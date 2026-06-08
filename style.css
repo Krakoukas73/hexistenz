@@ -1,105 +1,52 @@
-/* =========================================================
-   🌌 GLOBAL / BACKGROUND
-========================================================= */
-
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+html,
+body {
+  width: 100%;
   height: 100%;
+  margin: 0;
+  overflow: hidden;
   background: radial-gradient(circle at center, #121a24 0%, #070a0f 70%, #04060a 100%);
 }
 
-/* Canvas principal */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.55) 100%);
+  z-index: 2;
+}
+
 #app {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   display: block;
   width: 100vw;
   height: 100vh;
   z-index: 1;
-
-  /* filter: contrast(1.15) brightness(1.1) saturate(1.2); */
 }
 
-canvas {
-  pointer-events: auto;
-}
-
-/* Vignette cinéma */
-body::after {
-  content: "";
+.panel,
+#tileUI {
   position: fixed;
-  inset: 0;
-  pointer-events: none;
-
-  background: radial-gradient(
-    circle at center,
-    rgba(0,0,0,0) 40%,
-    rgba(0,0,0,0.55) 100%
-  );
-
-  /* mix-blend-mode: multiply; */
+  z-index: 10;
+  font-family: monospace;
+  color: rgba(220, 240, 255, 0.9);
 }
-
-
-/* =========================================================
-   🐞 DEBUG HUD
-========================================================= */
 
 #debugHud {
-  position: fixed;
   top: 10px;
   right: 10px;
-  z-index: 10;
-
+  min-width: 180px;
   padding: 10px 12px;
-
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(120, 180, 255, 0.25);
   border-radius: 8px;
-
-  color: rgba(220, 240, 255, 0.9);
-  font-family: monospace;
   font-size: 12px;
   line-height: 1.4;
-
-  pointer-events: auto;
-
-  /* backdrop-filter: blur(6px); */
 }
 
-#debugHud button {
-  margin-top: 8px;
-  width: 100%;
-
-  background: rgba(40, 40, 40, 0.85);
-  border: 1px solid rgba(120, 180, 255, 0.35);
-
-  color: #d8ecff;
-
-  padding: 6px 8px;
-
-  cursor: pointer;
-  font-family: monospace;
-  font-size: 12px;
-}
-
-#debugHud button:hover {
-  background: rgba(70, 70, 70, 0.95);
-}
-
-
-/* =========================================================
-   ⌨️ KEYBOARD HUD
-========================================================= */
-
-#keyboardHUD {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  font-family: monospace;
+#keyboard {
+  margin-top: 12px;
 }
 
 .key-row {
@@ -110,75 +57,60 @@ body::after {
   margin: 4px 0;
 }
 
-/* touche standard */
-.key {
-  width: 40px;
-  height: 40px;
-  margin: 2px;
+.command-row {
+  justify-content: flex-start;
+  margin-top: 12px;
+}
 
+.key,
+.key-button {
   display: flex;
   align-items: center;
   justify-content: center;
-
   background: #1b1f2a;
   border: 1px solid #3a3f55;
   border-radius: 6px;
-
   color: #aaa;
   font-weight: bold;
-
-  transition: all 0.1s ease;
+  user-select: none;
+  transition: transform 0.1s ease, background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
 }
 
-.key.active {
-  background: #ff3b3b;
-  color: white;
-  border-color: #ff3b3b;
-  transform: scale(1.1);
-}
-
-/* touche vide */
-.key.empty {
+.key {
   width: 40px;
   height: 40px;
-  margin: 2px;
+}
 
+.key.empty {
   background: transparent;
   border: none;
 }
 
-/* label texte à côté des touches */
-.key-label {
-  font-family: monospace;
-  font-size: 12px;
-  color: #aaa;
+.key.active {
+  background: #ff3b3b;
+  border-color: #ff3b3b;
+  color: white;
+  transform: scale(1.08);
 }
 
-/* bouton type touche */
-.key-button {
-  width: 160px;
-  height: 40px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: #1b1f2a;
-  border: 1px solid #3a3f55;
-  border-radius: 6px;
-
+.key-label {
   color: #aaa;
-  font-family: monospace;
-  font-weight: bold;
+  font-size: 12px;
+  line-height: 40px;
+}
 
+.key-button {
+  width: 100%;
+  height: 36px;
+  margin-top: 10px;
   cursor: pointer;
-  transition: all 0.1s ease;
+  font-family: monospace;
 }
 
 .key-button:hover {
   background: #2a3142;
   border-color: #5a6a8a;
-  color: #fff;
+  color: white;
 }
 
 .key-button:active {
@@ -188,34 +120,32 @@ body::after {
   transform: scale(0.98);
 }
 
-
-/* =========================================================
-   🧱 TILE UI
-========================================================= */
-
 #tileUI {
-  position: fixed;
-  bottom: 20px;
   right: 20px;
-  z-index: 9999;
-
+  bottom: 20px;
   display: flex;
   gap: 10px;
-
-  font-family: monospace;
-  color: white;
 }
 
 .tileBox {
-  background: rgba(0,0,0,0.7);
-  border: 1px solid rgba(120,180,255,0.25);
-  border-radius: 8px;
-  padding: 8px;
   min-width: 120px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(120, 180, 255, 0.25);
+  border-radius: 8px;
 }
 
 .title {
+  margin-bottom: 6px;
   font-size: 10px;
   opacity: 0.7;
-  margin-bottom: 6px;
+}
+
+.mini-tile {
+  width: 40px;
+  height: 54px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 2px;
 }

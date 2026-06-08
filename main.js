@@ -1,3 +1,7 @@
 import { initScene } from './scene.js';
 
-initScene();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initScene, { once: true });
+} else {
+  initScene();
+}
