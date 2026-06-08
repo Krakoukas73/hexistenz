@@ -2,6 +2,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 
 export class CameraControls {
   constructor(camera, domElement) {
+
     this.camera = camera;
     this.dom = domElement;
 
@@ -12,6 +13,11 @@ export class CameraControls {
     this.spherical.radius = 15;
     this.spherical.theta = Math.PI / 4;
     this.spherical.phi = Math.PI / 3;
+
+	// default camera state
+	this.defaultRadius = 15;
+	this.defaultTheta = Math.PI / 4;
+	this.defaultPhi = Math.PI / 3;
 
     this.minRadius = 3;
     this.maxRadius = 80;
@@ -32,6 +38,15 @@ export class CameraControls {
 
     this.prev = new THREE.Vector2();
 
+	this.keys = {
+	  z: false,
+	  q: false,
+	  s: false,
+	  d: false
+	};
+
+	this.keySpeed = 0.15;	
+
     // hover system
     this.currentHex = null;
     this.onHover = null;
@@ -40,6 +55,7 @@ export class CameraControls {
     this._updateCamera();
 	
 	this.onClick = null;
+	this.uiBlocked = false;
   }
 
   // -------------------------
@@ -64,13 +80,14 @@ export class CameraControls {
     });
 	
 	this.dom.addEventListener('mousedown', (e) => {
+	  if (this.uiBlocked) return;
+
 	  if (e.button === 0) {
 		if (this.onClick && this.currentHex) {
 		  this.onClick(this.currentHex);
 		}
 	  }
-	});	
-	
+	});
 
     window.addEventListener('mouseup', () => {
       this.isLeftDown = false;
@@ -112,6 +129,22 @@ export class CameraControls {
 
       this._updateCamera();
     });
+	
+	
+	window.addEventListener('keydown', (e) => {
+	  const k = e.key.toLowerCase();
+	  if (this.keys[k] !== undefined) {
+		this.keys[k] = true;
+	  }
+	});
+
+	window.addEventListener('keyup', (e) => {
+	  const k = e.key.toLowerCase();
+	  if (this.keys[k] !== undefined) {
+		this.keys[k] = false;
+	  }
+	});	
+	
   }
 
   // -------------------------
@@ -119,6 +152,7 @@ export class CameraControls {
   // -------------------------
 
   _updateCamera() {
+
     const offset = new THREE.Vector3();
 
     offset.x = this.spherical.radius * Math.sin(this.spherical.phi) * Math.sin(this.spherical.theta);
@@ -128,6 +162,30 @@ export class CameraControls {
     this.camera.position.copy(this.target).add(offset);
     this.camera.lookAt(this.target);
   }
+  
+	update() {
+	  this._applyKeyboardMovement();
+	  this._updateCamera();
+	}  
+  
+	_applyKeyboardMovement() {
+
+	  const forward = new THREE.Vector3();
+	  const right = new THREE.Vector3();
+
+	  this.camera.getWorldDirection(forward);
+	  forward.y = 0;
+	  forward.normalize();
+
+	  right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+
+	  if (this.keys.z) this.target.add(forward.clone().multiplyScalar(this.keySpeed));
+	  if (this.keys.s) this.target.add(forward.clone().multiplyScalar(-this.keySpeed));
+
+	  if (this.keys.q) this.target.add(right.clone().multiplyScalar(-this.keySpeed));
+	  if (this.keys.d) this.target.add(right.clone().multiplyScalar(this.keySpeed));
+	}  
+  
 
   // -------------------------
   // PAN (stable world drag)
@@ -147,6 +205,8 @@ export class CameraControls {
     return ok ? hit : null;
   }
 
+  
+  
   _pan(clientX, clientY) {
     const worldPoint = this._getWorldPoint(clientX, clientY);
     if (!worldPoint) return;
@@ -163,6 +223,8 @@ export class CameraControls {
 
     this.target.copy(this.dragStartTarget).add(delta);
   }
+  
+  
 
   // -------------------------
   // HOVER SYSTEM
@@ -223,4 +285,16 @@ _updateHover(clientX, clientY) {
 
     return { q: rx, r: rz };
   }
+  
+  
+resetCamera() {
+  this.target.set(0, 0, 0);
+
+  this.spherical.radius = 15;
+  this.spherical.theta = Math.PI / 4;
+  this.spherical.phi = Math.PI / 3;
+
+  this._updateCamera();
+}
+  
 }

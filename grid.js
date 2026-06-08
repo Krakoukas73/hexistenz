@@ -26,9 +26,11 @@ export function createGrid() {
       const hex = createHexWire(pos.x, 0, pos.z, HEX_SIZE, material);
       group.add(hex);
 
-      const label = createLabel(`${q},${r}`);
-      label.position.set(pos.x, 0.01, pos.z);
+      /*
+	  const label = createLabel(`${q},${r}`);
+      label.position.set(pos.x, 0.08, pos.z);
       group.add(label);
+	  */
     }
   }
 
@@ -106,13 +108,15 @@ function createLabel(text) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.minFilter = THREE.LinearFilter;
 
-  const material = new THREE.SpriteMaterial({
-    map: texture,
-    transparent: true,
-    depthWrite: false
-  });
+	const material = new THREE.SpriteMaterial({
+	  map: texture,
+	  transparent: true,
+	  depthWrite: false,
+	  depthTest: false
+	});
 
   const sprite = new THREE.Sprite(material);
+  sprite.renderOrder = 999;
 
   // 🔥 PLUS GRAND VISUELLEMENT
   sprite.scale.set(1.4, 0.7, 1);

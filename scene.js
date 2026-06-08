@@ -29,6 +29,29 @@ export function initScene() {
   );
 
   const controls = new CameraControls(camera, canvas);
+  
+  const keyZ = document.getElementById("keyZ"); 
+  const keyQ = document.getElementById("keyQ"); 
+  const keyS = document.getElementById("keyS"); 
+  const keyD = document.getElementById("keyD");
+    
+  const btn = document.getElementById("btnResetCamera");
+
+	btn.addEventListener("click", (e) => {
+	  e.stopPropagation(); // 💥 empêche le canvas de recevoir le clic
+	  controls.resetCamera();
+	});  
+  
+  
+	// -------------------------
+	// RESET CAMERA BUTTON
+	// -------------------------
+	const btnResetCamera = document.getElementById('btnResetCamera');
+
+	btnResetCamera.addEventListener('click', () => {
+	  controls.resetCamera();
+	});  
+  
 
   scene.add(createGrid());
 
@@ -55,7 +78,7 @@ export function initScene() {
   controls.onHover = (hex) => {
     const pos = axialToWorld(hex.q, hex.r);
 
-    hoverMesh.position.set(pos.x, 0.01, pos.z);
+    hoverMesh.position.set(pos.x, 0.003, pos.z);
     hoverMesh.visible = true;
 
     safeSet(dbgHover, `${hex.q},${hex.r}`);
@@ -75,14 +98,26 @@ export function initScene() {
 
     const pos = axialToWorld(hex.q, hex.r);
 
-    selectedMesh.position.set(pos.x, 0.02, pos.z);
+    selectedMesh.position.set(pos.x, 0.004, pos.z);
     selectedMesh.visible = true;
 
     safeSet(dbgSelected, `${hex.q},${hex.r}`);
   };
 
+	function setKey(el, active) {
+	  if (!el) return;
+	  el.classList.toggle("active", active);
+	}
+
   function animate() {
     requestAnimationFrame(animate);
+	controls.update(); // 💥 IMPORTANT
+
+	setKey(keyZ, controls.keys.z);
+	setKey(keyQ, controls.keys.q);
+	setKey(keyS, controls.keys.s);
+	setKey(keyD, controls.keys.d);	
+	
     renderer.render(scene, camera);
   }
 
