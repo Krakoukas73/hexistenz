@@ -4,6 +4,7 @@ import { CameraControls } from './controls.js';
 import { createGrid } from './grid.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { createTileMesh } from './tileMesh.js';
+import { canPlaceTileAt } from './placementRules.js';
 import { createDeck, generateTile, rotateTile } from './tileGenerator.js';
 import { createUI, setText, updateDeckUI, updateKeyboardUI } from './ui.js';
 
@@ -47,7 +48,7 @@ export function initScene() {
   controls.onClick = (hex) => placeTile(hex);
 
   controls.onWheel = (hex, deltaY) => {
-    if (hex && isAvailable(hex)) rotateActiveTile(deltaY < 0 ? 1 : -1);
+    if (hex && isPlacementTarget(hex)) rotateActiveTile(deltaY < 0 ? 1 : -1);
     else controls.zoom(deltaY);
   };
 
@@ -78,7 +79,12 @@ export function initScene() {
 
     setText(ui.hover, key);
 
-    if (placedTiles.has(key)) {
+    if (!isPlacementTarget(hex)) {
+      ghostTile.visible = false;
+      return;
+    }
+
+    if (!ensureCompatibleRotation(0)) {
       ghostTile.visible = false;
       return;
     }
@@ -87,7 +93,8 @@ export function initScene() {
   }
 
   function placeTile(hex) {
-    if (!isAvailable(hex)) return;
+    if (!isPlacementTarget(hex)) return;
+    if (!ensureCompatibleRotation(0)) return;
 
     const key = makeHexKey(hex.q, hex.r);
     const position = axialToWorld(hex.q, hex.r);
@@ -112,10 +119,20 @@ export function initScene() {
   }
 
   function rotateActiveTile(step) {
-    rotationIndex = (rotationIndex + step + 6) % 6;
+    const hasTarget = hoveredHex && isPlacementTarget(hoveredHex);
+
+    if (hasTarget) {
+      if (!ensureCompatibleRotation(step)) {
+        ghostTile.visible = false;
+        return;
+      }
+    } else {
+      rotationIndex = normalizeRotation(rotationIndex + step);
+    }
+
     setText(ui.rotation, `${rotationIndex}/6`);
 
-    if (hoveredHex && isAvailable(hoveredHex)) {
+    if (hasTarget) {
       const position = axialToWorld(hoveredHex.q, hoveredHex.r);
       rebuildGhost(position);
     }
@@ -147,7 +164,7 @@ export function initScene() {
     setText(ui.rotation, '0/6');
     updateDeckUI(ui, deck);
 
-    if (hoveredHex && isAvailable(hoveredHex)) {
+    if (hoveredHex && isPlacementTarget(hoveredHex) && ensureCompatibleRotation(0)) {
       const position = axialToWorld(hoveredHex.q, hoveredHex.r);
       rebuildGhost(position);
     } else {
@@ -155,9 +172,41 @@ export function initScene() {
     }
   }
 
-  function isAvailable(hex) {
-    return !placedTiles.has(makeHexKey(hex.q, hex.r));
+  function isPlacementTarget(hex) {
+    return canPlaceTileAt(hex, placedTiles);
   }
+
+  function isCurrentRotationValid() {
+    return canPlaceTileAt(hoveredHex, placedTiles, rotateTile(deck[0], rotationIndex));
+  }
+
+  function ensureCompatibleRotation(step) {
+    if (!hoveredHex || !isPlacementTarget(hoveredHex)) return false;
+
+    const direction = Math.sign(step);
+
+    if (direction === 0 && isCurrentRotationValid()) return true;
+
+    const scanDirection = direction === 0 ? 1 : direction;
+    const start = normalizeRotation(rotationIndex + scanDirection);
+
+    for (let offset = 0; offset < 6; offset++) {
+      const candidate = normalizeRotation(start + offset * scanDirection);
+      const rotatedTile = rotateTile(deck[0], candidate);
+
+      if (canPlaceTileAt(hoveredHex, placedTiles, rotatedTile)) {
+        rotationIndex = candidate;
+        setText(ui.rotation, `${rotationIndex}/6`);
+        return true;
+      }
+    }
+
+    return false;
+  }
+}
+
+function normalizeRotation(value) {
+  return ((value % 6) + 6) % 6;
 }
 
 function createRenderer(canvas) {
