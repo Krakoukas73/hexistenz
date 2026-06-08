@@ -8,9 +8,11 @@
 
 ## 🇫🇷 Présentation
 
-Hexistenz est un jeu expérimental de construction et de stratégie jouable directement dans le navigateur. Inspiré des city-builders minimalistes et des jeux de plateau procéduraux, il repose sur une vaste grille hexagonale 3D, une navigation fluide et un rendu WebGL temps réel.
+Hexistenz est un jeu expérimental de construction et de stratégie jouable directement dans le navigateur. Fortement inspiré de **Dorfromantik** et du mythique **The Settlers** de 1993 développé par Blue Byte, le projet repose sur une vaste grille hexagonale 3D, une navigation fluide et un rendu WebGL temps réel.
 
-### ✨ Fonctionnalités (v0.13)
+Le projet est développé intégralement en **vibe coding**, principalement avec **Claude** et **Codex**, dans une approche de prototypage rapide centrée sur l'expérimentation, l'itération et le gameplay émergent.
+
+### ✨ Fonctionnalités (v0.14.1)
 
 - Génération procédurale de la grille hexagonale
 - Placement dynamique de tuiles
@@ -32,15 +34,19 @@ Hexistenz est un jeu expérimental de construction et de stratégie jouable dire
 
 Créer un monde procédural vivant composé de villages, forêts, voies ferrées, rivières, côtes et paysages variés dans un univers cohérent, optimisé et relaxant.
 
-**Statut actuel :** `v0.13` — Première base jouable avec grille hexagonale, système de caméra et moteur de rendu.
+**Statut actuel :** `v0.14.1` — Prototype jouable intégrant la grille hexagonale, le système de caméra et les fondations techniques du futur gameplay.
+
 
 ---
 
+
 ## 🇬🇧 Overview
 
-Hexistenz is an experimental browser-based strategy and world-building game inspired by minimalist city-builders and procedural board games. It focuses on large 3D hexagonal worlds, smooth navigation and real-time WebGL rendering.
+Hexistenz is an experimental browser-based strategy and world-building game inspired by **Dorfromantik** and the classic **The Settlers (1993)** developed by Blue Byte. It focuses on large 3D hexagonal worlds, smooth navigation and real-time WebGL rendering.
 
-### ✨ Features (v0.13)
+The project is being developed entirely through **vibe coding**, primarily using **Claude** and **Codex**, with a strong emphasis on rapid prototyping, experimentation and emergent gameplay.
+
+### ✨ Features (v0.14.1)
 
 - Procedurally generated hexagonal grid
 - Dynamic tile placement
@@ -62,7 +68,7 @@ Hexistenz is an experimental browser-based strategy and world-building game insp
 
 Build a living procedural world featuring villages, forests, railways, rivers, coastlines and diverse landscapes within a coherent and optimized low-poly universe.
 
-**Current status:** `v0.13` — First playable foundation featuring the hexagonal grid, camera system and rendering engine.
+**Current status:** `v0.14.1` — Playable prototype featuring the hexagonal grid, camera system and the technical foundations for future gameplay systems.
 
 ---
 
