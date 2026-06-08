@@ -1,3 +1,7 @@
+
+<img width="1672" height="941" alt="22_381KB" src="https://github.com/user-attachments/assets/74ca9632-5cb1-4a82-a72a-e180fbe6b345" />
+
+
 # Hexistenz
 
 > 🇫🇷 Un monde hexagonal low-poly construit avec Three.js et WebGL.
