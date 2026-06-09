@@ -5,8 +5,9 @@ import { createGrid } from './grid.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { createTileMesh } from './tileMesh.js';
 import { canPlaceTileAt } from './placementRules.js';
+import { calculatePlacementScore } from './scoring.js';
 import { createDeck, generateTile, rotateTile } from './tileGenerator.js';
-import { createUI, setText, updateDeckUI, updateKeyboardUI } from './ui.js';
+import { createUI, setText, updateDeckUI, updateKeyboardUI, updateScoreUI } from './ui.js';
 
 export function initScene() {
   const canvas = document.getElementById('app');
@@ -22,6 +23,7 @@ export function initScene() {
   let hoveredHex = null;
   let rotationIndex = 0;
   let rotationKeyActive = false;
+  let totalScore = 0;
 
   const ghostTile = new THREE.Group();
 
@@ -29,6 +31,7 @@ export function initScene() {
 
   scene.add(createGrid(), ghostTile);
   updateDeckUI(ui, deck);
+  updateScoreUI(ui, totalScore, 0);
 
   ui.resetCamera?.addEventListener('click', event => {
     event.stopPropagation();
@@ -99,12 +102,14 @@ export function initScene() {
     const key = makeHexKey(hex.q, hex.r);
     const position = axialToWorld(hex.q, hex.r);
     const tile = rotateTile(deck[0], rotationIndex);
+    const scoreResult = calculatePlacementScore(hex, placedTiles, tile);
     const mesh = createTileMesh(tile);
 
     mesh.position.set(position.x, 0.003, position.z);
     scene.add(mesh);
 
-    const placedTile = { q: hex.q, r: hex.r, key, tile, mesh };
+    const placedTile = { q: hex.q, r: hex.r, key, tile, mesh, score: scoreResult.total };
+    totalScore += scoreResult.total;
 
     placedTiles.set(key, placedTile);
     placementHistory.push(placedTile);
@@ -116,6 +121,7 @@ export function initScene() {
     deck.push(generateTile());
     rotationIndex = 0;
     updateDeckUI(ui, deck);
+    updateScoreUI(ui, totalScore, scoreResult.total);
   }
 
   function rotateActiveTile(step) {
@@ -155,6 +161,7 @@ export function initScene() {
     });
 
     placedTiles.delete(last.key);
+    totalScore = Math.max(0, totalScore - (last.score ?? 0));
 
     deck.pop();
     deck.unshift(last.tile);
@@ -163,6 +170,7 @@ export function initScene() {
     setText(ui.selected, '-');
     setText(ui.rotation, '0/6');
     updateDeckUI(ui, deck);
+    updateScoreUI(ui, totalScore, -(last.score ?? 0));
 
     if (hoveredHex && isPlacementTarget(hoveredHex) && ensureCompatibleRotation(0)) {
       const position = axialToWorld(hoveredHex.q, hoveredHex.r);

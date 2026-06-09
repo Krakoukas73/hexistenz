@@ -9,6 +9,8 @@ export function createUI() {
     activeTile: document.getElementById('activeTile'),
     nextTile: document.getElementById('nextTile'),
     rotation: document.getElementById('dbgRotation'),
+    score: document.getElementById('dbgScore'),
+    lastScore: document.getElementById('dbgLastScore'),
     keys: {
       z: document.getElementById('keyZ'),
       q: document.getElementById('keyQ'),
@@ -34,4 +36,9 @@ export function updateKeyboardUI(ui, keys, rotationKeyActive = false) {
   }
 
   if (ui.keys.r) ui.keys.r.classList.toggle('active', rotationKeyActive);
+}
+
+export function updateScoreUI(ui, totalScore, lastScore = 0) {
+  setText(ui.score, String(totalScore));
+  setText(ui.lastScore, lastScore > 0 ? `+${lastScore}` : String(lastScore));
 }
