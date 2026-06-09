@@ -58,7 +58,7 @@ function createSectorMeshes(edges, opacity) {
     const group = new THREE.Group();
     group.add(mesh);
 
-    const label = createValueLabel(edge, sector);
+    const label = createValueLabel(edge, vertices[sector.a], vertices[sector.b]);
     if (label) group.add(label);
 
     return group;
@@ -165,16 +165,22 @@ function edgeCssColor(type) {
   return `#${EDGE_COLOR[type].toString(16).padStart(6, '0')}`;
 }
 
-function createValueLabel(edge, sector) {
+function createValueLabel(edge, vertexA, vertexB) {
   const type = getEdgeType(edge);
   const value = getEdgeValue(edge);
 
   if (!shouldShowValue(type, value)) return null;
 
-  const angle = ((sector.a + sector.b) / 2) * (Math.PI / 3);
   const sprite = new THREE.Sprite(getTextSpriteMaterial(String(value)));
 
-  sprite.position.set(Math.cos(angle) * HEX_SIZE * 0.53, TILE_VISUAL.labelY ?? 0.07, Math.sin(angle) * HEX_SIZE * 0.53);
+  // Même triangle, même source de vérité : le label est placé au centroïde
+  // du secteur qui a servi à dessiner la texture. Impossible de dériver
+  // vers le voisin par un calcul d'angle séparé.
+  sprite.position.set(
+    (vertexA.x + vertexB.x) / 3,
+    TILE_VISUAL.labelY ?? 0.07,
+    (vertexA.z + vertexB.z) / 3
+  );
   sprite.scale.set(0.28, 0.16, 1);
   return sprite;
 }

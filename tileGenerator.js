@@ -35,10 +35,12 @@ export function generateTile() {
 }
 
 export function rotateTile(tile, steps) {
+  const normalizedSteps = normalizeRotation(steps);
+
   return {
     ...tile,
-    edges: rotateEdges(tile.edges, steps),
-    rotation: normalizeRotation((tile.rotation ?? 0) + steps)
+    edges: rotateEdges(tile.edges, normalizedSteps),
+    rotation: normalizeRotation((tile.rotation ?? 0) + normalizedSteps)
   };
 }
 
@@ -46,10 +48,12 @@ export function rotateEdges(edges, steps) {
   const normalizedSteps = normalizeRotation(steps);
   const rotated = {};
 
+  // Un triangle est indivisible : texture + valeur voyagent ensemble.
+  // Ne jamais reconstruire type et value via deux mappings différents.
   for (let i = 0; i < EDGE_ORDER.length; i++) {
-    const from = EDGE_ORDER[i];
-    const to = EDGE_ORDER[(i + normalizedSteps) % EDGE_ORDER.length];
-    rotated[to] = edges[from];
+    const fromKey = EDGE_ORDER[i];
+    const toKey = EDGE_ORDER[(i + normalizedSteps) % EDGE_ORDER.length];
+    rotated[toKey] = cloneEdge(edges[fromKey]);
   }
 
   return rotated;
@@ -60,7 +64,28 @@ export function getEdgeType(edge) {
 }
 
 export function getEdgeValue(edge) {
-  return typeof edge === 'string' ? 1 : edge?.value ?? 1;
+  if (typeof edge === 'string') return 1;
+  return sanitizeEdgeValue(getEdgeType(edge), edge?.value);
+}
+
+export function cloneEdge(edge) {
+  const type = getEdgeType(edge);
+
+  return {
+    type,
+    value: sanitizeEdgeValue(type, typeof edge === 'string' ? 1 : edge?.value)
+  };
+}
+
+function canHaveVariableValue(type) {
+  return type === EDGE_TYPES.field || type === EDGE_TYPES.forest || type === EDGE_TYPES.house;
+}
+
+function sanitizeEdgeValue(type, value) {
+  if (!canHaveVariableValue(type)) return 1;
+
+  const numericValue = Number(value ?? 1);
+  return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : 1;
 }
 
 function generateWeightedEdges() {
@@ -72,7 +97,7 @@ function generateWeightedEdges() {
 function createEdge(type) {
   return {
     type,
-    value: EDGE_VALUE_RANGES[type]?.() ?? 1
+    value: sanitizeEdgeValue(type, EDGE_VALUE_RANGES[type]?.() ?? 1)
   };
 }
 
@@ -165,19 +190,31 @@ function pickFieldValue() {
 
 function pickForestValue() {
   return Number(pickWeighted({
-    3: 12,
-    4: 12,
+    1: 16,
+    2: 14,
+    3: 14,
+    4: 14,
     5: 12,
-    6: 10,
+    6: 12,
     7: 10,
     8: 10,
     9: 10,
-    10: 5,
-    11: 5,
-    12: 5,
-    13: 2,
-    14: 2,
-    15: 2
+    10: 8,
+    11: 8,
+    12: 6,
+    13: 6,
+    14: 5,
+    15: 5,
+    16: 4,
+    17: 4,
+    18: 3,
+    19: 3,
+    20: 2,
+    21: 2,
+    22: 1,
+    23: 1,
+    24: 1,
+    25: 1
   }));
 }
 

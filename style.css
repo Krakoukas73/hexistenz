@@ -33,6 +33,50 @@ body::after {
   color: rgba(220, 240, 255, 0.9);
 }
 
+
+#scorePanel {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 12;
+  min-width: 210px;
+  padding: 14px 16px;
+  font-family: monospace;
+  color: rgba(240, 250, 255, 0.96);
+  background: rgba(0, 0, 0, 0.68);
+  border: 1px solid rgba(120, 180, 255, 0.38);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.score-title {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: rgba(180, 215, 255, 0.82);
+}
+
+.score-value {
+  margin-top: 4px;
+  font-size: 42px;
+  line-height: 1;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 16px rgba(90, 170, 255, 0.42);
+}
+
+.last-score-line {
+  margin-top: 8px;
+  font-size: 15px;
+  color: rgba(225, 242, 255, 0.86);
+}
+
+#dbgLastScore {
+  display: inline-block;
+  margin-left: 8px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
 #debugHud {
   top: 10px;
   right: 10px;
@@ -43,6 +87,38 @@ body::after {
   border-radius: 8px;
   font-size: 12px;
   line-height: 1.4;
+}
+
+
+.debug-texture-title {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(120, 180, 255, 0.18);
+  color: rgba(180, 215, 255, 0.82);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.debug-texture-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 10px;
+  margin-top: 7px;
+}
+
+.debug-texture-grid div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: rgba(220, 240, 255, 0.9);
+}
+
+.debug-texture-grid .swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
 }
 
 #keyboard {

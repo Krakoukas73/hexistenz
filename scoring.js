@@ -4,6 +4,7 @@ import { makeHexKey } from './hex.js';
 import { getEdgeType } from './tileGenerator.js';
 
 export const SCORE_VALUES = {
+  tilePlacement: 2,
   matchingEdge: 10,
   networkMatchingEdge: 25,
   perfectTileBonus: 50
@@ -40,10 +41,11 @@ export function calculatePlacementScore(hex, placedTiles, tile) {
     : 0;
 
   return {
-    total: edgeScore + perfectBonus,
+    total: SCORE_VALUES.tilePlacement + edgeScore + perfectBonus,
     matchingEdges,
     checkedEdges,
     perfectBonus,
-    edgeScore
+    edgeScore,
+    tilePlacement: SCORE_VALUES.tilePlacement
   };
 }
