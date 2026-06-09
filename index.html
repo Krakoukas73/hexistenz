@@ -15,6 +15,7 @@
     <div>Rotation: <span id="dbgRotation">0/6</span></div>
     <div>Score: <span id="dbgScore">0</span></div>
     <div>Dernier coup: <span id="dbgLastScore">0</span></div>
+    <div>Pose: <span id="dbgPlacement">-</span></div>
 
     <button id="btnResetCamera" class="key-button" type="button">RESET CAMERA</button>
     <button id="btnUndoLastTile" class="key-button" type="button">ANNULER</button>
@@ -71,7 +72,8 @@
           <h2>🎯 Objectif</h2>
           <p>Pose les tuiles hexagonales pour agrandir la carte et marquer un maximum de points. Chaque tuile possède 6 bords colorés : les aligner correctement augmente le score.</p>
           <div class="score-strip">
-            <div><strong>+10</strong><span>par bord identique contre une tuile voisine</span></div>
+            <div><strong>+10</strong><span>par bord identique classique contre une tuile voisine</span></div>
+            <div><strong>+25</strong><span>par connexion eau/eau ou rail/rail</span></div>
             <div><strong>+50</strong><span>bonus si les 6 côtés touchent et correspondent</span></div>
           </div>
         </article>
@@ -88,21 +90,29 @@
 
         <article class="help-card">
           <h2>🌊 Eaux et rails</h2>
-          <p>L’eau et le rail sont des réseaux stricts. Ils doivent continuer sur le même type en face d’une tuile voisine.</p>
-          <div class="rule-line"><span class="swatch water"></span><strong>Eau</strong><span>se connecte uniquement à eau</span></div>
-          <div class="rule-line"><span class="swatch rail"></span><strong>Rail</strong><span>se connecte uniquement à rail</span></div>
+          <p>L’eau et le rail sont des réseaux stricts et plus difficiles à placer. En échange, chaque connexion correcte rapporte plus de points.</p>
+          <div class="rule-line"><span class="swatch water"></span><strong>Eau</strong><span>se connecte uniquement à eau : +25</span></div>
+          <div class="rule-line"><span class="swatch rail"></span><strong>Rail</strong><span>se connecte uniquement à rail : +25</span></div>
         </article>
 
         <article class="help-card help-card-textures">
-          <h2>🎨 Textures</h2>
+          <h2>🎨 Textures & valeurs</h2>
           <div class="legend-grid">
-            <div><span class="swatch field"></span><span>Champ</span><code>#F2D16B</code></div>
-            <div><span class="swatch forest"></span><span>Forêt</span><code>#2F7D32</code></div>
-            <div><span class="swatch grass"></span><span>Herbe</span><code>#2ECC71</code></div>
-            <div><span class="swatch house"></span><span>Maison</span><code>#D14B4B</code></div>
-            <div><span class="swatch water"></span><span>Eau</span><code>#3A7DFF</code></div>
-            <div><span class="swatch rail"></span><span>Rail</span><code>#DDDDDD</code></div>
+            <div><span class="swatch field"></span><span>Champ</span><code>1-12 blés</code></div>
+            <div><span class="swatch forest"></span><span>Forêt</span><code>3-15 arbres</code></div>
+            <div><span class="swatch grass"></span><span>Herbe</span><code>1</code></div>
+            <div><span class="swatch house"></span><span>Maison</span><code>1-12 maisons</code></div>
+            <div><span class="swatch water"></span><span>Eau</span><code>1</code></div>
+            <div><span class="swatch rail"></span><span>Rail</span><code>1</code></div>
           </div>
+        </article>
+
+
+
+        <article class="help-card help-card-wide">
+          <h2>🚩 Objectifs bientôt</h2>
+          <p>Chaque triangle possède maintenant une texture et une valeur. Prairie, eau et rail valent toujours 1. Les champs, les forêts et les villages peuvent contenir plusieurs blés, arbres ou maisons.</p>
+          <p>Certaines tuiles recevront bientôt des objectifs spéciaux : par exemple créer une forêt de 50 arbres, prolonger une rivière sur 15 unités de longueur, ou construire un réseau ferroviaire précis.</p>
         </article>
 
         <article class="help-card help-card-controls">

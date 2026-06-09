@@ -4,7 +4,7 @@ import { CameraControls } from './controls.js';
 import { createGrid } from './grid.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { createTileMesh } from './tileMesh.js';
-import { canPlaceTileAt } from './placementRules.js';
+import { canPlaceTileAt, getPlacementValidation } from './placementRules.js';
 import { calculatePlacementScore } from './scoring.js';
 import { createDeck, generateTile, rotateTile } from './tileGenerator.js';
 import { createUI, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateScoreUI } from './ui.js';
@@ -113,24 +113,27 @@ export function initScene() {
 
     if (!isPlacementTarget(hex)) {
       ghostTile.visible = false;
+      setText(ui.placement, '-');
       return;
     }
 
-    if (!ensureCompatibleRotation(0)) {
-      ghostTile.visible = false;
-      return;
-    }
-
-    rebuildGhost(position);
+    const tile = rotateTile(deck[0], rotationIndex);
+    const validation = getPlacementValidation(hex, placedTiles, tile);
+    rebuildGhost(position, tile, validation);
   }
 
   function placeTile(hex) {
     if (!isPlacementTarget(hex)) return;
-    if (!ensureCompatibleRotation(0)) return;
 
     const key = makeHexKey(hex.q, hex.r);
     const position = axialToWorld(hex.q, hex.r);
     const tile = rotateTile(deck[0], rotationIndex);
+    const validation = getPlacementValidation(hex, placedTiles, tile);
+
+    if (!validation.valid) {
+      rebuildGhost(position, tile, validation);
+      return;
+    }
     const scoreResult = calculatePlacementScore(hex, placedTiles, tile);
     const mesh = createTileMesh(tile);
 
@@ -156,28 +159,95 @@ export function initScene() {
   function rotateActiveTile(step) {
     const hasTarget = hoveredHex && isPlacementTarget(hoveredHex);
 
-    if (hasTarget) {
-      if (!ensureCompatibleRotation(step)) {
-        ghostTile.visible = false;
-        return;
-      }
-    } else {
-      rotationIndex = normalizeRotation(rotationIndex + step);
-    }
-
+    rotationIndex = normalizeRotation(rotationIndex + step);
     setText(ui.rotation, `${rotationIndex}/6`);
 
     if (hasTarget) {
       const position = axialToWorld(hoveredHex.q, hoveredHex.r);
-      rebuildGhost(position);
+      const tile = rotateTile(deck[0], rotationIndex);
+      const validation = getPlacementValidation(hoveredHex, placedTiles, tile);
+      rebuildGhost(position, tile, validation);
     }
   }
 
-  function rebuildGhost(position) {
+  function rebuildGhost(position, tile = rotateTile(deck[0], rotationIndex), validation = null) {
+    const status = validation ?? getPlacementValidation(hoveredHex, placedTiles, tile);
+
     ghostTile.clear();
-    ghostTile.add(createTileMesh(rotateTile(deck[0], rotationIndex)));
+    ghostTile.add(createTileMesh(tile, { opacity: 1 }));
+    ghostTile.add(createPlacementFeedbackOverlay(status));
     ghostTile.position.set(position.x, 0.003, position.z);
     ghostTile.visible = true;
+
+    setText(ui.placement, getPlacementLabel(status));
+  }
+
+
+  function createPlacementFeedbackOverlay(validation) {
+    const group = new THREE.Group();
+    const color = validation.valid ? 0x35ff70 : 0xff3030;
+    const radius = 1.02;
+    const points = [];
+
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i;
+      points.push(new THREE.Vector3(Math.cos(angle) * radius, 0.055, Math.sin(angle) * radius));
+    }
+
+    points.push(points[0].clone());
+    group.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(points),
+      new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.95 })
+    ));
+
+    for (const conflict of validation.conflicts ?? []) {
+      const marker = createConflictMarker(conflict.edge);
+      group.add(marker);
+    }
+
+    return group;
+  }
+
+  function createConflictMarker(edge) {
+    const angle = getEdgeAngle(edge);
+    const geometry = new THREE.BoxGeometry(0.42, 0.035, 0.12);
+    const material = new THREE.MeshBasicMaterial({ color: 0xff3030 });
+    const marker = new THREE.Mesh(geometry, material);
+
+    marker.position.set(Math.cos(angle) * 0.82, 0.075, Math.sin(angle) * 0.82);
+    marker.rotation.y = -angle;
+    return marker;
+  }
+
+  function getEdgeAngle(edge) {
+    return {
+      n: Math.PI / 6,
+      ne: Math.PI / 2,
+      se: Math.PI * 5 / 6,
+      s: Math.PI * 7 / 6,
+      sw: Math.PI * 3 / 2,
+      nw: Math.PI * 11 / 6
+    }[edge] ?? 0;
+  }
+
+  function getPlacementLabel(validation) {
+    if (validation.valid) return 'OK';
+    if (validation.reason !== 'INVALID_NETWORK_CONNECTION') return validation.reason ?? 'INTERDIT';
+
+    return validation.conflicts
+      ?.map(conflict => `${formatEdgeType(conflict.ownType)} ≠ ${formatEdgeType(conflict.neighborType)}`)
+      .join(', ') || 'RÉSEAU INCOMPATIBLE';
+  }
+
+  function formatEdgeType(type) {
+    return {
+      field: 'champ',
+      forest: 'forêt',
+      water: 'eau',
+      rail: 'rail',
+      house: 'maison',
+      grass: 'prairie'
+    }[type] ?? type;
   }
 
   function undoLastPlacement() {
@@ -201,11 +271,14 @@ export function initScene() {
     updateDeckUI(ui, deck);
     updateScoreUI(ui, totalScore, -(last.score ?? 0));
 
-    if (hoveredHex && isPlacementTarget(hoveredHex) && ensureCompatibleRotation(0)) {
+    if (hoveredHex && isPlacementTarget(hoveredHex)) {
       const position = axialToWorld(hoveredHex.q, hoveredHex.r);
-      rebuildGhost(position);
+      const tile = rotateTile(deck[0], rotationIndex);
+      const validation = getPlacementValidation(hoveredHex, placedTiles, tile);
+      rebuildGhost(position, tile, validation);
     } else {
       ghostTile.visible = false;
+      setText(ui.placement, '-');
     }
   }
 

@@ -11,6 +11,7 @@ export function createUI() {
     rotation: document.getElementById('dbgRotation'),
     score: document.getElementById('dbgScore'),
     lastScore: document.getElementById('dbgLastScore'),
+    placement: document.getElementById('dbgPlacement'),
     keys: {
       z: document.getElementById('keyZ'),
       q: document.getElementById('keyQ'),

@@ -1,5 +1,6 @@
 import { EDGE_ORDER, NETWORK_EDGE_TYPES } from './config.js';
 import { makeHexKey } from './hex.js';
+import { getEdgeType } from './tileGenerator.js';
 
 export const HEX_DIRECTIONS = [
   { q: 1, r: 0, edge: 'n' },
@@ -24,8 +25,9 @@ export function getPlacementValidation(hex, placedTiles, tile = null) {
 
   if (!hasAdjacentPlacedTile(hex, placedTiles)) return invalid('NO_ADJACENT_TILE');
 
-  if (tile && !hasValidNetworkConnections(hex, placedTiles, tile)) {
-    return invalid('INVALID_NETWORK_CONNECTION');
+  if (tile) {
+    const conflicts = getNetworkConnectionConflicts(hex, placedTiles, tile);
+    if (conflicts.length > 0) return invalid('INVALID_NETWORK_CONNECTION', { conflicts });
   }
 
   return valid();
@@ -36,15 +38,32 @@ export function hasAdjacentPlacedTile(hex, placedTiles) {
 }
 
 export function hasValidNetworkConnections(hex, placedTiles, tile) {
-  return HEX_DIRECTIONS.every(direction => {
+  return getNetworkConnectionConflicts(hex, placedTiles, tile).length === 0;
+}
+
+export function getNetworkConnectionConflicts(hex, placedTiles, tile) {
+  const conflicts = [];
+
+  for (const direction of HEX_DIRECTIONS) {
     const neighbor = getNeighborTile(hex, direction, placedTiles);
-    if (!neighbor) return true;
+    if (!neighbor) continue;
 
-    const ownType = tile.edges[direction.edge];
-    const neighborType = neighbor.tile.edges[getOppositeEdge(direction.edge)];
+    const ownEdge = direction.edge;
+    const neighborEdge = getOppositeEdge(direction.edge);
+    const ownType = getEdgeType(tile.edges[ownEdge]);
+    const neighborType = getEdgeType(neighbor.tile.edges[neighborEdge]);
 
-    return areEdgesCompatible(ownType, neighborType);
-  });
+    if (!areEdgesCompatible(ownType, neighborType)) {
+      conflicts.push({
+        edge: ownEdge,
+        ownType,
+        neighborType,
+        neighborKey: neighbor.key ?? makeHexKey(hex.q + direction.q, hex.r + direction.r)
+      });
+    }
+  }
+
+  return conflicts;
 }
 
 export function areEdgesCompatible(a, b) {
@@ -69,6 +88,6 @@ function valid() {
   return { valid: true, reason: null };
 }
 
-function invalid(reason) {
-  return { valid: false, reason };
+function invalid(reason, details = {}) {
+  return { valid: false, reason, ...details };
 }

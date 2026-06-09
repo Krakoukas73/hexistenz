@@ -1,5 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { EDGE_COLOR, EDGE_ORDER, HEX_SIZE, TILE_VISUAL } from './config.js';
+import { EDGE_COLOR, EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
+import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 
 const SECTOR_DEFS = [
   { key: 'n', a: 0, b: 1 },
@@ -11,6 +12,7 @@ const SECTOR_DEFS = [
 ];
 
 const materialCache = new Map();
+const textTextureCache = new Map();
 
 export function createTileMesh(tileOrEdges, options = {}) {
   const edges = tileOrEdges.edges ?? tileOrEdges;
@@ -30,7 +32,7 @@ export function renderMiniTile(tile) {
 
   const e = tile.edges;
   const c = tile.center ?? mostCommonEdgeType(edgesToArray(e));
-  const cell = type => `<div style="background:${edgeCssColor(type)}"></div>`;
+  const cell = edge => `<div style="background:${edgeCssColor(getEdgeType(edge))}">${getMiniValueLabel(edge)}</div>`;
   const center = `<div class="mini-center" style="background:${edgeCssColor(c)}"></div>`;
 
   return `
@@ -48,10 +50,18 @@ function createSectorMeshes(edges, opacity) {
 
   return SECTOR_DEFS.map(sector => {
     const geometry = createSectorGeometry(vertices[sector.a], vertices[sector.b]);
-    const material = getBiomeMaterial(edges[sector.key], opacity);
+    const edge = edges[sector.key];
+    const material = getBiomeMaterial(getEdgeType(edge), opacity);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.y = TILE_VISUAL.sectorY;
-    return mesh;
+
+    const group = new THREE.Group();
+    group.add(mesh);
+
+    const label = createValueLabel(edge, sector);
+    if (label) group.add(label);
+
+    return group;
   });
 }
 
@@ -128,7 +138,7 @@ function getBiomeMaterial(type, opacity = 1) {
 }
 
 function edgesToArray(edges) {
-  return EDGE_ORDER.map(edge => edges[edge]);
+  return EDGE_ORDER.map(edge => getEdgeType(edges[edge]));
 }
 
 function pickCenterType(edges) {
@@ -138,7 +148,7 @@ function pickCenterType(edges) {
 }
 
 function hasEdgeType(edges, type) {
-  return EDGE_ORDER.some(edge => edges[edge] === type);
+  return EDGE_ORDER.some(edge => getEdgeType(edges[edge]) === type);
 }
 
 function mostCommonEdgeType(types) {
@@ -153,4 +163,52 @@ function mostCommonEdgeType(types) {
 
 function edgeCssColor(type) {
   return `#${EDGE_COLOR[type].toString(16).padStart(6, '0')}`;
+}
+
+function createValueLabel(edge, sector) {
+  const type = getEdgeType(edge);
+  const value = getEdgeValue(edge);
+
+  if (!shouldShowValue(type, value)) return null;
+
+  const angle = ((sector.a + sector.b) / 2) * (Math.PI / 3);
+  const sprite = new THREE.Sprite(getTextSpriteMaterial(String(value)));
+
+  sprite.position.set(Math.cos(angle) * HEX_SIZE * 0.53, TILE_VISUAL.labelY ?? 0.07, Math.sin(angle) * HEX_SIZE * 0.53);
+  sprite.scale.set(0.28, 0.16, 1);
+  return sprite;
+}
+
+function getTextSpriteMaterial(text) {
+  if (textTextureCache.has(text)) return textTextureCache.get(text);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 64;
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.62)';
+  ctx.roundRect(18, 10, 92, 44, 14);
+  ctx.fill();
+  ctx.font = 'bold 34px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(text, 64, 33);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+  textTextureCache.set(text, material);
+  return material;
+}
+
+function getMiniValueLabel(edge) {
+  const type = getEdgeType(edge);
+  const value = getEdgeValue(edge);
+  return shouldShowValue(type, value) ? `<span class="mini-value">${value}</span>` : '';
+}
+
+function shouldShowValue(type, value) {
+  return value > 1 && (type === EDGE_TYPES.field || type === EDGE_TYPES.forest || type === EDGE_TYPES.house);
 }
