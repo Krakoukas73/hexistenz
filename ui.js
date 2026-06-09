@@ -16,8 +16,11 @@ export function createUI() {
       q: document.getElementById('keyQ'),
       s: document.getElementById('keyS'),
       d: document.getElementById('keyD'),
-      r: document.getElementById('keyR')
-    }
+      r: document.getElementById('keyR'),
+      h: document.getElementById('keyH')
+    },
+    helpOverlay: document.getElementById('helpOverlay'),
+    closeHelp: document.getElementById('btnCloseHelp')
   };
 }
 
@@ -36,6 +39,14 @@ export function updateKeyboardUI(ui, keys, rotationKeyActive = false) {
   }
 
   if (ui.keys.r) ui.keys.r.classList.toggle('active', rotationKeyActive);
+}
+
+export function setHelpVisible(ui, visible) {
+  if (!ui.helpOverlay) return;
+
+  ui.helpOverlay.classList.toggle('hidden', !visible);
+  ui.helpOverlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
+  ui.keys.h?.classList.toggle('active', visible);
 }
 
 export function updateScoreUI(ui, totalScore, lastScore = 0) {

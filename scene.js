@@ -7,7 +7,7 @@ import { createTileMesh } from './tileMesh.js';
 import { canPlaceTileAt } from './placementRules.js';
 import { calculatePlacementScore } from './scoring.js';
 import { createDeck, generateTile, rotateTile } from './tileGenerator.js';
-import { createUI, setText, updateDeckUI, updateKeyboardUI, updateScoreUI } from './ui.js';
+import { createUI, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateScoreUI } from './ui.js';
 
 export function initScene() {
   const canvas = document.getElementById('app');
@@ -24,6 +24,7 @@ export function initScene() {
   let rotationIndex = 0;
   let rotationKeyActive = false;
   let totalScore = 0;
+  let helpVisible = false;
 
   const ghostTile = new THREE.Group();
 
@@ -43,6 +44,15 @@ export function initScene() {
     undoLastPlacement();
   });
 
+  ui.closeHelp?.addEventListener('click', event => {
+    event.stopPropagation();
+    toggleHelp(false);
+  });
+
+  ui.helpOverlay?.addEventListener('click', event => {
+    if (event.target === ui.helpOverlay) toggleHelp(false);
+  });
+
   controls.onHover = (hex) => {
     hoveredHex = hex;
     updateHover(hex);
@@ -56,7 +66,21 @@ export function initScene() {
   };
 
   window.addEventListener('keydown', event => {
-    if (event.key.toLowerCase() !== 'r') return;
+    const key = event.key.toLowerCase();
+
+    if (key === 'h') {
+      event.preventDefault();
+      toggleHelp();
+      return;
+    }
+
+    if (key === 'escape' && helpVisible) {
+      event.preventDefault();
+      toggleHelp(false);
+      return;
+    }
+
+    if (key !== 'r' || helpVisible) return;
     rotationKeyActive = true;
     rotateActiveTile(1);
   });
@@ -74,6 +98,11 @@ export function initScene() {
     controls.update();
     updateKeyboardUI(ui, controls.keys, rotationKeyActive);
     renderer.render(scene, camera);
+  }
+
+  function toggleHelp(forceVisible = null) {
+    helpVisible = forceVisible ?? !helpVisible;
+    setHelpVisible(ui, helpVisible);
   }
 
   function updateHover(hex) {
