@@ -40,6 +40,7 @@ export const TILE_VISUAL = {
   centerY: 0.018,
   outlineY: 0.024,
   labelY: 0.07,
+  railY: 0.052,
   outlineColor: 0x151A21,
   outlineOpacity: 0.75
 };

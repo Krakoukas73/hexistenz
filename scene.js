@@ -31,7 +31,7 @@ export function initScene() {
   ghostTile.visible = false;
 
   scene.add(createGrid(), ghostTile);
-  updateDeckUI(ui, deck);
+  refreshDeckUI();
   updateScoreUI(ui, totalScore, 0);
 
   ui.resetCamera?.addEventListener('click', event => {
@@ -100,6 +100,10 @@ export function initScene() {
     renderer.render(scene, camera);
   }
 
+  function refreshDeckUI() {
+    updateDeckUI(ui, [rotateTile(deck[0], rotationIndex), deck[1]]);
+  }
+
   function toggleHelp(forceVisible = null) {
     helpVisible = forceVisible ?? !helpVisible;
     setHelpVisible(ui, helpVisible);
@@ -152,7 +156,7 @@ export function initScene() {
     deck.shift();
     deck.push(generateTile());
     rotationIndex = 0;
-    updateDeckUI(ui, deck);
+    refreshDeckUI();
     updateScoreUI(ui, totalScore, scoreResult.total);
   }
 
@@ -161,6 +165,7 @@ export function initScene() {
 
     rotationIndex = normalizeRotation(rotationIndex + step);
     setText(ui.rotation, `${rotationIndex}/6`);
+    refreshDeckUI();
 
     if (hasTarget) {
       const position = axialToWorld(hoveredHex.q, hoveredHex.r);
@@ -210,12 +215,18 @@ export function initScene() {
 
   function createConflictMarker(edge) {
     const angle = getEdgeAngle(edge);
-    const geometry = new THREE.BoxGeometry(0.42, 0.035, 0.12);
+    const marker = new THREE.Group();
+    const geometry = new THREE.BoxGeometry(0.44, 0.035, 0.08);
     const material = new THREE.MeshBasicMaterial({ color: 0xff3030 });
-    const marker = new THREE.Mesh(geometry, material);
+    const barA = new THREE.Mesh(geometry, material);
+    const barB = new THREE.Mesh(geometry, material);
 
     marker.position.set(Math.cos(angle) * 0.82, 0.075, Math.sin(angle) * 0.82);
     marker.rotation.y = -angle;
+    barA.rotation.y = Math.PI / 4;
+    barB.rotation.y = -Math.PI / 4;
+
+    marker.add(barA, barB);
     return marker;
   }
 
@@ -232,6 +243,7 @@ export function initScene() {
 
   function getPlacementLabel(validation) {
     if (validation.valid) return 'OK';
+    if (validation.reason === 'OUT_OF_GRID') return 'HORS GRILLE';
     if (validation.reason !== 'INVALID_NETWORK_CONNECTION') return validation.reason ?? 'INTERDIT';
 
     return validation.conflicts
@@ -268,7 +280,7 @@ export function initScene() {
 
     setText(ui.selected, '-');
     setText(ui.rotation, '0/6');
-    updateDeckUI(ui, deck);
+    refreshDeckUI();
     updateScoreUI(ui, totalScore, -(last.score ?? 0));
 
     if (hoveredHex && isPlacementTarget(hoveredHex)) {

@@ -1,4 +1,4 @@
-import { EDGE_ORDER, NETWORK_EDGE_TYPES } from './config.js';
+import { EDGE_ORDER, GRID_RADIUS, NETWORK_EDGE_TYPES } from './config.js';
 import { makeHexKey } from './hex.js';
 import { getEdgeType } from './tileGenerator.js';
 
@@ -18,6 +18,8 @@ export function canPlaceTileAt(hex, placedTiles, tile = null) {
 export function getPlacementValidation(hex, placedTiles, tile = null) {
   if (!hex) return invalid('NO_HEX');
 
+  if (!isHexInsideGrid(hex)) return invalid('OUT_OF_GRID');
+
   const key = makeHexKey(hex.q, hex.r);
   if (placedTiles.has(key)) return invalid('OCCUPIED');
 
@@ -31,6 +33,16 @@ export function getPlacementValidation(hex, placedTiles, tile = null) {
   }
 
   return valid();
+}
+
+
+export function isHexInsideGrid(hex) {
+  if (!hex) return false;
+  return Math.max(
+    Math.abs(hex.q),
+    Math.abs(hex.r),
+    Math.abs(-hex.q - hex.r)
+  ) <= GRID_RADIUS;
 }
 
 export function hasAdjacentPlacedTile(hex, placedTiles) {
