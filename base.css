@@ -1,0 +1,205 @@
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #121a24 0%, #070a0f 70%, #04060a 100%);
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.55) 100%);
+  z-index: 2;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+.panel,
+#tileUI {
+  position: fixed;
+  z-index: 10;
+  font-family: monospace;
+  color: rgba(220, 240, 255, 0.9);
+}
+
+
+#scorePanel {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 12;
+  min-width: 210px;
+  padding: 14px 16px;
+  font-family: monospace;
+  color: rgba(240, 250, 255, 0.96);
+  background: rgba(0, 0, 0, 0.68);
+  border: 1px solid rgba(120, 180, 255, 0.38);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.score-title {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: rgba(180, 215, 255, 0.82);
+}
+
+.score-value {
+  margin-top: 4px;
+  font-size: 42px;
+  line-height: 1;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 16px rgba(90, 170, 255, 0.42);
+}
+
+.last-score-line {
+  margin-top: 8px;
+  font-size: 15px;
+  color: rgba(225, 242, 255, 0.86);
+}
+
+#dbgLastScore {
+  display: inline-block;
+  margin-left: 8px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+#debugHud {
+  right: 20px;
+  bottom: 20px;
+  min-width: 180px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(120, 180, 255, 0.25);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+
+.debug-texture-title {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+  color: rgba(180, 215, 255, 0.82);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.debug-texture-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 10px;
+  margin-top: 7px;
+}
+
+.debug-texture-grid div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: rgba(220, 240, 255, 0.9);
+}
+
+.debug-texture-grid .swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.debug-keyboard-title {
+  margin-top: 12px;
+  color: rgba(180, 215, 255, 0.82);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#keyboard {
+  margin-top: 7px;
+}
+
+.key-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 4px 0;
+}
+
+.command-row {
+  justify-content: flex-start;
+  margin-top: 12px;
+}
+
+.key,
+.key-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1b1f2a;
+  border: 1px solid #3a3f55;
+  border-radius: 6px;
+  color: #aaa;
+  font-weight: bold;
+  user-select: none;
+  transition: transform 0.1s ease, background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
+}
+
+.key {
+  width: 40px;
+  height: 40px;
+}
+
+.key.empty {
+  background: transparent;
+  border: none;
+}
+
+.key.active {
+  background: #ff3b3b;
+  border-color: #ff3b3b;
+  color: white;
+  transform: scale(1.08);
+}
+
+.key-label {
+  color: #aaa;
+  font-size: 12px;
+  line-height: 40px;
+}
+
+.key-button {
+  width: 100%;
+  height: 36px;
+  margin-top: 10px;
+  cursor: pointer;
+  font-family: monospace;
+}
+
+.key-button:hover {
+  background: #2a3142;
+  border-color: #5a6a8a;
+  color: white;
+}
+
+.key-button:active {
+  background: #ff3b3b;
+  border-color: #ff3b3b;
+  color: white;
+  transform: scale(0.98);
+}

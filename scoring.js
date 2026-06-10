@@ -7,7 +7,7 @@ export const SCORE_VALUES = {
   tilePlacement: 2,
   matchingEdge: 10,
   networkMatchingEdge: 25,
-  perfectTileBonus: 50
+  surroundedTileBonus: 50
 };
 
 function getMatchingEdgeScore(edgeType) {
@@ -36,16 +36,46 @@ export function calculatePlacementScore(hex, placedTiles, tile) {
     }
   }
 
-  const perfectBonus = checkedEdges === 6 && matchingEdges === 6
-    ? SCORE_VALUES.perfectTileBonus
-    : 0;
+  const surroundedTiles = countNewlySurroundedTiles(hex, placedTiles);
+  const surroundedTileBonus = surroundedTiles * SCORE_VALUES.surroundedTileBonus;
 
   return {
-    total: SCORE_VALUES.tilePlacement + edgeScore + perfectBonus,
+    total: SCORE_VALUES.tilePlacement + edgeScore + surroundedTileBonus,
     matchingEdges,
     checkedEdges,
-    perfectBonus,
+    surroundedTiles,
+    surroundedTileBonus,
     edgeScore,
     tilePlacement: SCORE_VALUES.tilePlacement
   };
+}
+
+function countNewlySurroundedTiles(hex, placedTiles) {
+  const candidateKeys = new Set([makeHexKey(hex.q, hex.r)]);
+
+  for (const direction of HEX_DIRECTIONS) {
+    const neighborHex = { q: hex.q + direction.q, r: hex.r + direction.r };
+    const neighborKey = makeHexKey(neighborHex.q, neighborHex.r);
+    if (placedTiles.has(neighborKey)) candidateKeys.add(neighborKey);
+  }
+
+  let count = 0;
+
+  for (const key of candidateKeys) {
+    const candidate = key === makeHexKey(hex.q, hex.r)
+      ? hex
+      : placedTiles.get(key);
+
+    if (candidate && isSurroundedAfterPlacement(candidate, hex, placedTiles)) count++;
+  }
+
+  return count;
+}
+
+function isSurroundedAfterPlacement(candidate, placedHex, placedTiles) {
+  return HEX_DIRECTIONS.every(direction => {
+    const q = candidate.q + direction.q;
+    const r = candidate.r + direction.r;
+    return placedTiles.has(makeHexKey(q, r)) || (q === placedHex.q && r === placedHex.r);
+  });
 }

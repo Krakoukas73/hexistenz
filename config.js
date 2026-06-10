@@ -1,6 +1,6 @@
 export const HEX_SIZE = 1;
 export const GRID_RADIUS = 10;
-export const DECK_SIZE = 5;
+export const DECK_SIZE = 50;
 
 export const EDGE_ORDER = ['n', 'ne', 'se', 's', 'sw', 'nw'];
 

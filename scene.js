@@ -6,10 +6,14 @@ import { axialToWorld, makeHexKey } from './hex.js';
 import { createTileMesh } from './tileMesh.js';
 import { canPlaceTileAt, getPlacementValidation } from './placementRules.js';
 import { calculatePlacementScore } from './scoring.js';
-import { createDeck, generateTile, rotateTile } from './tileGenerator.js';
-import { createUI, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateScoreUI } from './ui.js';
+import { createDeck, rotateTile } from './tileGenerator.js';
+import { createUI, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateMissionUI, updateScoreUI } from './ui.js';
 import { createPlacementFeedbackOverlay, getPlacementLabel } from './placementOverlay.js';
 import { createWaterZoneOverlay, rebuildWaterZoneOverlay } from './waterZoneOverlay.js';
+import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
+import { createCamera, createRenderer, createThreeScene, resizeRenderer } from './threeSetup.js';
+import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
+import { MISSION_REWARD, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, maybeGenerateMissionForTile, removeMissionById, restoreMissions } from './missions.js';
 
 export function initScene() {
   const canvas = document.getElementById('app');
@@ -18,16 +22,21 @@ export function initScene() {
   const camera = createCamera();
   const controls = new CameraControls(camera, canvas);
   const ui = createUI();
+  const highscoreUI = createHighscoreUI(ui);
 
+  // État de partie : carte posée, historique annulable, deck et score.
   const placedTiles = new Map();
   const placementHistory = [];
   const deck = createDeck(DECK_SIZE);
+  const missionManager = createMissionManager();
   let hoveredHex = null;
   let rotationIndex = 0;
   let rotationKeyActive = false;
   let totalScore = 0;
   let helpVisible = false;
+  let gameOver = false;
 
+  // Tuile fantôme et overlays : feedback visuel, aucun impact sur les règles.
   const ghostTile = new THREE.Group();
   const waterZoneOverlay = createWaterZoneOverlay();
 
@@ -35,6 +44,8 @@ export function initScene() {
 
   scene.add(createGrid(), waterZoneOverlay, ghostTile);
   refreshDeckUI();
+  maybeAddMissionForCurrentTile();
+  updateMissionUI(ui, missionManager.active, formatMissionLabel);
   updateScoreUI(ui, totalScore, 0);
 
   ui.resetCamera?.addEventListener('click', event => {
@@ -104,7 +115,9 @@ export function initScene() {
   }
 
   function refreshDeckUI() {
-    updateDeckUI(ui, [rotateTile(deck[0], rotationIndex), deck[1]]);
+    const displayDeck = deck.slice();
+    if (displayDeck[0]) displayDeck[0] = rotateTile(displayDeck[0], rotationIndex);
+    updateDeckUI(ui, displayDeck);
   }
 
   function toggleHelp(forceVisible = null) {
@@ -113,14 +126,11 @@ export function initScene() {
   }
 
   function updateHover(hex) {
-    const key = makeHexKey(hex.q, hex.r);
     const position = axialToWorld(hex.q, hex.r);
-
-    setText(ui.hover, key);
 
     if (!isPlacementTarget(hex)) {
       ghostTile.visible = false;
-      setText(ui.placement, '-');
+      setText(ui.placement, gameOver ? 'FIN DU DECK' : '-');
       return;
     }
 
@@ -130,7 +140,7 @@ export function initScene() {
   }
 
   function placeTile(hex) {
-    if (!isPlacementTarget(hex)) return;
+    if (gameOver || deck.length === 0 || !isPlacementTarget(hex)) return;
 
     const key = makeHexKey(hex.q, hex.r);
     const position = axialToWorld(hex.q, hex.r);
@@ -147,21 +157,50 @@ export function initScene() {
     mesh.position.set(position.x, 0.003, position.z);
     scene.add(mesh);
 
-    const placedTile = { q: hex.q, r: hex.r, key, tile, mesh, score: scoreResult.total };
-    totalScore += scoreResult.total;
+    const placedTile = {
+      q: hex.q,
+      r: hex.r,
+      key,
+      tile,
+      mesh,
+      score: scoreResult.total,
+      bonusTilesAwarded: getBonusTilesAwarded(scoreResult),
+      completedMissions: [],
+      generatedMission: null
+    };
+
+    const completedMissions = getCompletedMissions(missionManager, new Map([...placedTiles, [key, placedTile]]));
+    const missionScore = completedMissions.length * MISSION_REWARD;
+    placedTile.completedMissions = completedMissions;
+    placedTile.score = scoreResult.total + missionScore;
+    consumeCompletedMissions(missionManager, completedMissions);
+    totalScore += placedTile.score;
 
     placedTiles.set(key, placedTile);
     placementHistory.push(placedTile);
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
 
     ghostTile.visible = false;
-    setText(ui.selected, key);
-
     deck.shift();
-    deck.push(generateTile());
+    addBonusTiles(placedTile.bonusTilesAwarded);
     rotationIndex = 0;
     refreshDeckUI();
-    updateScoreUI(ui, totalScore, scoreResult.total);
+    placedTile.generatedMission = maybeAddMissionForCurrentTile();
+    updateMissionUI(ui, missionManager.active, formatMissionLabel);
+    updateScoreUI(ui, totalScore, placedTile.score);
+    if (deck.length === 0) endGame();
+  }
+
+  function maybeAddMissionForCurrentTile() {
+    return maybeGenerateMissionForTile(missionManager, deck[0]);
+  }
+
+  function addBonusTiles(count) {
+    for (let i = 0; i < count; i++) deck.push(createDeck(1)[0]);
+  }
+
+  function removeBonusTiles(count) {
+    for (let i = 0; i < count && deck.length > 0; i++) deck.pop();
   }
 
   function rotateActiveTile(step) {
@@ -191,11 +230,11 @@ export function initScene() {
     setText(ui.placement, getPlacementLabel(status));
   }
 
-
   function undoLastPlacement() {
     const last = placementHistory.pop();
     if (!last) return;
 
+    gameOver = false;
     scene.remove(last.mesh);
     last.mesh.traverse?.(object => {
       object.geometry?.dispose?.();
@@ -205,13 +244,15 @@ export function initScene() {
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
     totalScore = Math.max(0, totalScore - (last.score ?? 0));
 
-    deck.pop();
+    if (last.generatedMission) removeMissionById(missionManager, last.generatedMission.id);
+    restoreMissions(missionManager, last.completedMissions ?? []);
+    removeBonusTiles(last.bonusTilesAwarded ?? 0);
     deck.unshift(last.tile);
     rotationIndex = 0;
 
-    setText(ui.selected, '-');
     setText(ui.rotation, '0/6');
     refreshDeckUI();
+    updateMissionUI(ui, missionManager.active, formatMissionLabel);
     updateScoreUI(ui, totalScore, -(last.score ?? 0));
 
     if (hoveredHex && isPlacementTarget(hoveredHex)) {
@@ -226,62 +267,13 @@ export function initScene() {
   }
 
   function isPlacementTarget(hex) {
-    return canPlaceTileAt(hex, placedTiles);
+    return !gameOver && deck.length > 0 && canPlaceTileAt(hex, placedTiles);
   }
 
-  function isCurrentRotationValid() {
-    return canPlaceTileAt(hoveredHex, placedTiles, rotateTile(deck[0], rotationIndex));
-  }
-
-  function ensureCompatibleRotation(step) {
-    if (!hoveredHex || !isPlacementTarget(hoveredHex)) return false;
-
-    const direction = Math.sign(step);
-
-    if (direction === 0 && isCurrentRotationValid()) return true;
-
-    const scanDirection = direction === 0 ? 1 : direction;
-    const start = normalizeRotation(rotationIndex + scanDirection);
-
-    for (let offset = 0; offset < 6; offset++) {
-      const candidate = normalizeRotation(start + offset * scanDirection);
-      const rotatedTile = rotateTile(deck[0], candidate);
-
-      if (canPlaceTileAt(hoveredHex, placedTiles, rotatedTile)) {
-        rotationIndex = candidate;
-        setText(ui.rotation, `${rotationIndex}/6`);
-        return true;
-      }
-    }
-
-    return false;
+  function endGame() {
+    gameOver = true;
+    ghostTile.visible = false;
+    setText(ui.placement, 'FIN DU DECK');
+    askHighscoreSubmit(highscoreUI, totalScore);
   }
 }
-
-function normalizeRotation(value) {
-  return ((value % 6) + 6) % 6;
-}
-
-function createRenderer(canvas) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  return renderer;
-}
-
-function createThreeScene() {
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0b0f14);
-  return scene;
-}
-
-function createCamera() {
-  return new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-}
-
-function resizeRenderer(renderer, camera) {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-

@@ -2,12 +2,12 @@ import { renderMiniTile } from './tileMesh.js';
 
 export function createUI() {
   return {
-    hover: document.getElementById('dbgHover'),
-    selected: document.getElementById('dbgSelected'),
     resetCamera: document.getElementById('btnResetCamera'),
     undoLastTile: document.getElementById('btnUndoLastTile'),
     activeTile: document.getElementById('activeTile'),
     nextTile: document.getElementById('nextTile'),
+    deckRemaining: document.getElementById('deckRemaining'),
+    missionList: document.getElementById('missionList'),
     rotation: document.getElementById('dbgRotation'),
     score: document.getElementById('dbgScore'),
     lastScore: document.getElementById('dbgLastScore'),
@@ -32,6 +32,7 @@ export function setText(element, value) {
 export function updateDeckUI(ui, deck) {
   if (ui.activeTile) ui.activeTile.innerHTML = renderMiniTile(deck[0]);
   if (ui.nextTile) ui.nextTile.innerHTML = renderMiniTile(deck[1]);
+  setText(ui.deckRemaining, String(deck.length));
 }
 
 export function updateKeyboardUI(ui, keys, rotationKeyActive = false) {
@@ -53,4 +54,27 @@ export function setHelpVisible(ui, visible) {
 export function updateScoreUI(ui, totalScore, lastScore = 0) {
   setText(ui.score, String(totalScore));
   setText(ui.lastScore, lastScore > 0 ? `+${lastScore}` : String(lastScore));
+}
+
+
+export function updateMissionUI(ui, missions, formatter) {
+  if (!ui.missionList) return;
+
+  if (missions.length === 0) {
+    ui.missionList.innerHTML = '<li class="mission-empty">Aucune mission</li>';
+    return;
+  }
+
+  ui.missionList.innerHTML = missions
+    .map(mission => `<li>${escapeHtml(formatter(mission))}</li>`)
+    .join('');
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"]/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;'
+  }[character]));
 }
