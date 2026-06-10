@@ -86,7 +86,7 @@ Build a living procedural world featuring villages, forests, railways, rivers, c
 <img width="1672" height="941" alt="05_304KB" src="https://github.com/user-attachments/assets/dc25fd6e-53ba-453f-8387-e94823822c4d" />
 <img width="1536" height="1024" alt="09_316KB" src="https://github.com/user-attachments/assets/f3433ebe-cc06-4ecc-9a9e-b97d8b7b1dda" />
 <img width="1536" height="1024" alt="13_317KB" src="https://github.com/user-attachments/assets/f24a20ab-3e65-461f-a754-b2223f072c33" />
-<img width="1536" height="1024" alt="27_319KB" src="https://github.com/user-attachments/assets/8b563cf3-c30a-4be2-bf22-b8c1c15cce57" />
+
 <img width="1536" height="1024" alt="11_326KB" src="https://github.com/user-attachments/assets/ffa951f1-e7ae-4097-991a-3ffe014c8d0c" />
 <img width="1672" height="941" alt="19_326KB" src="https://github.com/user-attachments/assets/5feedc33-a247-4734-a360-f5c68da2af93" />
 <img width="1536" height="1024" alt="29_342KB" src="https://github.com/user-attachments/assets/bccb3ffc-8312-4ce0-9534-c4d35c3ef61b" />
