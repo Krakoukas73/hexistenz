@@ -7,6 +7,9 @@ const DEFAULT_CAMERA = {
   phi: Math.PI / 3
 };
 
+const MIN_POLAR_ANGLE = 0.000001;
+const MAX_POLAR_ANGLE = Math.PI / 2 - 0.02;
+
 export class CameraControls {
   constructor(camera, domElement) {
     this.camera = camera;
@@ -114,7 +117,7 @@ export class CameraControls {
   rotateCamera(dx, dy) {
     this.spherical.theta -= dx * this.rotateSpeed;
     this.spherical.phi -= dy * this.rotateSpeed;
-    this.spherical.phi = THREE.MathUtils.clamp(this.spherical.phi, 0.000001, Math.PI - 0.000001);
+    this.spherical.phi = THREE.MathUtils.clamp(this.spherical.phi, MIN_POLAR_ANGLE, MAX_POLAR_ANGLE);
   }
 
   applyKeyboardMovement() {
@@ -178,6 +181,8 @@ export class CameraControls {
   }
 
   updateCamera() {
+    this.spherical.phi = THREE.MathUtils.clamp(this.spherical.phi, MIN_POLAR_ANGLE, MAX_POLAR_ANGLE);
+
     const offset = new THREE.Vector3();
     offset.x = this.spherical.radius * Math.sin(this.spherical.phi) * Math.sin(this.spherical.theta);
     offset.y = this.spherical.radius * Math.cos(this.spherical.phi);

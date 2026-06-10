@@ -1,6 +1,9 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { EDGE_COLOR, EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
-import { getEdgeType, getEdgeValue } from './tileGenerator.js';
+import { EDGE_COLOR, EDGE_ORDER, HEX_SIZE, TILE_VISUAL } from './config.js';
+import { getEdgeType } from './tileGenerator.js';
+import { getBiomeMaterial } from './tileTextures.js';
+import { createRailOverlay, createRailCenterOverlay } from './tileRailOverlay.js';
+import { createValueLabel, getMiniValueLabel } from './tileLabels.js';
 
 const SECTOR_DEFS = [
   { key: 'n', a: 0, b: 1 },
@@ -11,156 +14,6 @@ const SECTOR_DEFS = [
   { key: 'nw', a: 5, b: 0 }
 ];
 
-const materialCache = new Map();
-const textTextureCache = new Map();
-
-const generatedTextureCache = new Map();
-
-function getGeneratedTexture(type) {
-  if (generatedTextureCache.has(type)) return generatedTextureCache.get(type);
-
-  const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-
-  if (type === 'water') {
-    ctx.fillStyle = '#2f6fa3';
-    ctx.fillRect(0, 0, 128, 128);
-
-    for (let y = 0; y < 128; y += 16) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-
-      for (let x = -16; x <= 144; x += 8) {
-        ctx.lineTo(x, y + Math.sin((x + y) * 0.08) * 4);
-      }
-
-      ctx.stroke();
-    }
-
-    for (let i = 0; i < 40; i++) {
-      const x = (i * 47) % 128;
-      const y = (i * 29) % 128;
-      ctx.fillStyle = 'rgba(255,255,255,0.06)';
-      ctx.beginPath();
-      ctx.arc(x, y, (i % 3) + 1, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  } else if (type === 'field') {
-    ctx.fillStyle = '#d9b94e';
-    ctx.fillRect(0, 0, 128, 128);
-
-    for (let x = -128; x < 256; x += 16) {
-      ctx.strokeStyle = 'rgba(255, 245, 170, 0.52)';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.moveTo(x, -8);
-      ctx.lineTo(x + 128, 136);
-      ctx.stroke();
-
-      ctx.strokeStyle = 'rgba(125, 92, 25, 0.22)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(x + 8, -8);
-      ctx.lineTo(x + 136, 136);
-      ctx.stroke();
-    }
-  } else if (type === 'forest') {
-    ctx.fillStyle = '#23652b';
-    ctx.fillRect(0, 0, 128, 128);
-
-    const trees = [
-      [14, 18], [40, 10], [70, 22], [102, 14],
-      [24, 50], [56, 42], [92, 54], [120, 42],
-      [10, 86], [44, 84], [76, 94], [108, 82],
-      [30, 118], [64, 116], [98, 120]
-    ];
-
-    for (const [x, y] of trees) {
-      ctx.fillStyle = 'rgba(16, 54, 20, 0.28)';
-      ctx.beginPath();
-      ctx.arc(x + 3, y + 4, 11, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#164d22';
-      ctx.beginPath();
-      ctx.moveTo(x, y - 12);
-      ctx.lineTo(x - 11, y + 10);
-      ctx.lineTo(x + 11, y + 10);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#2f8a3a';
-      ctx.beginPath();
-      ctx.moveTo(x, y - 15);
-      ctx.lineTo(x - 8, y + 6);
-      ctx.lineTo(x + 8, y + 6);
-      ctx.closePath();
-      ctx.fill();
-    }
-  } else if (type === 'grass') {
-    ctx.fillStyle = '#2ebf62';
-    ctx.fillRect(0, 0, 128, 128);
-
-    for (let y = 8; y < 128; y += 16) {
-      for (let x = 6; x < 128; x += 18) {
-        const ox = ((x * 13 + y * 7) % 9) - 4;
-        ctx.strokeStyle = 'rgba(190, 255, 195, 0.34)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(x + ox, y + 5);
-        ctx.lineTo(x + ox + 3, y - 5);
-        ctx.stroke();
-
-        ctx.strokeStyle = 'rgba(15, 105, 45, 0.24)';
-        ctx.beginPath();
-        ctx.moveTo(x + ox + 5, y + 5);
-        ctx.lineTo(x + ox + 1, y - 3);
-        ctx.stroke();
-      }
-    }
-  } else if (type === 'house') {
-    ctx.fillStyle = '#b94141';
-    ctx.fillRect(0, 0, 128, 128);
-
-    const houses = [
-      [18, 24], [54, 16], [92, 30],
-      [34, 64], [78, 70], [114, 58],
-      [18, 104], [58, 110], [100, 100]
-    ];
-
-    for (const [x, y] of houses) {
-      ctx.fillStyle = 'rgba(65, 20, 18, 0.24)';
-      ctx.fillRect(x - 9, y - 1, 20, 16);
-
-      ctx.fillStyle = '#f1c56f';
-      ctx.fillRect(x - 8, y, 16, 14);
-
-      ctx.fillStyle = '#5e2731';
-      ctx.beginPath();
-      ctx.moveTo(x - 10, y);
-      ctx.lineTo(x, y - 10);
-      ctx.lineTo(x + 10, y);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = 'rgba(80, 45, 25, 0.55)';
-      ctx.fillRect(x - 2, y + 5, 4, 9);
-    }
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(2, 2);
-
-  generatedTextureCache.set(type, texture);
-  return texture;
-}
-
-
 export function createTileMesh(tileOrEdges, options = {}) {
   const edges = tileOrEdges.edges ?? tileOrEdges;
   const center = tileOrEdges.center ?? pickCenterType(edges);
@@ -169,6 +22,10 @@ export function createTileMesh(tileOrEdges, options = {}) {
 
   group.add(...createSectorMeshes(edges, opacity));
   group.add(createCenterMesh(center, opacity));
+
+  const railCenterOverlay = createRailCenterOverlay(edges, SECTOR_DEFS, createOuterVertices);
+  if (railCenterOverlay) group.add(railCenterOverlay);
+
   group.add(createOutlineMesh(opacity));
 
   return group;
@@ -207,18 +64,22 @@ function createSectorMeshes(edges, opacity) {
   return SECTOR_DEFS.map(sector => {
     const geometry = createSectorGeometry(vertices[sector.a], vertices[sector.b]);
     const edge = edges[sector.key];
-    const material = getBiomeMaterial(getEdgeType(edge), opacity);
-    const mesh = new THREE.Mesh(geometry, material);
+    const mesh = new THREE.Mesh(geometry, getBiomeMaterial(getEdgeType(edge), opacity));
     mesh.position.y = TILE_VISUAL.sectorY;
 
     const group = new THREE.Group();
+    group.userData.edgeKey = sector.key;
     group.add(mesh);
 
     const railOverlay = createRailOverlay(edge, vertices[sector.a], vertices[sector.b]);
     if (railOverlay) group.add(railOverlay);
 
     const label = createValueLabel(edge, vertices[sector.a], vertices[sector.b]);
-    if (label) group.add(label);
+    if (label) {
+      label.userData.isValueLabel = true;
+      label.userData.edgeKey = sector.key;
+      group.add(label);
+    }
 
     return group;
   });
@@ -247,74 +108,6 @@ function createSectorGeometry(a, b) {
   geometry.computeVertexNormals();
 
   return geometry;
-}
-
-function createRailOverlay(edge, vertexA, vertexB) {
-  if (getEdgeType(edge) !== EDGE_TYPES.rail) return null;
-
-  const group = new THREE.Group();
-  const y = (TILE_VISUAL.railY ?? 0.055);
-
-  const mid = new THREE.Vector3(
-    (vertexA.x + vertexB.x) / 2,
-    y,
-    (vertexA.z + vertexB.z) / 2
-  );
-  const start = mid.clone().multiplyScalar(0.18);
-  const end = mid.clone().multiplyScalar(0.92);
-
-  const dir = end.clone().sub(start);
-  const len = dir.length();
-  if (len === 0) return null;
-  dir.normalize();
-
-  const side = new THREE.Vector3(-dir.z, 0, dir.x);
-  const railGap = HEX_SIZE * 0.095;
-  const sleeperHalf = HEX_SIZE * 0.16;
-
-  const sleeperMaterial = getRailLineMaterial('sleeper');
-  const railMaterial = getRailLineMaterial('rail');
-
-  for (let i = 0.22; i <= 0.86; i += 0.16) {
-    const p = start.clone().lerp(end, i);
-    group.add(createLineSegment(
-      p.clone().add(side.clone().multiplyScalar(-sleeperHalf)),
-      p.clone().add(side.clone().multiplyScalar(sleeperHalf)),
-      sleeperMaterial
-    ));
-  }
-
-  group.add(createLineSegment(
-    start.clone().add(side.clone().multiplyScalar(-railGap)),
-    end.clone().add(side.clone().multiplyScalar(-railGap)),
-    railMaterial
-  ));
-  group.add(createLineSegment(
-    start.clone().add(side.clone().multiplyScalar(railGap)),
-    end.clone().add(side.clone().multiplyScalar(railGap)),
-    railMaterial
-  ));
-
-  return group;
-}
-
-function createLineSegment(a, b, material) {
-  const geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
-  return new THREE.Line(geometry, material);
-}
-
-function getRailLineMaterial(kind) {
-  const key = `rail_overlay_${kind}`;
-  if (materialCache.has(key)) return materialCache.get(key);
-
-  const material = new THREE.LineBasicMaterial({
-    color: kind === 'rail' ? 0x262626 : 0x7A4A24,
-    transparent: false,
-    depthWrite: false
-  });
-
-  materialCache.set(key, material);
-  return material;
 }
 
 function createCenterMesh(centerType, opacity) {
@@ -358,28 +151,6 @@ function createOuterVertices(radius = HEX_SIZE * TILE_VISUAL.radiusScale) {
   return vertices;
 }
 
-function getBiomeMaterial(type, opacity = 1) {
-  const key = `${type}_${opacity}`;
-  if (materialCache.has(key)) return materialCache.get(key);
-
-  const materialConfig = {
-    color: EDGE_COLOR[type] ?? 0x222833,
-    transparent: opacity < 1,
-    opacity,
-    side: THREE.DoubleSide,
-    depthWrite: opacity >= 1
-  };
-
-  if (type === 'water' || type === 'field' || type === 'forest' || type === 'grass' || type === 'house') {
-    materialConfig.map = getGeneratedTexture(type);
-  }
-
-  const material = new THREE.MeshBasicMaterial(materialConfig);
-
-  materialCache.set(key, material);
-  return material;
-}
-
 function edgesToArray(edges) {
   return EDGE_ORDER.map(edge => getEdgeType(edges[edge]));
 }
@@ -406,58 +177,4 @@ function mostCommonEdgeType(types) {
 
 function edgeCssColor(type) {
   return `#${EDGE_COLOR[type].toString(16).padStart(6, '0')}`;
-}
-
-function createValueLabel(edge, vertexA, vertexB) {
-  const type = getEdgeType(edge);
-  const value = getEdgeValue(edge);
-
-  if (!shouldShowValue(type, value)) return null;
-
-  const sprite = new THREE.Sprite(getTextSpriteMaterial(String(value)));
-
-  // Même triangle, même source de vérité : le label est placé au centroïde
-  // du secteur qui a servi à dessiner la texture. Impossible de dériver
-  // vers le voisin par un calcul d'angle séparé.
-  sprite.position.set(
-    (vertexA.x + vertexB.x) / 3,
-    TILE_VISUAL.labelY ?? 0.07,
-    (vertexA.z + vertexB.z) / 3
-  );
-  sprite.scale.set(0.28, 0.16, 1);
-  return sprite;
-}
-
-function getTextSpriteMaterial(text) {
-  if (textTextureCache.has(text)) return textTextureCache.get(text);
-
-  const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 64;
-
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.62)';
-  ctx.roundRect(18, 10, 92, 44, 14);
-  ctx.fill();
-  ctx.font = 'bold 34px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText(text, 64, 33);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
-  textTextureCache.set(text, material);
-  return material;
-}
-
-function getMiniValueLabel(edge) {
-  const type = getEdgeType(edge);
-  const value = getEdgeValue(edge);
-  return shouldShowValue(type, value) ? `<span class="mini-value">${value}</span>` : '';
-}
-
-function shouldShowValue(type, value) {
-  return value > 1 && (type === EDGE_TYPES.field || type === EDGE_TYPES.forest || type === EDGE_TYPES.house);
 }

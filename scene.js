@@ -8,6 +8,8 @@ import { canPlaceTileAt, getPlacementValidation } from './placementRules.js';
 import { calculatePlacementScore } from './scoring.js';
 import { createDeck, generateTile, rotateTile } from './tileGenerator.js';
 import { createUI, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateScoreUI } from './ui.js';
+import { createPlacementFeedbackOverlay, getPlacementLabel } from './placementOverlay.js';
+import { createWaterZoneOverlay, rebuildWaterZoneOverlay } from './waterZoneOverlay.js';
 
 export function initScene() {
   const canvas = document.getElementById('app');
@@ -27,10 +29,11 @@ export function initScene() {
   let helpVisible = false;
 
   const ghostTile = new THREE.Group();
+  const waterZoneOverlay = createWaterZoneOverlay();
 
   ghostTile.visible = false;
 
-  scene.add(createGrid(), ghostTile);
+  scene.add(createGrid(), waterZoneOverlay, ghostTile);
   refreshDeckUI();
   updateScoreUI(ui, totalScore, 0);
 
@@ -149,6 +152,7 @@ export function initScene() {
 
     placedTiles.set(key, placedTile);
     placementHistory.push(placedTile);
+    rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
 
     ghostTile.visible = false;
     setText(ui.selected, key);
@@ -188,80 +192,6 @@ export function initScene() {
   }
 
 
-  function createPlacementFeedbackOverlay(validation) {
-    const group = new THREE.Group();
-    const color = validation.valid ? 0x35ff70 : 0xff3030;
-    const radius = 1.02;
-    const points = [];
-
-    for (let i = 0; i < 6; i++) {
-      const angle = (Math.PI / 3) * i;
-      points.push(new THREE.Vector3(Math.cos(angle) * radius, 0.055, Math.sin(angle) * radius));
-    }
-
-    points.push(points[0].clone());
-    group.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints(points),
-      new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.95 })
-    ));
-
-    for (const conflict of validation.conflicts ?? []) {
-      const marker = createConflictMarker(conflict.edge);
-      group.add(marker);
-    }
-
-    return group;
-  }
-
-  function createConflictMarker(edge) {
-    const angle = getEdgeAngle(edge);
-    const marker = new THREE.Group();
-    const geometry = new THREE.BoxGeometry(0.44, 0.035, 0.08);
-    const material = new THREE.MeshBasicMaterial({ color: 0xff3030 });
-    const barA = new THREE.Mesh(geometry, material);
-    const barB = new THREE.Mesh(geometry, material);
-
-    marker.position.set(Math.cos(angle) * 0.82, 0.075, Math.sin(angle) * 0.82);
-    marker.rotation.y = -angle;
-    barA.rotation.y = Math.PI / 4;
-    barB.rotation.y = -Math.PI / 4;
-
-    marker.add(barA, barB);
-    return marker;
-  }
-
-  function getEdgeAngle(edge) {
-    return {
-      n: Math.PI / 6,
-      ne: Math.PI / 2,
-      se: Math.PI * 5 / 6,
-      s: Math.PI * 7 / 6,
-      sw: Math.PI * 3 / 2,
-      nw: Math.PI * 11 / 6
-    }[edge] ?? 0;
-  }
-
-  function getPlacementLabel(validation) {
-    if (validation.valid) return 'OK';
-    if (validation.reason === 'OUT_OF_GRID') return 'HORS GRILLE';
-    if (validation.reason !== 'INVALID_NETWORK_CONNECTION') return validation.reason ?? 'INTERDIT';
-
-    return validation.conflicts
-      ?.map(conflict => `${formatEdgeType(conflict.ownType)} ≠ ${formatEdgeType(conflict.neighborType)}`)
-      .join(', ') || 'RÉSEAU INCOMPATIBLE';
-  }
-
-  function formatEdgeType(type) {
-    return {
-      field: 'champ',
-      forest: 'forêt',
-      water: 'eau',
-      rail: 'rail',
-      house: 'maison',
-      grass: 'prairie'
-    }[type] ?? type;
-  }
-
   function undoLastPlacement() {
     const last = placementHistory.pop();
     if (!last) return;
@@ -272,6 +202,7 @@ export function initScene() {
     });
 
     placedTiles.delete(last.key);
+    rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
     totalScore = Math.max(0, totalScore - (last.score ?? 0));
 
     deck.pop();

@@ -34,7 +34,7 @@ export const EDGE_COLOR = {
 };
 
 export const TILE_VISUAL = {
-  radiusScale: 0.94,
+  radiusScale: 1,
   centerRadiusScale: 0.33,
   sectorY: 0.012,
   centerY: 0.018,

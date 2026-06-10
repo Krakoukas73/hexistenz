@@ -3,6 +3,7 @@ import { pickRandom, pickWeighted } from './random.js';
 
 const MIXED_NETWORK_TILE_CHANCE = 0.04;
 const NETWORK_TERMINUS_CHANCE = 0.20;
+const WATER_TARGET_COUNTS = { 2: 38, 3: 36, 4: 19, 5: 5, 6: 2 };
 
 const EDGE_VALUE_RANGES = {
   [EDGE_TYPES.field]: pickFieldValue,
@@ -25,6 +26,8 @@ export function generateTile() {
   for (const networkType of NETWORK_EDGE_TYPES) {
     enforceNetworkContinuity(edges, networkType);
   }
+
+  expandWaterCoverage(edges);
 
   return {
     id: createTileId(),
@@ -148,6 +151,44 @@ function enforceNetworkContinuity(edges, networkType) {
   if (pickedEdge) edges[pickedEdge] = createEdge(networkType);
 }
 
+
+function expandWaterCoverage(edges) {
+  const waterCount = countEdgesOfType(edges, EDGE_TYPES.water);
+  if (waterCount === 0) return;
+
+  const targetCount = Math.max(waterCount, Number(pickWeighted(WATER_TARGET_COUNTS)));
+  if (waterCount >= targetCount) return;
+
+  const candidates = EDGE_ORDER.filter(edge => !NETWORK_EDGE_TYPES.includes(getEdgeType(edges[edge])));
+
+  while (countEdgesOfType(edges, EDGE_TYPES.water) < targetCount && candidates.length > 0) {
+    const pickedIndex = pickBestWaterExpansionCandidateIndex(edges, candidates);
+    const [pickedEdge] = candidates.splice(pickedIndex, 1);
+    edges[pickedEdge] = createEdge(EDGE_TYPES.water);
+  }
+}
+
+function pickBestWaterExpansionCandidateIndex(edges, candidates) {
+  const weightedCandidates = {};
+
+  candidates.forEach((edge, index) => {
+    weightedCandidates[index] = 1 + countAdjacentEdgesOfType(edges, edge, EDGE_TYPES.water) * 8;
+  });
+
+  return Number(pickWeighted(weightedCandidates));
+}
+
+function countAdjacentEdgesOfType(edges, edge, type) {
+  const index = EDGE_ORDER.indexOf(edge);
+  const previousEdge = EDGE_ORDER[(index + EDGE_ORDER.length - 1) % EDGE_ORDER.length];
+  const nextEdge = EDGE_ORDER[(index + 1) % EDGE_ORDER.length];
+
+  return [previousEdge, nextEdge].reduce(
+    (count, currentEdge) => count + (getEdgeType(edges[currentEdge]) === type ? 1 : 0),
+    0
+  );
+}
+
 function countEdgesOfType(edges, type) {
   return EDGE_ORDER.reduce((count, edge) => count + (getEdgeType(edges[edge]) === type ? 1 : 0), 0);
 }
@@ -173,65 +214,28 @@ function hasEdgeType(edges, type) {
 
 function pickFieldValue() {
   return Number(pickWeighted({
-    1: 14,
-    2: 14,
-    3: 10,
-    4: 10,
-    5: 10,
-    6: 5,
-    7: 5,
-    8: 5,
-    9: 2,
-    10: 2,
-    11: 2,
-    12: 2
+    1: 1,
+    2: 1
   }));
 }
 
 function pickForestValue() {
   return Number(pickWeighted({
-    1: 16,
-    2: 14,
-    3: 14,
-    4: 14,
-    5: 12,
-    6: 12,
-    7: 10,
-    8: 10,
-    9: 10,
-    10: 8,
-    11: 8,
-    12: 6,
-    13: 6,
-    14: 5,
-    15: 5,
-    16: 4,
-    17: 4,
-    18: 3,
-    19: 3,
-    20: 2,
-    21: 2,
-    22: 1,
-    23: 1,
-    24: 1,
-    25: 1
+    1: 1,
+    2: 1,
+    3: 1,
+    4: 1,
+    5: 1,
+    6: 1
   }));
 }
 
 function pickHouseValue() {
   return Number(pickWeighted({
-    1: 14,
-    2: 14,
-    3: 10,
-    4: 10,
-    5: 10,
-    6: 5,
-    7: 5,
-    8: 5,
-    9: 2,
-    10: 2,
-    11: 2,
-    12: 2
+    1: 1,
+    2: 1,
+    3: 1,
+    4: 1
   }));
 }
 
