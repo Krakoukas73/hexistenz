@@ -25,12 +25,12 @@ export const EDGE_WEIGHTS = {
 export const NETWORK_EDGE_TYPES = [EDGE_TYPES.water, EDGE_TYPES.rail];
 
 export const EDGE_COLOR = {
-  field: 0xF2D16B,
-  forest: 0x2F7D32,
-  water: 0x3A7DFF,
+  field: 0xE5C65A,
+  forest: 0x1F5A2B,
+  water: 0x5FA8D3,
   rail: 0xDDDDDD,
-  house: 0xD14B4B,
-  grass: 0x2ECC71
+  house: 0x8E4A34,
+  grass: 0x78A84A
 };
 
 export const TILE_VISUAL = {

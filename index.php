@@ -23,6 +23,8 @@
         <button id="btnSaveScore" type="button">OK</button>
       </div>
       <div id="highscoreStatus" class="highscore-status"></div>
+      <button id="btnAbandonGame" class="abandon-button" type="button">ABANDONNER LA PARTIE</button>
+      <button id="btnNewGame" class="new-game-button" type="button">NOUVELLE PARTIE</button>
     </div>
   </aside>
 
@@ -111,7 +113,7 @@
             <div><strong>+10</strong><span>par bord identique classique contre une tuile voisine</span></div>
             <div><strong>+25</strong><span>par connexion eau/eau ou rail/rail</span></div>
             <div><strong>+50</strong><span>bonus quand une tuile est entourée sur ses 6 côtés</span></div>
-            <div><strong>+100</strong><span>par mission terminée</span></div>
+            <div><strong>+100 +3 tuiles</strong><span>par mission terminée</span></div>
           </div>
         </article>
 
@@ -153,8 +155,9 @@
 
         <article class="help-card help-card-wide">
           <h2>🚩 Missions</h2>
-          <p>Chaque nouvelle tuile courante a 10% de chance d’ajouter une mission dans l’encart Missions en cours.</p>
-          <p>Les missions actuelles demandent de créer une forêt, un village, une voie ferrée ou une voie d’eau d’une taille précise. Terminer une mission rapporte 100 points.</p>
+          <p>Chaque nouvelle tuile courante a 20% de chance d’ajouter une mission dans l’encart Missions en cours.</p>
+          <p>Les missions actuelles demandent de créer une forêt, un village, une voie ferrée, une voie d’eau, une prairie ou une surface agricole d’une taille précise. Terminer une mission rapporte 100 points et ajoute 3 cartes supplémentaires dans la pioche. Les objectifs commencent simples puis augmentent progressivement quand le même type de mission réapparaît. Une mission réalisée reste visible 5 tours, puis disparaît automatiquement.</p>
+          <p>La difficulté tient compte de la valeur réelle des triangles : prairie, eau et rail valent toujours 1 élément ; les champs valent 1 à 2, les maisons 1 à 4 et les forêts 1 à 6 arbres. Les objectifs forêt, village et surface agricole demandent donc plus d’unités que les réseaux à 1 élément, parce que ces zones montent mécaniquement plus vite. La progression est affichée directement dans la liste, par exemple Forêt 22/50 arbres ou Surface agricole 12/24 champs.</p>
         </article>
 
         <article class="help-card help-card-controls">

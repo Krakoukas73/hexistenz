@@ -175,11 +175,11 @@
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
 }
 
-.field { background: #f2d16b; }
-.forest { background: #2f7d32; }
-.grass { background: #2ecc71; }
-.house { background: #d14b4b; }
-.water { background: #3a7dff; }
+.field { background: #e5c65a; }
+.forest { background: radial-gradient(circle at 35% 35%, #3f9340 0 28%, #1f5a2b 29% 100%); }
+.grass { background: linear-gradient(135deg, #83b84f 0 65%, #8a6b3e 65% 100%); }
+.house { background: linear-gradient(135deg, #c49a68 0 45%, #6f3428 45% 100%); }
+.water { background: #5fa8d3; }
 .rail { background: #dddddd; }
 
 .legend-grid {

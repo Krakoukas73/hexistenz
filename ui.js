@@ -4,6 +4,8 @@ export function createUI() {
   return {
     resetCamera: document.getElementById('btnResetCamera'),
     undoLastTile: document.getElementById('btnUndoLastTile'),
+    abandonGame: document.getElementById('btnAbandonGame'),
+    newGame: document.getElementById('btnNewGame'),
     activeTile: document.getElementById('activeTile'),
     nextTile: document.getElementById('nextTile'),
     deckRemaining: document.getElementById('deckRemaining'),
@@ -57,7 +59,7 @@ export function updateScoreUI(ui, totalScore, lastScore = 0) {
 }
 
 
-export function updateMissionUI(ui, missions, formatter) {
+export function updateMissionUI(ui, missions, formatter, progressByType = new Map()) {
   if (!ui.missionList) return;
 
   if (missions.length === 0) {
@@ -65,9 +67,12 @@ export function updateMissionUI(ui, missions, formatter) {
     return;
   }
 
-  ui.missionList.innerHTML = missions
-    .map(mission => `<li>${escapeHtml(formatter(mission))}</li>`)
-    .join('');
+  ui.missionList.innerHTML = missions.map(mission => {
+    const className = mission.completed ? ' class="mission-completed"' : '';
+    const icon = mission.completed ? '✅' : '🎯';
+
+    return `<li${className}><span class="mission-icon">${icon}</span><span class="mission-text">${escapeHtml(formatter(mission, progressByType))}</span></li>`;
+  }).join('');
 }
 
 function escapeHtml(value) {

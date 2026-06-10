@@ -159,7 +159,6 @@ export class CameraControls {
     if (!world) return;
 
     const hex = worldToAxial(world.x, world.z);
-    if (this.currentHex && this.currentHex.q === hex.q && this.currentHex.r === hex.r) return;
 
     this.currentHex = hex;
     if (this.onHover) this.onHover(hex, world);

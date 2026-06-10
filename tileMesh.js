@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { EDGE_COLOR, EDGE_ORDER, HEX_SIZE, TILE_VISUAL } from './config.js';
+import { EDGE_ORDER, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getBiomeMaterial } from './tileTextures.js';
 import { createRailOverlay, createRailCenterOverlay } from './tileRailOverlay.js';
@@ -38,8 +38,9 @@ export function renderMiniTile(tile) {
   const c = tile.center ?? mostCommonEdgeType(edgesToArray(e));
   const sector = edgeKey => {
     const edge = e[edgeKey];
+    const type = getEdgeType(edge);
     return `
-      <div class="mini-sector mini-sector-${edgeKey}" style="background:${edgeCssColor(getEdgeType(edge))}">
+      <div class="mini-sector mini-sector-${edgeKey} mini-type-${type}">
         ${getMiniValueLabel(edge)}
       </div>
     `;
@@ -53,7 +54,7 @@ export function renderMiniTile(tile) {
       ${sector('s')}
       ${sector('sw')}
       ${sector('nw')}
-      <div class="mini-hex-center" style="background:${edgeCssColor(c)}"></div>
+      <div class="mini-hex-center mini-type-${c}"></div>
     </div>
   `;
 }
@@ -173,8 +174,4 @@ function mostCommonEdgeType(types) {
   }
 
   return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
-}
-
-function edgeCssColor(type) {
-  return `#${EDGE_COLOR[type].toString(16).padStart(6, '0')}`;
 }

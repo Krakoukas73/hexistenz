@@ -9,11 +9,11 @@ import { calculatePlacementScore } from './scoring.js';
 import { createDeck, rotateTile } from './tileGenerator.js';
 import { createUI, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateMissionUI, updateScoreUI } from './ui.js';
 import { createPlacementFeedbackOverlay, getPlacementLabel } from './placementOverlay.js';
-import { createWaterZoneOverlay, rebuildWaterZoneOverlay } from './waterZoneOverlay.js';
+import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay, rebuildWaterZoneOverlay, updateHoverZoneOverlayAnimation } from './waterZoneOverlay.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { createCamera, createRenderer, createThreeScene, resizeRenderer } from './threeSetup.js';
 import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
-import { MISSION_REWARD, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, maybeGenerateMissionForTile, removeMissionById, restoreMissions } from './missions.js';
+import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, setMissionTurn } from './missions.js';
 
 export function initScene() {
   const canvas = document.getElementById('app');
@@ -39,13 +39,14 @@ export function initScene() {
   // Tuile fantôme et overlays : feedback visuel, aucun impact sur les règles.
   const ghostTile = new THREE.Group();
   const waterZoneOverlay = createWaterZoneOverlay();
+  const hoverZoneOverlay = createHoverZoneOverlay();
 
   ghostTile.visible = false;
 
-  scene.add(createGrid(), waterZoneOverlay, ghostTile);
+  scene.add(createGrid(), waterZoneOverlay, hoverZoneOverlay, ghostTile);
   refreshDeckUI();
   maybeAddMissionForCurrentTile();
-  updateMissionUI(ui, missionManager.active, formatMissionLabel);
+  refreshMissionUI();
   updateScoreUI(ui, totalScore, 0);
 
   ui.resetCamera?.addEventListener('click', event => {
@@ -58,6 +59,16 @@ export function initScene() {
     undoLastPlacement();
   });
 
+  ui.abandonGame?.addEventListener('click', event => {
+    event.stopPropagation();
+    abandonGame();
+  });
+
+  ui.newGame?.addEventListener('click', event => {
+    event.stopPropagation();
+    startNewGame();
+  });
+
   ui.closeHelp?.addEventListener('click', event => {
     event.stopPropagation();
     toggleHelp(false);
@@ -67,9 +78,9 @@ export function initScene() {
     if (event.target === ui.helpOverlay) toggleHelp(false);
   });
 
-  controls.onHover = (hex) => {
+  controls.onHover = (hex, world) => {
     hoveredHex = hex;
-    updateHover(hex);
+    updateHover(hex, world);
   };
 
   controls.onClick = (hex) => placeTile(hex);
@@ -111,6 +122,7 @@ export function initScene() {
     requestAnimationFrame(animate);
     controls.update();
     updateKeyboardUI(ui, controls.keys, rotationKeyActive);
+    updateHoverZoneOverlayAnimation(hoverZoneOverlay, waterZoneOverlay);
     renderer.render(scene, camera);
   }
 
@@ -125,8 +137,9 @@ export function initScene() {
     setHelpVisible(ui, helpVisible);
   }
 
-  function updateHover(hex) {
+  function updateHover(hex, world) {
     const position = axialToWorld(hex.q, hex.r);
+    rebuildHoverZoneOverlay(hoverZoneOverlay, hex, world, placedTiles, waterZoneOverlay);
 
     if (!isPlacementTarget(hex)) {
       ghostTile.visible = false;
@@ -166,12 +179,17 @@ export function initScene() {
       score: scoreResult.total,
       bonusTilesAwarded: getBonusTilesAwarded(scoreResult),
       completedMissions: [],
-      generatedMission: null
+      missionBonusTilesAwarded: 0,
+      generatedMission: null,
+      missionTurnBefore: missionManager.turn,
+      purgedMissions: []
     };
 
     const completedMissions = getCompletedMissions(missionManager, new Map([...placedTiles, [key, placedTile]]));
     const missionScore = completedMissions.length * MISSION_REWARD;
+    const missionBonusTilesAwarded = completedMissions.length * MISSION_TILE_REWARD;
     placedTile.completedMissions = completedMissions;
+    placedTile.missionBonusTilesAwarded = missionBonusTilesAwarded;
     placedTile.score = scoreResult.total + missionScore;
     consumeCompletedMissions(missionManager, completedMissions);
     totalScore += placedTile.score;
@@ -179,16 +197,22 @@ export function initScene() {
     placedTiles.set(key, placedTile);
     placementHistory.push(placedTile);
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+    rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
 
     ghostTile.visible = false;
     deck.shift();
-    addBonusTiles(placedTile.bonusTilesAwarded);
+    addBonusTiles(placedTile.bonusTilesAwarded + placedTile.missionBonusTilesAwarded);
+    placedTile.purgedMissions = advanceMissionTurn(missionManager);
     rotationIndex = 0;
     refreshDeckUI();
     placedTile.generatedMission = maybeAddMissionForCurrentTile();
-    updateMissionUI(ui, missionManager.active, formatMissionLabel);
+    refreshMissionUI();
     updateScoreUI(ui, totalScore, placedTile.score);
     if (deck.length === 0) endGame();
+  }
+
+  function refreshMissionUI() {
+    updateMissionUI(ui, missionManager.active, formatMissionLabel, getMissionProgressByType(placedTiles));
   }
 
   function maybeAddMissionForCurrentTile() {
@@ -235,6 +259,7 @@ export function initScene() {
     if (!last) return;
 
     gameOver = false;
+    ui.abandonGame?.removeAttribute('disabled');
     scene.remove(last.mesh);
     last.mesh.traverse?.(object => {
       object.geometry?.dispose?.();
@@ -242,17 +267,20 @@ export function initScene() {
 
     placedTiles.delete(last.key);
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+    rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     totalScore = Math.max(0, totalScore - (last.score ?? 0));
 
     if (last.generatedMission) removeMissionById(missionManager, last.generatedMission.id);
+    restoreMissionSnapshots(missionManager, last.purgedMissions ?? []);
     restoreMissions(missionManager, last.completedMissions ?? []);
-    removeBonusTiles(last.bonusTilesAwarded ?? 0);
+    setMissionTurn(missionManager, last.missionTurnBefore ?? missionManager.turn);
+    removeBonusTiles((last.bonusTilesAwarded ?? 0) + (last.missionBonusTilesAwarded ?? 0));
     deck.unshift(last.tile);
     rotationIndex = 0;
 
     setText(ui.rotation, '0/6');
     refreshDeckUI();
-    updateMissionUI(ui, missionManager.active, formatMissionLabel);
+    refreshMissionUI();
     updateScoreUI(ui, totalScore, -(last.score ?? 0));
 
     if (hoveredHex && isPlacementTarget(hoveredHex)) {
@@ -270,10 +298,21 @@ export function initScene() {
     return !gameOver && deck.length > 0 && canPlaceTileAt(hex, placedTiles);
   }
 
-  function endGame() {
+  function abandonGame() {
+    if (gameOver) return;
+    endGame('PARTIE ABANDONNÉE');
+  }
+
+  function startNewGame() {
+    window.location.reload();
+  }
+
+  function endGame(label = 'FIN DU DECK') {
     gameOver = true;
     ghostTile.visible = false;
-    setText(ui.placement, 'FIN DU DECK');
+    rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
+    ui.abandonGame?.setAttribute('disabled', 'disabled');
+    setText(ui.placement, label);
     askHighscoreSubmit(highscoreUI, totalScore);
   }
 }
