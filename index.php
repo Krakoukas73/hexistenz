@@ -21,6 +21,44 @@
       </div>
     </div>
     <div class="last-score-line">Dernier coup <span id="dbgLastScore">0</span></div>
+    <div id="statsPanel" class="stats-panel">
+      <div class="stats-title">STATISTIQUES</div>
+      <div class="stats-summary-row">
+        <div class="stats-summary-card stats-tiles"><span>Tuiles posées</span><strong id="statTiles">0</strong></div>
+        <div class="stats-summary-card stats-trains"><span>Trains</span><strong id="statTrains">0</strong></div>
+      </div>
+      <div class="stats-card-grid">
+        <div class="stats-card stats-grass">
+          <div class="stats-card-head"><span class="stats-icon">🌿</span><span>Prairie</span></div>
+          <div class="stats-metrics"><div><span>Total</span><strong id="statGrass">0</strong></div><div><span>Surface max</span><strong id="statLargestGrass">0</strong></div></div>
+        </div>
+
+        <div class="stats-card stats-field">
+          <div class="stats-card-head"><span class="stats-icon">🌾</span><span>Champ de blé</span></div>
+          <div class="stats-metrics"><div><span>Total</span><strong id="statField">0</strong></div><div><span>Surface max</span><strong id="statLargestField">0</strong></div></div>
+        </div>
+
+        <div class="stats-card stats-forest">
+          <div class="stats-card-head"><span class="stats-icon">🌲</span><span>Forêt</span></div>
+          <div class="stats-metrics"><div><span>Total</span><strong id="statForest">0</strong></div><div><span>Surface max</span><strong id="statLargestForest">0</strong></div></div>
+        </div>
+
+        <div class="stats-card stats-house">
+          <div class="stats-card-head"><span class="stats-icon">🏘️</span><span>Village</span></div>
+          <div class="stats-metrics"><div><span>Total</span><strong id="statHouse">0</strong></div><div><span>Surface max</span><strong id="statLargestHouse">0</strong></div></div>
+        </div>
+
+        <div class="stats-card stats-water">
+          <div class="stats-card-head"><span class="stats-icon">💧</span><span>Eau</span></div>
+          <div class="stats-metrics"><div><span>Total</span><strong id="statWater">0</strong></div><div><span>Surface max</span><strong id="statLargestWater">0</strong></div></div>
+        </div>
+
+        <div class="stats-card stats-rail">
+          <div class="stats-card-head"><span class="stats-icon">🛤️</span><span>Voie ferrée</span></div>
+          <div class="stats-metrics"><div><span>Total</span><strong id="statRail">0</strong></div><div><span>Voie max</span><strong id="statLargestRail">0</strong></div></div>
+        </div>
+      </div>
+    </div>
     <div id="highscorePanel" class="highscore-panel">
       <div class="highscore-title">HIGHSCORES</div>
       <ol id="highscoreList" class="highscore-list">
@@ -39,9 +77,9 @@
   <aside id="debugHud" class="panel">
     <div class="debug-texture-title">Textures</div>
     <div class="debug-texture-grid">
-      <div><span class="swatch field"></span><span>Champ</span></div>
+      <div><span class="swatch field"></span><span>Champ de blé</span></div>
       <div><span class="swatch forest"></span><span>Forêt</span></div>
-      <div><span class="swatch grass"></span><span>Herbe</span></div>
+      <div><span class="swatch grass"></span><span>Prairie</span></div>
       <div><span class="swatch house"></span><span>Maison</span></div>
       <div><span class="swatch water"></span><span>Eau</span></div>
       <div><span class="swatch rail"></span><span>Rail</span></div>
@@ -152,10 +190,10 @@
         <article class="help-card help-card-textures">
           <h2>🎨 Textures & valeurs</h2>
           <div class="legend-grid">
-            <div><span class="swatch field"></span><span>Champ</span><code>1-2 blés</code></div>
+            <div><span class="swatch field"></span><span>Champ de blé</span><code>1-2 blés</code></div>
             <div><span class="swatch forest"></span><span>Forêt</span><code>1-6 arbres</code></div>
-            <div><span class="swatch grass"></span><span>Herbe</span><code>1</code></div>
-            <div><span class="swatch house"></span><span>Maison</span><code>1-4 maisons</code></div>
+            <div><span class="swatch grass"></span><span>Prairie</span><code>1</code></div>
+            <div><span class="swatch house"></span><span>Village</span><code>1-4 maisons</code></div>
             <div><span class="swatch water"></span><span>Eau</span><code>1</code></div>
             <div><span class="swatch rail"></span><span>Rail</span><code>1</code></div>
           </div>
@@ -166,8 +204,8 @@
         <article class="help-card help-card-wide">
           <h2>🚩 Missions</h2>
           <p>Chaque nouvelle tuile courante a 20% de chance d’ajouter une mission dans l’encart Missions en cours.</p>
-          <p>Les missions actuelles demandent de créer une forêt, un village, une voie ferrée, une voie d’eau, une prairie, une surface agricole d’une taille précise, ou un nombre précis de trains visibles. Terminer une mission rapporte 100 points et ajoute 3 cartes supplémentaires dans la pioche. Les objectifs commencent simples puis augmentent progressivement quand le même type de mission réapparaît : 1 train, puis 2 trains, puis 3 trains, etc. Une mission réalisée reste visible 5 tours, puis disparaît automatiquement.</p>
-          <p>La difficulté tient compte de la valeur réelle des triangles : prairie, eau et rail valent toujours 1 élément ; les champs valent 1 à 2, les maisons 1 à 4 et les forêts 1 à 6 arbres. Une mission Train compte les lignes ferroviaires qui affichent réellement un train, ouvertes ou fermées. Les objectifs forêt, village et surface agricole demandent donc plus d’unités que les réseaux à 1 élément, parce que ces zones montent mécaniquement plus vite. La progression est affichée directement dans la liste, par exemple Forêt 22/50 arbres, Surface agricole 12/24 champs ou Train 2/3 trains.</p>
+          <p>Les missions actuelles demandent de créer une forêt, un village, une voie ferrée, une voie d’eau, une prairie, une surface de champs de blé d’une taille précise, ou un nombre précis de trains visibles. Terminer une mission rapporte 100 points et ajoute 3 cartes supplémentaires dans la pioche. Les objectifs commencent simples puis augmentent progressivement quand le même type de mission réapparaît : 1 train, puis 2 trains, puis 3 trains, etc. Une mission réalisée reste visible 5 tours, puis disparaît automatiquement.</p>
+          <p>La difficulté tient compte de la valeur réelle des triangles : prairie, eau et rail valent toujours 1 élément ; les champs de blé valent 1 à 2, les maisons 1 à 4 et les forêts 1 à 6 arbres. Une mission Trains compte les lignes ferroviaires qui affichent réellement un train, ouvertes ou fermées. Les objectifs forêt, village et surface agricole demandent donc plus d’unités que les réseaux à 1 élément, parce que ces zones montent mécaniquement plus vite. La progression est affichée directement dans la liste, par exemple Forêt : 22/50 arbres, Surface agricole : 12/24 champs de blé, Voie ferrée : 6/9 rails ou Trains : 2/3.</p>
         </article>
 
         <article class="help-card help-card-controls">

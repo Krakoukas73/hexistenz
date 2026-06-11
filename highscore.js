@@ -19,17 +19,20 @@ export function createHighscoreUI(ui) {
   return elements;
 }
 
-export function askHighscoreSubmit(elements, score) {
+export function askHighscoreSubmit(elements, score, gridPercent = 0) {
   if (!elements || score <= 0) return;
 
+  const normalizedGridPercent = normalizeGridPercent(gridPercent);
   elements.currentScore = score;
+  elements.currentGridPercent = normalizedGridPercent;
   elements.submitBox?.classList.remove('hidden');
-  setStatus(elements, `Score final : ${score}`);
+  setStatus(elements, `Score final : ${score} · Grille : ${normalizedGridPercent.toFixed(1)}%`);
   elements.nameInput?.focus();
 }
 
 async function submitCurrentScore(ui, elements) {
   const score = Number(elements.currentScore ?? 0);
+  const gridPercent = normalizeGridPercent(elements.currentGridPercent ?? 0);
   const name = sanitizeName(elements.nameInput?.value || DEFAULT_NAME);
 
   if (score <= 0) return;
@@ -39,13 +42,14 @@ async function submitCurrentScore(ui, elements) {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, score })
+      body: JSON.stringify({ name, score, gridPercent })
     });
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
 
     elements.currentScore = 0;
+    elements.currentGridPercent = 0;
     elements.submitBox?.classList.add('hidden');
     if (elements.nameInput) elements.nameInput.value = '';
     renderHighscores(elements, data.scores || []);
@@ -80,8 +84,23 @@ function renderHighscores(elements, scores) {
 
   elements.list.innerHTML = scores
     .slice(0, 10)
-    .map(entry => `<li><span>${escapeHtml(entry.name)}</span><strong>${Number(entry.score) || 0}</strong></li>`)
+    .map((entry, index) => {
+      const gridPercent = normalizeGridPercent(entry.gridPercent ?? 0);
+      const rankBadge = getRankBadge(index);
+      return `<li><span>${rankBadge}${escapeHtml(entry.name)}</span><strong>${Number(entry.score) || 0}<em>${gridPercent.toFixed(1)}%</em></strong></li>`;
+    })
     .join('');
+}
+
+function getRankBadge(index) {
+  const medal = ['🥇', '🥈', '🥉'][index];
+  return medal ? `<span class="highscore-rank-medal">${medal}</span>` : '<span class="highscore-rank-medal"></span>';
+}
+
+function normalizeGridPercent(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.min(100, Math.round(number * 10) / 10));
 }
 
 function sanitizeName(value) {

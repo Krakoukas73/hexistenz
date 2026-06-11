@@ -33,7 +33,7 @@
 }
 
 .missionList li::after {
-  content: '+100 / +3 cartes';
+  content: '+100 / +3 tuiles';
   color: #f2d16b;
   font-size: 11px;
 }

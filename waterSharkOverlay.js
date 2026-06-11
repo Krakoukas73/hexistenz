@@ -22,9 +22,9 @@ const MIN_ZONE_SECTORS = 2;
 const SHARKS_PER_WATER_SECTOR = 0.38;
 const SHARK_SPEED = 0.34;
 const PORT_INSET = 0.52;
-const FIN_WIDTH = HEX_SIZE * 0.072;
-const FIN_HEIGHT = HEX_SIZE * 0.245;
-const FIN_LENGTH = HEX_SIZE * 0.43;
+const FIN_WIDTH = HEX_SIZE * 0.058;
+const FIN_HEIGHT = HEX_SIZE * 0.185;
+const FIN_LENGTH = HEX_SIZE * 0.36;
 
 export function createWaterSharkOverlay() {
   const group = new THREE.Group();
@@ -70,7 +70,7 @@ export function updateWaterSharkOverlay(group, timeSeconds = 0) {
     shark.object.rotation.y = -Math.atan2(sample.tangent.z, sample.tangent.x) + Math.PI / 2;
     shark.object.visible = life > 0.035;
 
-    shark.fin.material.opacity = 0.22 + life * 0.78;
+    shark.fin.material.opacity = 0.18 + life * 0.72;
     shark.body.material.opacity = 0.05 + life * 0.18;
     shark.leftWake.material.opacity = life * 0.34;
     shark.rightWake.material.opacity = life * 0.34;
@@ -128,7 +128,7 @@ function addZoneSharks(group, zone, zoneIndex) {
 function createSharkObject(seedKey) {
   const group = new THREE.Group();
   group.name = 'animated-lowpoly-shark-fin';
-  const scale = 0.88 + hashUnit(`${seedKey}:scale`) * 0.34;
+  const scale = 0.78 + hashUnit(`${seedKey}:scale`) * 0.24;
   group.scale.setScalar(scale);
 
   const ripple = createSurfaceRipple(seedKey);

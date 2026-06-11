@@ -8,7 +8,7 @@ import { updateAnimatedBiomeTextures } from './tileTextures.js';
 import { canPlaceTileAt, getPlacementValidation } from './placementRules.js';
 import { calculatePlacementScore } from './scoring.js';
 import { createDeck, rotateTile } from './tileGenerator.js';
-import { createUI, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateMissionUI, updateScoreUI } from './ui.js';
+import { createUI, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateMissionUI, updateScoreUI, updateStatsUI } from './ui.js';
 import { createPlacementFeedbackOverlay, getPlacementLabel } from './placementOverlay.js';
 import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay, rebuildWaterZoneOverlay, updateHoverZoneOverlayAnimation } from './waterZoneOverlay.js';
 import { createRailTrainOverlay, rebuildRailTrainOverlay, updateRailTrainOverlay } from './railTrainOverlay.js';
@@ -16,7 +16,7 @@ import { createWaterSharkOverlay, rebuildWaterSharkOverlay, updateWaterSharkOver
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { createCamera, createRenderer, createThreeScene, resizeRenderer } from './threeSetup.js';
 import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
-import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, setMissionTurn } from './missions.js';
+import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, setMissionTurn } from './missions.js';
 
 export function initScene() {
   const canvas = document.getElementById('app');
@@ -54,6 +54,7 @@ export function initScene() {
   maybeAddMissionForCurrentTile();
   refreshMissionUI();
   updateScoreUI(ui, totalScore, 0, placedTiles.size, totalGridTiles);
+  refreshStatsUI();
 
   ui.resetCamera?.addEventListener('click', event => {
     event.stopPropagation();
@@ -99,6 +100,8 @@ export function initScene() {
   window.addEventListener('keydown', event => {
     const key = event.key.toLowerCase();
 
+    if (isTextInputTarget(event.target)) return;
+
     if (key === 'h') {
       event.preventDefault();
       toggleHelp();
@@ -139,6 +142,12 @@ export function initScene() {
     const displayDeck = deck.slice();
     if (displayDeck[0]) displayDeck[0] = rotateTile(displayDeck[0], rotationIndex);
     updateDeckUI(ui, displayDeck);
+  }
+
+  function isTextInputTarget(target) {
+    if (!target) return false;
+    const tagName = target.tagName?.toLowerCase();
+    return tagName === 'input' || tagName === 'textarea' || target.isContentEditable;
   }
 
   function toggleHelp(forceVisible = null) {
@@ -219,11 +228,16 @@ export function initScene() {
     placedTile.generatedMission = maybeAddMissionForCurrentTile();
     refreshMissionUI();
     updateScoreUI(ui, totalScore, placedTile.score, placedTiles.size, totalGridTiles);
+    refreshStatsUI();
     if (deck.length === 0) endGame();
   }
 
   function refreshMissionUI() {
     updateMissionUI(ui, missionManager.active, formatMissionLabel, getMissionProgressByType(placedTiles));
+  }
+
+  function refreshStatsUI() {
+    updateStatsUI(ui, getGameStats(placedTiles));
   }
 
   function maybeAddMissionForCurrentTile() {
@@ -295,6 +309,7 @@ export function initScene() {
     refreshDeckUI();
     refreshMissionUI();
     updateScoreUI(ui, totalScore, -(last.score ?? 0), placedTiles.size, totalGridTiles);
+    refreshStatsUI();
 
     if (hoveredHex && isPlacementTarget(hoveredHex)) {
       const position = axialToWorld(hoveredHex.q, hoveredHex.r);
@@ -326,7 +341,11 @@ export function initScene() {
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     ui.abandonGame?.setAttribute('disabled', 'disabled');
     setText(ui.placement, label);
-    askHighscoreSubmit(highscoreUI, totalScore);
+    askHighscoreSubmit(highscoreUI, totalScore, getGridPercent());
+  }
+
+  function getGridPercent() {
+    return totalGridTiles > 0 ? (placedTiles.size / totalGridTiles) * 100 : 0;
   }
 }
 

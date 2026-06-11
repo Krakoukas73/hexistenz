@@ -17,19 +17,28 @@
 
 .highscore-list {
   margin: 0;
-  padding-left: 22px;
+  list-style: none;
+  padding-left: 0;
   font-size: 12px;
   color: rgba(225, 242, 255, 0.86);
 }
 
 .highscore-list li {
-  margin: 4px 0;
-  padding-left: 2px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  clear: both;
+  min-height: 24px;
+  margin: 6px 0;
+  padding-left: 0;
+  line-height: 1.15;
 }
 
-.highscore-list li span {
+.highscore-list li > span {
   display: inline-block;
-  max-width: 112px;
+  min-width: 0;
+  max-width: 156px;
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: bottom;
@@ -37,8 +46,19 @@
 }
 
 .highscore-list li strong {
-  float: right;
+  flex: 0 0 auto;
+  float: none;
   color: #ffffff;
+  text-align: right;
+}
+
+.highscore-list li strong em {
+  display: block;
+  margin-top: 1px;
+  color: rgba(180, 215, 255, 0.78);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
 }
 
 .highscore-submit {
@@ -120,4 +140,14 @@
 .abandon-button:disabled {
   cursor: default;
   opacity: 0.48;
+}
+
+
+.highscore-rank-medal {
+  display: inline-block;
+  width: 24px;
+  margin-right: 3px;
+  font-size: 20px;
+  line-height: 1;
+  vertical-align: -3px;
 }

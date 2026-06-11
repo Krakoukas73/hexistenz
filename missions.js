@@ -12,7 +12,7 @@ const TRAIN_MISSION_TYPE = 'train';
 
 // Paliers calibrés sur l'effort réel de zone :
 // - prairie, eau et rail valent toujours 1 unité par triangle ;
-// - champs = 1 à 2, maisons = 1 à 4, arbres = 1 à 6.
+// - champs de blé = 1 à 2, maisons = 1 à 4, arbres = 1 à 6.
 // Les objectifs des textures à valeur variable montent donc plus haut,
 // parce qu'une zone équivalente progresse plus vite qu'un réseau eau/rail.
 const MISSION_TYPES = [
@@ -31,32 +31,32 @@ const MISSION_TYPES = [
   {
     type: EDGE_TYPES.rail,
     label: 'Voie ferrée',
-    unit: 'éléments',
+    unit: 'rails',
     targets: [8, 15, 24, 35, 48, 65]
   },
   {
     type: TRAIN_MISSION_TYPE,
     matchTypes: [EDGE_TYPES.rail],
-    label: 'Train',
-    unit: 'trains',
+    label: 'Trains',
+    unit: '',
     targets: [1, 2, 3, 4, 5, 6]
   },
   {
     type: EDGE_TYPES.water,
     label: "Voie d'eau",
-    unit: 'éléments',
+    unit: "cases d'eau",
     targets: [8, 15, 24, 35, 48, 65]
   },
   {
     type: EDGE_TYPES.grass,
     label: 'Prairie',
-    unit: 'éléments',
+    unit: 'champs',
     targets: [8, 15, 24, 35, 48, 65]
   },
   {
     type: EDGE_TYPES.field,
     label: 'Surface agricole',
-    unit: 'champs',
+    unit: 'champs de blé',
     targets: [12, 24, 38, 56, 78, 105]
   }
 ];
@@ -147,6 +147,26 @@ export function getMissionProgressByType(placedTiles) {
   return progress;
 }
 
+export function getGameStats(placedTiles) {
+  const totals = Object.fromEntries(Object.values(EDGE_TYPES).map(type => [type, 0]));
+
+  for (const placedTile of placedTiles.values()) {
+    for (const edge of EDGE_ORDER) {
+      const type = getTileEdgeType(placedTile, edge);
+      if (type) totals[type] = (totals[type] ?? 0) + getEdgeValue(placedTile.tile.edges[edge]);
+    }
+  }
+
+  const largestByType = getBestZoneTotalsByType(placedTiles);
+
+  return {
+    tiles: placedTiles.size,
+    totals,
+    largest: Object.fromEntries(Object.values(EDGE_TYPES).map(type => [type, largestByType.get(type) ?? 0])),
+    trainLines: countRailTrainLines(placedTiles)
+  };
+}
+
 export function consumeCompletedMissions(manager, completedMissions) {
   if (completedMissions.length === 0) return;
 
@@ -178,7 +198,8 @@ function purgeOldCompletedMissions(manager) {
 
 export function formatMissionLabel(mission, progressByType = new Map()) {
   const progress = Math.min(progressByType.get(mission.type) ?? 0, mission.target);
-  return `${mission.label} ${progress}/${mission.target} ${mission.unit}`;
+  const unit = mission.unit ? ` ${mission.unit}` : '';
+  return `${mission.label} : ${progress}/${mission.target}${unit}`;
 }
 
 

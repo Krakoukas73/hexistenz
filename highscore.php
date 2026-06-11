@@ -52,10 +52,13 @@ try {
             exit;
         }
 
+        $gridPercent = normalize_grid_percent($payload['gridPercent'] ?? 0);
+
         $scores = read_scores($SCORE_FILE);
         $scores[] = [
             'name' => $name,
             'score' => (int)$score,
+            'gridPercent' => $gridPercent,
             'date' => gmdate('c')
         ];
 
@@ -88,6 +91,23 @@ try {
         'details' => $error->getMessage()
     ], JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+function normalize_grid_percent($value)
+{
+    if (!is_numeric($value)) {
+        return 0.0;
+    }
+
+    $number = (float)$value;
+    if ($number < 0) {
+        $number = 0;
+    }
+    if ($number > 100) {
+        $number = 100;
+    }
+
+    return round($number, 1);
 }
 
 function sanitize_name($name)
@@ -134,6 +154,7 @@ function read_scores($file)
             $clean[] = [
                 'name' => (string)$entry['name'],
                 'score' => (int)$entry['score'],
+                'gridPercent' => normalize_grid_percent($entry['gridPercent'] ?? 0),
                 'date' => isset($entry['date']) ? (string)$entry['date'] : ''
             ];
         }
@@ -175,6 +196,7 @@ function public_scores($scores, $limit)
         $public[] = [
             'name' => (string)$entry['name'],
             'score' => (int)$entry['score'],
+            'gridPercent' => normalize_grid_percent($entry['gridPercent'] ?? 0),
             'date' => isset($entry['date']) ? (string)$entry['date'] : ''
         ];
     }

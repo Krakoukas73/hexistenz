@@ -14,6 +14,22 @@ export function createUI() {
     score: document.getElementById('dbgScore'),
     gridPercent: document.getElementById('dbgGridPercent'),
     lastScore: document.getElementById('dbgLastScore'),
+    stats: {
+      tiles: document.getElementById('statTiles'),
+      grass: document.getElementById('statGrass'),
+      field: document.getElementById('statField'),
+      forest: document.getElementById('statForest'),
+      house: document.getElementById('statHouse'),
+      water: document.getElementById('statWater'),
+      rail: document.getElementById('statRail'),
+      trains: document.getElementById('statTrains'),
+      largestGrass: document.getElementById('statLargestGrass'),
+      largestField: document.getElementById('statLargestField'),
+      largestForest: document.getElementById('statLargestForest'),
+      largestHouse: document.getElementById('statLargestHouse'),
+      largestWater: document.getElementById('statLargestWater'),
+      largestRail: document.getElementById('statLargestRail')
+    },
     placement: document.getElementById('dbgPlacement'),
     keys: {
       z: document.getElementById('keyZ'),
@@ -64,6 +80,25 @@ export function updateScoreUI(ui, totalScore, lastScore = 0, placedTileCount = n
   }
 }
 
+
+export function updateStatsUI(ui, stats) {
+  if (!ui?.stats || !stats) return;
+
+  setText(ui.stats.tiles, String(stats.tiles ?? 0));
+  setText(ui.stats.grass, String(stats.totals?.grass ?? 0));
+  setText(ui.stats.field, String(stats.totals?.field ?? 0));
+  setText(ui.stats.forest, String(stats.totals?.forest ?? 0));
+  setText(ui.stats.house, String(stats.totals?.house ?? 0));
+  setText(ui.stats.water, String(stats.totals?.water ?? 0));
+  setText(ui.stats.rail, String(stats.totals?.rail ?? 0));
+  setText(ui.stats.trains, String(stats.trainLines ?? 0));
+  setText(ui.stats.largestGrass, String(stats.largest?.grass ?? 0));
+  setText(ui.stats.largestField, String(stats.largest?.field ?? 0));
+  setText(ui.stats.largestForest, String(stats.largest?.forest ?? 0));
+  setText(ui.stats.largestHouse, String(stats.largest?.house ?? 0));
+  setText(ui.stats.largestWater, String(stats.largest?.water ?? 0));
+  setText(ui.stats.largestRail, String(stats.largest?.rail ?? 0));
+}
 
 export function updateMissionUI(ui, missions, formatter, progressByType = new Map()) {
   if (!ui.missionList) return;
