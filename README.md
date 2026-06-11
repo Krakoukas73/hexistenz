@@ -139,4 +139,6 @@ JavaScript ES Modules (no bundler)  ·  PHP  ·  JSON storage
 *🇫🇷 Fait avec curiosité, Three.js et beaucoup de tuiles.*  
 *🇬🇧 Made with curiosity, Three.js and a lot of tiles.*
 
+# ⬡ 
+
 </div>
