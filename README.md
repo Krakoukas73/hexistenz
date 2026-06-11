@@ -8,7 +8,7 @@
 **🇫🇷 Un monde hexagonal low-poly qui vit dans votre navigateur.**  
 **🇬🇧 A low-poly hexagonal world that lives in your browser.**
 
-`v0.14` · No install · No login · Just play
+No install · No login · Just play
 
 [![Play Now](https://img.shields.io/badge/▶%20Jouer%20%2F%20Play-online-brightgreen?style=for-the-badge)](https://hexistenz.com)
 [![Three.js](https://img.shields.io/badge/Three.js-r160-black?style=flat-square&logo=threedotjs)](https://threejs.org)
