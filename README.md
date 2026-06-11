@@ -70,9 +70,9 @@ The core mechanic: **connections**. Extending a zone of the same type earns poin
 
 ## 👥 Multijoueur / Multiplayer
 
-🇫🇷 Le jeu propose un **mode multijoueur en ligne** : créez une partie, partagez le lien, et comparez votre score sur le **tableau des high scores** partagé. Toujours sans installation — un navigateur suffit.
+🇫🇷 Le jeu propose un **mode multijoueur en ligne** : créez une partie, jouez ensemble, et comparez votre score sur le **tableau des high scores** partagé. Toujours sans installation — un navigateur suffit.
 
-🇬🇧 The game includes an **online multiplayer mode**: create a session, share the link, and compare your score on the **shared leaderboard**. Still no install — a browser is all you need.
+🇬🇧 The game includes an **online multiplayer mode**: create a session, share the game, and compare your score on the **shared leaderboard**. Still no install — a browser is all you need.
 
 ---
 
@@ -87,7 +87,6 @@ The core mechanic: **connections**. Extending a zone of the same type earns poin
 - **Dégradé eau / Water depth** — carte de profondeur procédurale, zones de plage, bateaux animés
 - **Courbure mondiale / World curvature** — mode bouliste qui arrondit l'horizon
 - **Ciel étoilé + comètes / Starfield + comets** — le ciel est vivant
-- **Animation hex du menu / Hex pixelization on menu** — les fonds du menu démarrage se pixelisent progressivement en hexagones puis reviennent à la netteté (animation `sin²`, canvas 2D)
 
 ---
 
