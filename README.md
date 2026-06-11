@@ -127,38 +127,10 @@ JavaScript ES Modules (no bundler)  ·  PHP  ·  JSON storage
 
 ---
 
-## 📸 Screenshots
 
-<img width="1536" height="1024" alt="30" src="https://github.com/user-attachments/assets/91c0b898-6243-42c3-9c3c-9f9b1a838a4e" />
-<img width="1672" height="941" alt="06" src="https://github.com/user-attachments/assets/f13c20d9-d687-4fbf-ba24-52a11bd00c72" />
-<img width="1536" height="1024" alt="25" src="https://github.com/user-attachments/assets/e5416dcf-f382-456c-a107-8f1ef662bcc1" />
-<img width="1672" height="941" alt="05" src="https://github.com/user-attachments/assets/dc25fd6e-53ba-453f-8387-e94823822c4d" />
-<img width="1536" height="1024" alt="09" src="https://github.com/user-attachments/assets/f3433ebe-cc06-4ecc-9a9e-b97d8b7b1dda" />
-<img width="1536" height="1024" alt="13" src="https://github.com/user-attachments/assets/f24a20ab-3e65-461f-a754-b2223f072c33" />
-<img width="1536" height="1024" alt="11" src="https://github.com/user-attachments/assets/ffa951f1-e7ae-4097-991a-3ffe014c8d0c" />
-<img width="1672" height="941" alt="19" src="https://github.com/user-attachments/assets/5feedc33-a247-4734-a360-f5c68da2af93" />
-<img width="1536" height="1024" alt="29" src="https://github.com/user-attachments/assets/bccb3ffc-8312-4ce0-9534-c4d35c3ef61b" />
-<img width="1536" height="1024" alt="15" src="https://github.com/user-attachments/assets/9cfd8960-db6c-485f-9641-a0eff5eb2249" />
-<img width="1672" height="941" alt="07" src="https://github.com/user-attachments/assets/02f4ddec-9645-4061-aeb6-ef932d029362" />
-<img width="1672" height="941" alt="08" src="https://github.com/user-attachments/assets/926d1cb1-ffe9-44f5-9404-bddb52bce11a" />
-<img width="1536" height="1024" alt="28" src="https://github.com/user-attachments/assets/092fc005-2282-4ae7-b03a-f6a5cfa2af7f" />
-<img width="1536" height="1024" alt="26" src="https://github.com/user-attachments/assets/a9bfce25-16bb-44b6-9a2c-88655d45cd7b" />
-<img width="1672" height="941" alt="02" src="https://github.com/user-attachments/assets/b5ba1637-53a1-415d-93a1-6af2ca5aa4c0" />
-<img width="1536" height="1024" alt="16" src="https://github.com/user-attachments/assets/4f6ed129-1518-4b87-9f1b-49c4ca3e9ca8" />
-<img width="1672" height="941" alt="10" src="https://github.com/user-attachments/assets/3f9469ca-a988-4305-afda-2588b3e5edb7" />
-<img width="1536" height="1024" alt="14" src="https://github.com/user-attachments/assets/b7e2aa99-ba73-4cb8-88d2-d924085946b1" />
-<img width="1672" height="941" alt="22" src="https://github.com/user-attachments/assets/047bba90-cd76-4d4b-8c0f-080dd3011311" />
-<img width="1536" height="1024" alt="31" src="https://github.com/user-attachments/assets/fd73b3b4-a398-498a-b0e1-937f36ebf673" />
-<img width="1536" height="1024" alt="20" src="https://github.com/user-attachments/assets/0020f0ca-58e3-462c-8d60-d03b27573a75" />
-<img width="1672" height="941" alt="23" src="https://github.com/user-attachments/assets/e9c63261-a2fe-4025-9762-9013220170fc" />
-<img width="1672" height="941" alt="01" src="https://github.com/user-attachments/assets/e6261592-b993-4eee-8fe3-ac54abcdb08d" />
-<img width="1672" height="941" alt="12" src="https://github.com/user-attachments/assets/e92adb04-408e-4fcc-b649-ddc32f03881e" />
-<img width="1672" height="941" alt="18" src="https://github.com/user-attachments/assets/753364aa-1e03-46eb-a130-221515089b1a" />
-<img width="1536" height="1024" alt="17" src="https://github.com/user-attachments/assets/c125de82-7d20-4c88-b1b0-d77fde5be341" />
-<img width="1672" height="941" alt="24" src="https://github.com/user-attachments/assets/983b94ff-69e8-43ca-ab08-f07526577e1b" />
-<img width="1672" height="941" alt="03" src="https://github.com/user-attachments/assets/cf513d8d-c79a-41cb-a7a4-72bc23db3938" />
+
 <img width="1536" height="1024" alt="21" src="https://github.com/user-attachments/assets/f243058f-9801-44d0-9436-e86f12e14804" />
-<img width="1672" height="941" alt="04" src="https://github.com/user-attachments/assets/8fb6dc58-2437-44ed-913b-a2fc35c0c0c0" />
+
 
 ---
 
