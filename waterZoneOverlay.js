@@ -16,12 +16,14 @@ const SECTOR_DEFS = [
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 const HALO_Y = 0.115;
-const HOVER_HALO_Y = 0.34;
-const LABEL_Y = 0.16;
+const HOVER_HALO_Y = 0.30;
+const LABEL_Y = 0.19;
 const CENTER_RADIUS = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
-const HOVER_HALO_RADIUS = 0.052;
-const HOVER_GLOW_RADIUS = 0.15;
-const HOVER_DIFFUSE_RADIUS = 0.23;
+const HOVER_HALO_RADIUS = 0.056;
+const HOVER_GLOW_RADIUS = 0.16;
+const HOVER_DIFFUSE_RADIUS = 0.24;
+const HOVER_LABEL_SCALE = 1.85;
+const HOVER_LABEL_Y_OFFSET = 0.285;
 
 const textTextureCache = new Map();
 
@@ -61,7 +63,7 @@ export function rebuildHoverZoneOverlay(overlay, hoverHex, worldPoint, placedTil
 }
 
 export function updateHoverZoneOverlayAnimation(overlay, zoneOverlay = null, elapsedSeconds = performance.now() / 1000) {
-  const pulse = 1 + Math.sin(elapsedSeconds * 7) * 0.10;
+  const pulse = 1 + Math.sin(elapsedSeconds * 7) * 0.16;
 
   zoneOverlay?.traverse?.(object => {
     if (!object.userData?.isHoverHighlightedZoneLabel) return;
@@ -70,7 +72,7 @@ export function updateHoverZoneOverlayAnimation(overlay, zoneOverlay = null, ela
     if (!baseScale || baseY === undefined) return;
 
     object.scale.set(baseScale.x * pulse, baseScale.y * pulse, baseScale.z);
-    object.position.y = baseY + 0.035 + Math.sin(elapsedSeconds * 7) * 0.012;
+    object.position.y = baseY + HOVER_LABEL_Y_OFFSET + Math.sin(elapsedSeconds * 7) * 0.018;
   });
 }
 
@@ -133,11 +135,11 @@ function highlightHoverZoneLabel(zoneOverlay, zone) {
 
     object.userData.isHoverHighlightedZoneLabel = true;
     object.scale.set(
-      object.userData.hoverBaseScale.x * 1.15,
-      object.userData.hoverBaseScale.y * 1.15,
+      object.userData.hoverBaseScale.x * HOVER_LABEL_SCALE,
+      object.userData.hoverBaseScale.y * HOVER_LABEL_SCALE,
       object.userData.hoverBaseScale.z
     );
-    object.position.y = object.userData.hoverBaseY + 0.035;
+    object.position.y = object.userData.hoverBaseY + HOVER_LABEL_Y_OFFSET;
   });
 }
 
@@ -155,7 +157,7 @@ function highlightHoverValueLabels(zone) {
         object.userData.hoverBaseScale.y * 1.35,
         object.userData.hoverBaseScale.z
       );
-      object.position.y = object.userData.hoverBaseY + 0.035;
+      object.position.y = object.userData.hoverBaseY + HOVER_LABEL_Y_OFFSET;
     });
   }
 }
@@ -238,33 +240,19 @@ function getTextureNeighbors(placedTile, edge, type, placedTiles) {
 
 function createHoverZoneBoundary(zone, placedTiles) {
   const group = new THREE.Group();
-  group.name = `${zone.type}-hover-zone-halo`;
+  group.name = `${zone.type}-hover-zone-contour`;
 
-  const diffuse = createZoneBoundary(zone, placedTiles, {
-    y: HOVER_HALO_Y - 0.006,
-    radius: HOVER_DIFFUSE_RADIUS,
-    opacity: 0.16,
-    additive: true,
-    name: `${zone.type}-hover-zone-diffuse`
-  });
-
-  const glow = createZoneBoundary(zone, placedTiles, {
+  // Hover volontairement sans halo : les halos empilés rendent les jonctions
+  // dégueulasses et amplifient visuellement le moindre raccord. Ici on garde
+  // un seul contour net, avec segments complets qui se touchent aux extrémités.
+  group.add(createZoneBoundary(zone, placedTiles, {
     y: HOVER_HALO_Y,
-    radius: HOVER_GLOW_RADIUS,
-    opacity: 0.34,
-    additive: true,
-    name: `${zone.type}-hover-zone-glow`
-  });
-
-  const halo = createZoneBoundary(zone, placedTiles, {
-    y: HOVER_HALO_Y + 0.01,
     radius: HOVER_HALO_RADIUS,
     opacity: 0.98,
     additive: false,
-    name: `${zone.type}-hover-zone-core`
-  });
+    name: `${zone.type}-hover-zone-contour`
+  }));
 
-  group.add(diffuse, glow, halo);
   return group;
 }
 
@@ -307,29 +295,165 @@ function createFlatSegmentMesh(segment, width, material) {
 }
 
 function getZoneBoundarySegments(zone, placedTiles, y = HALO_Y) {
-  const edges = new Map();
-  const tileKeysWithCenter = new Set();
+  const sectorKeys = new Set(zone.sectors.map(sectorRef => makeNodeKey(sectorRef.tile.key, sectorRef.edge)));
+  const centerKeys = new Set();
 
   for (const sectorRef of zone.sectors) {
-    addPolygonEdges(edges, getSectorVisiblePolygon(sectorRef.tile, sectorRef.edge, y));
-
     if (getTileCenterType(sectorRef.tile) === zone.type) {
-      tileKeysWithCenter.add(sectorRef.tile.key);
+      centerKeys.add(sectorRef.tile.key);
     }
   }
 
-  for (const tileKey of tileKeysWithCenter) {
-    const placedTile = placedTiles.get(tileKey);
-    if (placedTile) addPolygonEdges(edges, getCenterPolygon(placedTile, y));
+  const segments = [];
+
+  for (const sectorRef of zone.sectors) {
+    addSectorBoundarySegments(segments, sectorRef, sectorKeys, centerKeys, placedTiles, y);
   }
 
-  const rawSegments = [...edges.values()]
-    .filter(entry => entry.count === 1)
-    .map(entry => entry.segment);
+  for (const tileKey of centerKeys) {
+    const placedTile = placedTiles.get(tileKey);
+    if (placedTile) addCenterBoundarySegments(segments, placedTile, sectorKeys, y);
+  }
 
-  return cleanupBoundarySegments(rawSegments);
+  return mergeCollinearSegments(segments);
 }
 
+function addSectorBoundarySegments(segments, sectorRef, sectorKeys, centerKeys, placedTiles, y) {
+  const { tile: placedTile, edge } = sectorRef;
+  const sector = SECTOR_BY_KEY[edge];
+  const outerVertices = createOuterVertices();
+  const innerVertices = createOuterVertices(CENTER_RADIUS);
+  const world = axialToWorld(placedTile.q, placedTile.r);
+  const edgeIndex = EDGE_ORDER.indexOf(edge);
+  const previousEdge = EDGE_ORDER[(edgeIndex + EDGE_ORDER.length - 1) % EDGE_ORDER.length];
+  const nextEdge = EDGE_ORDER[(edgeIndex + 1) % EDGE_ORDER.length];
+
+  const points = {
+    innerA: toWorldVector(world, innerVertices[sector.a], y),
+    outerA: toWorldVector(world, outerVertices[sector.a], y),
+    outerB: toWorldVector(world, outerVertices[sector.b], y),
+    innerB: toWorldVector(world, innerVertices[sector.b], y)
+  };
+
+  // Bord extérieur : uniquement si la tuile voisine opposée n'appartient pas à la zone.
+  const direction = DIRECTION_BY_EDGE[edge];
+  const neighborTile = direction
+    ? placedTiles.get(makeHexKey(placedTile.q + direction.q, placedTile.r + direction.r))
+    : null;
+  const oppositeEdge = getOppositeEdge(edge);
+  const hasOuterNeighbor = neighborTile && sectorKeys.has(makeNodeKey(neighborTile.key, oppositeEdge));
+  if (!hasOuterNeighbor) addBoundarySegment(segments, points.outerA, points.outerB);
+
+  // Jonctions latérales entre triangles d'une même tuile.
+  if (!sectorKeys.has(makeNodeKey(placedTile.key, previousEdge))) {
+    addBoundarySegment(segments, points.innerA, points.outerA);
+  }
+
+  if (!sectorKeys.has(makeNodeKey(placedTile.key, nextEdge))) {
+    addBoundarySegment(segments, points.outerB, points.innerB);
+  }
+
+  // Bord côté centre : absent si le centre de la tuile fait partie de la zone.
+  if (!centerKeys.has(placedTile.key)) {
+    addBoundarySegment(segments, points.innerB, points.innerA);
+  }
+}
+
+function addCenterBoundarySegments(segments, placedTile, sectorKeys, y) {
+  const world = axialToWorld(placedTile.q, placedTile.r);
+  const innerVertices = createOuterVertices(CENTER_RADIUS);
+
+  for (const edge of EDGE_ORDER) {
+    if (sectorKeys.has(makeNodeKey(placedTile.key, edge))) continue;
+    const sector = SECTOR_BY_KEY[edge];
+    addBoundarySegment(
+      segments,
+      toWorldVector(world, innerVertices[sector.a], y),
+      toWorldVector(world, innerVertices[sector.b], y)
+    );
+  }
+}
+
+function addBoundarySegment(segments, from, to) {
+  if (from.distanceToSquared(to) <= 0.000001) return;
+  segments.push({ from, to });
+}
+
+function mergeCollinearSegments(segments) {
+  const byLine = new Map();
+
+  for (const segment of segments) {
+    const lineKey = makeLineKey(segment.from, segment.to);
+    if (!byLine.has(lineKey)) byLine.set(lineKey, []);
+    byLine.get(lineKey).push(segment);
+  }
+
+  const merged = [];
+
+  for (const group of byLine.values()) {
+    const remaining = [...group];
+
+    while (remaining.length > 0) {
+      let current = remaining.pop();
+      let changed = true;
+
+      while (changed) {
+        changed = false;
+        for (let i = remaining.length - 1; i >= 0; i--) {
+          const candidate = remaining[i];
+          const combined = tryMergeTouchingCollinearSegments(current, candidate);
+          if (!combined) continue;
+          current = combined;
+          remaining.splice(i, 1);
+          changed = true;
+        }
+      }
+
+      merged.push(current);
+    }
+  }
+
+  return merged;
+}
+
+function tryMergeTouchingCollinearSegments(a, b) {
+  const points = [a.from, a.to, b.from, b.to];
+  const keys = points.map(makePointKey);
+  const shared = keys.filter((key, index) => keys.indexOf(key) !== index);
+  if (shared.length === 0) return null;
+
+  let bestFrom = points[0];
+  let bestTo = points[1];
+  let bestDistance = -1;
+
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const distance = points[i].distanceToSquared(points[j]);
+      if (distance > bestDistance) {
+        bestDistance = distance;
+        bestFrom = points[i];
+        bestTo = points[j];
+      }
+    }
+  }
+
+  return { from: bestFrom.clone(), to: bestTo.clone() };
+}
+
+function makeLineKey(a, b) {
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const angle = Math.atan2(dz, dx);
+  const normalizedAngle = ((angle % Math.PI) + Math.PI) % Math.PI;
+  const roundedAngle = Math.round(normalizedAngle / (Math.PI / 6));
+
+  // Projection normale : même droite infinie, même clé. Suffisant ici car les
+  // contours ne suivent que les axes 0/60/120 degrés des hexagones.
+  const nx = -Math.sin(roundedAngle * Math.PI / 6);
+  const nz = Math.cos(roundedAngle * Math.PI / 6);
+  const offset = a.x * nx + a.z * nz;
+  return `${roundedAngle}:${offset.toFixed(4)}`;
+}
 
 function cleanupBoundarySegments(segments) {
   let cleanSegments = segments.filter(segment => getSegmentLength(segment) > 0.001);
@@ -462,7 +586,7 @@ function createZoneLabel(zone) {
   const sprite = new THREE.Sprite(getTextSpriteMaterial(String(zone.total), zone.type));
   sprite.name = `${zone.type}-zone-label`;
   sprite.position.copy(center);
-  sprite.scale.set(0.72, 0.42, 1);
+  sprite.scale.set(0.88, 0.54, 1);
   sprite.userData.isZoneLabel = true;
   sprite.userData.zoneSignature = makeZoneSignature(zone);
   return sprite;
@@ -521,19 +645,32 @@ function getTextSpriteMaterial(text, type) {
   if (textTextureCache.has(cacheKey)) return textTextureCache.get(cacheKey);
 
   const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 64;
+  canvas.width = 192;
+  canvas.height = 96;
 
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 3;
   ctx.fillStyle = getLabelBackground(type);
-  ctx.roundRect(18, 10, 92, 44, 14);
+  ctx.roundRect(22, 12, 148, 70, 20);
   ctx.fill();
-  ctx.font = 'bold 34px system-ui, sans-serif';
+
+  ctx.shadowBlur = 0;
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+  ctx.roundRect(25, 15, 142, 64, 17);
+  ctx.stroke();
+
+  ctx.font = '900 52px system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.62)';
+  ctx.strokeText(text, 96, 50);
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(text, 64, 33);
+  ctx.fillText(text, 96, 50);
 
   const texture = new THREE.CanvasTexture(canvas);
   const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });

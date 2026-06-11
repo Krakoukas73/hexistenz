@@ -8,12 +8,17 @@ export function createGrid() {
 
   for (let q = -GRID_RADIUS; q <= GRID_RADIUS; q++) {
     for (let r = -GRID_RADIUS; r <= GRID_RADIUS; r++) {
+      if (!isGridHex(q, r)) continue;
       const { x, y, z } = axialToWorld(q, r);
       group.add(createHexWire(x, y, z, material));
     }
   }
 
   return group;
+}
+
+function isGridHex(q, r) {
+  return Math.max(Math.abs(q), Math.abs(r), Math.abs(-q - r)) <= GRID_RADIUS;
 }
 
 function createHexWire(x, y, z, material) {

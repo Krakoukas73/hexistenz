@@ -1,15 +1,18 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { DECK_SIZE } from './config.js';
+import { DECK_SIZE, GRID_RADIUS } from './config.js';
 import { CameraControls } from './controls.js';
 import { createGrid } from './grid.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { createTileMesh } from './tileMesh.js';
+import { updateAnimatedBiomeTextures } from './tileTextures.js';
 import { canPlaceTileAt, getPlacementValidation } from './placementRules.js';
 import { calculatePlacementScore } from './scoring.js';
 import { createDeck, rotateTile } from './tileGenerator.js';
 import { createUI, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateMissionUI, updateScoreUI } from './ui.js';
 import { createPlacementFeedbackOverlay, getPlacementLabel } from './placementOverlay.js';
 import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay, rebuildWaterZoneOverlay, updateHoverZoneOverlayAnimation } from './waterZoneOverlay.js';
+import { createRailTrainOverlay, rebuildRailTrainOverlay, updateRailTrainOverlay } from './railTrainOverlay.js';
+import { createWaterSharkOverlay, rebuildWaterSharkOverlay, updateWaterSharkOverlay } from './waterSharkOverlay.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { createCamera, createRenderer, createThreeScene, resizeRenderer } from './threeSetup.js';
 import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
@@ -35,19 +38,22 @@ export function initScene() {
   let totalScore = 0;
   let helpVisible = false;
   let gameOver = false;
+  const totalGridTiles = getTotalGridTiles(GRID_RADIUS);
 
   // Tuile fantôme et overlays : feedback visuel, aucun impact sur les règles.
   const ghostTile = new THREE.Group();
   const waterZoneOverlay = createWaterZoneOverlay();
   const hoverZoneOverlay = createHoverZoneOverlay();
+  const railTrainOverlay = createRailTrainOverlay();
+  const waterSharkOverlay = createWaterSharkOverlay();
 
   ghostTile.visible = false;
 
-  scene.add(createGrid(), waterZoneOverlay, hoverZoneOverlay, ghostTile);
+  scene.add(createGrid(), waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterSharkOverlay, ghostTile);
   refreshDeckUI();
   maybeAddMissionForCurrentTile();
   refreshMissionUI();
-  updateScoreUI(ui, totalScore, 0);
+  updateScoreUI(ui, totalScore, 0, placedTiles.size, totalGridTiles);
 
   ui.resetCamera?.addEventListener('click', event => {
     event.stopPropagation();
@@ -121,8 +127,11 @@ export function initScene() {
   function animate() {
     requestAnimationFrame(animate);
     controls.update();
+    updateAnimatedBiomeTextures(performance.now() * 0.001);
     updateKeyboardUI(ui, controls.keys, rotationKeyActive);
     updateHoverZoneOverlayAnimation(hoverZoneOverlay, waterZoneOverlay);
+    updateRailTrainOverlay(railTrainOverlay, performance.now() * 0.001);
+    updateWaterSharkOverlay(waterSharkOverlay, performance.now() * 0.001);
     renderer.render(scene, camera);
   }
 
@@ -198,6 +207,8 @@ export function initScene() {
     placementHistory.push(placedTile);
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
+    rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
+    rebuildWaterSharkOverlay(waterSharkOverlay, placedTiles);
 
     ghostTile.visible = false;
     deck.shift();
@@ -207,7 +218,7 @@ export function initScene() {
     refreshDeckUI();
     placedTile.generatedMission = maybeAddMissionForCurrentTile();
     refreshMissionUI();
-    updateScoreUI(ui, totalScore, placedTile.score);
+    updateScoreUI(ui, totalScore, placedTile.score, placedTiles.size, totalGridTiles);
     if (deck.length === 0) endGame();
   }
 
@@ -268,6 +279,8 @@ export function initScene() {
     placedTiles.delete(last.key);
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
+    rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
+    rebuildWaterSharkOverlay(waterSharkOverlay, placedTiles);
     totalScore = Math.max(0, totalScore - (last.score ?? 0));
 
     if (last.generatedMission) removeMissionById(missionManager, last.generatedMission.id);
@@ -281,7 +294,7 @@ export function initScene() {
     setText(ui.rotation, '0/6');
     refreshDeckUI();
     refreshMissionUI();
-    updateScoreUI(ui, totalScore, -(last.score ?? 0));
+    updateScoreUI(ui, totalScore, -(last.score ?? 0), placedTiles.size, totalGridTiles);
 
     if (hoveredHex && isPlacementTarget(hoveredHex)) {
       const position = axialToWorld(hoveredHex.q, hoveredHex.r);
@@ -315,4 +328,8 @@ export function initScene() {
     setText(ui.placement, label);
     askHighscoreSubmit(highscoreUI, totalScore);
   }
+}
+
+function getTotalGridTiles(radius) {
+  return 1 + 3 * radius * (radius + 1);
 }

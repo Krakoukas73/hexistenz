@@ -3,6 +3,7 @@ import { EDGE_COLOR, EDGE_TYPES } from './config.js';
 
 const materialCache = new Map();
 const generatedTextureCache = new Map();
+const animatedTextureState = new Map();
 const TEXTURED_TYPES = new Set([
   EDGE_TYPES.water,
   EDGE_TYPES.field,
@@ -38,7 +39,7 @@ function getGeneratedTexture(type) {
   canvas.height = 128;
   const ctx = canvas.getContext('2d');
 
-  drawTexture(type, ctx);
+  drawTexture(type, ctx, 0);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
@@ -46,39 +47,74 @@ function getGeneratedTexture(type) {
   texture.repeat.set(2, 2);
 
   generatedTextureCache.set(type, texture);
+
+  if (type === EDGE_TYPES.water) {
+    animatedTextureState.set(type, { canvas, ctx, texture });
+  }
+
   return texture;
 }
 
-function drawTexture(type, ctx) {
-  if (type === EDGE_TYPES.water) drawWaterTexture(ctx);
+export function updateAnimatedBiomeTextures(timeSeconds = 0) {
+  const waterState = animatedTextureState.get(EDGE_TYPES.water);
+  if (!waterState) return;
+
+  drawWaterTexture(waterState.ctx, timeSeconds);
+
+  // Très léger déplacement de la texture pour donner un courant lisible
+  // sans modifier la géométrie ni les règles du jeu.
+  waterState.texture.offset.x = (timeSeconds * 0.018) % 1;
+  waterState.texture.offset.y = (Math.sin(timeSeconds * 0.35) * 0.015) % 1;
+  waterState.texture.needsUpdate = true;
+}
+
+function drawTexture(type, ctx, timeSeconds = 0) {
+  if (type === EDGE_TYPES.water) drawWaterTexture(ctx, timeSeconds);
   else if (type === EDGE_TYPES.field) drawFieldTexture(ctx);
   else if (type === EDGE_TYPES.forest) drawForestTexture(ctx);
   else if (type === EDGE_TYPES.grass) drawGrassTexture(ctx);
   else if (type === EDGE_TYPES.house) drawHouseTexture(ctx);
 }
 
-function drawWaterTexture(ctx) {
-  ctx.fillStyle = '#4d8fbb';
+function drawWaterTexture(ctx, timeSeconds = 0) {
+  const phase = timeSeconds * 2.2;
+
+  ctx.clearRect(0, 0, 128, 128);
+
+  const gradient = ctx.createLinearGradient(0, 0, 128, 128);
+  gradient.addColorStop(0, '#4f9ccc');
+  gradient.addColorStop(0.52, '#397fae');
+  gradient.addColorStop(1, '#65b3dc');
+  ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 128, 128);
 
-  for (let y = 0; y < 128; y += 16) {
-    ctx.strokeStyle = 'rgba(235,250,255,0.20)';
+  for (let y = -16; y < 160; y += 16) {
+    const waveShift = Math.sin(phase + y * 0.09) * 7;
+
+    ctx.strokeStyle = 'rgba(235,250,255,0.22)';
     ctx.lineWidth = 3;
     ctx.beginPath();
 
-    for (let x = -16; x <= 144; x += 8) {
-      ctx.lineTo(x, y + Math.sin((x + y) * 0.08) * 4);
+    for (let x = -24; x <= 152; x += 8) {
+      const px = x + waveShift;
+      const py = y + Math.sin((x + y) * 0.08 + phase) * 4;
+      if (x === -24) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
     }
 
     ctx.stroke();
   }
 
-  for (let i = 0; i < 40; i++) {
-    const x = (i * 47) % 128;
-    const y = (i * 29) % 128;
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  for (let i = 0; i < 42; i++) {
+    const driftX = Math.sin(phase * 0.7 + i) * 5;
+    const driftY = Math.cos(phase * 0.55 + i * 1.7) * 3;
+    const x = ((i * 47) % 128) + driftX;
+    const y = ((i * 29) % 128) + driftY;
+    const alpha = 0.04 + Math.max(0, Math.sin(phase + i * 0.8)) * 0.06;
+
+    ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
     ctx.beginPath();
-    ctx.arc(x, y, (i % 3) + 1, 0, Math.PI * 2);
+    ctx.arc((x + 128) % 128, (y + 128) % 128, (i % 3) + 1, 0, Math.PI * 2);
     ctx.fill();
   }
 }

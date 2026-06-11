@@ -8,6 +8,8 @@ export const MISSION_TILE_REWARD = 3;
 export const MISSION_CHANCE = 0.20;
 export const COMPLETED_MISSION_VISIBLE_TURNS = 5;
 
+const TRAIN_MISSION_TYPE = 'train';
+
 // Paliers calibrés sur l'effort réel de zone :
 // - prairie, eau et rail valent toujours 1 unité par triangle ;
 // - champs = 1 à 2, maisons = 1 à 4, arbres = 1 à 6.
@@ -31,6 +33,13 @@ const MISSION_TYPES = [
     label: 'Voie ferrée',
     unit: 'éléments',
     targets: [8, 15, 24, 35, 48, 65]
+  },
+  {
+    type: TRAIN_MISSION_TYPE,
+    matchTypes: [EDGE_TYPES.rail],
+    label: 'Train',
+    unit: 'trains',
+    targets: [1, 2, 3, 4, 5, 6]
   },
   {
     type: EDGE_TYPES.water,
@@ -133,7 +142,9 @@ export function getCompletedMissions(manager, placedTiles) {
 }
 
 export function getMissionProgressByType(placedTiles) {
-  return getBestZoneTotalsByType(placedTiles);
+  const progress = getBestZoneTotalsByType(placedTiles);
+  progress.set(TRAIN_MISSION_TYPE, countRailTrainLines(placedTiles));
+  return progress;
 }
 
 export function consumeCompletedMissions(manager, completedMissions) {
@@ -196,7 +207,10 @@ function pickMissionDefinition(tile, manager) {
 
   if (availableDefinitions.length === 0) return null;
 
-  const matchingDefinitions = availableDefinitions.filter(mission => presentTypes.has(mission.type));
+  const matchingDefinitions = availableDefinitions.filter(mission => {
+    const matchTypes = mission.matchTypes ?? [mission.type];
+    return matchTypes.some(type => presentTypes.has(type));
+  });
   return pickRandom(matchingDefinitions.length > 0 ? matchingDefinitions : availableDefinitions);
 }
 
@@ -294,7 +308,77 @@ function getTileCenterType(placedTile) {
 }
 
 function isMissionType(type) {
-  return MISSION_TYPES.some(mission => mission.type === type);
+  return MISSION_TYPES.some(mission => mission.type === type && !mission.matchTypes);
+}
+
+function countRailTrainLines(placedTiles) {
+  const railNodes = new Set();
+  const adjacency = new Map();
+
+  for (const placedTile of placedTiles.values()) {
+    for (const edge of EDGE_ORDER) {
+      if (getTileEdgeType(placedTile, edge) !== EDGE_TYPES.rail) continue;
+      const nodeKey = makeNodeKey(placedTile.key, edge);
+      railNodes.add(nodeKey);
+      adjacency.set(nodeKey, adjacency.get(nodeKey) ?? new Set());
+    }
+  }
+
+  for (const placedTile of placedTiles.values()) {
+    const railEdges = EDGE_ORDER.filter(edge => getTileEdgeType(placedTile, edge) === EDGE_TYPES.rail);
+
+    for (let i = 0; i < railEdges.length; i += 1) {
+      for (let j = i + 1; j < railEdges.length; j += 1) {
+        connectRailNodes(adjacency, makeNodeKey(placedTile.key, railEdges[i]), makeNodeKey(placedTile.key, railEdges[j]));
+      }
+    }
+
+    for (const direction of HEX_DIRECTIONS) {
+      const ownEdge = direction.edge;
+      if (getTileEdgeType(placedTile, ownEdge) !== EDGE_TYPES.rail) continue;
+
+      const neighborKey = makeHexKey(placedTile.q + direction.q, placedTile.r + direction.r);
+      const neighborTile = placedTiles.get(neighborKey);
+      if (!neighborTile) continue;
+
+      const neighborEdge = getOppositeEdge(ownEdge);
+      if (getTileEdgeType(neighborTile, neighborEdge) !== EDGE_TYPES.rail) continue;
+
+      connectRailNodes(adjacency, makeNodeKey(placedTile.key, ownEdge), makeNodeKey(neighborTile.key ?? neighborKey, neighborEdge));
+    }
+  }
+
+  const visited = new Set();
+  let trainLines = 0;
+
+  for (const nodeKey of railNodes) {
+    if (visited.has(nodeKey)) continue;
+
+    const stack = [nodeKey];
+    const tileKeys = new Set();
+    visited.add(nodeKey);
+
+    while (stack.length > 0) {
+      const current = stack.pop();
+      tileKeys.add(current.split(':')[0]);
+
+      for (const next of adjacency.get(current) ?? []) {
+        if (visited.has(next)) continue;
+        visited.add(next);
+        stack.push(next);
+      }
+    }
+
+    if (tileKeys.size >= 2) trainLines += 1;
+  }
+
+  return trainLines;
+}
+
+function connectRailNodes(adjacency, a, b) {
+  if (!adjacency.has(a) || !adjacency.has(b) || a === b) return;
+  adjacency.get(a).add(b);
+  adjacency.get(b).add(a);
 }
 
 function makeNodeKey(tileKey, edge) {

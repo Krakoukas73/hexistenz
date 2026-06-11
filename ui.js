@@ -12,6 +12,7 @@ export function createUI() {
     missionList: document.getElementById('missionList'),
     rotation: document.getElementById('dbgRotation'),
     score: document.getElementById('dbgScore'),
+    gridPercent: document.getElementById('dbgGridPercent'),
     lastScore: document.getElementById('dbgLastScore'),
     placement: document.getElementById('dbgPlacement'),
     keys: {
@@ -53,9 +54,14 @@ export function setHelpVisible(ui, visible) {
   ui.keys.h?.classList.toggle('active', visible);
 }
 
-export function updateScoreUI(ui, totalScore, lastScore = 0) {
+export function updateScoreUI(ui, totalScore, lastScore = 0, placedTileCount = null, totalGridTiles = null) {
   setText(ui.score, String(totalScore));
   setText(ui.lastScore, lastScore > 0 ? `+${lastScore}` : String(lastScore));
+
+  if (placedTileCount !== null && totalGridTiles !== null) {
+    const percentage = totalGridTiles > 0 ? (placedTileCount / totalGridTiles) * 100 : 0;
+    setText(ui.gridPercent, `${percentage.toFixed(1)}%`);
+  }
 }
 
 
