@@ -16,13 +16,30 @@
         <div id="dbgScore" class="score-value">0</div>
       </div>
       <div>
-        <div class="score-title">GRILLE</div>
+        <div class="score-title">GRILLE CONQUISE</div>
         <div id="dbgGridPercent" class="score-value">0.0%</div>
       </div>
     </div>
     <div class="last-score-line">Dernier coup <span id="dbgLastScore">0</span></div>
+    <div id="highscorePanel" class="highscore-panel">
+      <div class="highscore-title">HIGHSCORES</div>
+      <ol id="highscoreList" class="highscore-list">
+        <li>Chargement...</li>
+      </ol>
+      <div id="highscoreSubmit" class="highscore-submit hidden">
+        <input id="highscoreName" type="text" maxlength="20" placeholder="Pseudo" autocomplete="off" />
+        <button id="btnSaveScore" type="button">OK</button>
+      </div>
+      <div id="highscoreStatus" class="highscore-status"></div>
+      <button id="btnAbandonGame" class="abandon-button" type="button">ABANDONNER</button>
+      <button id="btnNewGame" class="new-game-button" type="button">NOUVELLE PARTIE</button>
+    </div>
+	
+	<br>
     <div id="statsPanel" class="stats-panel">
-      <div class="stats-title">STATISTIQUES</div>
+      <br>
+	  <div class="stats-title">STATISTIQUES DE LA PARTIE</div>
+	  <br>
       <div class="stats-summary-row">
         <div class="stats-summary-card stats-tiles"><span>Tuiles posées</span><strong id="statTiles">0</strong></div>
         <div class="stats-summary-card stats-trains"><span>Trains</span><strong id="statTrains">0</strong></div>
@@ -58,19 +75,6 @@
           <div class="stats-metrics"><div><span>Total</span><strong id="statRail">0</strong></div><div><span>Voie max</span><strong id="statLargestRail">0</strong></div></div>
         </div>
       </div>
-    </div>
-    <div id="highscorePanel" class="highscore-panel">
-      <div class="highscore-title">HIGHSCORES</div>
-      <ol id="highscoreList" class="highscore-list">
-        <li>Chargement...</li>
-      </ol>
-      <div id="highscoreSubmit" class="highscore-submit hidden">
-        <input id="highscoreName" type="text" maxlength="20" placeholder="Pseudo" autocomplete="off" />
-        <button id="btnSaveScore" type="button">OK</button>
-      </div>
-      <div id="highscoreStatus" class="highscore-status"></div>
-      <button id="btnAbandonGame" class="abandon-button" type="button">ABANDONNER LA PARTIE</button>
-      <button id="btnNewGame" class="new-game-button" type="button">NOUVELLE PARTIE</button>
     </div>
   </aside>
 
@@ -146,22 +150,22 @@
     <div class="help-panel" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
       <header class="help-header">
         <div>
-          <div class="help-kicker">Guide joueur</div>
           <h1 id="helpTitle">Aide</h1>
+          <div class="help-kicker">Guide du joueur au long cours</div>
         </div>
         <button id="btnCloseHelp" class="help-close" type="button" aria-label="Fermer l'aide">×</button>
       </header>
 
       <div class="help-grid">
         <article class="help-card help-card-wide">
-          <h2>🎯 Objectif</h2>
+          <h2>🎯 Objectif du jeu</h2>
           <p>Pose les tuiles hexagonales pour agrandir la carte et marquer un maximum de points. Chaque tuile possède 6 bords colorés : les aligner correctement augmente le score.</p>
           <div class="score-strip">
-            <div><strong>+2</strong><span>par tuile posée</span></div>
-            <div><strong>+10</strong><span>par bord identique classique contre une tuile voisine</span></div>
-            <div><strong>+25</strong><span>par connexion eau/eau ou rail/rail</span></div>
-            <div><strong>+50</strong><span>bonus quand une tuile est entourée sur ses 6 côtés</span></div>
-            <div><strong>+100 +3 tuiles</strong><span>par mission terminée</span></div>
+            <div><strong>+2 points</strong><span>par tuile posée</span></div>
+            <div><strong>+10 points</strong><span>par bord identique contre une tuile voisine</span></div>
+            <div><strong>+25 points</strong><span>par connexion eau/eau ou rail/rail</span></div>
+            <div><strong>+50 points</strong><span>bonus quand une tuile est entourée sur ses 6 côtés</span></div>
+            <div><strong>+100 points + 3 tuiles</strong><span>par mission terminée</span></div>
           </div>
         </article>
 
@@ -185,6 +189,12 @@
           <p>L’eau et le rail sont des réseaux stricts et plus difficiles à placer. En échange, chaque connexion correcte rapporte plus de points.</p>
           <div class="rule-line"><span class="swatch water"></span><strong>Eau</strong><span>se connecte uniquement à eau : +25</span></div>
           <div class="rule-line"><span class="swatch rail"></span><strong>Rail</strong><span>se connecte uniquement à rail : +25</span></div>
+        </article>
+
+        <article class="help-card">
+          <h2>🕳️ Cellules noires</h2>
+          <p>Les cellules noires sont des cases spéciales déjà présentes sur la grille. Elles agissent comme des jokers : elles remplacent ce qui manque autour d’elles et acceptent les connexions avec toutes les textures adjacentes.</p>
+          <div class="rule-line"><span class="swatch black-cell"></span><strong>Joker</strong><span>compte comme compatible avec tout bord voisin</span></div>
         </article>
 
         <article class="help-card help-card-textures">

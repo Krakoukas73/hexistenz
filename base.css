@@ -39,7 +39,9 @@ body::after {
   top: 14px;
   left: 14px;
   z-index: 12;
-  min-width: 360px;
+  width: 360px;
+  max-width: calc(100vw - 28px);
+  box-sizing: border-box;
   padding: 14px 16px;
   font-family: monospace;
   color: rgba(240, 250, 255, 0.96);
@@ -238,7 +240,7 @@ body::after {
 }
 
 .stats-title::after {
-  content: "temps réel";
+  content: none;
   padding: 2px 7px;
   border: 1px solid rgba(180, 215, 255, 0.18);
   border-radius: 999px;
@@ -276,6 +278,7 @@ body::after {
 }
 
 .stats-summary-card strong {
+  overflow-wrap: anywhere;
   color: #ffffff;
   font-size: 20px;
   font-weight: 1000;
@@ -362,10 +365,11 @@ body::after {
 
 .stats-metrics strong {
   display: block;
+  overflow-wrap: anywhere;
   color: #ffffff;
-  font-size: 18px;
+  font-size: 13px;
   font-weight: 1000;
-  line-height: 1;
+  line-height: 1.12;
 }
 
 .stats-grass { background: linear-gradient(135deg, rgba(131, 184, 79, 0.22), rgba(138, 107, 62, 0.12)); }
@@ -396,4 +400,99 @@ body::after {
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+
+/* v0.5.3.1 : topbar bornée avant le deck "tuile courante / tuile suivante".
+   Patch CSS uniquement : aucune logique JS/gameplay modifiée. */
+#statsPanel.stats-panel {
+  position: static;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin-top: 14px;
+  padding: 10px 0 0;
+  border-top: 1px solid rgba(120, 180, 255, 0.24);
+  background: transparent;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+#statsPanel .stats-title {
+  margin-bottom: 8px;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+#statsPanel .stats-title::after {
+  content: none;
+}
+
+#statsPanel .stats-summary-row {
+  margin-bottom: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+#statsPanel .stats-summary-card {
+  padding: 7px 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+#statsPanel .stats-summary-card strong {
+  font-size: 18px;
+}
+
+#statsPanel .stats-card-grid {
+  grid-template-columns: 1fr;
+  gap: 7px;
+  min-width: 0;
+}
+
+#statsPanel .stats-card {
+  padding: 7px 8px;
+}
+
+#statsPanel .stats-card-head {
+  margin-bottom: 5px;
+  gap: 5px;
+  font-size: 11px;
+}
+
+#statsPanel .stats-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+}
+
+#statsPanel .stats-metrics {
+  gap: 6px;
+}
+
+#statsPanel .stats-metrics div {
+  padding: 5px 6px 4px;
+}
+
+#statsPanel .stats-metrics span {
+  font-size: 8px;
+}
+
+#statsPanel .stats-metrics strong {
+  font-size: 11px;
+  line-height: 1.08;
+  white-space: normal;
+}
+
+@media (max-width: 1050px) {
+  #scorePanel {
+    width: calc(100vw - 28px);
+    max-height: calc(100vh - 28px);
+    overflow-y: auto;
+  }
 }

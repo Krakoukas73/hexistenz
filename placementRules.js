@@ -11,24 +11,24 @@ export const HEX_DIRECTIONS = [
   { q: 1, r: -1, edge: 'nw' }
 ];
 
-export function canPlaceTileAt(hex, placedTiles, tile = null) {
-  return getPlacementValidation(hex, placedTiles, tile).valid;
+export function canPlaceTileAt(hex, placedTiles, tile = null, specialCells = null) {
+  return getPlacementValidation(hex, placedTiles, tile, specialCells).valid;
 }
 
-export function getPlacementValidation(hex, placedTiles, tile = null) {
+export function getPlacementValidation(hex, placedTiles, tile = null, specialCells = null) {
   if (!hex) return invalid('NO_HEX');
 
   if (!isHexInsideGrid(hex)) return invalid('OUT_OF_GRID');
 
   const key = makeHexKey(hex.q, hex.r);
-  if (placedTiles.has(key)) return invalid('OCCUPIED');
+  if (placedTiles.has(key) || specialCells?.has(key)) return invalid('OCCUPIED');
 
   if (placedTiles.size === 0) return valid();
 
-  if (!hasAdjacentPlacedTile(hex, placedTiles)) return invalid('NO_ADJACENT_TILE');
+  if (!hasAdjacentPlacedTile(hex, placedTiles, specialCells)) return invalid('NO_ADJACENT_TILE');
 
   if (tile) {
-    const conflicts = getNetworkConnectionConflicts(hex, placedTiles, tile);
+    const conflicts = getNetworkConnectionConflicts(hex, placedTiles, tile, specialCells);
     if (conflicts.length > 0) return invalid('INVALID_NETWORK_CONNECTION', { conflicts });
   }
 
@@ -45,19 +45,21 @@ export function isHexInsideGrid(hex) {
   ) <= GRID_RADIUS;
 }
 
-export function hasAdjacentPlacedTile(hex, placedTiles) {
-  return HEX_DIRECTIONS.some(direction => getNeighborTile(hex, direction, placedTiles));
+export function hasAdjacentPlacedTile(hex, placedTiles, specialCells = null) {
+  return HEX_DIRECTIONS.some(direction => getNeighborTile(hex, direction, placedTiles) || getNeighborSpecialCell(hex, direction, specialCells));
 }
 
-export function hasValidNetworkConnections(hex, placedTiles, tile) {
-  return getNetworkConnectionConflicts(hex, placedTiles, tile).length === 0;
+export function hasValidNetworkConnections(hex, placedTiles, tile, specialCells = null) {
+  return getNetworkConnectionConflicts(hex, placedTiles, tile, specialCells).length === 0;
 }
 
-export function getNetworkConnectionConflicts(hex, placedTiles, tile) {
+export function getNetworkConnectionConflicts(hex, placedTiles, tile, specialCells = null) {
   const conflicts = [];
 
   for (const direction of HEX_DIRECTIONS) {
     const neighbor = getNeighborTile(hex, direction, placedTiles);
+    const specialNeighbor = getNeighborSpecialCell(hex, direction, specialCells);
+    if (specialNeighbor) continue;
     if (!neighbor) continue;
 
     const ownEdge = direction.edge;
@@ -94,6 +96,10 @@ export function getOppositeEdge(edge) {
 
 function getNeighborTile(hex, direction, placedTiles) {
   return placedTiles.get(makeHexKey(hex.q + direction.q, hex.r + direction.r));
+}
+
+function getNeighborSpecialCell(hex, direction, specialCells) {
+  return specialCells?.get(makeHexKey(hex.q + direction.q, hex.r + direction.r)) ?? null;
 }
 
 function valid() {

@@ -85,19 +85,25 @@ export function updateStatsUI(ui, stats) {
   if (!ui?.stats || !stats) return;
 
   setText(ui.stats.tiles, String(stats.tiles ?? 0));
-  setText(ui.stats.grass, String(stats.totals?.grass ?? 0));
-  setText(ui.stats.field, String(stats.totals?.field ?? 0));
-  setText(ui.stats.forest, String(stats.totals?.forest ?? 0));
-  setText(ui.stats.house, String(stats.totals?.house ?? 0));
-  setText(ui.stats.water, String(stats.totals?.water ?? 0));
-  setText(ui.stats.rail, String(stats.totals?.rail ?? 0));
+  setText(ui.stats.grass, formatStatValue(stats.totals?.grass, 'unité', 'unités'));
+  setText(ui.stats.field, formatStatValue(stats.totals?.field, 'champ de blé', 'champs de blé'));
+  setText(ui.stats.forest, formatStatValue(stats.totals?.forest, 'arbre', 'arbres'));
+  setText(ui.stats.house, formatStatValue(stats.totals?.house, 'maison', 'maisons'));
+  setText(ui.stats.water, formatStatValue(stats.totals?.water, 'unité', 'unités'));
+  setText(ui.stats.rail, formatStatValue(stats.totals?.rail, 'rail', 'rails'));
   setText(ui.stats.trains, String(stats.trainLines ?? 0));
-  setText(ui.stats.largestGrass, String(stats.largest?.grass ?? 0));
-  setText(ui.stats.largestField, String(stats.largest?.field ?? 0));
-  setText(ui.stats.largestForest, String(stats.largest?.forest ?? 0));
-  setText(ui.stats.largestHouse, String(stats.largest?.house ?? 0));
-  setText(ui.stats.largestWater, String(stats.largest?.water ?? 0));
-  setText(ui.stats.largestRail, String(stats.largest?.rail ?? 0));
+  setText(ui.stats.largestGrass, formatStatValue(stats.largest?.grass, 'unité', 'unités'));
+  setText(ui.stats.largestField, formatStatValue(stats.largest?.field, 'champ de blé', 'champs de blé'));
+  setText(ui.stats.largestForest, formatStatValue(stats.largest?.forest, 'arbre', 'arbres'));
+  setText(ui.stats.largestHouse, formatStatValue(stats.largest?.house, 'maison', 'maisons'));
+  setText(ui.stats.largestWater, formatStatValue(stats.largest?.water, 'unité', 'unités'));
+  setText(ui.stats.largestRail, formatStatValue(stats.largest?.rail, 'rail', 'rails'));
+}
+
+function formatStatValue(value, singularUnit, pluralUnit) {
+  const amount = Number(value ?? 0);
+  const unit = amount <= 1 ? singularUnit : pluralUnit;
+  return `${amount} ${unit}`;
 }
 
 export function updateMissionUI(ui, missions, formatter, progressByType = new Map()) {

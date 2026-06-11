@@ -2,6 +2,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 import { DECK_SIZE, GRID_RADIUS } from './config.js';
 import { CameraControls } from './controls.js';
 import { createGrid } from './grid.js';
+import { createSpecialCells, createSpecialCellsMesh, updateSpecialCellsMeshAnimation } from './specialCells.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { createTileMesh } from './tileMesh.js';
 import { updateAnimatedBiomeTextures } from './tileTextures.js';
@@ -13,6 +14,8 @@ import { createPlacementFeedbackOverlay, getPlacementLabel } from './placementOv
 import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay, rebuildWaterZoneOverlay, updateHoverZoneOverlayAnimation } from './waterZoneOverlay.js';
 import { createRailTrainOverlay, rebuildRailTrainOverlay, updateRailTrainOverlay } from './railTrainOverlay.js';
 import { createWaterSharkOverlay, rebuildWaterSharkOverlay, updateWaterSharkOverlay } from './waterSharkOverlay.js';
+import { createForestRabbitOverlay, rebuildForestRabbitOverlay, updateForestRabbitOverlay } from './forestRabbitOverlay.js';
+import { createHouseSmokeOverlay, rebuildHouseSmokeOverlay, updateHouseSmokeOverlay } from './houseSmokeOverlay.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { createCamera, createRenderer, createThreeScene, resizeRenderer } from './threeSetup.js';
 import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
@@ -29,6 +32,8 @@ export function initScene() {
 
   // État de partie : carte posée, historique annulable, deck et score.
   const placedTiles = new Map();
+  const specialCells = createSpecialCells();
+  const specialCellsMesh = createSpecialCellsMesh(specialCells);
   const placementHistory = [];
   const deck = createDeck(DECK_SIZE);
   const missionManager = createMissionManager();
@@ -46,10 +51,12 @@ export function initScene() {
   const hoverZoneOverlay = createHoverZoneOverlay();
   const railTrainOverlay = createRailTrainOverlay();
   const waterSharkOverlay = createWaterSharkOverlay();
+  const forestRabbitOverlay = createForestRabbitOverlay();
+  const houseSmokeOverlay = createHouseSmokeOverlay();
 
   ghostTile.visible = false;
 
-  scene.add(createGrid(), waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterSharkOverlay, ghostTile);
+  scene.add(createGrid(), specialCellsMesh, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterSharkOverlay, forestRabbitOverlay, houseSmokeOverlay, ghostTile);
   refreshDeckUI();
   maybeAddMissionForCurrentTile();
   refreshMissionUI();
@@ -130,11 +137,15 @@ export function initScene() {
   function animate() {
     requestAnimationFrame(animate);
     controls.update();
-    updateAnimatedBiomeTextures(performance.now() * 0.001);
+    const timeSeconds = performance.now() * 0.001;
+    updateAnimatedBiomeTextures(timeSeconds);
+    updateSpecialCellsMeshAnimation(specialCellsMesh, timeSeconds);
     updateKeyboardUI(ui, controls.keys, rotationKeyActive);
     updateHoverZoneOverlayAnimation(hoverZoneOverlay, waterZoneOverlay);
-    updateRailTrainOverlay(railTrainOverlay, performance.now() * 0.001);
-    updateWaterSharkOverlay(waterSharkOverlay, performance.now() * 0.001);
+    updateRailTrainOverlay(railTrainOverlay, timeSeconds);
+    updateWaterSharkOverlay(waterSharkOverlay, timeSeconds);
+    updateForestRabbitOverlay(forestRabbitOverlay, timeSeconds);
+    updateHouseSmokeOverlay(houseSmokeOverlay, timeSeconds);
     renderer.render(scene, camera);
   }
 
@@ -166,7 +177,7 @@ export function initScene() {
     }
 
     const tile = rotateTile(deck[0], rotationIndex);
-    const validation = getPlacementValidation(hex, placedTiles, tile);
+    const validation = getPlacementValidation(hex, placedTiles, tile, specialCells);
     rebuildGhost(position, tile, validation);
   }
 
@@ -176,13 +187,13 @@ export function initScene() {
     const key = makeHexKey(hex.q, hex.r);
     const position = axialToWorld(hex.q, hex.r);
     const tile = rotateTile(deck[0], rotationIndex);
-    const validation = getPlacementValidation(hex, placedTiles, tile);
+    const validation = getPlacementValidation(hex, placedTiles, tile, specialCells);
 
     if (!validation.valid) {
       rebuildGhost(position, tile, validation);
       return;
     }
-    const scoreResult = calculatePlacementScore(hex, placedTiles, tile);
+    const scoreResult = calculatePlacementScore(hex, placedTiles, tile, specialCells);
     const mesh = createTileMesh(tile);
 
     mesh.position.set(position.x, 0.003, position.z);
@@ -218,6 +229,8 @@ export function initScene() {
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
     rebuildWaterSharkOverlay(waterSharkOverlay, placedTiles);
+    rebuildForestRabbitOverlay(forestRabbitOverlay, placedTiles);
+    rebuildHouseSmokeOverlay(houseSmokeOverlay, placedTiles);
 
     ghostTile.visible = false;
     deck.shift();
@@ -262,13 +275,13 @@ export function initScene() {
     if (hasTarget) {
       const position = axialToWorld(hoveredHex.q, hoveredHex.r);
       const tile = rotateTile(deck[0], rotationIndex);
-      const validation = getPlacementValidation(hoveredHex, placedTiles, tile);
+      const validation = getPlacementValidation(hoveredHex, placedTiles, tile, specialCells);
       rebuildGhost(position, tile, validation);
     }
   }
 
   function rebuildGhost(position, tile = rotateTile(deck[0], rotationIndex), validation = null) {
-    const status = validation ?? getPlacementValidation(hoveredHex, placedTiles, tile);
+    const status = validation ?? getPlacementValidation(hoveredHex, placedTiles, tile, specialCells);
 
     ghostTile.clear();
     ghostTile.add(createTileMesh(tile, { opacity: 1 }));
@@ -295,6 +308,8 @@ export function initScene() {
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
     rebuildWaterSharkOverlay(waterSharkOverlay, placedTiles);
+    rebuildForestRabbitOverlay(forestRabbitOverlay, placedTiles);
+    rebuildHouseSmokeOverlay(houseSmokeOverlay, placedTiles);
     totalScore = Math.max(0, totalScore - (last.score ?? 0));
 
     if (last.generatedMission) removeMissionById(missionManager, last.generatedMission.id);
@@ -314,7 +329,7 @@ export function initScene() {
     if (hoveredHex && isPlacementTarget(hoveredHex)) {
       const position = axialToWorld(hoveredHex.q, hoveredHex.r);
       const tile = rotateTile(deck[0], rotationIndex);
-      const validation = getPlacementValidation(hoveredHex, placedTiles, tile);
+      const validation = getPlacementValidation(hoveredHex, placedTiles, tile, specialCells);
       rebuildGhost(position, tile, validation);
     } else {
       ghostTile.visible = false;
@@ -323,7 +338,7 @@ export function initScene() {
   }
 
   function isPlacementTarget(hex) {
-    return !gameOver && deck.length > 0 && canPlaceTileAt(hex, placedTiles);
+    return !gameOver && deck.length > 0 && canPlaceTileAt(hex, placedTiles, null, specialCells);
   }
 
   function abandonGame() {

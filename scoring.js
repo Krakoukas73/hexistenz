@@ -16,13 +16,16 @@ function getMatchingEdgeScore(edgeType) {
     : SCORE_VALUES.matchingEdge;
 }
 
-export function calculatePlacementScore(hex, placedTiles, tile) {
+export function calculatePlacementScore(hex, placedTiles, tile, specialCells = null) {
   let matchingEdges = 0;
   let checkedEdges = 0;
   let edgeScore = 0;
 
   for (const direction of HEX_DIRECTIONS) {
-    const neighbor = placedTiles.get(makeHexKey(hex.q + direction.q, hex.r + direction.r));
+    const neighborKey = makeHexKey(hex.q + direction.q, hex.r + direction.r);
+    if (specialCells?.has(neighborKey)) continue;
+
+    const neighbor = placedTiles.get(neighborKey);
     if (!neighbor) continue;
 
     checkedEdges++;
@@ -36,7 +39,7 @@ export function calculatePlacementScore(hex, placedTiles, tile) {
     }
   }
 
-  const surroundedTiles = countNewlySurroundedTiles(hex, placedTiles);
+  const surroundedTiles = countNewlySurroundedTiles(hex, placedTiles, specialCells);
   const surroundedTileBonus = surroundedTiles * SCORE_VALUES.surroundedTileBonus;
 
   return {
@@ -50,7 +53,7 @@ export function calculatePlacementScore(hex, placedTiles, tile) {
   };
 }
 
-function countNewlySurroundedTiles(hex, placedTiles) {
+function countNewlySurroundedTiles(hex, placedTiles, specialCells = null) {
   const candidateKeys = new Set([makeHexKey(hex.q, hex.r)]);
 
   for (const direction of HEX_DIRECTIONS) {
@@ -66,16 +69,17 @@ function countNewlySurroundedTiles(hex, placedTiles) {
       ? hex
       : placedTiles.get(key);
 
-    if (candidate && isSurroundedAfterPlacement(candidate, hex, placedTiles)) count++;
+    if (candidate && isSurroundedAfterPlacement(candidate, hex, placedTiles, specialCells)) count++;
   }
 
   return count;
 }
 
-function isSurroundedAfterPlacement(candidate, placedHex, placedTiles) {
+function isSurroundedAfterPlacement(candidate, placedHex, placedTiles, specialCells = null) {
   return HEX_DIRECTIONS.every(direction => {
     const q = candidate.q + direction.q;
     const r = candidate.r + direction.r;
-    return placedTiles.has(makeHexKey(q, r)) || (q === placedHex.q && r === placedHex.r);
+    const key = makeHexKey(q, r);
+    return placedTiles.has(key) || specialCells?.has(key) || (q === placedHex.q && r === placedHex.r);
   });
 }
