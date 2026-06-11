@@ -1,6 +1,4 @@
 
-<img width="1133" height="1379" alt="logo2" src="https://github.com/user-attachments/assets/23433398-575e-4b2c-a019-6ca69a86fd53" />
-
 <img width="1536" height="1024" alt="Hexistenz hero" src="https://github.com/user-attachments/assets/8561d479-a1cc-4e50-8dfd-75b394e7f7d2" />
 
 
