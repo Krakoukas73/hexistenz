@@ -13,11 +13,14 @@ const SECTOR_DEFS = [
   { key: 'nw', a: 5, b: 0 }
 ];
 
-const TRAIN_Y = (TILE_VISUAL.railY ?? 0.052) + 0.04;
-const TRAIN_SPEED = 0.30;
-const TRAIN_CURVE_SLOW_DISTANCE = HEX_SIZE * 0.32;
-const TRAIN_TERMINUS_SLOW_DISTANCE = HEX_SIZE * 0.58;
-const TRAIN_SCALE = HEX_SIZE * 0.22;
+const TRAIN_Y = (TILE_VISUAL.railY ?? 0.052) + 0.025;
+const TRAIN_SPEED = 0.18;
+const TRAIN_CURVE_SLOW_DISTANCE = HEX_SIZE * 0.42;
+const TRAIN_TERMINUS_SLOW_DISTANCE = HEX_SIZE * 0.72;
+const TRAIN_SCALE = HEX_SIZE * 0.153;
+const TRAIN_UNIT_SPACING = HEX_SIZE * 0.30;
+const TRAIN_MIN_WAGONS = 2;
+const TRAIN_MAX_WAGONS = 8;
 const PORT_INSET = 0.18;
 
 const materialCache = new Map();
@@ -46,8 +49,8 @@ export function rebuildRailTrainOverlay(group, placedTiles) {
     const distance = measurePath(points);
     if (distance < HEX_SIZE * 1.05) continue;
 
-    const trainObject = createTrainObject();
-    trainObject.position.copy(points[0]);
+    const wagonCount = getWagonCountForRailNetwork(component.tileKeys.size, distance);
+    const trainObject = createTrainObject(wagonCount);
     trainObject.visible = true;
     group.add(trainObject);
     group.userData.trains.push({
@@ -65,15 +68,7 @@ export function updateRailTrainOverlay(group, timeSeconds = 0) {
 
   for (const train of trains) {
     const progress = (timeSeconds * TRAIN_SPEED / Math.max(train.distance, 0.001) + train.offset) % 1;
-    const sample = samplePingPongMotionTrack(train.motionTrack, progress);
-
-    train.object.position.copy(sample.position);
-    train.object.position.y = TRAIN_Y;
-    train.object.rotation.y = -Math.atan2(sample.tangent.z, sample.tangent.x);
-
-    const pulse = 1 + Math.sin(timeSeconds * 8) * 0.035;
-    train.object.scale.setScalar(pulse);
-    updateTrainSmoke(train.object, timeSeconds + train.offset * 10);
+    updateArticulatedTrain(train.object, train.motionTrack, progress, timeSeconds + train.offset * 10);
   }
 }
 
@@ -265,185 +260,301 @@ function reconstructPath(previous, start, end) {
   return path.reverse();
 }
 
-function createTrainObject() {
+function getWagonCountForRailNetwork(tileCount, distance) {
+  const byTiles = Math.floor(Math.max(0, tileCount - 2) / 2) + TRAIN_MIN_WAGONS;
+  const byDistance = Math.floor(Math.max(0, distance - HEX_SIZE * 1.5) / (HEX_SIZE * 1.25)) + TRAIN_MIN_WAGONS;
+  return Math.max(TRAIN_MIN_WAGONS, Math.min(TRAIN_MAX_WAGONS, Math.max(byTiles, byDistance)));
+}
+
+function createTrainObject(wagonCount = TRAIN_MIN_WAGONS) {
   const group = new THREE.Group();
-  group.name = 'animatedRailTrain';
+  group.name = 'animatedRailTrainArticulated';
 
-  const base = new THREE.Mesh(
-    new THREE.BoxGeometry(TRAIN_SCALE * 2.05, TRAIN_SCALE * 0.22, TRAIN_SCALE * 0.86),
-    getMaterial('base', 0x2D3436, 1)
-  );
-  base.position.set(TRAIN_SCALE * 0.18, TRAIN_SCALE * 0.11, 0);
-  base.renderOrder = 46;
-  group.add(base);
+  const units = [];
+  const couplers = [];
 
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(TRAIN_SCALE * 1.32, TRAIN_SCALE * 0.52, TRAIN_SCALE * 0.78),
-    getMaterial('body', 0xD83A2E, 1)
-  );
-  body.position.set(TRAIN_SCALE * 0.32, TRAIN_SCALE * 0.42, 0);
-  body.renderOrder = 47;
-  group.add(body);
+  const loco = new THREE.Group();
+  loco.name = 'train-locomotive-independent';
+  addLocomotive(loco, 0);
+  group.add(loco);
+  units.push({ object: loco, followDistance: 0, type: 'locomotive' });
 
-  const boiler = new THREE.Mesh(
-    new THREE.CylinderGeometry(TRAIN_SCALE * 0.34, TRAIN_SCALE * 0.34, TRAIN_SCALE * 1.18, 18),
-    getMaterial('boiler', 0xC7362D, 1)
-  );
-  boiler.rotation.z = Math.PI / 2;
-  boiler.position.set(TRAIN_SCALE * 0.46, TRAIN_SCALE * 0.55, 0);
-  boiler.renderOrder = 48;
-  group.add(boiler);
+  const wagonPalettes = [
+    { body: 0x4F6D7A, roof: 0xE9C46A, cargo: 'coal' },
+    { body: 0x8F5E3C, roof: 0xF4A261, cargo: 'freight' },
+    { body: 0x5B7C48, roof: 0xD9B56A, cargo: 'freight' },
+    { body: 0x6B5B95, roof: 0xC8B6E2, cargo: 'mail' },
+    { body: 0xA24936, roof: 0xE9C46A, cargo: 'freight' },
+    { body: 0x386F8F, roof: 0xA8DADC, cargo: 'mail' },
+    { body: 0x71543A, roof: 0xD6A541, cargo: 'coal' },
+    { body: 0x495867, roof: 0xF2CC8F, cargo: 'freight' }
+  ];
 
-  const boilerCap = new THREE.Mesh(
-    new THREE.CylinderGeometry(TRAIN_SCALE * 0.37, TRAIN_SCALE * 0.37, TRAIN_SCALE * 0.08, 18),
-    getMaterial('boilerCap', 0xF2994A, 1)
-  );
-  boilerCap.rotation.z = Math.PI / 2;
-  boilerCap.position.set(TRAIN_SCALE * 1.08, TRAIN_SCALE * 0.55, 0);
-  boilerCap.renderOrder = 49;
-  group.add(boilerCap);
+  for (let i = 0; i < wagonCount; i += 1) {
+    const palette = wagonPalettes[i % wagonPalettes.length];
+    const wagon = new THREE.Group();
+    wagon.name = `train-wagon-${i + 1}-independent`;
+    addWagon(wagon, 0, palette.body, palette.roof, palette.cargo);
+    group.add(wagon);
+    units.push({
+      object: wagon,
+      followDistance: TRAIN_UNIT_SPACING * (i + 1),
+      type: 'wagon'
+    });
 
-  const cabin = new THREE.Mesh(
-    new THREE.BoxGeometry(TRAIN_SCALE * 0.72, TRAIN_SCALE * 0.82, TRAIN_SCALE * 0.86),
-    getMaterial('cabin', 0xF2C94C, 1)
-  );
-  cabin.position.set(-TRAIN_SCALE * 0.58, TRAIN_SCALE * 0.64, 0);
-  cabin.renderOrder = 49;
-  group.add(cabin);
-
-  const roof = new THREE.Mesh(
-    new THREE.BoxGeometry(TRAIN_SCALE * 0.88, TRAIN_SCALE * 0.16, TRAIN_SCALE * 1.0),
-    getMaterial('roof', 0x222831, 1)
-  );
-  roof.position.set(-TRAIN_SCALE * 0.58, TRAIN_SCALE * 1.12, 0);
-  roof.renderOrder = 50;
-  group.add(roof);
-
-  for (const z of [-0.46, 0.46]) {
-    const window = new THREE.Mesh(
-      new THREE.PlaneGeometry(TRAIN_SCALE * 0.34, TRAIN_SCALE * 0.28),
-      getMaterial('window', 0x9BE7FF, 0.9)
-    );
-    window.rotation.y = z < 0 ? Math.PI / 2 : -Math.PI / 2;
-    window.position.set(-TRAIN_SCALE * 0.58, TRAIN_SCALE * 0.74, TRAIN_SCALE * z);
-    window.renderOrder = 51;
-    group.add(window);
-  }
-
-  const chimney = new THREE.Mesh(
-    new THREE.CylinderGeometry(TRAIN_SCALE * 0.13, TRAIN_SCALE * 0.17, TRAIN_SCALE * 0.55, 14),
-    getMaterial('dark', 0x171A1F, 1)
-  );
-  chimney.position.set(TRAIN_SCALE * 0.78, TRAIN_SCALE * 0.95, 0);
-  chimney.renderOrder = 51;
-  group.add(chimney);
-
-  const headLamp = new THREE.Mesh(
-    new THREE.SphereGeometry(TRAIN_SCALE * 0.12, 12, 8),
-    getMaterial('lamp', 0xFFF2A6, 1)
-  );
-  headLamp.position.set(TRAIN_SCALE * 1.18, TRAIN_SCALE * 0.58, 0);
-  headLamp.renderOrder = 52;
-  group.add(headLamp);
-
-  const cowcatcher = new THREE.Mesh(
-    new THREE.ConeGeometry(TRAIN_SCALE * 0.36, TRAIN_SCALE * 0.36, 4),
-    getMaterial('cowcatcher', 0x3E464C, 1)
-  );
-  cowcatcher.rotation.z = -Math.PI / 2;
-  cowcatcher.rotation.y = Math.PI / 4;
-  cowcatcher.position.set(TRAIN_SCALE * 1.36, TRAIN_SCALE * 0.18, 0);
-  cowcatcher.renderOrder = 49;
-  group.add(cowcatcher);
-
-  for (const x of [-0.72, -0.22, 0.38, 0.88]) {
-    for (const z of [-0.46, 0.46]) {
-      const wheel = new THREE.Mesh(
-        new THREE.CylinderGeometry(TRAIN_SCALE * 0.17, TRAIN_SCALE * 0.17, TRAIN_SCALE * 0.12, 16),
-        getMaterial('wheel', 0x101317, 1)
-      );
-      wheel.rotation.x = Math.PI / 2;
-      wheel.position.set(TRAIN_SCALE * x, TRAIN_SCALE * 0.04, TRAIN_SCALE * z);
-      wheel.renderOrder = 52;
-      group.add(wheel);
-
-      const hub = new THREE.Mesh(
-        new THREE.CylinderGeometry(TRAIN_SCALE * 0.07, TRAIN_SCALE * 0.07, TRAIN_SCALE * 0.135, 12),
-        getMaterial('hub', 0xD8DEE9, 1)
-      );
-      hub.rotation.x = Math.PI / 2;
-      hub.position.copy(wheel.position);
-      hub.renderOrder = 53;
-      group.add(hub);
-    }
-  }
-
-  const wagon = new THREE.Mesh(
-    new THREE.BoxGeometry(TRAIN_SCALE * 0.98, TRAIN_SCALE * 0.44, TRAIN_SCALE * 0.78),
-    getMaterial('wagon', 0x6C5CE7, 1)
-  );
-  wagon.position.set(-TRAIN_SCALE * 1.5, TRAIN_SCALE * 0.38, 0);
-  wagon.renderOrder = 47;
-  group.add(wagon);
-
-  const wagonRoof = new THREE.Mesh(
-    new THREE.BoxGeometry(TRAIN_SCALE * 1.08, TRAIN_SCALE * 0.13, TRAIN_SCALE * 0.88),
-    getMaterial('wagonRoof', 0x2D3436, 1)
-  );
-  wagonRoof.position.set(-TRAIN_SCALE * 1.5, TRAIN_SCALE * 0.68, 0);
-  wagonRoof.renderOrder = 48;
-  group.add(wagonRoof);
-
-  const coupler = new THREE.Mesh(
-    new THREE.BoxGeometry(TRAIN_SCALE * 0.34, TRAIN_SCALE * 0.08, TRAIN_SCALE * 0.12),
-    getMaterial('coupler', 0x1F252A, 1)
-  );
-  coupler.position.set(-TRAIN_SCALE * 1.02, TRAIN_SCALE * 0.22, 0);
-  coupler.renderOrder = 52;
-  group.add(coupler);
-
-  for (const x of [-1.78, -1.22]) {
-    for (const z of [-0.43, 0.43]) {
-      const wheel = new THREE.Mesh(
-        new THREE.CylinderGeometry(TRAIN_SCALE * 0.14, TRAIN_SCALE * 0.14, TRAIN_SCALE * 0.11, 14),
-        getMaterial('wheel', 0x101317, 1)
-      );
-      wheel.rotation.x = Math.PI / 2;
-      wheel.position.set(TRAIN_SCALE * x, TRAIN_SCALE * 0.035, TRAIN_SCALE * z);
-      wheel.renderOrder = 52;
-      group.add(wheel);
-    }
+    const coupler = new THREE.Group();
+    coupler.name = `train-coupler-${i + 1}-articulated`;
+    addCoupler(coupler, 0);
+    group.add(coupler);
+    couplers.push({ object: coupler, frontIndex: i, rearIndex: i + 1 });
   }
 
   const smokePuffs = [];
   const smokeMaterial = new THREE.MeshBasicMaterial({
     color: 0xEEF4F7,
     transparent: true,
-    opacity: 0.74,
+    opacity: 0.62,
     depthWrite: false,
     depthTest: true,
     side: THREE.DoubleSide
   });
 
-  for (let i = 0; i < 90; i += 1) {
+  for (let i = 0; i < 64; i += 1) {
     const smoke = new THREE.Mesh(
-      new THREE.CircleGeometry(TRAIN_SCALE * (0.16 + (i % 5) * 0.045), 22),
+      new THREE.CircleGeometry(TRAIN_SCALE * (0.13 + (i % 5) * 0.035), 20),
       smokeMaterial.clone()
     );
-    smoke.name = 'chimney-heavy-animated-smoke';
+    smoke.name = 'chimney-slow-animated-smoke';
     smoke.rotation.x = -Math.PI / 2;
-    smoke.renderOrder = 54 + i;
-    group.add(smoke);
+    smoke.renderOrder = 60 + i;
+    loco.add(smoke);
     smokePuffs.push({
       mesh: smoke,
-      phase: i / 90,
-      drift: (i % 2 === 0 ? 1 : -1) * (0.045 + (i % 5) * 0.018),
-      wobble: 0.65 + (i % 5) * 0.17
+      phase: i / 64,
+      drift: (i % 2 === 0 ? 1 : -1) * (0.035 + (i % 5) * 0.014),
+      wobble: 0.48 + (i % 5) * 0.13
     });
   }
 
-  group.userData.smokePuffs = smokePuffs;
+  loco.userData.smokePuffs = smokePuffs;
+  group.userData.units = units;
+  group.userData.couplers = couplers;
+  group.userData.loco = loco;
   return group;
+}
+
+function updateArticulatedTrain(trainObject, motionTrack, progress, timeSeconds) {
+  const units = trainObject.userData.units ?? [];
+  if (units.length === 0) return;
+
+  for (const unit of units) {
+    const sample = samplePingPongMotionTrack(motionTrack, progress, unit.followDistance);
+    unit.object.position.copy(sample.position);
+    unit.object.position.y = TRAIN_Y;
+    unit.object.rotation.y = -Math.atan2(sample.tangent.z, sample.tangent.x);
+
+    const pulse = 1 + Math.sin(timeSeconds * 2.3 + unit.followDistance * 2.1) * 0.006;
+    unit.object.scale.setScalar(pulse);
+  }
+
+  for (const coupler of trainObject.userData.couplers ?? []) {
+    const front = units[coupler.frontIndex]?.object;
+    const rear = units[coupler.rearIndex]?.object;
+    if (!front || !rear) continue;
+
+    const middle = front.position.clone().lerp(rear.position, 0.5);
+    const direction = front.position.clone().sub(rear.position);
+    coupler.object.position.copy(middle);
+    coupler.object.position.y = TRAIN_Y + TRAIN_SCALE * 0.22;
+    coupler.object.rotation.y = -Math.atan2(direction.z, direction.x);
+    coupler.object.visible = direction.length() > 0.001;
+  }
+
+  updateTrainSmoke(trainObject.userData.loco, timeSeconds);
+}
+
+function addLocomotive(group, xOffset) {
+  addBox(group, 'loco-frame', xOffset + 0.12, 0.13, 0, 1.72, 0.20, 0.72, 0x232A30, 50);
+  addBox(group, 'loco-side-left', xOffset + 0.10, 0.29, -0.39, 1.62, 0.22, 0.055, 0x1B2025, 55);
+  addBox(group, 'loco-side-right', xOffset + 0.10, 0.29, 0.39, 1.62, 0.22, 0.055, 0x1B2025, 55);
+
+  const boiler = new THREE.Mesh(
+    new THREE.CylinderGeometry(TRAIN_SCALE * 0.27, TRAIN_SCALE * 0.27, TRAIN_SCALE * 1.02, 24),
+    getMaterial('loco-boiler', 0xB8322A, 1)
+  );
+  boiler.rotation.z = Math.PI / 2;
+  boiler.position.set(TRAIN_SCALE * (xOffset + 0.38), TRAIN_SCALE * 0.58, 0);
+  boiler.renderOrder = 56;
+  group.add(boiler);
+
+  const boilerBandXs = [-0.02, 0.34, 0.70];
+  for (const bandX of boilerBandXs) {
+    const band = new THREE.Mesh(
+      new THREE.CylinderGeometry(TRAIN_SCALE * 0.285, TRAIN_SCALE * 0.285, TRAIN_SCALE * 0.045, 24),
+      getMaterial('brass-bands', 0xD6A541, 1)
+    );
+    band.rotation.z = Math.PI / 2;
+    band.position.set(TRAIN_SCALE * (xOffset + bandX), TRAIN_SCALE * 0.58, 0);
+    band.renderOrder = 57;
+    group.add(band);
+  }
+
+  const boilerFront = new THREE.Mesh(
+    new THREE.CylinderGeometry(TRAIN_SCALE * 0.30, TRAIN_SCALE * 0.30, TRAIN_SCALE * 0.075, 24),
+    getMaterial('boiler-front', 0x2B3035, 1)
+  );
+  boilerFront.rotation.z = Math.PI / 2;
+  boilerFront.position.set(TRAIN_SCALE * (xOffset + 0.93), TRAIN_SCALE * 0.58, 0);
+  boilerFront.renderOrder = 58;
+  group.add(boilerFront);
+
+  addBox(group, 'cabin-body', xOffset - 0.62, 0.63, 0, 0.58, 0.72, 0.76, 0xC84B31, 58);
+  addBox(group, 'cabin-back', xOffset - 0.92, 0.54, 0, 0.10, 0.54, 0.70, 0x7F2D2A, 59);
+  addBox(group, 'cabin-roof', xOffset - 0.62, 1.05, 0, 0.74, 0.14, 0.90, 0x15191E, 60);
+  addBox(group, 'cabin-roof-cap', xOffset - 0.62, 1.16, 0, 0.56, 0.08, 0.78, 0x333A40, 61);
+
+  for (const z of [-0.405, 0.405]) {
+    addSideWindow(group, xOffset - 0.62, 0.70, z, 0.26, 0.26);
+    addSideWindow(group, xOffset - 0.82, 0.70, z, 0.16, 0.22);
+  }
+
+  const chimney = new THREE.Mesh(
+    new THREE.CylinderGeometry(TRAIN_SCALE * 0.105, TRAIN_SCALE * 0.155, TRAIN_SCALE * 0.48, 18),
+    getMaterial('chimney', 0x111419, 1)
+  );
+  chimney.position.set(TRAIN_SCALE * (xOffset + 0.62), TRAIN_SCALE * 0.98, 0);
+  chimney.renderOrder = 62;
+  group.add(chimney);
+
+  const chimneyLip = new THREE.Mesh(
+    new THREE.CylinderGeometry(TRAIN_SCALE * 0.17, TRAIN_SCALE * 0.17, TRAIN_SCALE * 0.07, 18),
+    getMaterial('chimney-lip', 0x20252B, 1)
+  );
+  chimneyLip.position.set(TRAIN_SCALE * (xOffset + 0.62), TRAIN_SCALE * 1.24, 0);
+  chimneyLip.renderOrder = 63;
+  group.add(chimneyLip);
+
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(TRAIN_SCALE * 0.17, 18, 10),
+    getMaterial('steam-dome', 0xD6A541, 1)
+  );
+  dome.scale.y = 0.75;
+  dome.position.set(TRAIN_SCALE * (xOffset + 0.12), TRAIN_SCALE * 0.91, 0);
+  dome.renderOrder = 62;
+  group.add(dome);
+
+  const headLamp = new THREE.Mesh(
+    new THREE.SphereGeometry(TRAIN_SCALE * 0.105, 16, 10),
+    getMaterial('head-lamp', 0xFFF1A8, 1)
+  );
+  headLamp.position.set(TRAIN_SCALE * (xOffset + 1.03), TRAIN_SCALE * 0.61, 0);
+  headLamp.renderOrder = 64;
+  group.add(headLamp);
+
+  const cowcatcher = new THREE.Mesh(
+    new THREE.ConeGeometry(TRAIN_SCALE * 0.28, TRAIN_SCALE * 0.30, 4),
+    getMaterial('cowcatcher', 0x394149, 1)
+  );
+  cowcatcher.rotation.z = -Math.PI / 2;
+  cowcatcher.rotation.y = Math.PI / 4;
+  cowcatcher.position.set(TRAIN_SCALE * (xOffset + 1.20), TRAIN_SCALE * 0.19, 0);
+  cowcatcher.renderOrder = 57;
+  group.add(cowcatcher);
+
+  addWheelSet(group, xOffset - 0.72, 0.17, 0.40);
+  addWheelSet(group, xOffset - 0.22, 0.16, 0.40);
+  addWheelSet(group, xOffset + 0.36, 0.18, 0.40);
+  addWheelSet(group, xOffset + 0.76, 0.14, 0.40);
+  addBox(group, 'drive-rod-left', xOffset + 0.05, 0.18, -0.47, 1.38, 0.035, 0.035, 0xC8CED3, 66);
+  addBox(group, 'drive-rod-right', xOffset + 0.05, 0.18, 0.47, 1.38, 0.035, 0.035, 0xC8CED3, 66);
+}
+
+function addWagon(group, xOffset, bodyColor, roofColor, cargoType) {
+  addBox(group, 'wagon-base', xOffset, 0.14, 0, 0.98, 0.17, 0.70, 0x22282E, 50);
+  addBox(group, 'wagon-body', xOffset, 0.43, 0, 0.92, 0.48, 0.68, bodyColor, 55);
+  addBox(group, 'wagon-roof', xOffset, 0.75, 0, 1.02, 0.13, 0.78, roofColor, 56);
+  addBox(group, 'wagon-ridge', xOffset, 0.85, 0, 0.82, 0.06, 0.56, 0x252B31, 57);
+
+  for (const z of [-0.36, 0.36]) {
+    addSideWindow(group, xOffset - 0.24, 0.48, z, 0.18, 0.20);
+    addSideWindow(group, xOffset + 0.08, 0.48, z, 0.18, 0.20);
+    addSideWindow(group, xOffset + 0.36, 0.48, z, 0.14, 0.18);
+  }
+
+  if (cargoType === 'coal') {
+    for (const cx of [-0.30, -0.10, 0.12, 0.32]) {
+      const coal = new THREE.Mesh(
+        new THREE.DodecahedronGeometry(TRAIN_SCALE * 0.10, 0),
+        getMaterial('coal', 0x111111, 1)
+      );
+      coal.position.set(TRAIN_SCALE * (xOffset + cx), TRAIN_SCALE * 0.82, TRAIN_SCALE * (cx % 0.2));
+      coal.renderOrder = 60;
+      group.add(coal);
+    }
+  } else {
+    addBox(group, 'wagon-crate-a', xOffset - 0.22, 0.83, -0.13, 0.26, 0.18, 0.22, 0xB8753B, 60);
+    addBox(group, 'wagon-crate-b', xOffset + 0.15, 0.83, 0.13, 0.30, 0.18, 0.22, 0x9C6534, 60);
+  }
+
+  addWheelSet(group, xOffset - 0.32, 0.125, 0.37);
+  addWheelSet(group, xOffset + 0.32, 0.125, 0.37);
+}
+
+function addCoupler(group, x) {
+  addBox(group, 'coupler', x, 0.22, 0, 0.38, 0.055, 0.10, 0x15191E, 64);
+}
+
+function addWheelSet(group, x, radius, z) {
+  for (const side of [-1, 1]) {
+    const wheel = new THREE.Mesh(
+      new THREE.CylinderGeometry(TRAIN_SCALE * radius, TRAIN_SCALE * radius, TRAIN_SCALE * 0.095, 20),
+      getMaterial('wheel', 0x0C0E11, 1)
+    );
+    wheel.rotation.x = Math.PI / 2;
+    wheel.position.set(TRAIN_SCALE * x, TRAIN_SCALE * 0.055, TRAIN_SCALE * z * side);
+    wheel.renderOrder = 67;
+    group.add(wheel);
+
+    const rim = new THREE.Mesh(
+      new THREE.TorusGeometry(TRAIN_SCALE * radius * 0.82, TRAIN_SCALE * radius * 0.12, 8, 20),
+      getMaterial('wheel-rim', 0x5E6872, 1)
+    );
+    rim.rotation.x = Math.PI / 2;
+    rim.position.copy(wheel.position);
+    rim.renderOrder = 68;
+    group.add(rim);
+
+    const hub = new THREE.Mesh(
+      new THREE.CylinderGeometry(TRAIN_SCALE * radius * 0.34, TRAIN_SCALE * radius * 0.34, TRAIN_SCALE * 0.105, 14),
+      getMaterial('wheel-hub', 0xD8DEE9, 1)
+    );
+    hub.rotation.x = Math.PI / 2;
+    hub.position.copy(wheel.position);
+    hub.renderOrder = 69;
+    group.add(hub);
+  }
+}
+
+function addBox(group, name, x, y, z, width, height, depth, color, renderOrder) {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(TRAIN_SCALE * width, TRAIN_SCALE * height, TRAIN_SCALE * depth),
+    getMaterial(name, color, 1)
+  );
+  mesh.position.set(TRAIN_SCALE * x, TRAIN_SCALE * y, TRAIN_SCALE * z);
+  mesh.renderOrder = renderOrder;
+  group.add(mesh);
+  return mesh;
+}
+
+function addSideWindow(group, x, y, z, width, height) {
+  const window = new THREE.Mesh(
+    new THREE.PlaneGeometry(TRAIN_SCALE * width, TRAIN_SCALE * height),
+    getMaterial('window', 0x9BE7FF, 0.94)
+  );
+  window.rotation.y = z < 0 ? Math.PI / 2 : -Math.PI / 2;
+  window.position.set(TRAIN_SCALE * x, TRAIN_SCALE * y, TRAIN_SCALE * z);
+  window.renderOrder = 70;
+  group.add(window);
 }
 
 function updateTrainSmoke(trainObject, timeSeconds) {
@@ -451,10 +562,10 @@ function updateTrainSmoke(trainObject, timeSeconds) {
 
   for (let i = 0; i < smokePuffs.length; i += 1) {
     const puff = smokePuffs[i];
-    const t = (timeSeconds * 0.78 + puff.phase) % 1;
+    const t = (timeSeconds * 0.34 + puff.phase) % 1;
     const rise = smoothstep(0, 1, t);
     const spread = 0.85 + rise * 5.8;
-    const sideWobble = Math.sin(timeSeconds * (1.7 + puff.wobble) + i * 1.83) * TRAIN_SCALE * 0.22;
+    const sideWobble = Math.sin(timeSeconds * (0.72 + puff.wobble * 0.45) + i * 1.83) * TRAIN_SCALE * 0.16;
 
     puff.mesh.position.set(
       TRAIN_SCALE * (0.80 - rise * 1.15),
@@ -462,7 +573,7 @@ function updateTrainSmoke(trainObject, timeSeconds) {
       TRAIN_SCALE * (puff.drift + Math.sin(t * Math.PI * 2 + i) * 0.34) + sideWobble
     );
 
-    const scale = spread * (0.96 + Math.sin(timeSeconds * 4.1 + i) * 0.10);
+    const scale = spread * (0.96 + Math.sin(timeSeconds * 1.65 + i) * 0.07);
     puff.mesh.scale.set(scale, scale, scale);
     puff.mesh.material.opacity = Math.max(0, (1 - rise) * 0.88);
     puff.mesh.visible = puff.mesh.material.opacity > 0.025;
@@ -477,7 +588,7 @@ function getMaterial(name, color, opacity) {
     color,
     transparent: opacity < 1,
     opacity,
-    depthWrite: false,
+    depthWrite: opacity >= 1,
     depthTest: true
   });
 
@@ -485,7 +596,7 @@ function getMaterial(name, color, opacity) {
   return material;
 }
 
-function samplePingPongMotionTrack(track, progress) {
+function samplePingPongMotionTrack(track, progress, followDistance = 0) {
   if (!track || track.samples.length === 0) {
     return { position: new THREE.Vector3(), tangent: new THREE.Vector3(1, 0, 0) };
   }
@@ -500,7 +611,8 @@ function samplePingPongMotionTrack(track, progress) {
   const pingPong = Math.floor(progress * 2) % 2 === 1;
   const halfProgress = (progress * 2) % 1;
   let targetMotion = easeInOutSine(halfProgress) * track.totalMotion;
-  if (pingPong) targetMotion = track.totalMotion - targetMotion;
+  targetMotion = pingPong ? track.totalMotion - targetMotion + followDistance : targetMotion - followDistance;
+  targetMotion = Math.max(0, Math.min(track.totalMotion, targetMotion));
 
   const sample = sampleMotionTrackAt(track, targetMotion);
   if (pingPong) sample.tangent.multiplyScalar(-1);

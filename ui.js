@@ -37,7 +37,8 @@ export function createUI() {
       s: document.getElementById('keyS'),
       d: document.getElementById('keyD'),
       r: document.getElementById('keyR'),
-      h: document.getElementById('keyH')
+      h: document.getElementById('keyH'),
+      space: document.getElementById('keySpace')
     },
     helpOverlay: document.getElementById('helpOverlay'),
     closeHelp: document.getElementById('btnCloseHelp')
@@ -54,12 +55,21 @@ export function updateDeckUI(ui, deck) {
   setText(ui.deckRemaining, String(deck.length));
 }
 
-export function updateKeyboardUI(ui, keys, rotationKeyActive = false) {
+export function updateKeyboardUI(ui, keys, rotationKeyActive = false, gridOnlyMode = false) {
   for (const key of ['z', 'q', 's', 'd']) {
     if (ui.keys[key]) ui.keys[key].classList.toggle('active', Boolean(keys[key]));
   }
 
   if (ui.keys.r) ui.keys.r.classList.toggle('active', rotationKeyActive);
+  if (ui.keys.space) ui.keys.space.classList.toggle('active', gridOnlyMode);
+}
+
+export function setGridOnlyModeVisible(ui, visible) {
+  document.body.classList.toggle('grid-only-mode', visible);
+  if (ui.helpOverlay && visible) {
+    ui.helpOverlay.classList.add('hidden');
+    ui.helpOverlay.setAttribute('aria-hidden', 'true');
+  }
 }
 
 export function setHelpVisible(ui, visible) {

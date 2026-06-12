@@ -31,6 +31,23 @@ export function getBiomeMaterial(type, opacity = 1) {
   return material;
 }
 
+export function getBiomeSideMaterial(type, opacity = 1) {
+  const key = `side_${type}_${opacity}`;
+  if (materialCache.has(key)) return materialCache.get(key);
+
+  const color = new THREE.Color(EDGE_COLOR[type] ?? 0x222833).multiplyScalar(0.72);
+  const material = new THREE.MeshBasicMaterial({
+    color,
+    transparent: opacity < 1,
+    opacity,
+    side: THREE.DoubleSide,
+    depthWrite: opacity >= 1
+  });
+
+  materialCache.set(key, material);
+  return material;
+}
+
 function getGeneratedTexture(type) {
   if (generatedTextureCache.has(type)) return generatedTextureCache.get(type);
 

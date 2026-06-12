@@ -11,6 +11,15 @@ export function createRenderer(canvas) {
 export function createThreeScene() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0b0f14);
+
+  // Éclairage doux pour les modèles GLB : assez pour lire les couleurs,
+  // pas assez pour transformer les arbres en néons nucléaires.
+  scene.add(new THREE.HemisphereLight(0xdfefff, 0x202815, 0.95));
+
+  const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+  sun.position.set(4, 7, 3);
+  scene.add(sun);
+
   return scene;
 }
 

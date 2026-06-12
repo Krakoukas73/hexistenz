@@ -53,12 +53,38 @@ export function createSpecialCellsMesh(specialCells) {
 
   for (const cell of specialCells.values()) {
     const position = axialToWorld(cell.q, cell.r);
-    const mesh = createSpecialCellMesh();
+    const mesh = createSpecialCellMesh(cell);
     mesh.position.set(position.x, 0.02, position.z);
     group.add(mesh);
   }
 
   return group;
+}
+
+export function addSpecialCellMesh(group, cell) {
+  if (!group || !cell) return;
+
+  const position = axialToWorld(cell.q, cell.r);
+  const mesh = createSpecialCellMesh(cell);
+  mesh.position.set(position.x, 0.02, position.z);
+  group.add(mesh);
+}
+
+export function removeSpecialCellMesh(group, key) {
+  if (!group || !key) return;
+
+  const mesh = group.children.find(child => child.userData?.specialCellKey === key);
+  if (!mesh) return;
+
+  group.remove(mesh);
+  mesh.traverse?.(child => {
+    child.geometry?.dispose?.();
+    if (Array.isArray(child.material)) {
+      child.material.forEach(material => material.dispose?.());
+    } else {
+      child.material?.dispose?.();
+    }
+  });
 }
 
 export function updateSpecialCellsMeshAnimation(group, timeSeconds = 0) {
@@ -104,8 +130,9 @@ export function isSpecialCellAt(hex, specialCells) {
   return specialCells.has(makeHexKey(hex.q, hex.r));
 }
 
-function createSpecialCellMesh() {
+function createSpecialCellMesh(cell = null) {
   const group = new THREE.Group();
+  if (cell?.key) group.userData.specialCellKey = cell.key;
 
   const fill = new THREE.Mesh(
     new THREE.CircleGeometry(HEX_SIZE * 0.98, 6),

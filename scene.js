@@ -2,19 +2,19 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 import { DECK_SIZE, GRID_RADIUS } from './config.js';
 import { CameraControls } from './controls.js';
 import { createGrid } from './grid.js';
-import { createSpecialCells, createSpecialCellsMesh, updateSpecialCellsMeshAnimation } from './specialCells.js';
+import { addSpecialCellMesh, createSpecialCells, createSpecialCellsMesh, removeSpecialCellMesh, updateSpecialCellsMeshAnimation } from './specialCells.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { createTileMesh } from './tileMesh.js';
 import { updateAnimatedBiomeTextures } from './tileTextures.js';
 import { canPlaceTileAt, getPlacementValidation } from './placementRules.js';
 import { calculatePlacementScore } from './scoring.js';
 import { createDeck, rotateTile } from './tileGenerator.js';
-import { createUI, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateMissionUI, updateScoreUI, updateStatsUI } from './ui.js';
+import { createUI, setGridOnlyModeVisible, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateMissionUI, updateScoreUI, updateStatsUI } from './ui.js';
 import { createPlacementFeedbackOverlay, getPlacementLabel } from './placementOverlay.js';
 import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay, rebuildWaterZoneOverlay, updateHoverZoneOverlayAnimation } from './waterZoneOverlay.js';
 import { createRailTrainOverlay, rebuildRailTrainOverlay, updateRailTrainOverlay } from './railTrainOverlay.js';
 import { createWaterSharkOverlay, rebuildWaterSharkOverlay, updateWaterSharkOverlay } from './waterSharkOverlay.js';
-import { createForestRabbitOverlay, rebuildForestRabbitOverlay, updateForestRabbitOverlay } from './forestRabbitOverlay.js';
+import { createForestBirchOverlay, rebuildForestBirchOverlay } from './forestBirchOverlay.js';
 import { createHouseSmokeOverlay, rebuildHouseSmokeOverlay, updateHouseSmokeOverlay } from './houseSmokeOverlay.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { createCamera, createRenderer, createThreeScene, resizeRenderer } from './threeSetup.js';
@@ -43,6 +43,8 @@ export function initScene() {
   let totalScore = 0;
   let helpVisible = false;
   let gameOver = false;
+  let gridOnlyMode = false;
+  let hiddenSpecialCellKey = null;
   const totalGridTiles = getTotalGridTiles(GRID_RADIUS);
 
   // Tuile fantôme et overlays : feedback visuel, aucun impact sur les règles.
@@ -51,12 +53,12 @@ export function initScene() {
   const hoverZoneOverlay = createHoverZoneOverlay();
   const railTrainOverlay = createRailTrainOverlay();
   const waterSharkOverlay = createWaterSharkOverlay();
-  const forestRabbitOverlay = createForestRabbitOverlay();
+  const forestBirchOverlay = createForestBirchOverlay();
   const houseSmokeOverlay = createHouseSmokeOverlay();
 
   ghostTile.visible = false;
 
-  scene.add(createGrid(), specialCellsMesh, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterSharkOverlay, forestRabbitOverlay, houseSmokeOverlay, ghostTile);
+  scene.add(createGrid(), specialCellsMesh, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterSharkOverlay, forestBirchOverlay, houseSmokeOverlay, ghostTile);
   refreshDeckUI();
   maybeAddMissionForCurrentTile();
   refreshMissionUI();
@@ -109,8 +111,15 @@ export function initScene() {
 
     if (isTextInputTarget(event.target)) return;
 
+    if ((key === ' ' || key === 'spacebar') && !event.repeat) {
+      event.preventDefault();
+      toggleGridOnlyMode();
+      return;
+    }
+
     if (key === 'h') {
       event.preventDefault();
+      if (gridOnlyMode) toggleGridOnlyMode(false);
       toggleHelp();
       return;
     }
@@ -140,11 +149,10 @@ export function initScene() {
     const timeSeconds = performance.now() * 0.001;
     updateAnimatedBiomeTextures(timeSeconds);
     updateSpecialCellsMeshAnimation(specialCellsMesh, timeSeconds);
-    updateKeyboardUI(ui, controls.keys, rotationKeyActive);
+    updateKeyboardUI(ui, controls.keys, rotationKeyActive, gridOnlyMode);
     updateHoverZoneOverlayAnimation(hoverZoneOverlay, waterZoneOverlay);
     updateRailTrainOverlay(railTrainOverlay, timeSeconds);
     updateWaterSharkOverlay(waterSharkOverlay, timeSeconds);
-    updateForestRabbitOverlay(forestRabbitOverlay, timeSeconds);
     updateHouseSmokeOverlay(houseSmokeOverlay, timeSeconds);
     renderer.render(scene, camera);
   }
@@ -166,15 +174,54 @@ export function initScene() {
     setHelpVisible(ui, helpVisible);
   }
 
-  function updateHover(hex, world) {
-    const position = axialToWorld(hex.q, hex.r);
-    rebuildHoverZoneOverlay(hoverZoneOverlay, hex, world, placedTiles, waterZoneOverlay);
+  function toggleGridOnlyMode(forceVisible = null) {
+    gridOnlyMode = forceVisible ?? !gridOnlyMode;
+    if (gridOnlyMode && helpVisible) {
+      helpVisible = false;
+      setHelpVisible(ui, false);
+    }
+    setGridOnlyModeVisible(ui, gridOnlyMode);
+    setGridLabelVisibility(!gridOnlyMode);
+    if (gridOnlyMode) rebuildHoverZoneOverlay(hoverZoneOverlay, null, null, placedTiles, waterZoneOverlay);
+  }
 
-    if (!isPlacementTarget(hex)) {
+  function setGridLabelVisibility(visible) {
+    const apply = object => {
+      object.traverse?.(child => {
+        if (child.userData?.isValueLabel || child.name?.includes('zone-label')) child.visible = visible;
+      });
+    };
+
+    for (const placedTile of placedTiles.values()) apply(placedTile.mesh);
+    apply(ghostTile);
+    apply(waterZoneOverlay);
+    apply(hoverZoneOverlay);
+  }
+
+  function updateHover(hex, world) {
+    if (!hex) {
+      updateHoveredSpecialCellVisibility(null);
       ghostTile.visible = false;
       setText(ui.placement, gameOver ? 'FIN DU DECK' : '-');
       return;
     }
+
+    const position = axialToWorld(hex.q, hex.r);
+    if (gridOnlyMode) {
+      rebuildHoverZoneOverlay(hoverZoneOverlay, null, null, placedTiles, waterZoneOverlay);
+      setGridLabelVisibility(false);
+    } else {
+      rebuildHoverZoneOverlay(hoverZoneOverlay, hex, world, placedTiles, waterZoneOverlay);
+    }
+
+    if (!isPlacementTarget(hex)) {
+      updateHoveredSpecialCellVisibility(null);
+      ghostTile.visible = false;
+      setText(ui.placement, gameOver ? 'FIN DU DECK' : '-');
+      return;
+    }
+
+    updateHoveredSpecialCellVisibility(hex);
 
     const tile = rotateTile(deck[0], rotationIndex);
     const validation = getPlacementValidation(hex, placedTiles, tile, specialCells);
@@ -186,6 +233,8 @@ export function initScene() {
 
     const key = makeHexKey(hex.q, hex.r);
     const position = axialToWorld(hex.q, hex.r);
+    updateHoveredSpecialCellVisibility(hex);
+
     const tile = rotateTile(deck[0], rotationIndex);
     const validation = getPlacementValidation(hex, placedTiles, tile, specialCells);
 
@@ -193,6 +242,13 @@ export function initScene() {
       rebuildGhost(position, tile, validation);
       return;
     }
+    const consumedSpecialCell = specialCells.get(key) ?? null;
+    if (consumedSpecialCell) {
+      specialCells.delete(key);
+      removeSpecialCellMesh(specialCellsMesh, key);
+      if (hiddenSpecialCellKey === key) hiddenSpecialCellKey = null;
+    }
+
     const scoreResult = calculatePlacementScore(hex, placedTiles, tile, specialCells);
     const mesh = createTileMesh(tile);
 
@@ -211,7 +267,8 @@ export function initScene() {
       missionBonusTilesAwarded: 0,
       generatedMission: null,
       missionTurnBefore: missionManager.turn,
-      purgedMissions: []
+      purgedMissions: [],
+      consumedSpecialCell
     };
 
     const completedMissions = getCompletedMissions(missionManager, new Map([...placedTiles, [key, placedTile]]));
@@ -229,8 +286,9 @@ export function initScene() {
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
     rebuildWaterSharkOverlay(waterSharkOverlay, placedTiles);
-    rebuildForestRabbitOverlay(forestRabbitOverlay, placedTiles);
+    rebuildForestBirchOverlay(forestBirchOverlay, placedTiles);
     rebuildHouseSmokeOverlay(houseSmokeOverlay, placedTiles);
+    if (gridOnlyMode) setGridLabelVisibility(false);
 
     ghostTile.visible = false;
     deck.shift();
@@ -286,10 +344,28 @@ export function initScene() {
     ghostTile.clear();
     ghostTile.add(createTileMesh(tile, { opacity: 1 }));
     ghostTile.add(createPlacementFeedbackOverlay(status));
+    if (gridOnlyMode) setGridLabelVisibility(false);
     ghostTile.position.set(position.x, 0.003, position.z);
     ghostTile.visible = true;
 
     setText(ui.placement, getPlacementLabel(status));
+  }
+
+  function updateHoveredSpecialCellVisibility(hex) {
+    const key = hex ? makeHexKey(hex.q, hex.r) : null;
+    const nextHiddenKey = key && specialCells.has(key) ? key : null;
+
+    if (hiddenSpecialCellKey && hiddenSpecialCellKey !== nextHiddenKey) {
+      setSpecialCellMeshVisible(hiddenSpecialCellKey, true);
+    }
+
+    if (nextHiddenKey) setSpecialCellMeshVisible(nextHiddenKey, false);
+    hiddenSpecialCellKey = nextHiddenKey;
+  }
+
+  function setSpecialCellMeshVisible(key, visible) {
+    const mesh = specialCellsMesh.children.find(child => child.userData?.specialCellKey === key);
+    if (mesh) mesh.visible = visible;
   }
 
   function undoLastPlacement() {
@@ -304,12 +380,18 @@ export function initScene() {
     });
 
     placedTiles.delete(last.key);
+    if (last.consumedSpecialCell) {
+      specialCells.set(last.key, last.consumedSpecialCell);
+      addSpecialCellMesh(specialCellsMesh, last.consumedSpecialCell);
+    }
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
     rebuildWaterSharkOverlay(waterSharkOverlay, placedTiles);
-    rebuildForestRabbitOverlay(forestRabbitOverlay, placedTiles);
+    rebuildForestBirchOverlay(forestBirchOverlay, placedTiles);
     rebuildHouseSmokeOverlay(houseSmokeOverlay, placedTiles);
+    updateHoveredSpecialCellVisibility(hoveredHex);
+    if (gridOnlyMode) setGridLabelVisibility(false);
     totalScore = Math.max(0, totalScore - (last.score ?? 0));
 
     if (last.generatedMission) removeMissionById(missionManager, last.generatedMission.id);
@@ -352,6 +434,7 @@ export function initScene() {
 
   function endGame(label = 'FIN DU DECK') {
     gameOver = true;
+    updateHoveredSpecialCellVisibility(null);
     ghostTile.visible = false;
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     ui.abandonGame?.setAttribute('disabled', 'disabled');

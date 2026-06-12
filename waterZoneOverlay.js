@@ -17,7 +17,7 @@ const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, 
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 const HALO_Y = 0.115;
 const HOVER_HALO_Y = 0.30;
-const LABEL_Y = 0.19;
+const LABEL_Y = 0.72;
 const CENTER_RADIUS = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
 const HOVER_HALO_RADIUS = 0.056;
 const HOVER_GLOW_RADIUS = 0.16;
@@ -157,7 +157,7 @@ function highlightHoverValueLabels(zone) {
         object.userData.hoverBaseScale.y * 1.35,
         object.userData.hoverBaseScale.z
       );
-      object.position.y = object.userData.hoverBaseY + HOVER_LABEL_Y_OFFSET;
+      object.position.y = object.userData.hoverBaseY + (object.userData.hoverLiftOffset ?? HOVER_LABEL_Y_OFFSET);
     });
   }
 }

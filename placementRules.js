@@ -21,7 +21,7 @@ export function getPlacementValidation(hex, placedTiles, tile = null, specialCel
   if (!isHexInsideGrid(hex)) return invalid('OUT_OF_GRID');
 
   const key = makeHexKey(hex.q, hex.r);
-  if (placedTiles.has(key) || specialCells?.has(key)) return invalid('OCCUPIED');
+  if (placedTiles.has(key)) return invalid('OCCUPIED');
 
   if (placedTiles.size === 0) return valid();
 

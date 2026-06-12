@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GRID_RADIUS, HEX_SIZE } from './config.js';
+import { GRID_RADIUS, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { axialToWorld } from './hex.js';
 
 export function createGrid() {
@@ -9,8 +9,9 @@ export function createGrid() {
   for (let q = -GRID_RADIUS; q <= GRID_RADIUS; q++) {
     for (let r = -GRID_RADIUS; r <= GRID_RADIUS; r++) {
       if (!isGridHex(q, r)) continue;
-      const { x, y, z } = axialToWorld(q, r);
-      group.add(createHexWire(x, y, z, material));
+      const { x, z } = axialToWorld(q, r);
+      const gridY = (TILE_VISUAL.waterY ?? -0.075) - (TILE_VISUAL.waterThickness ?? 0.08) - 0.012;
+      group.add(createHexWire(x, gridY, z, material));
     }
   }
 

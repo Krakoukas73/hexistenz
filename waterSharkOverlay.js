@@ -1,4 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
@@ -17,10 +18,17 @@ const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, 
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 
 const CENTER_RADIUS = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
-const WATER_SURFACE_Y = (TILE_VISUAL.sectorY ?? 0.012) + 0.032;
+const WATER_SURFACE_Y = TILE_VISUAL.waterY ?? 0;
 const MIN_ZONE_SECTORS = 2;
-const SHARKS_PER_WATER_SECTOR = 0.38;
-const SHARK_SPEED = 0.34;
+const BOATS_PER_WATER_COMPONENT = 1;
+const BOAT_SPEED = 0.13;
+const BOAT_HEADING_OFFSET = Math.PI;
+const BOAT_MODEL_URL = './glb/bateau.glb';
+const BOAT_TARGET_LENGTH = HEX_SIZE * 0.98;
+const BOAT_Y_OFFSET = -0.018;
+let boatPrototype = null;
+let boatLoading = false;
+let boatRequested = false;
 const PORT_INSET = 0.52;
 const FIN_WIDTH = HEX_SIZE * 0.058;
 const FIN_HEIGHT = HEX_SIZE * 0.185;
@@ -30,12 +38,19 @@ export function createWaterSharkOverlay() {
   const group = new THREE.Group();
   group.name = 'waterSharkOverlay';
   group.userData.sharks = [];
+  ensureBoatModel(group);
   return group;
 }
 
 export function rebuildWaterSharkOverlay(group, placedTiles) {
+  group.userData.lastPlacedTiles = placedTiles;
   clearGroup(group);
   group.userData.sharks = [];
+
+  if (!boatPrototype) {
+    ensureBoatModel(group);
+    return;
+  }
 
   const visited = new Set();
   let zoneIndex = 0;
@@ -57,31 +72,15 @@ export function updateWaterSharkOverlay(group, timeSeconds = 0) {
   const sharks = group.userData.sharks ?? [];
 
   for (const shark of sharks) {
-    const progress = (timeSeconds * SHARK_SPEED / Math.max(shark.distance, 0.001) + shark.offset) % 1;
+    const drift = Math.sin(timeSeconds * 0.37 + shark.offset * Math.PI * 2) * 0.018;
+    const progress = (timeSeconds * BOAT_SPEED / Math.max(shark.distance, 0.001) + shark.offset + drift) % 1;
     const sample = samplePingPongMotionTrack(shark.motionTrack, progress);
-    const lifePhase = positiveModulo(progress * 1.35 + shark.lifeOffset, 1);
-    const emerge = smoothstep(0.02, 0.16, lifePhase);
-    const vanish = 1 - smoothstep(0.78, 0.96, lifePhase);
-    const life = Math.max(0, emerge * vanish);
-    const bob = Math.sin((timeSeconds * 3.2) + shark.offset * Math.PI * 2) * 0.008;
+    const bob = Math.sin((timeSeconds * 1.15) + shark.offset * Math.PI * 2) * 0.004;
 
     shark.object.position.copy(sample.position);
-    shark.object.position.y = WATER_SURFACE_Y + bob - (1 - life) * 0.08;
-    shark.object.rotation.y = -Math.atan2(sample.tangent.z, sample.tangent.x) + Math.PI / 2;
-    shark.object.visible = life > 0.035;
-
-    shark.fin.material.opacity = 0.18 + life * 0.72;
-    shark.body.material.opacity = 0.05 + life * 0.18;
-    shark.leftWake.material.opacity = life * 0.34;
-    shark.rightWake.material.opacity = life * 0.34;
-    shark.ripple.material.opacity = Math.max(0, life * (1 - smoothstep(0.42, 1, lifePhase)) * 0.38);
-
-    const wakePulse = 1 + Math.sin(timeSeconds * 5 + shark.offset * 10) * 0.08;
-    shark.leftWake.scale.setScalar(wakePulse);
-    shark.rightWake.scale.setScalar(wakePulse);
-
-    const rippleScale = shark.rippleBaseScale * (0.35 + lifePhase * 1.15);
-    shark.ripple.scale.set(rippleScale, rippleScale, 1);
+    shark.object.position.y = WATER_SURFACE_Y + BOAT_Y_OFFSET + bob;
+    shark.object.rotation.y = -Math.atan2(sample.tangent.z, sample.tangent.x) + BOAT_HEADING_OFFSET;
+    shark.object.visible = true;
   }
 }
 
@@ -99,27 +98,20 @@ function addZoneSharks(group, zone, zoneIndex) {
     const distance = measurePath(points);
     if (distance < HEX_SIZE * 0.58) continue;
 
-    const sharkCount = Math.max(1, Math.round(component.nodes.length * SHARKS_PER_WATER_SECTOR));
+    const boatCount = BOATS_PER_WATER_COMPONENT;
     const motionTrack = buildMotionTrack(points);
 
-    for (let index = 0; index < sharkCount; index++) {
-      const seedKey = `water-zone:${zoneIndex}:component:${component.index}:shark:${index}`;
+    for (let index = 0; index < boatCount; index++) {
+      const seedKey = `water-zone:${zoneIndex}:component:${component.index}:boat:${index}`;
       const object = createSharkObject(seedKey);
       object.position.copy(points[0]);
       group.add(object);
 
       group.userData.sharks.push({
         object,
-        fin: object.userData.fin,
-        body: object.userData.body,
-        leftWake: object.userData.leftWake,
-        rightWake: object.userData.rightWake,
-        ripple: object.userData.ripple,
         motionTrack,
         distance,
-        offset: (index / sharkCount + hashUnit(`${seedKey}:offset`) * 0.19) % 1,
-        lifeOffset: hashUnit(`${seedKey}:life`),
-        rippleBaseScale: 0.55 + hashUnit(`${seedKey}:ripple`) * 0.35
+        offset: hashUnit(`${seedKey}:offset`)
       });
     }
   }
@@ -127,19 +119,80 @@ function addZoneSharks(group, zone, zoneIndex) {
 
 function createSharkObject(seedKey) {
   const group = new THREE.Group();
-  group.name = 'animated-lowpoly-shark-fin';
-  const scale = 0.78 + hashUnit(`${seedKey}:scale`) * 0.24;
+  group.name = 'animated-water-boat-glb';
+  const scale = 0.92 + hashUnit(`${seedKey}:scale`) * 0.18;
   group.scale.setScalar(scale);
 
-  const ripple = createSurfaceRipple(seedKey);
-  const body = createSubsurfaceBody(seedKey);
-  const leftWake = createWakeStroke(seedKey, -1);
-  const rightWake = createWakeStroke(seedKey, 1);
-  const fin = createLowPolyFin(seedKey);
+  const boat = createBoatModel(seedKey);
 
-  group.add(ripple, body, leftWake, rightWake, fin);
-  group.userData = { fin, body, leftWake, rightWake, ripple };
+  group.add(boat);
+  group.userData = { boat };
   return group;
+}
+
+function ensureBoatModel(group) {
+  if (boatLoading || boatRequested) return;
+  boatLoading = true;
+  boatRequested = true;
+
+  new GLTFLoader().load(
+    BOAT_MODEL_URL,
+    gltf => {
+      boatPrototype = prepareBoatPrototype(gltf.scene);
+      boatLoading = false;
+      const lastPlacedTiles = group.userData.lastPlacedTiles;
+      if (lastPlacedTiles) rebuildWaterSharkOverlay(group, lastPlacedTiles);
+    },
+    undefined,
+    error => {
+      boatLoading = false;
+      console.warn(`Modèle bateau GLB indisponible : ${BOAT_MODEL_URL}`, error);
+    }
+  );
+}
+
+function prepareBoatPrototype(model) {
+  const wrapper = new THREE.Group();
+  wrapper.name = 'normalized-water-boat';
+
+  const source = model.clone(true);
+  const box = new THREE.Box3().setFromObject(source);
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  source.position.set(-center.x, -box.min.y, -center.z);
+
+  const length = Math.max(size.x, size.z) || 1;
+  wrapper.scale.setScalar(BOAT_TARGET_LENGTH / length);
+  wrapper.add(source);
+
+  wrapper.traverse(object => {
+    if (!object.isMesh) return;
+    object.castShadow = false;
+    object.receiveShadow = false;
+    if (object.material) object.material = cloneBoatMaterial(object.material);
+  });
+
+  return wrapper;
+}
+
+function cloneBoatMaterial(material) {
+  if (Array.isArray(material)) return material.map(item => cloneBoatMaterial(item));
+  const cloned = material.clone();
+  cloned.side = THREE.DoubleSide;
+  if ('emissiveIntensity' in cloned) cloned.emissiveIntensity = 0;
+  if ('toneMapped' in cloned) cloned.toneMapped = true;
+  cloned.needsUpdate = true;
+  return cloned;
+}
+
+function createBoatModel(seedKey) {
+  const boat = boatPrototype ? boatPrototype.clone(true) : new THREE.Group();
+  boat.name = 'water-boat-glb-instance';
+  boat.rotation.y = 0;
+  return boat;
 }
 
 function createLowPolyFin(seedKey) {

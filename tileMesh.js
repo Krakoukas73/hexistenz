@@ -1,7 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_ORDER, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { getEdgeType } from './tileGenerator.js';
-import { getBiomeMaterial } from './tileTextures.js';
+import { getBiomeMaterial, getBiomeSideMaterial } from './tileTextures.js';
 import { createRailOverlay, createRailCenterOverlay } from './tileRailOverlay.js';
 import { createValueLabel, getMiniValueLabel } from './tileLabels.js';
 
@@ -16,7 +16,7 @@ const SECTOR_DEFS = [
 
 export function createTileMesh(tileOrEdges, options = {}) {
   const edges = tileOrEdges.edges ?? tileOrEdges;
-  const center = tileOrEdges.center ?? pickCenterType(edges);
+  const center = hasEdgeType(edges, 'water') ? 'water' : (tileOrEdges.center ?? pickCenterType(edges));
   const opacity = options.opacity ?? 1;
   const group = new THREE.Group();
 
@@ -26,8 +26,6 @@ export function createTileMesh(tileOrEdges, options = {}) {
   const railCenterOverlay = createRailCenterOverlay(edges, SECTOR_DEFS, createOuterVertices);
   if (railCenterOverlay) group.add(railCenterOverlay);
 
-  group.add(createOutlineMesh(opacity));
-
   return group;
 }
 
@@ -35,7 +33,7 @@ export function renderMiniTile(tile) {
   if (!tile) return '';
 
   const e = tile.edges;
-  const c = tile.center ?? mostCommonEdgeType(edgesToArray(e));
+  const c = hasEdgeType(e, 'water') ? 'water' : (tile.center ?? mostCommonEdgeType(edgesToArray(e)));
   const sector = edgeKey => {
     const edge = e[edgeKey];
     const type = getEdgeType(edge);
@@ -63,10 +61,12 @@ function createSectorMeshes(edges, opacity) {
   const vertices = createOuterVertices();
 
   return SECTOR_DEFS.map(sector => {
-    const geometry = createSectorGeometry(vertices[sector.a], vertices[sector.b]);
     const edge = edges[sector.key];
-    const mesh = new THREE.Mesh(geometry, getBiomeMaterial(getEdgeType(edge), opacity));
-    mesh.position.y = TILE_VISUAL.sectorY;
+    const type = getEdgeType(edge);
+    const geometry = createSectorGeometry(vertices[sector.a], vertices[sector.b], type);
+    const materials = [getBiomeMaterial(type, opacity), getBiomeSideMaterial(type, opacity)];
+    const mesh = new THREE.Mesh(geometry, materials);
+    mesh.position.y = type === 'water' ? TILE_VISUAL.waterY : TILE_VISUAL.sectorY;
 
     const group = new THREE.Group();
     group.userData.edgeKey = sector.key;
@@ -86,40 +86,118 @@ function createSectorMeshes(edges, opacity) {
   });
 }
 
-function createSectorGeometry(a, b) {
+function createSectorGeometry(a, b, type) {
+  return createThickSectorGeometry(a, b, getSectorDepth(type));
+}
+
+function getSectorDepth(type) {
+  return type === 'water'
+    ? (TILE_VISUAL.waterThickness ?? ((TILE_VISUAL.tileThickness ?? 0.16) * 0.5))
+    : (TILE_VISUAL.tileThickness ?? 0.16);
+}
+
+function createThickSectorGeometry(a, b, depth) {
   const geometry = new THREE.BufferGeometry();
+  const innerRadius = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
+  const innerA = pointAtRadius(a, innerRadius);
+  const innerB = pointAtRadius(b, innerRadius);
 
   const vertices = new Float32Array([
-    0, 0, 0,
+    innerA.x, 0, innerA.z,
     a.x, 0, a.z,
-    b.x, 0, b.z
+    b.x, 0, b.z,
+    innerB.x, 0, innerB.z,
+    innerA.x, -depth, innerA.z,
+    a.x, -depth, a.z,
+    b.x, -depth, b.z,
+    innerB.x, -depth, innerB.z
   ]);
 
   const uvs = new Float32Array([
-    0.5, 0.5,
-    (a.x / HEX_SIZE + 1) * 0.5,
-    (a.z / HEX_SIZE + 1) * 0.5,
-    (b.x / HEX_SIZE + 1) * 0.5,
-    (b.z / HEX_SIZE + 1) * 0.5
+    ...uvForPoint(innerA),
+    ...uvForPoint(a),
+    ...uvForPoint(b),
+    ...uvForPoint(innerB),
+    ...uvForPoint(innerA),
+    ...uvForPoint(a),
+    ...uvForPoint(b),
+    ...uvForPoint(innerB)
   ]);
 
   geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
   geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-  geometry.setIndex([0, 1, 2]);
+
+  geometry.setIndex([
+    0, 1, 2, 0, 2, 3,      // dessus texturé, avec trou central propre
+    4, 6, 5, 4, 7, 6,      // dessous
+    1, 5, 6, 1, 6, 2,
+    2, 6, 7, 2, 7, 3,
+    3, 7, 4, 3, 4, 0,
+    0, 4, 5, 0, 5, 1
+  ]);
+
+  geometry.clearGroups();
+  geometry.addGroup(0, 6, 0);
+  geometry.addGroup(6, 30, 1);
   geometry.computeVertexNormals();
 
   return geometry;
 }
 
+function pointAtRadius(point, radius) {
+  const length = Math.hypot(point.x, point.z) || 1;
+  return {
+    x: (point.x / length) * radius,
+    z: (point.z / length) * radius
+  };
+}
+
+function uvForPoint(point) {
+  return [
+    (point.x / HEX_SIZE + 1) * 0.5,
+    (point.z / HEX_SIZE + 1) * 0.5
+  ];
+}
+
 function createCenterMesh(centerType, opacity) {
-  const geometry = new THREE.CircleGeometry(
+  const depth = centerType === 'water'
+    ? (TILE_VISUAL.waterThickness ?? ((TILE_VISUAL.tileThickness ?? 0.16) * 0.5))
+    : (TILE_VISUAL.tileThickness ?? 0.16);
+
+  if (centerType === 'water') {
+    const geometry = new THREE.CylinderGeometry(
+      HEX_SIZE * TILE_VISUAL.centerRadiusScale,
+      HEX_SIZE * TILE_VISUAL.centerRadiusScale,
+      depth,
+      6,
+      1,
+      false
+    );
+
+    const mesh = new THREE.Mesh(geometry, [
+      getBiomeSideMaterial(centerType, opacity),
+      getBiomeMaterial(centerType, opacity),
+      getBiomeSideMaterial(centerType, opacity)
+    ]);
+    mesh.position.y = TILE_VISUAL.waterY - depth / 2;
+    return mesh;
+  }
+
+  const geometry = new THREE.CylinderGeometry(
     HEX_SIZE * TILE_VISUAL.centerRadiusScale,
-    6
+    HEX_SIZE * TILE_VISUAL.centerRadiusScale,
+    depth,
+    6,
+    1,
+    false
   );
 
-  const mesh = new THREE.Mesh(geometry, getBiomeMaterial(centerType, opacity));
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.position.y = TILE_VISUAL.centerY;
+  const mesh = new THREE.Mesh(geometry, [
+    getBiomeSideMaterial(centerType, opacity),
+    getBiomeMaterial(centerType, opacity),
+    getBiomeSideMaterial(centerType, opacity)
+  ]);
+  mesh.position.y = TILE_VISUAL.centerY - depth / 2;
   return mesh;
 }
 
@@ -157,9 +235,12 @@ function edgesToArray(edges) {
 }
 
 function pickCenterType(edges) {
+  const types = edgesToArray(edges);
+  // Fallback visuel cohérent avec tileGenerator : toute tuile ayant de l'eau
+  // garde un centre eau pour que le réseau soit continu.
   if (hasEdgeType(edges, 'water')) return 'water';
   if (hasEdgeType(edges, 'rail')) return 'rail';
-  return mostCommonEdgeType(edgesToArray(edges));
+  return mostCommonEdgeType(types);
 }
 
 function hasEdgeType(edges, type) {

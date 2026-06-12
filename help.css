@@ -259,3 +259,70 @@ kbd {
     overflow: auto;
   }
 }
+
+/* Aide condensée : elle doit tenir dans une page, pas devenir un parchemin maudit. */
+.help-panel {
+  width: min(1120px, calc(100vw - 36px));
+  max-height: calc(100vh - 36px);
+  padding: 14px;
+}
+
+.help-header {
+  margin-bottom: 10px;
+  padding-bottom: 9px;
+}
+
+.help-header h1 {
+  font-size: clamp(26px, 3.2vw, 42px);
+}
+
+.help-grid {
+  gap: 9px;
+}
+
+.help-card {
+  padding: 10px;
+}
+
+.help-card h2 {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.help-card p,
+.help-card li {
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.score-strip {
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.score-strip div,
+.rule-line,
+.legend-grid div,
+.control-map div {
+  padding: 6px;
+}
+
+.score-strip strong {
+  font-size: 18px;
+}
+
+.score-strip span,
+.rule-line span:last-child,
+.control-map span {
+  font-size: 10.5px;
+}
+
+.control-map {
+  gap: 6px;
+}
+
+kbd {
+  min-width: 30px;
+  padding: 5px 6px;
+  font-size: 10px;
+}

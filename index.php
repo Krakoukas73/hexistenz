@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dorfromantik prototype</title>
   <link rel="stylesheet" href="style.css" />
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
 </head>
 <body>
   <canvas id="app"></canvas>
@@ -117,6 +125,11 @@
         <div class="key" id="keyH">H</div>
         <div class="key-label">Aide</div>
       </div>
+
+      <div class="key-row command-row">
+        <div class="key key-space" id="keySpace">ESPACE</div>
+        <div class="key-label">Mode immersif</div>
+      </div>
     </div>
   </aside>
 
@@ -151,7 +164,7 @@
       <header class="help-header">
         <div>
           <h1 id="helpTitle">Aide</h1>
-          <div class="help-kicker">Guide du joueur au long cours</div>
+          <div class="help-kicker">Résumé compact du joueur</div>
         </div>
         <button id="btnCloseHelp" class="help-close" type="button" aria-label="Fermer l'aide">×</button>
       </header>
@@ -159,7 +172,7 @@
       <div class="help-grid">
         <article class="help-card help-card-wide">
           <h2>🎯 Objectif du jeu</h2>
-          <p>Pose les tuiles hexagonales pour agrandir la carte et marquer un maximum de points. Chaque tuile possède 6 bords colorés : les aligner correctement augmente le score.</p>
+          <p>Pose les tuiles hexagonales, connecte les textures identiques et termine les missions. Chaque bord bien aligné paie ; eau et rails paient davantage.</p>
           <div class="score-strip">
             <div><strong>+2 points</strong><span>par tuile posée</span></div>
             <div><strong>+10 points</strong><span>par bord identique contre une tuile voisine</span></div>
@@ -172,14 +185,10 @@
         <article class="help-card">
           <h2>🧩 Placement</h2>
           <ul>
-            <li>La pioche contient initialement 50 tuiles.</li>
-            <li>La première tuile peut être posée librement dans la grille.</li>
-            <li>Les suivantes doivent toucher au moins une tuile déjà placée.</li>
-            <li>Une case déjà occupée est interdite.</li>
-            <li>Quand la pioche est vide, le jeu s’arrête.</li>
-            <li>Si la tuile courante correspond sur au moins 2 côtés, tu gagnes 1 tuile dans la pioche.</li>
-            <li>Si la tuile courante correspond sur au moins 3 côtés, tu gagnes 2 tuiles dans la pioche.</li>
-            <li>Entourer une tuile par 6 autres tuiles sur ses 6 côtés rapporte 50 points.</li>
+            <li>Départ : 50 tuiles. La première est libre, les suivantes touchent une tuile posée.</li>
+            <li>Case occupée interdite. Pioche vide = fin.</li>
+            <li>2 côtés compatibles : +1 tuile ; 3 côtés compatibles : +2 tuiles.</li>
+            <li>Tuile encerclée sur 6 côtés : +50 points.</li>
             <li>La tuile fantôme indique l’emplacement possible.</li>
           </ul>
         </article>
@@ -193,7 +202,7 @@
 
         <article class="help-card">
           <h2>🕳️ Cellules noires</h2>
-          <p>Les cellules noires sont des cases spéciales déjà présentes sur la grille. Elles agissent comme des jokers : elles remplacent ce qui manque autour d’elles et acceptent les connexions avec toutes les textures adjacentes.</p>
+          <p>Les cellules noires sont des tuiles spéciales déjà présentes sur la grille. Elles agissent comme des jokers : elles remplacent ce qui manque autour d’elles et acceptent les connexions avec toutes les textures adjacentes.</p>
           <div class="rule-line"><span class="swatch black-cell"></span><strong>Joker</strong><span>compte comme compatible avec tout bord voisin</span></div>
         </article>
 
@@ -213,9 +222,8 @@
 
         <article class="help-card help-card-wide">
           <h2>🚩 Missions</h2>
-          <p>Chaque nouvelle tuile courante a 20% de chance d’ajouter une mission dans l’encart Missions en cours.</p>
-          <p>Les missions actuelles demandent de créer une forêt, un village, une voie ferrée, une voie d’eau, une prairie, une surface de champs de blé d’une taille précise, ou un nombre précis de trains visibles. Terminer une mission rapporte 100 points et ajoute 3 cartes supplémentaires dans la pioche. Les objectifs commencent simples puis augmentent progressivement quand le même type de mission réapparaît : 1 train, puis 2 trains, puis 3 trains, etc. Une mission réalisée reste visible 5 tours, puis disparaît automatiquement.</p>
-          <p>La difficulté tient compte de la valeur réelle des triangles : prairie, eau et rail valent toujours 1 élément ; les champs de blé valent 1 à 2, les maisons 1 à 4 et les forêts 1 à 6 arbres. Une mission Trains compte les lignes ferroviaires qui affichent réellement un train, ouvertes ou fermées. Les objectifs forêt, village et surface agricole demandent donc plus d’unités que les réseaux à 1 élément, parce que ces zones montent mécaniquement plus vite. La progression est affichée directement dans la liste, par exemple Forêt : 22/50 arbres, Surface agricole : 12/24 champs de blé, Voie ferrée : 6/9 rails ou Trains : 2/3.</p>
+          <p>À chaque nouvelle tuile courante, 20% de chance d’ajouter une mission. Elle peut demander forêt, village, voie ferrée, voie d’eau, prairie, champ de blé ou trains visibles.</p>
+          <p>Récompense : +100 points et +3 tuiles. Les objectifs progressent par type, une mission terminée reste visible 5 tours. Les valeurs réelles comptent : prairie/eau/rail = 1 ; champ de blé = 1-2 ; maison = 1-4 ; forêt = 1-6 arbres.</p>
         </article>
 
         <article class="help-card help-card-controls">
@@ -227,7 +235,8 @@
             <div><kbd>D</kbd><span>Déplacer à droite</span></div>
             <div><kbd>R</kbd><span>Tourner la tuile active</span></div>
             <div><kbd>H</kbd><span>Afficher / masquer cette aide</span></div>
-            <div><kbd>Molette</kbd><span>Zoom sur une tuile posée, rotation sur une case disponible</span></div>
+            <div><kbd>ESPACE</kbd><span>Mode immersif : masque interface, HUD et nombres</span></div>
+            <div><kbd>Molette</kbd><span>Zoom sur tuile posée, rotation sur case disponible</span></div>
             <div><kbd>Clic gauche</kbd><span>Poser ou déplacer la caméra en glissant</span></div>
             <div><kbd>Clic droit</kbd><span>Rotation de la caméra</span></div>
           </div>

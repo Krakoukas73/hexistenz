@@ -39,10 +39,12 @@ export function generateTile() {
 
 export function rotateTile(tile, steps) {
   const normalizedSteps = normalizeRotation(steps);
+  const edges = rotateEdges(tile.edges, normalizedSteps);
 
   return {
     ...tile,
-    edges: rotateEdges(tile.edges, normalizedSteps),
+    edges,
+    center: pickCenterFromEdges(edges),
     rotation: normalizeRotation((tile.rotation ?? 0) + normalizedSteps)
   };
 }
@@ -194,6 +196,9 @@ function countEdgesOfType(edges, type) {
 }
 
 function pickCenterFromEdges(edges) {
+  // Une tuile avec au moins une connexion eau doit garder un centre eau :
+  // c'est le nœud visuel et logique qui relie les triangles d'eau de la tuile.
+  // La régression venait de la règle waterCount >= 4, trop stricte.
   if (hasEdgeType(edges, EDGE_TYPES.water)) return EDGE_TYPES.water;
   if (hasEdgeType(edges, EDGE_TYPES.rail)) return EDGE_TYPES.rail;
 
@@ -204,7 +209,8 @@ function pickCenterFromEdges(edges) {
     counts.set(type, (counts.get(type) ?? 0) + 1);
   }
 
-  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  const picked = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  return picked ?? EDGE_TYPES.grass;
 }
 
 function hasEdgeType(edges, type) {

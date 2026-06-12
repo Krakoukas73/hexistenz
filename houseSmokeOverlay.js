@@ -12,7 +12,7 @@ const SECTOR_DEFS = [
 ];
 
 const HOUSE_BASE_Y = (TILE_VISUAL.sectorY ?? 0.012) + 0.018;
-const HOUSE_SCALE = HEX_SIZE * 0.112;
+const HOUSE_SCALE = HEX_SIZE * 0.148;
 const HOUSE_CHIMNEY_TOP_Y = HOUSE_BASE_Y + HOUSE_SCALE * 1.62;
 const HOUSE_SMOKE_Y = HOUSE_CHIMNEY_TOP_Y + HOUSE_SCALE * 0.08;
 const PUFFS_PER_COLUMN = 18;
@@ -67,10 +67,10 @@ export function updateHouseSmokeOverlay(group, timeSeconds = 0) {
         column.z + backWobble + puff.drift.z * rise
       );
 
-      const scale = puff.baseScale * (0.72 + rise * 2.55 + Math.sin(timeSeconds * 3.3 + i) * 0.075);
+      const scale = puff.baseScale * (0.76 + rise * 1.55 + Math.sin(timeSeconds * 1.45 + i) * 0.035);
       puff.mesh.scale.set(scale, scale, scale);
-      puff.mesh.material.opacity = Math.max(0, (1 - rise) * puff.opacity);
-      puff.mesh.visible = puff.mesh.material.opacity > 0.025;
+      puff.mesh.material.opacity = Math.max(0, Math.pow(1 - rise, 1.25) * puff.opacity);
+      puff.mesh.visible = puff.mesh.material.opacity > 0.018;
     }
   }
 }
@@ -116,13 +116,13 @@ function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey
       column.puffs.push({
         mesh,
         phase: (puffIndex / PUFFS_PER_COLUMN + hashUnit(`${puffSeed}:phase`) * 0.20) % 1,
-        speed: 0.43 + hashUnit(`${puffSeed}:speed`) * 0.17,
-        rise: HEX_SIZE * (0.48 + hashUnit(`${puffSeed}:rise`) * 0.22),
-        drift: new THREE.Vector3(Math.cos(windAngle) * windPower, 0, Math.sin(windAngle) * windPower),
-        wobble: HEX_SIZE * (0.014 + hashUnit(`${puffSeed}:wobble`) * 0.018),
-        wobbleSpeed: 1.05 + hashUnit(`${puffSeed}:wobble-speed`) * 1.20,
-        baseScale: 0.72 + hashUnit(`${puffSeed}:scale`) * 0.26,
-        opacity: 0.58 + hashUnit(`${puffSeed}:opacity`) * 0.20
+        speed: 0.20 + hashUnit(`${puffSeed}:speed`) * 0.09,
+        rise: HEX_SIZE * (0.34 + hashUnit(`${puffSeed}:rise`) * 0.16),
+        drift: new THREE.Vector3(Math.cos(windAngle) * windPower * 0.58, 0, Math.sin(windAngle) * windPower * 0.58),
+        wobble: HEX_SIZE * (0.006 + hashUnit(`${puffSeed}:wobble`) * 0.010),
+        wobbleSpeed: 0.38 + hashUnit(`${puffSeed}:wobble-speed`) * 0.52,
+        baseScale: 0.58 + hashUnit(`${puffSeed}:scale`) * 0.18,
+        opacity: 0.34 + hashUnit(`${puffSeed}:opacity`) * 0.14
       });
     }
 
@@ -136,68 +136,114 @@ function createVillageHouseObject(seedKey, sector, index) {
   group.name = 'village-house-3d-under-smoke';
 
   const sectorAngle = (SECTOR_DEFS.findIndex(item => item.key === sector.key) * Math.PI / 3) + Math.PI / 6;
-  const jitter = (hashUnit(`${seedKey}:house-rotation`) - 0.5) * 0.34;
+  const jitter = (hashUnit(`${seedKey}:house-rotation`) - 0.5) * 0.42;
   group.rotation.y = -sectorAngle + jitter;
-  group.scale.setScalar(0.92 + hashUnit(`${seedKey}:house-scale`) * 0.16);
+  group.scale.setScalar(1.08 + hashUnit(`${seedKey}:house-scale`) * 0.24);
 
-  const wallColor = [0xD9A15F, 0xC98F5D, 0xE0B16F, 0xBC7A55][index % 4];
-  const roofColor = [0xB94735, 0xD05B3F, 0x9E3A2F, 0xC9573A][(index + Math.floor(hashUnit(`${seedKey}:roof`) * 4)) % 4];
+  const variant = Math.floor(hashUnit(`${seedKey}:variant`) * 5) % 5;
+  const width = HOUSE_SCALE * (0.92 + hashUnit(`${seedKey}:width`) * 0.34);
+  const depth = HOUSE_SCALE * (0.76 + hashUnit(`${seedKey}:depth`) * 0.30);
+  const height = HOUSE_SCALE * (0.68 + hashUnit(`${seedKey}:height`) * 0.30);
+
+  const wallPalette = [0xD9A15F, 0xC98F5D, 0xE0B16F, 0xBC7A55, 0xD7BA82, 0xB98562];
+  const roofPalette = [0xB94735, 0xD05B3F, 0x9E3A2F, 0xC9573A, 0x7E342C];
+  const wallColor = wallPalette[(index + Math.floor(hashUnit(`${seedKey}:wall`) * wallPalette.length)) % wallPalette.length];
+  const roofColor = roofPalette[(index + Math.floor(hashUnit(`${seedKey}:roof`) * roofPalette.length)) % roofPalette.length];
 
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(HOUSE_SCALE * 0.92, HOUSE_SCALE * 0.72, HOUSE_SCALE * 0.82),
+    new THREE.BoxGeometry(width, height, depth),
     getHouseMaterial(`wall-${wallColor}`, wallColor)
   );
   body.name = 'village-house-body';
-  body.position.set(0, HOUSE_SCALE * 0.36, 0);
+  body.position.set(0, height * 0.5, 0);
   body.renderOrder = 120;
 
-  const roof = new THREE.Mesh(
-    new THREE.ConeGeometry(HOUSE_SCALE * 0.70, HOUSE_SCALE * 0.48, 4),
-    getHouseMaterial(`roof-${roofColor}`, roofColor)
+  const foundation = new THREE.Mesh(
+    new THREE.BoxGeometry(width * 1.08, HOUSE_SCALE * 0.10, depth * 1.08),
+    getHouseMaterial('foundation-stone', 0x7F7568)
   );
-  roof.name = 'village-house-roof';
-  roof.position.set(0, HOUSE_SCALE * 0.96, 0);
-  roof.rotation.y = Math.PI / 4;
-  roof.scale.z = 0.82;
-  roof.renderOrder = 121;
+  foundation.name = 'village-house-foundation';
+  foundation.position.set(0, HOUSE_SCALE * 0.05, 0);
+  foundation.renderOrder = 119;
 
+  const roof = createHouseRoof(variant, width, depth, height, roofColor);
+
+  const chimneyOffsetX = 0;
+  const chimneyOffsetZ = 0;
   const chimney = new THREE.Mesh(
-    new THREE.BoxGeometry(HOUSE_SCALE * 0.18, HOUSE_SCALE * 0.46, HOUSE_SCALE * 0.18),
+    new THREE.BoxGeometry(HOUSE_SCALE * 0.17, HOUSE_SCALE * 0.48, HOUSE_SCALE * 0.17),
     getHouseMaterial('chimney', 0x5B3328)
   );
   chimney.name = 'village-house-chimney-aligned-with-smoke';
-  chimney.position.set(0, HOUSE_SCALE * 1.36, 0);
-  chimney.renderOrder = 122;
+  chimney.position.set(chimneyOffsetX, height + HOUSE_SCALE * 0.54, chimneyOffsetZ);
+  chimney.renderOrder = 123;
 
   const door = new THREE.Mesh(
-    new THREE.PlaneGeometry(HOUSE_SCALE * 0.22, HOUSE_SCALE * 0.32),
-    getHouseMaterial('door', 0x5A3826)
+    new THREE.PlaneGeometry(HOUSE_SCALE * (0.20 + variant * 0.012), HOUSE_SCALE * 0.34),
+    getHouseMaterial('door', variant % 2 === 0 ? 0x5A3826 : 0x3F3024)
   );
   door.name = 'village-house-door';
-  door.position.set(0, HOUSE_SCALE * 0.28, -HOUSE_SCALE * 0.413);
-  door.rotation.x = 0;
-  door.renderOrder = 123;
+  door.position.set(width * (variant === 3 ? -0.22 : 0), HOUSE_SCALE * 0.31, -depth * 0.506);
+  door.renderOrder = 124;
 
-  const leftWindow = createHouseWindow(-HOUSE_SCALE * 0.25);
-  const rightWindow = createHouseWindow(HOUSE_SCALE * 0.25);
+  const knob = new THREE.Mesh(
+    new THREE.CircleGeometry(HOUSE_SCALE * 0.018, 10),
+    getHouseMaterial('door-knob', 0xE5C15A)
+  );
+  knob.name = 'village-house-door-knob';
+  knob.position.set(door.position.x + HOUSE_SCALE * 0.055, HOUSE_SCALE * 0.31, -depth * 0.509);
+  knob.renderOrder = 126;
 
-  for (const mesh of [body, roof, chimney, door, leftWindow, rightWindow]) {
+  const leftWindow = createHouseWindow(-width * 0.26, height * 0.62, -depth * 0.508, variant);
+  const rightWindow = createHouseWindow(width * 0.26, height * 0.62, -depth * 0.508, variant + 1);
+  const atticWindow = createHouseWindow(0, height + HOUSE_SCALE * 0.18, -depth * 0.512, variant + 2, 0.72);
+
+  const sideWindow = createHouseWindow(0, height * 0.58, 0, variant + 3, 0.86);
+  sideWindow.position.set(width * 0.506, height * 0.58, 0);
+  sideWindow.rotation.y = Math.PI / 2;
+
+  for (const mesh of [foundation, body, roof, chimney, door, knob, leftWindow, rightWindow, atticWindow, sideWindow]) {
     mesh.castShadow = false;
     mesh.receiveShadow = false;
   }
 
-  group.add(body, roof, chimney, door, leftWindow, rightWindow);
+  group.add(foundation, body, roof, chimney, door, knob, leftWindow, rightWindow, atticWindow, sideWindow);
   return group;
 }
 
-function createHouseWindow(x) {
+function createHouseRoof(variant, width, depth, height, roofColor) {
+  let roof;
+  if (variant === 1 || variant === 4) {
+    roof = new THREE.Mesh(
+      new THREE.BoxGeometry(width * 1.16, HOUSE_SCALE * 0.36, depth * 1.02),
+      getHouseMaterial(`roof-${roofColor}`, roofColor)
+    );
+    roof.rotation.z = variant === 1 ? 0.18 : -0.18;
+    roof.position.set(0, height + HOUSE_SCALE * 0.30, 0);
+  } else {
+    roof = new THREE.Mesh(
+      new THREE.ConeGeometry(Math.max(width, depth) * 0.60, HOUSE_SCALE * (0.52 + variant * 0.035), 4),
+      getHouseMaterial(`roof-${roofColor}`, roofColor)
+    );
+    roof.position.set(0, height + HOUSE_SCALE * 0.30, 0);
+    roof.rotation.y = Math.PI / 4;
+    roof.scale.z = depth / Math.max(width, 0.001);
+  }
+  roof.name = 'village-house-roof';
+  roof.renderOrder = 122;
+  return roof;
+}
+
+function createHouseWindow(x, y, z, variant = 0, sizeMultiplier = 1) {
+  const w = HOUSE_SCALE * (0.14 + (variant % 3) * 0.018) * sizeMultiplier;
+  const h = HOUSE_SCALE * (0.13 + (variant % 2) * 0.020) * sizeMultiplier;
   const window = new THREE.Mesh(
-    new THREE.PlaneGeometry(HOUSE_SCALE * 0.16, HOUSE_SCALE * 0.14),
-    getHouseMaterial('window', 0xF6E7A6)
+    new THREE.PlaneGeometry(w, h),
+    getHouseMaterial(`window-${variant % 4}`, [0xF6E7A6, 0xFFE4A0, 0xDFF0FF, 0xF1D38D][variant % 4])
   );
   window.name = 'village-house-window';
-  window.position.set(x, HOUSE_SCALE * 0.48, -HOUSE_SCALE * 0.414);
-  window.renderOrder = 124;
+  window.position.set(x, y, z);
+  window.renderOrder = 125;
   return window;
 }
 

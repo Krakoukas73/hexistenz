@@ -36,10 +36,14 @@ export const EDGE_COLOR = {
 export const TILE_VISUAL = {
   radiusScale: 1,
   centerRadiusScale: 0.33,
-  sectorY: 0.012,
-  centerY: 0.018,
-  outlineY: 0.024,
-  labelY: 0.07,
+  sectorY: 0,
+  centerY: 0,
+  waterY: -0.075,
+  tileThickness: 0.12,
+  waterThickness: 0.06,
+  outlineY: 0.036,
+  labelY: 0.58,
+  valueLabelHoverLift: 0.07,
   railY: 0.052,
   outlineColor: 0x151A21,
   outlineOpacity: 0.75

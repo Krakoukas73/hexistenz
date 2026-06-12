@@ -496,3 +496,15 @@ body::after {
     overflow-y: auto;
   }
 }
+
+body.grid-only-mode #scorePanel,
+body.grid-only-mode #debugHud,
+body.grid-only-mode #tileUI,
+body.grid-only-mode .help-overlay {
+  display: none !important;
+}
+
+.key-space {
+  width: 74px;
+  font-size: 11px;
+}
