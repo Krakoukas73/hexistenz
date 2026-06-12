@@ -508,3 +508,10 @@ body.grid-only-mode .help-overlay {
   width: 74px;
   font-size: 11px;
 }
+
+.key-combo {
+  width: auto;
+  min-width: 54px;
+  padding: 0 8px;
+  font-size: 11px;
+}

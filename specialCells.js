@@ -2,8 +2,8 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 import { GRID_RADIUS, HEX_SIZE } from './config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 
-export const SPECIAL_CELL_MIN = 5;
-export const SPECIAL_CELL_MAX = 30;
+export const SPECIAL_CELL_MIN = 1;
+export const SPECIAL_CELL_MAX = 5;
 
 const CLUSTER_TARGET_MIN = 4;
 const CLUSTER_TARGET_MAX = 6;
@@ -109,7 +109,7 @@ export function updateSpecialCellsMeshAnimation(group, timeSeconds = 0) {
     const progress = (timeSeconds * particle.speed + particle.phase) % 1;
     const radius = THREE.MathUtils.lerp(particle.outerRadius, particle.innerRadius, progress);
     const angle = particle.baseAngle + progress * particle.turns * Math.PI * 2;
-    const flicker = 0.45 + Math.sin(timeSeconds * particle.flickerSpeed + particle.phase * 12) * 0.18;
+    const flicker = 0.28 + Math.sin(timeSeconds * particle.flickerSpeed + particle.phase * 12) * 0.035;
 
     child.position.set(
       Math.cos(angle) * radius,
@@ -120,7 +120,7 @@ export function updateSpecialCellsMeshAnimation(group, timeSeconds = 0) {
     child.scale.setScalar(THREE.MathUtils.lerp(particle.outerScale, particle.innerScale, progress));
 
     if (child.material) {
-      child.material.opacity = Math.max(0.08, flicker * (1 - progress * 0.55));
+      child.material.opacity = Math.max(0.06, flicker * (1 - progress * 0.28));
     }
   });
 }
@@ -137,7 +137,7 @@ function createSpecialCellMesh(cell = null) {
   const fill = new THREE.Mesh(
     new THREE.CircleGeometry(HEX_SIZE * 0.98, 6),
     new THREE.MeshBasicMaterial({
-      color: 0x000000,
+      color: 0x10202a,
       side: THREE.DoubleSide
     })
   );
@@ -155,17 +155,17 @@ function createSpecialCellMesh(cell = null) {
 
 function createBlackCellVortex() {
   const group = new THREE.Group();
-  const ringCount = 9;
+  const ringCount = 10;
 
   for (let i = 0; i < ringCount; i += 1) {
-    const radius = HEX_SIZE * (0.12 + i * 0.085);
-    const thickness = HEX_SIZE * (0.018 + i * 0.002);
+    const radius = HEX_SIZE * (0.14 + i * 0.078);
+    const thickness = HEX_SIZE * (0.014 + i * 0.0015);
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(radius, radius + thickness, 64, 1, 0.05 + i * 0.38, Math.PI * 1.42),
+      new THREE.RingGeometry(radius, radius + thickness, 64, 1, 0.05 + i * 0.38, Math.PI * 1.28),
       new THREE.MeshBasicMaterial({
-        color: i % 2 === 0 ? 0xbdbdbd : 0x2b2b2b,
+        color: i % 2 === 0 ? 0x8ee6d1 : 0x3b6f88,
         transparent: true,
-        opacity: 0.92 - i * 0.055,
+        opacity: 0.38 - i * 0.018,
         side: THREE.DoubleSide,
         depthWrite: false
       })
@@ -175,7 +175,7 @@ function createBlackCellVortex() {
     ring.rotation.y = i * 0.56;
     ring.userData.blackCellAnimation = {
       baseRotation: ring.rotation.y,
-      speed: 2.45 + i * 0.32,
+      speed: 0.18 + i * 0.026,
       direction: i % 2 === 0 ? 1 : -1
     };
     group.add(ring);
@@ -184,9 +184,9 @@ function createBlackCellVortex() {
   const core = new THREE.Mesh(
     new THREE.CircleGeometry(HEX_SIZE * 0.2, 40),
     new THREE.MeshBasicMaterial({
-      color: 0x000000,
+      color: 0x14313b,
       transparent: true,
-      opacity: 1,
+      opacity: 0.72,
       side: THREE.DoubleSide,
       depthWrite: false
     })
@@ -195,11 +195,11 @@ function createBlackCellVortex() {
   core.geometry.rotateX(-Math.PI / 2);
   core.userData.blackCellAnimation = {
     baseRotation: 0,
-    speed: 4.4,
+    speed: 0.22,
     direction: 1,
     pulse: true,
-    pulseSpeed: 6.4,
-    pulseAmount: 0.18,
+    pulseSpeed: 0.85,
+    pulseAmount: 0.035,
     phase: Math.random() * Math.PI * 2
   };
   group.add(core);
@@ -207,9 +207,9 @@ function createBlackCellVortex() {
   const glow = new THREE.Mesh(
     new THREE.RingGeometry(HEX_SIZE * 0.2, HEX_SIZE * 0.31, 48),
     new THREE.MeshBasicMaterial({
-      color: 0xf2f2f2,
+      color: 0xb8ffe8,
       transparent: true,
-      opacity: 0.48,
+      opacity: 0.18,
       side: THREE.DoubleSide,
       depthWrite: false
     })
@@ -218,11 +218,11 @@ function createBlackCellVortex() {
   glow.geometry.rotateX(-Math.PI / 2);
   glow.userData.blackCellAnimation = {
     baseRotation: 0,
-    speed: 5.2,
+    speed: 0.2,
     direction: -1,
     pulse: true,
-    pulseSpeed: 7.6,
-    pulseAmount: 0.25,
+    pulseSpeed: 0.72,
+    pulseAmount: 0.045,
     phase: Math.random() * Math.PI * 2
   };
   group.add(glow);
@@ -233,7 +233,7 @@ function createBlackCellVortex() {
 }
 
 function addBlackCellDebris(group) {
-  const debrisCount = 18;
+  const debrisCount = 9;
 
   for (let i = 0; i < debrisCount; i += 1) {
     const size = HEX_SIZE * (0.025 + Math.random() * 0.035);
@@ -246,9 +246,9 @@ function addBlackCellDebris(group) {
     const debris = new THREE.Mesh(
       geometry,
       new THREE.MeshBasicMaterial({
-        color: i % 4 === 0 ? 0xffffff : 0x9f9f9f,
+        color: i % 4 === 0 ? 0xd7fff2 : 0x86b7ad,
         transparent: true,
-        opacity: 0.42,
+        opacity: 0.18,
         side: THREE.DoubleSide,
         depthWrite: false
       })
@@ -256,14 +256,14 @@ function addBlackCellDebris(group) {
 
     debris.userData.blackCellParticle = {
       baseAngle: Math.random() * Math.PI * 2,
-      outerRadius: HEX_SIZE * (1.08 + Math.random() * 0.55),
-      innerRadius: HEX_SIZE * (0.1 + Math.random() * 0.12),
-      outerScale: 0.95 + Math.random() * 0.35,
-      innerScale: 0.2 + Math.random() * 0.25,
-      speed: 0.55 + Math.random() * 0.55,
-      turns: 1.15 + Math.random() * 1.2,
-      spinSpeed: 4 + Math.random() * 5,
-      flickerSpeed: 7 + Math.random() * 7,
+      outerRadius: HEX_SIZE * (0.76 + Math.random() * 0.18),
+      innerRadius: HEX_SIZE * (0.26 + Math.random() * 0.1),
+      outerScale: 0.7 + Math.random() * 0.25,
+      innerScale: 0.45 + Math.random() * 0.18,
+      speed: 0.055 + Math.random() * 0.04,
+      turns: 0.45 + Math.random() * 0.3,
+      spinSpeed: 0.22 + Math.random() * 0.32,
+      flickerSpeed: 0.55 + Math.random() * 0.7,
       phase: Math.random(),
       y: 0.012 + i * 0.00025
     };

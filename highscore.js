@@ -1,6 +1,15 @@
 const API_URL = 'highscore.php';
 const DEFAULT_NAME = 'Joueur';
 
+const STAT_TYPES = [
+  ['grass', '🌿', 'stats-grass-chip'],
+  ['field', '🌾', 'stats-field-chip'],
+  ['forest', '🌲', 'stats-forest-chip'],
+  ['house', '🏘️', 'stats-house-chip'],
+  ['water', '💧', 'stats-water-chip'],
+  ['rail', '🛤️', 'stats-rail-chip']
+];
+
 export function createHighscoreUI(ui) {
   const elements = {
     list: document.getElementById('highscoreList'),
@@ -19,12 +28,13 @@ export function createHighscoreUI(ui) {
   return elements;
 }
 
-export function askHighscoreSubmit(elements, score, gridPercent = 0) {
+export function askHighscoreSubmit(elements, score, gridPercent = 0, stats = null) {
   if (!elements || score <= 0) return;
 
   const normalizedGridPercent = normalizeGridPercent(gridPercent);
   elements.currentScore = score;
   elements.currentGridPercent = normalizedGridPercent;
+  elements.currentStats = sanitizeGameStats(stats);
   elements.submitBox?.classList.remove('hidden');
   setStatus(elements, `Score final : ${score} · Grille : ${normalizedGridPercent.toFixed(1)}%`);
   elements.nameInput?.focus();
@@ -33,6 +43,7 @@ export function askHighscoreSubmit(elements, score, gridPercent = 0) {
 async function submitCurrentScore(ui, elements) {
   const score = Number(elements.currentScore ?? 0);
   const gridPercent = normalizeGridPercent(elements.currentGridPercent ?? 0);
+  const stats = sanitizeGameStats(elements.currentStats);
   const name = sanitizeName(elements.nameInput?.value || DEFAULT_NAME);
 
   if (score <= 0) return;
@@ -42,7 +53,7 @@ async function submitCurrentScore(ui, elements) {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, score, gridPercent })
+      body: JSON.stringify({ name, score, gridPercent, stats })
     });
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -50,6 +61,7 @@ async function submitCurrentScore(ui, elements) {
 
     elements.currentScore = 0;
     elements.currentGridPercent = 0;
+    elements.currentStats = null;
     elements.submitBox?.classList.add('hidden');
     if (elements.nameInput) elements.nameInput.value = '';
     renderHighscores(elements, data.scores || []);
@@ -87,14 +99,66 @@ function renderHighscores(elements, scores) {
     .map((entry, index) => {
       const gridPercent = normalizeGridPercent(entry.gridPercent ?? 0);
       const rankBadge = getRankBadge(index);
-      return `<li><span>${rankBadge}${escapeHtml(entry.name)}</span><strong>${Number(entry.score) || 0}<em>${gridPercent.toFixed(1)}%</em></strong></li>`;
+      const stats = sanitizeGameStats(entry.stats);
+      const statLine = renderCompactStats(stats);
+      return `
+        <li>
+          <div class="highscore-entry-main">
+            <span class="highscore-player">${rankBadge}${escapeHtml(entry.name)}</span>
+            ${statLine}
+          </div>
+          <strong>${Number(entry.score) || 0}<em>${gridPercent.toFixed(1)}%</em></strong>
+        </li>`;
     })
     .join('');
+}
+
+function renderCompactStats(stats) {
+  if (!stats) return '';
+
+  const textureChips = STAT_TYPES
+    .map(([type, emoji, className]) => {
+      const total = safeInt(stats.totals?.[type]);
+      const largest = safeInt(stats.largest?.[type]);
+      if (total === 0 && largest === 0) return '';
+      return `<span class="highscore-stat-chip ${className}" title="${emoji} total / surface max">${emoji}${total}/${largest}</span>`;
+    })
+    .join('');
+
+  const tiles = safeInt(stats.tiles);
+  const trains = safeInt(stats.trainLines);
+  const summary = `<span class="highscore-stat-chip stats-summary-chip" title="Tuiles posées / trains">⬢${tiles} 🚂${trains}</span>`;
+
+  return `<div class="highscore-stats-line">${summary}${textureChips}</div>`;
 }
 
 function getRankBadge(index) {
   const medal = ['🥇', '🥈', '🥉'][index];
   return medal ? `<span class="highscore-rank-medal">${medal}</span>` : '<span class="highscore-rank-medal"></span>';
+}
+
+function sanitizeGameStats(stats) {
+  if (!stats || typeof stats !== 'object') return null;
+
+  const clean = {
+    tiles: safeInt(stats.tiles),
+    trainLines: safeInt(stats.trainLines),
+    totals: {},
+    largest: {}
+  };
+
+  for (const [type] of STAT_TYPES) {
+    clean.totals[type] = safeInt(stats.totals?.[type]);
+    clean.largest[type] = safeInt(stats.largest?.[type]);
+  }
+
+  return clean;
+}
+
+function safeInt(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.min(999999, Math.floor(number)));
 }
 
 function normalizeGridPercent(value) {

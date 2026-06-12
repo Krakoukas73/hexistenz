@@ -9,7 +9,8 @@ const TEXTURED_TYPES = new Set([
   EDGE_TYPES.field,
   EDGE_TYPES.forest,
   EDGE_TYPES.grass,
-  EDGE_TYPES.house
+  EDGE_TYPES.house,
+  EDGE_TYPES.rail
 ]);
 
 export function getBiomeMaterial(type, opacity = 1) {
@@ -91,6 +92,7 @@ function drawTexture(type, ctx, timeSeconds = 0) {
   else if (type === EDGE_TYPES.forest) drawForestTexture(ctx);
   else if (type === EDGE_TYPES.grass) drawGrassTexture(ctx);
   else if (type === EDGE_TYPES.house) drawHouseTexture(ctx);
+  else if (type === EDGE_TYPES.rail) drawRailGroundTexture(ctx);
 }
 
 function drawWaterTexture(ctx, timeSeconds = 0) {
@@ -137,31 +139,49 @@ function drawWaterTexture(ctx, timeSeconds = 0) {
 }
 
 function drawFieldTexture(ctx) {
-  ctx.fillStyle = '#e5c65a';
+  const gradient = ctx.createLinearGradient(0, 0, 128, 128);
+  gradient.addColorStop(0, '#f0d477');
+  gradient.addColorStop(0.45, '#d8ad3b');
+  gradient.addColorStop(1, '#f3df8a');
+  ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 128, 128);
 
-  // Champs de blé : rangs labourés + petites touches de chaume.
-  for (let x = -140; x < 256; x += 18) {
-    ctx.strokeStyle = 'rgba(255, 238, 150, 0.60)';
-    ctx.lineWidth = 6;
+  // Champs de blé : rangs plus fins, sillons, chaumes et petites variations.
+  for (let x = -150; x < 270; x += 13) {
+    ctx.strokeStyle = 'rgba(255, 244, 164, 0.52)';
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(x, -10);
-    ctx.lineTo(x + 128, 138);
+    ctx.moveTo(x, -12);
+    ctx.lineTo(x + 128, 140);
     ctx.stroke();
 
-    ctx.strokeStyle = 'rgba(120, 82, 24, 0.26)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(105, 70, 20, 0.24)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(x + 9, -10);
-    ctx.lineTo(x + 137, 138);
+    ctx.moveTo(x + 7, -12);
+    ctx.lineTo(x + 135, 140);
     ctx.stroke();
   }
 
-  for (let i = 0; i < 70; i++) {
-    const x = (i * 31) % 128;
-    const y = (i * 47) % 128;
-    ctx.fillStyle = i % 3 === 0 ? 'rgba(255, 248, 180, 0.34)' : 'rgba(112, 78, 26, 0.18)';
-    ctx.fillRect(x, y, 2, 5);
+  for (let i = 0; i < 115; i++) {
+    const x = (i * 37 + (i % 5) * 11) % 128;
+    const y = (i * 53 + (i % 7) * 5) % 128;
+    const tall = 3 + (i % 4);
+    ctx.strokeStyle = i % 4 === 0 ? 'rgba(255, 250, 188, 0.44)' : 'rgba(126, 86, 24, 0.22)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y + tall);
+    ctx.lineTo(x + ((i % 3) - 1), y - tall);
+    ctx.stroke();
+  }
+
+  for (let i = 0; i < 24; i++) {
+    const x = (i * 47) % 128;
+    const y = (i * 31) % 128;
+    ctx.fillStyle = 'rgba(120, 75, 18, 0.14)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, 7 + (i % 4), 3 + (i % 2), 0.55, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
@@ -252,51 +272,86 @@ function drawGrassTexture(ctx) {
 }
 
 function drawHouseTexture(ctx) {
-  ctx.fillStyle = '#8e4a34';
+  const gradient = ctx.createLinearGradient(0, 0, 128, 128);
+  gradient.addColorStop(0, '#9b5a3d');
+  gradient.addColorStop(0.55, '#7f432f');
+  gradient.addColorStop(1, '#b0744e');
+  ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 128, 128);
 
-  // Village : parcelles, chemins clairs, murs beiges et toits brique.
-  ctx.strokeStyle = 'rgba(210, 180, 120, 0.26)';
-  ctx.lineWidth = 9;
+  // Sol de village uniquement : plus de fausses maisons plates au sol,
+  // puisque les vraies maisons 3D sont posées au-dessus.
+  ctx.strokeStyle = 'rgba(214, 184, 124, 0.34)';
+  ctx.lineWidth = 12;
+  ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(-10, 34);
-  ctx.lineTo(140, 96);
-  ctx.moveTo(28, -10);
-  ctx.lineTo(96, 138);
+  ctx.moveTo(-12, 36);
+  ctx.bezierCurveTo(26, 48, 56, 56, 140, 92);
+  ctx.moveTo(30, -12);
+  ctx.bezierCurveTo(40, 30, 58, 74, 96, 140);
   ctx.stroke();
 
-  const houses = [
-    [18, 24, -0.12], [54, 16, 0.08], [92, 30, -0.06],
-    [34, 64, 0.10], [78, 70, -0.08], [114, 58, 0.05],
-    [18, 104, 0.04], [58, 110, -0.10], [100, 100, 0.12]
-  ];
-
-  for (const [x, y, rot] of houses) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(rot);
-
-    ctx.fillStyle = 'rgba(55, 22, 18, 0.28)';
-    ctx.fillRect(-9, 1, 20, 16);
-
-    ctx.fillStyle = '#c49a68';
-    ctx.fillRect(-8, 0, 16, 14);
-
-    ctx.fillStyle = '#6f3428';
+  ctx.strokeStyle = 'rgba(92, 50, 34, 0.28)';
+  ctx.lineWidth = 2;
+  for (let y = 9; y < 128; y += 13) {
     ctx.beginPath();
-    ctx.moveTo(-11, 0);
-    ctx.lineTo(0, -10);
-    ctx.lineTo(11, 0);
-    ctx.closePath();
+    ctx.moveTo(0, y + ((y * 7) % 5));
+    ctx.lineTo(128, y - ((y * 5) % 7));
+    ctx.stroke();
+  }
+
+  for (let i = 0; i < 95; i++) {
+    const x = (i * 41 + (i % 6) * 7) % 128;
+    const y = (i * 29 + (i % 5) * 13) % 128;
+    const r = 1.4 + (i % 4) * 0.55;
+    ctx.fillStyle = i % 3 === 0 ? 'rgba(198, 158, 102, 0.34)' : 'rgba(74, 38, 28, 0.20)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * 1.45, r, (i % 8) * 0.2, 0, Math.PI * 2);
     ctx.fill();
+  }
 
-    ctx.fillStyle = 'rgba(255, 230, 150, 0.38)';
-    ctx.fillRect(-5, 4, 3, 3);
-    ctx.fillRect(3, 4, 3, 3);
+  for (let i = 0; i < 18; i++) {
+    const x = (i * 53) % 128;
+    const y = (i * 47) % 128;
+    ctx.fillStyle = 'rgba(86, 109, 58, 0.28)';
+    ctx.beginPath();
+    ctx.arc(x, y, 3 + (i % 3), 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
 
-    ctx.fillStyle = 'rgba(70, 42, 25, 0.58)';
-    ctx.fillRect(-2, 7, 4, 7);
+function drawRailGroundTexture(ctx) {
+  ctx.fillStyle = '#8d877c';
+  ctx.fillRect(0, 0, 128, 128);
 
-    ctx.restore();
+  const gradient = ctx.createLinearGradient(0, 0, 128, 128);
+  gradient.addColorStop(0, 'rgba(188, 184, 171, 0.44)');
+  gradient.addColorStop(0.5, 'rgba(104, 99, 91, 0.32)');
+  gradient.addColorStop(1, 'rgba(215, 205, 180, 0.30)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 128, 128);
+
+  // Ballast : lit de gravier sous les rails 3D/overlay.
+  for (let i = 0; i < 170; i++) {
+    const x = (i * 43 + (i % 9) * 17) % 128;
+    const y = (i * 61 + (i % 7) * 11) % 128;
+    const radius = 1.1 + (i % 4) * 0.55;
+    const tone = i % 5;
+    ctx.fillStyle = tone === 0 ? 'rgba(235, 230, 212, 0.40)'
+      : tone === 1 ? 'rgba(55, 55, 52, 0.24)'
+      : tone === 2 ? 'rgba(120, 114, 104, 0.34)'
+      : 'rgba(164, 155, 137, 0.34)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius * 1.4, radius, (i % 6) * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  for (let x = -130; x < 260; x += 24) {
+    ctx.strokeStyle = 'rgba(74, 70, 64, 0.22)';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(x, -10);
+    ctx.lineTo(x + 128, 138);
+    ctx.stroke();
   }
 }

@@ -1,5 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
+import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
+import { makeHexKey } from './hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 
 const SECTOR_DEFS = [
@@ -18,6 +20,10 @@ const HOUSE_SMOKE_Y = HOUSE_CHIMNEY_TOP_Y + HOUSE_SCALE * 0.08;
 const PUFFS_PER_COLUMN = 18;
 const smokeMaterialCache = [];
 const houseMaterialCache = new Map();
+const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
+const CHURCH_MIN_HOUSES = 8;
+const CHURCH_HOUSES_PER_EXTRA = 18;
+const CHURCH_MAX_PER_ZONE = 4;
 
 export function createHouseSmokeOverlay() {
   const group = new THREE.Group();
@@ -29,6 +35,8 @@ export function createHouseSmokeOverlay() {
 export function rebuildHouseSmokeOverlay(group, placedTiles) {
   clearGroup(group);
   group.userData.columns = [];
+
+  const churchSectors = collectVillageChurchSectors(placedTiles);
 
   for (const placedTile of placedTiles.values()) {
     const edges = placedTile.tile?.edges;
@@ -43,9 +51,9 @@ export function rebuildHouseSmokeOverlay(group, placedTiles) {
 
       const houseCount = Math.max(1, Math.min(4, Math.round(getEdgeValue(edge))));
 
-      // Règle volontairement bête et fiable : 1 maison du triangle = 1 panache.
-      // Aucune mutualisation par zone contiguë, aucun regroupement central.
-      addSectorSmokeColumns(group, tileX, tileZ, sector, houseCount, placedTile.key);
+      // 1 maison du triangle = 1 maison 3D.
+      // La fumée est déterministe et limitée à environ 60% des maisons.
+      addSectorSmokeColumns(group, tileX, tileZ, sector, houseCount, placedTile.key, churchSectors.has(makeSectorKey(placedTile.key, sector.key)));
     }
   }
 }
@@ -75,7 +83,7 @@ export function updateHouseSmokeOverlay(group, timeSeconds = 0) {
   }
 }
 
-function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey) {
+function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey, hasChurch = false) {
   const vertices = createOuterVertices();
   const a = vertices[sector.a];
   const b = vertices[sector.b];
@@ -92,10 +100,18 @@ function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey
       house: null
     };
 
-    const house = createVillageHouseObject(seed, sector, i);
+    const isChurch = hasChurch && i === 0;
+    const house = isChurch
+      ? createVillageChurchObject(`${tileKey}:${sector.key}:village-church`, sector)
+      : createVillageHouseObject(seed, sector, i);
     house.position.set(column.x, HOUSE_BASE_Y, column.z);
     group.add(house);
     column.house = house;
+
+    if (isChurch) continue;
+
+    const chimneySmokes = hashUnit(`${seed}:chimney-smokes`) < 0.60;
+    if (!chimneySmokes) continue;
 
     for (let puffIndex = 0; puffIndex < PUFFS_PER_COLUMN; puffIndex += 1) {
       const puffSeed = `${seed}:puff:${puffIndex}`;
@@ -128,6 +144,127 @@ function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey
 
     group.userData.columns.push(column);
   }
+}
+
+function collectVillageChurchSectors(placedTiles) {
+  const selected = new Set();
+  const visited = new Set();
+
+  for (const placedTile of placedTiles.values()) {
+    const edges = placedTile.tile?.edges;
+    if (!edges) continue;
+
+    for (const edge of EDGE_ORDER) {
+      if (getTileEdgeType(placedTile, edge) !== EDGE_TYPES.house) continue;
+      const nodeKey = makeSectorKey(placedTile.key, edge);
+      if (visited.has(nodeKey)) continue;
+
+      const zone = collectHouseZone(placedTile, edge, placedTiles, visited);
+      if (zone.total < CHURCH_MIN_HOUSES) continue;
+
+      const churchCount = Math.min(
+        CHURCH_MAX_PER_ZONE,
+        Math.max(1, 1 + Math.floor((zone.total - CHURCH_MIN_HOUSES) / CHURCH_HOUSES_PER_EXTRA))
+      );
+
+      const candidates = zone.sectors
+        .filter(sectorRef => Math.round(getEdgeValue(sectorRef.tile.tile.edges[sectorRef.edge])) >= 2)
+        .sort((a, b) => rankChurchCandidate(a, zone) - rankChurchCandidate(b, zone));
+
+      const fallback = [...zone.sectors].sort((a, b) => rankChurchCandidate(a, zone) - rankChurchCandidate(b, zone));
+      const ordered = candidates.length > 0 ? candidates : fallback;
+      const usedTiles = new Set();
+
+      for (const candidate of ordered) {
+        if (selected.size >= 256) break; // garde-fou, pas Notre-Dame à chaque pixel.
+        if (usedTiles.has(candidate.tile.key)) continue;
+        selected.add(makeSectorKey(candidate.tile.key, candidate.edge));
+        usedTiles.add(candidate.tile.key);
+        if (usedTiles.size >= churchCount) break;
+      }
+    }
+  }
+
+  return selected;
+}
+
+function collectHouseZone(startTile, startEdge, placedTiles, visited) {
+  const stack = [{ tile: startTile, edge: startEdge }];
+  const sectors = [];
+  let total = 0;
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    const nodeKey = makeSectorKey(current.tile.key, current.edge);
+    if (visited.has(nodeKey)) continue;
+    if (getTileEdgeType(current.tile, current.edge) !== EDGE_TYPES.house) continue;
+
+    visited.add(nodeKey);
+    sectors.push(current);
+    total += getEdgeValue(current.tile.tile.edges[current.edge]);
+
+    for (const neighbor of getHouseNeighbors(current.tile, current.edge, placedTiles)) {
+      const neighborKey = makeSectorKey(neighbor.tile.key, neighbor.edge);
+      if (!visited.has(neighborKey)) stack.push(neighbor);
+    }
+  }
+
+  return { sectors, total };
+}
+
+function getHouseNeighbors(placedTile, edge, placedTiles) {
+  const neighbors = [];
+
+  if (getTileCenterType(placedTile) === EDGE_TYPES.house) {
+    for (const sameTileEdge of EDGE_ORDER) {
+      if (sameTileEdge !== edge && getTileEdgeType(placedTile, sameTileEdge) === EDGE_TYPES.house) {
+        neighbors.push({ tile: placedTile, edge: sameTileEdge });
+      }
+    }
+  }
+
+  const edgeIndex = EDGE_ORDER.indexOf(edge);
+  const internalEdges = [
+    EDGE_ORDER[(edgeIndex + EDGE_ORDER.length - 1) % EDGE_ORDER.length],
+    EDGE_ORDER[(edgeIndex + 1) % EDGE_ORDER.length]
+  ];
+
+  for (const internalEdge of internalEdges) {
+    if (getTileEdgeType(placedTile, internalEdge) === EDGE_TYPES.house) {
+      neighbors.push({ tile: placedTile, edge: internalEdge });
+    }
+  }
+
+  const direction = DIRECTION_BY_EDGE[edge];
+  if (!direction) return neighbors;
+
+  const neighborTile = placedTiles.get(makeHexKey(placedTile.q + direction.q, placedTile.r + direction.r));
+  const oppositeEdge = getOppositeEdge(edge);
+
+  if (neighborTile && getTileEdgeType(neighborTile, oppositeEdge) === EDGE_TYPES.house) {
+    neighbors.push({ tile: neighborTile, edge: oppositeEdge });
+  }
+
+  return neighbors;
+}
+
+function rankChurchCandidate(sectorRef, zone) {
+  const value = getEdgeValue(sectorRef.tile.tile.edges[sectorRef.edge]);
+  const centerBonus = getTileCenterType(sectorRef.tile) === EDGE_TYPES.house ? 80 : 0;
+  const seed = hashUnit(`${zone.total}:${zone.sectors.length}:${sectorRef.tile.key}:${sectorRef.edge}:church-rank`);
+  return -(value * 100 + centerBonus + seed);
+}
+
+function makeSectorKey(tileKey, edge) {
+  return `${tileKey}:${edge}`;
+}
+
+function getTileEdgeType(placedTile, edge) {
+  return getEdgeType(placedTile.tile.edges[edge]);
+}
+
+function getTileCenterType(placedTile) {
+  return placedTile.tile.center ?? null;
 }
 
 
@@ -210,6 +347,96 @@ function createVillageHouseObject(seedKey, sector, index) {
   group.add(foundation, body, roof, chimney, door, knob, leftWindow, rightWindow, atticWindow, sideWindow);
   return group;
 }
+function createVillageChurchObject(seedKey, sector) {
+  const group = new THREE.Group();
+  group.name = 'village-church-3d-large-zone-reward';
+
+  const sectorAngle = (SECTOR_DEFS.findIndex(item => item.key === sector.key) * Math.PI / 3) + Math.PI / 6;
+  const jitter = (hashUnit(`${seedKey}:church-rotation`) - 0.5) * 0.22;
+  group.rotation.y = -sectorAngle + jitter;
+  group.scale.setScalar(1.23);
+
+  const naveWidth = HOUSE_SCALE * 1.24;
+  const naveDepth = HOUSE_SCALE * 1.82;
+  const naveHeight = HOUSE_SCALE * 1.10;
+  const stone = getHouseMaterial('church-stone-warm', 0xC9B796);
+  const darkStone = getHouseMaterial('church-stone-dark', 0x8D806D);
+  const roofMat = getHouseMaterial('church-roof-slate', 0x4C5662);
+  const glassMat = getHouseMaterial('church-glass-blue', 0xB9E1FF);
+  const goldMat = getHouseMaterial('church-cross-gold', 0xE1C15A);
+
+  const base = new THREE.Mesh(new THREE.BoxGeometry(naveWidth * 1.18, HOUSE_SCALE * 0.12, naveDepth * 1.12), darkStone);
+  base.name = 'village-church-stone-base';
+  base.position.set(0, HOUSE_SCALE * 0.06, 0);
+
+  const nave = new THREE.Mesh(new THREE.BoxGeometry(naveWidth, naveHeight, naveDepth), stone);
+  nave.name = 'village-church-nave';
+  nave.position.set(0, HOUSE_SCALE * 0.12 + naveHeight * 0.5, 0);
+
+  const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(naveWidth * 0.80, HOUSE_SCALE * 0.62, 4),
+    roofMat
+  );
+  roof.name = 'village-church-roof';
+  roof.position.set(0, HOUSE_SCALE * 0.12 + naveHeight + HOUSE_SCALE * 0.28, 0);
+  roof.rotation.y = Math.PI / 4;
+  roof.scale.z = naveDepth / Math.max(naveWidth, 0.001);
+
+  const towerWidth = HOUSE_SCALE * 0.70;
+  const towerHeight = HOUSE_SCALE * 1.96;
+  const tower = new THREE.Mesh(new THREE.BoxGeometry(towerWidth, towerHeight, towerWidth), stone);
+  tower.name = 'village-church-bell-tower';
+  tower.position.set(0, HOUSE_SCALE * 0.12 + towerHeight * 0.5, -naveDepth * 0.54);
+
+  const spire = new THREE.Mesh(
+    new THREE.ConeGeometry(towerWidth * 0.64, HOUSE_SCALE * 1.22, 5),
+    roofMat
+  );
+  spire.name = 'village-church-spire';
+  spire.position.set(0, HOUSE_SCALE * 0.12 + towerHeight + HOUSE_SCALE * 0.56, -naveDepth * 0.54);
+  spire.rotation.y = Math.PI / 5;
+
+  const crossVertical = new THREE.Mesh(new THREE.BoxGeometry(HOUSE_SCALE * 0.055, HOUSE_SCALE * 0.34, HOUSE_SCALE * 0.055), goldMat);
+  crossVertical.name = 'village-church-cross-vertical';
+  crossVertical.position.set(0, HOUSE_SCALE * 0.12 + towerHeight + HOUSE_SCALE * 1.30, -naveDepth * 0.54);
+
+  const crossHorizontal = new THREE.Mesh(new THREE.BoxGeometry(HOUSE_SCALE * 0.24, HOUSE_SCALE * 0.050, HOUSE_SCALE * 0.050), goldMat);
+  crossHorizontal.name = 'village-church-cross-horizontal';
+  crossHorizontal.position.set(0, HOUSE_SCALE * 0.12 + towerHeight + HOUSE_SCALE * 1.35, -naveDepth * 0.54);
+
+  const door = new THREE.Mesh(new THREE.PlaneGeometry(HOUSE_SCALE * 0.34, HOUSE_SCALE * 0.54), getHouseMaterial('church-door-dark-oak', 0x4C3326));
+  door.name = 'village-church-front-door';
+  door.position.set(0, HOUSE_SCALE * 0.42, -naveDepth * 0.54 - towerWidth * 0.505);
+
+  const rose = new THREE.Mesh(new THREE.CircleGeometry(HOUSE_SCALE * 0.16, 18), glassMat);
+  rose.name = 'village-church-rose-window';
+  rose.position.set(0, HOUSE_SCALE * 1.18, -naveDepth * 0.54 - towerWidth * 0.508);
+
+  const leftWindow = createChurchSideWindow(-naveWidth * 0.505, HOUSE_SCALE * 0.86, -naveDepth * 0.14, glassMat, true);
+  const rightWindow = createChurchSideWindow(naveWidth * 0.505, HOUSE_SCALE * 0.86, naveDepth * 0.18, glassMat, false);
+  const rearWindow = new THREE.Mesh(new THREE.PlaneGeometry(HOUSE_SCALE * 0.30, HOUSE_SCALE * 0.46), glassMat);
+  rearWindow.name = 'village-church-rear-window';
+  rearWindow.position.set(0, HOUSE_SCALE * 0.92, naveDepth * 0.506);
+  rearWindow.rotation.y = Math.PI;
+
+  for (const mesh of [base, nave, roof, tower, spire, crossVertical, crossHorizontal, door, rose, leftWindow, rightWindow, rearWindow]) {
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    mesh.renderOrder = 128;
+  }
+
+  group.add(base, nave, roof, tower, spire, crossVertical, crossHorizontal, door, rose, leftWindow, rightWindow, rearWindow);
+  return group;
+}
+
+function createChurchSideWindow(x, y, z, material, leftSide) {
+  const window = new THREE.Mesh(new THREE.PlaneGeometry(HOUSE_SCALE * 0.20, HOUSE_SCALE * 0.40), material);
+  window.name = 'village-church-side-window';
+  window.position.set(x, y, z);
+  window.rotation.y = leftSide ? -Math.PI / 2 : Math.PI / 2;
+  return window;
+}
+
 
 function createHouseRoof(variant, width, depth, height, roofColor) {
   let roof;

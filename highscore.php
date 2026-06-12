@@ -53,12 +53,14 @@ try {
         }
 
         $gridPercent = normalize_grid_percent($payload['gridPercent'] ?? 0);
+        $stats = sanitize_stats($payload['stats'] ?? null);
 
         $scores = read_scores($SCORE_FILE);
         $scores[] = [
             'name' => $name,
             'score' => (int)$score,
             'gridPercent' => $gridPercent,
+            'stats' => $stats,
             'date' => gmdate('c')
         ];
 
@@ -110,6 +112,47 @@ function normalize_grid_percent($value)
     return round($number, 1);
 }
 
+
+function sanitize_stats($stats)
+{
+    $types = ['grass', 'field', 'forest', 'house', 'water', 'rail'];
+
+    if (!is_array($stats)) {
+        return null;
+    }
+
+    $clean = [
+        'tiles' => clamp_int($stats['tiles'] ?? 0),
+        'trainLines' => clamp_int($stats['trainLines'] ?? 0),
+        'totals' => [],
+        'largest' => []
+    ];
+
+    foreach ($types as $type) {
+        $clean['totals'][$type] = clamp_int($stats['totals'][$type] ?? 0);
+        $clean['largest'][$type] = clamp_int($stats['largest'][$type] ?? 0);
+    }
+
+    return $clean;
+}
+
+function clamp_int($value)
+{
+    if (!is_numeric($value)) {
+        return 0;
+    }
+
+    $number = (int)$value;
+    if ($number < 0) {
+        return 0;
+    }
+    if ($number > 999999) {
+        return 999999;
+    }
+
+    return $number;
+}
+
 function sanitize_name($name)
 {
     $name = trim($name);
@@ -155,6 +198,7 @@ function read_scores($file)
                 'name' => (string)$entry['name'],
                 'score' => (int)$entry['score'],
                 'gridPercent' => normalize_grid_percent($entry['gridPercent'] ?? 0),
+                'stats' => sanitize_stats($entry['stats'] ?? null),
                 'date' => isset($entry['date']) ? (string)$entry['date'] : ''
             ];
         }
@@ -197,6 +241,7 @@ function public_scores($scores, $limit)
             'name' => (string)$entry['name'],
             'score' => (int)$entry['score'],
             'gridPercent' => normalize_grid_percent($entry['gridPercent'] ?? 0),
+            'stats' => sanitize_stats($entry['stats'] ?? null),
             'date' => isset($entry['date']) ? (string)$entry['date'] : ''
         ];
     }

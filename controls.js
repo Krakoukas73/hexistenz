@@ -31,7 +31,7 @@ export class CameraControls {
     this.zoomDamping = 0.28;
     // Déplacement clavier volontairement amorti : ZQSD ne doit pas transformer
     // la caméra en mobylette volée par un gobelin sous amphétamines.
-    this.keySpeed = 0.055;
+    this.keySpeed = 0.06325;
     this.keySmoothing = 0.16;
     this.keyStopSmoothing = 0.20;
     this.keyboardVelocity = new THREE.Vector3();
@@ -65,8 +65,12 @@ export class CameraControls {
     this.dom.addEventListener('wheel', event => this.handleWheel(event), { passive: false });
 
     window.addEventListener('mouseup', () => this.stopDragging());
-    window.addEventListener('keydown', event => this.setKey(event.key, true));
-    window.addEventListener('keyup', event => this.setKey(event.key, false));
+    window.addEventListener('keydown', event => {
+      if (this.setKey(event.key, true)) event.preventDefault();
+    });
+    window.addEventListener('keyup', event => {
+      if (this.setKey(event.key, false)) event.preventDefault();
+    });
   }
 
   update() {
@@ -209,8 +213,19 @@ export class CameraControls {
   }
 
   setKey(key, active) {
+    const aliases = {
+      arrowup: 'z',
+      arrowleft: 'q',
+      arrowdown: 's',
+      arrowright: 'd'
+    };
+
     const normalized = key.toLowerCase();
-    if (this.keys[normalized] !== undefined) this.keys[normalized] = active;
+    const mappedKey = aliases[normalized] || normalized;
+
+    if (this.keys[mappedKey] === undefined) return false;
+    this.keys[mappedKey] = active;
+    return true;
   }
 
   updateCamera() {

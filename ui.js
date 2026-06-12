@@ -38,6 +38,8 @@ export function createUI() {
       d: document.getElementById('keyD'),
       r: document.getElementById('keyR'),
       h: document.getElementById('keyH'),
+      plus: document.getElementById('keyPlus'),
+      minus: document.getElementById('keyMinus'),
       space: document.getElementById('keySpace')
     },
     helpOverlay: document.getElementById('helpOverlay'),

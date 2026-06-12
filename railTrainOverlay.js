@@ -22,6 +22,10 @@ const TRAIN_UNIT_SPACING = HEX_SIZE * 0.30;
 const TRAIN_MIN_WAGONS = 2;
 const TRAIN_MAX_WAGONS = 8;
 const PORT_INSET = 0.18;
+const STATION_Y = (TILE_VISUAL.railY ?? 0.052) + 0.012;
+const STATION_SCALE = HEX_SIZE * 0.22;
+const STATION_TRACK_CLEARANCE = HEX_SIZE * 0.25;
+const STATION_TERMINUS_BACKSET = HEX_SIZE * 0.08;
 
 const materialCache = new Map();
 
@@ -40,6 +44,8 @@ export function rebuildRailTrainOverlay(group, placedTiles) {
   const components = findComponents(graph);
 
   for (const component of components) {
+    addRailTerminusStations(group, graph, component);
+
     if (component.tileKeys.size < 2) continue;
 
     const path = findLongestPath(graph, component.nodes);
@@ -258,6 +264,112 @@ function reconstructPath(previous, start, end) {
   }
 
   return path.reverse();
+}
+
+
+function addRailTerminusStations(group, graph, component) {
+  const terminalPorts = component.nodes
+    .filter(nodeId => nodeId.includes(':port:') && (graph.adjacency.get(nodeId)?.size ?? 0) <= 1)
+    .slice(0, 8);
+
+  for (const nodeId of terminalPorts) {
+    const node = graph.nodes.get(nodeId);
+    if (!node) continue;
+
+    const centerId = nodeId.replace(/:port:[^:]+$/, ':center');
+    const center = graph.nodes.get(centerId)?.position ?? new THREE.Vector3(0, STATION_Y, 0);
+    const outward = node.position.clone().sub(center);
+    if (outward.lengthSq() < 0.0001) outward.set(1, 0, 0);
+    outward.y = 0;
+    outward.normalize();
+
+    const station = createRailStationObject(nodeId);
+    const side = new THREE.Vector3(-outward.z, 0, outward.x).normalize();
+    const sideSign = hashUnit(`${nodeId}:station-side`) > 0.5 ? 1 : -1;
+
+    station.position.copy(node.position)
+      .add(outward.clone().multiplyScalar(-STATION_TERMINUS_BACKSET))
+      .add(side.multiplyScalar(STATION_TRACK_CLEARANCE * sideSign));
+    station.position.y = STATION_Y;
+    station.rotation.y = Math.atan2(outward.x, outward.z) + (sideSign < 0 ? Math.PI : 0);
+    group.add(station);
+  }
+}
+
+function createRailStationObject(seedKey = 'station') {
+  const group = new THREE.Group();
+  group.name = 'rail-terminus-station-svg-style';
+
+  const baseMat = getMaterial('station-stone-platform', 0xB7A78A, 1);
+  const edgeMat = getMaterial('station-platform-edge', 0x6E6254, 1);
+  const wallMat = getMaterial('station-warm-walls', 0xE2C98F, 1);
+  const roofMat = getMaterial('station-red-roof', 0xA9462F, 1);
+  const timberMat = getMaterial('station-dark-timber', 0x4A2D1F, 1);
+  const glassMat = getMaterial('station-blue-glass', 0xA8DCF0, 0.94);
+  const signMat = getMaterial('station-sign-cream', 0xF7E7B2, 1);
+
+  addStationBox(group, 'station-platform', -0.03, 0.045, 0, 1.66, 0.09, 0.96, baseMat, 34);
+  addStationBox(group, 'station-platform-left-edge', -0.03, 0.102, -0.50, 1.72, 0.055, 0.055, edgeMat, 35);
+  addStationBox(group, 'station-platform-right-edge', -0.03, 0.102, 0.50, 1.72, 0.055, 0.055, edgeMat, 35);
+
+  addStationBox(group, 'station-main-hall', -0.18, 0.38, 0, 0.72, 0.56, 0.58, wallMat, 42);
+  addStationBox(group, 'station-side-room', 0.36, 0.31, 0, 0.42, 0.42, 0.48, wallMat, 41);
+  addStationBox(group, 'station-tower', -0.62, 0.50, 0, 0.30, 0.80, 0.34, wallMat, 43);
+
+  addStationBox(group, 'station-main-roof', -0.18, 0.72, 0, 0.86, 0.14, 0.74, roofMat, 46);
+  addStationBox(group, 'station-main-roof-ridge', -0.18, 0.82, 0, 0.64, 0.06, 0.54, timberMat, 47);
+  addStationBox(group, 'station-side-roof', 0.36, 0.57, 0, 0.52, 0.12, 0.62, roofMat, 45);
+  addStationBox(group, 'station-tower-roof', -0.62, 0.96, 0, 0.44, 0.16, 0.48, roofMat, 48);
+
+  addStationBox(group, 'station-door', -0.18, 0.25, -0.302, 0.18, 0.30, 0.018, timberMat, 52);
+  addStationBox(group, 'station-window-a', -0.42, 0.43, -0.304, 0.14, 0.16, 0.014, glassMat, 53);
+  addStationBox(group, 'station-window-b', 0.08, 0.43, -0.304, 0.14, 0.16, 0.014, glassMat, 53);
+  addStationBox(group, 'station-window-c', 0.36, 0.33, -0.254, 0.13, 0.14, 0.014, glassMat, 53);
+  addStationBox(group, 'station-clock-face', -0.62, 0.72, -0.182, 0.18, 0.18, 0.014, signMat, 54);
+  addStationBox(group, 'station-sign', -0.18, 0.58, -0.316, 0.44, 0.12, 0.018, signMat, 55);
+
+  for (const x of [-0.78, -0.36, 0.04, 0.44]) {
+    addStationBox(group, 'station-lamp-post', x, 0.31, -0.42, 0.035, 0.42, 0.035, timberMat, 56);
+    const lamp = new THREE.Mesh(
+      new THREE.SphereGeometry(STATION_SCALE * 0.055, 12, 8),
+      getMaterial('station-lamp-warm', 0xFFE6A0, 1)
+    );
+    lamp.position.set(STATION_SCALE * x, STATION_SCALE * 0.55, STATION_SCALE * -0.42);
+    lamp.renderOrder = 57;
+    group.add(lamp);
+  }
+
+  const flag = new THREE.Mesh(
+    new THREE.PlaneGeometry(STATION_SCALE * 0.18, STATION_SCALE * 0.11),
+    getMaterial('station-small-flag', hashUnit(`${seedKey}:flag`) > 0.5 ? 0xD45D45 : 0x5B8CC0, 0.96)
+  );
+  flag.position.set(STATION_SCALE * -0.55, STATION_SCALE * 1.10, STATION_SCALE * -0.01);
+  flag.rotation.y = Math.PI / 2;
+  flag.renderOrder = 58;
+  group.add(flag);
+
+  return group;
+}
+
+function addStationBox(group, name, x, y, z, width, height, depth, material, renderOrder) {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(STATION_SCALE * width, STATION_SCALE * height, STATION_SCALE * depth),
+    material
+  );
+  mesh.name = name;
+  mesh.position.set(STATION_SCALE * x, STATION_SCALE * y, STATION_SCALE * z);
+  mesh.renderOrder = renderOrder;
+  group.add(mesh);
+  return mesh;
+}
+
+function hashUnit(text) {
+  let h = 2166136261;
+  for (let i = 0; i < String(text).length; i += 1) {
+    h ^= String(text).charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 10000) / 10000;
 }
 
 function getWagonCountForRailNetwork(tileCount, distance) {

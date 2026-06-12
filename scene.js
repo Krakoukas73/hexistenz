@@ -1,8 +1,9 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { DECK_SIZE, GRID_RADIUS } from './config.js';
 import { CameraControls } from './controls.js';
-import { createGrid } from './grid.js';
+import { createGrid, updateGridAvailability } from './grid.js';
 import { addSpecialCellMesh, createSpecialCells, createSpecialCellsMesh, removeSpecialCellMesh, updateSpecialCellsMeshAnimation } from './specialCells.js';
+import { BONUS_CELL_SCORE, addBonusCellMesh, createBonusCells, createBonusCellsMesh, removeBonusCellMesh, updateBonusCellsMeshAnimation } from './bonusCells.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { createTileMesh } from './tileMesh.js';
 import { updateAnimatedBiomeTextures } from './tileTextures.js';
@@ -33,7 +34,9 @@ export function initScene() {
   // État de partie : carte posée, historique annulable, deck et score.
   const placedTiles = new Map();
   const specialCells = createSpecialCells();
+  const bonusCells = createBonusCells(new Set(specialCells.keys()));
   const specialCellsMesh = createSpecialCellsMesh(specialCells);
+  const bonusCellsMesh = createBonusCellsMesh(bonusCells);
   const placementHistory = [];
   const deck = createDeck(DECK_SIZE);
   const missionManager = createMissionManager();
@@ -55,11 +58,13 @@ export function initScene() {
   const waterSharkOverlay = createWaterSharkOverlay();
   const forestBirchOverlay = createForestBirchOverlay();
   const houseSmokeOverlay = createHouseSmokeOverlay();
+  const gridOverlay = createGrid();
 
   ghostTile.visible = false;
 
-  scene.add(createGrid(), specialCellsMesh, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterSharkOverlay, forestBirchOverlay, houseSmokeOverlay, ghostTile);
+  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterSharkOverlay, forestBirchOverlay, houseSmokeOverlay, ghostTile);
   refreshDeckUI();
+  refreshGridAvailability();
   maybeAddMissionForCurrentTile();
   refreshMissionUI();
   updateScoreUI(ui, totalScore, 0, placedTiles.size, totalGridTiles);
@@ -111,6 +116,12 @@ export function initScene() {
 
     if (isTextInputTarget(event.target)) return;
 
+    if (event.ctrlKey && !event.shiftKey && !event.altKey && key === 'z') {
+      event.preventDefault();
+      undoLastPlacement();
+      return;
+    }
+
     if ((key === ' ' || key === 'spacebar') && !event.repeat) {
       event.preventDefault();
       toggleGridOnlyMode();
@@ -121,6 +132,18 @@ export function initScene() {
       event.preventDefault();
       if (gridOnlyMode) toggleGridOnlyMode(false);
       toggleHelp();
+      return;
+    }
+
+    if ((event.key === '+' || event.key === '=' || event.code === 'NumpadAdd') && !helpVisible) {
+      event.preventDefault();
+      controls.zoom(-120);
+      return;
+    }
+
+    if ((event.key === '-' || event.code === 'NumpadSubtract') && !helpVisible) {
+      event.preventDefault();
+      controls.zoom(120);
       return;
     }
 
@@ -149,6 +172,7 @@ export function initScene() {
     const timeSeconds = performance.now() * 0.001;
     updateAnimatedBiomeTextures(timeSeconds);
     updateSpecialCellsMeshAnimation(specialCellsMesh, timeSeconds);
+    updateBonusCellsMeshAnimation(bonusCellsMesh, timeSeconds);
     updateKeyboardUI(ui, controls.keys, rotationKeyActive, gridOnlyMode);
     updateHoverZoneOverlayAnimation(hoverZoneOverlay, waterZoneOverlay);
     updateRailTrainOverlay(railTrainOverlay, timeSeconds);
@@ -249,6 +273,12 @@ export function initScene() {
       if (hiddenSpecialCellKey === key) hiddenSpecialCellKey = null;
     }
 
+    const consumedBonusCell = bonusCells.get(key) ?? null;
+    if (consumedBonusCell) {
+      bonusCells.delete(key);
+      removeBonusCellMesh(bonusCellsMesh, key);
+    }
+
     const scoreResult = calculatePlacementScore(hex, placedTiles, tile, specialCells);
     const mesh = createTileMesh(tile);
 
@@ -268,7 +298,8 @@ export function initScene() {
       generatedMission: null,
       missionTurnBefore: missionManager.turn,
       purgedMissions: [],
-      consumedSpecialCell
+      consumedSpecialCell,
+      consumedBonusCell
     };
 
     const completedMissions = getCompletedMissions(missionManager, new Map([...placedTiles, [key, placedTile]]));
@@ -276,13 +307,15 @@ export function initScene() {
     const missionBonusTilesAwarded = completedMissions.length * MISSION_TILE_REWARD;
     placedTile.completedMissions = completedMissions;
     placedTile.missionBonusTilesAwarded = missionBonusTilesAwarded;
-    placedTile.score = scoreResult.total + missionScore;
+    const bonusCellScore = consumedBonusCell ? BONUS_CELL_SCORE : 0;
+    placedTile.score = scoreResult.total + missionScore + bonusCellScore;
     consumeCompletedMissions(missionManager, completedMissions);
     totalScore += placedTile.score;
 
     placedTiles.set(key, placedTile);
     placementHistory.push(placedTile);
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+    refreshGridAvailability();
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
     rebuildWaterSharkOverlay(waterSharkOverlay, placedTiles);
@@ -296,6 +329,7 @@ export function initScene() {
     placedTile.purgedMissions = advanceMissionTurn(missionManager);
     rotationIndex = 0;
     refreshDeckUI();
+    refreshGridAvailability();
     placedTile.generatedMission = maybeAddMissionForCurrentTile();
     refreshMissionUI();
     updateScoreUI(ui, totalScore, placedTile.score, placedTiles.size, totalGridTiles);
@@ -329,6 +363,7 @@ export function initScene() {
     rotationIndex = normalizeRotation(rotationIndex + step);
     setText(ui.rotation, `${rotationIndex}/6`);
     refreshDeckUI();
+    refreshGridAvailability();
 
     if (hasTarget) {
       const position = axialToWorld(hoveredHex.q, hoveredHex.r);
@@ -336,6 +371,11 @@ export function initScene() {
       const validation = getPlacementValidation(hoveredHex, placedTiles, tile, specialCells);
       rebuildGhost(position, tile, validation);
     }
+  }
+
+  function refreshGridAvailability() {
+    const currentTile = deck.length > 0 && !gameOver ? rotateTile(deck[0], rotationIndex) : null;
+    updateGridAvailability(gridOverlay, placedTiles, currentTile, specialCells, getPlacementValidation);
   }
 
   function rebuildGhost(position, tile = rotateTile(deck[0], rotationIndex), validation = null) {
@@ -384,6 +424,10 @@ export function initScene() {
       specialCells.set(last.key, last.consumedSpecialCell);
       addSpecialCellMesh(specialCellsMesh, last.consumedSpecialCell);
     }
+    if (last.consumedBonusCell) {
+      bonusCells.set(last.key, last.consumedBonusCell);
+      addBonusCellMesh(bonusCellsMesh, last.consumedBonusCell);
+    }
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
@@ -404,6 +448,7 @@ export function initScene() {
 
     setText(ui.rotation, '0/6');
     refreshDeckUI();
+    refreshGridAvailability();
     refreshMissionUI();
     updateScoreUI(ui, totalScore, -(last.score ?? 0), placedTiles.size, totalGridTiles);
     refreshStatsUI();
@@ -434,12 +479,13 @@ export function initScene() {
 
   function endGame(label = 'FIN DU DECK') {
     gameOver = true;
+    refreshGridAvailability();
     updateHoveredSpecialCellVisibility(null);
     ghostTile.visible = false;
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     ui.abandonGame?.setAttribute('disabled', 'disabled');
     setText(ui.placement, label);
-    askHighscoreSubmit(highscoreUI, totalScore, getGridPercent());
+    askHighscoreSubmit(highscoreUI, totalScore, getGridPercent(), getGameStats(placedTiles));
   }
 
   function getGridPercent() {

@@ -95,6 +95,8 @@
       <div><span class="swatch house"></span><span>Maison</span></div>
       <div><span class="swatch water"></span><span>Eau</span></div>
       <div><span class="swatch rail"></span><span>Rail</span></div>
+      <div><span class="swatch black-cell"></span><span>Joker</span></div>
+      <div><span class="swatch bonus-cell"></span><span>Bonus</span></div>
     </div>
 
     <button id="btnResetCamera" class="key-button" type="button">RESET CAMERA</button>
@@ -124,6 +126,17 @@
       <div class="key-row command-row">
         <div class="key" id="keyH">H</div>
         <div class="key-label">Aide</div>
+      </div>
+
+      <div class="key-row command-row">
+        <div class="key" id="keyPlus">+</div>
+        <div class="key" id="keyMinus">-</div>
+        <div class="key-label">Zoom caméra</div>
+      </div>
+
+      <div class="key-row command-row">
+        <div class="key key-combo">CTRL+Z</div>
+        <div class="key-label">Annuler</div>
       </div>
 
       <div class="key-row command-row">
@@ -179,6 +192,7 @@
             <div><strong>+25 points</strong><span>par connexion eau/eau ou rail/rail</span></div>
             <div><strong>+50 points</strong><span>bonus quand une tuile est entourée sur ses 6 côtés</span></div>
             <div><strong>+100 points + 3 tuiles</strong><span>par mission terminée</span></div>
+            <div><strong>+1500 points</strong><span>si tu poses une tuile sur une case bonus</span></div>
           </div>
         </article>
 
@@ -190,6 +204,7 @@
             <li>2 côtés compatibles : +1 tuile ; 3 côtés compatibles : +2 tuiles.</li>
             <li>Tuile encerclée sur 6 côtés : +50 points.</li>
             <li>La tuile fantôme indique l’emplacement possible.</li>
+            <li>Les cases bonus dorées apparaissent à la génération : occupe-les pour gagner +1500 points.</li>
           </ul>
         </article>
 
@@ -198,6 +213,12 @@
           <p>L’eau et le rail sont des réseaux stricts et plus difficiles à placer. En échange, chaque connexion correcte rapporte plus de points.</p>
           <div class="rule-line"><span class="swatch water"></span><strong>Eau</strong><span>se connecte uniquement à eau : +25</span></div>
           <div class="rule-line"><span class="swatch rail"></span><strong>Rail</strong><span>se connecte uniquement à rail : +25</span></div>
+        </article>
+
+        <article class="help-card">
+          <h2>⭐ Cases bonus</h2>
+          <p>Entre 1 et 4 cases bonus sont générées sur la grille. Elles ne changent aucune règle de placement : si tu arrives à poser une tuile dessus, elles disparaissent et rapportent immédiatement +1500 points.</p>
+          <div class="rule-line"><span class="swatch bonus-cell"></span><strong>Bonus</strong><span>objectif optionnel, pur score, zéro piège</span></div>
         </article>
 
         <article class="help-card">
@@ -234,6 +255,9 @@
             <div><kbd>S</kbd><span>Reculer caméra</span></div>
             <div><kbd>D</kbd><span>Déplacer à droite</span></div>
             <div><kbd>R</kbd><span>Tourner la tuile active</span></div>
+            <div><kbd>+</kbd><span>Zoomer la caméra</span></div>
+            <div><kbd>-</kbd><span>Dézoomer la caméra</span></div>
+            <div><kbd>Ctrl+Z</kbd><span>Annuler le dernier mouvement</span></div>
             <div><kbd>H</kbd><span>Afficher / masquer cette aide</span></div>
             <div><kbd>ESPACE</kbd><span>Mode immersif : masque interface, HUD et nombres</span></div>
             <div><kbd>Molette</kbd><span>Zoom sur tuile posée, rotation sur case disponible</span></div>
