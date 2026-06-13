@@ -18,8 +18,8 @@ export const EDGE_WEIGHTS = {
   forest: 30,
   grass: 24,
   house: 18,
-  water: 7,
-  rail: 5
+  water: 6,
+  rail: 4
 };
 
 export const NETWORK_EDGE_TYPES = [EDGE_TYPES.water, EDGE_TYPES.rail];
@@ -41,10 +41,14 @@ export const TILE_VISUAL = {
   waterY: -0.075,
   tileThickness: 0.12,
   waterThickness: 0.06,
+  railThickness: 0.06,
+  // Surface visuelle des rails : même principe que l'eau, un lit plus bas
+  // mais avec les overlays rails posés juste au-dessus de cette surface.
+  railSurfaceY: -0.075,
   outlineY: 0.036,
   labelY: 0.58,
   valueLabelHoverLift: 0.07,
-  railY: 0.052,
+  railY: -0.023,
   outlineColor: 0x151A21,
   outlineOpacity: 0.75
 };

@@ -9,6 +9,7 @@ const DEFAULT_CAMERA = {
 
 const MIN_POLAR_ANGLE = 0.000001;
 const MAX_POLAR_ANGLE = Math.PI / 2 - 0.02;
+const CLICK_DRAG_CANCEL_DISTANCE = 6;
 
 export class CameraControls {
   constructor(camera, domElement) {
@@ -53,6 +54,9 @@ export class CameraControls {
     this.groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.dragStartPoint = null;
     this.dragStartTarget = null;
+    this.leftDownStart = null;
+    this.leftDownHex = null;
+    this.leftDownMoved = false;
 
     this.bindEvents();
     this.updateCamera();
@@ -64,7 +68,7 @@ export class CameraControls {
     this.dom.addEventListener('mousemove', event => this.handleMouseMove(event));
     this.dom.addEventListener('wheel', event => this.handleWheel(event), { passive: false });
 
-    window.addEventListener('mouseup', () => this.stopDragging());
+    window.addEventListener('mouseup', event => this.handleMouseUp(event));
     window.addEventListener('keydown', event => {
       if (this.setKey(event.key, true)) event.preventDefault();
     });
@@ -104,11 +108,15 @@ export class CameraControls {
   }
 
   handleMouseDown(event) {
+    this.updateHover(event.clientX, event.clientY);
+
     if (event.button === 0) {
-      if (this.onClick && this.currentHex) this.onClick(this.currentHex);
       this.isLeftDown = true;
       this.dragStartPoint = null;
       this.dragStartTarget = null;
+      this.leftDownStart = new THREE.Vector2(event.clientX, event.clientY);
+      this.leftDownHex = this.currentHex ? { ...this.currentHex } : null;
+      this.leftDownMoved = false;
     }
 
     if (event.button === 2) this.isRightDown = true;
@@ -120,7 +128,13 @@ export class CameraControls {
     const dy = event.clientY - this.prev.y;
 
     if (this.isRightDown) this.rotateCamera(dx, dy);
-    if (this.isLeftDown) this.pan(event.clientX, event.clientY);
+    if (this.isLeftDown) {
+      if (this.leftDownStart) {
+        const dragDistance = this.leftDownStart.distanceTo(new THREE.Vector2(event.clientX, event.clientY));
+        if (dragDistance > CLICK_DRAG_CANCEL_DISTANCE) this.leftDownMoved = true;
+      }
+      this.pan(event.clientX, event.clientY);
+    }
 
     this.updateHover(event.clientX, event.clientY);
     this.prev.set(event.clientX, event.clientY);
@@ -185,11 +199,30 @@ export class CameraControls {
     this.target.lerp(desiredTarget, 0.55);
   }
 
+  handleMouseUp(event) {
+    if (event.button === 0 && this.isLeftDown) {
+      this.updateHover(event.clientX, event.clientY);
+      const releasedOnStartHex = this.leftDownHex && this.currentHex
+        && this.leftDownHex.q === this.currentHex.q
+        && this.leftDownHex.r === this.currentHex.r;
+
+      if (!this.leftDownMoved && releasedOnStartHex && this.onClick) {
+        this.onClick(this.currentHex);
+      }
+    }
+
+    if (event.button === 2) this.isRightDown = false;
+    this.stopDragging();
+  }
+
   stopDragging() {
     this.isLeftDown = false;
     this.isRightDown = false;
     this.dragStartPoint = null;
     this.dragStartTarget = null;
+    this.leftDownStart = null;
+    this.leftDownHex = null;
+    this.leftDownMoved = false;
   }
 
   updateHover(clientX, clientY) {
