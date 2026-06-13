@@ -127,7 +127,8 @@ function renderCompactStats(stats) {
 
   const tiles = safeInt(stats.tiles);
   const trains = safeInt(stats.trainLines);
-  const summary = `<span class="highscore-stat-chip stats-summary-chip" title="Tuiles posées / trains">⬢${tiles} 🚂${trains}</span>`;
+  const boats = safeInt(stats.boatCount);
+  const summary = `<span class="highscore-stat-chip stats-summary-chip" title="Tuiles posées / trains / bateaux">⬢${tiles} 🚂${trains} ⛵${boats}</span>`;
 
   return `<div class="highscore-stats-line">${summary}${textureChips}</div>`;
 }
@@ -143,6 +144,7 @@ function sanitizeGameStats(stats) {
   const clean = {
     tiles: safeInt(stats.tiles),
     trainLines: safeInt(stats.trainLines),
+    boatCount: safeInt(stats.boatCount),
     totals: {},
     largest: {}
   };

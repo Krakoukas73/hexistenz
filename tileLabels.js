@@ -1,5 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_TYPES, TILE_VISUAL } from './config.js';
+import { TEXT_LAYER } from './threeSetup.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 
 const textTextureCache = new Map();
@@ -11,6 +12,7 @@ export function createValueLabel(edge, vertexA, vertexB) {
   if (!shouldShowValue(type, value)) return null;
 
   const sprite = new THREE.Sprite(getTextSpriteMaterial(String(value)));
+  sprite.layers.set(TEXT_LAYER);
 
   // Même triangle, même source de vérité : le label est placé au centroïde
   // du secteur qui a servi à dessiner la texture. Impossible de dériver

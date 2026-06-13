@@ -13,7 +13,12 @@ const SECTOR_DEFS = [
   { key: 'nw', a: 5, b: 0 }
 ];
 
-const HOUSE_BASE_Y = (TILE_VISUAL.sectorY ?? 0.012) + 0.018;
+// Les maisons/églises ont leur origine au pied du modèle. Depuis que le
+// biome maison est 30% moins épais en gardant le dessous collé à la grille,
+// son dessus réel est abaissé : on pose donc les bâtiments sur cette surface,
+// pas sur l'ancien niveau flottant sectorY + 0.018.
+const HOUSE_GROUND_Y = (TILE_VISUAL.tileThickness ?? 0.12) * -0.30;
+const HOUSE_BASE_Y = HOUSE_GROUND_Y + 0.002;
 const HOUSE_SCALE = HEX_SIZE * 0.148;
 const HOUSE_CHIMNEY_TOP_Y = HOUSE_BASE_Y + HOUSE_SCALE * 1.62;
 const HOUSE_SMOKE_Y = HOUSE_CHIMNEY_TOP_Y + HOUSE_SCALE * 0.08;

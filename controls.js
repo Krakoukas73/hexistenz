@@ -70,6 +70,9 @@ export class CameraControls {
 
     window.addEventListener('mouseup', event => this.handleMouseUp(event));
     window.addEventListener('keydown', event => {
+      // Les raccourcis système/jeu (Ctrl+Z, Alt+..., etc.) ne doivent pas être
+      // avalés par le déplacement caméra. ZQSD reste actif sans modificateur.
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
       if (this.setKey(event.key, true)) event.preventDefault();
     });
     window.addEventListener('keyup', event => {

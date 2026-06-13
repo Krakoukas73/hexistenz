@@ -68,7 +68,7 @@ body::after {
 }
 
 .score-value {
-  margin-top: 4px;
+  margin-top: 2px;
   font-size: 42px;
   line-height: 1;
   font-weight: 900;
@@ -90,72 +90,92 @@ body::after {
 }
 
 #debugHud {
-  right: 20px;
-  bottom: 20px;
-  min-width: 180px;
-  padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(120, 180, 255, 0.25);
-  border-radius: 8px;
-  font-size: 12px;
-  line-height: 1.4;
+  right: 18px;
+  bottom: 286px;
+  width: 270px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px;
+  background: linear-gradient(180deg, rgba(18, 27, 39, 0.86), rgba(4, 7, 11, 0.82));
+  border: 1px solid rgba(120, 180, 255, 0.34);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  font-size: 10px;
+  line-height: 1.12;
+}
+
+#debugHud br {
+  display: none;
 }
 
 
 .debug-texture-title {
   margin-top: 0;
+  margin-bottom: 8px;
   padding-top: 0;
   border-top: 0;
-  color: rgba(180, 215, 255, 0.82);
+  color: rgba(180, 215, 255, 0.86);
   font-size: 11px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
 .debug-texture-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px 10px;
-  margin-top: 7px;
+  gap: 5px 9px;
+  margin-top: 0;
 }
 
 .debug-texture-grid div {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
   color: rgba(220, 240, 255, 0.9);
+  font-size: 9px;
+  white-space: nowrap;
 }
 
 .debug-texture-grid .swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex: 0 0 auto;
 }
 
 .debug-keyboard-title {
-  margin-top: 12px;
-  color: rgba(180, 215, 255, 0.82);
+  margin-top: 10px;
+  margin-bottom: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(120, 180, 255, 0.24);
+  color: rgba(180, 215, 255, 0.86);
   font-size: 11px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
 #keyboard {
-  margin-top: 7px;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 0;
+  padding: 8px;
+  border: 1px solid rgba(120, 180, 255, 0.26);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .key-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin: 4px 0;
+  gap: 5px;
+  margin: 2px 0;
 }
 
 .command-row {
   justify-content: flex-start;
-  margin-top: 12px;
+  margin-top: 2px;
 }
 
 .key,
@@ -165,7 +185,7 @@ body::after {
   justify-content: center;
   background: #1b1f2a;
   border: 1px solid #3a3f55;
-  border-radius: 6px;
+  border-radius: 5px;
   color: #aaa;
   font-weight: bold;
   user-select: none;
@@ -173,8 +193,8 @@ body::after {
 }
 
 .key {
-  width: 40px;
-  height: 40px;
+  width: 22px;
+  height: 22px;
 }
 
 .key.empty {
@@ -191,16 +211,17 @@ body::after {
 
 .key-label {
   color: #aaa;
-  font-size: 12px;
-  line-height: 40px;
+  font-size: 10px;
+  line-height: 22px;
 }
 
 .key-button {
   width: 100%;
-  height: 36px;
-  margin-top: 10px;
+  height: 24px;
+  margin-top: 7px;
   cursor: pointer;
   font-family: monospace;
+  font-size: 10px;
 }
 
 .key-button:hover {
@@ -333,7 +354,7 @@ body::after {
   justify-content: center;
   width: 18px;
   height: 18px;
-  border-radius: 6px;
+  border-radius: 5px;
   background: rgba(0, 0, 0, 0.22);
   font-size: 13px;
 }
@@ -505,13 +526,15 @@ body.grid-only-mode .help-overlay {
 }
 
 .key-space {
-  width: 74px;
-  font-size: 11px;
+  width: 58px;
+  font-size: 9px;
 }
 
 .key-combo {
   width: auto;
-  min-width: 54px;
-  padding: 0 8px;
-  font-size: 11px;
+  min-width: 48px;
+  padding: 0 6px;
+  font-size: 9px;
 }
+
+.stats-boats { background: linear-gradient(135deg, rgba(80,180,255,0.18), rgba(0,120,255,0.08)); }

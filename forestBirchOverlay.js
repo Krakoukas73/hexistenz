@@ -13,7 +13,9 @@ const TREE_MODEL_DEFS = [
 ];
 
 const TREE_SIZE_MULTIPLIER = 2.07;
-const TREE_Y = 0.018;
+// Alignement sol réel des forêts : les dalles forest sont abaissées de 30% d'épaisseur (0.12 * -0.30 = -0.036).
+// Léger enfouissement pour éviter tout flottement visible sur le relief.
+const TREE_Y = -0.042;
 const CENTER_SAFE_RADIUS = HEX_SIZE * (TILE_VISUAL.centerRadiusScale + 0.08);
 const MIN_TREE_DISTANCE = 0.115;
 const MAX_TREE_PLACEMENT_ATTEMPTS = 36;

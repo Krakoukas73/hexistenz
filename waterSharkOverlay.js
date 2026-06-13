@@ -68,6 +68,48 @@ export function rebuildWaterSharkOverlay(group, placedTiles) {
   }
 }
 
+
+export function countWaterBoats(placedTiles) {
+  const visited = new Set();
+  let zoneIndex = 0;
+  let boats = 0;
+
+  for (const placedTile of placedTiles.values()) {
+    for (const edge of EDGE_ORDER) {
+      const nodeKey = makeNodeKey(placedTile.key, edge);
+      if (visited.has(nodeKey) || !isWaterEdge(placedTile, edge)) continue;
+
+      const zone = collectWaterZone(placedTile, edge, placedTiles, visited);
+      if (zone.sectors.length < MIN_ZONE_SECTORS) continue;
+
+      boats += countZoneBoats(zone, zoneIndex++);
+    }
+  }
+
+  return boats;
+}
+
+function countZoneBoats(zone, zoneIndex = 0) {
+  const graph = buildWaterGraph(zone);
+  const components = findComponents(graph);
+  let boats = 0;
+
+  for (const component of components) {
+    if (component.nodes.length < MIN_ZONE_SECTORS) continue;
+
+    const path = findLongestPath(graph, component.nodes);
+    if (path.length < 2) continue;
+
+    const points = path.map(nodeId => graph.nodes.get(nodeId).position.clone());
+    const distance = measurePath(points);
+    if (distance < HEX_SIZE * 0.58) continue;
+
+    boats += BOATS_PER_WATER_COMPONENT;
+  }
+
+  return boats;
+}
+
 export function updateWaterSharkOverlay(group, timeSeconds = 0) {
   const sharks = group.userData.sharks ?? [];
 

@@ -23,6 +23,7 @@ export function createUI() {
       water: document.getElementById('statWater'),
       rail: document.getElementById('statRail'),
       trains: document.getElementById('statTrains'),
+      boats: document.getElementById('statBoats'),
       largestGrass: document.getElementById('statLargestGrass'),
       largestField: document.getElementById('statLargestField'),
       largestForest: document.getElementById('statLargestForest'),
@@ -104,6 +105,7 @@ export function updateStatsUI(ui, stats) {
   setText(ui.stats.water, formatStatValue(stats.totals?.water, 'unité', 'unités'));
   setText(ui.stats.rail, formatStatValue(stats.totals?.rail, 'rail', 'rails'));
   setText(ui.stats.trains, String(stats.trainLines ?? 0));
+  setText(ui.stats.boats, String(stats.boatCount ?? 0));
   setText(ui.stats.largestGrass, formatStatValue(stats.largest?.grass, 'unité', 'unités'));
   setText(ui.stats.largestField, formatStatValue(stats.largest?.field, 'champ de blé', 'champs de blé'));
   setText(ui.stats.largestForest, formatStatValue(stats.largest?.forest, 'arbre', 'arbres'));

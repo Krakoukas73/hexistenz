@@ -2,6 +2,7 @@ import { EDGE_ORDER, EDGE_TYPES } from './config.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { makeHexKey } from './hex.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
+import { countWaterBoats } from './waterSharkOverlay.js';
 
 export const MISSION_REWARD = 100;
 export const MISSION_TILE_REWARD = 3;
@@ -9,6 +10,7 @@ export const MISSION_CHANCE = 0.20;
 export const COMPLETED_MISSION_VISIBLE_TURNS = 5;
 
 const TRAIN_MISSION_TYPE = 'train';
+const BOAT_MISSION_TYPE = 'boat';
 
 // Paliers calibrés sur l'effort réel de zone :
 // - prairie, eau et rail valent toujours 1 unité par triangle ;
@@ -38,6 +40,13 @@ const MISSION_TYPES = [
     type: TRAIN_MISSION_TYPE,
     matchTypes: [EDGE_TYPES.rail],
     label: 'Trains',
+    unit: '',
+    targets: [1, 2, 3, 4, 5, 6]
+  },
+  {
+    type: BOAT_MISSION_TYPE,
+    matchTypes: [EDGE_TYPES.water],
+    label: 'Bateaux',
     unit: '',
     targets: [1, 2, 3, 4, 5, 6]
   },
@@ -144,6 +153,7 @@ export function getCompletedMissions(manager, placedTiles) {
 export function getMissionProgressByType(placedTiles) {
   const progress = getBestZoneTotalsByType(placedTiles);
   progress.set(TRAIN_MISSION_TYPE, countRailTrainLines(placedTiles));
+  progress.set(BOAT_MISSION_TYPE, countWaterBoats(placedTiles));
   return progress;
 }
 
@@ -163,7 +173,8 @@ export function getGameStats(placedTiles) {
     tiles: placedTiles.size,
     totals,
     largest: Object.fromEntries(Object.values(EDGE_TYPES).map(type => [type, largestByType.get(type) ?? 0])),
-    trainLines: countRailTrainLines(placedTiles)
+    trainLines: countRailTrainLines(placedTiles),
+    boatCount: countWaterBoats(placedTiles)
   };
 }
 

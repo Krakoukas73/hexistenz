@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dorfromantik prototype</title>
+  <title>Hexistenz</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="multiplayerUi.css" />
 
   <script type="importmap">
     {
@@ -50,7 +51,7 @@
 	  <br>
       <div class="stats-summary-row">
         <div class="stats-summary-card stats-tiles"><span>Tuiles posées</span><strong id="statTiles">0</strong></div>
-        <div class="stats-summary-card stats-trains"><span>Trains</span><strong id="statTrains">0</strong></div>
+        <div class="stats-summary-card stats-trains"><span>Trains 🚂</span><strong id="statTrains">0</strong></div><div class="stats-summary-card stats-boats"><span>Bateaux ⛵</span><strong id="statBoats">0</strong></div>
       </div>
       <div class="stats-card-grid">
         <div class="stats-card stats-grass">

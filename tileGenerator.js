@@ -3,7 +3,8 @@ import { pickRandom, pickWeighted } from './random.js';
 
 const MIXED_NETWORK_TILE_CHANCE = 0.04;
 const NETWORK_TERMINUS_CHANCE = 0.20;
-const WATER_TARGET_COUNTS = { 2: 38, 3: 36, 4: 19, 5: 5, 6: 2 };
+const WATER_TERMINUS_CHANCE = 0.65;
+const WATER_TARGET_COUNTS = { 1: 60, 2: 38, 3: 30, 4: 16, 5: 5, 6: 2 };
 
 const EDGE_VALUE_RANGES = {
   [EDGE_TYPES.field]: pickFieldValue,
@@ -142,10 +143,10 @@ function enforceNetworkContinuity(edges, networkType) {
   const count = countEdgesOfType(edges, networkType);
   if (count !== 1) return;
 
-  // 1 fois sur 5 environ, un réseau peut être terminal :
-  // eau = lac/barrage, rail = gare/terminus.
-  // Donc on garde une seule connexion au lieu de forcer une sortie.
-  if (Math.random() < NETWORK_TERMINUS_CHANCE) return;
+  // Eau et rail peuvent être terminaux, mais l'eau autorise désormais
+  // davantage de tuiles à 1 seul triangle pour créer des lacs/sources isolées.
+  const terminusChance = networkType === EDGE_TYPES.water ? WATER_TERMINUS_CHANCE : NETWORK_TERMINUS_CHANCE;
+  if (Math.random() < terminusChance) return;
 
   const candidates = EDGE_ORDER.filter(edge => !NETWORK_EDGE_TYPES.includes(getEdgeType(edges[edge])));
   const pickedEdge = pickRandom(candidates);
@@ -196,10 +197,9 @@ function countEdgesOfType(edges, type) {
 }
 
 function pickCenterFromEdges(edges) {
-  // Une tuile avec au moins une connexion eau doit garder un centre eau :
-  // c'est le nœud visuel et logique qui relie les triangles d'eau de la tuile.
-  // La régression venait de la règle waterCount >= 4, trop stricte.
-  if (hasEdgeType(edges, EDGE_TYPES.water)) return EDGE_TYPES.water;
+  // Le centre devient eau uniquement quand au moins deux triangles d'eau
+  // doivent être reliés visuellement/logiquement dans la tuile.
+  if (countEdgesOfType(edges, EDGE_TYPES.water) >= 2) return EDGE_TYPES.water;
   if (hasEdgeType(edges, EDGE_TYPES.rail)) return EDGE_TYPES.rail;
 
   const counts = new Map();

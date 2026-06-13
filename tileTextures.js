@@ -37,14 +37,19 @@ export function getBiomeSideMaterial(type, opacity = 1) {
   if (materialCache.has(key)) return materialCache.get(key);
 
   const color = new THREE.Color(EDGE_COLOR[type] ?? 0x222833).multiplyScalar(0.72);
-  const material = new THREE.MeshBasicMaterial({
+  const materialConfig = {
     color,
     transparent: opacity < 1,
     opacity,
     side: THREE.DoubleSide,
     depthWrite: opacity >= 1
-  });
+  };
 
+  if (type === EDGE_TYPES.field) {
+    materialConfig.map = getGeneratedFieldSideTexture();
+  }
+
+  const material = new THREE.MeshBasicMaterial(materialConfig);
   materialCache.set(key, material);
   return material;
 }
@@ -70,6 +75,25 @@ function getGeneratedTexture(type) {
     animatedTextureState.set(type, { canvas, ctx, texture });
   }
 
+  return texture;
+}
+
+function getGeneratedFieldSideTexture() {
+  const key = 'field_side_stalks';
+  if (generatedTextureCache.has(key)) return generatedTextureCache.get(key);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+
+  drawFieldSideTexture(ctx);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(3, 1);
+  generatedTextureCache.set(key, texture);
   return texture;
 }
 
@@ -136,6 +160,37 @@ function drawWaterTexture(ctx, timeSeconds = 0) {
     ctx.arc((x + 128) % 128, (y + 128) % 128, (i % 3) + 1, 0, Math.PI * 2);
     ctx.fill();
   }
+}
+
+function drawFieldSideTexture(ctx) {
+  const gradient = ctx.createLinearGradient(0, 0, 0, 128);
+  gradient.addColorStop(0, '#f3d56c');
+  gradient.addColorStop(0.42, '#c89427');
+  gradient.addColorStop(1, '#7a4f18');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 128, 128);
+
+  // Flancs de champs : tiges verticales serrées, plus sombres en bas
+  // pour donner une vraie tranche de blé au lieu d'un simple mur jaune.
+  for (let x = -4; x < 134; x += 5) {
+    const sway = ((x * 17) % 7) - 3;
+    ctx.strokeStyle = x % 3 === 0 ? 'rgba(255, 238, 129, 0.58)' : 'rgba(98, 62, 16, 0.34)';
+    ctx.lineWidth = x % 4 === 0 ? 2 : 1;
+    ctx.beginPath();
+    ctx.moveTo(x, 128);
+    ctx.bezierCurveTo(x + sway, 92, x - sway * 0.4, 48, x + sway * 0.7, 2);
+    ctx.stroke();
+  }
+
+  for (let x = 2; x < 128; x += 11) {
+    ctx.fillStyle = 'rgba(255, 232, 112, 0.48)';
+    ctx.beginPath();
+    ctx.ellipse(x + ((x * 13) % 5) - 2, 18 + ((x * 7) % 16), 2.2, 7.5, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = 'rgba(76, 45, 12, 0.22)';
+  ctx.fillRect(0, 104, 128, 24);
 }
 
 function drawFieldTexture(ctx) {

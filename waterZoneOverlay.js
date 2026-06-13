@@ -1,4 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { TEXT_LAYER } from './threeSetup.js';
 import { EDGE_COLOR, EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
@@ -584,6 +585,7 @@ function createZoneLabel(zone) {
   center.y = LABEL_Y;
 
   const sprite = new THREE.Sprite(getTextSpriteMaterial(String(zone.total), zone.type));
+  sprite.layers.set(TEXT_LAYER);
   sprite.name = `${zone.type}-zone-label`;
   sprite.position.copy(center);
   sprite.scale.set(0.88, 0.54, 1);

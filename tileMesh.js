@@ -3,6 +3,7 @@ import { EDGE_ORDER, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getBiomeMaterial, getBiomeSideMaterial } from './tileTextures.js';
 import { createRailOverlay, createRailCenterOverlay } from './tileRailOverlay.js';
+import { createRoadOverlay, createRoadCenterOverlay } from './tileRoadOverlay.js';
 import { createValueLabel, getMiniValueLabel } from './tileLabels.js';
 
 const SECTOR_DEFS = [
@@ -32,13 +33,20 @@ const TERRAIN_RELIEF = {
   baseAmplitude: 0.064,
   typeAmplitude: {
     grass: 0.085,
-    forest: 0.118,
+    forest: 0.083,
     field: 0.075,
-    house: 0.055,
+    house: 0.039,
     rail: 0.043,
     water: 0.017
   },
   edgeFadeStart: 0.30
+};
+
+const THIN_BIOME_DEPTH_RATIO = {
+  // Maisons et forêts validées : dalles 30% moins épaisses,
+  // dessus toujours au niveau de pose, dessous remonté uniquement pour ces biomes.
+  house: 0.70,
+  forest: 0.70
 };
 
 const BIOME_HEIGHT_RATIO = {
@@ -54,12 +62,15 @@ const BIOME_HEIGHT_RATIO = {
 
 export function createTileMesh(tileOrEdges, options = {}) {
   const edges = tileOrEdges.edges ?? tileOrEdges;
-  const center = hasEdgeType(edges, 'water') ? 'water' : (tileOrEdges.center ?? pickCenterType(edges));
+  const center = countEdgesOfType(edges, 'water') >= 2 ? 'water' : (tileOrEdges.center ?? pickCenterType(edges));
   const opacity = options.opacity ?? 1;
   const group = new THREE.Group();
 
   group.add(...createSectorMeshes(edges, opacity));
   group.add(createCenterMesh(center, opacity));
+
+  const roadCenterOverlay = createRoadCenterOverlay(edges, SECTOR_DEFS, createOuterVertices);
+  if (roadCenterOverlay) group.add(roadCenterOverlay);
 
   const railCenterOverlay = createRailCenterOverlay(edges, SECTOR_DEFS, createOuterVertices);
   if (railCenterOverlay) group.add(railCenterOverlay);
@@ -71,7 +82,7 @@ export function renderMiniTile(tile) {
   if (!tile) return '';
 
   const e = tile.edges;
-  const c = hasEdgeType(e, 'water') ? 'water' : (tile.center ?? mostCommonEdgeType(edgesToArray(e)));
+  const c = countEdgesOfType(e, 'water') >= 2 ? 'water' : (tile.center ?? mostCommonEdgeType(edgesToArray(e)));
   const sector = edgeKey => {
     const edge = e[edgeKey];
     const type = getEdgeType(edge);
@@ -110,6 +121,9 @@ function createSectorMeshes(edges, opacity) {
     group.userData.edgeKey = sector.key;
     group.add(mesh);
 
+    const roadOverlay = createRoadOverlay(edge, vertices[sector.a], vertices[sector.b], sector.key);
+    if (roadOverlay) group.add(roadOverlay);
+
     const railOverlay = createRailOverlay(edge, vertices[sector.a], vertices[sector.b]);
     if (railOverlay) group.add(railOverlay);
 
@@ -137,9 +151,14 @@ function getSectorDepth(type) {
     return TILE_VISUAL.railThickness ?? TILE_VISUAL.waterThickness ?? ((TILE_VISUAL.tileThickness ?? 0.16) * 0.5);
   }
 
-  // Tous les biomes non-eau gardent le même fond de volume sur la grille.
-  // La variation se fait par le dessus : field monte, grass descend.
   const baseDepth = TILE_VISUAL.tileThickness ?? 0.16;
+
+  // Maisons/forêts : le bug venait de la réduction d'épaisseur appliquée
+  // vers le bas uniquement, ce qui remontait leur dessous au-dessus de la
+  // grille. On garde donc la base commune, et leur faible épaisseur est
+  // portée par getBiomeLocalTopY().
+  if (THIN_BIOME_DEPTH_RATIO[type]) return baseDepth;
+
   return baseDepth + getBiomeLocalTopY(type);
 }
 
@@ -196,12 +215,45 @@ function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bInd
     indices.push(topCount + triangle[2], topCount + triangle[1], topCount + triangle[0]);
   }
 
+  const bottomIndexCount = indices.length - topIndexCount;
+
   // Flancs, y compris le bord extérieur dentelé.
+  // Les faces latérales ont leurs propres sommets/UV : indispensable pour
+  // appliquer une texture verticale lisible sur les tranches de champs de blé
+  // sans massacrer les UV du dessus texturé.
+  const sideIndexStart = indices.length;
+  const perimeterLengths = [0];
   for (let i = 0; i < topCount; i++) {
     const next = (i + 1) % topCount;
-    indices.push(i, topCount + i, topCount + next);
-    indices.push(i, topCount + next, next);
+    const aPoint = topPoints[i];
+    const bPoint = topPoints[next];
+    const length = Math.hypot(bPoint.x - aPoint.x, bPoint.z - aPoint.z);
+    perimeterLengths.push(perimeterLengths[i] + length);
   }
+  const perimeter = Math.max(perimeterLengths[perimeterLengths.length - 1], 0.001);
+
+  for (let i = 0; i < topCount; i++) {
+    const next = (i + 1) % topCount;
+    const aPoint = topPoints[i];
+    const bPoint = topPoints[next];
+    const u0 = perimeterLengths[i] / perimeter;
+    const u1 = perimeterLengths[i + 1] / perimeter;
+    const baseIndex = vertexData.length / 3;
+
+    vertexData.push(aPoint.x, topHeights[i], aPoint.z);
+    uvData.push(u0, 1);
+    vertexData.push(aPoint.x, bottomHeights[i], aPoint.z);
+    uvData.push(u0, 0);
+    vertexData.push(bPoint.x, bottomHeights[next], bPoint.z);
+    uvData.push(u1, 0);
+    vertexData.push(bPoint.x, topHeights[next], bPoint.z);
+    uvData.push(u1, 1);
+
+    indices.push(baseIndex, baseIndex + 1, baseIndex + 2);
+    indices.push(baseIndex, baseIndex + 2, baseIndex + 3);
+  }
+
+  const sideIndexCount = indices.length - sideIndexStart;
 
   geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertexData), 3));
   geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvData), 2));
@@ -209,7 +261,7 @@ function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bInd
 
   geometry.clearGroups();
   geometry.addGroup(0, topIndexCount, 0);
-  geometry.addGroup(topIndexCount, indices.length - topIndexCount, 1);
+  geometry.addGroup(topIndexCount, bottomIndexCount + sideIndexCount, 1);
   geometry.computeVertexNormals();
 
   return geometry;
@@ -248,7 +300,15 @@ function hashTerrainPoint(point, type, salt) {
 
 function getBiomeLocalTopY(type) {
   if (type === 'water') return 0;
+
   const baseDepth = TILE_VISUAL.tileThickness ?? 0.16;
+  const thinRatio = THIN_BIOME_DEPTH_RATIO[type];
+
+  // Forêt/maison sont 30% moins épaisses, mais leur dessous doit rester
+  // collé au même plan que les autres tuiles. Leur dessus est donc abaissé,
+  // au lieu de laisser le dessous flotter.
+  if (thinRatio) return baseDepth * (thinRatio - 1);
+
   return baseDepth * (BIOME_HEIGHT_RATIO[type] ?? 0);
 }
 
@@ -487,11 +547,15 @@ function edgesToArray(edges) {
 
 function pickCenterType(edges) {
   const types = edgesToArray(edges);
-  // Fallback visuel cohérent avec tileGenerator : toute tuile ayant de l'eau
-  // garde un centre eau pour que le réseau soit continu.
-  if (hasEdgeType(edges, 'water')) return 'water';
+  // Fallback visuel cohérent avec tileGenerator : le centre eau n'est utilisé
+  // que pour relier au moins deux triangles d'eau dans la tuile.
+  if (countEdgesOfType(edges, 'water') >= 2) return 'water';
   if (hasEdgeType(edges, 'rail')) return 'rail';
   return mostCommonEdgeType(types);
+}
+
+function countEdgesOfType(edges, type) {
+  return EDGE_ORDER.reduce((count, edge) => count + (getEdgeType(edges[edge]) === type ? 1 : 0), 0);
 }
 
 function hasEdgeType(edges, type) {
