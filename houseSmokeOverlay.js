@@ -1,4 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { makeHexKey } from './hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
@@ -20,11 +21,23 @@ const SECTOR_DEFS = [
 const HOUSE_GROUND_Y = (TILE_VISUAL.tileThickness ?? 0.12) * -0.30;
 const HOUSE_BASE_Y = HOUSE_GROUND_Y + 0.002;
 const HOUSE_SCALE = HEX_SIZE * 0.148;
+const HOUSE_GLB_SIZE_MULTIPLIER = 1.38;
+const HOUSE_GLB_SPACING_MULTIPLIER = 1.12;
 const HOUSE_CHIMNEY_TOP_Y = HOUSE_BASE_Y + HOUSE_SCALE * 1.62;
 const HOUSE_SMOKE_Y = HOUSE_CHIMNEY_TOP_Y + HOUSE_SCALE * 0.08;
 const PUFFS_PER_COLUMN = 18;
 const smokeMaterialCache = [];
 const houseMaterialCache = new Map();
+
+const HOUSE_GLB_MODEL_DEFS = [
+  { key: 'maison-1', url: './glb/maison-1.glb', size: 1.416, spawnWeight: 56 },
+  { key: 'maison-2', url: './glb/maison-2.glb', size: 1.472, spawnWeight: 30 },
+  { key: 'maison-3', url: './glb/maison-3.glb', size: 1.679, spawnWeight: 11 },
+  { key: 'maison-4', url: './glb/maison-4.glb', size: 1.932, spawnWeight: 3 }
+];
+const houseGlbLibrary = new Map();
+let houseModelsLoading = false;
+let houseModelsRequested = false;
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 const CHURCH_MIN_HOUSES = 8;
 const CHURCH_HOUSES_PER_EXTRA = 18;
@@ -37,12 +50,19 @@ export function createHouseSmokeOverlay() {
   const group = new THREE.Group();
   group.name = 'house-smoke-overlay';
   group.userData.columns = [];
+  ensureHouseGlbModels(group);
   return group;
 }
 
 export function rebuildHouseSmokeOverlay(group, placedTiles) {
+  group.userData.lastPlacedTiles = placedTiles;
   clearGroup(group);
   group.userData.columns = [];
+
+  if (houseGlbLibrary.size === 0) {
+    ensureHouseGlbModels(group);
+    return;
+  }
 
   const churchSectors = collectVillageChurchSectors(placedTiles);
   const cemeterySectors = collectVillageCemeterySectors(placedTiles, churchSectors);
@@ -123,7 +143,9 @@ function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey
   for (let i = 0; i < columnCount; i += 1) {
     const anchor = anchors[i] ?? anchors[anchors.length - 1];
     const seed = `${tileKey}:${sector.key}:house-smoke:${i}`;
-    const local = trianglePoint(a, b, anchor.centerWeight, anchor.aWeight, anchor.bWeight);
+    const isChurch = hasChurch && i === 0;
+    const baseLocal = trianglePoint(a, b, anchor.centerWeight, anchor.aWeight, anchor.bWeight);
+    const local = isChurch ? baseLocal : spreadVillageHouseLocalPoint(baseLocal);
     const column = {
       x: tileX + local.x,
       z: tileZ + local.z,
@@ -131,7 +153,6 @@ function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey
       house: null
     };
 
-    const isChurch = hasChurch && i === 0;
     const house = isChurch
       ? createVillageChurchObject(`${tileKey}:${sector.key}:village-church`, sector)
       : createVillageHouseObject(seed, sector, i);
@@ -139,41 +160,9 @@ function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey
     group.add(house);
     column.house = house;
 
+    // Les maisons GLB remplacent intégralement les anciennes maisons SVG/CSS et leurs cheminées.
+    // La fumée est volontairement désactivée côté maisons. Les églises restent inchangées.
     if (isChurch) continue;
-
-    const chimneySmokes = hashUnit(`${seed}:chimney-smokes`) < 0.60;
-    if (!chimneySmokes) continue;
-
-    for (let puffIndex = 0; puffIndex < PUFFS_PER_COLUMN; puffIndex += 1) {
-      const puffSeed = `${seed}:puff:${puffIndex}`;
-      const mesh = new THREE.Mesh(
-        new THREE.CircleGeometry(HEX_SIZE * (0.034 + hashUnit(`${puffSeed}:radius`) * 0.018), 18),
-        getSmokeMaterial(puffIndex).clone()
-      );
-
-      mesh.name = 'village-house-animated-smoke-puff';
-      mesh.rotation.x = -Math.PI / 2;
-      mesh.renderOrder = 170 + puffIndex;
-      mesh.position.set(column.x, HOUSE_SMOKE_Y, column.z);
-      group.add(mesh);
-
-      const windAngle = -0.82 + hashUnit(`${puffSeed}:wind-angle`) * 0.38;
-      const windPower = HEX_SIZE * (0.080 + hashUnit(`${puffSeed}:wind-power`) * 0.075);
-
-      column.puffs.push({
-        mesh,
-        phase: (puffIndex / PUFFS_PER_COLUMN + hashUnit(`${puffSeed}:phase`) * 0.20) % 1,
-        speed: 0.20 + hashUnit(`${puffSeed}:speed`) * 0.09,
-        rise: HEX_SIZE * (0.34 + hashUnit(`${puffSeed}:rise`) * 0.16),
-        drift: new THREE.Vector3(Math.cos(windAngle) * windPower * 0.58, 0, Math.sin(windAngle) * windPower * 0.58),
-        wobble: HEX_SIZE * (0.006 + hashUnit(`${puffSeed}:wobble`) * 0.010),
-        wobbleSpeed: 0.38 + hashUnit(`${puffSeed}:wobble-speed`) * 0.52,
-        baseScale: 0.58 + hashUnit(`${puffSeed}:scale`) * 0.18,
-        opacity: 0.34 + hashUnit(`${puffSeed}:opacity`) * 0.14
-      });
-    }
-
-    group.userData.columns.push(column);
   }
 }
 
@@ -964,85 +953,130 @@ function getTileCenterType(placedTile) {
 }
 
 
+function ensureHouseGlbModels(group) {
+  if (houseModelsLoading || houseModelsRequested) return;
+  houseModelsLoading = true;
+  houseModelsRequested = true;
+
+  let pending = HOUSE_GLB_MODEL_DEFS.length;
+  const finishOne = () => {
+    pending -= 1;
+    if (pending > 0) return;
+
+    houseModelsLoading = false;
+    const lastPlacedTiles = group.userData.lastPlacedTiles;
+    if (lastPlacedTiles) rebuildHouseSmokeOverlay(group, lastPlacedTiles);
+  };
+
+  for (const def of HOUSE_GLB_MODEL_DEFS) {
+    new GLTFLoader().load(
+      def.url,
+      gltf => {
+        houseGlbLibrary.set(def.key, prepareHouseGlbPrototype(gltf.scene, def));
+        finishOne();
+      },
+      undefined,
+      error => {
+        console.warn(`Modèle maison GLB indisponible : ${def.url}`, error);
+        finishOne();
+      }
+    );
+  }
+}
+
+function prepareHouseGlbPrototype(model, def) {
+  const source = model.clone(true);
+  const prototype = normalizeHouseGlbModel(source, def);
+
+  prototype.traverse(object => {
+    if (!object.isMesh) return;
+    object.castShadow = true;
+    object.receiveShadow = true;
+    if (object.material) object.material = cloneHouseGlbMaterial(object.material);
+  });
+
+  return prototype;
+}
+
+function cloneHouseGlbMaterial(material) {
+  if (Array.isArray(material)) return material.map(item => cloneHouseGlbMaterial(item));
+
+  const cloned = material.clone();
+  cloned.side = THREE.DoubleSide;
+  if ('emissiveIntensity' in cloned) cloned.emissiveIntensity = 0;
+  if ('toneMapped' in cloned) cloned.toneMapped = true;
+  cloned.needsUpdate = true;
+  return cloned;
+}
+
+function normalizeHouseGlbModel(model, def) {
+  const wrapper = new THREE.Group();
+  wrapper.name = `normalized-${def.key}-village-house-glb`;
+
+  const box = new THREE.Box3().setFromObject(model);
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  model.position.set(-center.x, -box.min.y, -center.z);
+
+  const maxDimension = Math.max(size.x, size.y, size.z) || 1;
+  wrapper.scale.setScalar((HOUSE_SCALE * def.size) / maxDimension);
+  wrapper.add(model);
+  return wrapper;
+}
+
+
+function spreadVillageHouseLocalPoint(local) {
+  return {
+    x: local.x * HOUSE_GLB_SPACING_MULTIPLIER,
+    z: local.z * HOUSE_GLB_SPACING_MULTIPLIER
+  };
+}
+
 function createVillageHouseObject(seedKey, sector, index) {
   const group = new THREE.Group();
-  group.name = 'village-house-3d-under-smoke';
+  group.name = 'village-house-glb';
 
   const sectorAngle = (SECTOR_DEFS.findIndex(item => item.key === sector.key) * Math.PI / 3) + Math.PI / 6;
   const jitter = (hashUnit(`${seedKey}:house-rotation`) - 0.5) * 0.42;
   group.rotation.y = -sectorAngle + jitter;
-  group.scale.setScalar(1.08 + hashUnit(`${seedKey}:house-scale`) * 0.24);
+  group.scale.setScalar((0.94 + hashUnit(`${seedKey}:house-scale`) * 0.18) * HOUSE_GLB_SIZE_MULTIPLIER);
 
-  const variant = Math.floor(hashUnit(`${seedKey}:variant`) * 5) % 5;
-  const width = HOUSE_SCALE * (0.92 + hashUnit(`${seedKey}:width`) * 0.34);
-  const depth = HOUSE_SCALE * (0.76 + hashUnit(`${seedKey}:depth`) * 0.30);
-  const height = HOUSE_SCALE * (0.68 + hashUnit(`${seedKey}:height`) * 0.30);
+  const def = pickHouseGlbDefinition(seedKey, index);
+  const prototype = houseGlbLibrary.get(def.key);
 
-  const wallPalette = [0xD9A15F, 0xC98F5D, 0xE0B16F, 0xBC7A55, 0xD7BA82, 0xB98562];
-  const roofPalette = [0xB94735, 0xD05B3F, 0x9E3A2F, 0xC9573A, 0x7E342C];
-  const wallColor = wallPalette[(index + Math.floor(hashUnit(`${seedKey}:wall`) * wallPalette.length)) % wallPalette.length];
-  const roofColor = roofPalette[(index + Math.floor(hashUnit(`${seedKey}:roof`) * roofPalette.length)) % roofPalette.length];
+  if (!prototype) return group;
 
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(width, height, depth),
-    getWallSvgMaterial(`house-wall-${wallColor}`, wallColor, 'plaster')
-  );
-  body.name = 'village-house-body';
-  body.position.set(0, height * 0.5, 0);
-  body.renderOrder = 120;
+  const house = prototype.clone(true);
+  house.name = `${def.key}-village-house-instance`;
+  house.traverse(object => {
+    if (!object.isMesh) return;
+    object.castShadow = false;
+    object.receiveShadow = false;
+  });
 
-  const foundation = new THREE.Mesh(
-    new THREE.BoxGeometry(width * 1.08, HOUSE_SCALE * 0.10, depth * 1.08),
-    getHouseMaterial('foundation-stone', 0x7F7568)
-  );
-  foundation.name = 'village-house-foundation';
-  foundation.position.set(0, HOUSE_SCALE * 0.05, 0);
-  foundation.renderOrder = 119;
-
-  const roof = createHouseRoof(variant, width, depth, height, roofColor);
-
-  const chimneyOffsetX = 0;
-  const chimneyOffsetZ = 0;
-  const chimney = new THREE.Mesh(
-    new THREE.BoxGeometry(HOUSE_SCALE * 0.17, HOUSE_SCALE * 0.48, HOUSE_SCALE * 0.17),
-    getHouseMaterial('chimney', 0x5B3328)
-  );
-  chimney.name = 'village-house-chimney-aligned-with-smoke';
-  chimney.position.set(chimneyOffsetX, height + HOUSE_SCALE * 0.54, chimneyOffsetZ);
-  chimney.renderOrder = 123;
-
-  const door = new THREE.Mesh(
-    new THREE.PlaneGeometry(HOUSE_SCALE * (0.20 + variant * 0.012), HOUSE_SCALE * 0.34),
-    getHouseMaterial('door', variant % 2 === 0 ? 0x5A3826 : 0x3F3024)
-  );
-  door.name = 'village-house-door';
-  door.position.set(width * (variant === 3 ? -0.22 : 0), HOUSE_SCALE * 0.31, -depth * 0.506);
-  door.renderOrder = 124;
-
-  const knob = new THREE.Mesh(
-    new THREE.CircleGeometry(HOUSE_SCALE * 0.018, 10),
-    getHouseMaterial('door-knob', 0xE5C15A)
-  );
-  knob.name = 'village-house-door-knob';
-  knob.position.set(door.position.x + HOUSE_SCALE * 0.055, HOUSE_SCALE * 0.31, -depth * 0.509);
-  knob.renderOrder = 126;
-
-  const leftWindow = createHouseWindow(-width * 0.26, height * 0.62, -depth * 0.508, variant);
-  const rightWindow = createHouseWindow(width * 0.26, height * 0.62, -depth * 0.508, variant + 1);
-  const atticWindow = createHouseWindow(0, height + HOUSE_SCALE * 0.18, -depth * 0.512, variant + 2, 0.72);
-
-  const sideWindow = createHouseWindow(0, height * 0.58, 0, variant + 3, 0.86);
-  sideWindow.position.set(width * 0.506, height * 0.58, 0);
-  sideWindow.rotation.y = Math.PI / 2;
-
-  for (const mesh of [foundation, body, roof, chimney, door, knob, leftWindow, rightWindow, atticWindow, sideWindow]) {
-    mesh.castShadow = false;
-    mesh.receiveShadow = false;
-  }
-
-  group.add(foundation, body, roof, chimney, door, knob, leftWindow, rightWindow, atticWindow, sideWindow);
+  group.add(house);
   return group;
 }
+
+
+function pickHouseGlbDefinition(seedKey, index) {
+  // Pondération volontairement asymétrique : les petites maisons doivent composer
+  // l'essentiel des villages. Les modèles moyens/gros restent possibles, mais
+  // évitent de transformer un petit triangle en centre commercial des enfers.
+  const totalWeight = HOUSE_GLB_MODEL_DEFS.reduce((total, def) => total + (def.spawnWeight ?? 1), 0);
+  let roll = hashUnit(`${seedKey}:weighted-glb-variant:${index}`) * totalWeight;
+
+  for (const def of HOUSE_GLB_MODEL_DEFS) {
+    roll -= def.spawnWeight ?? 1;
+    if (roll <= 0) return def;
+  }
+
+  return HOUSE_GLB_MODEL_DEFS[0];
+}
+
 function createVillageChurchObject(seedKey, sector) {
   const group = new THREE.Group();
   group.name = 'village-church-3d-large-zone-reward';

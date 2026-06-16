@@ -3,6 +3,7 @@ import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
+import { getTrainRailY } from './terrainHeight.js';
 
 const SECTOR_DEFS = [
   { key: 'n', a: 0, b: 1 },
@@ -13,16 +14,21 @@ const SECTOR_DEFS = [
   { key: 'nw', a: 5, b: 0 }
 ];
 
-const TRAIN_Y = (TILE_VISUAL.railY ?? 0.052) + 0.025;
+const TRAIN_Y = (TILE_VISUAL.railY ?? 0.052) - 0.050; // fallback only
 const TRAIN_SPEED = 0.18;
-const TRAIN_CURVE_SLOW_DISTANCE = HEX_SIZE * 0.42;
+const TRAIN_CURVE_SLOW_DISTANCE = HEX_SIZE * 0.30;
+const TRAIN_ROTATION_SMOOTHING = 0.085;
 const TRAIN_TERMINUS_SLOW_DISTANCE = HEX_SIZE * 0.72;
 const TRAIN_SCALE = HEX_SIZE * 0.153;
 const TRAIN_UNIT_SPACING = HEX_SIZE * 0.30;
 const TRAIN_MIN_WAGONS = 2;
 const TRAIN_MAX_WAGONS = 8;
-const PORT_INSET = 0.18;
-const STATION_Y = (TILE_VISUAL.railY ?? 0.052) + 0.012;
+const PORT_SCALE = 1.002;
+const TRACK_HUB_RADIUS = HEX_SIZE * 0.185;
+const TRACK_MIN_CURVE_RADIUS = HEX_SIZE * 0.34;
+const MOTION_SAMPLE_SPACING = HEX_SIZE * 0.045;
+const MOTION_SMOOTH_PASSES = 3;
+const STATION_Y = (TILE_VISUAL.railY ?? 0.052) - 0.060;
 const STATION_SCALE = HEX_SIZE * 0.22;
 const STATION_TRACK_CLEARANCE = HEX_SIZE * 0.25;
 const STATION_TERMINUS_BACKSET = HEX_SIZE * 0.08;
@@ -51,7 +57,8 @@ export function rebuildRailTrainOverlay(group, placedTiles) {
     const path = findLongestPath(graph, component.nodes);
     if (path.length < 2) continue;
 
-    const points = path.map(nodeId => graph.nodes.get(nodeId).position.clone());
+    const graphPoints = path.map(nodeId => graph.nodes.get(nodeId).position.clone());
+    const points = smoothRailMotionPath(graphPoints);
     const distance = measurePath(points);
     if (distance < HEX_SIZE * 1.05) continue;
 
@@ -83,20 +90,7 @@ function buildRailGraph(placedTiles) {
 
   for (const tile of placedTiles.values()) {
     const tileKey = tile.key ?? makeHexKey(tile.q, tile.r);
-    const world = axialToWorld(tile.q, tile.r);
-    const centerId = getCenterNodeId(tileKey);
-    const centerPosition = new THREE.Vector3(world.x, TRAIN_Y, world.z);
-
-    addNode(graph, centerId, centerPosition, tileKey);
-
-    for (const edge of EDGE_ORDER) {
-      if (!isRailEdge(tile, edge)) continue;
-
-      const portId = getPortNodeId(tileKey, edge);
-      const portPosition = getRailPortWorldPosition(tile.q, tile.r, edge);
-      addNode(graph, portId, portPosition, tileKey);
-      addEdge(graph, centerId, portId);
-    }
+    addTileRailRouteNodes(graph, tile, tileKey);
   }
 
   for (const tile of placedTiles.values()) {
@@ -122,6 +116,254 @@ function buildRailGraph(placedTiles) {
   return graph;
 }
 
+function addTileRailRouteNodes(graph, tile, tileKey) {
+  const railPorts = getTileRailPorts(tile, tileKey);
+  if (railPorts.length === 0) return;
+
+  const world = axialToWorld(tile.q, tile.r);
+  addNode(graph, getCenterNodeId(tileKey), new THREE.Vector3(world.x, TRAIN_Y, world.z), tileKey);
+
+  for (const port of railPorts) {
+    addNode(graph, getPortNodeId(tileKey, port.key), toWorldRailPoint(tile.q, tile.r, port.point), tileKey);
+  }
+
+  const routes = createTileRailRoutes(railPorts);
+  for (const route of routes) {
+    addRouteToGraph(graph, tile, tileKey, route);
+  }
+}
+
+function addRouteToGraph(graph, tile, tileKey, route) {
+  const points = route.points.map(point => toWorldRailPoint(tile.q, tile.r, point));
+  if ((!route.closed && points.length < 2) || (route.closed && points.length < 4)) return;
+
+  const nodeIds = points.map((point, index) => {
+    const id = getRouteNodeId(tileKey, route.seedKey, index, route.portKeys?.[index]);
+    addNode(graph, id, point, tileKey);
+    return id;
+  });
+
+  const segmentCount = route.closed ? nodeIds.length : nodeIds.length - 1;
+  for (let i = 0; i < segmentCount; i += 1) {
+    addEdge(graph, nodeIds[i], nodeIds[(i + 1) % nodeIds.length]);
+  }
+}
+
+function getTileRailPorts(tile, tileKey) {
+  const vertices = createOuterVertices();
+
+  return SECTOR_DEFS
+    .map((sector, index) => {
+      if (!isRailEdge(tile, sector.key)) return null;
+
+      const vertexA = vertices[sector.a];
+      const vertexB = vertices[sector.b];
+      const point = new THREE.Vector3(
+        ((vertexA.x + vertexB.x) / 2) * PORT_SCALE,
+        0,
+        ((vertexA.z + vertexB.z) / 2) * PORT_SCALE
+      );
+      const direction = new THREE.Vector3(point.x, 0, point.z).normalize();
+
+      return {
+        index,
+        key: sector.key,
+        nodeId: getPortNodeId(tileKey, sector.key),
+        point,
+        direction
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.index - b.index);
+}
+
+function createTileRailRoutes(ports) {
+  if (ports.length === 1) return [createTileTerminusRoute(ports[0])];
+  if (ports.length === 2) return [createTilePortToPortRoute(ports[0], ports[1])];
+  return createTileJunctionRoutes(ports);
+}
+
+function createTileTerminusRoute(port) {
+  const direction = port.direction.clone();
+  const start = port.point.clone();
+  const end = direction.clone().multiplyScalar(TRACK_HUB_RADIUS * 1.02);
+  const distance = start.distanceTo(end);
+  const controlDistance = clamp(distance * 0.44, TRACK_MIN_CURVE_RADIUS * 0.62, HEX_SIZE * 0.62);
+  const c1 = start.clone().add(direction.clone().multiplyScalar(-controlDistance));
+  const c2 = end.clone().add(direction.clone().multiplyScalar(controlDistance * 0.18));
+
+  const points = sampleCubic(start, c1, c2, end, 20);
+  return {
+    seedKey: `rail-terminus:${port.index}`,
+    points,
+    closed: false,
+    portKeys: { 0: port.key }
+  };
+}
+
+function createTilePortToPortRoute(a, b) {
+  const start = a.point.clone();
+  const end = b.point.clone();
+  const distance = start.distanceTo(end);
+  const controlDistance = clamp(distance * 0.42, TRACK_MIN_CURVE_RADIUS, HEX_SIZE * 0.72);
+  const dot = clamp(a.direction.dot(b.direction), -1, 1);
+  const almostOpposite = dot < -0.92;
+  const c1 = start.clone().add(a.direction.clone().multiplyScalar(-controlDistance));
+  const c2 = end.clone().add(b.direction.clone().multiplyScalar(-controlDistance));
+
+  if (almostOpposite) {
+    c1.copy(start.clone().multiplyScalar(0.42));
+    c2.copy(end.clone().multiplyScalar(0.42));
+  }
+
+  const points = sampleCubic(start, c1, c2, end, 34);
+  return {
+    seedKey: `rail-pair:${a.index}:${b.index}`,
+    points,
+    closed: false,
+    portKeys: { 0: a.key, [points.length - 1]: b.key }
+  };
+}
+
+function createTileJunctionRoutes(ports) {
+  const routes = [{
+    seedKey: `rail-hub:${ports.map(port => port.index).join('-')}`,
+    points: createHubRingPoints(44),
+    closed: true
+  }];
+
+  for (const port of ports) {
+    const direction = port.direction.clone();
+    const start = port.point.clone();
+    const end = direction.clone().multiplyScalar(TRACK_HUB_RADIUS);
+    const distance = start.distanceTo(end);
+    const controlDistance = clamp(distance * 0.46, TRACK_MIN_CURVE_RADIUS * 0.58, HEX_SIZE * 0.62);
+    const c1 = start.clone().add(direction.clone().multiplyScalar(-controlDistance));
+    const c2 = end.clone().add(direction.clone().multiplyScalar(controlDistance * 0.28));
+    const points = sampleCubic(start, c1, c2, end, 22);
+
+    routes.push({
+      seedKey: `rail-branch:${port.index}`,
+      points,
+      closed: false,
+      portKeys: { 0: port.key }
+    });
+  }
+
+  return routes;
+}
+
+function toWorldRailPoint(q, r, localPoint) {
+  const world = axialToWorld(q, r);
+  const salt = stableSalt(`${q}:${r}:${localPoint.x.toFixed(3)}:${localPoint.z.toFixed(3)}`);
+  return new THREE.Vector3(
+    world.x + localPoint.x,
+    getTrainRailY(localPoint, salt),
+    world.z + localPoint.z
+  );
+}
+
+function smoothRailMotionPath(points) {
+  const compact = compactMotionPoints(points);
+  if (compact.length < 3) return compact;
+
+  let smoothed = resampleMotionPath(compact, MOTION_SAMPLE_SPACING);
+  for (let pass = 0; pass < MOTION_SMOOTH_PASSES; pass += 1) {
+    smoothed = chaikinSmoothOpenPath(smoothed);
+    smoothed = resampleMotionPath(smoothed, MOTION_SAMPLE_SPACING);
+  }
+
+  smoothPathY(smoothed, false, 1);
+  return smoothed;
+}
+
+
+function stableSalt(seedKey = 'rail-train') {
+  let hash = 2166136261;
+  const text = String(seedKey);
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % 997;
+}
+
+function smoothPathY(points, closed = false, passes = 1) {
+  if (points.length < 3) return;
+  for (let pass = 0; pass < passes; pass += 1) {
+    const previousY = points.map(point => point.y);
+    const start = closed ? 0 : 1;
+    const end = closed ? points.length : points.length - 1;
+    for (let i = start; i < end; i += 1) {
+      const prev = (i - 1 + points.length) % points.length;
+      const next = (i + 1) % points.length;
+      points[i].y = previousY[i] * 0.5 + (previousY[prev] + previousY[next]) * 0.25;
+    }
+  }
+}
+
+function compactMotionPoints(points) {
+  const compact = [];
+  for (const point of points) {
+    const previous = compact[compact.length - 1];
+    if (!previous || previous.distanceTo(point) > HEX_SIZE * 0.006) {
+      compact.push(point.clone());
+    }
+  }
+  return compact;
+}
+
+function chaikinSmoothOpenPath(points) {
+  if (points.length < 3) return points.map(point => point.clone());
+
+  const result = [points[0].clone()];
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const a = points[i];
+    const b = points[i + 1];
+    const q = a.clone().lerp(b, 0.25);
+    const r = a.clone().lerp(b, 0.75);
+    result.push(q, r);
+  }
+  result.push(points[points.length - 1].clone());
+  return result;
+}
+
+function resampleMotionPath(points, spacing) {
+  const length = measurePath(points);
+  if (length <= 0) return points.map(point => point.clone());
+
+  const count = Math.max(2, Math.ceil(length / Math.max(spacing, 0.001)));
+  const samples = [];
+  for (let i = 0; i <= count; i += 1) {
+    samples.push(getPointAtMotionDistance(points, (i / count) * length));
+  }
+  return samples;
+}
+
+function getPointAtMotionDistance(points, distance) {
+  if (points.length === 0) return new THREE.Vector3(0, TRAIN_Y, 0);
+  if (points.length === 1) return points[0].clone();
+
+  let remaining = Math.max(0, Math.min(distance, measurePath(points)));
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const a = points[i];
+    const b = points[i + 1];
+    const segment = a.distanceTo(b);
+    if (remaining <= segment || i === points.length - 2) {
+      const t = segment <= 0 ? 0 : remaining / segment;
+      return a.clone().lerp(b, t);
+    }
+    remaining -= segment;
+  }
+
+  return points[points.length - 1].clone();
+}
+
+function getRouteNodeId(tileKey, seedKey, index, portKey) {
+  if (portKey) return getPortNodeId(tileKey, portKey);
+  return `${tileKey}:route:${seedKey}:${index}`;
+}
+
 function isRailEdge(placedTile, edge) {
   return getEdgeType(placedTile?.tile?.edges?.[edge]) === EDGE_TYPES.rail;
 }
@@ -135,16 +377,14 @@ function getPortNodeId(tileKey, edge) {
 }
 
 function getRailPortWorldPosition(q, r, edge) {
-  const world = axialToWorld(q, r);
   const vertices = createOuterVertices();
   const sector = SECTOR_DEFS.find(item => item.key === edge);
   const mid = new THREE.Vector3(
-    (vertices[sector.a].x + vertices[sector.b].x) / 2,
+    ((vertices[sector.a].x + vertices[sector.b].x) / 2) * PORT_SCALE,
     0,
-    (vertices[sector.a].z + vertices[sector.b].z) / 2
-  ).multiplyScalar(PORT_INSET);
-
-  return new THREE.Vector3(world.x + mid.x, TRAIN_Y, world.z + mid.z);
+    ((vertices[sector.a].z + vertices[sector.b].z) / 2) * PORT_SCALE
+  );
+  return toWorldRailPoint(q, r, mid);
 }
 
 function addNode(graph, id, position, tileKey) {
@@ -290,7 +530,7 @@ function addRailTerminusStations(group, graph, component) {
     station.position.copy(node.position)
       .add(outward.clone().multiplyScalar(-STATION_TERMINUS_BACKSET))
       .add(side.multiplyScalar(STATION_TRACK_CLEARANCE * sideSign));
-    station.position.y = STATION_Y;
+    station.position.y = node.position.y + HEX_SIZE * 0.015;
     station.rotation.y = Math.atan2(outward.x, outward.z) + (sideSign < 0 ? Math.PI : 0);
     group.add(station);
   }
@@ -463,7 +703,11 @@ function updateArticulatedTrain(trainObject, motionTrack, progress, timeSeconds)
     const sample = samplePingPongMotionTrack(motionTrack, progress, unit.followDistance);
     unit.object.position.copy(sample.position);
     unit.object.position.y = TRAIN_Y;
-    unit.object.rotation.y = -Math.atan2(sample.tangent.z, sample.tangent.x);
+
+    const targetRotation = -Math.atan2(sample.tangent.z, sample.tangent.x);
+    if (unit.lastRotationY === undefined) unit.lastRotationY = targetRotation;
+    unit.lastRotationY = lerpAngle(unit.lastRotationY, targetRotation, TRAIN_ROTATION_SMOOTHING);
+    unit.object.rotation.y = unit.lastRotationY;
 
     const pulse = 1 + Math.sin(timeSeconds * 2.3 + unit.followDistance * 2.1) * 0.006;
     unit.object.scale.setScalar(pulse);
@@ -478,7 +722,10 @@ function updateArticulatedTrain(trainObject, motionTrack, progress, timeSeconds)
     const direction = front.position.clone().sub(rear.position);
     coupler.object.position.copy(middle);
     coupler.object.position.y = TRAIN_Y + TRAIN_SCALE * 0.22;
-    coupler.object.rotation.y = -Math.atan2(direction.z, direction.x);
+    const targetRotation = -Math.atan2(direction.z, direction.x);
+    if (coupler.lastRotationY === undefined) coupler.lastRotationY = targetRotation;
+    coupler.lastRotationY = lerpAngle(coupler.lastRotationY, targetRotation, TRAIN_ROTATION_SMOOTHING);
+    coupler.object.rotation.y = coupler.lastRotationY;
     coupler.object.visible = direction.length() > 0.001;
   }
 
@@ -820,14 +1067,14 @@ function getLocalTrainSpeedFactor(points, segmentIndex, t, physicalDistance, pat
   if (previousTurn > 0) {
     const distanceFromPreviousCorner = t * points[segmentIndex].distanceTo(points[segmentIndex + 1]);
     const cornerInfluence = 1 - smoothstep(0, TRAIN_CURVE_SLOW_DISTANCE, distanceFromPreviousCorner);
-    speed = Math.min(speed, lerp(1, 0.42, cornerInfluence * previousTurn));
+    speed = Math.min(speed, lerp(1, 0.72, cornerInfluence * previousTurn));
   }
 
   const nextTurn = getTurnStrength(points, segmentIndex + 1);
   if (nextTurn > 0) {
     const distanceFromNextCorner = (1 - t) * points[segmentIndex].distanceTo(points[segmentIndex + 1]);
     const cornerInfluence = 1 - smoothstep(0, TRAIN_CURVE_SLOW_DISTANCE, distanceFromNextCorner);
-    speed = Math.min(speed, lerp(1, 0.42, cornerInfluence * nextTurn));
+    speed = Math.min(speed, lerp(1, 0.72, cornerInfluence * nextTurn));
   }
 
   return speed;
@@ -859,6 +1106,43 @@ function getSmoothedTangent(points, segmentIndex, t, fallbackTangent) {
   }
 
   return current;
+}
+
+
+function sampleCubic(p0, p1, p2, p3, segments = 24) {
+  const points = [];
+  for (let i = 0; i <= segments; i += 1) {
+    const t = i / segments;
+    const mt = 1 - t;
+    points.push(new THREE.Vector3(
+      mt * mt * mt * p0.x + 3 * mt * mt * t * p1.x + 3 * mt * t * t * p2.x + t * t * t * p3.x,
+      0,
+      mt * mt * mt * p0.z + 3 * mt * mt * t * p1.z + 3 * mt * t * t * p2.z + t * t * t * p3.z
+    ));
+  }
+  return points;
+}
+
+function createHubRingPoints(segments = 40) {
+  const points = [];
+  for (let i = 0; i < segments; i += 1) {
+    const angle = (i / segments) * Math.PI * 2;
+    points.push(new THREE.Vector3(
+      Math.cos(angle) * TRACK_HUB_RADIUS,
+      0,
+      Math.sin(angle) * TRACK_HUB_RADIUS
+    ));
+  }
+  return points;
+}
+
+function lerpAngle(from, to, t) {
+  const delta = Math.atan2(Math.sin(to - from), Math.cos(to - from));
+  return from + delta * Math.max(0, Math.min(1, t));
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function easeInOutSine(t) {

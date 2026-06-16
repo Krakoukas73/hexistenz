@@ -7,6 +7,7 @@ import { BONUS_CELL_SCORE, addBonusCellMesh, createBonusCells, createBonusCellsM
 import { axialToWorld, makeHexKey } from './hex.js';
 import { createTileMesh } from './tileMesh.js';
 import { updateAnimatedBiomeTextures } from './tileTextures.js';
+import { isRealisticWaterMaterial, triggerRealisticWaterRipple, updateRealisticWater } from './realisticWater.js';
 import { canPlaceTileAt, getPlacementValidation } from './placementRules.js';
 import { calculatePlacementScore } from './scoring.js';
 import { createDeck, rotateTile } from './tileGenerator.js';
@@ -19,7 +20,7 @@ import { createForestBirchOverlay, rebuildForestBirchOverlay } from './forestBir
 import { createHouseSmokeOverlay, rebuildHouseSmokeOverlay, updateHouseSmokeOverlay } from './houseSmokeOverlay.js';
 import { createFieldWaterEffectsOverlay, rebuildFieldWaterEffectsOverlay, updateFieldWaterEffectsOverlay } from './fieldWaterEffectsOverlay.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
-import { createCamera, createPixelPostprocess, createRenderer, createThreeScene, resizeRenderer } from './threeSetup.js';
+import { applySceneCurvatureFlags, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './threeSetup.js';
 import { createPostprocessHud } from './postprocessHud.js';
 import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
 import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, setMissionTurn } from './missions.js';
@@ -34,7 +35,7 @@ export function initScene(options = {}) {
   const controls = new CameraControls(camera, canvas);
   const ui = createUI();
   const highscoreUI = createHighscoreUI(ui);
-  createPostprocessHud(postprocess);
+  createPostprocessHud(postprocess, { worldShapeMode: options.worldShapeMode });
 
   // État de partie : carte posée, historique annulable, deck et score.
   const multiplayer = options.multiplayer ?? null;
@@ -59,10 +60,14 @@ export function initScene(options = {}) {
   let rotationIndex = 0;
   let rotationKeyActive = false;
   let totalScore = Number(initialState?.totalScore ?? 0);
+  let lastScore = Number(initialState?.lastScore ?? 0);
   let helpVisible = false;
   let gameOver = false;
   let gridOnlyMode = false;
   let hiddenSpecialCellKey = null;
+  let shadowRefreshFrame = 0;
+  const waterClickRaycaster = new THREE.Raycaster();
+  const waterClickPointer = new THREE.Vector2();
   const totalGridTiles = getTotalGridTiles(GRID_RADIUS);
 
   // Tuile fantôme et overlays : feedback visuel, aucun impact sur les règles.
@@ -88,6 +93,14 @@ export function initScene(options = {}) {
     placedTile.mesh = mesh;
     scene.add(mesh);
   }
+
+  // Une save déjà remplie arrive avec ses tuiles, mais les overlays décoratifs
+  // (maisons, bateaux, trains, effets d'eau/champs/forêt) sont des groupes dérivés.
+  // Ils doivent donc être reconstruits immédiatement au chargement, pas seulement
+  // après la prochaine pose de tuile. Sinon le jeu ressemble à une carte postale
+  // soviétique en attente d'un coup de pied.
+  rebuildInitialDerivedOverlays();
+
   if (isMultiplayer) {
     createMultiplayerBadge(multiplayer.roomCode, playerName);
     setInterval(refreshMultiplayerRoom, 900);
@@ -96,7 +109,7 @@ export function initScene(options = {}) {
   refreshGridAvailability();
   if (!isMultiplayer || !initialState?.missionManager) maybeAddMissionForCurrentTile();
   refreshMissionUI();
-  updateScoreUI(ui, totalScore, 0, placedTiles.size, totalGridTiles);
+  updateScoreUI(ui, totalScore, lastScore, placedTiles.size, totalGridTiles);
   refreshStatsUI();
 
   ui.resetCamera?.addEventListener('click', event => {
@@ -192,6 +205,7 @@ export function initScene(options = {}) {
   });
 
   window.addEventListener('resize', () => resizeRenderer(renderer, camera, postprocess));
+  canvas.addEventListener('pointerdown', handleWaterPointerDown, { passive: true });
 
   animate();
 
@@ -200,6 +214,7 @@ export function initScene(options = {}) {
     controls.update();
     const timeSeconds = performance.now() * 0.001;
     updateAnimatedBiomeTextures(timeSeconds);
+    updateRealisticWater(timeSeconds);
     updateSpecialCellsMeshAnimation(specialCellsMesh, timeSeconds);
     updateBonusCellsMeshAnimation(bonusCellsMesh, timeSeconds);
     updateKeyboardUI(ui, controls.keys, rotationKeyActive, gridOnlyMode);
@@ -208,7 +223,40 @@ export function initScene(options = {}) {
     updateWaterSharkOverlay(waterSharkOverlay, timeSeconds);
     updateHouseSmokeOverlay(houseSmokeOverlay, timeSeconds);
     updateFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, timeSeconds);
+    updateSunShadowOrbit(scene, timeSeconds);
+    updateWorldCurvedSprites(scene);
+    if ((shadowRefreshFrame++ % 20) === 0) {
+      applySceneCurvatureFlags(scene);
+      applySceneShadowFlags(scene);
+    }
     postprocess.render();
+  }
+
+
+  function handleWaterPointerDown(event) {
+    const rect = canvas.getBoundingClientRect();
+    waterClickPointer.x = ((event.clientX - rect.left) / Math.max(rect.width, 1)) * 2 - 1;
+    waterClickPointer.y = -(((event.clientY - rect.top) / Math.max(rect.height, 1)) * 2 - 1);
+
+    waterClickRaycaster.setFromCamera(waterClickPointer, camera);
+    const hits = waterClickRaycaster.intersectObjects(scene.children, true);
+
+    for (const hit of hits) {
+      const materials = Array.isArray(hit.object.material) ? hit.object.material : [hit.object.material];
+      if (!materials.some(isRealisticWaterMaterial)) continue;
+      triggerRealisticWaterRipple(hit.point, performance.now() * 0.001);
+      return;
+    }
+  }
+
+  function rebuildInitialDerivedOverlays() {
+    rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+    rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
+    rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
+    rebuildWaterSharkOverlay(waterSharkOverlay, placedTiles);
+    rebuildForestBirchOverlay(forestBirchOverlay, placedTiles);
+    rebuildHouseSmokeOverlay(houseSmokeOverlay, placedTiles);
+    rebuildFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, placedTiles);
   }
 
   function refreshDeckUI() {
@@ -364,7 +412,8 @@ export function initScene(options = {}) {
     refreshGridAvailability();
     placedTile.generatedMission = maybeAddMissionForCurrentTile();
     refreshMissionUI();
-    updateScoreUI(ui, totalScore, placedTile.score, placedTiles.size, totalGridTiles);
+    lastScore = placedTile.score;
+    updateScoreUI(ui, totalScore, lastScore, placedTiles.size, totalGridTiles);
     refreshStatsUI();
     if (isMultiplayer) persistMultiplayerState();
     if (deck.length === 0) endGame();
@@ -484,7 +533,8 @@ export function initScene(options = {}) {
     refreshDeckUI();
     refreshGridAvailability();
     refreshMissionUI();
-    updateScoreUI(ui, totalScore, -(last.score ?? 0), placedTiles.size, totalGridTiles);
+    lastScore = -(last.score ?? 0);
+    updateScoreUI(ui, totalScore, lastScore, placedTiles.size, totalGridTiles);
     refreshStatsUI();
     if (isMultiplayer) persistMultiplayerState();
 
@@ -661,6 +711,7 @@ export function initScene(options = {}) {
         if (placedTile) placementHistory.push(placedTile);
       }
       totalScore = Number(snapshot.totalScore ?? 0);
+      lastScore = Number(snapshot.lastScore ?? getLastPlacementScore(placementHistory));
       gameOver = Boolean(snapshot.gameOver);
       rotationIndex = Number(snapshot.players?.[playerId]?.rotationIndex ?? rotationIndex ?? 0);
 
@@ -674,7 +725,7 @@ export function initScene(options = {}) {
       refreshDeckUI();
       refreshGridAvailability();
       refreshMissionUI();
-      updateScoreUI(ui, totalScore, 0, placedTiles.size, totalGridTiles);
+      updateScoreUI(ui, totalScore, lastScore, placedTiles.size, totalGridTiles);
       refreshStatsUI();
       setText(ui.rotation, `${rotationIndex}/6`);
 
@@ -718,6 +769,7 @@ export function initScene(options = {}) {
       updatedAt: Date.now(),
       stateVersion: localMultiplayerStateVersion,
       totalScore,
+      lastScore,
       rotationIndex,
       gameOver,
       placedTiles: [...placedTiles.values()].map(serializePlacedTile),
@@ -732,6 +784,12 @@ export function initScene(options = {}) {
 
 }
 
+
+
+function getLastPlacementScore(placementHistory) {
+  const lastPlacedTile = placementHistory?.[placementHistory.length - 1];
+  return Number(lastPlacedTile?.score ?? 0);
+}
 
 function hydrateCellMap(cells) {
   if (!Array.isArray(cells)) return null;
@@ -824,7 +882,7 @@ function createMultiplayerBadge(roomCode, playerName) {
 
   const roomTitle = document.createElement('div');
   roomTitle.className = 'score-title';
-  roomTitle.textContent = 'partie en ligne';
+  roomTitle.textContent = 'PARTIE EN COURS';
 
   const roomValue = document.createElement('div');
   roomValue.className = 'score-value multiplayer-badge-value';
@@ -835,7 +893,7 @@ function createMultiplayerBadge(roomCode, playerName) {
 
   const playerTitle = document.createElement('div');
   playerTitle.className = 'score-title';
-  playerTitle.textContent = 'joueur';
+  playerTitle.textContent = 'JOUEUR';
 
   const playerValue = document.createElement('div');
   playerValue.className = 'score-value multiplayer-badge-value';

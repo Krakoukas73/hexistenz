@@ -1,5 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { TEXT_LAYER } from './threeSetup.js';
+import { getWorldCurvatureDrop, markNoWorldCurvature } from './worldCurvature.js';
 import { EDGE_COLOR, EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
@@ -73,7 +74,7 @@ export function updateHoverZoneOverlayAnimation(overlay, zoneOverlay = null, ela
     if (!baseScale || baseY === undefined) return;
 
     object.scale.set(baseScale.x * pulse, baseScale.y * pulse, baseScale.z);
-    object.position.y = baseY + HOVER_LABEL_Y_OFFSET + Math.sin(elapsedSeconds * 7) * 0.018;
+    setCurvedSpriteFlatY(object, baseY + HOVER_LABEL_Y_OFFSET + Math.sin(elapsedSeconds * 7) * 0.018);
   });
 }
 
@@ -99,6 +100,11 @@ export function rebuildWaterZoneOverlay(overlay, placedTiles) {
 }
 
 
+function setCurvedSpriteFlatY(sprite, y) {
+  sprite.position.y = y;
+  sprite.userData.worldCurvatureFlatY = y;
+}
+
 function resetPlacedValueLabels(placedTiles) {
   for (const placedTile of placedTiles.values()) {
     setTileValueLabelsVisible(placedTile, true);
@@ -110,7 +116,7 @@ function resetHoverValueLabels(placedTiles) {
     placedTile.mesh?.traverse?.(object => {
       if (!object.userData?.isValueLabel || !object.userData.hoverBaseScale) return;
       object.scale.copy(object.userData.hoverBaseScale);
-      object.position.y = object.userData.hoverBaseY ?? object.position.y;
+      setCurvedSpriteFlatY(object, object.userData.hoverBaseY ?? object.position.y);
     });
   }
 }
@@ -119,7 +125,7 @@ function resetHoverZoneLabels(zoneOverlay) {
   zoneOverlay?.traverse?.(object => {
     if (!object.userData?.isHoverHighlightedZoneLabel) return;
     if (object.userData.hoverBaseScale) object.scale.copy(object.userData.hoverBaseScale);
-    if (object.userData.hoverBaseY !== undefined) object.position.y = object.userData.hoverBaseY;
+    if (object.userData.hoverBaseY !== undefined) setCurvedSpriteFlatY(object, object.userData.hoverBaseY);
     object.userData.isHoverHighlightedZoneLabel = false;
   });
 }
@@ -140,7 +146,7 @@ function highlightHoverZoneLabel(zoneOverlay, zone) {
       object.userData.hoverBaseScale.y * HOVER_LABEL_SCALE,
       object.userData.hoverBaseScale.z
     );
-    object.position.y = object.userData.hoverBaseY + HOVER_LABEL_Y_OFFSET;
+    setCurvedSpriteFlatY(object, object.userData.hoverBaseY + HOVER_LABEL_Y_OFFSET);
   });
 }
 
@@ -158,7 +164,7 @@ function highlightHoverValueLabels(zone) {
         object.userData.hoverBaseScale.y * 1.35,
         object.userData.hoverBaseScale.z
       );
-      object.position.y = object.userData.hoverBaseY + (object.userData.hoverLiftOffset ?? HOVER_LABEL_Y_OFFSET);
+      setCurvedSpriteFlatY(object, object.userData.hoverBaseY + (object.userData.hoverLiftOffset ?? HOVER_LABEL_Y_OFFSET));
     });
   }
 }
@@ -292,7 +298,7 @@ function createFlatSegmentMesh(segment, width, material) {
 
   mesh.position.copy(midpoint);
   mesh.rotation.set(-Math.PI / 2, 0, -angle);
-  return mesh;
+  return markNoWorldCurvature(mesh);
 }
 
 function getZoneBoundarySegments(zone, placedTiles, y = HALO_Y) {
@@ -591,6 +597,7 @@ function createZoneLabel(zone) {
   sprite.scale.set(0.88, 0.54, 1);
   sprite.userData.isZoneLabel = true;
   sprite.userData.zoneSignature = makeZoneSignature(zone);
+  sprite.userData.worldCurvatureFlatY = sprite.position.y;
   return sprite;
 }
 
@@ -630,7 +637,9 @@ function createOuterVertices(radius = HEX_SIZE * TILE_VISUAL.radiusScale) {
 }
 
 function toWorldVector(world, local, y = HALO_Y) {
-  return new THREE.Vector3(world.x + local.x, y, world.z + local.z);
+  const x = world.x + local.x;
+  const z = world.z + local.z;
+  return new THREE.Vector3(x, y + getWorldCurvatureDrop(x, z), z);
 }
 
 function getHoveredEdge(placedTile, worldPoint) {

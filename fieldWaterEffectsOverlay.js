@@ -81,12 +81,6 @@ export function updateFieldWaterEffectsOverlay(overlay, elapsedSeconds) {
       return;
     }
 
-    if (data.effectKind === 'foam-ring') {
-      const pulse = 0.72 + Math.sin(elapsedSeconds * data.speed + data.phase) * 0.18;
-      object.scale.set(data.baseScaleX * pulse, data.baseScaleY * pulse, 1);
-      object.material.opacity = 0.38 + Math.sin(elapsedSeconds * data.speed + data.phase) * 0.18;
-      return;
-    }
 
     if (data.effectKind === 'water-streak') {
       const t = (elapsedSeconds * data.speed + data.phase) % 1;
@@ -109,14 +103,26 @@ export function updateFieldWaterEffectsOverlay(overlay, elapsedSeconds) {
     }
 
     if (data.effectKind === 'crow-orbit') {
-      const t = elapsedSeconds * data.speed * (data.direction ?? 1) + data.phase;
-      object.position.set(
-        data.cx + Math.cos(t) * data.rx,
-        data.cy + Math.sin(t * (1.3 + (data.rx||0))) * 0.09,
-        data.cz + Math.sin(t) * data.rz
+      const dir = data.direction ?? 1;
+      const t = elapsedSeconds * data.speed * dir + data.phase;
+      const wobbleA = Math.sin(elapsedSeconds * data.wobbleSpeedA + data.phase * 1.37);
+      const wobbleB = Math.cos(elapsedSeconds * data.wobbleSpeedB + data.phase * 2.11);
+      const wobbleC = Math.sin(elapsedSeconds * data.wobbleSpeedC + data.phase * 0.61);
+      const localRx = data.rx * (1 + wobbleA * data.rxJitter);
+      const localRz = data.rz * (1 + wobbleB * data.rzJitter);
+      const x = data.cx + Math.cos(t) * localRx + Math.sin(t * 2.17 + data.phase) * data.sideDrift;
+      const z = data.cz + Math.sin(t + wobbleC * 0.32) * localRz + Math.cos(t * 1.83 + data.phase * 0.7) * data.sideDrift;
+      const y = data.cy
+        + Math.sin(elapsedSeconds * data.verticalSpeed + data.phase * 0.73) * data.verticalAmp
+        + Math.sin(t * 1.37 + wobbleB) * data.bobAmp;
+      object.position.set(x, y, z);
+      const tangentAngle = Math.atan2(
+        Math.cos(t + wobbleC * 0.32) * localRz,
+        -Math.sin(t) * localRx
       );
-      object.rotation.y = -t + Math.PI * 0.5;
-      object.rotation.z = Math.sin(t * (3 + (data.rz||0)*4)) * 0.35;
+      object.rotation.y = tangentAngle + (dir < 0 ? Math.PI : 0);
+      object.rotation.z = Math.sin(t * data.bankSpeed + data.phase) * data.bankAmp;
+      object.rotation.x = Math.cos(t * 1.9 + data.phase * 1.4) * 0.16;
       return;
     }
 
@@ -199,26 +205,7 @@ function createSplashForSector(placedTile, edge) {
     group.add(streak);
   }
 
-  for (let i = 0; i < 4; i += 1) {
-    const lane = (i - 1.5) / 4;
-    const foam = new THREE.Mesh(new THREE.RingGeometry(0.026, 0.045, 22), WATER_FOAM_MAT.clone());
-    foam.name = 'water-edge-foam-pulse';
-    foam.position.set(
-      tilePos.x + mid.x + tangent.x * lane * 0.56 + nx * 0.045,
-      WATER_SURFACE_Y + 0.004,
-      tilePos.z + mid.z + tangent.z * lane * 0.56 + nz * 0.045
-    );
-    foam.rotation.x = -Math.PI / 2;
-    foam.rotation.z = Math.atan2(tangent.z, tangent.x);
-    foam.userData = {
-      effectKind: 'foam-ring',
-      speed: 2.2 + hashUnit(`${seed}:foam-speed:${i}`) * 1.8,
-      phase: hashUnit(`${seed}:foam-phase:${i}`) * Math.PI * 2,
-      baseScaleX: 1.25 + hashUnit(`${seed}:foam-x:${i}`) * 0.65,
-      baseScaleY: 0.42 + hashUnit(`${seed}:foam-y:${i}`) * 0.18
-    };
-    group.add(foam);
-  }
+  // Les anciens petits cercles animés ont été retirés : les gouttes et la brume restent.
 
   for (let i = 0; i < 5; i += 1) {
     const lane = (i - 2) / 5;
@@ -384,16 +371,28 @@ function createScarecrowReward(zone) {
   const crowCount = Math.min(10, 4 + Math.floor(zone.total / 3));
   for (let i = 0; i < crowCount; i += 1) {
     const crow = createCrow(`${seed}:crow:${i}`);
+    const heightMultiplier = 1.0 + hashUnit(`${seed}:crowheight:${i}`) * 1.4; // 1x à 2.4x plus haut
     crow.userData = {
       effectKind: 'crow-orbit',
       cx: 0,
-      cy: 0.82 + i * 0.04,
+      cy: (0.82 + i * 0.04) * heightMultiplier,
       cz: 0,
       rx: 0.28 + hashUnit(`${seed}:crowrx:${i}`) * 0.55,
       rz: 0.18 + hashUnit(`${seed}:crowrz:${i}`) * 0.50,
-      speed: 0.45 + hashUnit(`${seed}:crowspeed:${i}`) * 0.90,
+      speed: 0.36 + hashUnit(`${seed}:crowspeed:${i}`) * 1.08,
       direction: hashUnit(`${seed}:crowdir:${i}`) > 0.5 ? 1 : -1,
-      phase: hashUnit(`${seed}:crowphase:${i}`) * Math.PI * 2
+      phase: hashUnit(`${seed}:crowphase:${i}`) * Math.PI * 2,
+      verticalSpeed: 0.55 + hashUnit(`${seed}:crowvspeed:${i}`) * 1.20,
+      verticalAmp: 0.06 + hashUnit(`${seed}:crowvamp:${i}`) * 0.22,
+      bobAmp: 0.035 + hashUnit(`${seed}:crowbob:${i}`) * 0.095,
+      wobbleSpeedA: 0.42 + hashUnit(`${seed}:crowwoba:${i}`) * 1.50,
+      wobbleSpeedB: 0.38 + hashUnit(`${seed}:crowwobb:${i}`) * 1.65,
+      wobbleSpeedC: 0.34 + hashUnit(`${seed}:crowwobc:${i}`) * 1.80,
+      rxJitter: 0.10 + hashUnit(`${seed}:crowrxj:${i}`) * 0.22,
+      rzJitter: 0.10 + hashUnit(`${seed}:crowrzj:${i}`) * 0.24,
+      sideDrift: 0.025 + hashUnit(`${seed}:crowside:${i}`) * 0.085,
+      bankSpeed: 2.4 + hashUnit(`${seed}:crowbank:${i}`) * 3.6,
+      bankAmp: 0.24 + hashUnit(`${seed}:crowbankamp:${i}`) * 0.38
     };
     group.add(crow);
   }

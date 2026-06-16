@@ -2,6 +2,8 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPixelatedPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/RenderPixelatedPass.js';
 import { OutputPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js';
+import { GRID_RADIUS, HEX_SIZE } from './config.js';
+import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS, getWorldCurvatureDrop, markNoWorldCurvature } from './worldCurvature.js';
 
 export const WORLD_LAYER = 0;
 export const TEXT_LAYER = 1;
@@ -14,6 +16,8 @@ export function createRenderer(canvas) {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.LinearToneMapping;
   renderer.toneMappingExposure = 1.38;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.BasicShadowMap;
   return renderer;
 }
 
@@ -22,19 +26,108 @@ export function createThreeScene() {
   scene.background = new THREE.Color(0x102033);
   scene.fog = new THREE.FogExp2(0x102033, 0.028);
 
-  // Éclairage doux pour les modèles GLB : assez pour lire les couleurs,
-  // pas assez pour transformer les arbres en néons nucléaires.
-  scene.add(new THREE.HemisphereLight(0xfff4d8, 0x173b52, 1.08));
+  // Éclairage global conservé, mais moins envahissant : le soleil directionnel
+  // devient la source principale et génère les ombres des objets 3D.
+  scene.add(new THREE.HemisphereLight(0xfff4d8, 0x173b52, 0.24));
 
-  const sun = new THREE.DirectionalLight(0xffc77f, 1.42);
-  sun.position.set(5, 8, 2.5);
-  scene.add(sun);
+  const sun = new THREE.DirectionalLight(0xffd08a, 3.35);
+  sun.name = 'main-sun-shadow-light';
+  sun.userData.orbit = { radius: 10.5, height: 8.4, speed: 0.06, visualScale: 1.18 };
+  sun.position.set(-7.5, 8.4, 5.5);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(8192, 8192);
+  sun.shadow.bias = -0.00012;
+  sun.shadow.normalBias = 0.0025;
+  sun.shadow.radius = 0;
+  sun.shadow.camera.near = 1;
+  sun.shadow.camera.far = 48;
 
-  const softFill = new THREE.DirectionalLight(0x8fd2ff, 0.36);
-  softFill.position.set(-5, 3, -4);
+  const shadowExtent = Math.max(14, GRID_RADIUS * HEX_SIZE * 1.75);
+  sun.shadow.camera.left = -shadowExtent;
+  sun.shadow.camera.right = shadowExtent;
+  sun.shadow.camera.top = shadowExtent;
+  sun.shadow.camera.bottom = -shadowExtent;
+
+  const sunTarget = new THREE.Object3D();
+  sunTarget.name = 'main-sun-shadow-target';
+  sunTarget.position.set(0, 0, 0);
+  sun.target = sunTarget;
+  scene.add(sunTarget, sun);
+
+  const sunVisual = markNoWorldCurvature(createVisibleSunObject());
+  sunVisual.userData.followLightName = sun.name;
+  sunVisual.position.copy(sun.position).multiplyScalar(sun.userData.orbit.visualScale);
+  scene.add(sunVisual);
+
+  const softFill = new THREE.DirectionalLight(0x8fd2ff, 0.03);
+  softFill.position.set(5, 4, -6);
   scene.add(softFill);
 
   return scene;
+}
+
+
+export function updateSunShadowOrbit(scene, timeSeconds) {
+  const sun = scene.getObjectByName('main-sun-shadow-light');
+  const sunVisual = scene.getObjectByName('visible-sky-sun');
+  const sunTarget = scene.getObjectByName('main-sun-shadow-target');
+  if (!sun) return;
+
+  const orbit = sun.userData.orbit ?? { radius: 10.5, height: 8.4, speed: 0.42, visualScale: 1.18 };
+  const angle = timeSeconds * orbit.speed;
+  const x = Math.cos(angle) * orbit.radius;
+  const z = Math.sin(angle) * orbit.radius;
+
+  sun.position.set(x, orbit.height, z);
+  if (sunTarget) {
+    sunTarget.position.set(0, 0, 0);
+    sunTarget.updateMatrixWorld();
+  }
+  if (sunVisual) sunVisual.position.set(x * orbit.visualScale, orbit.height * orbit.visualScale, z * orbit.visualScale);
+  sun.updateMatrixWorld();
+  sun.shadow.camera.updateProjectionMatrix();
+  sun.shadow.needsUpdate = true;
+}
+
+function createVisibleSunObject() {
+  const group = new THREE.Group();
+  group.name = 'visible-sky-sun';
+
+  const core = new THREE.Mesh(
+    new THREE.SphereGeometry(0.85, 32, 16),
+    new THREE.MeshBasicMaterial({
+      color: 0xffd36a,
+      transparent: true,
+      opacity: 0.98,
+      fog: false,
+      depthWrite: false,
+      depthTest: false
+    })
+  );
+  core.name = 'visible-sky-sun-core';
+  core.userData.disableCastShadow = true;
+  core.userData.disableReceiveShadow = true;
+  core.renderOrder = -10;
+  group.add(core);
+
+  const glow = new THREE.Mesh(
+    new THREE.SphereGeometry(1.55, 32, 16),
+    new THREE.MeshBasicMaterial({
+      color: 0xffb347,
+      transparent: true,
+      opacity: 0.22,
+      fog: false,
+      depthWrite: false,
+      depthTest: false
+    })
+  );
+  glow.name = 'visible-sky-sun-glow';
+  glow.userData.disableCastShadow = true;
+  glow.userData.disableReceiveShadow = true;
+  glow.renderOrder = -11;
+  group.add(glow);
+
+  return group;
 }
 
 export function createCamera() {
@@ -123,6 +216,70 @@ function clampPixelSize(value) {
 
 function clamp01(value) {
   return Math.min(1, Math.max(0, Number(value) || 0));
+}
+
+export function applySceneShadowFlags(scene) {
+  scene.traverse(object => {
+    if (!object.isMesh || object.userData?.shadowFlagsApplied) return;
+
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    const hasLightAwareOpaqueMaterial = materials.some(material => material && !material.transparent && material.type !== 'MeshBasicMaterial');
+    if (!hasLightAwareOpaqueMaterial) return;
+
+    object.castShadow = object.userData?.disableCastShadow ? false : true;
+    object.receiveShadow = object.userData?.disableReceiveShadow ? false : true;
+    object.userData.shadowFlagsApplied = true;
+  });
+}
+
+
+export function applySceneCurvatureFlags(scene) {
+  scene.traverse(object => {
+    const canCurve = object.isMesh || object.isLine || object.isPoints;
+    if (!canCurve || object.userData?.worldCurvatureApplied || object.userData?.disableWorldCurvature) return;
+
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    for (const material of materials) {
+      applyWorldCurvatureToMaterial(material);
+    }
+
+    object.userData.worldCurvatureApplied = true;
+  });
+}
+
+function applyWorldCurvatureToMaterial(material) {
+  if (!material || material.userData?.worldCurvatureApplied || material.isShaderMaterial) return;
+
+  const previousOnBeforeCompile = material.onBeforeCompile;
+  material.onBeforeCompile = shader => {
+    if (typeof previousOnBeforeCompile === 'function') previousOnBeforeCompile(shader);
+    shader.uniforms.uWorldCurvatureEnabled = WORLD_CURVATURE_UNIFORMS.uWorldCurvatureEnabled;
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <common>',
+      `#include <common>\n${WORLD_CURVATURE_SHADER}`
+    );
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <project_vertex>',
+      `vec4 dorfromantikWorldPosition = modelMatrix * vec4( transformed, 1.0 );\n       dorfromantikWorldPosition = dorfromantikApplyWorldCurvature(dorfromantikWorldPosition);\n       vec4 mvPosition = viewMatrix * dorfromantikWorldPosition;\n       gl_Position = projectionMatrix * mvPosition;`
+    );
+  };
+  material.userData.worldCurvatureApplied = true;
+  material.needsUpdate = true;
+}
+
+export function updateWorldCurvedSprites(scene) {
+  scene.traverse(object => {
+    if (!object.isSprite || object.userData?.disableWorldCurvature) return;
+
+    if (object.userData.worldCurvatureFlatY === undefined) {
+      object.userData.worldCurvatureFlatY = object.position.y;
+    }
+
+    const worldPosition = new THREE.Vector3();
+    object.updateMatrixWorld(true);
+    object.getWorldPosition(worldPosition);
+    object.position.y = object.userData.worldCurvatureFlatY + getWorldCurvatureDrop(worldPosition.x, worldPosition.z);
+  });
 }
 
 export function resizeRenderer(renderer, camera, postprocess = null) {

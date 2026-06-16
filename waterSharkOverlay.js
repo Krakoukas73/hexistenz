@@ -212,8 +212,8 @@ function prepareBoatPrototype(model) {
 
   wrapper.traverse(object => {
     if (!object.isMesh) return;
-    object.castShadow = false;
-    object.receiveShadow = false;
+    object.castShadow = true;
+    object.receiveShadow = true;
     if (object.material) object.material = cloneBoatMaterial(object.material);
   });
 

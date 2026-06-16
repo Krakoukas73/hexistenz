@@ -24,6 +24,7 @@ export function createValueLabel(edge, vertexA, vertexB) {
   );
   sprite.scale.set(0.56, 0.32, 1);
   sprite.userData.hoverLiftOffset = TILE_VISUAL.valueLabelHoverLift ?? 0.07;
+  sprite.userData.worldCurvatureFlatY = sprite.position.y;
   return sprite;
 }
 

@@ -109,12 +109,31 @@ export function renderMiniTile(tile) {
 function createSectorMeshes(edges, opacity) {
   const vertices = createOuterVertices();
 
-  return SECTOR_DEFS.map(sector => {
+  return SECTOR_DEFS.map((sector, sectorIndex) => {
     const edge = edges[sector.key];
     const type = getEdgeType(edge);
-    const geometry = createSectorGeometry(vertices[sector.a], vertices[sector.b], type, sector.a, sector.b);
+    const previousSector = SECTOR_DEFS[(sectorIndex + SECTOR_DEFS.length - 1) % SECTOR_DEFS.length];
+    const nextSector = SECTOR_DEFS[(sectorIndex + 1) % SECTOR_DEFS.length];
+    const previousType = getEdgeType(edges[previousSector.key]);
+    const nextType = getEdgeType(edges[nextSector.key]);
+
+    // Quand deux secteurs voisins ont la même matière, on supprime le
+    // grignotage sur leur frontière commune : plus de micro-trous moches
+    // entre deux triangles censés former une seule surface continue.
+    const geometry = createSectorGeometry(
+      vertices[sector.a],
+      vertices[sector.b],
+      type,
+      sector.a,
+      sector.b,
+      previousType !== type,
+      nextType !== type
+    );
     const materials = [getBiomeMaterial(type, opacity), getBiomeSideMaterial(type, opacity)];
     const mesh = new THREE.Mesh(geometry, materials);
+    mesh.receiveShadow = true;
+    mesh.castShadow = false;
+    mesh.userData.disableCastShadow = true;
     mesh.position.y = getBiomeSurfaceY(type, TILE_VISUAL.sectorY);
 
     const group = new THREE.Group();
@@ -138,8 +157,8 @@ function createSectorMeshes(edges, opacity) {
   });
 }
 
-function createSectorGeometry(a, b, type, aIndex, bIndex) {
-  return createThickSectorGeometry(a, b, getSectorDepth(type), type, aIndex, bIndex);
+function createSectorGeometry(a, b, type, aIndex, bIndex, raggedLeft = true, raggedRight = true) {
+  return createThickSectorGeometry(a, b, getSectorDepth(type), type, aIndex, bIndex, raggedLeft, raggedRight);
 }
 
 function getSectorDepth(type) {
@@ -162,14 +181,14 @@ function getSectorDepth(type) {
   return baseDepth + getBiomeLocalTopY(type);
 }
 
-function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bIndex = 1) {
+function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bIndex = 1, raggedLeft = true, raggedRight = true) {
   const geometry = new THREE.BufferGeometry();
   const innerRadius = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
   const innerA = pointAtRadius(a, innerRadius);
   const innerB = pointAtRadius(b, innerRadius);
-  const leftInnerEdge = createRaggedInnerEdge(innerA, a, aIndex);
+  const leftInnerEdge = createInnerEdge(innerA, a, aIndex, raggedLeft);
   const outerPoints = createRaggedOuterEdge(a, b, type);
-  const rightInnerEdge = createRaggedInnerEdge(innerB, b, bIndex).reverse();
+  const rightInnerEdge = createInnerEdge(innerB, b, bIndex, raggedRight).reverse();
 
   const topPoints = compactPointLoop([
     ...leftInnerEdge,
@@ -270,6 +289,12 @@ function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bInd
 
 function getTerrainTopY(point, type, salt = 0) {
   const baseY = getBiomeLocalTopY(type);
+
+  // Les secteurs de voie ferrée sont volontairement plats : pas de pente locale,
+  // pas de turbulence verticale. Les rails/traverses/cailloux posés dessus
+  // héritent ainsi d'un support stable au lieu de disparaître dans le relief.
+  if (type === 'rail') return baseY;
+
   if (!TERRAIN_RELIEF.enabled) return baseY;
 
   const amplitude = TERRAIN_RELIEF.typeAmplitude[type] ?? TERRAIN_RELIEF.baseAmplitude;
@@ -343,6 +368,27 @@ function createRaggedOuterEdge(a, b, type) {
   return points;
 }
 
+
+function createInnerEdge(innerPoint, outerPoint, vertexIndex, ragged = true) {
+  return ragged
+    ? createRaggedInnerEdge(innerPoint, outerPoint, vertexIndex)
+    : createStraightInnerEdge(innerPoint, outerPoint);
+}
+
+function createStraightInnerEdge(innerPoint, outerPoint) {
+  const points = [];
+  const segments = RAGGED_EDGE.innerSegments;
+
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    points.push({
+      x: THREE.MathUtils.lerp(innerPoint.x, outerPoint.x, t),
+      z: THREE.MathUtils.lerp(innerPoint.z, outerPoint.z, t)
+    });
+  }
+
+  return points;
+}
 
 function createRaggedInnerEdge(innerPoint, outerPoint, vertexIndex) {
   const points = [];
@@ -444,6 +490,9 @@ function createCenterMesh(centerType, opacity) {
     getBiomeSideMaterial(centerType, opacity)
   ]);
 
+  mesh.receiveShadow = true;
+  mesh.castShadow = false;
+  mesh.userData.disableCastShadow = true;
   mesh.position.y = getBiomeSurfaceY(centerType, TILE_VISUAL.centerY);
   return mesh;
 }

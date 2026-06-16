@@ -91,8 +91,8 @@ function prepareTreePrototype(model, def) {
 
   prototype.traverse(object => {
     if (!object.isMesh) return;
-    object.castShadow = false;
-    object.receiveShadow = false;
+    object.castShadow = true;
+    object.receiveShadow = true;
     if (object.material) {
       object.material = cloneVisibleMaterial(object.material);
     }
@@ -152,10 +152,12 @@ function addTreesForTile(group, placedTile) {
 
       const pos = positions[i];
       const seed = hashToUnit(`${placedTile.key}:${sector.key}:scale:${i}`);
-      const scaleJitter = 0.88 + seed * 0.24;
+      const scaleJitter = 0.80 + seed * 0.40;
 
       tree.position.set(tileWorld.x + pos.x, TREE_Y, tileWorld.z + pos.z);
       tree.rotation.y = hashToUnit(`${placedTile.key}:${sector.key}:rot:${i}`) * Math.PI * 2;
+      tree.rotation.x = (hashToUnit(`${placedTile.key}:${sector.key}:tiltx:${i}`) - 0.5) * 0.18;
+      tree.rotation.z = (hashToUnit(`${placedTile.key}:${sector.key}:tiltz:${i}`) - 0.5) * 0.18;
       tree.scale.multiplyScalar(scaleJitter);
       tree.userData.isForestTreeGlb = true;
       group.add(tree);

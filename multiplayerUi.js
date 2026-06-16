@@ -6,6 +6,7 @@ import { createBonusCells } from './bonusCells.js';
 import { createMissionManager } from './missions.js';
 import { makeHexKey } from './hex.js';
 import { createRoom, generateRoomCode, getOrCreatePlayerId, joinRoom, listRooms } from './multiplayerClient.js';
+import { getWorldShapeMode } from './worldCurvature.js';
 
 export function showStartupScreen() {
   const urlRoomCode = new URLSearchParams(window.location.search).get('multi');
@@ -25,7 +26,7 @@ function renderShell(screen = 'home', initialCode = '') {
   `;
   document.body.appendChild(overlay);
 
-  if (screen === 'multi') renderMulti(overlay, initialCode);
+  if (screen === 'multi') renderWorldShapeChoice(overlay, () => renderMulti(overlay, initialCode));
   else renderHome(overlay);
 }
 
@@ -39,11 +40,38 @@ function renderHome(overlay) {
   `;
 
   overlay.querySelector('[data-action="solo"]').addEventListener('click', () => {
-    overlay.remove();
-    initScene({ mode: 'solo' });
+    renderWorldShapeChoice(overlay, worldShapeMode => {
+      overlay.remove();
+      initScene({ mode: 'solo', worldShapeMode });
+    });
   });
 
-  overlay.querySelector('[data-action="multi"]').addEventListener('click', () => renderMulti(overlay));
+  overlay.querySelector('[data-action="multi"]').addEventListener('click', () => {
+    renderWorldShapeChoice(overlay, () => renderMulti(overlay));
+  });
+}
+
+
+function renderWorldShapeChoice(overlay, onSelected) {
+  const storedMode = normalizeWorldShapeMode(localStorage.getItem('dorfromantik.worldShapeMode') || getWorldShapeMode());
+  overlay.querySelector('.mode-copy').textContent = 'Choisis la géométrie du monde. Bouliste pour une planète courbée, platiste pour une planète plate.';
+  overlay.querySelector('.mode-content').innerHTML = `
+    <div class="mode-actions world-shape-actions">
+      <button data-action="bouliste" class="${storedMode === 'bouliste' ? '' : 'secondary'}">BOULISTE</button>
+      <button data-action="platiste" class="${storedMode === 'platiste' ? '' : 'secondary'}">PLATISTE</button>
+    </div>
+	<br>
+    <p class="mode-copy mode-shape-note">Réglable en jeu, parce que même les planètes ont droit à une crise d’identité.</p>
+  `;
+  setStatus(overlay, '');
+
+  for (const mode of ['bouliste', 'platiste']) {
+    overlay.querySelector(`[data-action="${mode}"]`).addEventListener('click', () => {
+      overlay.dataset.worldShapeMode = mode;
+      localStorage.setItem('dorfromantik.worldShapeMode', mode);
+      onSelected(mode);
+    });
+  }
 }
 
 function renderMulti(overlay, initialCode = '') {
@@ -179,9 +207,12 @@ async function handleJoin(overlay) {
 function startMultiplayerScene(overlay, { roomCode, playerId, playerName, state }) {
   localStorage.setItem('dorfromantik.multiplayer.name', playerName);
   history.replaceState(null, '', `${window.location.pathname}?multi=${encodeURIComponent(roomCode)}`);
+  const worldShapeMode = normalizeWorldShapeMode(overlay.dataset.worldShapeMode);
+  localStorage.setItem('dorfromantik.worldShapeMode', worldShapeMode);
   overlay.remove();
   initScene({
     mode: 'multi',
+    worldShapeMode,
     initialState: state,
     multiplayer: { roomCode, playerId, playerName }
   });
@@ -238,6 +269,10 @@ function clonePlain(value) {
 function readPlayerName(overlay) {
   const value = overlay.querySelector('[data-field="name"]').value.trim().slice(0, 24);
   return value || `Joueur-${Math.floor(Math.random() * 900 + 100)}`;
+}
+
+function normalizeWorldShapeMode(value) {
+  return value === 'platiste' ? 'platiste' : 'bouliste';
 }
 
 function normalizeCode(value) {

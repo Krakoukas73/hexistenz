@@ -1,5 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { worldToAxial } from './hex.js';
+import { intersectWorldCurvature } from './worldCurvature.js';
 
 const DEFAULT_CAMERA = {
   radius: 15,
@@ -33,8 +34,15 @@ export class CameraControls {
     // Déplacement clavier volontairement amorti : ZQSD ne doit pas transformer
     // la caméra en mobylette volée par un gobelin sous amphétamines.
     this.keySpeed = 0.06325;
+    this.keyNearSpeed = 0.12;
+    this.keyFarSpeed = 2.80;
+    this.keyDistanceExponent = 2.0;
     this.keySmoothing = 0.16;
+    this.keyNearSmoothing = 0.105;
+    this.keyFarSmoothing = 0.245;
     this.keyStopSmoothing = 0.20;
+    this.keyNearStopSmoothing = 0.14;
+    this.keyFarStopSmoothing = 0.30;
     this.keyboardVelocity = new THREE.Vector3();
     this.panDragScale = 0.45;
     this.desiredRadius = this.spherical.radius;
@@ -172,11 +180,16 @@ export class CameraControls {
     if (this.keys.q) desiredVelocity.addScaledVector(right, -1);
     if (this.keys.d) desiredVelocity.add(right);
 
+    const distanceFactor = this.getKeyboardDistanceFactor();
+    const moveSpeed = this.getKeyboardMoveSpeed(distanceFactor);
+    const moveSmoothing = THREE.MathUtils.lerp(this.keyNearSmoothing, this.keyFarSmoothing, distanceFactor);
+    const stopSmoothing = THREE.MathUtils.lerp(this.keyNearStopSmoothing, this.keyFarStopSmoothing, distanceFactor);
+
     if (desiredVelocity.lengthSq() > 0) {
-      desiredVelocity.normalize().multiplyScalar(this.keySpeed);
-      this.keyboardVelocity.lerp(desiredVelocity, this.keySmoothing);
+      desiredVelocity.normalize().multiplyScalar(moveSpeed);
+      this.keyboardVelocity.lerp(desiredVelocity, moveSmoothing);
     } else {
-      this.keyboardVelocity.lerp(new THREE.Vector3(0, 0, 0), this.keyStopSmoothing);
+      this.keyboardVelocity.lerp(new THREE.Vector3(0, 0, 0), stopSmoothing);
     }
 
     if (this.keyboardVelocity.lengthSq() > 0.000001) {
@@ -184,6 +197,35 @@ export class CameraControls {
     } else {
       this.keyboardVelocity.set(0, 0, 0);
     }
+  }
+
+  getKeyboardDistanceFactor() {
+    const radius = Math.max(this.spherical.radius, this.desiredRadius);
+    const normalized = THREE.MathUtils.clamp(
+      (radius - this.minRadius) / (this.maxRadius - this.minRadius),
+      0,
+      1
+    );
+
+    // Smoothstep maison : évite le changement brutal de vitesse pendant le zoom.
+    return normalized * normalized * (3 - 2 * normalized);
+  }
+
+  getKeyboardMoveSpeed(distanceFactor) {
+    const radiusScale = Math.pow(
+      THREE.MathUtils.clamp(this.spherical.radius / DEFAULT_CAMERA.radius, 0.25, 5.5),
+      this.keyDistanceExponent
+    );
+    const scaledSpeed = this.keySpeed * radiusScale;
+    const distanceSpeed = THREE.MathUtils.lerp(this.keyNearSpeed, this.keyFarSpeed, distanceFactor);
+
+    // On prend le plus généreux des deux modèles : près du sol ça reste fin,
+    // très loin ça cavale enfin au lieu de ramper comme un modem 56k agonisant.
+    return THREE.MathUtils.clamp(
+      Math.max(scaledSpeed, distanceSpeed),
+      this.keyNearSpeed,
+      this.keyFarSpeed
+    );
   }
 
   pan(clientX, clientY) {
@@ -244,8 +286,12 @@ export class CameraControls {
     this.pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
 
     this.raycaster.setFromCamera(this.pointer, this.camera);
-    const hit = new THREE.Vector3();
-    return this.raycaster.ray.intersectPlane(this.groundPlane, hit) ? hit : null;
+    const hit = intersectWorldCurvature(this.raycaster.ray, new THREE.Vector3());
+    if (hit) return hit;
+
+    // Secours plat si la courbure est désactivée ou si le rayon rate la surface.
+    const flatHit = new THREE.Vector3();
+    return this.raycaster.ray.intersectPlane(this.groundPlane, flatHit) ? flatHit : null;
   }
 
   setKey(key, active) {

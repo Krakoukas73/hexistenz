@@ -1,1 +1,83 @@
-[]
+[
+    {
+        "name": "ff",
+        "score": 2686,
+        "gridPercent": 16,
+        "stats": {
+            "tiles": 53,
+            "trainLines": 3,
+            "boatCount": 5,
+            "totals": {
+                "grass": 62,
+                "field": 126,
+                "forest": 333,
+                "house": 135,
+                "water": 22,
+                "rail": 21
+            },
+            "largest": {
+                "grass": 4,
+                "field": 15,
+                "forest": 32,
+                "house": 12,
+                "water": 14,
+                "rail": 6
+            }
+        },
+        "date": "2026-05-29T21:04:11+00:00"
+    },
+    {
+        "name": "ccc",
+        "score": 583,
+        "gridPercent": 8.8,
+        "stats": {
+            "tiles": 29,
+            "trainLines": 1,
+            "boatCount": 3,
+            "totals": {
+                "grass": 29,
+                "field": 57,
+                "forest": 184,
+                "house": 67,
+                "water": 18,
+                "rail": 9
+            },
+            "largest": {
+                "grass": 6,
+                "field": 5,
+                "forest": 34,
+                "house": 8,
+                "water": 9,
+                "rail": 3
+            }
+        },
+        "date": "2026-05-29T19:24:41+00:00"
+    },
+    {
+        "name": "cvb",
+        "score": 571,
+        "gridPercent": 8.5,
+        "stats": {
+            "tiles": 28,
+            "trainLines": 1,
+            "boatCount": 2,
+            "totals": {
+                "grass": 27,
+                "field": 55,
+                "forest": 184,
+                "house": 67,
+                "water": 15,
+                "rail": 9
+            },
+            "largest": {
+                "grass": 6,
+                "field": 5,
+                "forest": 34,
+                "house": 8,
+                "water": 9,
+                "rail": 3
+            }
+        },
+        "date": "2026-05-29T19:24:17+00:00"
+    }
+]

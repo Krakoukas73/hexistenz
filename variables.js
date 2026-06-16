@@ -92,8 +92,8 @@ export const TILE_VISUAL = {
   railThickness: 0.06,
 
   // Rails posés sur un lit plus bas, puis overlays ajustés par railY.
-  railSurfaceY: -0.075,
-  railY: -0.023,
+  railSurfaceY: -0.095,
+  railY: -0.043,
 
   outlineY: 0.036,
   labelY: 0.58,
