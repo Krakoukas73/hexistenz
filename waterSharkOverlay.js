@@ -1,8 +1,8 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
-import { axialToWorld, makeHexKey } from './hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
+import { axialToWorld, makeHexKey } from './stable/hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
 
 const SECTOR_DEFS = [

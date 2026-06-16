@@ -1,0 +1,187 @@
+#tileUI {
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.tilePreviewRow {
+  display: flex;
+  gap: 10px;
+}
+
+.tileBox,
+.deckRemainingBox {
+  min-width: 120px;
+  padding: 10px;
+  background: linear-gradient(180deg, rgba(18, 27, 39, 0.86), rgba(4, 7, 11, 0.82));
+  border: 1px solid rgba(120, 180, 255, 0.34);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.deckRemainingBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+#deckRemaining {
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 14px rgba(90, 170, 255, 0.5);
+}
+
+.title {
+  margin-bottom: 8px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: rgba(180, 215, 255, 0.86);
+  opacity: 1;
+}
+
+.deckRemainingBox .title {
+  margin-bottom: 0;
+}
+
+.mini-hex-tile {
+  position: relative;
+  width: 88px;
+  height: 76px;
+  margin: 4px auto 0;
+  overflow: hidden;
+  clip-path: polygon(100% 50%, 75% 6.7%, 25% 6.7%, 0 50%, 25% 93.3%, 75% 93.3%);
+  background: rgba(255, 255, 255, 0.08);
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.55));
+}
+
+.mini-hex-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  clip-path: polygon(100% 50%, 75% 6.7%, 25% 6.7%, 0 50%, 25% 93.3%, 75% 93.3%);
+  box-shadow: inset 0 0 0 2px rgba(21, 26, 33, 0.92), inset 0 0 18px rgba(0, 0, 0, 0.28);
+  z-index: 5;
+}
+
+.mini-sector {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1px rgba(21, 26, 33, 0.38), inset 0 12px 18px rgba(255, 255, 255, 0.06), inset 0 -14px 18px rgba(0, 0, 0, 0.16);
+}
+
+.mini-sector::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.10), transparent 44%, rgba(0, 0, 0, 0.14));
+  pointer-events: none;
+}
+
+/*
+  Les aperçus CSS doivent respecter l'orientation X/Z de la grille Three.js.
+  En écran, l'axe Z positif descend : les secteurs sont donc le miroir vertical
+  des coordonnées mathématiques utilisées par createTileMesh().
+*/
+.mini-sector-n { clip-path: polygon(50% 50%, 100% 50%, 75% 93.3%); }
+.mini-sector-ne { clip-path: polygon(50% 50%, 75% 93.3%, 25% 93.3%); }
+.mini-sector-se { clip-path: polygon(50% 50%, 25% 93.3%, 0 50%); }
+.mini-sector-s { clip-path: polygon(50% 50%, 0 50%, 25% 6.7%); }
+.mini-sector-sw { clip-path: polygon(50% 50%, 25% 6.7%, 75% 6.7%); }
+.mini-sector-nw { clip-path: polygon(50% 50%, 75% 6.7%, 100% 50%); }
+
+.mini-hex-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30px;
+  height: 30px;
+  transform: translate(-50%, -50%);
+  clip-path: polygon(100% 50%, 75% 6.7%, 25% 6.7%, 0 50%, 25% 93.3%, 75% 93.3%);
+  border: 2px solid rgba(21, 26, 33, 0.82);
+  box-sizing: border-box;
+  box-shadow: inset 0 10px 12px rgba(255, 255, 255, 0.08), inset 0 -10px 12px rgba(0, 0, 0, 0.18);
+  z-index: 2;
+}
+
+.mini-value {
+  position: absolute;
+  z-index: 3;
+  padding: 1px 3px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.58);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.mini-sector-n .mini-value { left: 72%; top: 65%; }
+.mini-sector-ne .mini-value { left: 50%; top: 76%; }
+.mini-sector-se .mini-value { left: 28%; top: 65%; }
+.mini-sector-s .mini-value { left: 28%; top: 35%; }
+.mini-sector-sw .mini-value { left: 50%; top: 24%; }
+.mini-sector-nw .mini-value { left: 72%; top: 35%; }
+
+/* Aperçus de tuiles : mêmes codes visuels que la grille, version CSS légère. */
+.mini-type-water {
+  background-color: #5fa8d3;
+  background-image:
+    radial-gradient(circle at 20% 28%, rgba(255, 255, 255, 0.12) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 62%, rgba(255, 255, 255, 0.10) 0 2px, transparent 3px),
+    repeating-linear-gradient(165deg, rgba(235, 250, 255, 0.20) 0 3px, transparent 3px 16px);
+}
+
+.mini-type-field {
+  background-color: #e5c65a;
+  background-image:
+    repeating-linear-gradient(48deg, rgba(255, 238, 150, 0.60) 0 6px, transparent 6px 18px),
+    repeating-linear-gradient(48deg, transparent 0 9px, rgba(120, 82, 24, 0.26) 9px 11px, transparent 11px 18px),
+    radial-gradient(circle at 30% 25%, rgba(255, 248, 180, 0.30) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 72%, rgba(112, 78, 26, 0.18) 0 2px, transparent 3px);
+}
+
+.mini-type-forest {
+  background-color: #1f5a2b;
+  background-image:
+    radial-gradient(circle at 20% 26%, rgba(63, 147, 64, 0.92) 0 7px, rgba(31, 106, 46, 0.92) 8px 13px, transparent 14px),
+    radial-gradient(circle at 55% 34%, rgba(47, 125, 50, 0.96) 0 8px, rgba(18, 72, 30, 0.96) 9px 15px, transparent 16px),
+    radial-gradient(circle at 75% 72%, rgba(63, 147, 64, 0.86) 0 7px, rgba(31, 106, 46, 0.92) 8px 13px, transparent 14px),
+    radial-gradient(circle at 38% 78%, rgba(10, 30, 15, 0.28) 0 5px, transparent 6px);
+}
+
+.mini-type-grass {
+  background-color: #78a84a;
+  background-image:
+    radial-gradient(ellipse at 24% 28%, rgba(108, 148, 62, 0.82) 0 19%, transparent 20%),
+    radial-gradient(ellipse at 76% 70%, rgba(126, 170, 72, 0.78) 0 18%, transparent 19%),
+    radial-gradient(ellipse at 60% 36%, rgba(112, 78, 42, 0.20) 0 8%, transparent 9%),
+    repeating-linear-gradient(105deg, rgba(196, 216, 110, 0.22) 0 2px, transparent 2px 12px);
+}
+
+.mini-type-house {
+  background-color: #8e4a34;
+  background-image:
+    linear-gradient(28deg, transparent 0 42%, rgba(210, 180, 120, 0.24) 42% 50%, transparent 50%),
+    linear-gradient(128deg, transparent 0 48%, rgba(210, 180, 120, 0.20) 48% 56%, transparent 56%),
+    radial-gradient(circle at 28% 32%, rgba(196, 154, 104, 0.86) 0 8px, rgba(111, 52, 40, 0.82) 9px 13px, transparent 14px),
+    radial-gradient(circle at 66% 68%, rgba(196, 154, 104, 0.76) 0 8px, rgba(111, 52, 40, 0.78) 9px 13px, transparent 14px);
+}
+
+.mini-type-rail {
+  background-color: #dddddd;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(70, 70, 70, 0.26) 0 2px, transparent 2px 12px),
+    linear-gradient(180deg, rgba(255,255,255,0.30), rgba(0,0,0,0.12));
+}

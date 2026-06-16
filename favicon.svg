@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Hexistenz favicon">
+  <defs>
+    <linearGradient id="hex-bg" x1="14" y1="8" x2="50" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f7d96b"/>
+      <stop offset="0.52" stop-color="#d49335"/>
+      <stop offset="1" stop-color="#7b3f1f"/>
+    </linearGradient>
+    <linearGradient id="hex-edge" x1="18" y1="10" x2="46" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff2b0"/>
+      <stop offset="1" stop-color="#32160c"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="14" fill="#11130f"/>
+  <path d="M32 5.5 55 18.75v26.5L32 58.5 9 45.25v-26.5L32 5.5Z" fill="url(#hex-bg)" stroke="url(#hex-edge)" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M32 13.5 48 22.75v18.5L32 50.5 16 41.25v-18.5L32 13.5Z" fill="none" stroke="#28170f" stroke-opacity="0.72" stroke-width="2.25" stroke-linejoin="round"/>
+  <path d="M20 24.5 32 17.5l12 7M20 39.5 32 46.5l12-7" fill="none" stroke="#ffe69b" stroke-opacity="0.52" stroke-width="2" stroke-linecap="round"/>
+  <path d="M23 21h6v8h6v-8h6v22h-6v-9h-6v9h-6V21Z" fill="#17120d" opacity="0.92"/>
+  <path d="M23 21h6v8h6v-8h6" fill="none" stroke="#fff0b4" stroke-opacity="0.35" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

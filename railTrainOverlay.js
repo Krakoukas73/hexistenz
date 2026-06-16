@@ -1,7 +1,8 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
-import { axialToWorld, makeHexKey } from './hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
+import { axialToWorld, makeHexKey } from './stable/hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getTrainRailY } from './terrainHeight.js';
 
@@ -29,22 +30,33 @@ const TRACK_MIN_CURVE_RADIUS = HEX_SIZE * 0.34;
 const MOTION_SAMPLE_SPACING = HEX_SIZE * 0.045;
 const MOTION_SMOOTH_PASSES = 3;
 const STATION_Y = (TILE_VISUAL.railY ?? 0.052) - 0.060;
-const STATION_SCALE = HEX_SIZE * 0.22;
-const STATION_TRACK_CLEARANCE = HEX_SIZE * 0.25;
+const STATION_TARGET_LENGTH = HEX_SIZE * 0.43;
+const STATION_TRACK_CLEARANCE = HEX_SIZE * 0.32;
 const STATION_TERMINUS_BACKSET = HEX_SIZE * 0.08;
+const STATION_MODEL_DEFS = [
+  { key: 'maison-3-station', url: './glb/maison-3.glb', weight: 3 },
+  { key: 'maison-4-station', url: './glb/maison-4.glb', weight: 2 }
+];
 
 const materialCache = new Map();
+const stationGlbLibrary = new Map();
+let stationModelsLoading = false;
+let stationModelsRequested = false;
 
 export function createRailTrainOverlay() {
   const group = new THREE.Group();
   group.name = 'railTrainOverlay';
   group.userData.trains = [];
+  ensureStationGlbModels(group);
   return group;
 }
 
 export function rebuildRailTrainOverlay(group, placedTiles) {
+  group.userData.lastPlacedTiles = placedTiles;
   clearGroup(group);
   group.userData.trains = [];
+
+  if (stationGlbLibrary.size < 1) ensureStationGlbModels(group);
 
   const graph = buildRailGraph(placedTiles);
   const components = findComponents(graph);
@@ -530,7 +542,7 @@ function addRailTerminusStations(group, graph, component) {
     station.position.copy(node.position)
       .add(outward.clone().multiplyScalar(-STATION_TERMINUS_BACKSET))
       .add(side.multiplyScalar(STATION_TRACK_CLEARANCE * sideSign));
-    station.position.y = node.position.y + HEX_SIZE * 0.015;
+    station.position.y = node.position.y - 0.075;
     station.rotation.y = Math.atan2(outward.x, outward.z) + (sideSign < 0 ? Math.PI : 0);
     group.add(station);
   }
@@ -538,57 +550,98 @@ function addRailTerminusStations(group, graph, component) {
 
 function createRailStationObject(seedKey = 'station') {
   const group = new THREE.Group();
-  group.name = 'rail-terminus-station-svg-style';
+  group.name = 'rail-terminus-station-glb-house';
 
-  const baseMat = getMaterial('station-stone-platform', 0xB7A78A, 1);
-  const edgeMat = getMaterial('station-platform-edge', 0x6E6254, 1);
-  const wallMat = getMaterial('station-warm-walls', 0xE2C98F, 1);
-  const roofMat = getMaterial('station-red-roof', 0xA9462F, 1);
-  const timberMat = getMaterial('station-dark-timber', 0x4A2D1F, 1);
-  const glassMat = getMaterial('station-blue-glass', 0xA8DCF0, 0.94);
-  const signMat = getMaterial('station-sign-cream', 0xF7E7B2, 1);
+  const prototype = pickStationPrototype(seedKey);
+  if (!prototype) return group;
 
-  addStationBox(group, 'station-platform', -0.03, 0.045, 0, 1.66, 0.09, 0.96, baseMat, 34);
-  addStationBox(group, 'station-platform-left-edge', -0.03, 0.102, -0.50, 1.72, 0.055, 0.055, edgeMat, 35);
-  addStationBox(group, 'station-platform-right-edge', -0.03, 0.102, 0.50, 1.72, 0.055, 0.055, edgeMat, 35);
-
-  addStationBox(group, 'station-main-hall', -0.18, 0.38, 0, 0.72, 0.56, 0.58, wallMat, 42);
-  addStationBox(group, 'station-side-room', 0.36, 0.31, 0, 0.42, 0.42, 0.48, wallMat, 41);
-  addStationBox(group, 'station-tower', -0.62, 0.50, 0, 0.30, 0.80, 0.34, wallMat, 43);
-
-  addStationBox(group, 'station-main-roof', -0.18, 0.72, 0, 0.86, 0.14, 0.74, roofMat, 46);
-  addStationBox(group, 'station-main-roof-ridge', -0.18, 0.82, 0, 0.64, 0.06, 0.54, timberMat, 47);
-  addStationBox(group, 'station-side-roof', 0.36, 0.57, 0, 0.52, 0.12, 0.62, roofMat, 45);
-  addStationBox(group, 'station-tower-roof', -0.62, 0.96, 0, 0.44, 0.16, 0.48, roofMat, 48);
-
-  addStationBox(group, 'station-door', -0.18, 0.25, -0.302, 0.18, 0.30, 0.018, timberMat, 52);
-  addStationBox(group, 'station-window-a', -0.42, 0.43, -0.304, 0.14, 0.16, 0.014, glassMat, 53);
-  addStationBox(group, 'station-window-b', 0.08, 0.43, -0.304, 0.14, 0.16, 0.014, glassMat, 53);
-  addStationBox(group, 'station-window-c', 0.36, 0.33, -0.254, 0.13, 0.14, 0.014, glassMat, 53);
-  addStationBox(group, 'station-clock-face', -0.62, 0.72, -0.182, 0.18, 0.18, 0.014, signMat, 54);
-  addStationBox(group, 'station-sign', -0.18, 0.58, -0.316, 0.44, 0.12, 0.018, signMat, 55);
-
-  for (const x of [-0.78, -0.36, 0.04, 0.44]) {
-    addStationBox(group, 'station-lamp-post', x, 0.31, -0.42, 0.035, 0.42, 0.035, timberMat, 56);
-    const lamp = new THREE.Mesh(
-      new THREE.SphereGeometry(STATION_SCALE * 0.055, 12, 8),
-      getMaterial('station-lamp-warm', 0xFFE6A0, 1)
-    );
-    lamp.position.set(STATION_SCALE * x, STATION_SCALE * 0.55, STATION_SCALE * -0.42);
-    lamp.renderOrder = 57;
-    group.add(lamp);
-  }
-
-  const flag = new THREE.Mesh(
-    new THREE.PlaneGeometry(STATION_SCALE * 0.18, STATION_SCALE * 0.11),
-    getMaterial('station-small-flag', hashUnit(`${seedKey}:flag`) > 0.5 ? 0xD45D45 : 0x5B8CC0, 0.96)
-  );
-  flag.position.set(STATION_SCALE * -0.55, STATION_SCALE * 1.10, STATION_SCALE * -0.01);
-  flag.rotation.y = Math.PI / 2;
-  flag.renderOrder = 58;
-  group.add(flag);
+  const station = prototype.clone(true);
+  station.name = 'rail-terminus-station-glb-instance';
+  station.rotation.y = hashUnit(`${seedKey}:station-model-yaw`) * 0.22 - 0.11;
+  group.add(station);
 
   return group;
+}
+
+function ensureStationGlbModels(group) {
+  if (stationModelsLoading || stationModelsRequested) return;
+  stationModelsLoading = true;
+  stationModelsRequested = true;
+
+  let pending = STATION_MODEL_DEFS.length;
+  const finishOne = () => {
+    pending -= 1;
+    if (pending > 0) return;
+
+    stationModelsLoading = false;
+    const lastPlacedTiles = group.userData.lastPlacedTiles;
+    if (lastPlacedTiles) rebuildRailTrainOverlay(group, lastPlacedTiles);
+  };
+
+  for (const def of STATION_MODEL_DEFS) {
+    new GLTFLoader().load(
+      def.url,
+      gltf => {
+        stationGlbLibrary.set(def.key, prepareStationGlbPrototype(gltf.scene, def));
+        finishOne();
+      },
+      undefined,
+      error => {
+        console.warn(`Modèle gare GLB indisponible : ${def.url}`, error);
+        finishOne();
+      }
+    );
+  }
+}
+
+function prepareStationGlbPrototype(model, def) {
+  const wrapper = new THREE.Group();
+  wrapper.name = `normalized-${def.key}`;
+
+  const source = model.clone(true);
+  const box = new THREE.Box3().setFromObject(source);
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  source.position.set(-center.x, -box.min.y, -center.z);
+  const length = Math.max(size.x, size.z) || 1;
+  wrapper.scale.setScalar(STATION_TARGET_LENGTH / length);
+  wrapper.add(source);
+
+  wrapper.traverse(object => {
+    if (!object.isMesh) return;
+    object.castShadow = true;
+    object.receiveShadow = true;
+    if (object.material) object.material = cloneGlbMaterial(object.material);
+  });
+
+  return wrapper;
+}
+
+function pickStationPrototype(seedKey) {
+  const loaded = STATION_MODEL_DEFS.filter(def => stationGlbLibrary.has(def.key));
+  if (loaded.length === 0) return null;
+
+  const totalWeight = loaded.reduce((total, def) => total + (def.weight ?? 1), 0);
+  let roll = hashUnit(`${seedKey}:station-glb-choice`) * totalWeight;
+  for (const def of loaded) {
+    roll -= def.weight ?? 1;
+    if (roll <= 0) return stationGlbLibrary.get(def.key);
+  }
+
+  return stationGlbLibrary.get(loaded[0].key);
+}
+
+function cloneGlbMaterial(material) {
+  if (Array.isArray(material)) return material.map(item => cloneGlbMaterial(item));
+  const cloned = material.clone();
+  cloned.side = THREE.DoubleSide;
+  if ('emissiveIntensity' in cloned) cloned.emissiveIntensity = 0;
+  if ('toneMapped' in cloned) cloned.toneMapped = true;
+  cloned.needsUpdate = true;
+  return cloned;
 }
 
 function addStationBox(group, name, x, y, z, width, height, depth, material, renderOrder) {

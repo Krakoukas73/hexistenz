@@ -1,24 +1,19 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 import { EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
-import { axialToWorld } from './hex.js';
+import { axialToWorld } from './stable/hex.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
+import { placeObjectOnTerrain } from './terrainHeight.js';
+import {
+  TREE_MODEL_DEFS,
+  TREE_SIZE_MULTIPLIER,
+  TREE_GROUND_OFFSET,
+  TREE_CENTER_SAFE_RADIUS_EXTRA,
+  MIN_TREE_DISTANCE,
+  MAX_TREE_PLACEMENT_ATTEMPTS
+} from './variables.js';
 
-const TREE_MODEL_DEFS = [
-  { key: 'birch', url: './glb/tree_birch.glb', baseScale: 0.225 },
-  { key: 'bushy_mini', url: './glb/tree_bushy_mini.glb', baseScale: 0.225 },
-  { key: 'oak_round', url: './glb/tree_oak_round.glb', baseScale: 0.225 },
-  { key: 'pine_soft', url: './glb/tree_pine_soft.glb', baseScale: 0.250 },
-  { key: 'poplar', url: './glb/tree_poplar.glb', baseScale: 0.250 }
-];
-
-const TREE_SIZE_MULTIPLIER = 2.07;
-// Alignement sol réel des forêts : les dalles forest sont abaissées de 30% d'épaisseur (0.12 * -0.30 = -0.036).
-// Léger enfouissement pour éviter tout flottement visible sur le relief.
-const TREE_Y = -0.042;
-const CENTER_SAFE_RADIUS = HEX_SIZE * (TILE_VISUAL.centerRadiusScale + 0.08);
-const MIN_TREE_DISTANCE = 0.115;
-const MAX_TREE_PLACEMENT_ATTEMPTS = 36;
+const CENTER_SAFE_RADIUS = HEX_SIZE * (TILE_VISUAL.centerRadiusScale + TREE_CENTER_SAFE_RADIUS_EXTRA);
 const SECTOR_DEFS = [
   { key: 'n', a: 0, b: 1 },
   { key: 'ne', a: 1, b: 2 },
@@ -154,8 +149,15 @@ function addTreesForTile(group, placedTile) {
       const seed = hashToUnit(`${placedTile.key}:${sector.key}:scale:${i}`);
       const scaleJitter = 0.80 + seed * 0.40;
 
-      tree.position.set(tileWorld.x + pos.x, TREE_Y, tileWorld.z + pos.z);
-      tree.rotation.y = hashToUnit(`${placedTile.key}:${sector.key}:rot:${i}`) * Math.PI * 2;
+      tree.position.set(tileWorld.x + pos.x, 0, tileWorld.z + pos.z);
+      const treeYaw = hashToUnit(`${placedTile.key}:${sector.key}:rot:${i}`) * Math.PI * 2;
+      placeObjectOnTerrain(tree, pos, EDGE_TYPES.forest, hashNumber(`${placedTile.key}:${sector.key}:tree:${i}`) % 97, {
+        groundOffset: TREE_GROUND_OFFSET,
+        alignToSlope: false,
+        yaw: treeYaw,
+        edgeLockStart: 0.98,
+        edgeLockEnd: 1.0
+      });
       tree.rotation.x = (hashToUnit(`${placedTile.key}:${sector.key}:tiltx:${i}`) - 0.5) * 0.18;
       tree.rotation.z = (hashToUnit(`${placedTile.key}:${sector.key}:tiltz:${i}`) - 0.5) * 0.18;
       tree.scale.multiplyScalar(scaleJitter);
@@ -284,4 +286,14 @@ function hashToUnit(value) {
 
 function disposeOverlayChildren(group) {
   group.clear();
+}
+
+function hashNumber(value) {
+  let hash = 2166136261;
+  const text = String(value);
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
 }

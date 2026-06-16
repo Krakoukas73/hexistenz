@@ -1,5 +1,5 @@
 import { EDGE_ORDER, EDGE_TYPES, EDGE_WEIGHTS, NETWORK_EDGE_TYPES } from './config.js';
-import { pickRandom, pickWeighted } from './random.js';
+import { pickRandom, pickWeighted } from './stable/random.js';
 
 const MIXED_NETWORK_TILE_CHANCE = 0.04;
 const NETWORK_TERMINUS_CHANCE = 0.20;

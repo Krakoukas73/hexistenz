@@ -1,6 +1,6 @@
 import { EDGE_ORDER, EDGE_TYPES } from './config.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
-import { makeHexKey } from './hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
+import { makeHexKey } from './stable/hex.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { countWaterBoats } from './waterSharkOverlay.js';
 

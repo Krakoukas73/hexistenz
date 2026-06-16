@@ -1,8 +1,10 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
-import { axialToWorld, makeHexKey } from './hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
+import { axialToWorld, makeHexKey } from './stable/hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
+import { getTerrainSurfaceY, placeObjectOnTerrain } from './terrainHeight.js';
 
 const SECTOR_DEFS = [
   { key: 'n', a: 0, b: 1 },
@@ -17,8 +19,19 @@ const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, 
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 const WATER_SURFACE_Y = (TILE_VISUAL.waterY ?? -0.075) + 0.012;
 const FIELD_SURFACE_Y = 0.070;
-const SCARECROW_MIN_FIELD_TOTAL = 5;
-const SCARECROW_SCALE = 0.62;
+const FIELD_FLAG_MIN_TOTAL = 5;
+const FIELD_FLAG_TARGET_HEIGHT = HEX_SIZE * 0.32;
+const BENCH_TARGET_LENGTH = HEX_SIZE * 0.16;
+const SIGNPOST_TARGET_HEIGHT = HEX_SIZE * 0.28;
+const SHORE_BOAT_TARGET_LENGTH = HEX_SIZE * 0.56;
+const ROAD_DECOR_Y = ((TILE_VISUAL.tileThickness ?? 0.12) * -0.30) + 0.010;
+const SHORE_BOAT_Y = WATER_SURFACE_Y + 0.006;
+const PROP_MODEL_DEFS = [
+  { key: 'field-flag', url: './glb/drapeau.glb', target: FIELD_FLAG_TARGET_HEIGHT, mode: 'height' },
+  { key: 'road-bench', url: './glb/banc.glb', target: BENCH_TARGET_LENGTH, mode: 'length' },
+  { key: 'road-signpost', url: './glb/poteau-indicateur.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
+  { key: 'shore-boat', url: './glb/barque.glb', target: SHORE_BOAT_TARGET_LENGTH, mode: 'length' }
+];
 
 const WATER_DROP_MAT = new THREE.MeshBasicMaterial({
   color: 0xBFEFFF,
@@ -54,13 +67,18 @@ const CROW_MAT = new THREE.MeshBasicMaterial({ color: 0x151515, side: THREE.Doub
 export function createFieldWaterEffectsOverlay() {
   const group = new THREE.Group();
   group.name = 'field-water-edge-effects-overlay';
+  ensurePropModels(group);
   return group;
 }
 
 export function rebuildFieldWaterEffectsOverlay(overlay, placedTiles) {
+  overlay.userData.lastPlacedTiles = placedTiles;
   clearGroup(overlay);
+  ensurePropModels(overlay);
   overlay.add(createWaterVoidSplashes(placedTiles));
-  overlay.add(createFieldScarecrows(placedTiles));
+  overlay.add(createFieldFlags(placedTiles));
+  overlay.add(createRoadsideVillageProps(placedTiles));
+  overlay.add(createShoreBoats(placedTiles));
 }
 
 export function updateFieldWaterEffectsOverlay(overlay, elapsedSeconds) {
@@ -229,14 +247,14 @@ function createSplashForSector(placedTile, edge) {
   return group;
 }
 
-function createFieldScarecrows(placedTiles) {
+function createFieldFlags(placedTiles) {
   const group = new THREE.Group();
-  group.name = 'field-zone-scarecrows-and-crows';
+  group.name = 'field-zone-flags-and-crows';
   const zones = collectFieldZones(placedTiles);
 
   for (const zone of zones) {
-    if (zone.total < SCARECROW_MIN_FIELD_TOTAL) continue;
-    group.add(createScarecrowReward(zone));
+    if (zone.total < FIELD_FLAG_MIN_TOTAL) continue;
+    group.add(createFieldFlagReward(zone));
   }
 
   return group;
@@ -278,7 +296,8 @@ function collectTextureZone(startTile, startEdge, type, placedTiles, visited) {
     }
   }
 
-  return { type, sectors, total, center: getZoneCenter(sectors) };
+  const center = getZoneCenter(sectors);
+  return { type, sectors, total, center, anchor: getNearestSectorRef(sectors, center) };
 }
 
 function getTextureNeighbors(placedTile, edge, type, placedTiles) {
@@ -317,61 +336,39 @@ function getZoneCenter(sectors) {
   return { x: x / Math.max(1, weight), z: z / Math.max(1, weight) };
 }
 
-function createScarecrowReward(zone) {
+function getNearestSectorRef(sectors, center) {
+  let best = null;
+  let bestDistance = Infinity;
+  for (const sectorRef of sectors) {
+    const sectorCenter = getSectorWorldCenter(sectorRef.tile, sectorRef.edge);
+    const distance = Math.hypot(sectorCenter.x - center.x, sectorCenter.z - center.z);
+    if (distance < bestDistance) {
+      best = sectorRef;
+      bestDistance = distance;
+    }
+  }
+  return best;
+}
+
+function createFieldFlagReward(zone) {
   const group = new THREE.Group();
-  group.name = `field-scarecrow-zone-${zone.total}`;
-  group.position.set(zone.center.x, FIELD_SURFACE_Y - 0.035, zone.center.z);
-  group.scale.setScalar(SCARECROW_SCALE);
-  group.userData = { effectKind: 'scarecrow-idle', phase: hashUnit(`${zone.center.x}:${zone.center.z}:idle`) * Math.PI * 2 };
+  group.name = `field-flag-zone-${zone.total}`;
+  group.position.set(zone.center.x, FIELD_SURFACE_Y - 0.090, zone.center.z);
+  const flagLocal = zone.anchor ? getTileLocalPoint(group.position, zone.anchor.tile) : null;
+  const flagGround = flagLocal ? getTerrainSurfaceY(flagLocal, EDGE_TYPES.field, hashNumber(`${zone.total}:field-flag`) % 97) : FIELD_SURFACE_Y;
+  group.position.y = flagGround - 0.020;
+  group.userData = { effectKind: 'field-flag-idle', phase: hashUnit(`${zone.center.x}:${zone.center.z}:idle`) * Math.PI * 2 };
 
   const seed = hashNumber(`${zone.total}:${zone.sectors.length}:${Math.round(zone.center.x * 100)}:${Math.round(zone.center.z * 100)}`);
   group.rotation.y = hashUnit(`${seed}:rot`) * Math.PI * 2;
 
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.024, 0.42, 6), WOOD_MAT);
-  pole.name = 'field-scarecrow-wooden-pole';
-  pole.position.y = 0.20;
-  group.add(pole);
-
-  const arms = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.34, 6), WOOD_MAT);
-  arms.name = 'field-scarecrow-crossbar';
-  arms.position.y = 0.33;
-  arms.rotation.z = Math.PI / 2;
-  group.add(arms);
-
-  const body = new THREE.Mesh(new THREE.ConeGeometry(0.085, 0.16, 4), CLOTH_MAT);
-  body.name = 'field-scarecrow-ragged-shirt';
-  body.position.y = 0.28;
-  body.rotation.y = Math.PI / 4;
-  group.add(body);
-
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.054, 10, 7), STRAW_MAT);
-  head.name = 'field-scarecrow-straw-head';
-  head.position.y = 0.43;
-  group.add(head);
-
-  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.085, 0.10, 10), HAT_MAT);
-  hat.name = 'field-scarecrow-pointed-hat';
-  hat.position.y = 0.51;
-  group.add(hat);
-
-  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.105, 0.012, 12), HAT_MAT);
-  brim.name = 'field-scarecrow-hat-brim';
-  brim.position.y = 0.465;
-  group.add(brim);
-
-  for (let i = 0; i < 7; i += 1) {
-    const straw = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.08 + hashUnit(`${seed}:straw:${i}`) * 0.05, 4), STRAW_MAT);
-    straw.name = 'field-scarecrow-loose-straw';
-    straw.position.set((hashUnit(`${seed}:strawx:${i}`) - 0.5) * 0.20, 0.22 + hashUnit(`${seed}:strawy:${i}`) * 0.20, (hashUnit(`${seed}:strawz:${i}`) - 0.5) * 0.08);
-    straw.rotation.z = (hashUnit(`${seed}:strawrz:${i}`) - 0.5) * 1.1;
-    straw.rotation.x = (hashUnit(`${seed}:strawrx:${i}`) - 0.5) * 0.8;
-    group.add(straw);
-  }
+  const flag = createPropModel('field-flag', `${seed}:flag`);
+  if (flag) group.add(flag);
 
   const crowCount = Math.min(10, 4 + Math.floor(zone.total / 3));
   for (let i = 0; i < crowCount; i += 1) {
     const crow = createCrow(`${seed}:crow:${i}`);
-    const heightMultiplier = 1.0 + hashUnit(`${seed}:crowheight:${i}`) * 1.4; // 1x à 2.4x plus haut
+    const heightMultiplier = 1.0 + hashUnit(`${seed}:crowheight:${i}`) * 1.4;
     crow.userData = {
       effectKind: 'crow-orbit',
       cx: 0,
@@ -398,6 +395,316 @@ function createScarecrowReward(zone) {
   }
 
   return group;
+}
+
+function createRoadsideVillageProps(placedTiles) {
+  const group = new THREE.Group();
+  group.name = 'village-roadside-glb-props';
+
+  for (const placedTile of placedTiles.values()) {
+    const tilePos = axialToWorld(placedTile.q, placedTile.r);
+    const tileCenter = new THREE.Vector3(tilePos.x, ROAD_DECOR_Y, tilePos.z);
+    const roadEdges = EDGE_ORDER.filter(edge => isRoadDecorEdge(placedTile, edge));
+
+    for (const edge of roadEdges) {
+      const edgeType = getTileEdgeType(placedTile, edge);
+      const seed = `${placedTile.key}:bench:${edge}`;
+      const chance = edgeType === EDGE_TYPES.forest ? 0.24 : 0.18;
+      if (hashUnit(seed) > chance) continue;
+
+      const center = getSectorWorldCenter(placedTile, edge);
+      const pos = new THREE.Vector3(center.x, ROAD_DECOR_Y, center.z)
+        .lerp(tileCenter, edgeType === EDGE_TYPES.forest ? 0.22 : 0.26);
+      nudgeRoadsideProp(pos, placedTile, edge, seed, edgeType === EDGE_TYPES.forest ? 0.038 : 0.032);
+      if (!snapPropToSafeSurface(pos, placedTile, edge, seed, { footprintRadius: HEX_SIZE * 0.075 })) continue;
+
+      const bench = createPropModel('road-bench', seed);
+      if (!bench) continue;
+      bench.name = edgeType === EDGE_TYPES.forest ? 'forest-pathside-bench-glb' : 'grass-roadside-bench-glb';
+      bench.position.copy(pos);
+      const benchYaw = getEdgeOutwardAngle(edge) + Math.PI / 2 + (hashUnit(`${seed}:yaw`) - 0.5) * 0.55;
+      placeObjectOnTerrain(bench, getTileLocalPoint(pos, placedTile), edgeType, hashNumber(seed) % 97, {
+        groundOffset: 0.012,
+        alignToSlope: true,
+        yaw: benchYaw,
+        edgeLockStart: 0.98,
+        edgeLockEnd: 1.0
+      });
+      group.add(bench);
+    }
+
+    for (const edge of roadEdges) {
+      const edgeType = getTileEdgeType(placedTile, edge);
+      const seed = `${placedTile.key}:signpost:${edge}`;
+      const chance = edgeType === EDGE_TYPES.forest ? 0.36 : 0.30;
+      if (hashUnit(seed) > chance) continue;
+
+      const center = getSectorWorldCenter(placedTile, edge);
+      const pos = new THREE.Vector3(center.x, ROAD_DECOR_Y, center.z)
+        .lerp(tileCenter, edgeType === EDGE_TYPES.forest ? 0.20 : 0.24);
+      nudgeRoadsideProp(pos, placedTile, edge, seed, edgeType === EDGE_TYPES.forest ? 0.046 : 0.040);
+      if (!snapPropToSafeSurface(pos, placedTile, edge, seed)) continue;
+
+      const sign = createPropModel('road-signpost', seed);
+      if (!sign) continue;
+      sign.name = edgeType === EDGE_TYPES.forest ? 'forest-path-signpost-glb' : 'grass-road-signpost-glb';
+      sign.position.copy(pos);
+      const signYaw = getEdgeOutwardAngle(edge) + (hashUnit(`${seed}:yaw`) - 0.5) * 0.65;
+      placeObjectOnTerrain(sign, getTileLocalPoint(pos, placedTile), edgeType, hashNumber(seed) % 97, {
+        groundOffset: 0.006,
+        alignToSlope: true,
+        yaw: signYaw,
+        edgeLockStart: 0.98,
+        edgeLockEnd: 1.0
+      });
+      group.add(sign);
+    }
+
+    for (const edge of EDGE_ORDER) {
+      if (!isShoreDecorEdge(placedTile, edge, placedTiles)) continue;
+      const edgeType = getTileEdgeType(placedTile, edge);
+      const seed = `${placedTile.key}:shore-signpost:${edge}`;
+      if (hashUnit(seed) > 0.22) continue;
+
+      const center = getSectorWorldCenter(placedTile, edge);
+      const pos = new THREE.Vector3(center.x, ROAD_DECOR_Y, center.z).lerp(tileCenter, 0.24);
+      nudgeRoadsideProp(pos, placedTile, edge, seed, 0.038);
+      if (!snapPropToSafeSurface(pos, placedTile, edge, seed)) continue;
+
+      const sign = createPropModel('road-signpost', seed);
+      if (!sign) continue;
+      sign.name = 'shoreline-signpost-glb';
+      sign.position.copy(pos);
+      const shoreSignYaw = getEdgeOutwardAngle(edge) + (hashUnit(`${seed}:yaw`) - 0.5) * 0.80;
+      placeObjectOnTerrain(sign, getTileLocalPoint(pos, placedTile), edgeType, hashNumber(seed) % 97, {
+        groundOffset: 0.006,
+        alignToSlope: true,
+        yaw: shoreSignYaw,
+        edgeLockStart: 0.98,
+        edgeLockEnd: 1.0
+      });
+      group.add(sign);
+    }
+  }
+
+  return group;
+}
+
+function isRoadDecorEdge(placedTile, edge) {
+  const type = getTileEdgeType(placedTile, edge);
+  // Bancs/poteaux uniquement sur surfaces naturelles praticables : jamais eau, maison,
+  // rail ou champ. Ça évite les bancs dans les baraques, brillante invention de gobelin.
+  return type === EDGE_TYPES.forest || type === EDGE_TYPES.grass;
+}
+
+function isShoreDecorEdge(placedTile, edge, placedTiles) {
+  const type = getTileEdgeType(placedTile, edge);
+  if (!isSafePropGroundType(type)) return false;
+  const direction = DIRECTION_BY_EDGE[edge];
+  const neighbor = placedTiles.get(makeHexKey(placedTile.q + direction.q, placedTile.r + direction.r));
+  return neighbor && getTileEdgeType(neighbor, getOppositeEdge(edge)) === EDGE_TYPES.water;
+}
+
+function snapPropToSafeSurface(pos, placedTile, fallbackEdge, seed, options = {}) {
+  const tilePos = axialToWorld(placedTile.q, placedTile.r);
+  const local = new THREE.Vector3(pos.x - tilePos.x, 0, pos.z - tilePos.z);
+  const edge = getEdgeFromLocalPoint(local) ?? fallbackEdge;
+  const type = getTileEdgeType(placedTile, edge);
+  if (!isSafePropGroundType(type)) return false;
+
+  const radius = Math.hypot(local.x, local.z) / Math.max(HEX_SIZE, 0.001);
+  // Pas sur les jointures ni trop au centre : ça limite les collisions visuelles avec
+  // maisons, rails, eau et autres machins déjà posés par le jeu.
+  if (radius < 0.30 || radius > 0.86) return false;
+  if (!isSingleTerrainFootprint(local, placedTile, type, options.footprintRadius ?? HEX_SIZE * 0.045)) return false;
+
+  pos.y = getTerrainSurfaceY(local, type, hashNumber(seed) % 97, {
+    edgeLockStart: 0.98,
+    edgeLockEnd: 1.0
+  }) + 0.010;
+  return true;
+}
+
+
+function isSingleTerrainFootprint(local, placedTile, expectedType, radius) {
+  const samples = [
+    { x: local.x, z: local.z },
+    { x: local.x + radius, z: local.z },
+    { x: local.x - radius, z: local.z },
+    { x: local.x, z: local.z + radius },
+    { x: local.x, z: local.z - radius },
+    { x: local.x + radius * 0.72, z: local.z + radius * 0.72 },
+    { x: local.x - radius * 0.72, z: local.z - radius * 0.72 }
+  ];
+
+  for (const sample of samples) {
+    const sampleRadius = Math.hypot(sample.x, sample.z) / Math.max(HEX_SIZE, 0.001);
+    if (sampleRadius < 0.28 || sampleRadius > 0.88) return false;
+    const sampleEdge = getEdgeFromLocalPoint(sample);
+    if (!sampleEdge) return false;
+    if (getTileEdgeType(placedTile, sampleEdge) !== expectedType) return false;
+  }
+  return true;
+}
+
+function isSafePropGroundType(type) {
+  return type === EDGE_TYPES.forest || type === EDGE_TYPES.grass;
+}
+
+function getEdgeFromLocalPoint(point) {
+  if (!point || (Math.abs(point.x) < 0.0001 && Math.abs(point.z) < 0.0001)) return null;
+  let angle = Math.atan2(point.z, point.x);
+  if (angle < 0) angle += Math.PI * 2;
+  const index = Math.floor(((angle + Math.PI / 6) % (Math.PI * 2)) / (Math.PI / 3));
+  return EDGE_ORDER[index] ?? null;
+}
+
+function getTileLocalPoint(pos, placedTile) {
+  const tilePos = axialToWorld(placedTile.q, placedTile.r);
+  return { x: pos.x - tilePos.x, z: pos.z - tilePos.z };
+}
+
+function nudgeRoadsideProp(pos, placedTile, edge, seed, amount) {
+  const sector = SECTOR_BY_KEY[edge];
+  const a = getHexVertex(sector.a);
+  const b = getHexVertex(sector.b);
+  const tangent = normalize2(b.x - a.x, b.z - a.z);
+  const sideSign = hashUnit(`${seed}:side`) > 0.5 ? 1 : -1;
+  const along = (hashUnit(`${seed}:along`) - 0.5) * amount * 1.55;
+  const side = sideSign * (amount * 0.45 + hashUnit(`${seed}:offset`) * amount);
+  pos.x += tangent.x * along - tangent.z * side;
+  pos.z += tangent.z * along + tangent.x * side;
+}
+
+function createShoreBoats(placedTiles) {
+  const group = new THREE.Group();
+  group.name = 'water-shore-static-boats-glb';
+
+  for (const placedTile of placedTiles.values()) {
+    const tilePos = axialToWorld(placedTile.q, placedTile.r);
+    for (const edge of EDGE_ORDER) {
+      if (getTileEdgeType(placedTile, edge) !== EDGE_TYPES.water) continue;
+      const direction = DIRECTION_BY_EDGE[edge];
+      const neighbor = placedTiles.get(makeHexKey(placedTile.q + direction.q, placedTile.r + direction.r));
+      if (!neighbor || getTileEdgeType(neighbor, getOppositeEdge(edge)) === EDGE_TYPES.water) continue;
+
+      const seed = `${placedTile.key}:shore-boat:${edge}`;
+      if (hashUnit(seed) > 0.22) continue;
+
+      const sector = SECTOR_BY_KEY[edge];
+      const a = getHexVertex(sector.a);
+      const b = getHexVertex(sector.b);
+      const mid = new THREE.Vector3((a.x + b.x) / 2, SHORE_BOAT_Y, (a.z + b.z) / 2);
+      const inward = new THREE.Vector3(-direction.q, 0, -direction.r);
+      if (inward.lengthSq() < 0.001) inward.set(-mid.x, 0, -mid.z);
+      inward.normalize();
+
+      const boat = createPropModel('shore-boat', seed);
+      if (!boat) continue;
+      boat.name = 'water-shore-inert-boat-glb';
+      boat.position.set(tilePos.x + mid.x + inward.x * HEX_SIZE * 0.08, SHORE_BOAT_Y, tilePos.z + mid.z + inward.z * HEX_SIZE * 0.08);
+      boat.rotation.y = getEdgeOutwardAngle(edge) + Math.PI / 2 + (hashUnit(`${seed}:yaw`) - 0.5) * 0.55;
+      boat.scale.multiplyScalar(0.86 + hashUnit(`${seed}:scale`) * 0.20);
+      group.add(boat);
+    }
+  }
+
+  return group;
+}
+
+
+
+const propGlbLibrary = new Map();
+let propModelsLoading = false;
+let propModelsRequested = false;
+
+function ensurePropModels(overlay) {
+  if (propModelsLoading || propModelsRequested) return;
+  propModelsLoading = true;
+  propModelsRequested = true;
+
+  let pending = PROP_MODEL_DEFS.length;
+  const finishOne = () => {
+    pending -= 1;
+    if (pending > 0) return;
+
+    propModelsLoading = false;
+    const lastPlacedTiles = overlay.userData.lastPlacedTiles;
+    if (lastPlacedTiles) rebuildFieldWaterEffectsOverlay(overlay, lastPlacedTiles);
+  };
+
+  for (const def of PROP_MODEL_DEFS) {
+    new GLTFLoader().load(
+      def.url,
+      gltf => {
+        propGlbLibrary.set(def.key, preparePropPrototype(gltf.scene, def));
+        finishOne();
+      },
+      undefined,
+      error => {
+        console.warn(`Modèle décor GLB indisponible : ${def.url}`, error);
+        finishOne();
+      }
+    );
+  }
+}
+
+function preparePropPrototype(model, def) {
+  const wrapper = new THREE.Group();
+  wrapper.name = `normalized-${def.key}`;
+
+  const source = model.clone(true);
+  const box = new THREE.Box3().setFromObject(source);
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  source.position.set(-center.x, -box.min.y, -center.z);
+  const dimension = def.mode === 'height' ? (size.y || 1) : (Math.max(size.x, size.z) || 1);
+  wrapper.scale.setScalar(def.target / dimension);
+  wrapper.add(source);
+
+  wrapper.traverse(object => {
+    if (!object.isMesh) return;
+    object.castShadow = true;
+    object.receiveShadow = true;
+    if (object.material) object.material = clonePropMaterial(object.material);
+  });
+
+  return wrapper;
+}
+
+function createPropModel(key, seedKey = key) {
+  const prototype = propGlbLibrary.get(key);
+  if (!prototype) return null;
+  const object = prototype.clone(true);
+  object.traverse(child => {
+    if (!child.isMesh) return;
+    child.castShadow = true;
+    child.receiveShadow = true;
+  });
+  object.rotation.y += (hashUnit(`${seedKey}:base-yaw`) - 0.5) * 0.16;
+  return object;
+}
+
+function clonePropMaterial(material) {
+  if (Array.isArray(material)) return material.map(item => clonePropMaterial(item));
+  const cloned = material.clone();
+  cloned.side = THREE.DoubleSide;
+  if ('emissiveIntensity' in cloned) cloned.emissiveIntensity = 0;
+  if ('toneMapped' in cloned) cloned.toneMapped = true;
+  cloned.needsUpdate = true;
+  return cloned;
+}
+
+function getEdgeOutwardAngle(edge) {
+  const sector = SECTOR_BY_KEY[edge];
+  const a = getHexVertex(sector.a);
+  const b = getHexVertex(sector.b);
+  const x = (a.x + b.x) / 2;
+  const z = (a.z + b.z) / 2;
+  return Math.atan2(x, z);
 }
 
 function createCrow(seedKey) {

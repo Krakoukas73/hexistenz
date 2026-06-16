@@ -8,6 +8,7 @@ import {
   BIOME_HEIGHT_RATIO
 } from './config.js';
 import { getEdgeType } from './tileGenerator.js';
+import { getTerrainSurfaceY, getTerrainNormalAt } from './terrainHeight.js';
 
 const materialCache = new Map();
 const geometryCache = new Map();
@@ -321,15 +322,11 @@ function addRailsideStones(group, centerline, seedKey, closed = false) {
     const position = base.clone()
       .add(side.clone().multiplyScalar(sideSign * lateral))
       .add(tangent.clone().multiplyScalar(longitudinal));
-    position.y = getSurfaceY(position, RAIL_TYPE) + HEX_SIZE * 0.006;
+    position.y = getSurfaceY(position, RAIL_TYPE) + HEX_SIZE * 0.002;
 
     const stone = createStoneMesh(`${seedKey}:stone:${i}`);
     stone.position.copy(position);
-    stone.rotation.set(
-      (hashUnit(`${seedKey}:stone-rx:${i}`) - 0.5) * 0.32,
-      hashUnit(`${seedKey}:stone-ry:${i}`) * Math.PI * 2,
-      (hashUnit(`${seedKey}:stone-rz:${i}`) - 0.5) * 0.32
-    );
+    alignScatterStoneToTerrain(stone, position, RAIL_TYPE, hashUnit(`${seedKey}:stone-ry:${i}`) * Math.PI * 2, `${seedKey}:stone:${i}`);
     const scale = 0.74 + hashUnit(`${seedKey}:stone-scale:${i}`) * 0.52;
     stone.scale.set(
       scale * (0.78 + hashUnit(`${seedKey}:stone-sx:${i}`) * 0.45),
@@ -358,16 +355,12 @@ function addBiomeScatterStones(group, edges, sectorDefs, createOuterVertices) {
 
     for (let i = 0; i < count; i += 1) {
       const position = randomPointInQuad(innerA, innerB, b, a, `${seed}:${i}`);
-      position.y = getSurfaceY(position, type) + HEX_SIZE * 0.006;
+      position.y = getSurfaceY(position, type) + HEX_SIZE * 0.001;
 
       const stone = createStoneMesh(`${seed}:stone:${i}`);
       stone.name = `procedural-${type}-decorative-stone`;
       stone.position.copy(position);
-      stone.rotation.set(
-        (hashUnit(`${seed}:rx:${i}`) - 0.5) * 0.28,
-        hashUnit(`${seed}:ry:${i}`) * Math.PI * 2,
-        (hashUnit(`${seed}:rz:${i}`) - 0.5) * 0.28
-      );
+      alignScatterStoneToTerrain(stone, position, type, hashUnit(`${seed}:ry:${i}`) * Math.PI * 2, `${seed}:stone:${i}`);
       const scale = 0.54 + hashUnit(`${seed}:scale:${i}`) * 0.42;
       stone.scale.set(
         scale * (0.72 + hashUnit(`${seed}:sx:${i}`) * 0.38),
@@ -400,6 +393,32 @@ function randomPointInQuad(p0, p1, p2, p3, seedKey) {
   return left.lerp(right, u);
 }
 
+
+function alignScatterStoneToTerrain(stone, position, type, yaw, seedKey) {
+  const normal = type === RAIL_TYPE
+    ? new THREE.Vector3(0, 1, 0)
+    : getTerrainNormalAt(position, type, hashNumber(seedKey) % 97, {
+      edgeLockStart: TRACK.edgeLockStart,
+      edgeLockEnd: TRACK.edgeLockEnd,
+      normalSampleStep: HEX_SIZE * 0.012
+    });
+  const slopeQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+  const yawQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+  stone.quaternion.copy(slopeQuat.multiply(yawQuat));
+  stone.rotateX((hashUnit(`${seedKey}:rx`) - 0.5) * 0.18);
+  stone.rotateZ((hashUnit(`${seedKey}:rz`) - 0.5) * 0.18);
+}
+
+function hashNumber(value) {
+  let hash = 2166136261;
+  const text = String(value);
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
 function createStoneMesh(seedKey) {
   const mesh = new THREE.Mesh(getStoneGeometry(seedKey), getRailMaterial('stone'));
   mesh.name = 'procedural-rail-side-stone';
@@ -414,7 +433,14 @@ function getRailCenterY(point, seedKey = 'rail') {
 }
 
 function getSurfaceY(point, type = RAIL_TYPE) {
-  const baseSurfaceY = type === RAIL_TYPE ? RAIL_SURFACE_Y : (TILE_VISUAL.sectorY ?? 0);
+  if (type !== RAIL_TYPE) {
+    return getTerrainSurfaceY(point, type, 0, {
+      edgeLockStart: TRACK.edgeLockStart,
+      edgeLockEnd: TRACK.edgeLockEnd
+    });
+  }
+
+  const baseSurfaceY = RAIL_SURFACE_Y;
   const terrainY = baseSurfaceY + getSmoothTerrainTopY(point, type);
   const connectionY = baseSurfaceY + getBiomeLocalTopY(type);
   const radius = Math.hypot(point.x, point.z) / Math.max(HEX_SIZE, 0.001);

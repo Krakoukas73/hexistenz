@@ -60,6 +60,49 @@ export function getTerrainSurfaceY(point, type = EDGE_TYPES.rail ?? 'rail', salt
   return THREE.MathUtils.lerp(surface, locked, edgeLock);
 }
 
+
+export function getTerrainNormalAt(point, type = EDGE_TYPES.grass ?? 'grass', salt = 0, options = {}) {
+  const step = options.normalSampleStep ?? HEX_SIZE * 0.018;
+  const left = { x: point.x - step, z: point.z };
+  const right = { x: point.x + step, z: point.z };
+  const back = { x: point.x, z: point.z - step };
+  const front = { x: point.x, z: point.z + step };
+
+  const hLeft = getTerrainSurfaceY(left, type, salt, options);
+  const hRight = getTerrainSurfaceY(right, type, salt, options);
+  const hBack = getTerrainSurfaceY(back, type, salt, options);
+  const hFront = getTerrainSurfaceY(front, type, salt, options);
+
+  const tangentX = new THREE.Vector3(step * 2, hRight - hLeft, 0);
+  const tangentZ = new THREE.Vector3(0, hFront - hBack, step * 2);
+  return tangentZ.cross(tangentX).normalize();
+}
+
+export function placeObjectOnTerrain(object, point, type = EDGE_TYPES.grass ?? 'grass', salt = 0, options = {}) {
+  if (!object || !point) return null;
+
+  const groundOffset = options.groundOffset ?? 0;
+  const surfaceOptions = {
+    edgeLockStart: options.edgeLockStart,
+    edgeLockEnd: options.edgeLockEnd,
+    normalSampleStep: options.normalSampleStep
+  };
+
+  object.position.y = getTerrainSurfaceY(point, type, salt, surfaceOptions) + groundOffset;
+
+  if (options.alignToSlope) {
+    const yaw = options.yaw ?? object.rotation.y ?? 0;
+    const normal = getTerrainNormalAt(point, type, salt, surfaceOptions);
+    const slopeQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+    const yawQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+    object.quaternion.copy(slopeQuat.multiply(yawQuat));
+  } else if (typeof options.yaw === 'number') {
+    object.rotation.y = options.yaw;
+  }
+
+  return object.position.y;
+}
+
 export function getRailCenterY(point, salt = 0) {
   return getTerrainSurfaceY(point, EDGE_TYPES.rail ?? 'rail', salt) + RAIL_OVERLAY_LIFT;
 }

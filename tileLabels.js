@@ -1,6 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_TYPES, TILE_VISUAL } from './config.js';
-import { TEXT_LAYER } from './threeSetup.js';
+import { TEXT_LAYER } from './stable/threeSetup.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 
 const textTextureCache = new Map();

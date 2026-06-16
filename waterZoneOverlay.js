@@ -1,9 +1,9 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { TEXT_LAYER } from './threeSetup.js';
-import { getWorldCurvatureDrop, markNoWorldCurvature } from './worldCurvature.js';
+import { TEXT_LAYER } from './stable/threeSetup.js';
+import { getWorldCurvatureDrop, markNoWorldCurvature } from './stable/worldCurvature.js';
 import { EDGE_COLOR, EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
-import { axialToWorld, makeHexKey } from './hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
+import { axialToWorld, makeHexKey } from './stable/hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 
 const SECTOR_DEFS = [

@@ -1,9 +1,10 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
-import { makeHexKey } from './hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
+import { makeHexKey } from './stable/hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
+import { getTerrainSurfaceY } from './terrainHeight.js';
 
 const SECTOR_DEFS = [
   { key: 'n', a: 0, b: 1 },
@@ -21,7 +22,7 @@ const SECTOR_DEFS = [
 const HOUSE_GROUND_Y = (TILE_VISUAL.tileThickness ?? 0.12) * -0.30;
 const HOUSE_BASE_Y = HOUSE_GROUND_Y + 0.002;
 const HOUSE_SCALE = HEX_SIZE * 0.148;
-const HOUSE_GLB_SIZE_MULTIPLIER = 1.38;
+const HOUSE_GLB_SIZE_MULTIPLIER = 1.75;
 const HOUSE_GLB_SPACING_MULTIPLIER = 1.12;
 const HOUSE_CHIMNEY_TOP_Y = HOUSE_BASE_Y + HOUSE_SCALE * 1.62;
 const HOUSE_SMOKE_Y = HOUSE_CHIMNEY_TOP_Y + HOUSE_SCALE * 0.08;
@@ -30,10 +31,10 @@ const smokeMaterialCache = [];
 const houseMaterialCache = new Map();
 
 const HOUSE_GLB_MODEL_DEFS = [
-  { key: 'maison-1', url: './glb/maison-1.glb', size: 1.416, spawnWeight: 56 },
-  { key: 'maison-2', url: './glb/maison-2.glb', size: 1.472, spawnWeight: 30 },
-  { key: 'maison-3', url: './glb/maison-3.glb', size: 1.679, spawnWeight: 11 },
-  { key: 'maison-4', url: './glb/maison-4.glb', size: 1.932, spawnWeight: 3 }
+  { key: 'maison-1', url: './glb/maison-1.glb', size: 1.50, spawnWeight: 56 },
+  { key: 'maison-2', url: './glb/maison-2.glb', size: 1.55, spawnWeight: 30 },
+  { key: 'maison-3', url: './glb/maison-3.glb', size: 1.60, spawnWeight: 11 },
+  { key: 'maison-4', url: './glb/maison-4.glb', size: 1.75, spawnWeight: 3 }
 ];
 const houseGlbLibrary = new Map();
 let houseModelsLoading = false;
@@ -156,7 +157,8 @@ function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey
     const house = isChurch
       ? createVillageChurchObject(`${tileKey}:${sector.key}:village-church`, sector)
       : createVillageHouseObject(seed, sector, i);
-    house.position.set(column.x, HOUSE_BASE_Y, column.z);
+    const houseSurfaceY = getTerrainSurfaceY(local, EDGE_TYPES.house, Math.floor(hashUnit(seed) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
+    house.position.set(column.x, houseSurfaceY + 0.004, column.z);
     group.add(house);
     column.house = house;
 

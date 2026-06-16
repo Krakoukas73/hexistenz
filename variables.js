@@ -219,8 +219,10 @@ export const TREE_MODEL_DEFS = [
   { key: 'pine_soft', url: './glb/tree_pine_soft.glb', baseScale: 0.250 },
   { key: 'poplar', url: './glb/tree_poplar.glb', baseScale: 0.250 }
 ];
-export const TREE_SIZE_MULTIPLIER = 2.07;
-export const TREE_Y = -0.042;
+export const TREE_SIZE_MULTIPLIER = 1.65;
+// Alignement sol réel des forêts : les dalles forest sont abaissées de 30% d'épaisseur (0.12 * -0.30 = -0.036).
+// Léger enfouissement pour éviter tout flottement visible sur le relief.
+export const TREE_GROUND_OFFSET = -0.010;
 export const TREE_CENTER_SAFE_RADIUS_EXTRA = 0.08;
 export const MIN_TREE_DISTANCE = 0.115;
 export const MAX_TREE_PLACEMENT_ATTEMPTS = 36;

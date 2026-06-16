@@ -1,12 +1,16 @@
 import { initScene } from './scene.js';
 import { DECK_SIZE } from './config.js';
 import { createDeck } from './tileGenerator.js';
-import { createSpecialCells } from './specialCells.js';
-import { createBonusCells } from './bonusCells.js';
+import { createSpecialCells } from './stable/specialCells.js';
+import { createBonusCells } from './stable/bonusCells.js';
 import { createMissionManager } from './missions.js';
-import { makeHexKey } from './hex.js';
-import { createRoom, generateRoomCode, getOrCreatePlayerId, joinRoom, listRooms } from './multiplayerClient.js';
-import { getWorldShapeMode } from './worldCurvature.js';
+import { makeHexKey } from './stable/hex.js';
+import { createRoom, generateRoomCode, getOrCreatePlayerId, joinRoom, listRooms } from './stable/multiplayerClient.js';
+import { getWorldShapeMode } from './stable/worldCurvature.js';
+
+const MENU_BACKGROUND_ENDPOINT = './backgrounds.php';
+const MENU_BACKGROUND_INTERVAL_MS = 6500;
+const MENU_BACKGROUND_FADE_MS = 1100;
 
 export function showStartupScreen() {
   const urlRoomCode = new URLSearchParams(window.location.search).get('multi');
@@ -15,8 +19,9 @@ export function showStartupScreen() {
 
 function renderShell(screen = 'home', initialCode = '') {
   const overlay = document.createElement('div');
-  overlay.className = 'mode-screen';
+  overlay.className = 'mode-screen mode-screen--with-background';
   overlay.innerHTML = `
+    <div class="mode-background-carousel" aria-hidden="true"></div>
     <section class="mode-panel">
       <h1>HEXISTENZ</h1>
       <p class="mode-copy"></p>
@@ -25,13 +30,178 @@ function renderShell(screen = 'home', initialCode = '') {
     </section>
   `;
   document.body.appendChild(overlay);
+  ensureMenuBackgroundStyles();
+  setupMenuBackgroundCarousel(overlay);
 
   if (screen === 'multi') renderWorldShapeChoice(overlay, () => renderMulti(overlay, initialCode));
   else renderHome(overlay);
 }
 
+function ensureMenuBackgroundStyles() {
+  if (document.getElementById('modeBackgroundCarouselStyles')) return;
+
+  const style = document.createElement('style');
+  style.id = 'modeBackgroundCarouselStyles';
+  style.textContent = `
+    .mode-screen--with-background {
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        radial-gradient(circle at 50% 15%, rgba(115, 190, 255, 0.16), transparent 34%),
+        linear-gradient(135deg, #071019 0%, #111827 46%, #05070b 100%);
+    }
+
+    .mode-background-carousel {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at center, rgba(22, 38, 56, 0.86), rgba(2, 5, 9, 0.96));
+    }
+
+    .mode-background-carousel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.76) 76%),
+        linear-gradient(180deg, rgba(2, 6, 12, 0.18), rgba(2, 6, 12, 0.72));
+      backdrop-filter: blur(1px);
+    }
+
+    .mode-background-slide {
+      position: absolute;
+      inset: -3%;
+      z-index: 1;
+      opacity: 0;
+      background-position: center;
+      background-size: cover;
+      transform: scale(1.035);
+      filter: saturate(1.08) contrast(1.04) brightness(0.78);
+      transition:
+        opacity ${MENU_BACKGROUND_FADE_MS}ms ease,
+        transform ${MENU_BACKGROUND_INTERVAL_MS}ms linear;
+      will-change: opacity, transform;
+    }
+
+    .mode-background-slide.is-active {
+      z-index: 2;
+      opacity: 1;
+      transform: scale(1.085);
+    }
+
+    .mode-screen--with-background .mode-panel {
+      position: relative;
+      z-index: 4;
+      background:
+        linear-gradient(160deg, rgba(8, 16, 26, 0.64), rgba(4, 8, 14, 0.42)),
+        rgba(5, 10, 18, 0.38);
+      border: 1px solid rgba(220, 240, 255, 0.28);
+      box-shadow:
+        0 22px 70px rgba(0, 0, 0, 0.48),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 0 44px rgba(120, 180, 255, 0.06);
+      backdrop-filter: blur(18px) saturate(1.18);
+      -webkit-backdrop-filter: blur(18px) saturate(1.18);
+    }
+
+    .mode-screen--with-background .mode-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      border-radius: inherit;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.18), transparent 34%),
+        radial-gradient(circle at 100% 100%, rgba(95, 170, 255, 0.13), transparent 40%);
+      pointer-events: none;
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .mode-screen--with-background .mode-panel {
+        background: rgba(5, 10, 18, 0.86);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+async function setupMenuBackgroundCarousel(overlay) {
+  const host = overlay.querySelector('.mode-background-carousel');
+  if (!host) return;
+
+  const images = await fetchMenuBackgroundImages();
+  if (!overlay.isConnected || !images.length) return;
+
+  const slides = [document.createElement('div'), document.createElement('div')];
+  for (const slide of slides) {
+    slide.className = 'mode-background-slide';
+    host.appendChild(slide);
+  }
+
+  let index = Math.floor(Math.random() * images.length);
+  let active = 0;
+
+  const show = () => {
+    const imageUrl = images[index % images.length];
+    const next = slides[active];
+    const prev = slides[1 - active];
+
+    next.style.backgroundImage = `url("${cssUrl(imageUrl)}")`;
+    next.classList.add('is-active');
+    prev.classList.remove('is-active');
+
+    active = 1 - active;
+    index += 1 + Math.floor(Math.random() * Math.max(1, images.length - 1));
+  };
+
+  show();
+
+  if (images.length <= 1) return;
+  const timer = window.setInterval(() => {
+    if (!overlay.isConnected) {
+      window.clearInterval(timer);
+      return;
+    }
+    show();
+  }, MENU_BACKGROUND_INTERVAL_MS);
+}
+
+async function fetchMenuBackgroundImages() {
+  try {
+    const response = await fetch(MENU_BACKGROUND_ENDPOINT, { cache: 'no-store' });
+    if (!response.ok) return [];
+    const data = await response.json();
+    const images = Array.isArray(data.images) ? data.images : [];
+    return shuffle(images.filter(isSafeBackgroundPath));
+  } catch (_) {
+    return [];
+  }
+}
+
+function isSafeBackgroundPath(path) {
+  return typeof path === 'string'
+    && /^backgrounds\/[^?#]+\.(?:avif|webp|png|jpe?g|gif)$/i.test(path);
+}
+
+function shuffle(values) {
+  const copy = values.slice();
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function cssUrl(value) {
+  return String(value).replace(/["\\\n\r\f]/g, match => `\\${match}`);
+}
+
 function renderHome(overlay) {
-  overlay.querySelector('.mode-copy').textContent = 'Choisis ton poison : solo stable ou multi expérimental.';
+  overlay.querySelector('.mode-copy').textContent = 'Choisis le mode de jeu : solo ou multijoueur.';
   overlay.querySelector('.mode-content').innerHTML = `
     <div class="mode-actions">
       <button data-action="solo">SOLO</button>
@@ -54,14 +224,14 @@ function renderHome(overlay) {
 
 function renderWorldShapeChoice(overlay, onSelected) {
   const storedMode = normalizeWorldShapeMode(localStorage.getItem('dorfromantik.worldShapeMode') || getWorldShapeMode());
-  overlay.querySelector('.mode-copy').textContent = 'Choisis la géométrie du monde. Bouliste pour une planète courbée, platiste pour une planète plate.';
+  overlay.querySelector('.mode-copy').textContent = 'Choisis la géométrie de ton monde.';
   overlay.querySelector('.mode-content').innerHTML = `
     <div class="mode-actions world-shape-actions">
       <button data-action="bouliste" class="${storedMode === 'bouliste' ? '' : 'secondary'}">BOULISTE</button>
       <button data-action="platiste" class="${storedMode === 'platiste' ? '' : 'secondary'}">PLATISTE</button>
     </div>
 	<br>
-    <p class="mode-copy mode-shape-note">Réglable en jeu, parce que même les planètes ont droit à une crise d’identité.</p>
+    <p class="mode-copy mode-shape-note">Tu pourras changer de faction en jeu, parce que même les planètes ont droit à une crise d’identité.</p>
   `;
   setStatus(overlay, '');
 
