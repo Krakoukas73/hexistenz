@@ -1,6 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
+import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, BOAT_TARGET_LENGTH } from './config.js';
 import { axialToWorld, makeHexKey } from './stable/hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
@@ -24,7 +24,6 @@ const BOATS_PER_WATER_COMPONENT = 1;
 const BOAT_SPEED = 0.13;
 const BOAT_HEADING_OFFSET = Math.PI;
 const BOAT_MODEL_URL = './glb/bateau.glb';
-const BOAT_TARGET_LENGTH = HEX_SIZE * 0.98;
 const BOAT_Y_OFFSET = -0.018;
 let boatPrototype = null;
 let boatLoading = false;

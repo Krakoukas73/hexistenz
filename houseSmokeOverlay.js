@@ -75,7 +75,9 @@ export function rebuildHouseSmokeOverlay(group, placedTiles) {
     const tileX = placedTile.mesh?.position?.x ?? 0;
     const tileZ = placedTile.mesh?.position?.z ?? 0;
 
-    addCentralHouseConnectionBridges(group, tileX, tileZ, placedTile);
+    // Les anciennes routes/ponts SVG du village sont neutralisés :
+    // tous les chemins visibles passent désormais par tileRoadOverlay.js en GLB.
+    // addCentralHouseConnectionBridges(group, tileX, tileZ, placedTile);
 
     for (const sector of SECTOR_DEFS) {
       const edge = edges[sector.key];
@@ -132,7 +134,8 @@ function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey
   const b = vertices[sector.b];
   const anchors = getColumnAnchors(columnCount);
 
-  addVillageGroundNetwork(group, tileX, tileZ, sector, columnCount, tileKey, hasChurch, hasCemetery, placedTile, placedTiles);
+  // Ancien réseau de routes/plazas/bridges en géométrie + textures SVG désactivé.
+  // addVillageGroundNetwork(group, tileX, tileZ, sector, columnCount, tileKey, hasChurch, hasCemetery, placedTile, placedTiles);
 
   if (hasCemetery) {
     const cemeteryLocal = trianglePoint(a, b, 0.18, 0.41, 0.41);

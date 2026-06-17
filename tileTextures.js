@@ -321,50 +321,80 @@ function drawGrassTexture(ctx) {
 }
 
 function drawHouseTexture(ctx) {
+  // Sol village : brun/gris terre battue + gravier. Zéro rouge brique.
+  ctx.fillStyle = '#8b8069';
+  ctx.fillRect(0, 0, 128, 128);
+
   const gradient = ctx.createLinearGradient(0, 0, 128, 128);
-  gradient.addColorStop(0, '#9b5a3d');
-  gradient.addColorStop(0.55, '#7f432f');
-  gradient.addColorStop(1, '#b0744e');
+  gradient.addColorStop(0, '#b8ad90');
+  gradient.addColorStop(0.48, '#706653');
+  gradient.addColorStop(1, '#a99d80');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 128, 128);
 
-  // Sol de village uniquement : plus de fausses maisons plates au sol,
-  // puisque les vraies maisons 3D sont posées au-dessus.
-  ctx.strokeStyle = 'rgba(214, 184, 124, 0.34)';
-  ctx.lineWidth = 12;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(-12, 36);
-  ctx.bezierCurveTo(26, 48, 56, 56, 140, 92);
-  ctx.moveTo(30, -12);
-  ctx.bezierCurveTo(40, 30, 58, 74, 96, 140);
-  ctx.stroke();
-
-  ctx.strokeStyle = 'rgba(92, 50, 34, 0.28)';
-  ctx.lineWidth = 2;
-  for (let y = 9; y < 128; y += 13) {
+  // Plaques de terre sèche.
+  for (let i = 0; i < 48; i++) {
+    const x = (i * 47 + (i % 5) * 19) % 128;
+    const y = (i * 71 + (i % 7) * 13) % 128;
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(72, 65, 52, 0.28)' : 'rgba(207, 199, 165, 0.24)';
     ctx.beginPath();
-    ctx.moveTo(0, y + ((y * 7) % 5));
-    ctx.lineTo(128, y - ((y * 5) % 7));
-    ctx.stroke();
-  }
-
-  for (let i = 0; i < 95; i++) {
-    const x = (i * 41 + (i % 6) * 7) % 128;
-    const y = (i * 29 + (i % 5) * 13) % 128;
-    const r = 1.4 + (i % 4) * 0.55;
-    ctx.fillStyle = i % 3 === 0 ? 'rgba(198, 158, 102, 0.34)' : 'rgba(74, 38, 28, 0.20)';
-    ctx.beginPath();
-    ctx.ellipse(x, y, r * 1.45, r, (i % 8) * 0.2, 0, Math.PI * 2);
+    ctx.ellipse(x, y, 12 + (i % 5) * 3, 4 + (i % 4) * 2, (i % 8) * 0.35, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  for (let i = 0; i < 18; i++) {
+  // Traces de roues / ornières.
+  ctx.lineCap = 'round';
+  for (let k = -1; k <= 3; k++) {
+    ctx.strokeStyle = 'rgba(47, 43, 35, 0.34)';
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.moveTo(-18, 17 + k * 38);
+    ctx.bezierCurveTo(22, 7 + k * 38, 58, 35 + k * 38, 146, 16 + k * 38);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(224, 216, 183, 0.16)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(-18, 25 + k * 38);
+    ctx.bezierCurveTo(22, 15 + k * 38, 58, 42 + k * 38, 146, 23 + k * 38);
+    ctx.stroke();
+  }
+
+  // Sillons fins de terre battue.
+  for (let y = -12; y < 150; y += 16) {
+    ctx.strokeStyle = 'rgba(63, 57, 45, 0.16)';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(-8, y);
+    ctx.bezierCurveTo(32, y + 8, 72, y - 6, 136, y + 5);
+    ctx.stroke();
+  }
+
+  // Gravier dense et visible.
+  for (let i = 0; i < 390; i++) {
+    const x = (i * 37 + (i % 11) * 17) % 128;
+    const y = (i * 59 + (i % 13) * 9) % 128;
+    const r = 0.75 + (i % 4) * 0.35;
+    const tone = i % 6;
+    ctx.fillStyle =
+      tone === 0 ? 'rgba(240, 234, 205, 0.70)' :
+      tone === 1 ? 'rgba(42, 41, 36, 0.42)' :
+      tone === 2 ? 'rgba(134, 128, 108, 0.56)' :
+      tone === 3 ? 'rgba(94, 85, 67, 0.48)' :
+      tone === 4 ? 'rgba(188, 179, 145, 0.52)' :
+                   'rgba(112, 106, 90, 0.42)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * 1.55, r, (i % 7) * 0.37, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Quelques herbes pauvres.
+  for (let i = 0; i < 26; i++) {
     const x = (i * 53) % 128;
     const y = (i * 47) % 128;
-    ctx.fillStyle = 'rgba(86, 109, 58, 0.28)';
+    ctx.fillStyle = 'rgba(72, 100, 58, 0.22)';
     ctx.beginPath();
-    ctx.arc(x, y, 3 + (i % 3), 0, Math.PI * 2);
+    ctx.ellipse(x, y, 3.8 + (i % 3), 1.8 + (i % 2), (i % 9) * 0.26, 0, Math.PI * 2);
     ctx.fill();
   }
 }

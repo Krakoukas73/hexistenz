@@ -13,24 +13,26 @@ import { getTerrainSurfaceY, getTerrainNormalAt } from './terrainHeight.js';
 const materialCache = new Map();
 const geometryCache = new Map();
 
+const RAIL_VISUAL_SCALE = 0.75;
+
 const TRACK = {
   portScale: 1.002,
   hubRadius: HEX_SIZE * 0.185,
   minCurveRadius: HEX_SIZE * 0.34,
   sampleSpacing: HEX_SIZE * 0.045,
-  railGauge: HEX_SIZE * 0.0475,
-  railRadius: HEX_SIZE * 0.009,
+  railGauge: HEX_SIZE * 0.0475 * RAIL_VISUAL_SCALE,
+  railRadius: HEX_SIZE * 0.009 * RAIL_VISUAL_SCALE,
   railRadialSegments: 4,
-  railLift: HEX_SIZE * 0.021,
-  sleeperLength: HEX_SIZE * 0.17,
-  sleeperDepth: HEX_SIZE * 0.025,
-  sleeperHeight: HEX_SIZE * 0.018,
+  railLift: HEX_SIZE * 0.021 * RAIL_VISUAL_SCALE,
+  sleeperLength: HEX_SIZE * 0.17 * RAIL_VISUAL_SCALE,
+  sleeperDepth: HEX_SIZE * 0.025 * RAIL_VISUAL_SCALE,
+  sleeperHeight: HEX_SIZE * 0.018 * RAIL_VISUAL_SCALE,
   sleeperSpacing: HEX_SIZE * 0.145,
   sleeperEdgeMargin: HEX_SIZE * 0.11,
   edgeLockStart: 0.78,
   edgeLockEnd: 0.985,
   ySmoothPasses: 2,
-  stoneSideOffset: HEX_SIZE * 0.185,
+  stoneSideOffset: HEX_SIZE * 0.185 * RAIL_VISUAL_SCALE,
   stoneSpacing: HEX_SIZE * 0.30,
   biomeStoneCount: 3
 };
@@ -652,7 +654,7 @@ function getStoneGeometry(seedKey) {
   const variant = Math.floor(hashUnit(seedKey) * 3);
   const key = `stone:${variant}`;
   if (!geometryCache.has(key)) {
-    const radius = HEX_SIZE * (variant === 0 ? 0.032 : variant === 1 ? 0.040 : 0.050);
+    const radius = HEX_SIZE * (variant === 0 ? 0.032 : variant === 1 ? 0.040 : 0.050) * RAIL_VISUAL_SCALE;
     const geometry = variant === 1
       ? new THREE.IcosahedronGeometry(radius, 0)
       : new THREE.DodecahedronGeometry(radius, 0);

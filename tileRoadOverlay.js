@@ -1,132 +1,462 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 import { EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { getEdgeType } from './tileGenerator.js';
 
-const roadMaterialCache = new Map();
+const ROAD_STRAIGHT_URL = './glb/stone-road-droite.glb';
+const ROAD_CURVE_URL = './glb/stone-road-curve60.glb';
 
-const ROADABLE_TYPES = new Set([
-  EDGE_TYPES.house
-]);
+// Les modèles restent réduits de 35%, mais les segments sont allongés et se
+// recouvrent franchement pour former de vrais chemins, pas des miettes de route.
+const STONE_ROAD_VISUAL_SCALE = 0.455;
+const STONE_ROAD_OVERLAP = 3.45;
+const STONE_ROAD_Y_OFFSET = 0.004;
 
-export function createRoadOverlay(edge, vertexA, vertexB, edgeKey = '') {
-  const type = getEdgeType(edge);
-  if (!ROADABLE_TYPES.has(type)) return null;
+const roadModelCache = new Map();
+const loader = new GLTFLoader();
 
-  const density = getRoadDensity(type, edgeKey);
-  if (density <= 0) return null;
+const ROAD_TYPE = EDGE_TYPES.house;
 
-  const group = new THREE.Group();
-  const y = getRoadY(type);
-  const outerMid = new THREE.Vector3(
-    (vertexA.x + vertexB.x) / 2,
-    y,
-    (vertexA.z + vertexB.z) / 2
-  );
-
-  // Version moins "aéroport" : aucun raccord systématique au centre.
-  // Chaque route/chemin traverse seulement une partie du triangle avec une courbe bruitée.
-  const inner = outerMid.clone().multiplyScalar(getInnerRoadStart(type, edgeKey)).setY(y);
-  const outer = outerMid.clone().multiplyScalar(0.93).setY(y);
-  const points = makeTurbulentPath(inner, outer, edgeKey, density, type);
-
-  if (type === EDGE_TYPES.house || density >= 3) {
-    group.add(createThickPolyline(points, getRoadWidth(type), getRoadMaterial('asphalt')));
-    group.add(createRoadMarkings(points, type));
-  } else if (type === EDGE_TYPES.forest) {
-    group.add(createThickPolyline(points, getRoadWidth(type), getRoadMaterial('forestTrail')));
-    group.add(createThickPolyline(points, getRoadWidth(type) * 0.34, getRoadMaterial('forestTrailLight')));
-  } else {
-    group.add(createThickPolyline(points, getRoadWidth(type), getRoadMaterial('dirt')));
-    group.add(createThickPolyline(points, getRoadWidth(type) * 0.30, getRoadMaterial('trailDust')));
-  }
-
-  if (type === EDGE_TYPES.forest || type === EDGE_TYPES.grass) {
-    const spurSeed = hashText(`${type}:${edgeKey}:spur`);
-    if (spurSeed % 3 !== 0) {
-      group.add(createPathSpur(points, spurSeed % 2 === 0 ? 1 : -1, type, edgeKey));
-    }
-  }
-
-  return group;
-}
-
-export function createRoadCenterOverlay() {
-  // Pas de disque central, pas d'étoile de routes : ça évite l'effet rond-point/aéroport.
+// Les anciennes routes par secteur produisaient des bouts isolés et cassés.
+// Tout le réseau routier est maintenant généré au centre de la tuile, comme les
+// voies ferrées : on relie seulement les ports village entre eux.
+export function createRoadOverlay() {
   return null;
 }
 
-function getRoadDensity(type, edgeKey) {
-  if (type === EDGE_TYPES.house) return 3;
-  if (type === EDGE_TYPES.field) return 0;
-  if (type === EDGE_TYPES.forest) return edgeKey === 'n' || edgeKey === 'se' || edgeKey === 'sw' ? 2 : 1;
-  if (type === EDGE_TYPES.grass) return edgeKey === 'ne' || edgeKey === 's' || edgeKey === 'nw' ? 2 : 1;
-  return 0;
-}
+export function createRoadCenterOverlay(edges, sectorDefs, createOuterVertices) {
+  const ports = getRoadPorts(edges, sectorDefs, createOuterVertices);
+  if (ports.length < 1) return null;
 
-function getRoadWidth(type) {
-  if (type === EDGE_TYPES.house) return HEX_SIZE * 0.112;
-  if (type === EDGE_TYPES.field) return HEX_SIZE * 0.075;
-  if (type === EDGE_TYPES.forest) return HEX_SIZE * 0.064;
-  return HEX_SIZE * 0.058;
-}
+  const group = new THREE.Group();
+  group.name = 'village-stone-road-glb-network';
 
-function getRoadY(type) {
-  if (type === EDGE_TYPES.rail) return TILE_VISUAL.railY ?? 0.055;
-
-  // Les routes/chemins doivent être plaqués sur le dessus réel du biome,
-  // pas flotter au niveau des anciens outlines. Petit epsilon seulement
-  // pour éviter le z-fighting avec le relief low-poly.
-  const baseDepth = TILE_VISUAL.tileThickness ?? 0.12;
-  const topYByType = {
-    [EDGE_TYPES.house]: baseDepth * -0.30,
-    [EDGE_TYPES.forest]: baseDepth * -0.30,
-    [EDGE_TYPES.grass]: baseDepth * -0.45,
-    [EDGE_TYPES.field]: baseDepth * 0.45
-  };
-
-  return (topYByType[type] ?? (TILE_VISUAL.sectorY ?? 0)) + 0.006;
-}
-
-function getInnerRoadStart(type, edgeKey) {
-  const seed = hashText(`${type}:${edgeKey}:inner`);
-  if (type === EDGE_TYPES.house) return 0.18 + (seed % 9) / 100;
-  return 0.24 + (seed % 18) / 100;
-}
-
-function makeTurbulentPath(inner, outer, edgeKey, density, type) {
-  const dir = outer.clone().sub(inner).normalize();
-  const side = new THREE.Vector3(-dir.z, 0, dir.x);
-  const seed = hashText(`${type}:${edgeKey}:turbulence`);
-  const amp = HEX_SIZE * (type === EDGE_TYPES.house ? 0.105 : 0.145) * (1 + density * 0.18);
-  const points = [inner.clone()];
-
-  for (let i = 1; i <= 4; i++) {
-    const t = i / 5;
-    const wobbleA = signedNoise(seed, i) * amp;
-    const wobbleB = signedNoise(seed >>> 3, i + 11) * amp * 0.45;
-    const point = inner.clone().lerp(outer, t);
-    point.add(side.clone().multiplyScalar(wobbleA));
-    point.add(dir.clone().multiplyScalar(wobbleB));
-    point.y = inner.y;
-    points.push(point);
+  const routes = createRoadRoutes(ports, edges);
+  for (const route of routes) {
+    const road = createStoneRoadFromPath(route.points, route.seedKey);
+    if (road) group.add(road);
   }
 
-  points.push(outer.clone());
+  return group.children.length > 0 ? group : null;
+}
+
+function getRoadPorts(edges, sectorDefs, createOuterVertices) {
+  const vertices = createOuterVertices();
+
+  return sectorDefs
+    .map((sector, index) => {
+      const edge = edges[sector.key];
+      if (getEdgeType(edge) !== ROAD_TYPE) return null;
+
+      const vertexA = vertices[sector.a];
+      const vertexB = vertices[sector.b];
+      const point = new THREE.Vector3(
+        ((vertexA.x + vertexB.x) / 2) * 0.955,
+        getRoadY(),
+        ((vertexA.z + vertexB.z) / 2) * 0.955
+      );
+
+      return {
+        index,
+        key: sector.key,
+        point,
+        direction: new THREE.Vector3(point.x, 0, point.z).normalize()
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.index - b.index);
+}
+
+function createRoadRoutes(ports, edges) {
+  if (ports.length === 1) {
+    return [createPortStubRoute(ports[0], true)];
+  }
+
+  // Réseau “place de village” : chaque grappe de secteurs village reçoit un hub
+  // interne, puis chaque maison/port tente de s'y raccorder. C'est plus proche
+  // des voies ferrées : un tracé continu, sinueux, avec des branches lisibles,
+  // au lieu de petits bouts de gravier jetés par un hamster ivre.
+  const routes = [];
+  const groups = groupContiguousRoadPorts(ports);
+
+  for (const group of groups) {
+    if (group.length === 1) {
+      routes.push(createPortStubRoute(group[0], true));
+      continue;
+    }
+
+    const hub = createVillageHubPoint(group);
+
+    // Chaque secteur maison a au moins une tentative de raccordement vers la
+    // place centrale. Cela corrige les maisons isolées visuellement non reliées.
+    for (const port of group) {
+      routes.push(createPortToHubRoute(port, hub, group.length));
+    }
+
+    // On conserve aussi des liaisons entre voisins pour densifier les chemins
+    // sans recréer des ponts ni traverser l'eau : seulement au sein d'une même
+    // grappe contiguë de village.
+    for (let i = 0; i < group.length; i += 1) {
+      const a = group[i];
+      const b = group[(i + 1) % group.length];
+      if (a !== b && areAdjacentIndexes(a.index, b.index)) {
+        routes.push(createPortToPortRoute(a, b, true));
+      }
+    }
+  }
+
+  return routes;
+}
+
+function groupContiguousRoadPorts(ports) {
+  const sorted = [...ports].sort((a, b) => a.index - b.index);
+  const groups = [];
+  let current = [];
+
+  for (const port of sorted) {
+    const previous = current[current.length - 1];
+    if (!previous || areAdjacentIndexes(previous.index, port.index)) {
+      current.push(port);
+    } else {
+      groups.push(current);
+      current = [port];
+    }
+  }
+
+  if (current.length > 0) groups.push(current);
+
+  // Fusionne le cas circulaire NW -> N : sur un hexagone, 5 et 0 sont voisins.
+  if (groups.length > 1) {
+    const first = groups[0][0];
+    const lastGroup = groups[groups.length - 1];
+    const last = lastGroup[lastGroup.length - 1];
+    if (first && last && areAdjacentIndexes(last.index, first.index)) {
+      groups[0] = [...lastGroup, ...groups[0]];
+      groups.pop();
+    }
+  }
+
+  return groups;
+}
+
+function createVillageHubPoint(group) {
+  const hub = new THREE.Vector3();
+  for (const port of group) hub.add(port.point);
+  hub.multiplyScalar(1 / group.length);
+
+  // Le hub reste vers l'intérieur du paquet de maisons, pas sur le bord : cela
+  // donne l'effet “petite place” visible dans les villages denses.
+  hub.multiplyScalar(group.length >= 4 ? 0.42 : 0.50);
+  hub.y = getRoadY();
+  return hub;
+}
+
+function createPortToHubRoute(port, hub, groupSize) {
+  const start = port.point.clone();
+  const end = hub.clone();
+  const distance = start.distanceTo(end);
+  const inward = port.direction.clone().multiplyScalar(-1);
+  const sideSign = port.index % 2 === 0 ? 1 : -1;
+  const side = new THREE.Vector3(-inward.z, 0, inward.x);
+  const bendStrength = HEX_SIZE * (groupSize >= 4 ? 0.18 : 0.13) * sideSign;
+
+  const c1 = start.clone()
+    .add(inward.clone().multiplyScalar(clamp(distance * 0.45, HEX_SIZE * 0.18, HEX_SIZE * 0.55)))
+    .add(side.clone().multiplyScalar(bendStrength));
+
+  const c2 = end.clone()
+    .add(inward.clone().multiplyScalar(-clamp(distance * 0.16, HEX_SIZE * 0.06, HEX_SIZE * 0.20)))
+    .add(side.clone().multiplyScalar(-bendStrength * 0.62));
+
+  const points = sampleCubic(start, c1, c2, end, 36);
+  addOrganicWobble(points, `road:hub:${port.key}:${groupSize}`);
+
+  return {
+    seedKey: `road:hub:${port.index}:${groupSize}`,
+    points,
+    aKey: port.key,
+    bKey: `hub:${groupSize}`
+  };
+}
+
+function createPortStubRoute(port, longStub = false) {
+  const start = port.point.clone();
+  const end = port.point.clone().add(port.direction.clone().multiplyScalar(-HEX_SIZE * (longStub ? 0.58 : 0.36)));
+  const side = new THREE.Vector3(-port.direction.z, 0, port.direction.x).multiplyScalar(HEX_SIZE * 0.10 * (port.index % 2 === 0 ? 1 : -1));
+  const c1 = start.clone().add(port.direction.clone().multiplyScalar(-HEX_SIZE * (longStub ? 0.22 : 0.12))).add(side);
+  const c2 = end.clone().add(side.clone().multiplyScalar(0.65));
+  const points = sampleCubic(start, c1, c2, end, 22);
+  addOrganicWobble(points, `road:stub:${port.key}`);
+  return { seedKey: `road:stub:${port.index}`, points, aKey: port.key, bKey: port.key };
+}
+
+function createPortToPortRoute(a, b, nearOuterRing = false) {
+  const start = a.point.clone();
+  const end = b.point.clone();
+  const distance = start.distanceTo(end);
+  const controlDistance = clamp(distance * (nearOuterRing ? 0.62 : 0.52), HEX_SIZE * 0.28, HEX_SIZE * 0.92);
+  const dot = clamp(a.direction.dot(b.direction), -1, 1);
+
+  const sideSign = ((a.index + b.index) % 2 === 0 ? 1 : -1);
+  const midDir = start.clone().add(end).normalize();
+  const side = new THREE.Vector3(-midDir.z, 0, midDir.x).multiplyScalar(HEX_SIZE * (nearOuterRing ? 0.18 : 0.24) * sideSign);
+  const c1 = start.clone().add(a.direction.clone().multiplyScalar(-controlDistance)).add(side);
+  const c2 = end.clone().add(b.direction.clone().multiplyScalar(-controlDistance)).add(side.clone().multiplyScalar(-0.35));
+
+  // Si les deux ports sont quasiment opposés, on tire une belle grande courbe
+  // douce plutôt qu'une ligne droite de géomètre triste.
+  if (dot < -0.88) {
+    const side = new THREE.Vector3(-a.direction.z, 0, a.direction.x);
+    const bend = side.multiplyScalar(HEX_SIZE * 0.20 * (a.index % 2 === 0 ? 1 : -1));
+    c1.copy(start.clone().multiplyScalar(0.40).add(bend));
+    c2.copy(end.clone().multiplyScalar(0.40).add(bend));
+  }
+
+  const points = sampleCubic(start, c1, c2, end, 34);
+  addOrganicWobble(points, `road:${a.key}:${b.key}`);
+
+  return {
+    seedKey: `road:${a.index}:${b.index}`,
+    points,
+    aKey: a.key,
+    bKey: b.key
+  };
+}
+
+function addOrganicWobble(points, seedKey) {
+  if (points.length < 5) return;
+  const seed = hashText(seedKey);
+  const start = points[0];
+  const end = points[points.length - 1];
+  const mainDir = end.clone().sub(start).normalize();
+  const side = new THREE.Vector3(-mainDir.z, 0, mainDir.x);
+  const amp = HEX_SIZE * 0.075;
+
+  for (let i = 1; i < points.length - 1; i += 1) {
+    const t = i / (points.length - 1);
+    const fade = Math.sin(t * Math.PI);
+    const wave = Math.sin(t * Math.PI * 3.15 + (seed % 628) / 100) * amp * 0.82;
+    const noise = signedNoise(seed, i) * amp * 0.42;
+    points[i].add(side.clone().multiplyScalar((wave + noise) * fade));
+    points[i].y = getRoadY();
+  }
+}
+
+function createStoneRoadFromPath(points, seedKey) {
+  const group = new THREE.Group();
+  const samples = samplePolyline(points, getRoadSpacing());
+
+  // En dessous de cette longueur, c'est visuellement lu comme un bout cassé.
+  if (samples.length < 6) return null;
+
+  for (let i = 0; i < samples.length - 1; i += 1) {
+    const a = samples[i];
+    const b = samples[i + 1];
+    const dir = b.clone().sub(a);
+    const length = dir.length();
+    if (length <= 0.001) continue;
+
+    const prev = samples[Math.max(0, i - 1)];
+    const next = samples[Math.min(samples.length - 1, i + 2)];
+    const incoming = a.clone().sub(prev);
+    const outgoing = next.clone().sub(b);
+    const turn = cross2D(incoming, outgoing);
+    const useCurve = i > 0 && i < samples.length - 2 && (Math.abs(turn) > 0.0012 || i % 3 !== 0);
+
+    const object = new THREE.Group();
+    const mid = a.clone().lerp(b, 0.5);
+    object.position.copy(mid);
+    object.position.y = getRoadSurfaceY(mid);
+    object.rotation.y = Math.atan2(dir.x, dir.z) + (useCurve && turn < 0 ? Math.PI : 0);
+    object.userData.roadTargetLength = length * STONE_ROAD_OVERLAP * STONE_ROAD_VISUAL_SCALE;
+    object.userData.roadTargetWidth = getRoadWidth() * STONE_ROAD_VISUAL_SCALE;
+    object.userData.roadTargetHeight = getRoadHeight() * STONE_ROAD_VISUAL_SCALE;
+
+    addRoadModelToObject(object, useCurve ? ROAD_CURVE_URL : ROAD_STRAIGHT_URL);
+    group.add(object);
+  }
+
+  group.name = `village-stone-road-route-${seedKey}`;
+  return group.children.length > 0 ? group : null;
+}
+
+function addRoadModelToObject(parent, url) {
+  getRoadModel(url).then(model => {
+    const clone = model.clone(true);
+    normalizeRoadClone(clone, parent.userData.roadTargetLength, parent.userData.roadTargetWidth, parent.userData.roadTargetHeight);
+    parent.add(clone);
+  });
+}
+
+function getRoadModel(url) {
+  if (roadModelCache.has(url)) return roadModelCache.get(url);
+
+  const promise = new Promise(resolve => {
+    loader.load(
+      url,
+      gltf => {
+        const model = gltf.scene;
+        model.traverse(child => {
+          if (!child.isMesh) return;
+          child.castShadow = false;
+          child.receiveShadow = true;
+          if (child.material) {
+            child.material.depthWrite = true;
+            child.material.needsUpdate = true;
+          }
+        });
+        resolve(model);
+      },
+      undefined,
+      () => resolve(createFallbackStoneRoad(url === ROAD_CURVE_URL))
+    );
+  });
+
+  roadModelCache.set(url, promise);
+  return promise;
+}
+
+function normalizeRoadClone(clone, targetLength, targetWidth, targetHeight) {
+  const box = new THREE.Box3().setFromObject(clone);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+
+  const lengthAxis = size.z >= size.x ? 'z' : 'x';
+  const currentLength = Math.max(lengthAxis === 'z' ? size.z : size.x, 0.0001);
+  const currentWidth = Math.max(lengthAxis === 'z' ? size.x : size.z, 0.0001);
+  const currentHeight = Math.max(size.y, 0.0001);
+
+  const uniform = Math.min(
+    targetLength / currentLength,
+    targetWidth / currentWidth,
+    targetHeight / currentHeight
+  );
+
+  clone.scale.multiplyScalar(uniform);
+
+  const normalizedBox = new THREE.Box3().setFromObject(clone);
+  const center = new THREE.Vector3();
+  normalizedBox.getCenter(center);
+  const minY = normalizedBox.min.y;
+
+  clone.position.x -= center.x;
+  clone.position.z -= center.z;
+  clone.position.y -= minY - STONE_ROAD_Y_OFFSET;
+}
+
+function createFallbackStoneRoad(curved = false) {
+  const group = new THREE.Group();
+  const material = new THREE.MeshLambertMaterial({ color: 0xc9c9b7, roughness: 0.85 });
+  const count = curved ? 7 : 5;
+
+  for (let i = 0; i < count; i += 1) {
+    const t = count === 1 ? 0 : (i / (count - 1)) - 0.5;
+    const geometry = new THREE.DodecahedronGeometry(0.12 + (i % 3) * 0.025, 1);
+    geometry.scale(1.25 + (i % 2) * 0.35, 0.22, 0.82);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.z = t;
+    mesh.position.x = curved ? Math.sin(t * Math.PI * 0.65) * 0.34 : ((i % 2) - 0.5) * 0.18;
+    mesh.rotation.y = curved ? t * 0.8 : ((i % 3) - 1) * 0.18;
+    mesh.castShadow = false;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+  }
+  return group;
+}
+
+function sampleCubic(p0, p1, p2, p3, steps) {
+  const points = [];
+  for (let i = 0; i <= steps; i += 1) {
+    const t = i / steps;
+    const inv = 1 - t;
+    const point = p0.clone().multiplyScalar(inv * inv * inv)
+      .add(p1.clone().multiplyScalar(3 * inv * inv * t))
+      .add(p2.clone().multiplyScalar(3 * inv * t * t))
+      .add(p3.clone().multiplyScalar(t * t * t));
+    point.y = getRoadY();
+    points.push(point);
+  }
   return points;
 }
 
-function createPathSpur(points, sign, type, edgeKey) {
-  const index = 2 + (hashText(`${type}:${edgeKey}:spur-index`) % Math.max(1, points.length - 4));
-  const start = points[index].clone();
-  const prev = points[Math.max(0, index - 1)];
-  const next = points[Math.min(points.length - 1, index + 1)];
-  const dir = next.clone().sub(prev).normalize();
-  const side = new THREE.Vector3(-dir.z, 0, dir.x);
-  const length = HEX_SIZE * (0.18 + (hashText(`${type}:${edgeKey}:spur-length`) % 12) / 100);
-  const mid = start.clone().add(side.clone().multiplyScalar(sign * length * 0.58));
-  const end = start.clone().add(side.multiplyScalar(sign * length));
-  mid.add(dir.clone().multiplyScalar(signedNoise(hashText(edgeKey), 5) * HEX_SIZE * 0.08));
-  return createThickPolyline([start, mid, end], getRoadWidth(type) * 0.46, getRoadMaterial(type === EDGE_TYPES.forest ? 'forestTrail' : 'dirt'));
+function samplePolyline(points, spacing) {
+  const output = [points[0].clone()];
+  let carried = 0;
+
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const a = points[i];
+    const b = points[i + 1];
+    const segment = b.clone().sub(a);
+    const length = segment.length();
+    if (length <= 0.0001) continue;
+
+    const dir = segment.clone().normalize();
+    let distance = spacing - carried;
+
+    while (distance < length) {
+      output.push(a.clone().add(dir.clone().multiplyScalar(distance)));
+      distance += spacing;
+    }
+
+    carried = Math.max(0, length - (distance - spacing));
+  }
+
+  const last = points[points.length - 1].clone();
+  if (output[output.length - 1].distanceTo(last) > spacing * 0.20) output.push(last);
+  else output[output.length - 1].copy(last);
+
+  return output;
+}
+
+function getRoadSpacing() {
+  return HEX_SIZE * 0.062;
+}
+
+function getRoadWidth() {
+  return HEX_SIZE * 0.29;
+}
+
+function getRoadHeight() {
+  return HEX_SIZE * 0.080;
+}
+
+function getRoadY() {
+  const baseDepth = TILE_VISUAL.tileThickness ?? 0.12;
+  return baseDepth * -0.30 + 0.006;
+}
+
+function getRoadSurfaceY(point) {
+  // Posé au sol, mais plus enterré comme en v4 : l'enfouissement excessif rendait
+  // les chemins incomplets selon l'angle caméra/relief.
+  return getRoadY() + Math.sin(point.x * 7.0 + point.z * 5.0) * 0.001;
+}
+
+function circularGap(a, b) {
+  return Math.min(Math.abs(a - b), 6 - Math.abs(a - b));
+}
+
+function areAdjacentIndexes(a, b) {
+  return circularGap(a, b) === 1;
+}
+
+function isVillageArc(a, b, edges) {
+  const keys = ['n', 'ne', 'se', 's', 'sw', 'nw'];
+  const forward = [];
+  for (let i = a; i !== b; i = (i + 1) % 6) forward.push(i);
+  forward.push(b);
+
+  const backward = [];
+  for (let i = a; i !== b; i = (i + 5) % 6) backward.push(i);
+  backward.push(b);
+
+  return [forward, backward].some(path => path.every(index => getEdgeType(edges[keys[index]]) === ROAD_TYPE));
+}
+
+function cross2D(a, b) {
+  if (a.lengthSq() <= 0.000001 || b.lengthSq() <= 0.000001) return 0;
+  const an = a.clone().normalize();
+  const bn = b.clone().normalize();
+  return an.x * bn.z - an.z * bn.x;
 }
 
 function signedNoise(seed, salt) {
@@ -134,103 +464,15 @@ function signedNoise(seed, salt) {
   return (n / 1000) - 1;
 }
 
-function createRoadMarkings(points, type) {
-  const group = new THREE.Group();
-  const material = getRoadMaterial('marking');
-  const width = type === EDGE_TYPES.house ? HEX_SIZE * 0.018 : HEX_SIZE * 0.012;
-
-  for (let i = 0.18; i <= 0.82; i += 0.22) {
-    const segment = samplePathSegment(points, i, 0.07);
-    if (!segment) continue;
-    group.add(createThickPolyline(segment, width, material));
-  }
-
-  return group;
-}
-
-function createHubDisk(y, asphalt) {
-  const geometry = new THREE.CircleGeometry(HEX_SIZE * (asphalt ? 0.135 : 0.105), 24);
-  geometry.rotateX(-Math.PI / 2);
-  const mesh = new THREE.Mesh(geometry, getRoadMaterial(asphalt ? 'asphalt' : 'dirt'));
-  mesh.position.y = y;
-  return mesh;
-}
-
-function createThickPolyline(points, width, material) {
-  if (points.length < 2) return new THREE.Group();
-
-  const group = new THREE.Group();
-  for (let i = 0; i < points.length - 1; i++) {
-    const a = points[i];
-    const b = points[i + 1];
-    const dir = b.clone().sub(a);
-    const length = dir.length();
-    if (length <= 0.0001) continue;
-
-    const mid = a.clone().lerp(b, 0.5);
-    const geometry = new THREE.PlaneGeometry(width, length);
-    geometry.rotateX(-Math.PI / 2);
-
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.copy(mid);
-    mesh.rotation.y = Math.atan2(dir.x, dir.z);
-    group.add(mesh);
-  }
-  return group;
-}
-
-function samplePathSegment(points, t, lengthRatio) {
-  const p = samplePath(points, t);
-  const a = samplePath(points, Math.max(0, t - lengthRatio / 2));
-  const b = samplePath(points, Math.min(1, t + lengthRatio / 2));
-  if (!p || !a || !b) return null;
-  return [a, b];
-}
-
-function samplePath(points, t) {
-  if (points.length === 2) return points[0].clone().lerp(points[1], t);
-  const p0 = points[0].clone().lerp(points[1], t);
-  const p1 = points[1].clone().lerp(points[2], t);
-  return p0.lerp(p1, t);
-}
-
-function getRoadMaterial(kind) {
-  if (roadMaterialCache.has(kind)) return roadMaterialCache.get(kind);
-
-  const color = kind === 'asphalt'
-    ? 0x2F3030
-    : kind === 'marking'
-      ? 0xF6E7A8
-      : kind === 'trailDust'
-        ? 0xC49A58
-        : kind === 'forestTrail'
-          ? 0x5D625F
-          : kind === 'forestTrailLight'
-            ? 0xA3A8A2
-            : 0x8B6233;
-  const transparent = kind === 'trailDust' || kind === 'forestTrailLight';
-  const opacity = kind === 'trailDust' ? 0.78 : kind === 'forestTrailLight' ? 0.74 : 1;
-
-  const material = new THREE.MeshBasicMaterial({
-    color,
-    transparent,
-    opacity,
-    side: THREE.DoubleSide,
-    depthWrite: false,
-    polygonOffset: true,
-    polygonOffsetFactor: -3,
-    polygonOffsetUnits: -3
-  });
-
-  roadMaterialCache.set(kind, material);
-  return material;
-}
-
 function hashText(text) {
   let hash = 2166136261;
-  for (let i = 0; i < text.length; i++) {
+  for (let i = 0; i < text.length; i += 1) {
     hash ^= text.charCodeAt(i);
     hash = Math.imul(hash, 16777619);
   }
   return hash >>> 0;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }

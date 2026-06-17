@@ -1,6 +1,15 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
+import { clone as cloneSkeleton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js';
+import {
+  EDGE_ORDER,
+  EDGE_TYPES,
+  HEX_SIZE,
+  TILE_VISUAL,
+  FIELD_BIRD_FLOCK_MODEL_URL,
+  FIELD_BIRD_FLOCK_TARGET_WIDTH,
+  FIELD_BIRD_FLOCK_ANIMATION_SPEED
+} from './config.js';
 import { axialToWorld, makeHexKey } from './stable/hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
@@ -24,14 +33,35 @@ const FIELD_FLAG_TARGET_HEIGHT = HEX_SIZE * 0.32;
 const BENCH_TARGET_LENGTH = HEX_SIZE * 0.16;
 const SIGNPOST_TARGET_HEIGHT = HEX_SIZE * 0.28;
 const SHORE_BOAT_TARGET_LENGTH = HEX_SIZE * 0.56;
+const NATURAL_FLOWER_TARGET_WIDTH = HEX_SIZE * 0.055;
+const NATURAL_ROCK_TARGET_LENGTH = HEX_SIZE * 0.125;
+const NATURAL_REED_TARGET_HEIGHT = HEX_SIZE * 0.105;
+const NATURAL_MUSHROOM_TARGET_WIDTH = HEX_SIZE * 0.060;
 const ROAD_DECOR_Y = ((TILE_VISUAL.tileThickness ?? 0.12) * -0.30) + 0.010;
 const SHORE_BOAT_Y = WATER_SURFACE_Y + 0.006;
 const PROP_MODEL_DEFS = [
   { key: 'field-flag', url: './glb/drapeau.glb', target: FIELD_FLAG_TARGET_HEIGHT, mode: 'height' },
   { key: 'road-bench', url: './glb/banc.glb', target: BENCH_TARGET_LENGTH, mode: 'length' },
   { key: 'road-signpost', url: './glb/poteau-indicateur.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
-  { key: 'shore-boat', url: './glb/barque.glb', target: SHORE_BOAT_TARGET_LENGTH, mode: 'length' }
+  { key: 'shore-boat', url: './glb/barque.glb', target: SHORE_BOAT_TARGET_LENGTH, mode: 'length' },
+  { key: 'flower-1', url: './glb/flower-1.glb', target: NATURAL_FLOWER_TARGET_WIDTH, mode: 'length', kind: 'flower' },
+  { key: 'flower-2', url: './glb/flower-2.glb', target: NATURAL_FLOWER_TARGET_WIDTH, mode: 'length', kind: 'flower' },
+  { key: 'flower-3', url: './glb/flower-3.glb', target: NATURAL_FLOWER_TARGET_WIDTH, mode: 'length', kind: 'flower' },
+  { key: 'flower-4', url: './glb/flower-4.glb', target: NATURAL_FLOWER_TARGET_WIDTH, mode: 'length', kind: 'flower' },
+  { key: 'rock-1', url: './glb/rock-1.glb', target: NATURAL_ROCK_TARGET_LENGTH, mode: 'length', kind: 'rock' },
+  { key: 'rock-2', url: './glb/rock-2.glb', target: NATURAL_ROCK_TARGET_LENGTH, mode: 'length', kind: 'rock' },
+  { key: 'rock-3', url: './glb/rock-3.glb', target: NATURAL_ROCK_TARGET_LENGTH, mode: 'length', kind: 'rock' },
+  { key: 'rock-4', url: './glb/rock-4.glb', target: NATURAL_ROCK_TARGET_LENGTH, mode: 'length', kind: 'rock' },
+  { key: 'reed', url: './glb/roseau.glb', target: NATURAL_REED_TARGET_HEIGHT, mode: 'height', kind: 'reed' },
+  { key: 'mushroom', url: './glb/mushroom.glb', target: NATURAL_MUSHROOM_TARGET_WIDTH, mode: 'length', kind: 'mushroom' }
 ];
+
+const NATURAL_DECOR_VARIANTS = {
+  flower: ['flower-1', 'flower-2', 'flower-3', 'flower-4'],
+  rock: ['rock-1', 'rock-2', 'rock-3', 'rock-4'],
+  reed: ['reed'],
+  mushroom: ['mushroom']
+};
 
 const WATER_DROP_MAT = new THREE.MeshBasicMaterial({
   color: 0xBFEFFF,
@@ -62,12 +92,12 @@ const WOOD_MAT = new THREE.MeshStandardMaterial({ color: 0x7A4A22, roughness: 0.
 const STRAW_MAT = new THREE.MeshStandardMaterial({ color: 0xDAB84A, roughness: 0.9, metalness: 0.01 });
 const CLOTH_MAT = new THREE.MeshStandardMaterial({ color: 0x7C3F25, roughness: 0.9, metalness: 0.01 });
 const HAT_MAT = new THREE.MeshStandardMaterial({ color: 0xB48C34, roughness: 0.92, metalness: 0.01 });
-const CROW_MAT = new THREE.MeshBasicMaterial({ color: 0x151515, side: THREE.DoubleSide });
 
 export function createFieldWaterEffectsOverlay() {
   const group = new THREE.Group();
   group.name = 'field-water-edge-effects-overlay';
   ensurePropModels(group);
+  ensureBirdModel(group);
   return group;
 }
 
@@ -75,8 +105,10 @@ export function rebuildFieldWaterEffectsOverlay(overlay, placedTiles) {
   overlay.userData.lastPlacedTiles = placedTiles;
   clearGroup(overlay);
   ensurePropModels(overlay);
+  ensureBirdModel(overlay);
   overlay.add(createWaterVoidSplashes(placedTiles));
   overlay.add(createFieldFlags(placedTiles));
+  overlay.add(createNaturalGroundProps(placedTiles));
   overlay.add(createRoadsideVillageProps(placedTiles));
   overlay.add(createShoreBoats(placedTiles));
 }
@@ -120,7 +152,14 @@ export function updateFieldWaterEffectsOverlay(overlay, elapsedSeconds) {
       return;
     }
 
-    if (data.effectKind === 'crow-orbit') {
+    if (data.effectKind === 'bird-flock-orbit') {
+      if (data.mixer) {
+        const previousAnimationTime = data.lastAnimationTime ?? elapsedSeconds;
+        const delta = Math.min(0.05, Math.max(0, elapsedSeconds - previousAnimationTime));
+        data.lastAnimationTime = elapsedSeconds;
+        data.mixer.update(delta * (data.animationSpeed ?? 1));
+      }
+
       const dir = data.direction ?? 1;
       const t = elapsedSeconds * data.speed * dir + data.phase;
       const wobbleA = Math.sin(elapsedSeconds * data.wobbleSpeedA + data.phase * 1.37);
@@ -134,13 +173,14 @@ export function updateFieldWaterEffectsOverlay(overlay, elapsedSeconds) {
         + Math.sin(elapsedSeconds * data.verticalSpeed + data.phase * 0.73) * data.verticalAmp
         + Math.sin(t * 1.37 + wobbleB) * data.bobAmp;
       object.position.set(x, y, z);
-      const tangentAngle = Math.atan2(
-        Math.cos(t + wobbleC * 0.32) * localRz,
-        -Math.sin(t) * localRx
-      );
-      object.rotation.y = tangentAngle + (dir < 0 ? Math.PI : 0);
-      object.rotation.z = Math.sin(t * data.bankSpeed + data.phase) * data.bankAmp;
-      object.rotation.x = Math.cos(t * 1.9 + data.phase * 1.4) * 0.16;
+      const tangentX = -Math.sin(t) * localRx * dir;
+      const tangentZ = Math.cos(t + wobbleC * 0.32) * localRz * dir;
+      // Dans birds.glb, les becs pointent vers -Z.
+      // On aligne donc l'axe local -Z du modèle sur la tangente réelle de l'orbite.
+      // Important : la tangente tient compte de dir, sinon les groupes en sens inverse volent à reculons.
+      object.rotation.y = Math.atan2(-tangentX, -tangentZ);
+      object.rotation.z = Math.sin(t * data.bankSpeed + data.phase) * data.bankAmp * dir;
+      object.rotation.x = Math.cos(t * 1.9 + data.phase * 1.4) * 0.08;
       return;
     }
 
@@ -365,36 +405,212 @@ function createFieldFlagReward(zone) {
   const flag = createPropModel('field-flag', `${seed}:flag`);
   if (flag) group.add(flag);
 
-  const crowCount = Math.min(10, 4 + Math.floor(zone.total / 3));
-  for (let i = 0; i < crowCount; i += 1) {
-    const crow = createCrow(`${seed}:crow:${i}`);
-    const heightMultiplier = 1.0 + hashUnit(`${seed}:crowheight:${i}`) * 1.4;
-    crow.userData = {
-      effectKind: 'crow-orbit',
+  const flockCount = Math.min(3, 1 + Math.floor(zone.total / 8));
+  for (let i = 0; i < flockCount; i += 1) {
+    const flock = createBirdFlock(`${seed}:bird-flock:${i}`);
+    if (!flock) continue;
+
+    const heightMultiplier = 1.50 + hashUnit(`${seed}:birdheight:${i}`) * 1.15;
+    const altitudeStagger = i * 0.26 + hashUnit(`${seed}:bird-altitude-stagger:${i}`) * 0.42;
+    flock.userData = {
+      ...flock.userData,
+      effectKind: 'bird-flock-orbit',
       cx: 0,
-      cy: (0.82 + i * 0.04) * heightMultiplier,
+      cy: (0.88 + i * 0.11) * heightMultiplier + altitudeStagger,
       cz: 0,
-      rx: 0.28 + hashUnit(`${seed}:crowrx:${i}`) * 0.55,
-      rz: 0.18 + hashUnit(`${seed}:crowrz:${i}`) * 0.50,
-      speed: 0.36 + hashUnit(`${seed}:crowspeed:${i}`) * 1.08,
-      direction: hashUnit(`${seed}:crowdir:${i}`) > 0.5 ? 1 : -1,
-      phase: hashUnit(`${seed}:crowphase:${i}`) * Math.PI * 2,
-      verticalSpeed: 0.55 + hashUnit(`${seed}:crowvspeed:${i}`) * 1.20,
-      verticalAmp: 0.06 + hashUnit(`${seed}:crowvamp:${i}`) * 0.22,
-      bobAmp: 0.035 + hashUnit(`${seed}:crowbob:${i}`) * 0.095,
-      wobbleSpeedA: 0.42 + hashUnit(`${seed}:crowwoba:${i}`) * 1.50,
-      wobbleSpeedB: 0.38 + hashUnit(`${seed}:crowwobb:${i}`) * 1.65,
-      wobbleSpeedC: 0.34 + hashUnit(`${seed}:crowwobc:${i}`) * 1.80,
-      rxJitter: 0.10 + hashUnit(`${seed}:crowrxj:${i}`) * 0.22,
-      rzJitter: 0.10 + hashUnit(`${seed}:crowrzj:${i}`) * 0.24,
-      sideDrift: 0.025 + hashUnit(`${seed}:crowside:${i}`) * 0.085,
-      bankSpeed: 2.4 + hashUnit(`${seed}:crowbank:${i}`) * 3.6,
-      bankAmp: 0.24 + hashUnit(`${seed}:crowbankamp:${i}`) * 0.38
+      rx: 0.42 + hashUnit(`${seed}:birdrx:${i}`) * 0.68,
+      rz: 0.26 + hashUnit(`${seed}:birdrz:${i}`) * 0.54,
+      speed: 0.28 + hashUnit(`${seed}:birdspeed:${i}`) * 0.72,
+      direction: hashUnit(`${seed}:birddir:${i}`) > 0.5 ? 1 : -1,
+      phase: hashUnit(`${seed}:birdphase:${i}`) * Math.PI * 2,
+      verticalSpeed: 0.45 + hashUnit(`${seed}:birdvspeed:${i}`) * 0.95,
+      verticalAmp: 0.04 + hashUnit(`${seed}:birdvamp:${i}`) * 0.16,
+      bobAmp: 0.025 + hashUnit(`${seed}:birdbob:${i}`) * 0.07,
+      wobbleSpeedA: 0.32 + hashUnit(`${seed}:birdwoba:${i}`) * 1.10,
+      wobbleSpeedB: 0.30 + hashUnit(`${seed}:birdwobb:${i}`) * 1.20,
+      wobbleSpeedC: 0.28 + hashUnit(`${seed}:birdwobc:${i}`) * 1.30,
+      rxJitter: 0.08 + hashUnit(`${seed}:birdrxj:${i}`) * 0.16,
+      rzJitter: 0.08 + hashUnit(`${seed}:birdrzj:${i}`) * 0.18,
+      sideDrift: 0.018 + hashUnit(`${seed}:birdside:${i}`) * 0.060,
+      bankSpeed: 1.8 + hashUnit(`${seed}:birdbank:${i}`) * 2.4,
+      bankAmp: 0.16 + hashUnit(`${seed}:birdbankamp:${i}`) * 0.26
     };
-    group.add(crow);
+    group.add(flock);
   }
 
   return group;
+}
+
+
+function createNaturalGroundProps(placedTiles) {
+  const group = new THREE.Group();
+  group.name = 'natural-grass-forest-glb-props';
+
+  for (const placedTile of placedTiles.values()) {
+    for (const edge of EDGE_ORDER) {
+      const type = getTileEdgeType(placedTile, edge);
+      if (!isSafePropGroundType(type)) continue;
+
+      addNaturalPropCluster(group, placedTile, edge, type, 'flower', placedTiles);
+      addNaturalPropCluster(group, placedTile, edge, type, 'rock', placedTiles);
+      addNaturalPropCluster(group, placedTile, edge, type, 'reed', placedTiles);
+      addNaturalPropCluster(group, placedTile, edge, type, 'mushroom', placedTiles);
+    }
+  }
+
+  return group;
+}
+
+function addNaturalPropCluster(group, placedTile, edge, type, kind, placedTiles) {
+  const seed = `${placedTile.key}:natural:${kind}:${edge}`;
+  const chance = getNaturalPropChance(kind, type, placedTile, edge, placedTiles);
+  if (hashUnit(seed) > chance) return;
+
+  const count = getNaturalPropCount(kind, type, seed, placedTile, edge, placedTiles);
+  const centerLocal = getNaturalSectorPoint(edge, `${seed}:cluster-center`);
+  const clusterRadius = getNaturalClusterRadius(kind);
+
+  for (let i = 0; i < count; i += 1) {
+    const local = getNaturalClusterPoint(edge, centerLocal, `${seed}:point:${i}`, clusterRadius);
+    const footprintRadius = getNaturalPropFootprint(kind);
+    if (!isSingleTerrainFootprint(local, placedTile, type, footprintRadius)) continue;
+
+    const key = pickNaturalPropVariant(kind, `${seed}:variant:${i}`);
+    const prop = createPropModel(key, `${seed}:model:${i}`);
+    if (!prop) continue;
+
+    const tilePos = axialToWorld(placedTile.q, placedTile.r);
+    prop.name = `${type}-${kind}-ambient-glb`;
+    prop.position.set(tilePos.x + local.x, 0, tilePos.z + local.z);
+    const yaw = hashUnit(`${seed}:yaw:${i}`) * Math.PI * 2;
+    const groundOffset = kind === 'flower' ? 0.003 : (kind === 'reed' ? 0.004 : (kind === 'mushroom' ? 0.002 : 0.000));
+    placeObjectOnTerrain(prop, local, type, hashNumber(`${seed}:terrain:${i}`) % 97, {
+      groundOffset,
+      alignToSlope: kind !== 'reed',
+      yaw,
+      edgeLockStart: 0.98,
+      edgeLockEnd: 1.0,
+      normalSampleStep: HEX_SIZE * 0.012
+    });
+
+    const jitter = getNaturalPropScaleJitter(kind, seed, i);
+    prop.scale.multiplyScalar(jitter);
+    if (kind === 'rock' && isNearWaterDecorArea(placedTile, edge, placedTiles)) {
+      prop.scale.multiplyScalar(1.22 + hashUnit(`${seed}:shore-rock-scale:${i}`) * 0.36);
+    }
+    if (kind === 'reed') {
+      prop.rotation.x += (hashUnit(`${seed}:leanx:${i}`) - 0.5) * 0.10;
+      prop.rotation.z += (hashUnit(`${seed}:leanz:${i}`) - 0.5) * 0.10;
+    }
+    if (kind === 'mushroom') {
+      prop.rotation.x += (hashUnit(`${seed}:mushleanx:${i}`) - 0.5) * 0.035;
+      prop.rotation.z += (hashUnit(`${seed}:mushleanz:${i}`) - 0.5) * 0.035;
+    }
+    group.add(prop);
+  }
+}
+
+function getNaturalPropChance(kind, type, placedTile, edge, placedTiles) {
+  const nearWater = placedTile && edge && placedTiles && isNearWaterDecorArea(placedTile, edge, placedTiles);
+  if (kind === 'flower') return type === EDGE_TYPES.grass ? 0.92 : 0.48;
+  if (kind === 'rock') return nearWater ? 0.30 : (type === EDGE_TYPES.grass ? 0.12 : 0.18);
+  if (kind === 'reed') return nearWater ? 1.0 : (type === EDGE_TYPES.grass ? 0.055 : 0.040);
+  if (kind === 'mushroom') return type === EDGE_TYPES.forest ? 0.70 : 0.34;
+  return 0;
+}
+
+function getNaturalPropCount(kind, type, seed, placedTile = null, edge = null, placedTiles = null) {
+  const nearWater = placedTile && edge && placedTiles && isNearWaterDecorArea(placedTile, edge, placedTiles);
+  if (kind === 'flower') {
+    return 2 + Math.floor(hashUnit(`${seed}:count`) * 4); // bouquets de 2 à 5
+  }
+  if (kind === 'rock') {
+    if (nearWater) return 1 + Math.floor(hashUnit(`${seed}:count`) * 2);
+    return hashUnit(`${seed}:count`) > 0.72 ? 2 : 1;
+  }
+  if (kind === 'reed' && nearWater) {
+    return 5 + Math.floor(hashUnit(`${seed}:count`) * 5); // 5 à 9 près de l'eau
+  }
+  if (kind === 'mushroom') {
+    return 4 + Math.floor(hashUnit(`${seed}:count`) * 6); // grappes de 4 à 9
+  }
+  return 1;
+}
+
+function getNaturalPropFootprint(kind) {
+  if (kind === 'flower') return HEX_SIZE * 0.018;
+  if (kind === 'rock') return HEX_SIZE * 0.070;
+  if (kind === 'mushroom') return HEX_SIZE * 0.024;
+  if (kind === 'reed') return HEX_SIZE * 0.026;
+  return HEX_SIZE * 0.042;
+}
+
+function getNaturalPropScaleJitter(kind, seed, index) {
+  const roll = hashUnit(`${seed}:scale:${index}`);
+  if (kind === 'flower') return 0.66 + roll * 0.62;
+  if (kind === 'rock') return 0.76 + roll * 0.34;
+  if (kind === 'mushroom') return 0.72 + roll * 0.58;
+  return 0.86 + roll * 0.26;
+}
+
+function getNaturalClusterRadius(kind) {
+  if (kind === 'flower') return HEX_SIZE * 0.070;
+  if (kind === 'mushroom') return HEX_SIZE * 0.095;
+  if (kind === 'reed') return HEX_SIZE * 0.115;
+  return HEX_SIZE * 0.150;
+}
+
+function pickNaturalPropVariant(kind, seed) {
+  const variants = NATURAL_DECOR_VARIANTS[kind] ?? [];
+  if (variants.length === 0) return null;
+  return variants[Math.floor(hashUnit(seed) * variants.length) % variants.length];
+}
+
+function getNaturalSectorPoint(edge, seed) {
+  const sector = SECTOR_BY_KEY[edge];
+  const a = getHexVertex(sector.a);
+  const b = getHexVertex(sector.b);
+  const edgeBias = 0.46 + hashUnit(`${seed}:edge-bias`) * 0.34;
+  const side = (hashUnit(`${seed}:side`) - 0.5) * 0.42;
+
+  const mid = { x: (a.x + b.x) * 0.5, z: (a.z + b.z) * 0.5 };
+  const tangent = normalize2(b.x - a.x, b.z - a.z);
+  return {
+    x: mid.x * edgeBias + tangent.x * side * HEX_SIZE,
+    z: mid.z * edgeBias + tangent.z * side * HEX_SIZE
+  };
+}
+
+function getNaturalClusterPoint(edge, center, seed, radius) {
+  if (!radius || radius <= 0) return center;
+  const angle = hashUnit(`${seed}:cluster-angle`) * Math.PI * 2;
+  const distance = Math.sqrt(hashUnit(`${seed}:cluster-distance`)) * radius;
+  const local = {
+    x: center.x + Math.cos(angle) * distance,
+    z: center.z + Math.sin(angle) * distance
+  };
+
+  // Si le petit bouquet déborde sur le secteur voisin, on revient au centre.
+  // Moins spectaculaire, mais mieux qu'un champignon dans une voie ferrée, cette brillante saloperie.
+  const resolvedEdge = getEdgeFromLocalPoint(local);
+  return resolvedEdge === edge ? local : center;
+}
+
+function isNearWaterDecorArea(placedTile, edge, placedTiles) {
+  if (isShoreDecorEdge(placedTile, edge, placedTiles)) return true;
+
+  for (const candidateEdge of EDGE_ORDER) {
+    if (getTileEdgeType(placedTile, candidateEdge) === EDGE_TYPES.water) return true;
+
+    const direction = DIRECTION_BY_EDGE[candidateEdge];
+    const neighbor = placedTiles.get(makeHexKey(placedTile.q + direction.q, placedTile.r + direction.r));
+    if (!neighbor) continue;
+    if (getTileEdgeType(neighbor, getOppositeEdge(candidateEdge)) === EDGE_TYPES.water) return true;
+    if ((neighbor.tile.center ?? null) === EDGE_TYPES.water) return true;
+    if (EDGE_ORDER.some(neighborEdge => getTileEdgeType(neighbor, neighborEdge) === EDGE_TYPES.water)) return true;
+  }
+
+  return false;
 }
 
 function createRoadsideVillageProps(placedTiles) {
@@ -614,6 +830,88 @@ function createShoreBoats(placedTiles) {
 
 
 
+const birdGlbLibrary = {
+  prototype: null,
+  animations: [],
+  loading: false,
+  requested: false
+};
+
+function ensureBirdModel(overlay) {
+  if (birdGlbLibrary.loading || birdGlbLibrary.requested) return;
+  birdGlbLibrary.loading = true;
+  birdGlbLibrary.requested = true;
+
+  new GLTFLoader().load(
+    FIELD_BIRD_FLOCK_MODEL_URL,
+    gltf => {
+      birdGlbLibrary.prototype = prepareBirdPrototype(gltf.scene);
+      birdGlbLibrary.animations = gltf.animations ?? [];
+      birdGlbLibrary.loading = false;
+
+      const lastPlacedTiles = overlay.userData.lastPlacedTiles;
+      if (lastPlacedTiles) rebuildFieldWaterEffectsOverlay(overlay, lastPlacedTiles);
+    },
+    undefined,
+    error => {
+      birdGlbLibrary.loading = false;
+      console.warn(`Modèle oiseaux GLB indisponible : ${FIELD_BIRD_FLOCK_MODEL_URL}`, error);
+    }
+  );
+}
+
+function prepareBirdPrototype(model) {
+  const wrapper = new THREE.Group();
+  wrapper.name = 'normalized-field-bird-flock-glb';
+
+  const source = cloneSkeleton(model);
+  const box = new THREE.Box3().setFromObject(source);
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  source.position.set(-center.x, -center.y, -center.z);
+  const dimension = Math.max(size.x, size.z) || 1;
+  wrapper.scale.setScalar(FIELD_BIRD_FLOCK_TARGET_WIDTH / dimension);
+  wrapper.add(source);
+
+  wrapper.traverse(object => {
+    if (!object.isMesh) return;
+    object.castShadow = false;
+    object.receiveShadow = false;
+    if (object.material) object.material = clonePropMaterial(object.material);
+  });
+
+  return wrapper;
+}
+
+function createBirdFlock(seedKey) {
+  if (!birdGlbLibrary.prototype) return null;
+
+  const object = cloneSkeleton(birdGlbLibrary.prototype);
+  object.name = 'field-birds-glb-animated-flock';
+  object.rotation.y += (hashUnit(`${seedKey}:base-yaw`) - 0.5) * 0.35;
+  object.scale.multiplyScalar(0.92 + hashUnit(`${seedKey}:scale`) * 0.22);
+
+  const mixer = birdGlbLibrary.animations.length > 0 ? new THREE.AnimationMixer(object) : null;
+  if (mixer) {
+    for (const clip of birdGlbLibrary.animations) {
+      const action = mixer.clipAction(clip);
+      action.play();
+    }
+  }
+
+  object.userData = {
+    mixer,
+    animationSpeed: FIELD_BIRD_FLOCK_ANIMATION_SPEED * (0.88 + hashUnit(`${seedKey}:anim`) * 0.24),
+    lastAnimationTime: null
+  };
+
+  return object;
+}
+
+
 const propGlbLibrary = new Map();
 let propModelsLoading = false;
 let propModelsRequested = false;
@@ -705,36 +1003,6 @@ function getEdgeOutwardAngle(edge) {
   const x = (a.x + b.x) / 2;
   const z = (a.z + b.z) / 2;
   return Math.atan2(x, z);
-}
-
-function createCrow(seedKey) {
-  const group = new THREE.Group();
-  group.name = 'field-crow-circling-scarecrow';
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 5), CROW_MAT);
-  body.name = 'crow-body';
-  body.scale.set(1.35, 0.72, 0.72);
-  group.add(body);
-
-  const leftWing = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.025), CROW_MAT);
-  leftWing.name = 'crow-left-wing';
-  leftWing.position.set(-0.052, 0, 0);
-  leftWing.rotation.z = 0.25 + hashUnit(`${seedKey}:lw`) * 0.35;
-  group.add(leftWing);
-
-  const rightWing = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.025), CROW_MAT);
-  rightWing.name = 'crow-right-wing';
-  rightWing.position.set(0.052, 0, 0);
-  rightWing.rotation.z = -0.25 - hashUnit(`${seedKey}:rw`) * 0.35;
-  group.add(rightWing);
-
-  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.026, 5), new THREE.MeshBasicMaterial({ color: 0xB07A16 }));
-  beak.name = 'crow-beak';
-  beak.position.set(0, 0, 0.034);
-  beak.rotation.x = Math.PI / 2;
-  group.add(beak);
-
-  group.scale.setScalar(1.25 + hashUnit(`${seedKey}:scale`) * 0.55);
-  return group;
 }
 
 function getSectorWorldCenter(placedTile, edge) {

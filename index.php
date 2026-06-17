@@ -7,6 +7,13 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/multiplayerUi.css" />
+  <style>
+    /* Harmonisation HUD/aide : village = nouvelles couleurs brun/gris terre battue + gravier. */
+    .swatch.house {
+      background: linear-gradient(135deg, #b8ad90 0%, #8b8069 42%, #706653 68%, #a99d80 100%);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), inset 0 -2px 4px rgba(47,43,35,0.35);
+    }
+  </style>
 
   <script type="importmap">
     {

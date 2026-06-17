@@ -70,7 +70,7 @@ export const EDGE_COLOR = {
   forest: 0x1F5A2B,
   water: 0x5FA8D3,
   rail: 0xDDDDDD,
-  house: 0x8E4A34,
+  house: 0x8B8069,
   grass: 0x78A84A
 };
 
@@ -111,7 +111,7 @@ export const THIN_BIOME_DEPTH_RATIO = {
 // Variation du dessus des biomes pour éviter les glitchs aux jonctions.
 // Le dessous reste collé à la grille : c'est la règle sacrée, gravée au burin.
 export const BIOME_HEIGHT_RATIO = {
-  field: 0.45,
+  field: 0.2475,
   grass: -0.45
 };
 
@@ -236,7 +236,7 @@ export const BOATS_PER_WATER_COMPONENT = 1;
 export const BOAT_SPEED = 0.13;
 export const BOAT_HEADING_OFFSET = Math.PI;
 export const BOAT_MODEL_URL = './glb/bateau.glb';
-export const BOAT_TARGET_LENGTH = 0.98;
+export const BOAT_TARGET_LENGTH = 0.735;
 export const BOAT_Y_OFFSET = -0.018;
 export const WATER_PORT_INSET = 0.52;
 export const SHARK_FIN_WIDTH = 0.058;
@@ -248,6 +248,13 @@ export const WATER_EDGE_SPLASH_Y_OFFSET = 0.012;
 export const FIELD_SURFACE_Y = 0.070;
 export const SCARECROW_MIN_FIELD_TOTAL = 5;
 export const SCARECROW_SCALE = 0.62;
+
+// Oiseaux GLB animés des champs.
+// Le fichier contient déjà 5 oiseaux avec battement d'ailes ; le code ne fait
+// que lancer l'AnimationMixer et déplacer tout le groupe sur une orbite.
+export const FIELD_BIRD_FLOCK_MODEL_URL = './glb/birds.glb';
+export const FIELD_BIRD_FLOCK_TARGET_WIDTH = 0.048;
+export const FIELD_BIRD_FLOCK_ANIMATION_SPEED = 1.0;
 
 // ----------------------------------------------------------------------------
 // TRAINS / GARES

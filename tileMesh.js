@@ -56,7 +56,7 @@ const BIOME_HEIGHT_RATIO = {
   // Champ de blé : plus épais au-dessus du niveau standard.
   // Prairie : dessus nettement abaissé pour obtenir une dalle plus fine,
   // tout en gardant le dessous sur la même base de grille que les autres tuiles.
-  field: 0.45,
+  field: 0.2475,
   grass: -0.45
 };
 
