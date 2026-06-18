@@ -2,6 +2,13 @@ import { EDGE_ORDER, GRID_RADIUS, NETWORK_EDGE_TYPES } from '../config.js';
 import { makeHexKey } from './hex.js';
 import { getEdgeType } from '../tileGenerator.js';
 
+
+let dynamicPlacementGridKeys = null;
+
+export function setPlacementGridKeys(keys) {
+  dynamicPlacementGridKeys = keys instanceof Set ? keys : null;
+}
+
 export const HEX_DIRECTIONS = [
   { q: 1, r: 0, edge: 'n' },
   { q: 0, r: 1, edge: 'ne' },
@@ -38,6 +45,7 @@ export function getPlacementValidation(hex, placedTiles, tile = null, specialCel
 
 export function isHexInsideGrid(hex) {
   if (!hex) return false;
+  if (dynamicPlacementGridKeys?.size) return dynamicPlacementGridKeys.has(makeHexKey(hex.q, hex.r));
   return Math.max(
     Math.abs(hex.q),
     Math.abs(hex.r),

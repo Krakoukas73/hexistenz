@@ -1,11 +1,14 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import {
   EDGE_TYPES,
+  EDGE_ORDER,
+  SECTOR_DEFS,
   HEX_SIZE,
   TILE_VISUAL,
   TERRAIN_RELIEF,
   THIN_BIOME_DEPTH_RATIO,
-  BIOME_HEIGHT_RATIO
+  BIOME_HEIGHT_RATIO,
+  RAGGED_EDGE
 } from './config.js';
 
 export const RAIL_SURFACE_Y = TILE_VISUAL.railSurfaceY ?? TILE_VISUAL.waterY ?? -0.075;
@@ -47,8 +50,222 @@ export function getTerrainLocalTopY(point, type = EDGE_TYPES.grass ?? 'grass', s
   return baseY + relief;
 }
 
+
+function getTerrainMeshLocalTopY(point, type = EDGE_TYPES.grass ?? 'grass', salt = 0) {
+  if (!point) return getTerrainLocalTopY(point, type, salt);
+  if (type === EDGE_TYPES.rail || type === 'rail') return getBiomeLocalTopY(type);
+
+  const radius = Math.hypot(point.x, point.z);
+  const centerRadius = HEX_SIZE * (TILE_VISUAL.centerRadiusScale ?? 0.33);
+
+  if (radius <= centerRadius + 0.0005) {
+    return interpolateTopFromPolygon(point, createCenterTopPoints(), type, 31, salt);
+  }
+
+  const sector = getSectorFromLocalPoint(point);
+  if (!sector) return getTerrainLocalTopY(point, type, salt);
+
+  const topPoints = createSectorTopPoints(sector, type);
+  return interpolateTopFromPolygon(point, topPoints, type, 0, salt);
+}
+
+function interpolateTopFromPolygon(point, topPoints, type, saltOffset = 0, fallbackSalt = 0) {
+  if (!topPoints?.length) return getTerrainLocalTopY(point, type, fallbackSalt);
+
+  const heights = topPoints.map((topPoint, index) => (
+    getTerrainLocalTopY(topPoint, type, index + saltOffset) + (saltOffset === 0 ? (RAGGED_EDGE?.lift ?? 0) : 0)
+  ));
+  const triangles = THREE.ShapeUtils.triangulateShape(
+    topPoints.map(topPoint => new THREE.Vector2(topPoint.x, topPoint.z)),
+    []
+  );
+
+  for (const triangle of triangles) {
+    const a = topPoints[triangle[0]];
+    const b = topPoints[triangle[1]];
+    const c = topPoints[triangle[2]];
+    const bary = getBarycentric2D(point, a, b, c);
+    if (!bary) continue;
+
+    return (
+      heights[triangle[0]] * bary.a +
+      heights[triangle[1]] * bary.b +
+      heights[triangle[2]] * bary.c
+    );
+  }
+
+  return getTerrainLocalTopY(point, type, fallbackSalt);
+}
+
+function getSectorFromLocalPoint(point) {
+  if (!point || (Math.abs(point.x) < 0.0001 && Math.abs(point.z) < 0.0001)) return null;
+  let angle = Math.atan2(point.z, point.x);
+  if (angle < 0) angle += Math.PI * 2;
+  const index = Math.floor(((angle + Math.PI / 6) % (Math.PI * 2)) / (Math.PI / 3));
+  const key = EDGE_ORDER[index];
+  return (SECTOR_DEFS ?? []).find(sector => sector.key === key) ?? null;
+}
+
+function createSectorTopPoints(sector, type) {
+  const vertices = createOuterVertices();
+  const a = vertices[sector.a];
+  const b = vertices[sector.b];
+  const innerRadius = HEX_SIZE * (TILE_VISUAL.centerRadiusScale ?? 0.33);
+  const innerA = pointAtRadius(a, innerRadius);
+  const innerB = pointAtRadius(b, innerRadius);
+  const leftInnerEdge = createInnerEdge(innerA, a, sector.a);
+  const outerPoints = createRaggedOuterEdge(a, b, type);
+  const rightInnerEdge = createInnerEdge(innerB, b, sector.b).reverse();
+
+  return compactPointLoop([
+    ...leftInnerEdge,
+    ...outerPoints,
+    ...rightInnerEdge
+  ]);
+}
+
+function createCenterTopPoints() {
+  return createOuterVertices(HEX_SIZE * (TILE_VISUAL.centerRadiusScale ?? 0.33));
+}
+
+function createOuterVertices(radius = HEX_SIZE * (TILE_VISUAL.radiusScale ?? 1)) {
+  const vertices = [];
+  for (let i = 0; i < 6; i += 1) {
+    const angle = (Math.PI / 3) * i;
+    vertices.push({
+      x: Math.cos(angle) * radius,
+      z: Math.sin(angle) * radius
+    });
+  }
+  return vertices;
+}
+
+function createInnerEdge(innerPoint, outerPoint, vertexIndex) {
+  return createRaggedInnerEdge(innerPoint, outerPoint, vertexIndex);
+}
+
+function createRaggedInnerEdge(innerPoint, outerPoint, vertexIndex) {
+  const points = [];
+  const seed = hashRaggedInnerEdge(vertexIndex);
+  const segments = RAGGED_EDGE?.innerSegments ?? 8;
+  const dx = outerPoint.x - innerPoint.x;
+  const dz = outerPoint.z - innerPoint.z;
+  const length = Math.hypot(dx, dz) || 1;
+  const normal = { x: -dz / length, z: dx / length };
+
+  for (let i = 0; i <= segments; i += 1) {
+    const t = i / segments;
+    const x = THREE.MathUtils.lerp(innerPoint.x, outerPoint.x, t);
+    const z = THREE.MathUtils.lerp(innerPoint.z, outerPoint.z, t);
+    const endFade = Math.sin(Math.PI * t);
+    const wave = Math.sin((Math.PI * t * 3) + hash01(seed + 23) * Math.PI * 2);
+    const localChaos = (hash01(seed + i * 131) - 0.5) * 2;
+    const bite = (RAGGED_EDGE?.innerAmplitude ?? 0.075) * endFade * ((wave * 0.65) + (localChaos * 0.35));
+
+    points.push({
+      x: x + normal.x * bite,
+      z: z + normal.z * bite
+    });
+  }
+
+  return points;
+}
+
+function createRaggedOuterEdge(a, b, type) {
+  const points = [];
+  const seed = hashRaggedEdge(a, b, type);
+  const segments = RAGGED_EDGE?.segments ?? 11;
+
+  for (let i = 0; i <= segments; i += 1) {
+    const t = i / segments;
+    const x = THREE.MathUtils.lerp(a.x, b.x, t);
+    const z = THREE.MathUtils.lerp(a.z, b.z, t);
+    const endFade = Math.sin(Math.PI * t);
+    const broadWave = 0.55 + 0.45 * Math.sin((Math.PI * t * 2) + hash01(seed + 17) * Math.PI * 2);
+    const localChaos = 0.65 + 0.35 * hash01(seed + i * 97);
+    const bite = (RAGGED_EDGE?.amplitude ?? 0.135) * endFade * (0.55 + broadWave * localChaos);
+    const length = Math.hypot(x, z) || 1;
+
+    points.push({
+      x: x + (x / length) * bite,
+      z: z + (z / length) * bite
+    });
+  }
+
+  return points;
+}
+
+function compactPointLoop(points) {
+  const compacted = [];
+
+  for (const point of points) {
+    const previous = compacted[compacted.length - 1];
+    if (!previous || Math.hypot(previous.x - point.x, previous.z - point.z) > 0.0001) {
+      compacted.push(point);
+    }
+  }
+
+  const first = compacted[0];
+  const last = compacted[compacted.length - 1];
+  if (first && last && Math.hypot(first.x - last.x, first.z - last.z) <= 0.0001) {
+    compacted.pop();
+  }
+
+  return compacted;
+}
+
+function pointAtRadius(point, radius) {
+  const length = Math.hypot(point.x, point.z) || 1;
+  return {
+    x: (point.x / length) * radius,
+    z: (point.z / length) * radius
+  };
+}
+
+function getBarycentric2D(point, a, b, c) {
+  const v0x = b.x - a.x;
+  const v0z = b.z - a.z;
+  const v1x = c.x - a.x;
+  const v1z = c.z - a.z;
+  const v2x = point.x - a.x;
+  const v2z = point.z - a.z;
+  const d00 = v0x * v0x + v0z * v0z;
+  const d01 = v0x * v1x + v0z * v1z;
+  const d11 = v1x * v1x + v1z * v1z;
+  const d20 = v2x * v0x + v2z * v0z;
+  const d21 = v2x * v1x + v2z * v1z;
+  const denom = d00 * d11 - d01 * d01;
+  if (Math.abs(denom) < 0.0000001) return null;
+
+  const v = (d11 * d20 - d01 * d21) / denom;
+  const w = (d00 * d21 - d01 * d20) / denom;
+  const u = 1 - v - w;
+  const eps = -0.0005;
+
+  if (u < eps || v < eps || w < eps) return null;
+  return { a: u, b: v, c: w };
+}
+
+function hashRaggedInnerEdge(vertexIndex) {
+  return ((vertexIndex + 1) * 2654435761) >>> 0;
+}
+
+function hashRaggedEdge(a, b, type) {
+  const text = `${type}:${a.x.toFixed(3)},${a.z.toFixed(3)}>${b.x.toFixed(3)},${b.z.toFixed(3)}`;
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+
 export function getTerrainSurfaceY(point, type = EDGE_TYPES.rail ?? 'rail', salt = 0, options = {}) {
-  const surface = getBiomeSurfaceOffsetY(type) + getTerrainLocalTopY(point, type, salt);
+  const localTop = options.exactMeshSurface === false
+    ? getTerrainLocalTopY(point, type, salt)
+    : getTerrainMeshLocalTopY(point, type, salt);
+  const surface = getBiomeSurfaceOffsetY(type) + localTop;
 
   // On garde uniquement les tout derniers centimètres de bord parfaitement raccords
   // entre deux tuiles ; avant, la voie doit réellement monter/descendre avec le relief.

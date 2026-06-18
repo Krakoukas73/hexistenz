@@ -483,15 +483,15 @@ function addNaturalPropCluster(group, placedTile, edge, type, kind, placedTiles)
     prop.name = `${type}-${kind}-ambient-glb`;
     prop.position.set(tilePos.x + local.x, 0, tilePos.z + local.z);
     const yaw = hashUnit(`${seed}:yaw:${i}`) * Math.PI * 2;
-    const groundOffset = kind === 'flower' ? 0.003 : (kind === 'reed' ? 0.004 : (kind === 'mushroom' ? 0.002 : 0.000));
-    placeObjectOnTerrain(prop, local, type, hashNumber(`${seed}:terrain:${i}`) % 97, {
+    const groundOffset = kind === 'flower' ? 0.006 : (kind === 'reed' ? 0.010 : (kind === 'mushroom' ? 0.004 : 0.000));
+    const surfaceY = placeObjectOnTerrain(prop, local, type, hashNumber(`${seed}:terrain:${i}`) % 97, {
       groundOffset,
       alignToSlope: kind !== 'reed',
       yaw,
       edgeLockStart: 0.98,
       edgeLockEnd: 1.0,
       normalSampleStep: HEX_SIZE * 0.012
-    });
+    }) - groundOffset;
 
     const jitter = getNaturalPropScaleJitter(kind, seed, i);
     prop.scale.multiplyScalar(jitter);
@@ -506,6 +506,11 @@ function addNaturalPropCluster(group, placedTile, edge, type, kind, placedTiles)
       prop.rotation.x += (hashUnit(`${seed}:mushleanx:${i}`) - 0.5) * 0.035;
       prop.rotation.z += (hashUnit(`${seed}:mushleanz:${i}`) - 0.5) * 0.035;
     }
+
+    // Dernière sécurité après scale + rotations/lean : certains petits GLB ont un pivot
+    // ou une base imparfaite. On cale la boîte réelle sur la surface calculée, dans les
+    // deux sens : ni enfoui, ni flottant au-dessus du relief.
+    snapPropBottomToSurface(prop, surfaceY, getNaturalPropGroundClearance(kind));
     group.add(prop);
   }
 }
@@ -543,6 +548,29 @@ function getNaturalPropFootprint(kind) {
   if (kind === 'mushroom') return HEX_SIZE * 0.024;
   if (kind === 'reed') return HEX_SIZE * 0.026;
   return HEX_SIZE * 0.042;
+}
+
+function getNaturalPropGroundClearance(kind) {
+  if (kind === 'flower') return 0.007;
+  if (kind === 'reed') return 0.012;
+  if (kind === 'mushroom') return 0.006;
+  if (kind === 'rock') return 0.0015;
+  return 0.003;
+}
+
+function snapPropBottomToSurface(object, surfaceY, clearance = 0.004) {
+  if (!object || !Number.isFinite(surfaceY)) return;
+
+  object.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(object);
+  if (!Number.isFinite(box.min.y)) return;
+
+  const targetBottomY = surfaceY + clearance;
+  const deltaY = targetBottomY - box.min.y;
+  if (Math.abs(deltaY) > 0.0005) {
+    object.position.y += deltaY;
+    object.updateMatrixWorld(true);
+  }
 }
 
 function getNaturalPropScaleJitter(kind, seed, index) {

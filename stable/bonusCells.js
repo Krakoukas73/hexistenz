@@ -1,13 +1,14 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GRID_RADIUS, HEX_SIZE, TILE_VISUAL } from '../config.js';
+import { HEX_SIZE, TILE_VISUAL } from '../config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
+import { getAllGridHexes } from './gridRegions.js';
 
 export const BONUS_CELL_MIN = 1;
 export const BONUS_CELL_MAX = 4;
 export const BONUS_CELL_SCORE = 1500;
 
-export function createBonusCells(blockedKeys = new Set()) {
-  const availableHexes = getAllGridHexes().filter(hex => !blockedKeys.has(makeHexKey(hex.q, hex.r)));
+export function createBonusCells(blockedKeys = new Set(), gridRegions = null) {
+  const availableHexes = getAllGridHexes(gridRegions ?? undefined).filter(hex => !blockedKeys.has(makeHexKey(hex.q, hex.r)));
   const count = Math.min(getRandomInt(BONUS_CELL_MIN, BONUS_CELL_MAX), availableHexes.length);
   const cells = new Map();
   shuffleInPlace(availableHexes);
@@ -168,20 +169,6 @@ function createStarGeometry(outerRadius, innerRadius, points) {
   }
   shape.closePath();
   return new THREE.ShapeGeometry(shape);
-}
-
-function getAllGridHexes() {
-  const hexes = [];
-
-  for (let q = -GRID_RADIUS; q <= GRID_RADIUS; q += 1) {
-    for (let r = -GRID_RADIUS; r <= GRID_RADIUS; r += 1) {
-      if (Math.max(Math.abs(q), Math.abs(r), Math.abs(-q - r)) <= GRID_RADIUS) {
-        hexes.push({ q, r });
-      }
-    }
-  }
-
-  return hexes;
 }
 
 function getRandomInt(min, max) {

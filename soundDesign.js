@@ -10,23 +10,51 @@ const AUDIO_LAYERS = {
       './sounds/corbeaux-2.ogg'
     ],
     maxVolume: 0.24,
-    audibleRadius: HEX_SIZE * 4.8,
-    fullVolumeRadius: HEX_SIZE * 1.35,
+    audibleRadius: HEX_SIZE * 3.0,
+    fullVolumeRadius: HEX_SIZE * 0.85,
     fadeSpeed: 1.40
   },
   forest: {
     url: './sounds/foret.ogg',
     maxVolume: 0.22,
-    audibleRadius: HEX_SIZE * 5.4,
-    fullVolumeRadius: HEX_SIZE * 1.65,
+    audibleRadius: HEX_SIZE * 4.0,
+    fullVolumeRadius: HEX_SIZE * 0.95,
     fadeSpeed: 1.45
   },
   village: {
     url: './sounds/village.ogg',
-    maxVolume: 0.18,
-    audibleRadius: HEX_SIZE * 4.7,
-    fullVolumeRadius: HEX_SIZE * 1.40,
+    maxVolume: 0.22,
+    audibleRadius: HEX_SIZE * 4.0,
+    fullVolumeRadius: HEX_SIZE * 0.85,
     fadeSpeed: 1.35
+  },
+  beach: {
+    urls: [
+      './sounds/plage-1.ogg',
+      './sounds/plage-2.ogg'
+    ],
+    maxVolume: 0.20,
+    audibleRadius: HEX_SIZE * 3.5,
+    fullVolumeRadius: HEX_SIZE * 0.75,
+    fadeSpeed: 1.35
+  },
+  train: {
+    urls: [
+      './sounds/train-1.ogg',
+      './sounds/train-2.ogg',
+      './sounds/train-3.ogg'
+    ],
+    maxVolume: 0.20,
+    audibleRadius: HEX_SIZE * 3.0,
+    fullVolumeRadius: HEX_SIZE * 0.95,
+    fadeSpeed: 1.40
+  },
+  boat: {
+    url: './sounds/bateau.ogg',
+    maxVolume: 0.22,
+    audibleRadius: HEX_SIZE * 3.5,
+    fullVolumeRadius: HEX_SIZE * 0.70,
+    fadeSpeed: 1.25
   }
 };
 
@@ -48,7 +76,7 @@ class AmbientSoundDesign {
     this.tmpWorldPosition = new THREE.Vector3();
     this.lastTimeSeconds = 0;
     this.lastProximityRefresh = -Infinity;
-    this.proximity = { crows: 0, forest: 0, village: 0 };
+    this.proximity = { crows: 0, forest: 0, village: 0, beach: 0, train: 0, boat: 0 };
     this.unlocked = false;
     this.started = false;
 
@@ -160,6 +188,9 @@ class AmbientSoundDesign {
       this.proximity.crows = this.computeCrowProximity();
       this.proximity.forest = this.computeBiomeProximity(EDGE_TYPES.forest);
       this.proximity.village = this.computeBiomeProximity(EDGE_TYPES.house);
+      this.proximity.beach = this.computeBiomeProximity(EDGE_TYPES.water);
+      this.proximity.train = this.computeRailProximity();
+      this.proximity.boat = this.computeBoatProximity();
     }
 
     for (const [key, layer] of this.layers.entries()) {
@@ -197,7 +228,53 @@ class AmbientSoundDesign {
       if (weightedDistance < closest) closest = weightedDistance;
     }
 
-    const def = type === EDGE_TYPES.house ? AUDIO_LAYERS.village : AUDIO_LAYERS.forest;
+    const def = type === EDGE_TYPES.house
+      ? AUDIO_LAYERS.village
+      : type === EDGE_TYPES.water
+        ? AUDIO_LAYERS.beach
+        : AUDIO_LAYERS.forest;
+    return distanceToProximity(closest, def.fullVolumeRadius, def.audibleRadius);
+  }
+
+  computeRailProximity() {
+    if (!this.placedTiles?.size) return 0;
+
+    let closest = Infinity;
+    const cameraX = this.camera.position.x;
+    const cameraZ = this.camera.position.z;
+
+    for (const placedTile of this.placedTiles.values()) {
+      let matchingEdges = 0;
+      for (const edge of EDGE_ORDER) {
+        if (getEdgeType(placedTile.tile?.edges?.[edge]) === EDGE_TYPES.rail) matchingEdges += 1;
+      }
+      if (matchingEdges <= 0) continue;
+
+      const position = axialToWorld(placedTile.q, placedTile.r);
+      const weightedDistance = Math.hypot(position.x - cameraX, position.z - cameraZ) / Math.min(1.65, 0.90 + matchingEdges * 0.15);
+      if (weightedDistance < closest) closest = weightedDistance;
+    }
+
+    const def = AUDIO_LAYERS.train;
+    return distanceToProximity(closest, def.fullVolumeRadius, def.audibleRadius);
+  }
+
+  computeBoatProximity() {
+    const overlay = this.fieldWaterEffectsOverlay;
+    if (!overlay) return 0;
+
+    let closest = Infinity;
+    const cameraX = this.camera.position.x;
+    const cameraZ = this.camera.position.z;
+
+    overlay.traverse(object => {
+      if (!object.name?.includes('water-shore-inert-boat')) return;
+      object.getWorldPosition(this.tmpWorldPosition);
+      const distance = Math.hypot(this.tmpWorldPosition.x - cameraX, this.tmpWorldPosition.z - cameraZ);
+      if (distance < closest) closest = distance;
+    });
+
+    const def = AUDIO_LAYERS.boat;
     return distanceToProximity(closest, def.fullVolumeRadius, def.audibleRadius);
   }
 
@@ -226,6 +303,6 @@ function distanceToProximity(distance, fullVolumeRadius, audibleRadius) {
   if (distance <= fullVolumeRadius) return 1;
   if (distance >= audibleRadius) return 0;
 
-  const t = 1 - ((distance - fullVolumeRadius) / Math.max(0.001, audibleRadius - fullVolumeRadius));
-  return THREE.MathUtils.smoothstep(t, 0, 1);
+  const middleRadius = fullVolumeRadius + ((audibleRadius - fullVolumeRadius) * 0.45);
+  return distance <= middleRadius ? 0.5 : 0;
 }

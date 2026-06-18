@@ -218,6 +218,7 @@
             <li>2 côtés compatibles : +1 tuile ; 3 côtés compatibles : +2 tuiles.</li>
             <li>Tuile encerclée sur 6 côtés : +50 points.</li>
             <li>La tuile fantôme indique l’emplacement possible.</li>
+            <li>À chaque pose, la zone jouable s’étend doucement : les cases jusqu’à 3 hexagones autour de la tuile deviennent disponibles.</li>
             <li>Les cases bonus dorées apparaissent à la génération : occupe-les pour gagner +1500 points.</li>
           </ul>
         </article>

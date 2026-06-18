@@ -316,7 +316,10 @@ function createWaterBeachMesh(zone, placedTiles) {
   mesh.receiveShadow = true;
   mesh.castShadow = false;
   mesh.userData.disableCastShadow = true;
-  group.add(markNoWorldCurvature(mesh));
+  // La plage doit suivre la courbure GPU comme le terrain et l'eau.
+  // Ne surtout pas la marquer en no-curvature : sinon, si on bascule en mode
+  // bouliste après génération, elle reste plate et flotte au-dessus de la mer.
+  group.add(mesh);
 
   return group;
 }
@@ -700,7 +703,7 @@ function createBeachStripGeometryFromWorldPolyline(worldPolyline, worldWaterCent
     for (const sample of profile) {
       const x = point.x + normal.x * sample.offset;
       const z = point.z + normal.z * sample.offset;
-      const y = sample.y + getWorldCurvatureDrop(x, z);
+      const y = sample.y;
       positions.push(x, y, z);
       uvs.push(alongU * 3.4, sample.v);
     }
@@ -721,7 +724,7 @@ function createBeachStripGeometryFromWorldPolyline(worldPolyline, worldWaterCent
   // d'un simple tapis plat sans volume. Invisible de haut, utile en caméra basse.
   const topVertexCount = positions.length / 3;
   for (let i = 0; i < topVertexCount; i++) {
-    positions.push(positions[i * 3], BEACH.bottomY + getWorldCurvatureDrop(positions[i * 3], positions[i * 3 + 2]), positions[i * 3 + 2]);
+    positions.push(positions[i * 3], BEACH.bottomY, positions[i * 3 + 2]);
     uvs.push(uvs[i * 2], uvs[i * 2 + 1]);
   }
 

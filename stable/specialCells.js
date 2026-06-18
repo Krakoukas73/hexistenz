@@ -1,6 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GRID_RADIUS, HEX_SIZE } from '../config.js';
+import { HEX_SIZE } from '../config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
+import { getAllGridHexes } from './gridRegions.js';
 
 export const SPECIAL_CELL_MIN = 1;
 export const SPECIAL_CELL_MAX = 5;
@@ -17,8 +18,8 @@ const HEX_DIRECTIONS = [
   { q: 1, r: -1 }
 ];
 
-export function createSpecialCells() {
-  const availableHexes = getAllGridHexes();
+export function createSpecialCells(gridRegions = null) {
+  const availableHexes = getAllGridHexes(gridRegions ?? undefined);
   const availableKeys = new Set(availableHexes.map(hex => makeHexKey(hex.q, hex.r)));
   const count = Math.min(getRandomInt(SPECIAL_CELL_MIN, SPECIAL_CELL_MAX), availableHexes.length);
   const cells = new Map();
@@ -351,20 +352,6 @@ function getHexDistance(a, b) {
 
 function weightedPick(items) {
   return items[getRandomInt(0, items.length - 1)];
-}
-
-function getAllGridHexes() {
-  const hexes = [];
-
-  for (let q = -GRID_RADIUS; q <= GRID_RADIUS; q += 1) {
-    for (let r = -GRID_RADIUS; r <= GRID_RADIUS; r += 1) {
-      if (Math.max(Math.abs(q), Math.abs(r), Math.abs(-q - r)) <= GRID_RADIUS) {
-        hexes.push({ q, r });
-      }
-    }
-  }
-
-  return hexes;
 }
 
 function getRandomInt(min, max) {

@@ -5,6 +5,7 @@ import { getRealisticWaterMaterial } from './realisticWater.js';
 const materialCache = new Map();
 const generatedTextureCache = new Map();
 const animatedTextureState = new Map();
+let activeTexturePalette = null;
 const TEXTURED_TYPES = new Set([
   EDGE_TYPES.water,
   EDGE_TYPES.field,
@@ -35,6 +36,7 @@ export function getBiomeMaterial(type, opacity = 1) {
   if (TEXTURED_TYPES.has(type)) materialConfig.map = getGeneratedTexture(type);
 
   const material = new THREE.MeshLambertMaterial(materialConfig);
+  material.name = `biome-${type}-top-material`;
   materialCache.set(key, material);
   return material;
 }
@@ -73,6 +75,7 @@ export function getBiomeSideMaterial(type, opacity = 1) {
   }
 
   const material = new THREE.MeshLambertMaterial(materialConfig);
+  material.name = `biome-${type}-side-material`;
   materialCache.set(key, material);
   return material;
 }
@@ -93,10 +96,7 @@ function getGeneratedTexture(type) {
   texture.repeat.set(2, 2);
 
   generatedTextureCache.set(type, texture);
-
-  if (type === EDGE_TYPES.water) {
-    animatedTextureState.set(type, { canvas, ctx, texture });
-  }
+  animatedTextureState.set(type, { canvas, ctx, texture, type });
 
   return texture;
 }
@@ -117,6 +117,7 @@ function getGeneratedFieldSideTexture() {
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(3, 1);
   generatedTextureCache.set(key, texture);
+  animatedTextureState.set(key, { canvas, ctx, texture, type: EDGE_TYPES.field, side: true });
   return texture;
 }
 
@@ -125,12 +126,26 @@ export function updateAnimatedBiomeTextures(timeSeconds = 0) {
   if (!waterState) return;
 
   drawWaterTexture(waterState.ctx, timeSeconds);
+  applyCanvasPalette(EDGE_TYPES.water, waterState.ctx);
 
   // Très léger déplacement de la texture pour donner un courant lisible
   // sans modifier la géométrie ni les règles du jeu.
   waterState.texture.offset.x = (timeSeconds * 0.018) % 1;
   waterState.texture.offset.y = (Math.sin(timeSeconds * 0.35) * 0.015) % 1;
   waterState.texture.needsUpdate = true;
+}
+
+export function applyBiomeTexturePalette(palette = null) {
+  activeTexturePalette = palette?.enabled === false ? null : palette;
+
+  for (const state of animatedTextureState.values()) {
+    if (!state?.ctx || !state?.texture) continue;
+
+    if (state.side) drawFieldSideTexture(state.ctx);
+    else drawTexture(state.type, state.ctx, 0);
+
+    state.texture.needsUpdate = true;
+  }
 }
 
 function drawTexture(type, ctx, timeSeconds = 0) {
@@ -140,6 +155,8 @@ function drawTexture(type, ctx, timeSeconds = 0) {
   else if (type === EDGE_TYPES.grass) drawGrassTexture(ctx);
   else if (type === EDGE_TYPES.house) drawHouseTexture(ctx);
   else if (type === EDGE_TYPES.rail) drawRailGroundTexture(ctx);
+
+  applyCanvasPalette(type, ctx);
 }
 
 function drawWaterTexture(ctx, timeSeconds = 0) {
@@ -185,6 +202,8 @@ function drawFieldSideTexture(ctx) {
 
   ctx.fillStyle = 'rgba(76, 45, 12, 0.22)';
   ctx.fillRect(0, 104, 128, 24);
+
+  applyCanvasPalette(EDGE_TYPES.field, ctx);
 }
 
 function drawFieldTexture(ctx) {
@@ -433,4 +452,74 @@ function drawRailGroundTexture(ctx) {
     ctx.lineTo(x + 128, 138);
     ctx.stroke();
   }
+}
+
+
+function applyCanvasPalette(type, ctx) {
+  const palette = activeTexturePalette;
+  const targetHex = palette?.targets?.[type];
+  const rawStrength = Math.min(1, Math.max(0, Number(palette?.strength ?? 0)));
+
+  if (!targetHex || rawStrength <= 0) return;
+
+  // La palette doit recolorer la texture elle-même, pas seulement teinter mollement
+  // quelques interstices. On garde la luminance et le contraste local pour préserver
+  // les détails lowpoly, mais la teinte cible devient dominante dès les valeurs moyennes.
+  const strength = Math.min(1, 0.12 + rawStrength * 2.35);
+  const target = new THREE.Color(targetHex);
+  const targetHsl = {};
+  target.getHSL(targetHsl);
+  const image = ctx.getImageData(0, 0, 128, 128);
+  const data = image.data;
+  const saturation = Number(palette.saturation ?? 1);
+  const contrast = Number(palette.contrast ?? 1);
+  const warmShift = Number(palette.warmShift ?? 0);
+
+  for (let i = 0; i < data.length; i += 4) {
+    let r = data[i] / 255;
+    let g = data[i + 1] / 255;
+    let b = data[i + 2] / 255;
+
+    const source = new THREE.Color(r, g, b);
+    const sourceHsl = {};
+    source.getHSL(sourceHsl);
+
+    const hueDelta = shortestHueDelta(sourceHsl.h, targetHsl.h);
+    const h = (sourceHsl.h + hueDelta * strength + 1) % 1;
+    const s = Math.min(1, Math.max(0, sourceHsl.s + (Math.max(sourceHsl.s, targetHsl.s) - sourceHsl.s) * strength));
+    const l = Math.min(1, Math.max(0, sourceHsl.l + (targetHsl.l - sourceHsl.l) * strength * 0.42));
+
+    source.setHSL(h, s, l);
+    r = source.r;
+    g = source.g;
+    b = source.b;
+
+    // Deuxième passe RGB légère : elle force la famille chromatique demandée
+    // tout en évitant un aplat monochrome immonde façon Paint 95.
+    const rgbForce = strength * 0.34;
+    r = r + (target.r - r) * rgbForce;
+    g = g + (target.g - g) * rgbForce;
+    b = b + (target.b - b) * rgbForce;
+
+    const luma = r * 0.2126 + g * 0.7152 + b * 0.0722;
+    r = luma + (r - luma) * saturation;
+    g = luma + (g - luma) * saturation;
+    b = luma + (b - luma) * saturation;
+
+    r = (r - 0.5) * contrast + 0.5 + warmShift * 0.32;
+    g = (g - 0.5) * contrast + 0.5 + warmShift * 0.08;
+    b = (b - 0.5) * contrast + 0.5 - warmShift * 0.28;
+
+    data[i] = Math.round(Math.min(1, Math.max(0, r)) * 255);
+    data[i + 1] = Math.round(Math.min(1, Math.max(0, g)) * 255);
+    data[i + 2] = Math.round(Math.min(1, Math.max(0, b)) * 255);
+  }
+
+  ctx.putImageData(image, 0, 0);
+}
+
+function shortestHueDelta(from, to) {
+  let delta = ((to - from + 0.5) % 1) - 0.5;
+  if (delta < -0.5) delta += 1;
+  return delta;
 }

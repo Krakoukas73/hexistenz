@@ -6,7 +6,10 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 export const WORLD_CURVATURE = {
   enabled: true,
   radius: 22.0,
-  maxDrop: 6.5
+  // Domaine volontairement large : avec l'extension douce de grille,
+  // les cellules peuvent sortir très loin du rayon initial. Un plafond bas
+  // crée une demi-sphère puis un plateau plat, ce qui casse le mode bouliste.
+  maxDrop: 240.0
 };
 
 export const WORLD_CURVATURE_UNIFORMS = {

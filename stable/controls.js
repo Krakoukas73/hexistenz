@@ -1,6 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { worldToAxial } from './hex.js';
-import { intersectWorldCurvature } from './worldCurvature.js';
+import { getWorldCurvatureDrop, intersectWorldCurvature } from './worldCurvature.js';
 
 const DEFAULT_CAMERA = {
   radius: 15,
@@ -105,7 +105,7 @@ export class CameraControls {
   }
 
   reset() {
-    this.target.set(0, 0, 0);
+    this.target.set(0, getWorldCurvatureDrop(0, 0), 0);
     this.spherical.radius = DEFAULT_CAMERA.radius;
     this.desiredRadius = DEFAULT_CAMERA.radius;
     this.spherical.theta = DEFAULT_CAMERA.theta;
@@ -213,6 +213,7 @@ export class CameraControls {
 
     if (this.keyboardVelocity.lengthSq() > 0.000001) {
       this.target.add(this.keyboardVelocity);
+      this.target.y = getWorldCurvatureDrop(this.target.x, this.target.z);
     } else {
       this.keyboardVelocity.set(0, 0, 0);
     }
@@ -264,6 +265,7 @@ export class CameraControls {
     const desiredTarget = this.dragStartTarget.clone().add(
       this.dragStartPoint.clone().sub(worldPoint).multiplyScalar(this.panDragScale)
     );
+    desiredTarget.y = getWorldCurvatureDrop(desiredTarget.x, desiredTarget.z);
     this.target.lerp(desiredTarget, 0.55);
   }
 
@@ -334,6 +336,10 @@ export class CameraControls {
   }
 
   updateCamera() {
+    // En mode bouliste, la cible caméra doit rester collée à la surface courbée.
+    // Sinon, sur les cellules ajoutées loin du centre, le zoom vise encore le plan y=0 :
+    // impression de mur invisible + clipping des tuiles proches.
+    this.target.y = getWorldCurvatureDrop(this.target.x, this.target.z);
     this.spherical.phi = THREE.MathUtils.clamp(this.spherical.phi, MIN_POLAR_ANGLE, MAX_POLAR_ANGLE);
     this.spherical.radius = THREE.MathUtils.lerp(
       this.spherical.radius,

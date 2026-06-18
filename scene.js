@@ -1,14 +1,14 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { DECK_SIZE, GRID_RADIUS } from './config.js';
 import { CameraControls } from './stable/controls.js';
-import { createGrid, updateGridAvailability } from './stable/grid.js';
+import { createGrid, ensureGridCellsAroundHex, getGridCellCount, getGridKeys, updateGridAvailability } from './stable/grid.js';
 import { addSpecialCellMesh, createSpecialCells, createSpecialCellsMesh, removeSpecialCellMesh, updateSpecialCellsMeshAnimation } from './stable/specialCells.js';
 import { BONUS_CELL_SCORE, addBonusCellMesh, createBonusCells, createBonusCellsMesh, removeBonusCellMesh, updateBonusCellsMeshAnimation } from './stable/bonusCells.js';
 import { axialToWorld, makeHexKey } from './stable/hex.js';
 import { createTileMesh } from './tileMesh.js';
 import { updateAnimatedBiomeTextures } from './tileTextures.js';
 import { isRealisticWaterMaterial, triggerRealisticWaterRipple, updateRealisticWater } from './realisticWater.js';
-import { canPlaceTileAt, getPlacementValidation } from './stable/placementRules.js';
+import { canPlaceTileAt, getPlacementValidation, setPlacementGridKeys } from './stable/placementRules.js';
 import { calculatePlacementScore } from './stable/scoring.js';
 import { createDeck, rotateTile } from './tileGenerator.js';
 import { createUI, setGridOnlyModeVisible, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateMissionUI, updateScoreUI, updateStatsUI } from './ui.js';
@@ -20,6 +20,8 @@ import { createForestBirchOverlay, rebuildForestBirchOverlay } from './forestBir
 import { createHouseSmokeOverlay, rebuildHouseSmokeOverlay, updateHouseSmokeOverlay } from './houseSmokeOverlay.js';
 import { createFieldWaterEffectsOverlay, rebuildFieldWaterEffectsOverlay, updateFieldWaterEffectsOverlay } from './fieldWaterEffectsOverlay.js';
 import { createAmbientSoundDesign } from './soundDesign.js';
+import { createVisualEnvironment } from './visualEnvironment.js';
+import { createDebugLightUI } from './debugLightUi.js';
 import { askHighscoreSubmit, createHighscoreUI } from './stable/highscore.js';
 import { applySceneCurvatureFlags, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './stable/threeSetup.js';
 import { createPostprocessHud } from './stable/postprocessHud.js';
@@ -33,6 +35,8 @@ export function initScene(options = {}) {
   const scene = createThreeScene();
   const camera = createCamera();
   const postprocess = createPixelPostprocess(renderer, scene, camera);
+  const visualEnvironment = createVisualEnvironment(scene, renderer);
+  createDebugLightUI({ visualEnvironment, postprocess });
   const controls = new CameraControls(camera, canvas);
   const ui = createUI();
   const highscoreUI = createHighscoreUI(ui);
@@ -69,7 +73,7 @@ export function initScene(options = {}) {
   let shadowRefreshFrame = 0;
   const waterClickRaycaster = new THREE.Raycaster();
   const waterClickPointer = new THREE.Vector2();
-  const totalGridTiles = getTotalGridTiles(GRID_RADIUS);
+  let totalGridTiles = getTotalGridTiles(GRID_RADIUS);
 
   // Tuile fantôme et overlays : feedback visuel, aucun impact sur les règles.
   const ghostTile = new THREE.Group();
@@ -83,11 +87,16 @@ export function initScene(options = {}) {
   const houseSmokeOverlay = createHouseSmokeOverlay();
   const fieldWaterEffectsOverlay = createFieldWaterEffectsOverlay();
   const ambientSoundDesign = createAmbientSoundDesign({ camera, canvas, placedTiles, fieldWaterEffectsOverlay });
-  const gridOverlay = createGrid();
+  const gridOverlay = createGrid([...placedTiles.values()]);
+  syncPlacementGridKeys();
+  totalGridTiles = getGridCellCount(gridOverlay);
 
   ghostTile.visible = false;
 
   scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterSharkOverlay, forestBirchOverlay, houseSmokeOverlay, fieldWaterEffectsOverlay, remoteGhosts, ghostTile);
+  applySceneCurvatureFlags(gridOverlay);
+  applySceneCurvatureFlags(specialCellsMesh);
+  applySceneCurvatureFlags(bonusCellsMesh);
   for (const placedTile of placedTiles.values()) {
     const position = axialToWorld(placedTile.q, placedTile.r);
     const mesh = createTileMesh(placedTile.tile);
@@ -231,6 +240,7 @@ export function initScene(options = {}) {
     if ((shadowRefreshFrame++ % 20) === 0) {
       applySceneCurvatureFlags(scene);
       applySceneShadowFlags(scene);
+      visualEnvironment.apply();
     }
     postprocess.render();
   }
@@ -396,6 +406,7 @@ export function initScene(options = {}) {
 
     placedTiles.set(key, placedTile);
     placementHistory.push(placedTile);
+    expandGridAroundPlacedTile(hex);
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
     refreshGridAvailability();
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
@@ -420,6 +431,19 @@ export function initScene(options = {}) {
     refreshStatsUI();
     if (isMultiplayer) persistMultiplayerState();
     if (deck.length === 0) endGame();
+  }
+
+  function expandGridAroundPlacedTile(hex) {
+    const added = ensureGridCellsAroundHex(gridOverlay, hex, 3);
+    if (added <= 0) return;
+    syncPlacementGridKeys();
+    totalGridTiles = getGridCellCount(gridOverlay);
+    applySceneCurvatureFlags(gridOverlay);
+    updateScoreUI(ui, totalScore, lastScore, placedTiles.size, totalGridTiles);
+  }
+
+  function syncPlacementGridKeys() {
+    setPlacementGridKeys(getGridKeys(gridOverlay));
   }
 
   function refreshMissionUI() {
@@ -471,6 +495,13 @@ export function initScene(options = {}) {
     ghostTile.add(createPlacementFeedbackOverlay(status));
     if (gridOnlyMode) setGridLabelVisibility(false);
     ghostTile.position.set(position.x, 0.003, position.z);
+
+    // Le hover est reconstruit à chaque mouvement souris. En mode bouliste, si
+    // on attend le balayage global périodique de la scène, l'hexagone vert/rouge
+    // apparaît d'abord plat puis se courbe quelques frames plus tard : effet
+    // visuel dégueulasse façon rustine posée après coup. On applique donc la
+    // courbure immédiatement au sous-arbre fantôme fraîchement créé.
+    applySceneCurvatureFlags(ghostTile);
     ghostTile.visible = true;
 
     setText(ui.placement, getPlacementLabel(status));
@@ -508,10 +539,12 @@ export function initScene(options = {}) {
     if (last.consumedSpecialCell) {
       specialCells.set(last.key, last.consumedSpecialCell);
       addSpecialCellMesh(specialCellsMesh, last.consumedSpecialCell);
+      applySceneCurvatureFlags(specialCellsMesh);
     }
     if (last.consumedBonusCell) {
       bonusCells.set(last.key, last.consumedBonusCell);
       addBonusCellMesh(bonusCellsMesh, last.consumedBonusCell);
+      applySceneCurvatureFlags(bonusCellsMesh);
     }
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
@@ -682,15 +715,22 @@ export function initScene(options = {}) {
         scene.add(mesh);
       }
 
+      for (const placedTile of placedTiles.values()) ensureGridCellsAroundHex(gridOverlay, placedTile, 3);
+      syncPlacementGridKeys();
+      totalGridTiles = getGridCellCount(gridOverlay);
+      applySceneCurvatureFlags(gridOverlay);
+
       specialCells.clear();
       const remoteSpecialCells = hydrateCellMap(snapshot.specialCells) ?? new Map();
       for (const [key, cell] of remoteSpecialCells.entries()) specialCells.set(key, cell);
       rebuildCellMeshGroup(specialCellsMesh, specialCells, addSpecialCellMesh);
+      applySceneCurvatureFlags(specialCellsMesh);
 
       bonusCells.clear();
       const remoteBonusCells = hydrateCellMap(snapshot.bonusCells) ?? new Map();
       for (const [key, cell] of remoteBonusCells.entries()) bonusCells.set(key, cell);
       rebuildCellMeshGroup(bonusCellsMesh, bonusCells, addBonusCellMesh);
+      applySceneCurvatureFlags(bonusCellsMesh);
 
       const remoteDeck = hydratePlayerDeck(snapshot, playerId);
       if (remoteDeck) deck.splice(0, deck.length, ...remoteDeck);

@@ -1,35 +1,89 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GRID_RADIUS, HEX_SIZE, TILE_VISUAL } from '../config.js';
-import { axialToWorld } from './hex.js';
+import { axialToWorld, makeHexKey } from './hex.js';
 
-export function createGrid() {
+const GRID_EXPANSION_RADIUS = 3;
+
+export function createGrid(seedHexes = []) {
   const group = new THREE.Group();
   group.name = 'placement-grid';
-  const material = new THREE.LineBasicMaterial({ color: 0x141b22, transparent: true, opacity: 0.18 });
-  const fillMaterial = new THREE.MeshBasicMaterial({
+  group.userData.gridKeys = new Set();
+  group.userData.gridCellPairs = new Map();
+
+  for (let q = -GRID_RADIUS; q <= GRID_RADIUS; q++) {
+    for (let r = -GRID_RADIUS; r <= GRID_RADIUS; r++) {
+      if (!isBaseGridHex(q, r)) continue;
+      addGridCell(group, q, r);
+    }
+  }
+
+  for (const hex of seedHexes ?? []) {
+    ensureGridCellsAroundHex(group, hex, GRID_EXPANSION_RADIUS);
+  }
+
+  return group;
+}
+
+export function ensureGridCellsAroundHex(gridGroup, centerHex, radius = GRID_EXPANSION_RADIUS) {
+  if (!gridGroup || !centerHex) return 0;
+
+  let added = 0;
+  const centerQ = Number(centerHex.q);
+  const centerR = Number(centerHex.r);
+  const safeRadius = Math.max(0, Math.floor(Number(radius) || 0));
+
+  for (let dq = -safeRadius; dq <= safeRadius; dq += 1) {
+    for (let dr = -safeRadius; dr <= safeRadius; dr += 1) {
+      const ds = -dq - dr;
+      if (Math.max(Math.abs(dq), Math.abs(dr), Math.abs(ds)) > safeRadius) continue;
+      if (addGridCell(gridGroup, centerQ + dq, centerR + dr)) added += 1;
+    }
+  }
+
+  return added;
+}
+
+export function getGridKeys(gridGroup) {
+  return gridGroup?.userData?.gridKeys ?? new Set();
+}
+
+export function getGridCellCount(gridGroup) {
+  return getGridKeys(gridGroup).size;
+}
+
+function isBaseGridHex(q, r) {
+  return Math.max(Math.abs(q), Math.abs(r), Math.abs(-q - r)) <= GRID_RADIUS;
+}
+
+function addGridCell(group, q, r) {
+  const key = makeHexKey(q, r);
+  if (group.userData.gridKeys?.has(key)) return false;
+
+  if (!group.userData.gridKeys) group.userData.gridKeys = new Set();
+  if (!group.userData.gridCellPairs) group.userData.gridCellPairs = new Map();
+
+  const { x, z } = axialToWorld(q, r);
+  const gridY = (TILE_VISUAL.waterY ?? -0.075) - (TILE_VISUAL.waterThickness ?? 0.08) - 0.012;
+  const fill = createHexFill(x, gridY - 0.002, z, createFillMaterial(), q, r);
+  const wire = createHexWire(x, gridY, z, createWireMaterial(), q, r);
+  group.userData.gridKeys.add(key);
+  group.userData.gridCellPairs.set(key, [fill, wire]);
+  group.add(fill, wire);
+  return true;
+}
+
+function createWireMaterial() {
+  return new THREE.LineBasicMaterial({ color: 0x141b22, transparent: true, opacity: 0.18 });
+}
+
+function createFillMaterial() {
+  return new THREE.MeshBasicMaterial({
     color: 0x10161c,
     transparent: true,
     opacity: 0.08,
     depthWrite: false,
     side: THREE.DoubleSide
   });
-
-  for (let q = -GRID_RADIUS; q <= GRID_RADIUS; q++) {
-    for (let r = -GRID_RADIUS; r <= GRID_RADIUS; r++) {
-      if (!isGridHex(q, r)) continue;
-      const { x, z } = axialToWorld(q, r);
-      const gridY = (TILE_VISUAL.waterY ?? -0.075) - (TILE_VISUAL.waterThickness ?? 0.08) - 0.012;
-      const fill = createHexFill(x, gridY - 0.002, z, fillMaterial.clone(), q, r);
-      const wire = createHexWire(x, gridY, z, material.clone(), q, r);
-      group.add(fill, wire);
-    }
-  }
-
-  return group;
-}
-
-function isGridHex(q, r) {
-  return Math.max(Math.abs(q), Math.abs(r), Math.abs(-q - r)) <= GRID_RADIUS;
 }
 
 function createHexWire(x, y, z, material, q, r) {

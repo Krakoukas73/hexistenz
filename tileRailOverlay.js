@@ -621,6 +621,7 @@ function addRailsideStones(group, centerline, seedKey, closed = false) {
       scale * (0.54 + hashUnit(`${seedKey}:stone-sy:${i}`) * 0.32),
       scale * (0.80 + hashUnit(`${seedKey}:stone-sz:${i}`) * 0.42)
     );
+    snapStoneBottomToSurface(stone, getSurfaceY(position, RAIL_TYPE), HEX_SIZE * 0.001);
     group.add(stone);
   }
 }
@@ -655,8 +656,25 @@ function addBiomeScatterStones(group, edges, sectorDefs, createOuterVertices) {
         scale * (0.42 + hashUnit(`${seed}:sy:${i}`) * 0.24),
         scale * (0.72 + hashUnit(`${seed}:sz:${i}`) * 0.38)
       );
+      snapStoneBottomToSurface(stone, getSurfaceY(position, type), HEX_SIZE * 0.001);
       group.add(stone);
     }
+  }
+}
+
+
+function snapStoneBottomToSurface(stone, surfaceY, clearance = HEX_SIZE * 0.001) {
+  if (!stone || !Number.isFinite(surfaceY)) return;
+
+  stone.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(stone);
+  if (!Number.isFinite(box.min.y)) return;
+
+  const targetBottomY = surfaceY + clearance;
+  const deltaY = targetBottomY - box.min.y;
+  if (Math.abs(deltaY) > 0.0005) {
+    stone.position.y += deltaY;
+    stone.updateMatrixWorld(true);
   }
 }
 

@@ -57,50 +57,101 @@ export function createHouseSmokeOverlay() {
 
 export function rebuildHouseSmokeOverlay(group, placedTiles) {
   group.userData.lastPlacedTiles = placedTiles;
-  clearGroup(group);
-  group.userData.columns = [];
+  if (!group.userData.tileHouseGroups) group.userData.tileHouseGroups = new Map();
 
   if (houseGlbLibrary.size === 0) {
     ensureHouseGlbModels(group);
     return;
   }
 
+  const tileHouseGroups = group.userData.tileHouseGroups;
+  const activeKeys = new Set();
   const churchSectors = collectVillageChurchSectors(placedTiles);
   const cemeterySectors = collectVillageCemeterySectors(placedTiles, churchSectors);
 
   for (const placedTile of placedTiles.values()) {
-    const edges = placedTile.tile?.edges;
-    if (!edges) continue;
+    const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
+    activeKeys.add(tileKey);
 
-    const tileX = placedTile.mesh?.position?.x ?? 0;
-    const tileZ = placedTile.mesh?.position?.z ?? 0;
+    const signature = getTileHouseOverlaySignature(placedTile, churchSectors, cemeterySectors);
+    const cached = tileHouseGroups.get(tileKey);
+    if (cached && cached.userData?.houseOverlaySignature === signature) continue;
 
-    // Les anciennes routes/ponts SVG du village sont neutralisés :
-    // tous les chemins visibles passent désormais par tileRoadOverlay.js en GLB.
-    // addCentralHouseConnectionBridges(group, tileX, tileZ, placedTile);
-
-    for (const sector of SECTOR_DEFS) {
-      const edge = edges[sector.key];
-      if (getEdgeType(edge) !== EDGE_TYPES.house) continue;
-
-      const houseCount = Math.max(1, Math.min(4, Math.round(getEdgeValue(edge))));
-
-      // 1 maison du triangle = 1 maison 3D.
-      // La fumée est déterministe et limitée à environ 60% des maisons.
-      addSectorSmokeColumns(
-        group,
-        tileX,
-        tileZ,
-        sector,
-        houseCount,
-        placedTile.key,
-        churchSectors.has(makeSectorKey(placedTile.key, sector.key)),
-        cemeterySectors.has(makeSectorKey(placedTile.key, sector.key)),
-        placedTile,
-        placedTiles
-      );
+    if (cached) {
+      group.remove(cached);
+      clearGroup(cached);
     }
+
+    const tileGroup = new THREE.Group();
+    tileGroup.name = `house-smoke-tile-${tileKey}`;
+    tileGroup.userData.houseOverlaySignature = signature;
+    buildHouseSmokeTileGroup(tileGroup, placedTile, placedTiles, churchSectors, cemeterySectors);
+    tileHouseGroups.set(tileKey, tileGroup);
+    group.add(tileGroup);
   }
+
+  for (const [tileKey, tileGroup] of tileHouseGroups.entries()) {
+    if (activeKeys.has(tileKey)) continue;
+    group.remove(tileGroup);
+    clearGroup(tileGroup);
+    tileHouseGroups.delete(tileKey);
+  }
+
+  group.userData.columns = Array.from(tileHouseGroups.values()).flatMap(tileGroup => tileGroup.userData.columns ?? []);
+}
+
+function buildHouseSmokeTileGroup(group, placedTile, placedTiles, churchSectors, cemeterySectors) {
+  group.userData.columns = [];
+
+  const edges = placedTile.tile?.edges;
+  if (!edges) return;
+
+  const tileX = placedTile.mesh?.position?.x ?? 0;
+  const tileZ = placedTile.mesh?.position?.z ?? 0;
+  const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
+
+  // Les anciennes routes/ponts SVG du village sont neutralisés :
+  // tous les chemins visibles passent désormais par tileRoadOverlay.js en GLB.
+  // addCentralHouseConnectionBridges(group, tileX, tileZ, placedTile);
+
+  for (const sector of SECTOR_DEFS) {
+    const edge = edges[sector.key];
+    if (getEdgeType(edge) !== EDGE_TYPES.house) continue;
+
+    const houseCount = Math.max(1, Math.min(4, Math.round(getEdgeValue(edge))));
+
+    // 1 maison du triangle = 1 maison 3D.
+    // La fumée est déterministe et limitée à environ 60% des maisons.
+    addSectorSmokeColumns(
+      group,
+      tileX,
+      tileZ,
+      sector,
+      houseCount,
+      tileKey,
+      churchSectors.has(makeSectorKey(tileKey, sector.key)),
+      cemeterySectors.has(makeSectorKey(tileKey, sector.key)),
+      placedTile,
+      placedTiles
+    );
+  }
+}
+
+function getTileHouseOverlaySignature(placedTile, churchSectors, cemeterySectors) {
+  const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
+  const edges = placedTile.tile?.edges ?? {};
+
+  return SECTOR_DEFS.map(sector => {
+    const edge = edges[sector.key];
+    const sectorKey = makeSectorKey(tileKey, sector.key);
+    return [
+      sector.key,
+      getEdgeType(edge),
+      Math.max(1, Math.min(4, Math.round(getEdgeValue(edge)))) || 0,
+      churchSectors.has(sectorKey) ? 'church' : '',
+      cemeterySectors.has(sectorKey) ? 'cemetery' : ''
+    ].join(':');
+  }).join('|');
 }
 
 export function updateHouseSmokeOverlay(group, timeSeconds = 0) {
@@ -1058,8 +1109,12 @@ function createVillageHouseObject(seedKey, sector, index) {
   house.name = `${def.key}-village-house-instance`;
   house.traverse(object => {
     if (!object.isMesh) return;
-    object.castShadow = false;
-    object.receiveShadow = false;
+    // Les maisons doivent naître avec leurs ombres actives.
+    // Sinon elles apparaissent sans ombre puis le passe global les réactive :
+    // c'est le clignotement/masquage visible à chaque pose de tuile.
+    object.castShadow = true;
+    object.receiveShadow = true;
+    object.userData.shadowFlagsApplied = true;
   });
 
   group.add(house);

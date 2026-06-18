@@ -145,6 +145,63 @@ export function triggerRealisticWaterRipple(worldPoint, timeSeconds = performanc
   updateRealisticWater(timeSeconds);
 }
 
+export function applyRealisticWaterPalette(palette = null) {
+  const targetHex = palette?.enabled === false ? null : palette?.targets?.water;
+  const rawStrength = Math.min(1, Math.max(0, Number(palette?.strength ?? 0)));
+  const strength = targetHex ? Math.min(1, 0.12 + rawStrength * 2.35) : 0;
+
+  for (const material of waterMaterials) {
+    if (!material?.uniforms) continue;
+
+    if (!targetHex || strength <= 0) {
+      material.uniforms.uDeepColor.value.set(0x155a8a);
+      material.uniforms.uShallowColor.value.set(0x66d7ff);
+      material.uniforms.uReflectionColor.value.set(0xf8fbff);
+      material.uniforms.uSkyColor.value.set(0x8fd7ff);
+      material.needsUpdate = true;
+      continue;
+    }
+
+    const target = new THREE.Color(targetHex);
+    const saturation = Number(palette.saturation ?? 1);
+    const contrast = Number(palette.contrast ?? 1);
+    const warmShift = Number(palette.warmShift ?? 0);
+
+    material.uniforms.uDeepColor.value.copy(forceWaterPaletteColor(new THREE.Color(0x155a8a), target, strength, saturation, contrast, warmShift, 0.80));
+    material.uniforms.uShallowColor.value.copy(forceWaterPaletteColor(new THREE.Color(0x66d7ff), target, strength, saturation, contrast, warmShift, 0.54));
+    material.uniforms.uReflectionColor.value.copy(forceWaterPaletteColor(new THREE.Color(0xf8fbff), target, strength, saturation, contrast, warmShift, 0.20));
+    material.uniforms.uSkyColor.value.copy(forceWaterPaletteColor(new THREE.Color(0x8fd7ff), target, strength, saturation, contrast, warmShift, 0.38));
+    material.needsUpdate = true;
+  }
+}
+
+function forceWaterPaletteColor(base, target, strength, saturation, contrast, warmShift, mixWeight) {
+  const baseHsl = {};
+  const targetHsl = {};
+  base.getHSL(baseHsl);
+  target.getHSL(targetHsl);
+
+  const force = Math.min(1, strength * mixWeight);
+  const hue = (baseHsl.h + shortestHueDelta(baseHsl.h, targetHsl.h) * force + 1) % 1;
+  const sat = Math.min(1, Math.max(0, (baseHsl.s + (Math.max(baseHsl.s, targetHsl.s) - baseHsl.s) * force) * saturation));
+  const lum = Math.min(1, Math.max(0, baseHsl.l + (targetHsl.l - baseHsl.l) * force * 0.45));
+  const color = new THREE.Color().setHSL(hue, sat, lum);
+
+  color.r = (color.r - 0.5) * contrast + 0.5 + warmShift * 0.32;
+  color.g = (color.g - 0.5) * contrast + 0.5 + warmShift * 0.08;
+  color.b = (color.b - 0.5) * contrast + 0.5 - warmShift * 0.28;
+  color.r = Math.min(1, Math.max(0, color.r));
+  color.g = Math.min(1, Math.max(0, color.g));
+  color.b = Math.min(1, Math.max(0, color.b));
+  return color;
+}
+
+function shortestHueDelta(from, to) {
+  let delta = ((to - from + 0.5) % 1) - 0.5;
+  if (delta < -0.5) delta += 1;
+  return delta;
+}
+
 export function isRealisticWaterMaterial(material) {
   return Boolean(material?.userData?.isRealisticWater);
 }

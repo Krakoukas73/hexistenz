@@ -19,7 +19,10 @@ export function createRenderer(canvas) {
   renderer.toneMappingExposure = 1.38;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.BasicShadowMap;
-  renderer.shadowMap.autoUpdate = true;
+  // Les ombres sont coûteuses : ne pas recalculer la shadow map à chaque frame.
+  // Elle est rafraîchie explicitement et de façon throttled par updateSunShadowOrbit().
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.needsUpdate = true;
   return renderer;
 }
 
@@ -95,8 +98,16 @@ export function updateSunShadowOrbit(scene, timeSeconds) {
   }
   if (sunVisual) sunVisual.position.set(x * orbit.visualScale, orbit.height * orbit.visualScale, z * orbit.visualScale);
   sun.updateMatrixWorld();
-  sun.shadow.camera.updateProjectionMatrix();
-  sun.shadow.needsUpdate = true;
+
+  // Recalculer une shadow map 8192² en continu est une aberration GPU.
+  // On garde le soleil visuel animé, mais les ombres réelles ne sont rafraîchies
+  // que par cadence contrôlée, au lieu de repartir au broyeur à chaque frame/pose.
+  const lastShadowUpdate = sun.userData.lastShadowUpdate ?? -Infinity;
+  if ((timeSeconds - lastShadowUpdate) >= 4) {
+    sun.shadow.camera.updateProjectionMatrix();
+    sun.shadow.needsUpdate = true;
+    sun.userData.lastShadowUpdate = timeSeconds;
+  }
 }
 
 function createVisibleSunObject() {
@@ -262,7 +273,7 @@ export function applySceneCurvatureFlags(scene) {
   });
 }
 
-function applyWorldCurvatureToMaterial(material) {
+export function applyWorldCurvatureToMaterial(material) {
   if (!material || material.userData?.worldCurvatureApplied || material.isShaderMaterial) return;
 
   const previousOnBeforeCompile = material.onBeforeCompile;

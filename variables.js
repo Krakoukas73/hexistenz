@@ -18,7 +18,7 @@
 export const HEX_SIZE = 1;
 
 // Rayon de la carte hexagonale. 10 donne une grande grille jouable.
-export const GRID_RADIUS = 9;
+export const GRID_RADIUS = 6;
 
 // Nombre de tuiles dans le deck initial.
 export const DECK_SIZE = 50;
