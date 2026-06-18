@@ -11,6 +11,7 @@ const DEFAULT_CAMERA = {
 const MIN_POLAR_ANGLE = 0.000001;
 const MAX_POLAR_ANGLE = Math.PI / 2 - 0.02;
 const CLICK_DRAG_CANCEL_DISTANCE = 6;
+const SHIFT_NAVIGATION_MULTIPLIER = 3.5;
 
 export class CameraControls {
   constructor(camera, domElement) {
@@ -24,13 +25,15 @@ export class CameraControls {
       DEFAULT_CAMERA.theta
     );
 
-    this.minRadius = 3;
+    // Zoom minimum abaissé : on peut enfin descendre près de la surface
+    // sans heurter un plafond invisible comme un pigeon contre une baie vitrée.
+    this.minRadius = 1.55;
     this.maxRadius = 80;
     this.rotateSpeed = 0.0026;
     // Zoom amorti : une molette Windows ne doit pas catapulter la caméra
     // comme un ascenseur de mine sans frein.
-    this.zoomStep = 0.72;
-    this.zoomDamping = 0.28;
+    this.zoomStep = 0.58;
+    this.zoomDamping = 0.24;
     // Déplacement clavier volontairement amorti : ZQSD ne doit pas transformer
     // la caméra en mobylette volée par un gobelin sous amphétamines.
     this.keySpeed = 0.06325;
@@ -48,6 +51,7 @@ export class CameraControls {
     this.desiredRadius = this.spherical.radius;
 
     this.keys = { z: false, q: false, s: false, d: false };
+    this.shiftBoostActive = false;
     this.currentHex = null;
 
     this.onHover = null;
@@ -78,13 +82,20 @@ export class CameraControls {
 
     window.addEventListener('mouseup', event => this.handleMouseUp(event));
     window.addEventListener('keydown', event => {
+      this.shiftBoostActive = event.shiftKey;
       // Les raccourcis système/jeu (Ctrl+Z, Alt+..., etc.) ne doivent pas être
       // avalés par le déplacement caméra. ZQSD reste actif sans modificateur.
       if (event.ctrlKey || event.metaKey || event.altKey) return;
       if (this.setKey(event.key, true)) event.preventDefault();
     });
     window.addEventListener('keyup', event => {
+      this.shiftBoostActive = event.shiftKey && event.key !== 'Shift';
       if (this.setKey(event.key, false)) event.preventDefault();
+    });
+    window.addEventListener('blur', () => {
+      this.shiftBoostActive = false;
+      Object.keys(this.keys).forEach(key => { this.keys[key] = false; });
+      this.keyboardVelocity.set(0, 0, 0);
     });
   }
 
@@ -102,14 +113,22 @@ export class CameraControls {
     this.updateCamera();
   }
 
-  zoom(deltaY) {
+  zoom(deltaY, boosted = false) {
     const direction = Math.sign(deltaY) || 0;
     if (!direction) return;
 
     // Wheel classique : deltaY vaut souvent 100 ou 120. Trackpad : valeurs fines.
-    // On borne pour garder un zoom précis, progressif, presque mètre par mètre.
+    // Plus on est près du sol, plus le pas se réduit : zoom rapproché précis,
+    // sans à-coups et sans traverser la carte comme un obus mal élevé.
     const wheelStrength = THREE.MathUtils.clamp(Math.abs(deltaY) / 120, 0.18, 1);
-    const deltaRadius = direction * this.zoomStep * wheelStrength;
+    const nearFactor = THREE.MathUtils.clamp(
+      (this.desiredRadius - this.minRadius) / Math.max(0.001, DEFAULT_CAMERA.radius - this.minRadius),
+      0,
+      1
+    );
+    const adaptiveStep = THREE.MathUtils.lerp(this.zoomStep * 0.34, this.zoomStep, nearFactor);
+    const boostMultiplier = boosted ? SHIFT_NAVIGATION_MULTIPLIER : 1;
+    const deltaRadius = direction * adaptiveStep * wheelStrength * boostMultiplier;
 
     this.desiredRadius = THREE.MathUtils.clamp(
       this.desiredRadius + deltaRadius,
@@ -156,8 +175,8 @@ export class CameraControls {
     event.preventDefault();
     this.updateHover(event.clientX, event.clientY);
 
-    if (this.onWheel) this.onWheel(this.currentHex, event.deltaY);
-    else this.zoom(event.deltaY);
+    if (this.onWheel) this.onWheel(this.currentHex, event.deltaY, event.shiftKey);
+    else this.zoom(event.deltaY, event.shiftKey);
   }
 
   rotateCamera(dx, dy) {
@@ -181,7 +200,7 @@ export class CameraControls {
     if (this.keys.d) desiredVelocity.add(right);
 
     const distanceFactor = this.getKeyboardDistanceFactor();
-    const moveSpeed = this.getKeyboardMoveSpeed(distanceFactor);
+    const moveSpeed = this.getKeyboardMoveSpeed(distanceFactor) * this.getNavigationMultiplier();
     const moveSmoothing = THREE.MathUtils.lerp(this.keyNearSmoothing, this.keyFarSmoothing, distanceFactor);
     const stopSmoothing = THREE.MathUtils.lerp(this.keyNearStopSmoothing, this.keyFarStopSmoothing, distanceFactor);
 
@@ -197,6 +216,10 @@ export class CameraControls {
     } else {
       this.keyboardVelocity.set(0, 0, 0);
     }
+  }
+
+  getNavigationMultiplier() {
+    return this.shiftBoostActive ? SHIFT_NAVIGATION_MULTIPLIER : 1;
   }
 
   getKeyboardDistanceFactor() {

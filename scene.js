@@ -19,6 +19,7 @@ import { createWaterSharkOverlay, rebuildWaterSharkOverlay, updateWaterSharkOver
 import { createForestBirchOverlay, rebuildForestBirchOverlay } from './forestBirchOverlay.js';
 import { createHouseSmokeOverlay, rebuildHouseSmokeOverlay, updateHouseSmokeOverlay } from './houseSmokeOverlay.js';
 import { createFieldWaterEffectsOverlay, rebuildFieldWaterEffectsOverlay, updateFieldWaterEffectsOverlay } from './fieldWaterEffectsOverlay.js';
+import { createAmbientSoundDesign } from './soundDesign.js';
 import { askHighscoreSubmit, createHighscoreUI } from './stable/highscore.js';
 import { applySceneCurvatureFlags, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './stable/threeSetup.js';
 import { createPostprocessHud } from './stable/postprocessHud.js';
@@ -81,6 +82,7 @@ export function initScene(options = {}) {
   const forestBirchOverlay = createForestBirchOverlay();
   const houseSmokeOverlay = createHouseSmokeOverlay();
   const fieldWaterEffectsOverlay = createFieldWaterEffectsOverlay();
+  const ambientSoundDesign = createAmbientSoundDesign({ camera, canvas, placedTiles, fieldWaterEffectsOverlay });
   const gridOverlay = createGrid();
 
   ghostTile.visible = false;
@@ -148,9 +150,9 @@ export function initScene(options = {}) {
 
   controls.onClick = (hex) => placeTile(hex);
 
-  controls.onWheel = (hex, deltaY) => {
+  controls.onWheel = (hex, deltaY, boosted = false) => {
     if (hex && isPlacementTarget(hex)) rotateActiveTile(deltaY < 0 ? 1 : -1);
-    else controls.zoom(deltaY);
+    else controls.zoom(deltaY, boosted);
   };
 
   window.addEventListener('keydown', event => {
@@ -179,13 +181,13 @@ export function initScene(options = {}) {
 
     if ((event.key === '+' || event.key === '=' || event.code === 'NumpadAdd') && !helpVisible) {
       event.preventDefault();
-      controls.zoom(-120);
+      controls.zoom(-120, event.shiftKey);
       return;
     }
 
     if ((event.key === '-' || event.code === 'NumpadSubtract') && !helpVisible) {
       event.preventDefault();
-      controls.zoom(120);
+      controls.zoom(120, event.shiftKey);
       return;
     }
 
@@ -223,6 +225,7 @@ export function initScene(options = {}) {
     updateWaterSharkOverlay(waterSharkOverlay, timeSeconds);
     updateHouseSmokeOverlay(houseSmokeOverlay, timeSeconds);
     updateFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, timeSeconds);
+    ambientSoundDesign.update(timeSeconds);
     updateSunShadowOrbit(scene, timeSeconds);
     updateWorldCurvedSprites(scene);
     if ((shadowRefreshFrame++ % 20) === 0) {

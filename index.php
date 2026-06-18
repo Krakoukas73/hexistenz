@@ -140,12 +140,17 @@
       <div class="key-row command-row">
         <div class="key" id="keyPlus">+</div>
         <div class="key" id="keyMinus">-</div>
-        <div class="key-label">Zoom caméra</div>
+        <div class="key-label">Zoom caméra (SHIFT = accéléré)</div>
       </div>
 
       <div class="key-row command-row">
         <div class="key key-combo">CTRL+Z</div>
         <div class="key-label">Annuler</div>
+      </div>
+
+      <div class="key-row command-row">
+        <div class="key key-combo">SHIFT</div>
+        <div class="key-label">Accélère déplacements et zoom</div>
       </div>
 
       <div class="key-row command-row">
@@ -269,6 +274,7 @@
             <div><kbd>Ctrl+Z</kbd><span>Annuler le dernier mouvement</span></div>
             <div><kbd>H</kbd><span>Afficher / masquer cette aide</span></div>
             <div><kbd>ESPACE</kbd><span>Mode immersif : masque interface, HUD et nombres</span></div>
+            <div><kbd>SHIFT</kbd><span>Accélère les déplacements clavier et le zoom</span></div>
             <div><kbd>Molette</kbd><span>Zoom sur tuile posée, rotation sur case disponible</span></div>
             <div><kbd>Clic gauche</kbd><span>Poser ou déplacer la caméra en glissant</span></div>
             <div><kbd>Clic droit</kbd><span>Rotation de la caméra</span></div>

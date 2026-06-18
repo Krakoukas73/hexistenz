@@ -410,22 +410,22 @@ function createFieldFlagReward(zone) {
     const flock = createBirdFlock(`${seed}:bird-flock:${i}`);
     if (!flock) continue;
 
-    const heightMultiplier = 1.50 + hashUnit(`${seed}:birdheight:${i}`) * 1.15;
-    const altitudeStagger = i * 0.26 + hashUnit(`${seed}:bird-altitude-stagger:${i}`) * 0.42;
+    const heightMultiplier = 1.75 + hashUnit(`${seed}:birdheight:${i}`) * 1.65;
+    const altitudeStagger = i * 0.42 + hashUnit(`${seed}:bird-altitude-stagger:${i}`) * 0.95;
     flock.userData = {
       ...flock.userData,
       effectKind: 'bird-flock-orbit',
       cx: 0,
-      cy: (0.88 + i * 0.11) * heightMultiplier + altitudeStagger,
+      cy: (1.02 + i * 0.16) * heightMultiplier + altitudeStagger,
       cz: 0,
       rx: 0.42 + hashUnit(`${seed}:birdrx:${i}`) * 0.68,
       rz: 0.26 + hashUnit(`${seed}:birdrz:${i}`) * 0.54,
       speed: 0.28 + hashUnit(`${seed}:birdspeed:${i}`) * 0.72,
       direction: hashUnit(`${seed}:birddir:${i}`) > 0.5 ? 1 : -1,
       phase: hashUnit(`${seed}:birdphase:${i}`) * Math.PI * 2,
-      verticalSpeed: 0.45 + hashUnit(`${seed}:birdvspeed:${i}`) * 0.95,
-      verticalAmp: 0.04 + hashUnit(`${seed}:birdvamp:${i}`) * 0.16,
-      bobAmp: 0.025 + hashUnit(`${seed}:birdbob:${i}`) * 0.07,
+      verticalSpeed: 0.38 + hashUnit(`${seed}:birdvspeed:${i}`) * 1.20,
+      verticalAmp: 0.08 + hashUnit(`${seed}:birdvamp:${i}`) * 0.28,
+      bobAmp: 0.040 + hashUnit(`${seed}:birdbob:${i}`) * 0.115,
       wobbleSpeedA: 0.32 + hashUnit(`${seed}:birdwoba:${i}`) * 1.10,
       wobbleSpeedB: 0.30 + hashUnit(`${seed}:birdwobb:${i}`) * 1.20,
       wobbleSpeedC: 0.28 + hashUnit(`${seed}:birdwobc:${i}`) * 1.30,

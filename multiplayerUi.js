@@ -23,7 +23,8 @@ function renderShell(screen = 'home', initialCode = '') {
   overlay.innerHTML = `
     <div class="mode-background-carousel" aria-hidden="true"></div>
     <section class="mode-panel">
-      <h1>HEXISTENZ</h1>
+      <img class="mode-logo" src="images/logo2.png" alt="Hexistenz" draggable="false" />
+      
       <p class="mode-copy"></p>
       <div class="mode-content"></div>
       <div class="multi-status" aria-live="polite"></div>
@@ -44,7 +45,7 @@ function ensureMenuBackgroundStyles() {
   style.id = 'modeBackgroundCarouselStyles';
   style.textContent = `
     .mode-screen--with-background {
-      overflow: hidden;
+      overflow: visible;
       isolation: isolate;
       background:
         radial-gradient(circle at 50% 15%, rgba(115, 190, 255, 0.16), transparent 34%),
@@ -95,7 +96,15 @@ function ensureMenuBackgroundStyles() {
 
     .mode-screen--with-background .mode-panel {
       position: relative;
+      overflow: visible !important;
       z-index: 4;
+      margin-top: clamp(120px, 18vh, 180px);
+      
+	  
+	  padding-top: clamp(320px, 41vh, 410px);
+	  
+	  
+	  
       background:
         linear-gradient(160deg, rgba(8, 16, 26, 0.64), rgba(4, 8, 14, 0.42)),
         rgba(5, 10, 18, 0.38);
@@ -118,6 +127,34 @@ function ensureMenuBackgroundStyles() {
         radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.18), transparent 34%),
         radial-gradient(circle at 100% 100%, rgba(95, 170, 255, 0.13), transparent 40%);
       pointer-events: none;
+    }
+
+    .mode-logo {
+      display: block;
+      width: min(520px, 78vw);
+      max-height: none;
+      margin: 0;
+      position: absolute;
+      top: clamp(-230px, -26vh, -150px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 8;
+      object-fit: contain;
+      user-select: none;
+      pointer-events: none;
+      filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.52));
+    }
+
+    @media (max-height: 760px) {
+      .mode-screen--with-background .mode-panel {
+        margin-top: 112px;
+        padding-top: 250px;
+      }
+
+      .mode-logo {
+        width: min(440px, 74vw);
+        top: -150px;
+      }
     }
 
     @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

@@ -18,7 +18,7 @@
 export const HEX_SIZE = 1;
 
 // Rayon de la carte hexagonale. 10 donne une grande grille jouable.
-export const GRID_RADIUS = 10;
+export const GRID_RADIUS = 9;
 
 // Nombre de tuiles dans le deck initial.
 export const DECK_SIZE = 50;
@@ -253,7 +253,7 @@ export const SCARECROW_SCALE = 0.62;
 // Le fichier contient déjà 5 oiseaux avec battement d'ailes ; le code ne fait
 // que lancer l'AnimationMixer et déplacer tout le groupe sur une orbite.
 export const FIELD_BIRD_FLOCK_MODEL_URL = './glb/birds.glb';
-export const FIELD_BIRD_FLOCK_TARGET_WIDTH = 0.048;
+export const FIELD_BIRD_FLOCK_TARGET_WIDTH = 0.0312;
 export const FIELD_BIRD_FLOCK_ANIMATION_SPEED = 1.0;
 
 // ----------------------------------------------------------------------------

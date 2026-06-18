@@ -40,6 +40,20 @@ const TRACK = {
 const RAIL_TYPE = EDGE_TYPES.rail;
 const RAIL_SURFACE_Y = TILE_VISUAL.railSurfaceY ?? TILE_VISUAL.waterY ?? -0.075;
 
+const RAIL_ZONE_BORDER = {
+  // Même philosophie que les plages validées : un ruban de terrain en relief,
+  // construit sur le contour turbulent réel du secteur, jamais une corde droite
+  // entre deux sommets d'hexagone.
+  width: HEX_SIZE * 0.082,
+  outerSegments: 16,
+  innerSegments: 12,
+  outerAmplitude: HEX_SIZE * 0.030,
+  innerAmplitude: HEX_SIZE * 0.024,
+  yLift: HEX_SIZE * 0.014,
+  sideDrop: HEX_SIZE * 0.040,
+  jointOverlap: HEX_SIZE * 0.030
+};
+
 // Toute la voie est maintenant générée par createRailCenterOverlay().
 // On garde l'export pour compatibilité avec tileMesh.js, mais on évite les anciens
 // morceaux séparés par secteur : c'était la source des cassures visibles.
@@ -54,6 +68,8 @@ export function createRailCenterOverlay(edges, sectorDefs, createOuterVertices) 
   const group = new THREE.Group();
   group.name = 'procedural-volume-rail-track';
 
+  addRailZoneBoundaryOverlay(group, edges, sectorDefs, createOuterVertices);
+
   const routes = createRailRoutes(railPorts);
   for (const route of routes) {
     addTrackRoute(group, route);
@@ -62,6 +78,276 @@ export function createRailCenterOverlay(edges, sectorDefs, createOuterVertices) 
   addBiomeScatterStones(group, edges, sectorDefs, createOuterVertices);
 
   return group;
+}
+
+
+function addRailZoneBoundaryOverlay(group, edges, sectorDefs, createOuterVertices) {
+  const railSectorKeys = new Set(sectorDefs
+    .filter(sector => getEdgeType(edges[sector.key]) === RAIL_TYPE)
+    .map(sector => sector.key));
+  if (railSectorKeys.size === 0) return;
+
+  const outerVertices = createOuterVertices();
+  const innerRadius = HEX_SIZE * (TILE_VISUAL.centerRadiusScale ?? 0.33);
+  const innerVertices = createOuterVertices(innerRadius);
+  const borderGeometries = [];
+
+  for (const sector of sectorDefs) {
+    if (!railSectorKeys.has(sector.key)) continue;
+
+    const edgeIndex = sectorDefs.findIndex(item => item.key === sector.key);
+    const previousSector = sectorDefs[(edgeIndex + sectorDefs.length - 1) % sectorDefs.length];
+    const nextSector = sectorDefs[(edgeIndex + 1) % sectorDefs.length];
+
+    // Bord extérieur du secteur rail : turbulent comme le mesh de terrain.
+    borderGeometries.push(createRailZoneRibbonGeometry(
+      createRailRaggedOuterEdge(outerVertices[sector.a], outerVertices[sector.b], sector.key),
+      true
+    ));
+
+    // Bords radiaux seulement quand le rail touche un autre biome : c'est la
+    // bordure de zone, pas un quadrillage interne à la con.
+    if (!railSectorKeys.has(previousSector.key)) {
+      borderGeometries.push(createRailZoneRibbonGeometry(
+        createRailRaggedInnerEdge(innerVertices[sector.a], outerVertices[sector.a], sector.a),
+        false
+      ));
+    }
+
+    if (!railSectorKeys.has(nextSector.key)) {
+      borderGeometries.push(createRailZoneRibbonGeometry(
+        createRailRaggedInnerEdge(innerVertices[sector.b], outerVertices[sector.b], sector.b).reverse(),
+        false
+      ));
+    }
+  }
+
+  const geometry = mergeRailZoneGeometries(borderGeometries.filter(Boolean));
+  if (!geometry) return;
+
+  const mesh = new THREE.Mesh(geometry, [getRailMaterial('ballastTop'), getRailMaterial('ballastSide')]);
+  mesh.name = 'procedural-rail-zone-turbulent-border';
+  mesh.receiveShadow = true;
+  mesh.castShadow = false;
+  mesh.renderOrder = 118;
+  group.add(mesh);
+}
+
+function createRailZoneRibbonGeometry(polyline, preferOuterSide = true) {
+  const clean = compactRailPolyline(polyline);
+  if (clean.length < 2) return null;
+
+  const expanded = extendRailPolyline(clean, RAIL_ZONE_BORDER.jointOverlap);
+  const positions = [];
+  const uvs = [];
+  const indices = [];
+  const topCount = expanded.length * 2;
+
+  const cumulative = [0];
+  for (let i = 1; i < expanded.length; i += 1) {
+    cumulative.push(cumulative[i - 1] + distance2D(expanded[i - 1], expanded[i]));
+  }
+  const total = Math.max(cumulative[cumulative.length - 1], 0.001);
+
+  for (let i = 0; i < expanded.length; i += 1) {
+    const point = expanded[i];
+    const tangent = getRailPolylineTangent(expanded, i);
+    const normal = getRailPolylineNormal(tangent, point, preferOuterSide);
+    const outer = offsetPoint2D(point, normal, RAIL_ZONE_BORDER.width * 0.58);
+    const inner = offsetPoint2D(point, normal, -RAIL_ZONE_BORDER.width * 0.42);
+    const v = cumulative[i] / total;
+    const yOuter = getSurfaceY(new THREE.Vector3(outer.x, 0, outer.z), RAIL_TYPE) + RAIL_ZONE_BORDER.yLift * 0.76;
+    const yInner = getSurfaceY(new THREE.Vector3(inner.x, 0, inner.z), RAIL_TYPE) + RAIL_ZONE_BORDER.yLift;
+
+    positions.push(outer.x, yOuter, outer.z);
+    uvs.push(v * 3.0, 0);
+    positions.push(inner.x, yInner, inner.z);
+    uvs.push(v * 3.0, 1);
+  }
+
+  for (let i = 0; i < expanded.length - 1; i += 1) {
+    const a = i * 2;
+    const b = a + 2;
+    indices.push(a, a + 1, b + 1);
+    indices.push(a, b + 1, b);
+  }
+  const topIndexCount = indices.length;
+
+  // Sous-face et flancs fermés : on évite de voir sous la bordure en caméra basse.
+  for (let i = 0; i < expanded.length; i += 1) {
+    const topOuter = i * 2;
+    const topInner = topOuter + 1;
+    const outerY = positions[topOuter * 3 + 1] - RAIL_ZONE_BORDER.sideDrop;
+    const innerY = positions[topInner * 3 + 1] - RAIL_ZONE_BORDER.sideDrop;
+    const base = positions.length / 3;
+
+    positions.push(positions[topOuter * 3], outerY, positions[topOuter * 3 + 2]);
+    uvs.push(uvs[topOuter * 2], 0);
+    positions.push(positions[topInner * 3], innerY, positions[topInner * 3 + 2]);
+    uvs.push(uvs[topInner * 2], 1);
+  }
+
+  for (let i = 0; i < expanded.length - 1; i += 1) {
+    const a = i * 2;
+    const b = a + 2;
+    const ba = topCount + a;
+    const bb = topCount + b;
+
+    indices.push(topCount + a + 1, topCount + b + 1, topCount + b);
+    indices.push(topCount + a + 1, topCount + b, topCount + a);
+
+    indices.push(a, b, bb);
+    indices.push(a, bb, ba);
+    indices.push(a + 1, topCount + a + 1, topCount + b + 1);
+    indices.push(a + 1, topCount + b + 1, b + 1);
+  }
+
+  const sideIndexCount = indices.length - topIndexCount;
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+  geometry.setIndex(indices);
+  geometry.clearGroups();
+  geometry.addGroup(0, topIndexCount, 0);
+  geometry.addGroup(topIndexCount, sideIndexCount, 1);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function createRailRaggedOuterEdge(a, b, seedKey) {
+  const points = [];
+  const seed = hashNumber(`rail-border-outer:${seedKey}:${a.x.toFixed(3)}:${a.z.toFixed(3)}:${b.x.toFixed(3)}:${b.z.toFixed(3)}`);
+
+  for (let i = 0; i <= RAIL_ZONE_BORDER.outerSegments; i += 1) {
+    const t = i / RAIL_ZONE_BORDER.outerSegments;
+    const x = THREE.MathUtils.lerp(a.x, b.x, t);
+    const z = THREE.MathUtils.lerp(a.z, b.z, t);
+    const endFade = Math.sin(Math.PI * t);
+    const broadWave = Math.sin(Math.PI * t * 2 + hashUnit(seed + 17) * Math.PI * 2);
+    const localChaos = (hashUnit(seed + i * 97) - 0.5) * 2;
+    const bite = RAIL_ZONE_BORDER.outerAmplitude * endFade * (broadWave * 0.62 + localChaos * 0.38);
+    const len = Math.hypot(x, z) || 1;
+    points.push({ x: x + (x / len) * bite, z: z + (z / len) * bite });
+  }
+
+  return points;
+}
+
+function createRailRaggedInnerEdge(innerPoint, outerPoint, vertexIndex) {
+  const points = [];
+  const seed = hashNumber(`rail-border-inner:${vertexIndex}`);
+  const dx = outerPoint.x - innerPoint.x;
+  const dz = outerPoint.z - innerPoint.z;
+  const length = Math.hypot(dx, dz) || 1;
+  const normal = { x: -dz / length, z: dx / length };
+
+  for (let i = 0; i <= RAIL_ZONE_BORDER.innerSegments; i += 1) {
+    const t = i / RAIL_ZONE_BORDER.innerSegments;
+    const x = THREE.MathUtils.lerp(innerPoint.x, outerPoint.x, t);
+    const z = THREE.MathUtils.lerp(innerPoint.z, outerPoint.z, t);
+    const endFade = Math.sin(Math.PI * t);
+    const wave = Math.sin(Math.PI * t * 3 + hashUnit(seed + 23) * Math.PI * 2);
+    const localChaos = (hashUnit(seed + i * 131) - 0.5) * 2;
+    const bite = RAIL_ZONE_BORDER.innerAmplitude * endFade * (wave * 0.65 + localChaos * 0.35);
+    points.push({ x: x + normal.x * bite, z: z + normal.z * bite });
+  }
+
+  return points;
+}
+
+function compactRailPolyline(points) {
+  const compacted = [];
+  for (const point of points) {
+    const previous = compacted[compacted.length - 1];
+    if (!previous || distance2D(previous, point) > 0.0001) compacted.push(point);
+  }
+  return compacted;
+}
+
+function extendRailPolyline(points, amount) {
+  if (points.length < 2 || amount <= 0) return points.map(point => ({ ...point }));
+  const out = points.map(point => ({ ...point }));
+  const firstDir = normalize2D(sub2D(out[0], out[1]));
+  const lastDir = normalize2D(sub2D(out[out.length - 1], out[out.length - 2]));
+  out[0].x += firstDir.x * amount;
+  out[0].z += firstDir.z * amount;
+  out[out.length - 1].x += lastDir.x * amount;
+  out[out.length - 1].z += lastDir.z * amount;
+  return out;
+}
+
+function getRailPolylineTangent(points, index) {
+  const previous = points[Math.max(0, index - 1)];
+  const next = points[Math.min(points.length - 1, index + 1)];
+  return normalize2D(sub2D(next, previous));
+}
+
+function getRailPolylineNormal(tangent, point, preferOuterSide) {
+  const n = normalize2D({ x: tangent.z, z: -tangent.x });
+  const radial = normalize2D(point);
+  const dot = n.x * radial.x + n.z * radial.z;
+  const sign = preferOuterSide ? (dot >= 0 ? 1 : -1) : 1;
+  return { x: n.x * sign, z: n.z * sign };
+}
+
+function offsetPoint2D(point, normal, distance) {
+  return { x: point.x + normal.x * distance, z: point.z + normal.z * distance };
+}
+
+function mergeRailZoneGeometries(geometries) {
+  if (geometries.length === 0) return null;
+  if (geometries.length === 1) return geometries[0];
+
+  const positions = [];
+  const uvs = [];
+  const indices = [];
+  const groups = [];
+  let vertexOffset = 0;
+  let indexOffset = 0;
+
+  for (const geometry of geometries) {
+    const position = geometry.getAttribute('position');
+    const uv = geometry.getAttribute('uv');
+    const index = geometry.getIndex();
+    if (!position || !uv || !index) continue;
+
+    for (let i = 0; i < position.count; i += 1) {
+      positions.push(position.getX(i), position.getY(i), position.getZ(i));
+      uvs.push(uv.getX(i), uv.getY(i));
+    }
+    for (let i = 0; i < index.count; i += 1) indices.push(index.getX(i) + vertexOffset);
+
+    for (const group of geometry.groups) {
+      groups.push({ start: indexOffset + group.start, count: group.count, materialIndex: group.materialIndex });
+    }
+
+    vertexOffset += position.count;
+    indexOffset += index.count;
+  }
+
+  if (positions.length === 0 || indices.length === 0) return null;
+  const merged = new THREE.BufferGeometry();
+  merged.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+  merged.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+  merged.setIndex(indices);
+  merged.clearGroups();
+  for (const group of groups) merged.addGroup(group.start, group.count, group.materialIndex);
+  merged.computeVertexNormals();
+  return merged;
+}
+
+function distance2D(a, b) {
+  return Math.hypot(a.x - b.x, a.z - b.z);
+}
+
+function sub2D(a, b) {
+  return { x: a.x - b.x, z: a.z - b.z };
+}
+
+function normalize2D(v) {
+  const length = Math.hypot(v.x, v.z);
+  if (length <= 0.000001) return { x: 1, z: 0 };
+  return { x: v.x / length, z: v.z / length };
 }
 
 function getRailPorts(edges, sectorDefs, createOuterVertices) {
@@ -615,7 +901,9 @@ function getRailMaterial(kind) {
     metal: { color: 0x5B5F5B, roughness: 0.58, metalness: 0.45 },
     wood: { color: 0x7A4425, roughness: 0.88, metalness: 0.02 },
     woodDark: { color: 0x4D2D1A, roughness: 0.90, metalness: 0.02 },
-    stone: { color: 0x8B8172, roughness: 0.96, metalness: 0.0 }
+    stone: { color: 0x8B8172, roughness: 0.96, metalness: 0.0 },
+    ballastTop: { color: 0x9A8A68, roughness: 0.98, metalness: 0.0 },
+    ballastSide: { color: 0x6F624D, roughness: 0.99, metalness: 0.0 }
   }[kind] ?? { color: 0xffffff, roughness: 0.8, metalness: 0.0 };
 
   const material = new THREE.MeshStandardMaterial({
