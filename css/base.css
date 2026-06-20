@@ -520,8 +520,13 @@ body::after {
 
 body.grid-only-mode #scorePanel,
 body.grid-only-mode #debugHud,
-body.grid-only-mode #tileUI,
+body.grid-only-mode .multiplayer-badge,
 body.grid-only-mode .help-overlay {
+  display: none !important;
+}
+
+body.grid-only-mode #tileUI .deckRemainingBox,
+body.grid-only-mode #tileUI .missionsBox {
   display: none !important;
 }
 

@@ -19,7 +19,7 @@ import { createWaterSharkOverlay, rebuildWaterSharkOverlay, updateWaterSharkOver
 import { createForestBirchOverlay, rebuildForestBirchOverlay } from './forestBirchOverlay.js';
 import { createHouseSmokeOverlay, rebuildHouseSmokeOverlay, updateHouseSmokeOverlay } from './houseSmokeOverlay.js';
 import { createFieldWaterEffectsOverlay, rebuildFieldWaterEffectsOverlay, updateFieldWaterEffectsOverlay } from './fieldWaterEffectsOverlay.js';
-import { createAmbientSoundDesign } from './soundDesign.js';
+import { createAmbientSoundDesign, startEndingMusic, startIngameMusic } from './soundDesign.js';
 import { createVisualEnvironment } from './visualEnvironment.js';
 import { createDebugLightUI } from './debugLightUi.js';
 import { askHighscoreSubmit, createHighscoreUI } from './stable/highscore.js';
@@ -235,7 +235,7 @@ export function initScene(options = {}) {
     updateHouseSmokeOverlay(houseSmokeOverlay, timeSeconds);
     updateFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, timeSeconds);
     ambientSoundDesign.update(timeSeconds);
-    updateSunShadowOrbit(scene, timeSeconds);
+    updateSunShadowOrbit(scene, timeSeconds, controls.target);
     updateWorldCurvedSprites(scene);
     if ((shadowRefreshFrame++ % 20) === 0) {
       applySceneCurvatureFlags(scene);
@@ -529,6 +529,7 @@ export function initScene(options = {}) {
     if (!last) return;
 
     gameOver = false;
+    startIngameMusic();
     ui.abandonGame?.removeAttribute('disabled');
     scene.remove(last.mesh);
     last.mesh.traverse?.(object => {
@@ -600,6 +601,7 @@ export function initScene(options = {}) {
 
   function endGame(label = 'FIN DU DECK') {
     gameOver = true;
+    startEndingMusic();
     refreshGridAvailability();
     updateHoveredSpecialCellVisibility(null);
     ghostTile.visible = false;
@@ -756,6 +758,8 @@ export function initScene(options = {}) {
       totalScore = Number(snapshot.totalScore ?? 0);
       lastScore = Number(snapshot.lastScore ?? getLastPlacementScore(placementHistory));
       gameOver = Boolean(snapshot.gameOver);
+      if (gameOver) startEndingMusic();
+      else startIngameMusic();
       rotationIndex = Number(snapshot.players?.[playerId]?.rotationIndex ?? rotationIndex ?? 0);
 
       rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);

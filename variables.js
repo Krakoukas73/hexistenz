@@ -213,11 +213,12 @@ export const CEMETERY_MAX_PER_ZONE = 3;
 // FORÊTS / ARBRES GLB
 // ----------------------------------------------------------------------------
 export const TREE_MODEL_DEFS = [
-  { key: 'birch', url: './glb/tree_birch.glb', baseScale: 0.225 },
-  { key: 'bushy_mini', url: './glb/tree_bushy_mini.glb', baseScale: 0.225 },
-  { key: 'oak_round', url: './glb/tree_oak_round.glb', baseScale: 0.225 },
-  { key: 'pine_soft', url: './glb/tree_pine_soft.glb', baseScale: 0.250 },
-  { key: 'poplar', url: './glb/tree_poplar.glb', baseScale: 0.250 }
+  { key: 'birch', url: './glb/arbres/tree_birch.glb', baseScale: 0.225 },
+  { key: 'bushy_mini', url: './glb/arbres/tree_bushy_mini.glb', baseScale: 0.225 },
+  { key: 'oak_round', url: './glb/arbres/tree_oak_round.glb', baseScale: 0.225 },
+  { key: 'pine_soft', url: './glb/arbres/tree_pine_soft.glb', baseScale: 0.250 },
+  { key: 'dead', url: './glb/arbres/tree_dead.glb', baseScale: 0.190 },
+  { key: 'poplar', url: './glb/arbres/tree_poplar.glb', baseScale: 0.250 }
 ];
 export const TREE_SIZE_MULTIPLIER = 1.65;
 // Alignement sol réel des forêts : les dalles forest sont abaissées de 30% d'épaisseur (0.12 * -0.30 = -0.036).
@@ -239,9 +240,10 @@ export const BOAT_MODEL_URL = './glb/bateau.glb';
 export const BOAT_TARGET_LENGTH = 0.735;
 export const BOAT_Y_OFFSET = -0.018;
 export const WATER_PORT_INSET = 0.52;
-export const SHARK_FIN_WIDTH = 0.058;
-export const SHARK_FIN_HEIGHT = 0.185;
-export const SHARK_FIN_LENGTH = 0.36;
+
+// export const SHARK_FIN_WIDTH = 0.058;
+// export const SHARK_FIN_HEIGHT = 0.185;
+// export const SHARK_FIN_LENGTH = 0.36;
 
 // Éclaboussures en bordure d'eau + épouvantails/corbeaux des champs.
 export const WATER_EDGE_SPLASH_Y_OFFSET = 0.012;

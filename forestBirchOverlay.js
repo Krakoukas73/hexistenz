@@ -4,6 +4,7 @@ import { EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { axialToWorld } from './stable/hex.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { placeObjectOnTerrain } from './terrainHeight.js';
+import { collectSpecialBuildingSafeZones } from './fieldWaterEffectsOverlay.js';
 import {
   TREE_MODEL_DEFS,
   TREE_SIZE_MULTIPLIER,
@@ -14,6 +15,7 @@ import {
 } from './variables.js';
 
 const CENTER_SAFE_RADIUS = HEX_SIZE * (TILE_VISUAL.centerRadiusScale + TREE_CENTER_SAFE_RADIUS_EXTRA);
+const SPECIAL_BUILDING_TREE_SAFE_RADIUS = HEX_SIZE * 0.38;
 const SECTOR_DEFS = [
   { key: 'n', a: 0, b: 1 },
   { key: 'ne', a: 1, b: 2 },
@@ -43,8 +45,10 @@ export function rebuildForestBirchOverlay(group, placedTiles) {
     return;
   }
 
+  const specialBuildingSafeZones = collectSpecialBuildingSafeZones(placedTiles);
+
   for (const placedTile of placedTiles.values()) {
-    addTreesForTile(group, placedTile);
+    addTreesForTile(group, placedTile, specialBuildingSafeZones);
   }
 }
 
@@ -129,7 +133,7 @@ function normalizeModel(model, def) {
   return wrapper;
 }
 
-function addTreesForTile(group, placedTile) {
+function addTreesForTile(group, placedTile, specialBuildingSafeZones = []) {
   const tileWorld = axialToWorld(placedTile.q, placedTile.r);
   const vertices = createOuterVertices();
 
@@ -146,6 +150,7 @@ function addTreesForTile(group, placedTile) {
       if (!tree) continue;
 
       const pos = positions[i];
+      if (isTreeInsideSpecialBuildingSafeZone(tileWorld.x + pos.x, tileWorld.z + pos.z, specialBuildingSafeZones)) continue;
       const seed = hashToUnit(`${placedTile.key}:${sector.key}:scale:${i}`);
       const scaleJitter = 0.80 + seed * 0.40;
 
@@ -165,6 +170,14 @@ function addTreesForTile(group, placedTile) {
       group.add(tree);
     }
   }
+}
+
+function isTreeInsideSpecialBuildingSafeZone(x, z, safeZones) {
+  for (const zone of safeZones) {
+    const radius = zone.radius ?? SPECIAL_BUILDING_TREE_SAFE_RADIUS;
+    if (Math.hypot(x - zone.x, z - zone.z) < radius) return true;
+  }
+  return false;
 }
 
 function cloneTreeForSlot(tileKey, edgeKey, index, countInSector) {

@@ -14,6 +14,7 @@ import { axialToWorld, makeHexKey } from './stable/hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { getTerrainSurfaceY, placeObjectOnTerrain } from './terrainHeight.js';
+import { collectVillageChurchSectors, collectVillageWatchtowerSectors } from './houseSmokeOverlay.js';
 
 const SECTOR_DEFS = [
   { key: 'n', a: 0, b: 1 },
@@ -33,6 +34,8 @@ const FIELD_FLAG_TARGET_HEIGHT = HEX_SIZE * 0.32;
 const BENCH_TARGET_LENGTH = HEX_SIZE * 0.16;
 const SIGNPOST_TARGET_HEIGHT = HEX_SIZE * 0.28;
 const SHORE_BOAT_TARGET_LENGTH = HEX_SIZE * 0.56;
+const SPECIAL_BUILDING_SAFE_RADIUS = HEX_SIZE * 0.34;
+const SPECIAL_BUILDING_BOAT_SAFE_RADIUS = HEX_SIZE * 0.26;
 const NATURAL_FLOWER_TARGET_WIDTH = HEX_SIZE * 0.055;
 const NATURAL_ROCK_TARGET_LENGTH = HEX_SIZE * 0.125;
 const NATURAL_REED_TARGET_HEIGHT = HEX_SIZE * 0.105;
@@ -40,7 +43,7 @@ const NATURAL_MUSHROOM_TARGET_WIDTH = HEX_SIZE * 0.060;
 const ROAD_DECOR_Y = ((TILE_VISUAL.tileThickness ?? 0.12) * -0.30) + 0.010;
 const SHORE_BOAT_Y = WATER_SURFACE_Y + 0.006;
 const PROP_MODEL_DEFS = [
-  { key: 'field-flag', url: './glb/drapeau.glb', target: FIELD_FLAG_TARGET_HEIGHT, mode: 'height' },
+  { key: 'field-flag', url: './glb/moulin.glb', target: FIELD_FLAG_TARGET_HEIGHT * 1.70, mode: 'height' },
   { key: 'road-bench', url: './glb/banc.glb', target: BENCH_TARGET_LENGTH, mode: 'length' },
   { key: 'road-signpost', url: './glb/poteau-indicateur.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
   { key: 'shore-boat', url: './glb/barque.glb', target: SHORE_BOAT_TARGET_LENGTH, mode: 'length' },
@@ -106,11 +109,12 @@ export function rebuildFieldWaterEffectsOverlay(overlay, placedTiles) {
   clearGroup(overlay);
   ensurePropModels(overlay);
   ensureBirdModel(overlay);
+  const specialBuildingSafeZones = collectSpecialBuildingSafeZones(placedTiles);
   overlay.add(createWaterVoidSplashes(placedTiles));
   overlay.add(createFieldFlags(placedTiles));
   overlay.add(createNaturalGroundProps(placedTiles));
-  overlay.add(createRoadsideVillageProps(placedTiles));
-  overlay.add(createShoreBoats(placedTiles));
+  overlay.add(createRoadsideVillageProps(placedTiles, specialBuildingSafeZones));
+  overlay.add(createShoreBoats(placedTiles, specialBuildingSafeZones));
 }
 
 export function updateFieldWaterEffectsOverlay(overlay, elapsedSeconds) {
@@ -298,6 +302,103 @@ function createFieldFlags(placedTiles) {
   }
 
   return group;
+}
+
+export function collectSpecialBuildingSafeZones(placedTiles) {
+  const zones = [];
+  const churchSectors = collectVillageChurchSectors(placedTiles);
+  const watchtowerSectors = collectVillageWatchtowerSectors(placedTiles, churchSectors);
+
+  for (const sectorKey of churchSectors) {
+    const zone = getVillageSpecialBuildingSafeZone(placedTiles, sectorKey, 'church');
+    if (zone) zones.push(zone);
+  }
+
+  for (const sectorKey of watchtowerSectors) {
+    if (churchSectors.has(sectorKey)) continue;
+    const zone = getVillageSpecialBuildingSafeZone(placedTiles, sectorKey, 'watchtower');
+    if (zone) zones.push(zone);
+  }
+
+  for (const fieldZone of collectFieldZones(placedTiles)) {
+    if (fieldZone.total < FIELD_FLAG_MIN_TOTAL) continue;
+    zones.push({
+      x: fieldZone.center.x,
+      z: fieldZone.center.z,
+      radius: SPECIAL_BUILDING_SAFE_RADIUS * 0.92,
+      kind: 'mill'
+    });
+  }
+
+  return zones;
+}
+
+function getVillageSpecialBuildingSafeZone(placedTiles, sectorKey, kind) {
+  const separator = sectorKey.lastIndexOf(':');
+  if (separator <= 0) return null;
+
+  const tileKey = sectorKey.slice(0, separator);
+  const edge = sectorKey.slice(separator + 1);
+  const placedTile = placedTiles.get(tileKey);
+  const sector = SECTOR_BY_KEY[edge];
+  if (!placedTile || !sector) return null;
+
+  const tilePos = axialToWorld(placedTile.q, placedTile.r);
+  const a = getHexVertex(sector.a);
+  const b = getHexVertex(sector.b);
+  const local = kind === 'watchtower'
+    ? trianglePoint(a, b, 0.18, 0.41, 0.41)
+    : getChurchRewardLocalPoint(placedTile, edge, a, b);
+
+  return {
+    x: tilePos.x + local.x,
+    z: tilePos.z + local.z,
+    radius: kind === 'church' ? SPECIAL_BUILDING_SAFE_RADIUS * 1.15 : SPECIAL_BUILDING_SAFE_RADIUS,
+    kind
+  };
+}
+
+function getChurchRewardLocalPoint(placedTile, edge, a, b) {
+  const houseCount = Math.max(1, Math.min(4, Math.round(getEdgeValue(placedTile.tile?.edges?.[edge]))));
+  const anchor = getHouseColumnAnchors(houseCount)[0] ?? { centerWeight: 0.43, aWeight: 0.285, bWeight: 0.285 };
+  return trianglePoint(a, b, anchor.centerWeight, anchor.aWeight, anchor.bWeight);
+}
+
+function getHouseColumnAnchors(columnCount) {
+  if (columnCount >= 4) {
+    return [
+      { centerWeight: 0.54, aWeight: 0.33, bWeight: 0.13 },
+      { centerWeight: 0.54, aWeight: 0.13, bWeight: 0.33 },
+      { centerWeight: 0.30, aWeight: 0.48, bWeight: 0.22 },
+      { centerWeight: 0.30, aWeight: 0.22, bWeight: 0.48 }
+    ];
+  }
+  if (columnCount === 3) return [
+    { centerWeight: 0.56, aWeight: 0.32, bWeight: 0.12 },
+    { centerWeight: 0.56, aWeight: 0.12, bWeight: 0.32 },
+    { centerWeight: 0.30, aWeight: 0.35, bWeight: 0.35 }
+  ];
+  if (columnCount === 2) return [
+    { centerWeight: 0.52, aWeight: 0.34, bWeight: 0.14 },
+    { centerWeight: 0.52, aWeight: 0.14, bWeight: 0.34 }
+  ];
+  return [{ centerWeight: 0.43, aWeight: 0.285, bWeight: 0.285 }];
+}
+
+function trianglePoint(a, b, centerWeight, aWeight, bWeight) {
+  const total = centerWeight + aWeight + bWeight;
+  return {
+    x: (a.x * aWeight + b.x * bWeight) / total,
+    z: (a.z * aWeight + b.z * bWeight) / total
+  };
+}
+
+function isInsideSpecialBuildingSafeZone(pos, safeZones, fallbackRadius = SPECIAL_BUILDING_SAFE_RADIUS) {
+  for (const zone of safeZones) {
+    const radius = zone.radius ?? fallbackRadius;
+    if (Math.hypot(pos.x - zone.x, pos.z - zone.z) < radius) return true;
+  }
+  return false;
 }
 
 function collectFieldZones(placedTiles) {
@@ -527,7 +628,10 @@ function getNaturalPropChance(kind, type, placedTile, edge, placedTiles) {
 function getNaturalPropCount(kind, type, seed, placedTile = null, edge = null, placedTiles = null) {
   const nearWater = placedTile && edge && placedTiles && isNearWaterDecorArea(placedTile, edge, placedTiles);
   if (kind === 'flower') {
-    return 2 + Math.floor(hashUnit(`${seed}:count`) * 4); // bouquets de 2 à 5
+    if (type === EDGE_TYPES.grass) {
+      return 14 + Math.floor(hashUnit(`${seed}:count`) * 13); // champs de fleurs : nappes de 14 à 26 sur prairie
+    }
+    return 4 + Math.floor(hashUnit(`${seed}:count`) * 5); // bouquets de 4 à 8 hors prairie
   }
   if (kind === 'rock') {
     if (nearWater) return 1 + Math.floor(hashUnit(`${seed}:count`) * 2);
@@ -582,7 +686,7 @@ function getNaturalPropScaleJitter(kind, seed, index) {
 }
 
 function getNaturalClusterRadius(kind) {
-  if (kind === 'flower') return HEX_SIZE * 0.070;
+  if (kind === 'flower') return HEX_SIZE * 0.185;
   if (kind === 'mushroom') return HEX_SIZE * 0.095;
   if (kind === 'reed') return HEX_SIZE * 0.115;
   return HEX_SIZE * 0.150;
@@ -611,17 +715,20 @@ function getNaturalSectorPoint(edge, seed) {
 
 function getNaturalClusterPoint(edge, center, seed, radius) {
   if (!radius || radius <= 0) return center;
-  const angle = hashUnit(`${seed}:cluster-angle`) * Math.PI * 2;
-  const distance = Math.sqrt(hashUnit(`${seed}:cluster-distance`)) * radius;
-  const local = {
-    x: center.x + Math.cos(angle) * distance,
-    z: center.z + Math.sin(angle) * distance
-  };
 
-  // Si le petit bouquet déborde sur le secteur voisin, on revient au centre.
-  // Moins spectaculaire, mais mieux qu'un champignon dans une voie ferrée, cette brillante saloperie.
-  const resolvedEdge = getEdgeFromLocalPoint(local);
-  return resolvedEdge === edge ? local : center;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const angle = hashUnit(`${seed}:cluster-angle:${attempt}`) * Math.PI * 2;
+    const distance = Math.sqrt(hashUnit(`${seed}:cluster-distance:${attempt}`)) * radius;
+    const local = {
+      x: center.x + Math.cos(angle) * distance,
+      z: center.z + Math.sin(angle) * distance
+    };
+
+    const resolvedEdge = getEdgeFromLocalPoint(local);
+    if (resolvedEdge === edge) return local;
+  }
+
+  return center;
 }
 
 function isNearWaterDecorArea(placedTile, edge, placedTiles) {
@@ -641,7 +748,7 @@ function isNearWaterDecorArea(placedTile, edge, placedTiles) {
   return false;
 }
 
-function createRoadsideVillageProps(placedTiles) {
+function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones = []) {
   const group = new THREE.Group();
   group.name = 'village-roadside-glb-props';
 
@@ -661,6 +768,7 @@ function createRoadsideVillageProps(placedTiles) {
         .lerp(tileCenter, edgeType === EDGE_TYPES.forest ? 0.22 : 0.26);
       nudgeRoadsideProp(pos, placedTile, edge, seed, edgeType === EDGE_TYPES.forest ? 0.038 : 0.032);
       if (!snapPropToSafeSurface(pos, placedTile, edge, seed, { footprintRadius: HEX_SIZE * 0.075 })) continue;
+      if (isInsideSpecialBuildingSafeZone(pos, specialBuildingSafeZones)) continue;
 
       const bench = createPropModel('road-bench', seed);
       if (!bench) continue;
@@ -688,6 +796,7 @@ function createRoadsideVillageProps(placedTiles) {
         .lerp(tileCenter, edgeType === EDGE_TYPES.forest ? 0.20 : 0.24);
       nudgeRoadsideProp(pos, placedTile, edge, seed, edgeType === EDGE_TYPES.forest ? 0.046 : 0.040);
       if (!snapPropToSafeSurface(pos, placedTile, edge, seed)) continue;
+      if (isInsideSpecialBuildingSafeZone(pos, specialBuildingSafeZones)) continue;
 
       const sign = createPropModel('road-signpost', seed);
       if (!sign) continue;
@@ -714,6 +823,7 @@ function createRoadsideVillageProps(placedTiles) {
       const pos = new THREE.Vector3(center.x, ROAD_DECOR_Y, center.z).lerp(tileCenter, 0.24);
       nudgeRoadsideProp(pos, placedTile, edge, seed, 0.038);
       if (!snapPropToSafeSurface(pos, placedTile, edge, seed)) continue;
+      if (isInsideSpecialBuildingSafeZone(pos, specialBuildingSafeZones)) continue;
 
       const sign = createPropModel('road-signpost', seed);
       if (!sign) continue;
@@ -820,7 +930,7 @@ function nudgeRoadsideProp(pos, placedTile, edge, seed, amount) {
   pos.z += tangent.z * along + tangent.x * side;
 }
 
-function createShoreBoats(placedTiles) {
+function createShoreBoats(placedTiles, specialBuildingSafeZones = []) {
   const group = new THREE.Group();
   group.name = 'water-shore-static-boats-glb';
 
@@ -847,6 +957,7 @@ function createShoreBoats(placedTiles) {
       if (!boat) continue;
       boat.name = 'water-shore-inert-boat-glb';
       boat.position.set(tilePos.x + mid.x + inward.x * HEX_SIZE * 0.08, SHORE_BOAT_Y, tilePos.z + mid.z + inward.z * HEX_SIZE * 0.08);
+      if (isInsideSpecialBuildingSafeZone(boat.position, specialBuildingSafeZones, SPECIAL_BUILDING_BOAT_SAFE_RADIUS)) continue;
       boat.rotation.y = getEdgeOutwardAngle(edge) + Math.PI / 2 + (hashUnit(`${seed}:yaw`) - 0.5) * 0.55;
       boat.scale.multiplyScalar(0.86 + hashUnit(`${seed}:scale`) * 0.20);
       group.add(boat);

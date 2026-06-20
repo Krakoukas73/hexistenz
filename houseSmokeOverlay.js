@@ -31,21 +31,29 @@ const smokeMaterialCache = [];
 const houseMaterialCache = new Map();
 
 const HOUSE_GLB_MODEL_DEFS = [
-  { key: 'maison-1', url: './glb/maison-1.glb', size: 1.50, spawnWeight: 56 },
+  { key: 'maison-1', url: './glb/maison-1.glb', size: 1.50, spawnWeight: 45 },
   { key: 'maison-2', url: './glb/maison-2.glb', size: 1.55, spawnWeight: 30 },
-  { key: 'maison-3', url: './glb/maison-3.glb', size: 1.60, spawnWeight: 11 },
-  { key: 'maison-4', url: './glb/maison-4.glb', size: 1.75, spawnWeight: 3 }
+  { key: 'maison-3', url: './glb/maison-3.glb', size: 1.60, spawnWeight: 15 },
+  { key: 'maison-4', url: './glb/maison-4.glb', size: 1.75, spawnWeight: 5 }
 ];
+const CHURCH_GLB_MODEL_DEF = { key: 'eglise', url: './glb/eglise.glb', size: 4.5 };
+const WATCHTOWER_GLB_MODEL_DEF = { key: 'towerlight', url: './glb/towerlight.glb', size: 3.65 };
 const houseGlbLibrary = new Map();
+let churchGlbPrototype = null;
+let watchtowerGlbPrototype = null;
 let houseModelsLoading = false;
 let houseModelsRequested = false;
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 const CHURCH_MIN_HOUSES = 8;
 const CHURCH_HOUSES_PER_EXTRA = 18;
 const CHURCH_MAX_PER_ZONE = 4;
+const WATCHTOWER_MIN_HOUSES = 4;
+const WATCHTOWER_HOUSES_PER_EXTRA = 8;
+const WATCHTOWER_MAX_PER_ZONE = 6;
 const CEMETERY_MIN_HOUSES = 13;
 const CEMETERY_HOUSES_PER_EXTRA = 24;
 const CEMETERY_MAX_PER_ZONE = 3;
+const SPECIAL_BUILDING_HOUSE_SAFE_RADIUS = HEX_SIZE * 0.22;
 
 export function createHouseSmokeOverlay() {
   const group = new THREE.Group();
@@ -67,13 +75,15 @@ export function rebuildHouseSmokeOverlay(group, placedTiles) {
   const tileHouseGroups = group.userData.tileHouseGroups;
   const activeKeys = new Set();
   const churchSectors = collectVillageChurchSectors(placedTiles);
-  const cemeterySectors = collectVillageCemeterySectors(placedTiles, churchSectors);
+  const watchtowerSectors = collectVillageWatchtowerSectors(placedTiles, churchSectors);
+  const blockedRewardSectors = new Set([...churchSectors, ...watchtowerSectors]);
+  const cemeterySectors = collectVillageCemeterySectors(placedTiles, blockedRewardSectors);
 
   for (const placedTile of placedTiles.values()) {
     const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
     activeKeys.add(tileKey);
 
-    const signature = getTileHouseOverlaySignature(placedTile, churchSectors, cemeterySectors);
+    const signature = getTileHouseOverlaySignature(placedTile, churchSectors, watchtowerSectors, cemeterySectors);
     const cached = tileHouseGroups.get(tileKey);
     if (cached && cached.userData?.houseOverlaySignature === signature) continue;
 
@@ -85,7 +95,7 @@ export function rebuildHouseSmokeOverlay(group, placedTiles) {
     const tileGroup = new THREE.Group();
     tileGroup.name = `house-smoke-tile-${tileKey}`;
     tileGroup.userData.houseOverlaySignature = signature;
-    buildHouseSmokeTileGroup(tileGroup, placedTile, placedTiles, churchSectors, cemeterySectors);
+    buildHouseSmokeTileGroup(tileGroup, placedTile, placedTiles, churchSectors, watchtowerSectors, cemeterySectors);
     tileHouseGroups.set(tileKey, tileGroup);
     group.add(tileGroup);
   }
@@ -100,7 +110,7 @@ export function rebuildHouseSmokeOverlay(group, placedTiles) {
   group.userData.columns = Array.from(tileHouseGroups.values()).flatMap(tileGroup => tileGroup.userData.columns ?? []);
 }
 
-function buildHouseSmokeTileGroup(group, placedTile, placedTiles, churchSectors, cemeterySectors) {
+function buildHouseSmokeTileGroup(group, placedTile, placedTiles, churchSectors, watchtowerSectors, cemeterySectors) {
   group.userData.columns = [];
 
   const edges = placedTile.tile?.edges;
@@ -130,6 +140,7 @@ function buildHouseSmokeTileGroup(group, placedTile, placedTiles, churchSectors,
       houseCount,
       tileKey,
       churchSectors.has(makeSectorKey(tileKey, sector.key)),
+      watchtowerSectors.has(makeSectorKey(tileKey, sector.key)),
       cemeterySectors.has(makeSectorKey(tileKey, sector.key)),
       placedTile,
       placedTiles
@@ -137,7 +148,7 @@ function buildHouseSmokeTileGroup(group, placedTile, placedTiles, churchSectors,
   }
 }
 
-function getTileHouseOverlaySignature(placedTile, churchSectors, cemeterySectors) {
+function getTileHouseOverlaySignature(placedTile, churchSectors, watchtowerSectors, cemeterySectors) {
   const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
   const edges = placedTile.tile?.edges ?? {};
 
@@ -149,6 +160,7 @@ function getTileHouseOverlaySignature(placedTile, churchSectors, cemeterySectors
       getEdgeType(edge),
       Math.max(1, Math.min(4, Math.round(getEdgeValue(edge)))) || 0,
       churchSectors.has(sectorKey) ? 'church' : '',
+      watchtowerSectors.has(sectorKey) ? 'watchtower' : '',
       cemeterySectors.has(sectorKey) ? 'cemetery' : ''
     ].join(':');
   }).join('|');
@@ -179,11 +191,12 @@ export function updateHouseSmokeOverlay(group, timeSeconds = 0) {
   }
 }
 
-function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey, hasChurch = false, hasCemetery = false, placedTile = null, placedTiles = null) {
+function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey, hasChurch = false, hasWatchtower = false, hasCemetery = false, placedTile = null, placedTiles = null) {
   const vertices = createOuterVertices();
   const a = vertices[sector.a];
   const b = vertices[sector.b];
   const anchors = getColumnAnchors(columnCount);
+  const protectedLocals = getSectorSpecialBuildingSafeLocals(a, b, anchors, hasChurch, hasWatchtower);
 
   // Ancien réseau de routes/plazas/bridges en géométrie + textures SVG désactivé.
   // addVillageGroundNetwork(group, tileX, tileZ, sector, columnCount, tileKey, hasChurch, hasCemetery, placedTile, placedTiles);
@@ -195,12 +208,21 @@ function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey
     group.add(cemetery);
   }
 
+  if (hasWatchtower) {
+    const towerLocal = trianglePoint(a, b, 0.18, 0.41, 0.41);
+    const tower = createVillageWatchtowerObject(`${tileKey}:${sector.key}:village-watchtower`, sector);
+    const towerSurfaceY = getTerrainSurfaceY(towerLocal, EDGE_TYPES.house, Math.floor(hashUnit(`${tileKey}:${sector.key}:watchtower`) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
+    tower.position.set(tileX + towerLocal.x, towerSurfaceY + 0.010, tileZ + towerLocal.z);
+    group.add(tower);
+  }
+
   for (let i = 0; i < columnCount; i += 1) {
     const anchor = anchors[i] ?? anchors[anchors.length - 1];
     const seed = `${tileKey}:${sector.key}:house-smoke:${i}`;
     const isChurch = hasChurch && i === 0;
     const baseLocal = trianglePoint(a, b, anchor.centerWeight, anchor.aWeight, anchor.bWeight);
     const local = isChurch ? baseLocal : spreadVillageHouseLocalPoint(baseLocal);
+    if (!isChurch && isLocalInsideSpecialBuildingSafeZone(local, protectedLocals)) continue;
     const column = {
       x: tileX + local.x,
       z: tileZ + local.z,
@@ -223,6 +245,35 @@ function addSectorSmokeColumns(group, tileX, tileZ, sector, columnCount, tileKey
 }
 
 
+
+function getSectorSpecialBuildingSafeLocals(a, b, anchors, hasChurch, hasWatchtower) {
+  const safeLocals = [];
+
+  if (hasChurch) {
+    const anchor = anchors[0] ?? { centerWeight: 0.43, aWeight: 0.285, bWeight: 0.285 };
+    safeLocals.push({
+      ...trianglePoint(a, b, anchor.centerWeight, anchor.aWeight, anchor.bWeight),
+      radius: SPECIAL_BUILDING_HOUSE_SAFE_RADIUS * 1.18
+    });
+  }
+
+  if (hasWatchtower) {
+    safeLocals.push({
+      ...trianglePoint(a, b, 0.18, 0.41, 0.41),
+      radius: SPECIAL_BUILDING_HOUSE_SAFE_RADIUS
+    });
+  }
+
+  return safeLocals;
+}
+
+function isLocalInsideSpecialBuildingSafeZone(local, safeLocals) {
+  for (const zone of safeLocals) {
+    const distance = Math.hypot(local.x - zone.x, local.z - zone.z);
+    if (distance < zone.radius) return true;
+  }
+  return false;
+}
 
 function addCentralHouseConnectionBridges(group, tileX, tileZ, placedTile) {
   const edges = placedTile.tile?.edges;
@@ -407,6 +458,7 @@ function addVillageGroundNetwork(group, tileX, tileZ, sector, columnCount, tileK
   const a = vertices[sector.a];
   const b = vertices[sector.b];
   const anchors = getColumnAnchors(columnCount);
+  const protectedLocals = getSectorSpecialBuildingSafeLocals(a, b, anchors, hasChurch, hasWatchtower);
   const isLargeVillageSector = hasChurch || hasCemetery || columnCount >= 3;
   const roadMaterial = isLargeVillageSector
     ? getVillageGroundMaterial('village-paved-road-svg', 0x8A8174, 'paved')
@@ -811,7 +863,7 @@ function createBridgePlankSvg(base, dark, light) {
   </svg>`;
 }
 
-function collectVillageChurchSectors(placedTiles) {
+export function collectVillageChurchSectors(placedTiles) {
   const selected = new Set();
   const visited = new Set();
 
@@ -851,6 +903,84 @@ function collectVillageChurchSectors(placedTiles) {
   }
 
   return selected;
+}
+
+
+export function collectVillageWatchtowerSectors(placedTiles, churchSectors = new Set()) {
+  const selected = new Set(churchSectors);
+  const visited = new Set();
+
+  for (const placedTile of placedTiles.values()) {
+    const edges = placedTile.tile?.edges;
+    if (!edges) continue;
+
+    for (const edge of EDGE_ORDER) {
+      if (getTileEdgeType(placedTile, edge) !== EDGE_TYPES.house) continue;
+      const nodeKey = makeSectorKey(placedTile.key, edge);
+      if (visited.has(nodeKey)) continue;
+
+      const zone = collectHouseZone(placedTile, edge, placedTiles, visited);
+      if (zone.total < WATCHTOWER_MIN_HOUSES) continue;
+
+      const churchCountInZone = zone.sectors.reduce(
+        (total, sectorRef) => total + (churchSectors.has(makeSectorKey(sectorRef.tile.key, sectorRef.edge)) ? 1 : 0),
+        0
+      );
+
+      // Dès 4 maisons contiguës : au moins une tour.
+      // Sur les gros villages : au moins autant de tours que d'églises.
+      const towerCount = Math.min(
+        WATCHTOWER_MAX_PER_ZONE,
+        Math.max(
+          1,
+          churchCountInZone,
+          1 + Math.floor((zone.total - WATCHTOWER_MIN_HOUSES) / WATCHTOWER_HOUSES_PER_EXTRA)
+        )
+      );
+
+      const alreadySelectedInZone = zone.sectors.reduce(
+        (total, sectorRef) => total + (selected.has(makeSectorKey(sectorRef.tile.key, sectorRef.edge)) ? 1 : 0),
+        0
+      );
+      if (alreadySelectedInZone >= towerCount) continue;
+
+      const candidates = [...zone.sectors]
+        .sort((a, b) => rankWatchtowerCandidate(a, zone, selected) - rankWatchtowerCandidate(b, zone, selected));
+
+      const usedTiles = new Set(
+        zone.sectors
+          .filter(sectorRef => selected.has(makeSectorKey(sectorRef.tile.key, sectorRef.edge)))
+          .map(sectorRef => sectorRef.tile.key)
+      );
+
+      for (const candidate of candidates) {
+        if (selected.size >= 256) break;
+        const sectorKey = makeSectorKey(candidate.tile.key, candidate.edge);
+        if (selected.has(sectorKey)) continue;
+        if (usedTiles.has(candidate.tile.key)) continue;
+
+        selected.add(sectorKey);
+        usedTiles.add(candidate.tile.key);
+
+        const selectedInZone = zone.sectors.reduce(
+          (total, sectorRef) => total + (selected.has(makeSectorKey(sectorRef.tile.key, sectorRef.edge)) ? 1 : 0),
+          0
+        );
+        if (selectedInZone >= towerCount) break;
+      }
+    }
+  }
+
+  return selected;
+}
+
+function rankWatchtowerCandidate(sectorRef, zone, selectedSectors = new Set()) {
+  const sectorKey = makeSectorKey(sectorRef.tile.key, sectorRef.edge);
+  const value = Math.round(getEdgeValue(sectorRef.tile.tile.edges[sectorRef.edge]));
+  const alreadySelectedPenalty = selectedSectors.has(sectorKey) ? -999 : 0;
+  const edgeBias = EDGE_ORDER.indexOf(sectorRef.edge);
+  const seed = hashUnit(`${zone.total}:${zone.sectors.length}:${sectorRef.tile.key}:${sectorRef.edge}:watchtower-rank`);
+  return -(alreadySelectedPenalty + value * 90 + edgeBias * 4 + seed);
 }
 
 
@@ -1014,7 +1144,7 @@ function ensureHouseGlbModels(group) {
   houseModelsLoading = true;
   houseModelsRequested = true;
 
-  let pending = HOUSE_GLB_MODEL_DEFS.length;
+  let pending = HOUSE_GLB_MODEL_DEFS.length + 2;
   const finishOne = () => {
     pending -= 1;
     if (pending > 0) return;
@@ -1038,6 +1168,32 @@ function ensureHouseGlbModels(group) {
       }
     );
   }
+
+  new GLTFLoader().load(
+    CHURCH_GLB_MODEL_DEF.url,
+    gltf => {
+      churchGlbPrototype = prepareHouseGlbPrototype(gltf.scene, CHURCH_GLB_MODEL_DEF);
+      finishOne();
+    },
+    undefined,
+    error => {
+      console.warn(`Modèle église GLB indisponible : ${CHURCH_GLB_MODEL_DEF.url}`, error);
+      finishOne();
+    }
+  );
+
+  new GLTFLoader().load(
+    WATCHTOWER_GLB_MODEL_DEF.url,
+    gltf => {
+      watchtowerGlbPrototype = prepareHouseGlbPrototype(gltf.scene, WATCHTOWER_GLB_MODEL_DEF);
+      finishOne();
+    },
+    undefined,
+    error => {
+      console.warn(`Modèle tour de garde GLB indisponible : ${WATCHTOWER_GLB_MODEL_DEF.url}`, error);
+      finishOne();
+    }
+  );
 }
 
 function prepareHouseGlbPrototype(model, def) {
@@ -1139,83 +1295,56 @@ function pickHouseGlbDefinition(seedKey, index) {
 
 function createVillageChurchObject(seedKey, sector) {
   const group = new THREE.Group();
-  group.name = 'village-church-3d-large-zone-reward';
+  group.name = 'village-church-glb-large-zone-reward';
 
   const sectorAngle = (SECTOR_DEFS.findIndex(item => item.key === sector.key) * Math.PI / 3) + Math.PI / 6;
   const jitter = (hashUnit(`${seedKey}:church-rotation`) - 0.5) * 0.22;
   group.rotation.y = -sectorAngle + jitter;
-  group.scale.setScalar(1.23);
+  group.scale.setScalar(0.88);
 
-  const naveWidth = HOUSE_SCALE * 1.24;
-  const naveDepth = HOUSE_SCALE * 1.82;
-  const naveHeight = HOUSE_SCALE * 1.10;
-  const stone = getWallSvgMaterial('church-stone-warm-svg', 0xC9B796, 'stone');
-  const darkStone = getWallSvgMaterial('church-stone-dark-svg', 0x8D806D, 'stoneDark');
-  const roofMat = getRoofSvgMaterial('church-roof-slate-svg', 0x4C5662, 'slate');
-  const glassMat = getHouseMaterial('church-glass-blue', 0xB9E1FF);
-  const goldMat = getHouseMaterial('church-cross-gold', 0xE1C15A);
+  if (!churchGlbPrototype) return group;
 
-  const base = new THREE.Mesh(new THREE.BoxGeometry(naveWidth * 1.18, HOUSE_SCALE * 0.12, naveDepth * 1.12), darkStone);
-  base.name = 'village-church-stone-base';
-  base.position.set(0, HOUSE_SCALE * 0.06, 0);
+  const church = churchGlbPrototype.clone(true);
+  church.name = 'eglise-glb-village-church-instance';
+  church.traverse(object => {
+    if (!object.isMesh) return;
+    object.castShadow = true;
+    object.receiveShadow = true;
+    object.userData.shadowFlagsApplied = true;
+  });
 
-  const nave = new THREE.Mesh(new THREE.BoxGeometry(naveWidth, naveHeight, naveDepth), stone);
-  nave.name = 'village-church-nave';
-  nave.position.set(0, HOUSE_SCALE * 0.12 + naveHeight * 0.5, 0);
+  group.add(church);
+  return group;
+}
 
-  const roof = new THREE.Mesh(
-    new THREE.ConeGeometry(naveWidth * 0.80, HOUSE_SCALE * 0.62, 4),
-    roofMat
-  );
-  roof.name = 'village-church-roof';
-  roof.position.set(0, HOUSE_SCALE * 0.12 + naveHeight + HOUSE_SCALE * 0.28, 0);
-  roof.rotation.y = Math.PI / 4;
-  roof.scale.z = naveDepth / Math.max(naveWidth, 0.001);
 
-  const towerWidth = HOUSE_SCALE * 0.70;
-  const towerHeight = HOUSE_SCALE * 1.96;
-  const tower = new THREE.Mesh(new THREE.BoxGeometry(towerWidth, towerHeight, towerWidth), stone);
-  tower.name = 'village-church-bell-tower';
-  tower.position.set(0, HOUSE_SCALE * 0.12 + towerHeight * 0.5, -naveDepth * 0.54);
+function createVillageWatchtowerObject(seedKey, sector) {
+  const group = new THREE.Group();
+  group.name = 'village-watchtower-glb-zone-reward';
 
-  const spire = new THREE.Mesh(
-    new THREE.ConeGeometry(towerWidth * 0.64, HOUSE_SCALE * 1.22, 4),
-    roof.material
-  );
-  spire.name = 'village-church-spire';
-  spire.position.set(0, HOUSE_SCALE * 0.12 + towerHeight + HOUSE_SCALE * 0.56, -naveDepth * 0.54);
-  spire.rotation.y = Math.PI / 4;
+  const sectorAngle = (SECTOR_DEFS.findIndex(item => item.key === sector.key) * Math.PI / 3) + Math.PI / 6;
+  const jitter = (hashUnit(`${seedKey}:watchtower-rotation`) - 0.5) * 0.28;
+  group.rotation.y = -sectorAngle + jitter;
+  group.scale.setScalar(0.93 + hashUnit(`${seedKey}:watchtower-scale`) * 0.12);
 
-  const crossVertical = new THREE.Mesh(new THREE.BoxGeometry(HOUSE_SCALE * 0.055, HOUSE_SCALE * 0.34, HOUSE_SCALE * 0.055), goldMat);
-  crossVertical.name = 'village-church-cross-vertical';
-  crossVertical.position.set(0, HOUSE_SCALE * 0.12 + towerHeight + HOUSE_SCALE * 1.30, -naveDepth * 0.54);
-
-  const crossHorizontal = new THREE.Mesh(new THREE.BoxGeometry(HOUSE_SCALE * 0.24, HOUSE_SCALE * 0.050, HOUSE_SCALE * 0.050), goldMat);
-  crossHorizontal.name = 'village-church-cross-horizontal';
-  crossHorizontal.position.set(0, HOUSE_SCALE * 0.12 + towerHeight + HOUSE_SCALE * 1.35, -naveDepth * 0.54);
-
-  const door = new THREE.Mesh(new THREE.PlaneGeometry(HOUSE_SCALE * 0.34, HOUSE_SCALE * 0.54), getHouseMaterial('church-door-dark-oak', 0x4C3326));
-  door.name = 'village-church-front-door';
-  door.position.set(0, HOUSE_SCALE * 0.42, -naveDepth * 0.54 - towerWidth * 0.505);
-
-  const rose = new THREE.Mesh(new THREE.CircleGeometry(HOUSE_SCALE * 0.16, 18), glassMat);
-  rose.name = 'village-church-rose-window';
-  rose.position.set(0, HOUSE_SCALE * 1.18, -naveDepth * 0.54 - towerWidth * 0.508);
-
-  const leftWindow = createChurchSideWindow(-naveWidth * 0.505, HOUSE_SCALE * 0.86, -naveDepth * 0.14, glassMat, true);
-  const rightWindow = createChurchSideWindow(naveWidth * 0.505, HOUSE_SCALE * 0.86, naveDepth * 0.18, glassMat, false);
-  const rearWindow = new THREE.Mesh(new THREE.PlaneGeometry(HOUSE_SCALE * 0.30, HOUSE_SCALE * 0.46), glassMat);
-  rearWindow.name = 'village-church-rear-window';
-  rearWindow.position.set(0, HOUSE_SCALE * 0.92, naveDepth * 0.506);
-  rearWindow.rotation.y = Math.PI;
-
-  for (const mesh of [base, nave, roof, tower, spire, crossVertical, crossHorizontal, door, rose, leftWindow, rightWindow, rearWindow]) {
-    mesh.castShadow = false;
-    mesh.receiveShadow = false;
-    mesh.renderOrder = 128;
+  if (!watchtowerGlbPrototype) {
+    if (!createVillageWatchtowerObject.warnedMissingModel) {
+      console.warn(`Tour de garde GLB indisponible ou non chargée : ${WATCHTOWER_GLB_MODEL_DEF.url}`);
+      createVillageWatchtowerObject.warnedMissingModel = true;
+    }
+    return group;
   }
 
-  group.add(base, nave, roof, tower, spire, crossVertical, crossHorizontal, door, rose, leftWindow, rightWindow, rearWindow);
+  const tower = watchtowerGlbPrototype.clone(true);
+  tower.name = 'towerlight-glb-village-watchtower-instance';
+  tower.traverse(object => {
+    if (!object.isMesh) return;
+    object.castShadow = true;
+    object.receiveShadow = true;
+    object.userData.shadowFlagsApplied = true;
+  });
+
+  group.add(tower);
   return group;
 }
 

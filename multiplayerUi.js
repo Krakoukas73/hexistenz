@@ -1,4 +1,5 @@
 import { initScene } from './scene.js';
+import { startMenuMusic, startIngameMusic } from './soundDesign.js';
 import { DECK_SIZE } from './config.js';
 import { createDeck } from './tileGenerator.js';
 import { createSpecialCells } from './stable/specialCells.js';
@@ -13,6 +14,7 @@ const MENU_BACKGROUND_INTERVAL_MS = 6500;
 const MENU_BACKGROUND_FADE_MS = 1100;
 
 export function showStartupScreen() {
+  startMenuMusic();
   const urlRoomCode = new URLSearchParams(window.location.search).get('multi');
   renderShell(urlRoomCode ? 'multi' : 'home', normalizeCode(urlRoomCode ?? ''));
 }
@@ -58,7 +60,7 @@ function ensureMenuBackgroundStyles() {
       z-index: 0;
       overflow: hidden;
       background:
-        radial-gradient(circle at center, rgba(22, 38, 56, 0.86), rgba(2, 5, 9, 0.96));
+        radial-gradient(circle at center, rgba(22, 38, 56, 0.58), rgba(2, 5, 9, 0.72));
     }
 
     .mode-background-carousel::after {
@@ -68,9 +70,9 @@ function ensureMenuBackgroundStyles() {
       z-index: 3;
       pointer-events: none;
       background:
-        radial-gradient(circle at 50% 42%, rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.76) 76%),
-        linear-gradient(180deg, rgba(2, 6, 12, 0.18), rgba(2, 6, 12, 0.72));
-      backdrop-filter: blur(1px);
+        radial-gradient(circle at 50% 42%, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.42) 76%),
+        linear-gradient(180deg, rgba(2, 6, 12, 0.08), rgba(2, 6, 12, 0.38));
+      backdrop-filter: blur(0.35px);
     }
 
     .mode-background-slide {
@@ -81,7 +83,7 @@ function ensureMenuBackgroundStyles() {
       background-position: center;
       background-size: cover;
       transform: scale(1.035);
-      filter: saturate(1.08) contrast(1.04) brightness(0.78);
+      filter: saturate(1.14) contrast(1.06) brightness(0.94);
       transition:
         opacity ${MENU_BACKGROUND_FADE_MS}ms ease,
         transform ${MENU_BACKGROUND_INTERVAL_MS}ms linear;
@@ -248,6 +250,7 @@ function renderHome(overlay) {
 
   overlay.querySelector('[data-action="solo"]').addEventListener('click', () => {
     renderWorldShapeChoice(overlay, worldShapeMode => {
+      startIngameMusic();
       overlay.remove();
       initScene({ mode: 'solo', worldShapeMode });
     });
@@ -261,14 +264,14 @@ function renderHome(overlay) {
 
 function renderWorldShapeChoice(overlay, onSelected) {
   const storedMode = normalizeWorldShapeMode(localStorage.getItem('dorfromantik.worldShapeMode') || getWorldShapeMode());
-  overlay.querySelector('.mode-copy').textContent = 'Choisis la géométrie de ton monde.';
+  overlay.querySelector('.mode-copy').textContent = 'Choisis la géométrie de ta planète :';
   overlay.querySelector('.mode-content').innerHTML = `
     <div class="mode-actions world-shape-actions">
-      <button data-action="bouliste" class="${storedMode === 'bouliste' ? '' : 'secondary'}">BOULISTE</button>
       <button data-action="platiste" class="${storedMode === 'platiste' ? '' : 'secondary'}">PLATISTE</button>
+      <button data-action="bouliste" class="${storedMode === 'bouliste' ? '' : 'secondary'}">BOULISTE</button>
     </div>
 	<br>
-    <p class="mode-copy mode-shape-note">Tu pourras changer de faction en jeu, parce que même les planètes ont droit à une crise d’identité.</p>
+    <p class="mode-copy mode-shape-note">On te conseille "<i>platiste</i>" pour débuter. Tu pourras changer de faction à n'importe quel moment en jeu, parce que même les planètes ont droit à une crise identitaire.</p>
   `;
   setStatus(overlay, '');
 
@@ -416,6 +419,7 @@ function startMultiplayerScene(overlay, { roomCode, playerId, playerName, state 
   history.replaceState(null, '', `${window.location.pathname}?multi=${encodeURIComponent(roomCode)}`);
   const worldShapeMode = normalizeWorldShapeMode(overlay.dataset.worldShapeMode);
   localStorage.setItem('dorfromantik.worldShapeMode', worldShapeMode);
+  startIngameMusic();
   overlay.remove();
   initScene({
     mode: 'multi',

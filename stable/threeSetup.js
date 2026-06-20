@@ -70,7 +70,7 @@ export function createThreeScene() {
 }
 
 
-export function updateSunShadowOrbit(scene, timeSeconds) {
+export function updateSunShadowOrbit(scene, timeSeconds, focusPoint = null) {
   const sun = scene.getObjectByName('main-sun-shadow-light');
   const sunVisual = scene.getObjectByName('visible-sky-sun');
   const sunTarget = scene.getObjectByName('main-sun-shadow-target');
@@ -87,16 +87,50 @@ export function updateSunShadowOrbit(scene, timeSeconds) {
   const angle = timeSeconds * orbit.speed;
   const x = Math.cos(angle) * orbit.radius;
   const z = Math.sin(angle) * orbit.radius;
+  const focus = getSunShadowFocusPoint(focusPoint);
+  const lightPosition = new THREE.Vector3(
+    focus.x + x,
+    focus.y + orbit.height,
+    focus.z + z
+  );
 
-  sun.position.set(x, orbit.height, z);
+  sun.position.copy(lightPosition);
   if (sunTarget) {
-    sunTarget.position.set(0, 0, 0);
+    sunTarget.position.copy(focus);
     sunTarget.updateMatrixWorld();
+    sun.target = sunTarget;
   }
-  if (sunVisual) sunVisual.position.set(x * orbit.visualScale, orbit.height * orbit.visualScale, z * orbit.visualScale);
+  if (sunVisual) {
+    sunVisual.position.set(
+      focus.x + x * orbit.visualScale,
+      focus.y + orbit.height * orbit.visualScale,
+      focus.z + z * orbit.visualScale
+    );
+  }
+  keepSunShadowCameraStable(sun);
   sun.updateMatrixWorld();
   sun.shadow.camera.updateProjectionMatrix();
   sun.shadow.needsUpdate = true;
+}
+
+function getSunShadowFocusPoint(focusPoint = null) {
+  const x = Number.isFinite(focusPoint?.x) ? focusPoint.x : 0;
+  const z = Number.isFinite(focusPoint?.z) ? focusPoint.z : 0;
+  const baseY = Number.isFinite(focusPoint?.y) ? focusPoint.y : 0;
+  const curvedY = getWorldCurvatureDrop(x, z);
+  return new THREE.Vector3(x, Math.min(baseY, curvedY), z);
+}
+
+function keepSunShadowCameraStable(sun) {
+  if (!sun?.shadow?.camera) return;
+  const camera = sun.shadow.camera;
+  const shadowExtent = Math.max(72, GRID_RADIUS * HEX_SIZE * 8.0);
+  camera.left = -shadowExtent;
+  camera.right = shadowExtent;
+  camera.top = shadowExtent;
+  camera.bottom = -shadowExtent;
+  camera.near = Math.min(camera.near ?? 0.1, 0.1);
+  camera.far = Math.max(camera.far ?? 160, 260);
 }
 
 function createVisibleSunObject() {

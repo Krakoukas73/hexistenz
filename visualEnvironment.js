@@ -223,7 +223,9 @@ export function applyEnvironment(scene, renderer, dome, config = DEFAULT_VISUAL_
 
   const target = scene.getObjectByName('main-sun-shadow-target');
   if (target) {
-    target.position.set(0, 0, 0);
+    // La position de la cible est tenue à jour par updateSunShadowOrbit().
+    // Ne surtout pas la remettre à (0,0,0), sinon les ombres repartent du centre
+    // de la grille au lieu de suivre la position courante du soleil et de la caméra.
     target.updateMatrixWorld();
     sun.target = target;
   }
