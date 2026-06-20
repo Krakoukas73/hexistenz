@@ -1,6 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_COLOR, EDGE_TYPES } from './config.js';
 import { getRealisticWaterMaterial } from './realisticWater.js';
+import { applyGlobalWindToMaterial } from './stable/globalWind.js';
 
 const materialCache = new Map();
 const generatedTextureCache = new Map();
@@ -37,6 +38,22 @@ export function getBiomeMaterial(type, opacity = 1) {
 
   const material = new THREE.MeshLambertMaterial(materialConfig);
   material.name = `biome-${type}-top-material`;
+
+  if (type === EDGE_TYPES.field) {
+    applyGlobalWindToMaterial(material, {
+      strength: 0.052,
+      speed: 1.62,
+      frequency: 0.84,
+      turbulence: 0.44,
+      // Même rampe que les flancs : le bord supérieur des côtés et le dessus
+      // reçoivent exactement le même décalage, sinon ça ouvre des trous.
+      heightStart: -0.160,
+      heightEnd: 0.036,
+      gustStrength: 0.32,
+      detailStrength: 0.14
+    });
+  }
+
   materialCache.set(key, material);
   return material;
 }
@@ -76,6 +93,21 @@ export function getBiomeSideMaterial(type, opacity = 1) {
 
   const material = new THREE.MeshLambertMaterial(materialConfig);
   material.name = `biome-${type}-side-material`;
+
+  if (type === EDGE_TYPES.field) {
+    applyGlobalWindToMaterial(material, {
+      strength: 0.052,
+      speed: 1.62,
+      frequency: 0.84,
+      turbulence: 0.44,
+      // Bas du flanc ancré, haut du flanc solidaire du dessus.
+      heightStart: -0.160,
+      heightEnd: 0.036,
+      gustStrength: 0.32,
+      detailStrength: 0.14
+    });
+  }
+
   materialCache.set(key, material);
   return material;
 }
@@ -86,7 +118,7 @@ function getGeneratedTexture(type) {
   const canvas = document.createElement('canvas');
   canvas.width = 128;
   canvas.height = 128;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
   drawTexture(type, ctx, 0);
 
@@ -108,7 +140,7 @@ function getGeneratedFieldSideTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = 128;
   canvas.height = 128;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
   drawFieldSideTexture(ctx);
 

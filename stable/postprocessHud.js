@@ -23,7 +23,7 @@ export function createPostprocessHud(postprocess, options = {}) {
   panel.innerHTML = `
     <div class="postprocess-hud__head">
       <div>
-        <div class="postprocess-hud__title">RENDU DE LA GRILLE</div>
+        <div class="postprocess-hud__title">PIXELISATION DE LA GRILLE</div>
         
       </div>
       <label class="postprocess-switch" title="Activer / désactiver le postprocess pixelisé">
@@ -33,7 +33,7 @@ export function createPostprocessHud(postprocess, options = {}) {
     </div>
 
     <label class="postprocess-control">
-      <span>Pixels <strong id="ppPixelSizeValue"></strong></span>
+      <span>Rayon (pixels) <strong id="ppPixelSizeValue"></strong></span>
       <input id="ppPixelSize" type="range" min="1" max="10" step="1" />
     </label>
 

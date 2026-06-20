@@ -309,7 +309,14 @@ function applyWorldCurvatureToMaterial(material) {
     );
     shader.vertexShader = shader.vertexShader.replace(
       '#include <project_vertex>',
-      `vec4 dorfromantikWorldPosition = modelMatrix * vec4( transformed, 1.0 );\n       dorfromantikWorldPosition = dorfromantikApplyWorldCurvature(dorfromantikWorldPosition);\n       vec4 mvPosition = viewMatrix * dorfromantikWorldPosition;\n       gl_Position = projectionMatrix * mvPosition;`
+      `vec4 dorfromantikLocalPosition = vec4( transformed, 1.0 );
+#ifdef USE_INSTANCING
+       dorfromantikLocalPosition = instanceMatrix * dorfromantikLocalPosition;
+#endif
+       vec4 dorfromantikWorldPosition = modelMatrix * dorfromantikLocalPosition;
+       dorfromantikWorldPosition = dorfromantikApplyWorldCurvature(dorfromantikWorldPosition);
+       vec4 mvPosition = viewMatrix * dorfromantikWorldPosition;
+       gl_Position = projectionMatrix * mvPosition;`
     );
   };
   material.userData.worldCurvatureApplied = true;

@@ -1,19 +1,12 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
+import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
+import { hashUnit10k as hashUnit } from './stable/hashUtils.js';
+import { createOuterVertices } from './stable/hexGeometry.js';
 import { axialToWorld, makeHexKey } from './stable/hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getTrainRailY } from './terrainHeight.js';
-
-const SECTOR_DEFS = [
-  { key: 'n', a: 0, b: 1 },
-  { key: 'ne', a: 1, b: 2 },
-  { key: 'se', a: 2, b: 3 },
-  { key: 's', a: 3, b: 4 },
-  { key: 'sw', a: 4, b: 5 },
-  { key: 'nw', a: 5, b: 0 }
-];
 
 const TRAIN_Y = (TILE_VISUAL.railY ?? 0.052) - 0.050; // fallback only
 const TRAIN_SPEED = 0.18;
@@ -46,7 +39,7 @@ let stationModelsRequested = false;
 
 export function createRailTrainOverlay() {
   const group = new THREE.Group();
-  group.name = 'railTrainOverlay';
+  group.name = 'rail-train-overlay';
   group.userData.trains = [];
   ensureStationGlbModels(group);
   return group;
@@ -389,17 +382,6 @@ function getPortNodeId(tileKey, edge) {
   return `${tileKey}:port:${edge}`;
 }
 
-function getRailPortWorldPosition(q, r, edge) {
-  const vertices = createOuterVertices();
-  const sector = SECTOR_DEFS.find(item => item.key === edge);
-  const mid = new THREE.Vector3(
-    ((vertices[sector.a].x + vertices[sector.b].x) / 2) * PORT_SCALE,
-    0,
-    ((vertices[sector.a].z + vertices[sector.b].z) / 2) * PORT_SCALE
-  );
-  return toWorldRailPoint(q, r, mid);
-}
-
 function addNode(graph, id, position, tileKey) {
   if (!graph.nodes.has(id)) {
     graph.nodes.set(id, { id, position, tileKeys: new Set([tileKey]) });
@@ -643,27 +625,6 @@ function cloneGlbMaterial(material) {
   if ('toneMapped' in cloned) cloned.toneMapped = true;
   cloned.needsUpdate = true;
   return cloned;
-}
-
-function addStationBox(group, name, x, y, z, width, height, depth, material, renderOrder) {
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(STATION_SCALE * width, STATION_SCALE * height, STATION_SCALE * depth),
-    material
-  );
-  mesh.name = name;
-  mesh.position.set(STATION_SCALE * x, STATION_SCALE * y, STATION_SCALE * z);
-  mesh.renderOrder = renderOrder;
-  group.add(mesh);
-  return mesh;
-}
-
-function hashUnit(text) {
-  let h = 2166136261;
-  for (let i = 0; i < String(text).length; i += 1) {
-    h ^= String(text).charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return ((h >>> 0) % 10000) / 10000;
 }
 
 function getWagonCountForRailNetwork(tileCount, distance) {
@@ -1218,19 +1179,6 @@ function measurePath(points) {
   return distance;
 }
 
-function createOuterVertices(radius = HEX_SIZE) {
-  const vertices = [];
-
-  for (let i = 0; i < EDGE_ORDER.length; i++) {
-    const angle = (Math.PI / 3) * i;
-    vertices.push({
-      x: Math.cos(angle) * radius,
-      z: Math.sin(angle) * radius
-    });
-  }
-
-  return vertices;
-}
 
 function clearGroup(group) {
   for (const child of [...group.children]) {

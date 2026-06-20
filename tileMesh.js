@@ -1,19 +1,11 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { EDGE_ORDER, HEX_SIZE, TILE_VISUAL } from './config.js';
+import { EDGE_ORDER, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
+import { createOuterVertices } from './stable/hexGeometry.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getBiomeMaterial, getBiomeSideMaterial } from './tileTextures.js';
-import { createRailOverlay, createRailCenterOverlay } from './tileRailOverlay.js';
-import { createRoadOverlay, createRoadCenterOverlay } from './tileRoadOverlay.js';
+import { createRailCenterOverlay } from './tileRailOverlay.js';
+import { createRoadCenterOverlay } from './tileRoadOverlay.js';
 import { createValueLabel, getMiniValueLabel } from './tileLabels.js';
-
-const SECTOR_DEFS = [
-  { key: 'n', a: 0, b: 1 },
-  { key: 'ne', a: 1, b: 2 },
-  { key: 'se', a: 2, b: 3 },
-  { key: 's', a: 3, b: 4 },
-  { key: 'sw', a: 4, b: 5 },
-  { key: 'nw', a: 5, b: 0 }
-];
 
 const RAGGED_EDGE = {
   // Morcelage visuel des bords : les bords externes débordent vers
@@ -56,7 +48,7 @@ const BIOME_HEIGHT_RATIO = {
   // Champ de blé : plus épais au-dessus du niveau standard.
   // Prairie : dessus nettement abaissé pour obtenir une dalle plus fine,
   // tout en gardant le dessous sur la même base de grille que les autres tuiles.
-  field: 0.2475,
+  field: 0.15,
   grass: -0.45
 };
 
@@ -107,7 +99,7 @@ export function renderMiniTile(tile) {
 }
 
 function createSectorMeshes(edges, opacity) {
-  const vertices = createOuterVertices();
+  const vertices = createOuterVertices(HEX_SIZE * TILE_VISUAL.radiusScale);
 
   return SECTOR_DEFS.map((sector, sectorIndex) => {
     const edge = edges[sector.key];
@@ -139,12 +131,6 @@ function createSectorMeshes(edges, opacity) {
     const group = new THREE.Group();
     group.userData.edgeKey = sector.key;
     group.add(mesh);
-
-    const roadOverlay = createRoadOverlay(edge, vertices[sector.a], vertices[sector.b], sector.key);
-    if (roadOverlay) group.add(roadOverlay);
-
-    const railOverlay = createRailOverlay(edge, vertices[sector.a], vertices[sector.b]);
-    if (railOverlay) group.add(railOverlay);
 
     const label = createValueLabel(edge, vertices[sector.a], vertices[sector.b]);
     if (label) {
@@ -574,20 +560,6 @@ function createOutlineMesh(opacity) {
   });
 
   return new THREE.Line(geometry, material);
-}
-
-function createOuterVertices(radius = HEX_SIZE * TILE_VISUAL.radiusScale) {
-  const vertices = [];
-
-  for (let i = 0; i < 6; i++) {
-    const angle = (Math.PI / 3) * i;
-    vertices.push({
-      x: Math.cos(angle) * radius,
-      z: Math.sin(angle) * radius
-    });
-  }
-
-  return vertices;
 }
 
 function edgesToArray(edges) {

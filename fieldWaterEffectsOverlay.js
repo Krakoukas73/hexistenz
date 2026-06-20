@@ -6,24 +6,20 @@ import {
   EDGE_TYPES,
   HEX_SIZE,
   TILE_VISUAL,
+  SECTOR_DEFS,
   FIELD_BIRD_FLOCK_MODEL_URL,
   FIELD_BIRD_FLOCK_TARGET_WIDTH,
   FIELD_BIRD_FLOCK_ANIMATION_SPEED
 } from './config.js';
+import { hashUnit10k as hashUnit, hashNumber } from './stable/hashUtils.js';
 import { axialToWorld, makeHexKey } from './stable/hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
+import { applyGlobalWindToObject } from './stable/globalWind.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { getTerrainSurfaceY, placeObjectOnTerrain } from './terrainHeight.js';
-import { collectVillageChurchSectors, collectVillageWatchtowerSectors } from './houseSmokeOverlay.js';
-
-const SECTOR_DEFS = [
-  { key: 'n', a: 0, b: 1 },
-  { key: 'ne', a: 1, b: 2 },
-  { key: 'se', a: 2, b: 3 },
-  { key: 's', a: 3, b: 4 },
-  { key: 'sw', a: 4, b: 5 },
-  { key: 'nw', a: 5, b: 0 }
-];
+import { collectVillageChurchSectors, collectVillageWatchtowerSectors } from './houseOverlay.js';
+import { makeNodeKey, getTileEdgeType, clearGroup } from './stable/tileUtils.js';
+import { collectZone } from './stable/zoneUtils.js';
 
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
@@ -33,20 +29,21 @@ const FIELD_FLAG_MIN_TOTAL = 5;
 const FIELD_FLAG_TARGET_HEIGHT = HEX_SIZE * 0.32;
 const BENCH_TARGET_LENGTH = HEX_SIZE * 0.16;
 const SIGNPOST_TARGET_HEIGHT = HEX_SIZE * 0.28;
-const SHORE_BOAT_TARGET_LENGTH = HEX_SIZE * 0.56;
+const SHORE_BOAT_TARGET_LENGTH = HEX_SIZE * 0.175;
 const SPECIAL_BUILDING_SAFE_RADIUS = HEX_SIZE * 0.34;
-const SPECIAL_BUILDING_BOAT_SAFE_RADIUS = HEX_SIZE * 0.26;
+const SPECIAL_BUILDING_BOAT_SAFE_RADIUS = HEX_SIZE * 0.18;
 const NATURAL_FLOWER_TARGET_WIDTH = HEX_SIZE * 0.055;
 const NATURAL_ROCK_TARGET_LENGTH = HEX_SIZE * 0.125;
 const NATURAL_REED_TARGET_HEIGHT = HEX_SIZE * 0.105;
 const NATURAL_MUSHROOM_TARGET_WIDTH = HEX_SIZE * 0.060;
 const ROAD_DECOR_Y = ((TILE_VISUAL.tileThickness ?? 0.12) * -0.30) + 0.010;
-const SHORE_BOAT_Y = WATER_SURFACE_Y + 0.006;
+const SHORE_BOAT_Y = WATER_SURFACE_Y + 0.012;
 const PROP_MODEL_DEFS = [
   { key: 'field-flag', url: './glb/moulin.glb', target: FIELD_FLAG_TARGET_HEIGHT * 1.70, mode: 'height' },
   { key: 'road-bench', url: './glb/banc.glb', target: BENCH_TARGET_LENGTH, mode: 'length' },
   { key: 'road-signpost', url: './glb/poteau-indicateur.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
-  { key: 'shore-boat', url: './glb/barque.glb', target: SHORE_BOAT_TARGET_LENGTH, mode: 'length' },
+  { key: 'shore-boat-1', url: './glb/barque-1.glb', target: SHORE_BOAT_TARGET_LENGTH, mode: 'length' },
+  { key: 'shore-boat-2', url: './glb/barque-2.glb', target: SHORE_BOAT_TARGET_LENGTH * 0.65, mode: 'length' },
   { key: 'flower-1', url: './glb/flower-1.glb', target: NATURAL_FLOWER_TARGET_WIDTH, mode: 'length', kind: 'flower' },
   { key: 'flower-2', url: './glb/flower-2.glb', target: NATURAL_FLOWER_TARGET_WIDTH, mode: 'length', kind: 'flower' },
   { key: 'flower-3', url: './glb/flower-3.glb', target: NATURAL_FLOWER_TARGET_WIDTH, mode: 'length', kind: 'flower' },
@@ -417,28 +414,9 @@ function collectFieldZones(placedTiles) {
 }
 
 function collectTextureZone(startTile, startEdge, type, placedTiles, visited) {
-  const stack = [{ tile: startTile, edge: startEdge }];
-  const sectors = [];
-  let total = 0;
-
-  while (stack.length > 0) {
-    const current = stack.pop();
-    const nodeKey = makeNodeKey(current.tile.key, current.edge);
-    if (visited.has(nodeKey)) continue;
-    if (getTileEdgeType(current.tile, current.edge) !== type) continue;
-
-    visited.add(nodeKey);
-    sectors.push(current);
-    total += getEdgeValue(current.tile.tile.edges[current.edge]);
-
-    for (const neighbor of getTextureNeighbors(current.tile, current.edge, type, placedTiles)) {
-      const neighborKey = makeNodeKey(neighbor.tile.key, neighbor.edge);
-      if (!visited.has(neighborKey)) stack.push(neighbor);
-    }
-  }
-
-  const center = getZoneCenter(sectors);
-  return { type, sectors, total, center, anchor: getNearestSectorRef(sectors, center) };
+  const result = collectZone(startTile, startEdge, type, placedTiles, visited, getTextureNeighbors);
+  const center = getZoneCenter(result.sectors);
+  return { ...result, center, anchor: getNearestSectorRef(result.sectors, center) };
 }
 
 function getTextureNeighbors(placedTile, edge, type, placedTiles) {
@@ -547,17 +525,24 @@ function createNaturalGroundProps(placedTiles) {
   const group = new THREE.Group();
   group.name = 'natural-grass-forest-glb-props';
 
+  // Phase 1 : collecter les instances pour les props haute-fréquence (flower, reed, mushroom)
+  // Les rochers gardent le chemin clone (variantes de taille côtière, peu nombreux)
+  const accumulator = new Map(); // variantKey → Matrix4[]
+
   for (const placedTile of placedTiles.values()) {
     for (const edge of EDGE_ORDER) {
       const type = getTileEdgeType(placedTile, edge);
       if (!isSafePropGroundType(type)) continue;
 
-      addNaturalPropCluster(group, placedTile, edge, type, 'flower', placedTiles);
-      addNaturalPropCluster(group, placedTile, edge, type, 'rock', placedTiles);
-      addNaturalPropCluster(group, placedTile, edge, type, 'reed', placedTiles);
-      addNaturalPropCluster(group, placedTile, edge, type, 'mushroom', placedTiles);
+      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'flower', placedTiles);
+      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'rock', placedTiles);
+      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'reed', placedTiles);
+      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'mushroom', placedTiles);
     }
   }
+
+  // Phase 2 : construire les InstancedMesh pour flower/reed/mushroom
+  buildNaturalPropInstancedMeshes(group, accumulator);
 
   return group;
 }
@@ -578,9 +563,7 @@ function addNaturalPropCluster(group, placedTile, edge, type, kind, placedTiles)
 
     const key = pickNaturalPropVariant(kind, `${seed}:variant:${i}`);
     const prop = createPropModel(key, `${seed}:model:${i}`);
-    if (!prop) continue;
-
-    const tilePos = axialToWorld(placedTile.q, placedTile.r);
+    if (!prop) continue;const tilePos = axialToWorld(placedTile.q, placedTile.r);
     prop.name = `${type}-${kind}-ambient-glb`;
     prop.position.set(tilePos.x + local.x, 0, tilePos.z + local.z);
     const yaw = hashUnit(`${seed}:yaw:${i}`) * Math.PI * 2;
@@ -613,6 +596,98 @@ function addNaturalPropCluster(group, placedTile, edge, type, kind, placedTiles)
     // deux sens : ni enfoui, ni flottant au-dessus du relief.
     snapPropBottomToSurface(prop, surfaceY, getNaturalPropGroundClearance(kind));
     group.add(prop);
+  }
+}
+
+// Collecte les matrices d'instance pour flower/reed/mushroom (sans clone).
+// La scale de base est cuite dans la géo du prototype via buildNaturalPropInstancedMeshes.
+function collectNaturalPropInstances(accumulator, placedTile, edge, type, kind, placedTiles) {
+  const seed = `${placedTile.key}:natural:${kind}:${edge}`;
+  const chance = getNaturalPropChance(kind, type, placedTile, edge, placedTiles);
+  if (hashUnit(seed) > chance) return;
+
+  const count = getNaturalPropCount(kind, type, seed, placedTile, edge, placedTiles);
+  const centerLocal = getNaturalSectorPoint(edge, `${seed}:cluster-center`);
+  const clusterRadius = getNaturalClusterRadius(kind);
+  const tilePos = axialToWorld(placedTile.q, placedTile.r);
+
+  for (let i = 0; i < count; i += 1) {
+    const local = getNaturalClusterPoint(edge, centerLocal, `${seed}:point:${i}`, clusterRadius);
+    const footprintRadius = getNaturalPropFootprint(kind);
+    if (!isSingleTerrainFootprint(local, placedTile, type, footprintRadius)) continue;
+
+    const variantKey = pickNaturalPropVariant(kind, `${seed}:variant:${i}`);
+    if (!variantKey || !propGlbLibrary.has(variantKey)) continue;
+
+    const yaw = hashUnit(`${seed}:yaw:${i}`) * Math.PI * 2;
+    const groundOffset = kind === 'flower' ? 0.006 : (kind === 'reed' ? 0.010 : (kind === 'mushroom' ? 0.004 : 0.000));
+
+    // Réinitialiser la rotation pour éviter les accumulations entre itérations
+    _propInstanceDummy.rotation.set(0, 0, 0);
+    _propInstanceDummy.position.set(tilePos.x + local.x, 0, tilePos.z + local.z);
+    placeObjectOnTerrain(_propInstanceDummy, local, type, hashNumber(`${seed}:terrain:${i}`) % 97, {
+      groundOffset,
+      alignToSlope: kind !== 'reed',
+      yaw,
+      edgeLockStart: 0.98,
+      edgeLockEnd: 1.0,
+      normalSampleStep: HEX_SIZE * 0.012
+    });
+    // Lean appliqué après placeObjectOnTerrain (même logique que le chemin clone)
+    if (kind === 'reed') {
+      _propInstanceDummy.rotation.x += (hashUnit(`${seed}:leanx:${i}`) - 0.5) * 0.10;
+      _propInstanceDummy.rotation.z += (hashUnit(`${seed}:leanz:${i}`) - 0.5) * 0.10;
+    }
+    if (kind === 'mushroom') {
+      _propInstanceDummy.rotation.x += (hashUnit(`${seed}:mushleanx:${i}`) - 0.5) * 0.035;
+      _propInstanceDummy.rotation.z += (hashUnit(`${seed}:mushleanz:${i}`) - 0.5) * 0.035;
+    }
+
+    let jitter = getNaturalPropScaleJitter(kind, seed, i);
+    // Rochers côtiers : plus gros (parité avec l'ancien chemin clone)
+    if (kind === 'rock' && isNearWaterDecorArea(placedTile, edge, placedTiles)) {
+      jitter *= 1.22 + hashUnit(`${seed}:shore-rock-scale:${i}`) * 0.36;
+    }
+    // Scale de base cuite dans la géo : on applique seulement le jitter dans la matrice d'instance
+    _propInstanceDummy.scale.setScalar(jitter);
+    _propInstanceDummy.updateMatrix();
+
+    if (!accumulator.has(variantKey)) accumulator.set(variantKey, []);
+    accumulator.get(variantKey).push(_propInstanceDummy.matrix.clone());
+  }
+}
+
+// Construit un InstancedMesh par sous-mesh de chaque variant de prop
+function buildNaturalPropInstancedMeshes(group, accumulator) {
+  for (const [variantKey, matrices] of accumulator) {
+    const prototype = propGlbLibrary.get(variantKey);
+    if (!prototype || matrices.length === 0) continue;
+
+    prototype.updateMatrixWorld(true);
+
+    prototype.traverse(child => {
+      if (!child.isMesh) return;
+      child.updateWorldMatrix(true, false);
+
+      const geo = child.geometry.clone();
+      geo.applyMatrix4(child.matrixWorld);
+
+      const mat = Array.isArray(child.material)
+        ? child.material.map(m => m.clone())
+        : child.material.clone();
+
+      const mesh = new THREE.InstancedMesh(geo, mat, matrices.length);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.frustumCulled = false; // bounding sphere calculée sur géo cuite à l'origine, pas sur les instances
+      mesh.name = `instanced-prop-${variantKey}`;
+
+      for (let i = 0; i < matrices.length; i++) {
+        mesh.setMatrixAt(i, matrices[i]);
+      }
+      mesh.instanceMatrix.needsUpdate = true;
+      group.add(mesh);
+    });
   }
 }
 
@@ -817,7 +892,7 @@ function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones = []) 
       if (!isShoreDecorEdge(placedTile, edge, placedTiles)) continue;
       const edgeType = getTileEdgeType(placedTile, edge);
       const seed = `${placedTile.key}:shore-signpost:${edge}`;
-      if (hashUnit(seed) > 0.22) continue;
+      if (hashUnit(seed) > 0.58) continue;
 
       const center = getSectorWorldCenter(placedTile, edge);
       const pos = new THREE.Vector3(center.x, ROAD_DECOR_Y, center.z).lerp(tileCenter, 0.24);
@@ -937,34 +1012,92 @@ function createShoreBoats(placedTiles, specialBuildingSafeZones = []) {
   for (const placedTile of placedTiles.values()) {
     const tilePos = axialToWorld(placedTile.q, placedTile.r);
     for (const edge of EDGE_ORDER) {
-      if (getTileEdgeType(placedTile, edge) !== EDGE_TYPES.water) continue;
-      const direction = DIRECTION_BY_EDGE[edge];
-      const neighbor = placedTiles.get(makeHexKey(placedTile.q + direction.q, placedTile.r + direction.r));
-      if (!neighbor || getTileEdgeType(neighbor, getOppositeEdge(edge)) === EDGE_TYPES.water) continue;
+      if (!isShoreBoatEligibleBeachEdge(placedTile, edge, placedTiles)) continue;
 
       const seed = `${placedTile.key}:shore-boat:${edge}`;
-      if (hashUnit(seed) > 0.22) continue;
+      if (hashUnit(seed) > 0.72) continue;
 
       const sector = SECTOR_BY_KEY[edge];
       const a = getHexVertex(sector.a);
       const b = getHexVertex(sector.b);
       const mid = new THREE.Vector3((a.x + b.x) / 2, SHORE_BOAT_Y, (a.z + b.z) / 2);
-      const inward = new THREE.Vector3(-direction.q, 0, -direction.r);
-      if (inward.lengthSq() < 0.001) inward.set(-mid.x, 0, -mid.z);
-      inward.normalize();
+      const inward = getShoreBoatBeachDirection(placedTile, edge, placedTiles, mid);
 
-      const boat = createPropModel('shore-boat', seed);
+      const boat = createPropModel(pickShoreBoatVariant(seed), seed);
       if (!boat) continue;
       boat.name = 'water-shore-inert-boat-glb';
-      boat.position.set(tilePos.x + mid.x + inward.x * HEX_SIZE * 0.08, SHORE_BOAT_Y, tilePos.z + mid.z + inward.z * HEX_SIZE * 0.08);
+      boat.position.set(tilePos.x + mid.x + inward.x * HEX_SIZE * 0.5, SHORE_BOAT_Y, tilePos.z + mid.z + inward.z * HEX_SIZE * 0.5);
       if (isInsideSpecialBuildingSafeZone(boat.position, specialBuildingSafeZones, SPECIAL_BUILDING_BOAT_SAFE_RADIUS)) continue;
-      boat.rotation.y = getEdgeOutwardAngle(edge) + Math.PI / 2 + (hashUnit(`${seed}:yaw`) - 0.5) * 0.55;
-      boat.scale.multiplyScalar(0.86 + hashUnit(`${seed}:scale`) * 0.20);
+      boat.rotation.y = Math.atan2(inward.x, inward.z) + Math.PI / 2 + (hashUnit(`${seed}:yaw`) - 0.5) * 0.50;
+      boat.scale.multiplyScalar(0.92 + hashUnit(`${seed}:scale`) * 0.18);
       group.add(boat);
     }
   }
 
   return group;
+}
+
+function isShoreBoatEligibleBeachEdge(placedTile, edge, placedTiles) {
+  if (getTileEdgeType(placedTile, edge) !== EDGE_TYPES.water) return false;
+
+  const direction = DIRECTION_BY_EDGE[edge];
+  const neighbor = placedTiles.get(makeHexKey(placedTile.q + direction.q, placedTile.r + direction.r));
+  const oppositeType = neighbor ? getTileEdgeType(neighbor, getOppositeEdge(edge)) : null;
+
+  // Jamais sur une frontière eau -> vide : il faut soit une vraie terre en face,
+  // soit une plage interne de tuile mixte eau/terre juste à côté du secteur eau.
+  if (neighbor && oppositeType !== EDGE_TYPES.water && oppositeType !== EDGE_TYPES.rail) return true;
+
+  return hasLandEdgeAdjacentToEdge(placedTile, edge);
+}
+
+function hasLandEdgeAdjacentToEdge(placedTile, edge) {
+  const index = EDGE_ORDER.indexOf(edge);
+  if (index < 0) return false;
+  const prevEdge = EDGE_ORDER[(index + EDGE_ORDER.length - 1) % EDGE_ORDER.length];
+  const nextEdge = EDGE_ORDER[(index + 1) % EDGE_ORDER.length];
+  return isBeachLandEdge(placedTile, prevEdge) || isBeachLandEdge(placedTile, nextEdge);
+}
+
+function isBeachLandEdge(placedTile, edge) {
+  const type = getTileEdgeType(placedTile, edge);
+  return type !== EDGE_TYPES.water && type !== EDGE_TYPES.rail;
+}
+
+function getShoreBoatBeachDirection(placedTile, edge, placedTiles, mid) {
+  const direction = DIRECTION_BY_EDGE[edge];
+  const neighbor = placedTiles.get(makeHexKey(placedTile.q + direction.q, placedTile.r + direction.r));
+  if (neighbor && isBeachLandEdge(neighbor, getOppositeEdge(edge))) {
+    const towardNeighbor = new THREE.Vector3(direction.q, 0, direction.r);
+    if (towardNeighbor.lengthSq() > 0.001) return towardNeighbor.normalize();
+  }
+
+  const adjacentLand = getAdjacentBeachLandVector(placedTile, edge);
+  if (adjacentLand.lengthSq() > 0.001) return adjacentLand.normalize();
+
+  const towardTileCenter = new THREE.Vector3(-mid.x, 0, -mid.z);
+  if (towardTileCenter.lengthSq() > 0.001) return towardTileCenter.normalize();
+
+  return new THREE.Vector3(0, 0, 1);
+}
+
+function getAdjacentBeachLandVector(placedTile, edge) {
+  const index = EDGE_ORDER.indexOf(edge);
+  const vector = new THREE.Vector3();
+  if (index < 0) return vector;
+
+  const addLandEdgeVector = candidateEdge => {
+    if (!isBeachLandEdge(placedTile, candidateEdge)) return;
+    const sector = SECTOR_BY_KEY[candidateEdge];
+    const a = getHexVertex(sector.a);
+    const b = getHexVertex(sector.b);
+    vector.x += (a.x + b.x) / 2;
+    vector.z += (a.z + b.z) / 2;
+  };
+
+  addLandEdgeVector(EDGE_ORDER[(index + EDGE_ORDER.length - 1) % EDGE_ORDER.length]);
+  addLandEdgeVector(EDGE_ORDER[(index + 1) % EDGE_ORDER.length]);
+  return vector;
 }
 
 
@@ -988,13 +1121,13 @@ function ensureBirdModel(overlay) {
       birdGlbLibrary.animations = gltf.animations ?? [];
       birdGlbLibrary.loading = false;
 
-      const lastPlacedTiles = overlay.userData.lastPlacedTiles;
-      if (lastPlacedTiles) rebuildFieldWaterEffectsOverlay(overlay, lastPlacedTiles);
+      maybeRebuildWhenReady(overlay);
     },
     undefined,
     error => {
       birdGlbLibrary.loading = false;
       console.warn(`Modèle oiseaux GLB indisponible : ${FIELD_BIRD_FLOCK_MODEL_URL}`, error);
+      maybeRebuildWhenReady(overlay); // rebuild sans oiseaux si le modèle échoue
     }
   );
 }
@@ -1055,6 +1188,18 @@ const propGlbLibrary = new Map();
 let propModelsLoading = false;
 let propModelsRequested = false;
 
+// Dummy réutilisé pour calculer les matrices d'instance sans allocation par prop
+const _propInstanceDummy = new THREE.Object3D();
+
+// Un seul rebuild : attend que props ET oiseaux soient tous chargés.
+// Sans cette garde, l'oiseau déclenche un 2e clearGroup qui efface les InstancedMesh du 1er rebuild.
+function maybeRebuildWhenReady(overlay) {
+  if (propModelsLoading) return;          // props encore en cours
+  if (birdGlbLibrary.loading) return;     // oiseau encore en cours
+  const lastPlacedTiles = overlay.userData.lastPlacedTiles;
+  if (lastPlacedTiles) rebuildFieldWaterEffectsOverlay(overlay, lastPlacedTiles);
+}
+
 function ensurePropModels(overlay) {
   if (propModelsLoading || propModelsRequested) return;
   propModelsLoading = true;
@@ -1066,8 +1211,7 @@ function ensurePropModels(overlay) {
     if (pending > 0) return;
 
     propModelsLoading = false;
-    const lastPlacedTiles = overlay.userData.lastPlacedTiles;
-    if (lastPlacedTiles) rebuildFieldWaterEffectsOverlay(overlay, lastPlacedTiles);
+    maybeRebuildWhenReady(overlay);
   };
 
   for (const def of PROP_MODEL_DEFS) {
@@ -1110,6 +1254,11 @@ function preparePropPrototype(model, def) {
   });
 
   return wrapper;
+}
+
+
+function pickShoreBoatVariant(seedKey) {
+  return hashUnit(`${seedKey}:shore-boat-variant`) < 0.5 ? 'shore-boat-1' : 'shore-boat-2';
 }
 
 function createPropModel(key, seedKey = key) {
@@ -1165,34 +1314,3 @@ function normalize2(x, z) {
   return { x: x / length, z: z / length };
 }
 
-function getTileEdgeType(placedTile, edge) {
-  return getEdgeType(placedTile.tile.edges[edge]);
-}
-
-function makeNodeKey(tileKey, edge) {
-  return `${tileKey}:${edge}`;
-}
-
-function hashNumber(value) {
-  let hash = 2166136261;
-  for (let i = 0; i < String(value).length; i += 1) {
-    hash ^= String(value).charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return Math.abs(hash >>> 0);
-}
-
-function hashUnit(value) {
-  return (hashNumber(value) % 10000) / 10000;
-}
-
-function clearGroup(group) {
-  while (group.children.length > 0) {
-    const child = group.children.pop();
-    child.traverse?.(object => {
-      object.geometry?.dispose?.();
-      if (Array.isArray(object.material)) object.material.forEach(material => material.dispose?.());
-      else object.material?.dispose?.();
-    });
-  }
-}

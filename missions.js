@@ -1,13 +1,12 @@
-import { EDGE_ORDER, EDGE_TYPES } from './config.js';
+import { EDGE_ORDER, EDGE_TYPES, MISSION_REWARD, MISSION_TILE_REWARD, MISSION_CHANCE, COMPLETED_MISSION_VISIBLE_TURNS } from './config.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { makeHexKey } from './stable/hex.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
-import { countWaterBoats } from './waterSharkOverlay.js';
+import { makeNodeKey, getTileEdgeType, getTileCenterType } from './stable/tileUtils.js';
+import { collectZone, getFullTextureNeighbors } from './stable/zoneUtils.js';
+import { countWaterBoats } from './waterBoatOverlay.js';
 
-export const MISSION_REWARD = 100;
-export const MISSION_TILE_REWARD = 3;
-export const MISSION_CHANCE = 0.20;
-export const COMPLETED_MISSION_VISIBLE_TURNS = 5;
+export { MISSION_REWARD, MISSION_TILE_REWARD, MISSION_CHANCE, COMPLETED_MISSION_VISIBLE_TURNS };
 
 const TRAIN_MISSION_TYPE = 'train';
 const BOAT_MISSION_TYPE = 'boat';
@@ -69,8 +68,6 @@ const MISSION_TYPES = [
     targets: [12, 24, 38, 56, 78, 105]
   }
 ];
-
-const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 
 export function createMissionManager() {
   return {
@@ -274,69 +271,7 @@ function getBestZoneTotalsByType(placedTiles) {
 }
 
 function collectTextureZone(startTile, startEdge, type, placedTiles, visited) {
-  const stack = [{ tile: startTile, edge: startEdge }];
-  let total = 0;
-
-  while (stack.length > 0) {
-    const current = stack.pop();
-    const nodeKey = makeNodeKey(current.tile.key, current.edge);
-
-    if (visited.has(nodeKey)) continue;
-    if (getTileEdgeType(current.tile, current.edge) !== type) continue;
-
-    visited.add(nodeKey);
-    total += getEdgeValue(current.tile.tile.edges[current.edge]);
-
-    for (const neighbor of getTextureNeighbors(current.tile, current.edge, type, placedTiles)) {
-      if (!visited.has(makeNodeKey(neighbor.tile.key, neighbor.edge))) stack.push(neighbor);
-    }
-  }
-
-  return { type, total };
-}
-
-function getTextureNeighbors(placedTile, edge, type, placedTiles) {
-  const neighbors = [];
-
-  if (getTileCenterType(placedTile) === type) {
-    for (const sameTileEdge of EDGE_ORDER) {
-      if (sameTileEdge !== edge && getTileEdgeType(placedTile, sameTileEdge) === type) {
-        neighbors.push({ tile: placedTile, edge: sameTileEdge });
-      }
-    }
-  }
-
-  const edgeIndex = EDGE_ORDER.indexOf(edge);
-  const internalEdges = [
-    EDGE_ORDER[(edgeIndex + EDGE_ORDER.length - 1) % EDGE_ORDER.length],
-    EDGE_ORDER[(edgeIndex + 1) % EDGE_ORDER.length]
-  ];
-
-  for (const internalEdge of internalEdges) {
-    if (getTileEdgeType(placedTile, internalEdge) === type) {
-      neighbors.push({ tile: placedTile, edge: internalEdge });
-    }
-  }
-
-  const direction = DIRECTION_BY_EDGE[edge];
-  if (!direction) return neighbors;
-
-  const neighborTile = placedTiles.get(makeHexKey(placedTile.q + direction.q, placedTile.r + direction.r));
-  const oppositeEdge = getOppositeEdge(edge);
-
-  if (neighborTile && getTileEdgeType(neighborTile, oppositeEdge) === type) {
-    neighbors.push({ tile: neighborTile, edge: oppositeEdge });
-  }
-
-  return neighbors;
-}
-
-function getTileEdgeType(placedTile, edge) {
-  return getEdgeType(placedTile.tile.edges[edge]);
-}
-
-function getTileCenterType(placedTile) {
-  return placedTile.tile.center ?? null;
+  return collectZone(startTile, startEdge, type, placedTiles, visited, getFullTextureNeighbors);
 }
 
 function isMissionType(type) {
@@ -411,10 +346,6 @@ function connectRailNodes(adjacency, a, b) {
   if (!adjacency.has(a) || !adjacency.has(b) || a === b) return;
   adjacency.get(a).add(b);
   adjacency.get(b).add(a);
-}
-
-function makeNodeKey(tileKey, edge) {
-  return `${tileKey}:${edge}`;
 }
 
 function pickRandom(items) {

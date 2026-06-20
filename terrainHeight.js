@@ -10,6 +10,8 @@ import {
   BIOME_HEIGHT_RATIO,
   RAGGED_EDGE
 } from './config.js';
+import { createOuterVertices } from './stable/hexGeometry.js';
+import { hashRaggedInnerEdge, hashRaggedEdge, hash01 } from './stable/raggedEdge.js';
 
 export const RAIL_SURFACE_Y = TILE_VISUAL.railSurfaceY ?? TILE_VISUAL.waterY ?? -0.075;
 export const RAIL_OVERLAY_LIFT = HEX_SIZE * 0.026;
@@ -107,7 +109,7 @@ function getSectorFromLocalPoint(point) {
 }
 
 function createSectorTopPoints(sector, type) {
-  const vertices = createOuterVertices();
+  const vertices = createOuterVertices(HEX_SIZE * TILE_VISUAL.radiusScale);
   const a = vertices[sector.a];
   const b = vertices[sector.b];
   const innerRadius = HEX_SIZE * (TILE_VISUAL.centerRadiusScale ?? 0.33);
@@ -126,18 +128,6 @@ function createSectorTopPoints(sector, type) {
 
 function createCenterTopPoints() {
   return createOuterVertices(HEX_SIZE * (TILE_VISUAL.centerRadiusScale ?? 0.33));
-}
-
-function createOuterVertices(radius = HEX_SIZE * (TILE_VISUAL.radiusScale ?? 1)) {
-  const vertices = [];
-  for (let i = 0; i < 6; i += 1) {
-    const angle = (Math.PI / 3) * i;
-    vertices.push({
-      x: Math.cos(angle) * radius,
-      z: Math.sin(angle) * radius
-    });
-  }
-  return vertices;
 }
 
 function createInnerEdge(innerPoint, outerPoint, vertexIndex) {
@@ -246,21 +236,6 @@ function getBarycentric2D(point, a, b, c) {
   return { a: u, b: v, c: w };
 }
 
-function hashRaggedInnerEdge(vertexIndex) {
-  return ((vertexIndex + 1) * 2654435761) >>> 0;
-}
-
-function hashRaggedEdge(a, b, type) {
-  const text = `${type}:${a.x.toFixed(3)},${a.z.toFixed(3)}>${b.x.toFixed(3)},${b.z.toFixed(3)}`;
-  let hash = 2166136261;
-  for (let i = 0; i < text.length; i += 1) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-}
-
-
 export function getTerrainSurfaceY(point, type = EDGE_TYPES.rail ?? 'rail', salt = 0, options = {}) {
   const localTop = options.exactMeshSurface === false
     ? getTerrainLocalTopY(point, type, salt)
@@ -336,14 +311,6 @@ function hashTerrainPoint(point, type, salt) {
     hash = Math.imul(hash, 16777619);
   }
   return hash >>> 0;
-}
-
-function hash01(value) {
-  let x = value >>> 0;
-  x ^= x << 13;
-  x ^= x >>> 17;
-  x ^= x << 5;
-  return ((x >>> 0) % 10000) / 10000;
 }
 
 function smoothstep(edge0, edge1, value) {

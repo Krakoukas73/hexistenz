@@ -15,12 +15,14 @@ import { createUI, setGridOnlyModeVisible, setHelpVisible, setText, updateDeckUI
 import { createPlacementFeedbackOverlay, getPlacementLabel } from './stable/placementOverlay.js';
 import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay, rebuildWaterZoneOverlay, updateHoverZoneOverlayAnimation } from './waterZoneOverlay.js';
 import { createRailTrainOverlay, rebuildRailTrainOverlay, updateRailTrainOverlay } from './railTrainOverlay.js';
-import { createWaterSharkOverlay, rebuildWaterSharkOverlay, updateWaterSharkOverlay } from './waterSharkOverlay.js';
-import { createForestBirchOverlay, rebuildForestBirchOverlay } from './forestBirchOverlay.js';
-import { createHouseSmokeOverlay, rebuildHouseSmokeOverlay, updateHouseSmokeOverlay } from './houseSmokeOverlay.js';
+import { createWaterBoatOverlay, rebuildWaterBoatOverlay, updateWaterBoatOverlay } from './waterBoatOverlay.js';
+import { createForestOverlay, rebuildForestOverlay } from './forestOverlay.js';
+import { createHouseOverlay, rebuildHouseOverlay, updateHouseOverlay } from './houseOverlay.js';
 import { createFieldWaterEffectsOverlay, rebuildFieldWaterEffectsOverlay, updateFieldWaterEffectsOverlay } from './fieldWaterEffectsOverlay.js';
 import { createAmbientSoundDesign, startEndingMusic, startIngameMusic } from './soundDesign.js';
 import { createVisualEnvironment } from './visualEnvironment.js';
+import { createCometSky, updateCometSky } from './stable/cometSky.js';
+import { updateGlobalWind } from './stable/globalWind.js';
 import { createDebugLightUI } from './debugLightUi.js';
 import { askHighscoreSubmit, createHighscoreUI } from './stable/highscore.js';
 import { applySceneCurvatureFlags, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './stable/threeSetup.js';
@@ -82,18 +84,19 @@ export function initScene(options = {}) {
   const waterZoneOverlay = createWaterZoneOverlay();
   const hoverZoneOverlay = createHoverZoneOverlay();
   const railTrainOverlay = createRailTrainOverlay();
-  const waterSharkOverlay = createWaterSharkOverlay();
-  const forestBirchOverlay = createForestBirchOverlay();
-  const houseSmokeOverlay = createHouseSmokeOverlay();
+  const waterBoatOverlay = createWaterBoatOverlay();
+  const forestOverlay = createForestOverlay();
+  const houseOverlay = createHouseOverlay();
   const fieldWaterEffectsOverlay = createFieldWaterEffectsOverlay();
-  const ambientSoundDesign = createAmbientSoundDesign({ camera, canvas, placedTiles, fieldWaterEffectsOverlay });
+  const cometSky = createCometSky();
+  const ambientSoundDesign = createAmbientSoundDesign({ camera, canvas, placedTiles, fieldWaterEffectsOverlay, railTrainOverlay, waterBoatOverlay, houseOverlay });
   const gridOverlay = createGrid([...placedTiles.values()]);
   syncPlacementGridKeys();
   totalGridTiles = getGridCellCount(gridOverlay);
 
   ghostTile.visible = false;
 
-  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterSharkOverlay, forestBirchOverlay, houseSmokeOverlay, fieldWaterEffectsOverlay, remoteGhosts, ghostTile);
+  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, houseOverlay, fieldWaterEffectsOverlay, cometSky, remoteGhosts, ghostTile);
   applySceneCurvatureFlags(gridOverlay);
   applySceneCurvatureFlags(specialCellsMesh);
   applySceneCurvatureFlags(bonusCellsMesh);
@@ -225,15 +228,17 @@ export function initScene(options = {}) {
     controls.update();
     const timeSeconds = performance.now() * 0.001;
     updateAnimatedBiomeTextures(timeSeconds);
+    updateGlobalWind(timeSeconds);
     updateRealisticWater(timeSeconds);
     updateSpecialCellsMeshAnimation(specialCellsMesh, timeSeconds);
     updateBonusCellsMeshAnimation(bonusCellsMesh, timeSeconds);
     updateKeyboardUI(ui, controls.keys, rotationKeyActive, gridOnlyMode);
     updateHoverZoneOverlayAnimation(hoverZoneOverlay, waterZoneOverlay);
     updateRailTrainOverlay(railTrainOverlay, timeSeconds);
-    updateWaterSharkOverlay(waterSharkOverlay, timeSeconds);
-    updateHouseSmokeOverlay(houseSmokeOverlay, timeSeconds);
+    updateWaterBoatOverlay(waterBoatOverlay, timeSeconds);
+    updateHouseOverlay(houseOverlay, timeSeconds);
     updateFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, timeSeconds);
+    updateCometSky(cometSky, camera, timeSeconds);
     ambientSoundDesign.update(timeSeconds);
     updateSunShadowOrbit(scene, timeSeconds, controls.target);
     updateWorldCurvedSprites(scene);
@@ -266,9 +271,9 @@ export function initScene(options = {}) {
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
-    rebuildWaterSharkOverlay(waterSharkOverlay, placedTiles);
-    rebuildForestBirchOverlay(forestBirchOverlay, placedTiles);
-    rebuildHouseSmokeOverlay(houseSmokeOverlay, placedTiles);
+    rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
+    rebuildForestOverlay(forestOverlay, placedTiles);
+    rebuildHouseOverlay(houseOverlay, placedTiles);
     rebuildFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, placedTiles);
   }
 
@@ -411,9 +416,9 @@ export function initScene(options = {}) {
     refreshGridAvailability();
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
-    rebuildWaterSharkOverlay(waterSharkOverlay, placedTiles);
-    rebuildForestBirchOverlay(forestBirchOverlay, placedTiles);
-    rebuildHouseSmokeOverlay(houseSmokeOverlay, placedTiles);
+    rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
+    rebuildForestOverlay(forestOverlay, placedTiles);
+    rebuildHouseOverlay(houseOverlay, placedTiles);
     rebuildFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, placedTiles);
     if (gridOnlyMode) setGridLabelVisibility(false);
 
@@ -550,9 +555,9 @@ export function initScene(options = {}) {
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
-    rebuildWaterSharkOverlay(waterSharkOverlay, placedTiles);
-    rebuildForestBirchOverlay(forestBirchOverlay, placedTiles);
-    rebuildHouseSmokeOverlay(houseSmokeOverlay, placedTiles);
+    rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
+    rebuildForestOverlay(forestOverlay, placedTiles);
+    rebuildHouseOverlay(houseOverlay, placedTiles);
     rebuildFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, placedTiles);
     updateHoveredSpecialCellVisibility(hoveredHex);
     if (gridOnlyMode) setGridLabelVisibility(false);
@@ -765,9 +770,9 @@ export function initScene(options = {}) {
       rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
       rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
       rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
-      rebuildWaterSharkOverlay(waterSharkOverlay, placedTiles);
-      rebuildForestBirchOverlay(forestBirchOverlay, placedTiles);
-      rebuildHouseSmokeOverlay(houseSmokeOverlay, placedTiles);
+      rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
+      rebuildForestOverlay(forestOverlay, placedTiles);
+      rebuildHouseOverlay(houseOverlay, placedTiles);
       rebuildFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, placedTiles);
       refreshDeckUI();
       refreshGridAvailability();

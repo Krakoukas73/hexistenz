@@ -1,18 +1,12 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, BOAT_TARGET_LENGTH } from './config.js';
+import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, BOAT_TARGET_LENGTH, SECTOR_DEFS } from './config.js';
 import { axialToWorld, makeHexKey } from './stable/hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
-
-const SECTOR_DEFS = [
-  { key: 'n', a: 0, b: 1 },
-  { key: 'ne', a: 1, b: 2 },
-  { key: 'se', a: 2, b: 3 },
-  { key: 's', a: 3, b: 4 },
-  { key: 'sw', a: 4, b: 5 },
-  { key: 'nw', a: 5, b: 0 }
-];
+import { hashUnit100k as hashUnit } from './stable/hashUtils.js';
+import { createOuterVertices } from './stable/hexGeometry.js';
+import { makeNodeKey, getTileCenterType, clearGroup, smoothstep } from './stable/tileUtils.js';
 
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
@@ -33,18 +27,18 @@ const FIN_WIDTH = HEX_SIZE * 0.058;
 const FIN_HEIGHT = HEX_SIZE * 0.185;
 const FIN_LENGTH = HEX_SIZE * 0.36;
 
-export function createWaterSharkOverlay() {
+export function createWaterBoatOverlay() {
   const group = new THREE.Group();
-  group.name = 'waterSharkOverlay';
-  group.userData.sharks = [];
+  group.name = 'water-boat-overlay';
+  group.userData.boats = [];
   ensureBoatModel(group);
   return group;
 }
 
-export function rebuildWaterSharkOverlay(group, placedTiles) {
+export function rebuildWaterBoatOverlay(group, placedTiles) {
   group.userData.lastPlacedTiles = placedTiles;
   clearGroup(group);
-  group.userData.sharks = [];
+  group.userData.boats = [];
 
   if (!boatPrototype) {
     ensureBoatModel(group);
@@ -62,7 +56,7 @@ export function rebuildWaterSharkOverlay(group, placedTiles) {
       const zone = collectWaterZone(placedTile, edge, placedTiles, visited);
       if (zone.sectors.length < MIN_ZONE_SECTORS) continue;
 
-      addZoneSharks(group, zone, zoneIndex++);
+      addZoneBoats(group, zone, zoneIndex++);
     }
   }
 }
@@ -109,23 +103,23 @@ function countZoneBoats(zone, zoneIndex = 0) {
   return boats;
 }
 
-export function updateWaterSharkOverlay(group, timeSeconds = 0) {
-  const sharks = group.userData.sharks ?? [];
+export function updateWaterBoatOverlay(group, timeSeconds = 0) {
+  const boats = group.userData.boats ?? [];
 
-  for (const shark of sharks) {
-    const drift = Math.sin(timeSeconds * 0.37 + shark.offset * Math.PI * 2) * 0.018;
-    const progress = (timeSeconds * BOAT_SPEED / Math.max(shark.distance, 0.001) + shark.offset + drift) % 1;
-    const sample = samplePingPongMotionTrack(shark.motionTrack, progress);
-    const bob = Math.sin((timeSeconds * 1.15) + shark.offset * Math.PI * 2) * 0.004;
+  for (const boat of boats) {
+    const drift = Math.sin(timeSeconds * 0.37 + boat.offset * Math.PI * 2) * 0.018;
+    const progress = (timeSeconds * BOAT_SPEED / Math.max(boat.distance, 0.001) + boat.offset + drift) % 1;
+    const sample = samplePingPongMotionTrack(boat.motionTrack, progress);
+    const bob = Math.sin((timeSeconds * 1.15) + boat.offset * Math.PI * 2) * 0.004;
 
-    shark.object.position.copy(sample.position);
-    shark.object.position.y = WATER_SURFACE_Y + BOAT_Y_OFFSET + bob;
-    shark.object.rotation.y = -Math.atan2(sample.tangent.z, sample.tangent.x) + BOAT_HEADING_OFFSET;
-    shark.object.visible = true;
+    boat.object.position.copy(sample.position);
+    boat.object.position.y = WATER_SURFACE_Y + BOAT_Y_OFFSET + bob;
+    boat.object.rotation.y = -Math.atan2(sample.tangent.z, sample.tangent.x) + BOAT_HEADING_OFFSET;
+    boat.object.visible = true;
   }
 }
 
-function addZoneSharks(group, zone, zoneIndex) {
+function addZoneBoats(group, zone, zoneIndex) {
   const graph = buildWaterGraph(zone);
   const components = findComponents(graph);
 
@@ -144,11 +138,11 @@ function addZoneSharks(group, zone, zoneIndex) {
 
     for (let index = 0; index < boatCount; index++) {
       const seedKey = `water-zone:${zoneIndex}:component:${component.index}:boat:${index}`;
-      const object = createSharkObject(seedKey);
+      const object = createBoatObject(seedKey);
       object.position.copy(points[0]);
       group.add(object);
 
-      group.userData.sharks.push({
+      group.userData.boats.push({
         object,
         motionTrack,
         distance,
@@ -158,7 +152,7 @@ function addZoneSharks(group, zone, zoneIndex) {
   }
 }
 
-function createSharkObject(seedKey) {
+function createBoatObject(seedKey) {
   const group = new THREE.Group();
   group.name = 'animated-water-boat-glb';
   const scale = 0.92 + hashUnit(`${seedKey}:scale`) * 0.18;
@@ -182,7 +176,7 @@ function ensureBoatModel(group) {
       boatPrototype = prepareBoatPrototype(gltf.scene);
       boatLoading = false;
       const lastPlacedTiles = group.userData.lastPlacedTiles;
-      if (lastPlacedTiles) rebuildWaterSharkOverlay(group, lastPlacedTiles);
+      if (lastPlacedTiles) rebuildWaterBoatOverlay(group, lastPlacedTiles);
     },
     undefined,
     error => {
@@ -289,7 +283,7 @@ function createLowPolyFin(seedKey) {
   });
 
   const mesh = new THREE.Mesh(geometry, material);
-  mesh.name = 'shark-dorsal-fin-faithful';
+  mesh.name = 'boat-fin';
   mesh.renderOrder = 72;
   return mesh;
 }
@@ -307,7 +301,7 @@ function createSubsurfaceBody(seedKey) {
       side: THREE.DoubleSide
     })
   );
-  mesh.name = 'shark-subsurface-shadow';
+  mesh.name = 'boat-shadow';
   mesh.rotation.x = -Math.PI / 2;
   mesh.rotation.z = hashUnit(`${seedKey}:body-rot`) * 0.16 - 0.08;
   mesh.position.y = -0.006;
@@ -330,7 +324,7 @@ function createWakeStroke(seedKey, side) {
   });
 
   const mesh = new THREE.Mesh(geometry, material);
-  mesh.name = side < 0 ? 'shark-left-wake' : 'shark-right-wake';
+  mesh.name = side < 0 ? 'boat-left-wake' : 'boat-right-wake';
   mesh.position.y = 0.004;
   mesh.renderOrder = 69;
   return mesh;
@@ -347,7 +341,7 @@ function createSurfaceRipple(seedKey) {
   });
 
   const ring = new THREE.Mesh(geometry, material);
-  ring.name = 'shark-surface-ripple';
+  ring.name = 'boat-ripple';
   ring.position.y = 0.002;
   ring.rotation.x = -Math.PI / 2;
   ring.rotation.z = hashUnit(`${seedKey}:ripple-rot`) * Math.PI;
@@ -432,7 +426,7 @@ function getWaterNeighbors(placedTile, edge, placedTiles) {
 
 function getSectorWaterPoint(placedTile, edge) {
   const sector = SECTOR_BY_KEY[edge];
-  const outerVertices = createOuterVertices();
+  const outerVertices = createOuterVertices(HEX_SIZE * TILE_VISUAL.radiusScale);
   const innerVertices = createOuterVertices(CENTER_RADIUS);
   const world = axialToWorld(placedTile.q, placedTile.r);
 
@@ -451,25 +445,8 @@ function midpoint(a, b) {
   return { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
 }
 
-function createOuterVertices(radius = HEX_SIZE * TILE_VISUAL.radiusScale) {
-  const vertices = [];
-  for (let i = 0; i < 6; i++) {
-    const angle = (Math.PI / 3) * i;
-    vertices.push({ x: Math.cos(angle) * radius, z: Math.sin(angle) * radius });
-  }
-  return vertices;
-}
-
 function isWaterEdge(placedTile, edge) {
   return getEdgeType(placedTile?.tile?.edges?.[edge]) === EDGE_TYPES.water;
-}
-
-function getTileCenterType(placedTile) {
-  return placedTile.tile.center ?? null;
-}
-
-function makeNodeKey(tileKey, edge) {
-  return `${tileKey}:${edge}`;
 }
 
 function addNode(graph, id, position, tileKey) {
@@ -673,34 +650,6 @@ function positiveModulo(value, modulo) {
   return ((value % modulo) + modulo) % modulo;
 }
 
-function smoothstep(edge0, edge1, value) {
-  const x = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
-  return x * x * (3 - 2 * x);
-}
-
 function easeInOutSine(value) {
   return -(Math.cos(Math.PI * value) - 1) / 2;
-}
-
-function hashUnit(input) {
-  let hash = 2166136261;
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return ((hash >>> 0) % 100000) / 100000;
-}
-
-function clearGroup(group) {
-  while (group.children.length > 0) {
-    const child = group.children.pop();
-    child.traverse?.(object => {
-      object.geometry?.dispose?.();
-      if (Array.isArray(object.material)) {
-        object.material.forEach(material => material.dispose?.());
-      } else {
-        object.material?.dispose?.();
-      }
-    });
-  }
 }

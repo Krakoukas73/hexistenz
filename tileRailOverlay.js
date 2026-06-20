@@ -9,6 +9,7 @@ import {
 } from './config.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getTerrainSurfaceY, getTerrainNormalAt } from './terrainHeight.js';
+import { hashUnitFull as hashUnit, hashNumber } from './stable/hashUtils.js';
 
 const materialCache = new Map();
 const geometryCache = new Map();
@@ -715,16 +716,6 @@ function alignScatterStoneToTerrain(stone, position, type, yaw, seedKey) {
   stone.rotateZ((hashUnit(`${seedKey}:rz`) - 0.5) * 0.18);
 }
 
-function hashNumber(value) {
-  let hash = 2166136261;
-  const text = String(value);
-  for (let i = 0; i < text.length; i += 1) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-}
-
 function createStoneMesh(seedKey) {
   const mesh = new THREE.Mesh(getStoneGeometry(seedKey), getRailMaterial('stone'));
   mesh.name = 'procedural-rail-side-stone';
@@ -983,12 +974,3 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function hashUnit(value) {
-  const text = String(value);
-  let hash = 2166136261;
-  for (let i = 0; i < text.length; i += 1) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0) / 4294967295;
-}

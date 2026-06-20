@@ -60,7 +60,7 @@ function ensureMenuBackgroundStyles() {
       z-index: 0;
       overflow: hidden;
       background:
-        radial-gradient(circle at center, rgba(22, 38, 56, 0.58), rgba(2, 5, 9, 0.72));
+        radial-gradient(circle at center, rgba(22, 38, 56, 0.36), rgba(2, 5, 9, 0.44));
     }
 
     .mode-background-carousel::after {
@@ -70,9 +70,9 @@ function ensureMenuBackgroundStyles() {
       z-index: 3;
       pointer-events: none;
       background:
-        radial-gradient(circle at 50% 42%, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.42) 76%),
-        linear-gradient(180deg, rgba(2, 6, 12, 0.08), rgba(2, 6, 12, 0.38));
-      backdrop-filter: blur(0.35px);
+        radial-gradient(circle at 50% 42%, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.24) 76%),
+        linear-gradient(180deg, rgba(2, 6, 12, 0.04), rgba(2, 6, 12, 0.22));
+      backdrop-filter: blur(0.18px);
     }
 
     .mode-background-slide {
@@ -83,7 +83,7 @@ function ensureMenuBackgroundStyles() {
       background-position: center;
       background-size: cover;
       transform: scale(1.035);
-      filter: saturate(1.14) contrast(1.06) brightness(0.94);
+      filter: saturate(1.18) contrast(1.07) brightness(1.03);
       transition:
         opacity ${MENU_BACKGROUND_FADE_MS}ms ease,
         transform ${MENU_BACKGROUND_INTERVAL_MS}ms linear;
@@ -108,15 +108,15 @@ function ensureMenuBackgroundStyles() {
 	  
 	  
       background:
-        linear-gradient(160deg, rgba(8, 16, 26, 0.64), rgba(4, 8, 14, 0.42)),
-        rgba(5, 10, 18, 0.38);
+        linear-gradient(160deg, rgba(8, 16, 26, 0.46), rgba(4, 8, 14, 0.28)),
+        rgba(5, 10, 18, 0.24);
       border: 1px solid rgba(220, 240, 255, 0.28);
       box-shadow:
-        0 22px 70px rgba(0, 0, 0, 0.48),
+        0 22px 70px rgba(0, 0, 0, 0.34),
         inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        inset 0 0 44px rgba(120, 180, 255, 0.06);
-      backdrop-filter: blur(18px) saturate(1.18);
-      -webkit-backdrop-filter: blur(18px) saturate(1.18);
+        inset 0 0 44px rgba(120, 180, 255, 0.045);
+      backdrop-filter: blur(10px) saturate(1.12);
+      -webkit-backdrop-filter: blur(10px) saturate(1.12);
     }
 
     .mode-screen--with-background .mode-panel::before {
@@ -126,8 +126,8 @@ function ensureMenuBackgroundStyles() {
       z-index: -1;
       border-radius: inherit;
       background:
-        radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.18), transparent 34%),
-        radial-gradient(circle at 100% 100%, rgba(95, 170, 255, 0.13), transparent 40%);
+        radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.11), transparent 34%),
+        radial-gradient(circle at 100% 100%, rgba(95, 170, 255, 0.08), transparent 40%);
       pointer-events: none;
     }
 
@@ -161,7 +161,7 @@ function ensureMenuBackgroundStyles() {
 
     @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
       .mode-screen--with-background .mode-panel {
-        background: rgba(5, 10, 18, 0.86);
+        background: rgba(5, 10, 18, 0.62);
       }
     }
   `;

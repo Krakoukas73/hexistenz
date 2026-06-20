@@ -111,7 +111,7 @@ export const THIN_BIOME_DEPTH_RATIO = {
 // Variation du dessus des biomes pour éviter les glitchs aux jonctions.
 // Le dessous reste collé à la grille : c'est la règle sacrée, gravée au burin.
 export const BIOME_HEIGHT_RATIO = {
-  field: 0.2475,
+  field: 0.15,
   grass: -0.45
 };
 

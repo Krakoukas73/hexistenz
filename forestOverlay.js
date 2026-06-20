@@ -1,7 +1,10 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-import { EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
+import { EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
+import { hashUnitFull as hashToUnit, hashNumber } from './stable/hashUtils.js';
+import { createOuterVertices } from './stable/hexGeometry.js';
 import { axialToWorld } from './stable/hex.js';
+import { applyGlobalWindToObject } from './stable/globalWind.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { placeObjectOnTerrain } from './terrainHeight.js';
 import { collectSpecialBuildingSafeZones } from './fieldWaterEffectsOverlay.js';
@@ -16,27 +19,21 @@ import {
 
 const CENTER_SAFE_RADIUS = HEX_SIZE * (TILE_VISUAL.centerRadiusScale + TREE_CENTER_SAFE_RADIUS_EXTRA);
 const SPECIAL_BUILDING_TREE_SAFE_RADIUS = HEX_SIZE * 0.38;
-const SECTOR_DEFS = [
-  { key: 'n', a: 0, b: 1 },
-  { key: 'ne', a: 1, b: 2 },
-  { key: 'se', a: 2, b: 3 },
-  { key: 's', a: 3, b: 4 },
-  { key: 'sw', a: 4, b: 5 },
-  { key: 'nw', a: 5, b: 0 }
-];
-
 const treeLibrary = new Map();
 let modelsLoading = false;
 let modelsRequested = false;
 
-export function createForestBirchOverlay() {
+// Dummy réutilisé pour calculer les matrices d'instance sans allocation par arbre
+const _instanceDummy = new THREE.Object3D();
+
+export function createForestOverlay() {
   const group = new THREE.Group();
   group.name = 'forest-tree-glb-overlay';
   ensureTreeModels(group);
   return group;
 }
 
-export function rebuildForestBirchOverlay(group, placedTiles) {
+export function rebuildForestOverlay(group, placedTiles) {
   group.userData.lastPlacedTiles = placedTiles;
   disposeOverlayChildren(group);
 
@@ -47,9 +44,14 @@ export function rebuildForestBirchOverlay(group, placedTiles) {
 
   const specialBuildingSafeZones = collectSpecialBuildingSafeZones(placedTiles);
 
+  // Phase 1 : collecter toutes les matrices d'instances par variant
+  const accumulator = new Map(); // variantKey → Matrix4[]
   for (const placedTile of placedTiles.values()) {
-    addTreesForTile(group, placedTile, specialBuildingSafeZones);
+    collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones);
   }
+
+  // Phase 2 : construire les InstancedMesh
+  buildTreeInstancedMeshes(group, accumulator);
 }
 
 function ensureTreeModels(group) {
@@ -64,7 +66,7 @@ function ensureTreeModels(group) {
 
     modelsLoading = false;
     const lastPlacedTiles = group.userData.lastPlacedTiles;
-    if (lastPlacedTiles) rebuildForestBirchOverlay(group, lastPlacedTiles);
+    if (lastPlacedTiles) rebuildForestOverlay(group, lastPlacedTiles);
   };
 
   for (const def of TREE_MODEL_DEFS) {
@@ -95,6 +97,17 @@ function prepareTreePrototype(model, def) {
     if (object.material) {
       object.material = cloneVisibleMaterial(object.material);
     }
+  });
+
+  applyGlobalWindToObject(prototype, {
+    strength: 0.052,
+    speed: 1.38,
+    frequency: 0.78,
+    turbulence: 0.30,
+    heightStart: 0.030,
+    heightEnd: 0.680,
+    gustStrength: 0.26,
+    detailStrength: 0.08
   });
 
   return prototype;
@@ -133,9 +146,15 @@ function normalizeModel(model, def) {
   return wrapper;
 }
 
-function addTreesForTile(group, placedTile, specialBuildingSafeZones = []) {
+// Phase 1 : accumule les matrices d'instance par variant (ordonné par TREE_MODEL_DEFS pour stabilité)
+function collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones = []) {
   const tileWorld = axialToWorld(placedTile.q, placedTile.r);
   const vertices = createOuterVertices();
+
+  const availableKeys = TREE_MODEL_DEFS
+    .map(def => def.key)
+    .filter(key => treeLibrary.has(key));
+  if (availableKeys.length === 0) return;
 
   for (const sector of SECTOR_DEFS) {
     const edge = placedTile.tile?.edges?.[sector.key];
@@ -146,29 +165,68 @@ function addTreesForTile(group, placedTile, specialBuildingSafeZones = []) {
     const positions = getTreePositionsInSector(vertices[sector.a], vertices[sector.b], count, placedTile.key, sector.key, avoidCenter);
 
     for (let i = 0; i < positions.length; i++) {
-      const tree = cloneTreeForSlot(placedTile.key, sector.key, i, positions.length);
-      if (!tree) continue;
-
       const pos = positions[i];
       if (isTreeInsideSpecialBuildingSafeZone(tileWorld.x + pos.x, tileWorld.z + pos.z, specialBuildingSafeZones)) continue;
-      const seed = hashToUnit(`${placedTile.key}:${sector.key}:scale:${i}`);
-      const scaleJitter = 0.80 + seed * 0.40;
 
-      tree.position.set(tileWorld.x + pos.x, 0, tileWorld.z + pos.z);
+      const modelIndex = pickMixedModelIndex(placedTile.key, sector.key, i, positions.length, availableKeys.length);
+      const variantKey = availableKeys[modelIndex];
+
+      const scaleJitter = 0.80 + hashToUnit(`${placedTile.key}:${sector.key}:scale:${i}`) * 0.40;
       const treeYaw = hashToUnit(`${placedTile.key}:${sector.key}:rot:${i}`) * Math.PI * 2;
-      placeObjectOnTerrain(tree, pos, EDGE_TYPES.forest, hashNumber(`${placedTile.key}:${sector.key}:tree:${i}`) % 97, {
+
+      _instanceDummy.position.set(tileWorld.x + pos.x, 0, tileWorld.z + pos.z);
+      placeObjectOnTerrain(_instanceDummy, pos, EDGE_TYPES.forest, hashNumber(`${placedTile.key}:${sector.key}:tree:${i}`) % 97, {
         groundOffset: TREE_GROUND_OFFSET,
         alignToSlope: false,
         yaw: treeYaw,
         edgeLockStart: 0.98,
         edgeLockEnd: 1.0
       });
-      tree.rotation.x = (hashToUnit(`${placedTile.key}:${sector.key}:tiltx:${i}`) - 0.5) * 0.18;
-      tree.rotation.z = (hashToUnit(`${placedTile.key}:${sector.key}:tiltz:${i}`) - 0.5) * 0.18;
-      tree.scale.multiplyScalar(scaleJitter);
-      tree.userData.isForestTreeGlb = true;
-      group.add(tree);
+      _instanceDummy.rotation.x = (hashToUnit(`${placedTile.key}:${sector.key}:tiltx:${i}`) - 0.5) * 0.18;
+      _instanceDummy.rotation.z = (hashToUnit(`${placedTile.key}:${sector.key}:tiltz:${i}`) - 0.5) * 0.18;
+      // La scale de base est cuite dans la géo (child.matrixWorld du prototype), on applique seulement le jitter ici.
+      _instanceDummy.scale.setScalar(scaleJitter);
+      _instanceDummy.updateMatrix();
+
+      if (!accumulator.has(variantKey)) accumulator.set(variantKey, []);
+      accumulator.get(variantKey).push(_instanceDummy.matrix.clone());
     }
+  }
+}
+
+// Phase 2 : crée un InstancedMesh par sous-mesh de chaque variant
+function buildTreeInstancedMeshes(group, accumulator) {
+  for (const [variantKey, matrices] of accumulator) {
+    const prototype = treeLibrary.get(variantKey);
+    if (!prototype || matrices.length === 0) continue;
+
+    // Calcule les matrices monde de chaque sous-mesh du prototype (prototype non attaché à la scène)
+    prototype.updateMatrixWorld(true);
+
+    prototype.traverse(child => {
+      if (!child.isMesh) return;
+      child.updateWorldMatrix(true, false);
+
+      // Cuit la transformation locale (position/scale du wrapper normalizeModel) dans la géo
+      const geo = child.geometry.clone();
+      geo.applyMatrix4(child.matrixWorld);
+
+      const mat = Array.isArray(child.material)
+        ? child.material.map(m => m.clone())
+        : child.material.clone();
+
+      const mesh = new THREE.InstancedMesh(geo, mat, matrices.length);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.frustumCulled = false; // bounding sphere calculée sur géo cuite à l'origine, pas sur les instances
+      mesh.name = `instanced-tree-${variantKey}`;
+
+      for (let i = 0; i < matrices.length; i++) {
+        mesh.setMatrixAt(i, matrices[i]);
+      }
+      mesh.instanceMatrix.needsUpdate = true;
+      group.add(mesh);
+    });
   }
 }
 
@@ -178,14 +236,6 @@ function isTreeInsideSpecialBuildingSafeZone(x, z, safeZones) {
     if (Math.hypot(x - zone.x, z - zone.z) < radius) return true;
   }
   return false;
-}
-
-function cloneTreeForSlot(tileKey, edgeKey, index, countInSector) {
-  const available = [...treeLibrary.values()];
-  if (available.length === 0) return null;
-
-  const modelIndex = pickMixedModelIndex(tileKey, edgeKey, index, countInSector, available.length);
-  return available[modelIndex].clone(true);
 }
 
 function pickMixedModelIndex(tileKey, edgeKey, index, countInSector, availableCount) {
@@ -274,39 +324,12 @@ function isFarEnoughFromOtherTrees(candidate, positions) {
   return positions.every(position => Math.hypot(candidate.x - position.x, candidate.z - position.z) >= MIN_TREE_DISTANCE);
 }
 
-function createOuterVertices(radius = HEX_SIZE) {
-  const vertices = [];
-
-  for (let i = 0; i < 6; i++) {
-    const angle = (Math.PI / 3) * i;
-    vertices.push({
-      x: Math.cos(angle) * radius,
-      z: Math.sin(angle) * radius
-    });
-  }
-
-  return vertices;
-}
-
-function hashToUnit(value) {
-  let hash = 2166136261;
-  for (let i = 0; i < value.length; i++) {
-    hash ^= value.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0) / 4294967295;
-}
-
 function disposeOverlayChildren(group) {
+  group.traverse(child => {
+    if (child === group) return;
+    if (child.geometry) child.geometry.dispose();
+    if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+    else if (child.material) child.material.dispose();
+  });
   group.clear();
-}
-
-function hashNumber(value) {
-  let hash = 2166136261;
-  const text = String(value);
-  for (let i = 0; i < text.length; i += 1) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
 }
