@@ -187,6 +187,32 @@ function moveTowards(current, target, step) {
 }
 
 
+// ─── Mute global ─────────────────────────────────────────────────────────────
+
+let _globalMuted = false;
+
+/**
+ * Active ou désactive tous les sons (musique + ambiance).
+ * Retourne le nouvel état muet (true = muet).
+ */
+export function toggleMute(ambientSoundDesign) {
+  _globalMuted = !_globalMuted;
+
+  // Musique HTML Audio
+  for (const audio of musicState.tracks.values()) {
+    audio.muted = _globalMuted;
+  }
+
+  // Ambiance THREE.Audio
+  ambientSoundDesign?.setMuted(_globalMuted);
+
+  return _globalMuted;
+}
+
+export function isGlobalMuted() {
+  return _globalMuted;
+}
+
 export function createAmbientSoundDesign({ camera, canvas, placedTiles, fieldWaterEffectsOverlay, railTrainOverlay, waterBoatOverlay, houseOverlay }) {
   return new AmbientSoundDesign({ camera, canvas, placedTiles, fieldWaterEffectsOverlay, railTrainOverlay, waterBoatOverlay, houseOverlay });
 }
@@ -210,6 +236,7 @@ class AmbientSoundDesign {
     this.proximity = { crows: 0, forest: 0, village: 0, beach: 0, train: 0, boat: 0, sacred: 0 };
     this.unlocked = false;
     this.started = false;
+    this.muted = false;
 
     this.camera.add(this.listener);
     this.createLayers();
@@ -314,7 +341,19 @@ class AmbientSoundDesign {
     }
   }
 
+  setMuted(muted) {
+    this.muted = Boolean(muted);
+    if (this.muted) {
+      for (const layer of this.layers.values()) {
+        layer.sound.userData.currentVolume = 0;
+        if (layer.loaded) layer.sound.setVolume(0);
+      }
+    }
+  }
+
   update(timeSeconds) {
+    if (this.muted) return;
+
     const deltaSeconds = Math.min(0.08, Math.max(0.001, timeSeconds - (this.lastTimeSeconds || timeSeconds)));
     this.lastTimeSeconds = timeSeconds;
 

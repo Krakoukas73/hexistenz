@@ -239,6 +239,49 @@ function cssUrl(value) {
   return String(value).replace(/["\\\n\r\f]/g, match => `\\${match}`);
 }
 
+function getPlayerNameFromCookie() {
+  const match = document.cookie.split(';')
+    .map(c => c.trim())
+    .find(c => c.startsWith('hexistenz_player_name='));
+  return match ? decodeURIComponent(match.split('=')[1] ?? '') : '';
+}
+
+function savePlayerNameCookie(name) {
+  const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
+  document.cookie = `hexistenz_player_name=${encodeURIComponent(name)}; expires=${expires}; path=/; SameSite=Lax`;
+}
+
+/**
+ * Pose la question du prénom avant le choix platiste/bouliste.
+ * Le nom est toujours demandé (pré-rempli avec la valeur cookie).
+ */
+function renderNameChoice(overlay, onConfirmed) {
+  const savedName = getPlayerNameFromCookie();
+  overlay.querySelector('.mode-copy').textContent = 'Comment tu t\'appelles ?';
+  overlay.querySelector('.mode-content').innerHTML = `
+    <label class="mode-label">Ton prénom (ou pseudo)</label>
+    <input data-field="player-name" maxlength="24" value="${escapeHtml(savedName)}" placeholder="Ex : Rémi" autocomplete="given-name" />
+    <div class="mode-actions">
+      <button data-action="confirm">CONTINUER →</button>
+    </div>
+  `;
+  setStatus(overlay, '');
+
+  const input = overlay.querySelector('[data-field="player-name"]');
+  requestAnimationFrame(() => { input.focus(); input.select(); });
+
+  const confirm = () => {
+    const name = input.value.trim() || 'Joueur';
+    savePlayerNameCookie(name);
+    onConfirmed(name);
+  };
+
+  overlay.querySelector('[data-action="confirm"]').addEventListener('click', confirm);
+  input.addEventListener('keydown', event => {
+    if (event.key === 'Enter') { event.preventDefault(); confirm(); }
+  });
+}
+
 function renderHome(overlay) {
   overlay.querySelector('.mode-copy').textContent = 'Choisis le mode de jeu : solo ou multijoueur.';
   overlay.querySelector('.mode-content').innerHTML = `
@@ -249,10 +292,12 @@ function renderHome(overlay) {
   `;
 
   overlay.querySelector('[data-action="solo"]').addEventListener('click', () => {
-    renderWorldShapeChoice(overlay, worldShapeMode => {
-      startIngameMusic();
-      overlay.remove();
-      initScene({ mode: 'solo', worldShapeMode });
+    renderNameChoice(overlay, playerName => {
+      renderWorldShapeChoice(overlay, worldShapeMode => {
+        startIngameMusic();
+        overlay.remove();
+        initScene({ mode: 'solo', worldShapeMode, playerName });
+      });
     });
   });
 
@@ -386,7 +431,7 @@ async function handleJoin(overlay) {
   const roomCode = normalizeCode(overlay.querySelector('[data-field="code"]').value);
 
   if (!roomCode) {
-    setStatus(overlay, 'Code partie manquant. Même un grille-pain alcoolique ferait mieux.');
+    setStatus(overlay, 'Code partie manquant.');
     return;
   }
 

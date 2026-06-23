@@ -348,6 +348,8 @@ Son spatialisé selon la carte. Sons connus : forêt, village, plage/eau, bateau
 
 Règle importante : les sons train ne se déclenchent qu'à la présence réelle d'un train (objet GLB existant), pas d'un simple secteur rail.
 
+**Touche M** — `toggleMute(ambientSoundDesign)` (exportée depuis `soundDesign.js`) coupe/rétablit tous les sons (musique HTML Audio + ambiance THREE.Audio). `AmbientSoundDesign.setMuted(bool)` force immédiatement les volumes à 0 et court-circuite `update()` tant que muet.
+
 ---
 
 ## 19. Multiplayer
@@ -471,7 +473,64 @@ Le shader vent (`stable/globalWind.js`) utilisait `modelMatrix * vec4(position, 
 
 ---
 
-## 23. Pièges connus
+## 23. Système LOD (Level Of Detail)
+
+### Principe
+
+Les objets Three.js sont masqués (`visible = false`) au-delà d'une distance caméra seuil. Le test est effectué dans la boucle `animate()` de `scene.js`, dans le bloc `(shadowRefreshFrame % 3) === 0` — soit ~20 Hz à 60 fps.
+
+La caméra est positionnée à `radius = 15`, `phi = π/3` → hauteur Y ≈ 7.5, décalage horizontal XZ ≈ 13 unités depuis la cible. La composante Y² (≈ 56) gonfle les distances 3D pour les objets posés au sol (Y ≈ 0), ce dont les seuils 3D tiennent compte.
+
+**Exception bateaux animés** (`waterBoatOverlay.js`) : la comparaison est **XZ uniquement** (`dx*dx + dz*dz`) pour éviter que Y² consomme tout le budget de distance sur terrain plat.
+
+### Seuils centralisés dans `variables.js`
+
+| Constante | Valeur | Comparaison | Cible |
+|---|---|---|---|
+| `LOD_MICRO_CULL_DISTANCE` | 16.0 | 3D | Fleurs, roseaux, champignons (InstancedMesh chunks) |
+| `LOD_SIGN_CULL_DISTANCE` | 17.0 | 3D par item | Panneaux indicateurs |
+| `LOD_SHORE_BOAT_CULL_DISTANCE` | 18.0 | 3D par item | Barques échouées (shore-inert-boat) |
+| `LOD_BOAT_CULL_DISTANCE` | 15.0 | **XZ uniquement** | Bateaux animés (waterBoatOverlay) |
+| `LOD_ROCK_CULL_DISTANCE` | 26.0 | 3D (chunks) | Rochers (InstancedMesh chunks) |
+| `LOD_PAVED_ROAD_CULL_DISTANCE` | 28.0 | 3D | Réseaux de routes pavées GLB |
+| `LOD_RAIL_TRACK_CULL_DISTANCE` | 30.0 | 3D | Rails/traverses/ballast |
+| `LOD_ROAD_DECOR_CULL_DISTANCE` | 30.0 | 3D par item | Bancs, moulins, corbeaux, drapeaux |
+| `LOD_TRAIN_CULL_DISTANCE` | 38.0 | 3D | Trains + gares |
+| `LOD_HOUSE_CULL_DISTANCE` | 32.0 | 3D | Bâtiments village |
+
+### Hiérarchie effective (petits → gros, disparition progressive)
+
+Distance XZ effective (avec Y≈7.5 de hauteur caméra) :
+1. Fleurs/roseaux/champignons → ~14.1 XZ
+2. Panneaux indicateurs → ~14.9 XZ
+3. Barques échouées → ~14.9 XZ
+4. Bateaux animés → 15.0 XZ (comparaison XZ directe)
+5. Rochers → ~24.9 XZ
+6. Routes pavées → ~26.9 XZ
+7. Rails/bancs/moulins/crows → ~28.9–29.1 XZ
+8. Bâtiments village → ~31.1 XZ
+9. Trains/gares → ~37.2 XZ
+
+### Implémentations
+
+**Chunks LOD** (forêt + micro-props) : `InstancedMesh` regroupé en chunks de `HEX_CHUNK_SIZE` tuiles. Le test compare la distance caméra au centre (`worldBoundingSphere`) du chunk. Seuil élargi ~20 % par rapport à la distance visible pour compenser : le centre peut être loin alors que le bord du chunk est encore proche.
+
+**Per-item LOD** (`roadsideDecorObjects`) : liste plate `{ object, center, lodDistSq }` construite dans `rebuildFieldWaterEffectsOverlay`. Inclut : drapeaux, bancs, panneaux, **barques échouées** (`water-shore-inert-boat-glb`). Mise à jour par `updateFieldDecorLOD()`.
+
+**Inline LOD** (scene.js, bloc %3) : scan direct de `placedTiles`, `mesh.getObjectByName(...)`, toggle `visible`. Utilisé pour `procedural-volume-rail-track` et `village-stone-road-glb-network` — une seule boucle, `distanceToSquared` calculé une fois par tile.
+
+**Overlay LOD** (fonctions dédiées, bloc %3) : `updateWaterBoatLOD`, `updateRailTrainLOD`, `updateHouseLOD`.
+
+### Règles
+
+- Toutes les constantes LOD dans `variables.js`. Zéro valeur magique dispersée.
+- Ne jamais comparer en 3D pour des objets posés au sol quand la hauteur caméra perturbe le résultat — préférer XZ ou calibrer le seuil.
+- Les petits objets disparaissent **avant** les gros quand on dézoome.
+- Aucun impact sur le rendu proche (les seuils sont calibrés bien au-delà du rayon de tuile visible).
+
+---
+
+## 24. Pièges connus
 
 **Grille invisible** — import cassé, erreur JS au chargement, `scene.js`, `stable/grid.js`, `stable/worldCurvature.js`.
 
@@ -491,7 +550,7 @@ Le shader vent (`stable/globalWind.js`) utilisait `modelMatrix * vec4(position, 
 
 ---
 
-## 24. Ce qu'on fera / ne fera pas
+## 25. Ce qu'on fera / ne fera pas
 
 À faire : polish graphique, lisibilité HUD, rebuild incrémental des overlays.
 
@@ -499,7 +558,7 @@ Pas prévu : React, Vue, TypeScript, framework, WebSocket obligatoire, SQL pour 
 
 ---
 
-## 25. Philosophie
+## 26. Philosophie
 
 1. Ne pas casser la grille.
 2. Ne pas casser le gameplay validé.

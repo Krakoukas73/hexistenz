@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
+import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, LOD_HOUSE_CULL_DISTANCE } from './config.js';
 import { hashUnit100k as hashUnit } from './stable/hashUtils.js';
 import { createOuterVertices } from './stable/hexGeometry.js';
 import { makeHexKey } from './stable/hex.js';
@@ -128,6 +128,17 @@ export function updateHouseOverlay(group, timeSeconds = 0) {
   }
 }
 
+export function updateHouseLOD(group, camera) {
+  const distSq = LOD_HOUSE_CULL_DISTANCE * LOD_HOUSE_CULL_DISTANCE;
+  const tileHouseGroups = group.userData.tileHouseGroups;
+  if (!tileHouseGroups) return;
+  for (const tileGroup of tileHouseGroups.values()) {
+    const center = tileGroup.userData.worldCenter;
+    if (!center) continue;
+    tileGroup.visible = camera.position.distanceToSquared(center) < distSq;
+  }
+}
+
 // ─── Chargement GLB — wrapper sans dépendance circulaire ─────────────────────
 
 function ensureHouseGlbModelsAndRebuild(group) {
@@ -147,6 +158,7 @@ function buildHouseTileGroup(group, placedTile, placedTiles, churchSectors, watc
 
   const tileX = placedTile.mesh?.position?.x ?? 0;
   const tileZ = placedTile.mesh?.position?.z ?? 0;
+  group.userData.worldCenter = new THREE.Vector3(tileX, 0, tileZ);
   const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
 
   for (const sector of SECTOR_DEFS) {

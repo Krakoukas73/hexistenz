@@ -1,5 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { DECK_SIZE, GRID_RADIUS } from './config.js';
+import { DECK_SIZE, GRID_RADIUS, COMET_HIT_SCORE, LOD_RAIL_TRACK_CULL_DISTANCE, LOD_PAVED_ROAD_CULL_DISTANCE } from './config.js';
+import { WORLD_CURVATURE } from './stable/worldCurvature.js';
 import { CameraControls } from './stable/controls.js';
 import { createGrid, ensureGridCellsAroundHex, getGridCellCount, getGridKeys, updateGridAvailability } from './stable/grid.js';
 import { addSpecialCellMesh, createSpecialCells, createSpecialCellsMesh, removeSpecialCellMesh, updateSpecialCellsMeshAnimation } from './stable/specialCells.js';
@@ -14,14 +15,14 @@ import { createDeck, rotateTile } from './tileGenerator.js';
 import { createUI, setGridOnlyModeVisible, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateMissionUI, updateScoreUI, updateStatsUI } from './ui.js';
 import { createPlacementFeedbackOverlay, getPlacementLabel } from './stable/placementOverlay.js';
 import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay, rebuildWaterZoneOverlay, updateHoverZoneOverlayAnimation } from './waterZoneOverlay.js';
-import { createRailTrainOverlay, rebuildRailTrainOverlay, updateRailTrainOverlay } from './railTrainOverlay.js';
-import { createWaterBoatOverlay, rebuildWaterBoatOverlay, updateWaterBoatOverlay } from './waterBoatOverlay.js';
-import { createForestOverlay, rebuildForestOverlay } from './forestOverlay.js';
-import { createHouseOverlay, rebuildHouseOverlay, updateHouseOverlay } from './houseOverlay.js';
-import { createFieldWaterEffectsOverlay, rebuildFieldWaterEffectsOverlay, updateFieldWaterEffectsOverlay } from './fieldWaterEffectsOverlay.js';
-import { createAmbientSoundDesign, startEndingMusic, startIngameMusic } from './soundDesign.js';
+import { createRailTrainOverlay, rebuildRailTrainOverlay, updateRailTrainOverlay, updateRailTrainLOD } from './railTrainOverlay.js';
+import { createWaterBoatOverlay, rebuildWaterBoatOverlay, updateWaterBoatOverlay, updateWaterBoatLOD } from './waterBoatOverlay.js';
+import { createForestOverlay, rebuildForestOverlay, updateForestLOD } from './forestOverlay.js';
+import { createHouseOverlay, rebuildHouseOverlay, updateHouseOverlay, updateHouseLOD } from './houseOverlay.js';
+import { createFieldWaterEffectsOverlay, rebuildFieldWaterEffectsOverlay, updateFieldWaterEffectsOverlay, updateNaturalPropsLOD, updateFieldDecorLOD } from './fieldWaterEffectsOverlay.js';
+import { createAmbientSoundDesign, startEndingMusic, startIngameMusic, toggleMute } from './soundDesign.js';
 import { createVisualEnvironment } from './visualEnvironment.js';
-import { createCometSky, updateCometSky } from './stable/cometSky.js';
+import { createCometSky, updateCometSky, tryCometHit, removeCometFromSky, spawnCometExplosion } from './stable/cometSky.js';
 import { updateGlobalWind } from './stable/globalWind.js';
 import { createDebugLightUI } from './debugLightUi.js';
 import { askHighscoreSubmit, createHighscoreUI } from './stable/highscore.js';
@@ -49,7 +50,7 @@ export function initScene(options = {}) {
   const isMultiplayer = options.mode === 'multi' && multiplayer?.roomCode;
   const initialState = options.initialState ?? null;
   const playerId = multiplayer?.playerId ?? null;
-  const playerName = multiplayer?.playerName ?? 'Joueur';
+  const playerName = options.playerName ?? multiplayer?.playerName ?? 'Joueur';
   let lastMultiplayerCursorSentAt = 0;
   let lastMultiplayerCursorSignature = '';
   let localMultiplayerStateVersion = Number(initialState?.stateVersion ?? 1);
@@ -73,6 +74,7 @@ export function initScene(options = {}) {
   let gridOnlyMode = false;
   let hiddenSpecialCellKey = null;
   let shadowRefreshFrame = 0;
+  let cometHits = 0;
   const waterClickRaycaster = new THREE.Raycaster();
   const waterClickPointer = new THREE.Vector2();
   let totalGridTiles = getTotalGridTiles(GRID_RADIUS);
@@ -191,6 +193,12 @@ export function initScene(options = {}) {
       return;
     }
 
+    if (key === 'm') {
+      event.preventDefault();
+      toggleMute(ambientSoundDesign);
+      return;
+    }
+
     if ((event.key === '+' || event.key === '=' || event.code === 'NumpadAdd') && !helpVisible) {
       event.preventDefault();
       controls.zoom(-120, event.shiftKey);
@@ -203,9 +211,10 @@ export function initScene(options = {}) {
       return;
     }
 
-    if (key === 'escape' && helpVisible) {
+    if (key === 'escape') {
       event.preventDefault();
-      toggleHelp(false);
+      if (gridOnlyMode) toggleGridOnlyMode(false);
+      toggleHelp();
       return;
     }
 
@@ -220,6 +229,41 @@ export function initScene(options = {}) {
 
   window.addEventListener('resize', () => resizeRenderer(renderer, camera, postprocess));
   canvas.addEventListener('pointerdown', handleWaterPointerDown, { passive: true });
+
+  // ── Clic sur les comètes ────────────────────────────────────────────────────
+  // Hitbox généreuse (1.2× le halo) : clic → +75 pts + disparition immédiate.
+  const _cometClickRaycaster = new THREE.Raycaster();
+  const _cometClickPointer   = new THREE.Vector2();
+  canvas.addEventListener('pointerdown', (event) => {
+    if (gameOver || event.button !== 0) return;
+    const rect = canvas.getBoundingClientRect();
+    _cometClickPointer.x = ((event.clientX - rect.left) / Math.max(rect.width, 1)) * 2 - 1;
+    _cometClickPointer.y = -(((event.clientY - rect.top)  / Math.max(rect.height, 1)) * 2 - 1);
+    _cometClickRaycaster.setFromCamera(_cometClickPointer, camera);
+    const hit = tryCometHit(cometSky, _cometClickRaycaster.ray, 0.466); // −10 % (était 0.518)
+    if (!hit) return;
+    cometHits++;
+    spawnCometExplosion(cometSky, hit);
+    removeCometFromSky(cometSky, hit);
+    totalScore += COMET_HIT_SCORE;
+    lastScore   = COMET_HIT_SCORE;
+    updateScoreUI(ui, totalScore, lastScore, placedTiles.size, totalGridTiles);
+    refreshStatsUI();
+  }, { passive: true });
+
+  // ── Contours de relief en mode bouliste ────────────────────────────────────
+  // Le normal buffer de RenderPixelatedPass n'intègre pas la courbure monde :
+  // ses arêtes normal-based créent des artefacts en mode sphère. On les désactive.
+  let _savedNormalEdge = postprocess.getSettings().normalEdgeStrength;
+  if (WORLD_CURVATURE.enabled) postprocess.applySettings({ normalEdgeStrength: 0.0 });
+  window.addEventListener('dorfromantik:world-curvature-changed', ({ detail }) => {
+    if (detail.enabled) {
+      _savedNormalEdge = postprocess.getSettings().normalEdgeStrength;
+      postprocess.applySettings({ normalEdgeStrength: 0.0 });
+    } else {
+      postprocess.applySettings({ normalEdgeStrength: _savedNormalEdge });
+    }
+  });
 
   animate();
 
@@ -246,6 +290,27 @@ export function initScene(options = {}) {
       applySceneCurvatureFlags(scene);
       applySceneShadowFlags(scene);
       visualEnvironment.apply();
+    }
+    if ((shadowRefreshFrame % 3) === 0) {
+      updateForestLOD(forestOverlay, camera);
+      updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera);
+      updateFieldDecorLOD(fieldWaterEffectsOverlay, camera);
+      updateWaterBoatLOD(waterBoatOverlay, camera);
+      updateRailTrainLOD(railTrainOverlay, camera);
+      updateHouseLOD(houseOverlay, camera);
+      // Rail track LOD — inline: scan placed tiles for rail track child meshes
+      const railTrackDistSq = LOD_RAIL_TRACK_CULL_DISTANCE * LOD_RAIL_TRACK_CULL_DISTANCE;
+      // Paved road LOD — même patron, groupe village-stone-road-glb-network
+      const pavedRoadDistSq = LOD_PAVED_ROAD_CULL_DISTANCE * LOD_PAVED_ROAD_CULL_DISTANCE;
+      for (const placedTile of placedTiles.values()) {
+        const mesh = placedTile.mesh;
+        if (!mesh) continue;
+        const distSq = camera.position.distanceToSquared(mesh.position);
+        const railTrack = mesh.getObjectByName('procedural-volume-rail-track');
+        if (railTrack) railTrack.visible = distSq < railTrackDistSq;
+        const roadNet = mesh.getObjectByName('village-stone-road-glb-network');
+        if (roadNet) roadNet.visible = distSq < pavedRoadDistSq;
+      }
     }
     postprocess.render();
   }
@@ -455,8 +520,14 @@ export function initScene(options = {}) {
     updateMissionUI(ui, missionManager.active, formatMissionLabel, getMissionProgressByType(placedTiles));
   }
 
+  function getFullGameStats() {
+    const stats = getGameStats(placedTiles);
+    stats.cometHits = cometHits;
+    return stats;
+  }
+
   function refreshStatsUI() {
-    updateStatsUI(ui, getGameStats(placedTiles));
+    updateStatsUI(ui, getFullGameStats());
   }
 
   function maybeAddMissionForCurrentTile() {
@@ -613,7 +684,8 @@ export function initScene(options = {}) {
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     ui.abandonGame?.setAttribute('disabled', 'disabled');
     setText(ui.placement, label);
-    askHighscoreSubmit(highscoreUI, totalScore, getGridPercent(), getGameStats(placedTiles));
+    refreshStatsUI();
+    askHighscoreSubmit(highscoreUI, totalScore, getGridPercent(), getFullGameStats());
   }
 
   function getGridPercent() {
@@ -830,7 +902,7 @@ export function initScene(options = {}) {
       bonusCells: [...bonusCells.values()].map(clonePlain),
       missionManager: serializeMissionManager(missionManager),
       players,
-      stats: getGameStats(placedTiles)
+      stats: getFullGameStats()
     };
   }
 

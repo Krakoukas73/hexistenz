@@ -14,7 +14,10 @@ import {
   TREE_GROUND_OFFSET,
   TREE_CENTER_SAFE_RADIUS_EXTRA,
   MIN_TREE_DISTANCE,
-  MAX_TREE_PLACEMENT_ATTEMPTS
+  MAX_TREE_PLACEMENT_ATTEMPTS,
+  TREE_WIND,
+  HEX_CHUNK_SIZE,
+  LOD_TREE_CULL_DISTANCE
 } from './variables.js';
 
 const CENTER_SAFE_RADIUS = HEX_SIZE * (TILE_VISUAL.centerRadiusScale + TREE_CENTER_SAFE_RADIUS_EXTRA);
@@ -25,6 +28,33 @@ let modelsRequested = false;
 
 // Dummy réutilisé pour calculer les matrices d'instance sans allocation par arbre
 const _instanceDummy = new THREE.Object3D();
+
+// Pré-alloués pour updateForestLOD() — évite GC chaque frame
+const _lodFrustum = new THREE.Frustum();
+const _lodProjMatrix = new THREE.Matrix4();
+const _lodPos = new THREE.Vector3();
+
+// Retourne la clé de chunk pour des coordonnées axiales (q, r)
+function getChunkKey(q, r) {
+  return `${Math.floor(q / HEX_CHUNK_SIZE)}:${Math.floor(r / HEX_CHUNK_SIZE)}`;
+}
+
+// Calcule une bounding sphere réelle en world-space à partir des matrices d'instances.
+// heightPadding couvre la hauteur de l'objet (pivot à la base).
+function computeInstancesBoundingSphere(matrices, heightPadding = 1.0) {
+  const center = new THREE.Vector3();
+  for (const m of matrices) {
+    _lodPos.setFromMatrixPosition(m);
+    center.add(_lodPos);
+  }
+  center.divideScalar(matrices.length);
+  let radius = 0;
+  for (const m of matrices) {
+    _lodPos.setFromMatrixPosition(m);
+    radius = Math.max(radius, center.distanceTo(_lodPos));
+  }
+  return new THREE.Sphere(center, radius + heightPadding);
+}
 
 export function createForestOverlay() {
   const group = new THREE.Group();
@@ -44,8 +74,8 @@ export function rebuildForestOverlay(group, placedTiles) {
 
   const specialBuildingSafeZones = collectSpecialBuildingSafeZones(placedTiles);
 
-  // Phase 1 : collecter toutes les matrices d'instances par variant
-  const accumulator = new Map(); // variantKey → Matrix4[]
+  // Phase 1 : collecter toutes les matrices d'instances par variant + chunk
+  const accumulator = new Map(); // variantKey → Map<chunkKey, Matrix4[]>
   for (const placedTile of placedTiles.values()) {
     collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones);
   }
@@ -99,16 +129,7 @@ function prepareTreePrototype(model, def) {
     }
   });
 
-  applyGlobalWindToObject(prototype, {
-    strength: 0.052,
-    speed: 1.38,
-    frequency: 0.78,
-    turbulence: 0.30,
-    heightStart: 0.030,
-    heightEnd: 0.680,
-    gustStrength: 0.26,
-    detailStrength: 0.08
-  });
+  applyGlobalWindToObject(prototype, TREE_WIND);
 
   return prototype;
 }
@@ -188,46 +209,74 @@ function collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones 
       _instanceDummy.scale.setScalar(scaleJitter);
       _instanceDummy.updateMatrix();
 
-      if (!accumulator.has(variantKey)) accumulator.set(variantKey, []);
-      accumulator.get(variantKey).push(_instanceDummy.matrix.clone());
+      if (!accumulator.has(variantKey)) accumulator.set(variantKey, new Map());
+      const byChunk = accumulator.get(variantKey);
+      const chunkKey = getChunkKey(placedTile.q, placedTile.r);
+      if (!byChunk.has(chunkKey)) byChunk.set(chunkKey, []);
+      byChunk.get(chunkKey).push(_instanceDummy.matrix.clone());
     }
   }
 }
 
-// Phase 2 : crée un InstancedMesh par sous-mesh de chaque variant
+// Phase 2 : crée un InstancedMesh par (chunk × sous-mesh) de chaque variant.
+// Chaque mesh reçoit une bounding sphere réelle pour le frustum culling manuel (updateForestLOD).
 function buildTreeInstancedMeshes(group, accumulator) {
-  for (const [variantKey, matrices] of accumulator) {
+  for (const [variantKey, byChunk] of accumulator) {
     const prototype = treeLibrary.get(variantKey);
-    if (!prototype || matrices.length === 0) continue;
+    if (!prototype) continue;
 
-    // Calcule les matrices monde de chaque sous-mesh du prototype (prototype non attaché à la scène)
+    // Précalcule les matrices monde de chaque sous-mesh du prototype (non attaché à la scène)
     prototype.updateMatrixWorld(true);
 
-    prototype.traverse(child => {
-      if (!child.isMesh) return;
-      child.updateWorldMatrix(true, false);
+    for (const [chunkKey, matrices] of byChunk) {
+      if (matrices.length === 0) continue;
+      const sphere = computeInstancesBoundingSphere(matrices, 0.6);
 
-      // Cuit la transformation locale (position/scale du wrapper normalizeModel) dans la géo
-      const geo = child.geometry.clone();
-      geo.applyMatrix4(child.matrixWorld);
+      prototype.traverse(child => {
+        if (!child.isMesh) return;
+        child.updateWorldMatrix(true, false);
 
-      const mat = Array.isArray(child.material)
-        ? child.material.map(m => m.clone())
-        : child.material.clone();
+        // Cuit la transformation locale (position/scale du wrapper normalizeModel) dans la géo
+        const geo = child.geometry.clone();
+        geo.applyMatrix4(child.matrixWorld);
 
-      const mesh = new THREE.InstancedMesh(geo, mat, matrices.length);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      mesh.frustumCulled = false; // bounding sphere calculée sur géo cuite à l'origine, pas sur les instances
-      mesh.name = `instanced-tree-${variantKey}`;
+        const mat = Array.isArray(child.material)
+          ? child.material.map(m => m.clone())
+          : child.material.clone();
 
-      for (let i = 0; i < matrices.length; i++) {
-        mesh.setMatrixAt(i, matrices[i]);
-      }
-      mesh.instanceMatrix.needsUpdate = true;
-      group.add(mesh);
-    });
+        const mesh = new THREE.InstancedMesh(geo, mat, matrices.length);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        // frustumCulled = false : la géo cuite est à l'origine. Le culling est géré manuellement
+        // via mesh.visible dans updateForestLOD() en utilisant worldBoundingSphere.
+        mesh.frustumCulled = false;
+        mesh.name = `instanced-tree-${variantKey}-${chunkKey}`;
+        mesh.userData.worldBoundingSphere = sphere;
+        mesh.userData.lodCategory = 'tree';
+
+        for (let i = 0; i < matrices.length; i++) {
+          mesh.setMatrixAt(i, matrices[i]);
+        }
+        mesh.instanceMatrix.needsUpdate = true;
+        group.add(mesh);
+      });
+    }
   }
+}
+
+// Met à jour la visibilité de chaque InstancedMesh d'arbres selon le frustum caméra.
+// À appeler depuis scene.js dans la boucle animate (tous les 3 frames suffisent).
+export function updateForestLOD(group, camera) {
+  _lodProjMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  _lodFrustum.setFromProjectionMatrix(_lodProjMatrix);
+
+  group.traverse(obj => {
+    if (!obj.isInstancedMesh || !obj.userData.worldBoundingSphere) return;
+    const sphere = obj.userData.worldBoundingSphere;
+    const inFrustum = _lodFrustum.intersectsSphere(sphere);
+    const dist = camera.position.distanceTo(sphere.center);
+    obj.visible = inFrustum && dist < LOD_TREE_CULL_DISTANCE;
+  });
 }
 
 function isTreeInsideSpecialBuildingSafeZone(x, z, safeZones) {

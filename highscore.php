@@ -125,6 +125,7 @@ function sanitize_stats($stats)
         'tiles' => clamp_int($stats['tiles'] ?? 0),
         'trainLines' => clamp_int($stats['trainLines'] ?? 0),
         'boatCount' => clamp_int($stats['boatCount'] ?? 0),
+        'cometHits' => clamp_int($stats['cometHits'] ?? 0),
         'totals' => [],
         'largest' => []
     ];

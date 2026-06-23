@@ -29,7 +29,8 @@ export function createUI() {
       largestForest: document.getElementById('statLargestForest'),
       largestHouse: document.getElementById('statLargestHouse'),
       largestWater: document.getElementById('statLargestWater'),
-      largestRail: document.getElementById('statLargestRail')
+      largestRail: document.getElementById('statLargestRail'),
+      comets: document.getElementById('statComets')
     },
     placement: document.getElementById('dbgPlacement'),
     keys: {
@@ -112,6 +113,7 @@ export function updateStatsUI(ui, stats) {
   setText(ui.stats.largestHouse, formatStatValue(stats.largest?.house, 'maison', 'maisons'));
   setText(ui.stats.largestWater, formatStatValue(stats.largest?.water, 'unité', 'unités'));
   setText(ui.stats.largestRail, formatStatValue(stats.largest?.rail, 'rail', 'rails'));
+  setText(ui.stats.comets, String(stats.cometHits ?? 0));
 }
 
 function formatStatValue(value, singularUnit, pluralUnit) {

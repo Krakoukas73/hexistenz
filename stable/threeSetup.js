@@ -222,7 +222,7 @@ export function createPixelPostprocess(renderer, scene, camera) {
       return { ...settings };
     },
     applySettings(nextSettings = {}) {
-      settings.enabled = Boolean(nextSettings.enabled);
+      settings.enabled = Boolean(nextSettings.enabled ?? settings.enabled);
       settings.pixelSize = clampPixelSize(nextSettings.pixelSize ?? settings.pixelSize);
       settings.normalEdgeStrength = clamp01(nextSettings.normalEdgeStrength ?? settings.normalEdgeStrength);
       settings.depthEdgeStrength = clamp01(nextSettings.depthEdgeStrength ?? settings.depthEdgeStrength);

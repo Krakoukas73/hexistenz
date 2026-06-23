@@ -52,14 +52,11 @@
       <button id="btnNewGame" class="new-game-button" type="button">NOUVELLE PARTIE</button>
     </div>
 	
-	<br>
     <div id="statsPanel" class="stats-panel">
-      <br>
 	  <div class="stats-title">STATISTIQUES DE LA PARTIE</div>
-	  <br>
       <div class="stats-summary-row">
         <div class="stats-summary-card stats-tiles"><span>Tuiles posées</span><strong id="statTiles">0</strong></div>
-        <div class="stats-summary-card stats-trains"><span>Trains 🚂</span><strong id="statTrains">0</strong></div><div class="stats-summary-card stats-boats"><span>Bateaux ⛵</span><strong id="statBoats">0</strong></div>
+        <div class="stats-summary-card stats-trains"><span>Trains 🚂</span><strong id="statTrains">0</strong></div><div class="stats-summary-card stats-boats"><span>Bateaux ⛵</span><strong id="statBoats">0</strong></div><div class="stats-summary-card stats-comets"><span>Comètes interceptées☄️</span><strong id="statComets">0</strong></div>
       </div>
       <div class="stats-card-grid">
         <div class="stats-card stats-grass">
@@ -95,70 +92,6 @@
     </div>
   </aside>
 
-  <aside id="debugHud" class="panel">
-    <div class="debug-texture-title">Textures</div>
-    <div class="debug-texture-grid">
-      <div><span class="swatch field"></span><span>Champ de blé</span></div>
-      <div><span class="swatch forest"></span><span>Forêt</span></div>
-      <div><span class="swatch grass"></span><span>Prairie</span></div>
-      <div><span class="swatch house"></span><span>Maison</span></div>
-      <div><span class="swatch water"></span><span>Eau</span></div>
-      <div><span class="swatch rail"></span><span>Rail</span></div>
-      <div><span class="swatch black-cell"></span><span>Joker</span></div>
-      <div><span class="swatch bonus-cell"></span><span>Bonus</span></div>
-    </div>
-
-    <button id="btnResetCamera" class="key-button" type="button">RESET CAMERA</button>
-    <button id="btnUndoLastTile" class="key-button" type="button">ANNULER</button>
-
-    <br>
-	
-	<div class="debug-keyboard-title">Raccourcis clavier</div>
-    <div id="keyboard">
-      <div class="key-row">
-        <div class="key empty"></div>
-        <div class="key" id="keyZ">Z</div>
-        <div class="key empty"></div>
-      </div>
-
-      <div class="key-row">
-        <div class="key" id="keyQ">Q</div>
-        <div class="key" id="keyS">S</div>
-        <div class="key" id="keyD">D</div>
-      </div>
-
-      <div class="key-row command-row">
-        <div class="key" id="keyR">R</div>
-        <div class="key-label">Tourner la tuile</div>
-      </div>
-
-      <div class="key-row command-row">
-        <div class="key" id="keyH">H</div>
-        <div class="key-label">Aide</div>
-      </div>
-
-      <div class="key-row command-row">
-        <div class="key" id="keyPlus">+</div>
-        <div class="key" id="keyMinus">-</div>
-        <div class="key-label">Zoom caméra (SHIFT = accéléré)</div>
-      </div>
-
-      <div class="key-row command-row">
-        <div class="key key-combo">CTRL+Z</div>
-        <div class="key-label">Annuler</div>
-      </div>
-
-      <div class="key-row command-row">
-        <div class="key key-combo">SHIFT</div>
-        <div class="key-label">Accélère déplacements et zoom</div>
-      </div>
-
-      <div class="key-row command-row">
-        <div class="key key-space" id="keySpace">ESPACE</div>
-        <div class="key-label">Mode immersif</div>
-      </div>
-    </div>
-  </aside>
 
   <aside id="tileUI">
     <div class="tilePreviewRow">
@@ -191,7 +124,7 @@
       <header class="help-header">
         <div>
           <h1 id="helpTitle">Aide</h1>
-          <div class="help-kicker">Résumé compact du joueur</div>
+          
         </div>
         <button id="btnCloseHelp" class="help-close" type="button" aria-label="Fermer l'aide">×</button>
       </header>
@@ -274,6 +207,7 @@
             <div><kbd>-</kbd><span>Dézoomer la caméra</span></div>
             <div><kbd>Ctrl+Z</kbd><span>Annuler le dernier mouvement</span></div>
             <div><kbd>H</kbd><span>Afficher / masquer cette aide</span></div>
+            <div><kbd>M</kbd><span>Couper / activer tous les sons</span></div>
             <div><kbd>ESPACE</kbd><span>Mode immersif : masque interface, HUD et nombres</span></div>
             <div><kbd>SHIFT</kbd><span>Accélère les déplacements clavier et le zoom</span></div>
             <div><kbd>Molette</kbd><span>Zoom sur tuile posée, rotation sur case disponible</span></div>

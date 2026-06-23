@@ -20,9 +20,34 @@ import { getTerrainSurfaceY, placeObjectOnTerrain } from './terrainHeight.js';
 import { collectVillageChurchSectors, collectVillageWatchtowerSectors } from './houseOverlay.js';
 import { makeNodeKey, getTileEdgeType, clearGroup } from './stable/tileUtils.js';
 import { collectZone } from './stable/zoneUtils.js';
+import { HEX_CHUNK_SIZE, LOD_MICRO_CULL_DISTANCE, LOD_ROCK_CULL_DISTANCE, LOD_ROAD_DECOR_CULL_DISTANCE, LOD_SIGN_CULL_DISTANCE, LOD_SHORE_BOAT_CULL_DISTANCE, ROCK_DENSITY } from './variables.js';
 
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
+
+// Pré-alloués pour updateNaturalPropsLOD() — évite GC chaque frame
+const _propLodFrustum = new THREE.Frustum();
+const _propLodMatrix = new THREE.Matrix4();
+const _propLodPos = new THREE.Vector3();
+
+function getPropChunkKey(q, r) {
+  return `${Math.floor(q / HEX_CHUNK_SIZE)}:${Math.floor(r / HEX_CHUNK_SIZE)}`;
+}
+
+function computePropBoundingSphere(matrices, heightPadding = 0.3) {
+  const center = new THREE.Vector3();
+  for (const m of matrices) {
+    _propLodPos.setFromMatrixPosition(m);
+    center.add(_propLodPos);
+  }
+  center.divideScalar(matrices.length);
+  let radius = 0;
+  for (const m of matrices) {
+    _propLodPos.setFromMatrixPosition(m);
+    radius = Math.max(radius, center.distanceTo(_propLodPos));
+  }
+  return new THREE.Sphere(center, radius + heightPadding);
+}
 const WATER_SURFACE_Y = (TILE_VISUAL.waterY ?? -0.075) + 0.012;
 const FIELD_SURFACE_Y = 0.070;
 const FIELD_FLAG_MIN_TOTAL = 5;
@@ -32,10 +57,10 @@ const SIGNPOST_TARGET_HEIGHT = HEX_SIZE * 0.28;
 const SHORE_BOAT_TARGET_LENGTH = HEX_SIZE * 0.175;
 const SPECIAL_BUILDING_SAFE_RADIUS = HEX_SIZE * 0.34;
 const SPECIAL_BUILDING_BOAT_SAFE_RADIUS = HEX_SIZE * 0.18;
-const NATURAL_FLOWER_TARGET_WIDTH = HEX_SIZE * 0.055;
-const NATURAL_ROCK_TARGET_LENGTH = HEX_SIZE * 0.125;
+const NATURAL_FLOWER_TARGET_WIDTH = HEX_SIZE * 0.047;   // −15 % (était 0.055)
+const NATURAL_ROCK_TARGET_LENGTH = HEX_SIZE * 0.106;    // −15 % (était 0.125)
 const NATURAL_REED_TARGET_HEIGHT = HEX_SIZE * 0.105;
-const NATURAL_MUSHROOM_TARGET_WIDTH = HEX_SIZE * 0.060;
+const NATURAL_MUSHROOM_TARGET_WIDTH = HEX_SIZE * 0.043; // −15 % (était 0.051)
 const ROAD_DECOR_Y = ((TILE_VISUAL.tileThickness ?? 0.12) * -0.30) + 0.010;
 const SHORE_BOAT_Y = WATER_SURFACE_Y + 0.012;
 const PROP_MODEL_DEFS = [
@@ -112,6 +137,38 @@ export function rebuildFieldWaterEffectsOverlay(overlay, placedTiles) {
   overlay.add(createNaturalGroundProps(placedTiles));
   overlay.add(createRoadsideVillageProps(placedTiles, specialBuildingSafeZones));
   overlay.add(createShoreBoats(placedTiles, specialBuildingSafeZones));
+
+  // Construire la liste plate d'objets LOD pour bancs/panneaux/moulins/oiseaux.
+  // Itère uniquement les enfants directs des deux sous-groupes — O(n) et pas de récursion inutile.
+  overlay.userData.roadsideDecorObjects = [];
+  const _decorDistSq     = LOD_ROAD_DECOR_CULL_DISTANCE * LOD_ROAD_DECOR_CULL_DISTANCE;
+  const _signDistSq      = LOD_SIGN_CULL_DISTANCE        * LOD_SIGN_CULL_DISTANCE;
+  const _shoreBoatDistSq = LOD_SHORE_BOAT_CULL_DISTANCE  * LOD_SHORE_BOAT_CULL_DISTANCE;
+  for (const subGroup of overlay.children) {
+    if (subGroup.name === 'field-zone-flags-and-crows') {
+      for (const child of subGroup.children) {
+        if (child.userData?.effectKind === 'field-flag-idle') {
+          overlay.userData.roadsideDecorObjects.push({ object: child, center: child.position.clone(), lodDistSq: _decorDistSq });
+        }
+      }
+    } else if (subGroup.name === 'village-roadside-glb-props') {
+      for (const child of subGroup.children) {
+        const n = child.name ?? '';
+        if (n.includes('bench') || n.includes('signpost')) {
+          // Les panneaux indicateurs ont un LOD plus sévère que les bancs
+          const distSq = n.includes('signpost') ? _signDistSq : _decorDistSq;
+          overlay.userData.roadsideDecorObjects.push({ object: child, center: child.position.clone(), lodDistSq: distSq });
+        }
+      }
+    } else if (subGroup.name === 'water-shore-static-boats-glb') {
+      // Barques échouées : petits objets statiques, disparaissent avant les gros décorations.
+      for (const child of subGroup.children) {
+        if (child.name === 'water-shore-inert-boat-glb') {
+          overlay.userData.roadsideDecorObjects.push({ object: child, center: child.position.clone(), lodDistSq: _shoreBoatDistSq });
+        }
+      }
+    }
+  }
 }
 
 export function updateFieldWaterEffectsOverlay(overlay, elapsedSeconds) {
@@ -521,6 +578,31 @@ function createFieldFlagReward(zone) {
 }
 
 
+// Met à jour la visibilité de chaque InstancedMesh de props naturels selon frustum + LOD distance.
+// À appeler depuis scene.js dans la boucle animate (tous les 3 frames suffisent).
+export function updateNaturalPropsLOD(overlay, camera) {
+  _propLodMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  _propLodFrustum.setFromProjectionMatrix(_propLodMatrix);
+
+  overlay.traverse(obj => {
+    if (!obj.isInstancedMesh || !obj.userData.worldBoundingSphere) return;
+    const sphere = obj.userData.worldBoundingSphere;
+    const inFrustum = _propLodFrustum.intersectsSphere(sphere);
+    const dist = camera.position.distanceTo(sphere.center);
+    const cat = obj.userData.lodCategory;
+    const withinDist = cat === 'micro'   ? dist < LOD_MICRO_CULL_DISTANCE
+                     : cat === 'rock'    ? dist < LOD_ROCK_CULL_DISTANCE
+                     : true;
+    obj.visible = inFrustum && withinDist;
+  });
+}
+
+export function updateFieldDecorLOD(overlay, camera) {
+  for (const item of (overlay.userData.roadsideDecorObjects ?? [])) {
+    item.object.visible = camera.position.distanceToSquared(item.center) < item.lodDistSq;
+  }
+}
+
 function createNaturalGroundProps(placedTiles) {
   const group = new THREE.Group();
   group.name = 'natural-grass-forest-glb-props';
@@ -652,51 +734,67 @@ function collectNaturalPropInstances(accumulator, placedTile, edge, type, kind, 
     _propInstanceDummy.scale.setScalar(jitter);
     _propInstanceDummy.updateMatrix();
 
-    if (!accumulator.has(variantKey)) accumulator.set(variantKey, []);
-    accumulator.get(variantKey).push(_propInstanceDummy.matrix.clone());
+    if (!accumulator.has(variantKey)) accumulator.set(variantKey, new Map());
+    const byChunk = accumulator.get(variantKey);
+    const chunkKey = getPropChunkKey(placedTile.q, placedTile.r);
+    if (!byChunk.has(chunkKey)) byChunk.set(chunkKey, []);
+    byChunk.get(chunkKey).push(_propInstanceDummy.matrix.clone());
   }
 }
 
-// Construit un InstancedMesh par sous-mesh de chaque variant de prop
+// Construit un InstancedMesh par (chunk × sous-mesh) de chaque variant de prop.
+// Chaque mesh reçoit une bounding sphere réelle pour le LOD culling dans updateNaturalPropsLOD().
 function buildNaturalPropInstancedMeshes(group, accumulator) {
-  for (const [variantKey, matrices] of accumulator) {
+  for (const [variantKey, byChunk] of accumulator) {
     const prototype = propGlbLibrary.get(variantKey);
-    if (!prototype || matrices.length === 0) continue;
+    if (!prototype) continue;
+
+    // 'micro' : fleurs, roseaux, champignons — cachés au-delà de LOD_MICRO_CULL_DISTANCE
+    // 'rock'  : rochers — cachés au-delà de LOD_ROCK_CULL_DISTANCE (22 u, entre micro et arbres)
+    const lodCategory = variantKey.startsWith('rock') ? 'rock' : 'micro';
 
     prototype.updateMatrixWorld(true);
 
-    prototype.traverse(child => {
-      if (!child.isMesh) return;
-      child.updateWorldMatrix(true, false);
+    for (const [chunkKey, matrices] of byChunk) {
+      if (matrices.length === 0) continue;
+      const sphere = computePropBoundingSphere(matrices, 0.25);
 
-      const geo = child.geometry.clone();
-      geo.applyMatrix4(child.matrixWorld);
+      prototype.traverse(child => {
+        if (!child.isMesh) return;
+        child.updateWorldMatrix(true, false);
 
-      const mat = Array.isArray(child.material)
-        ? child.material.map(m => m.clone())
-        : child.material.clone();
+        const geo = child.geometry.clone();
+        geo.applyMatrix4(child.matrixWorld);
 
-      const mesh = new THREE.InstancedMesh(geo, mat, matrices.length);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      mesh.frustumCulled = false; // bounding sphere calculée sur géo cuite à l'origine, pas sur les instances
-      mesh.name = `instanced-prop-${variantKey}`;
+        const mat = Array.isArray(child.material)
+          ? child.material.map(m => m.clone())
+          : child.material.clone();
 
-      for (let i = 0; i < matrices.length; i++) {
-        mesh.setMatrixAt(i, matrices[i]);
-      }
-      mesh.instanceMatrix.needsUpdate = true;
-      group.add(mesh);
-    });
+        const mesh = new THREE.InstancedMesh(geo, mat, matrices.length);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        // frustumCulled = false : géo cuite à l'origine. Culling manuel via updateNaturalPropsLOD().
+        mesh.frustumCulled = false;
+        mesh.name = `instanced-prop-${variantKey}-${chunkKey}`;
+        mesh.userData.worldBoundingSphere = sphere;
+        mesh.userData.lodCategory = lodCategory;
+
+        for (let i = 0; i < matrices.length; i++) {
+          mesh.setMatrixAt(i, matrices[i]);
+        }
+        mesh.instanceMatrix.needsUpdate = true;
+        group.add(mesh);
+      });
+    }
   }
 }
 
 function getNaturalPropChance(kind, type, placedTile, edge, placedTiles) {
   const nearWater = placedTile && edge && placedTiles && isNearWaterDecorArea(placedTile, edge, placedTiles);
-  if (kind === 'flower') return type === EDGE_TYPES.grass ? 0.92 : 0.48;
-  if (kind === 'rock') return nearWater ? 0.30 : (type === EDGE_TYPES.grass ? 0.12 : 0.18);
-  if (kind === 'reed') return nearWater ? 1.0 : (type === EDGE_TYPES.grass ? 0.055 : 0.040);
-  if (kind === 'mushroom') return type === EDGE_TYPES.forest ? 0.70 : 0.34;
+  if (kind === 'flower') return type === EDGE_TYPES.grass ? 1.0 : 0.96;   // ×2 (était 0.92/0.48)
+  if (kind === 'rock') return nearWater ? ROCK_DENSITY.chanceNearWater : (type === EDGE_TYPES.grass ? ROCK_DENSITY.chanceGrass : ROCK_DENSITY.chanceForest);
+  if (kind === 'reed') return nearWater ? 1.0 : (type === EDGE_TYPES.grass ? 0.12 : 0.08);
+  if (kind === 'mushroom') return type === EDGE_TYPES.forest ? 1.0 : 0.51; // ×1.5 (était 0.70/0.34)
   return 0;
 }
 
@@ -704,26 +802,29 @@ function getNaturalPropCount(kind, type, seed, placedTile = null, edge = null, p
   const nearWater = placedTile && edge && placedTiles && isNearWaterDecorArea(placedTile, edge, placedTiles);
   if (kind === 'flower') {
     if (type === EDGE_TYPES.grass) {
-      return 14 + Math.floor(hashUnit(`${seed}:count`) * 13); // champs de fleurs : nappes de 14 à 26 sur prairie
+      return 20 + Math.floor(hashUnit(`${seed}:count`) * 20); // −10 % : nappes de 20 à 39 sur prairie (était 22–43)
     }
-    return 4 + Math.floor(hashUnit(`${seed}:count`) * 5); // bouquets de 4 à 8 hors prairie
+    return 5 + Math.floor(hashUnit(`${seed}:count`) * 7); // −10 % : bouquets de 5 à 11 hors prairie (était 6–13)
   }
   if (kind === 'rock') {
-    if (nearWater) return 1 + Math.floor(hashUnit(`${seed}:count`) * 2);
-    return hashUnit(`${seed}:count`) > 0.72 ? 2 : 1;
+    // +20 % : 2–5 près de l'eau et en prairie, 1–4 en forêt (était 2–4 / 1–3).
+    if (nearWater || type === EDGE_TYPES.grass) return 2 + Math.floor(hashUnit(`${seed}:count`) * 4);
+    return 1 + Math.floor(hashUnit(`${seed}:count`) * 4);
   }
-  if (kind === 'reed' && nearWater) {
-    return 5 + Math.floor(hashUnit(`${seed}:count`) * 5); // 5 à 9 près de l'eau
+  if (kind === 'reed') {
+    return nearWater
+      ? 9 + Math.floor(hashUnit(`${seed}:count`) * 8)   // ×1.8 : 9–16 au bord de l'eau (était 5–9)
+      : 4 + Math.floor(hashUnit(`${seed}:count`) * 5);  // 4–8 hors eau
   }
   if (kind === 'mushroom') {
-    return 4 + Math.floor(hashUnit(`${seed}:count`) * 6); // grappes de 4 à 9
+    return 6 + Math.floor(hashUnit(`${seed}:count`) * 8); // ×1.5 : grappes de 6 à 13 (était 4–9)
   }
   return 1;
 }
 
 function getNaturalPropFootprint(kind) {
-  if (kind === 'flower') return HEX_SIZE * 0.018;
-  if (kind === 'rock') return HEX_SIZE * 0.070;
+  if (kind === 'flower') return HEX_SIZE * 0.036; // espacement inter-fleur (était 0.030)
+  if (kind === 'rock') return HEX_SIZE * ROCK_DENSITY.footprint;
   if (kind === 'mushroom') return HEX_SIZE * 0.024;
   if (kind === 'reed') return HEX_SIZE * 0.026;
   return HEX_SIZE * 0.042;
@@ -755,15 +856,22 @@ function snapPropBottomToSurface(object, surfaceY, clearance = 0.004) {
 function getNaturalPropScaleJitter(kind, seed, index) {
   const roll = hashUnit(`${seed}:scale:${index}`);
   if (kind === 'flower') return 0.66 + roll * 0.62;
-  if (kind === 'rock') return 0.76 + roll * 0.34;
+  if (kind === 'rock') {
+    // ~15 % de gros rochers jusqu'à 250 % de la taille standard (hash séparé pour indépendance).
+    const bigRoll = hashUnit(`${seed}:bigrock:${index}`);
+    if (bigRoll > ROCK_DENSITY.bigRockThreshold) {
+      return ROCK_DENSITY.bigRockScaleMin + roll * ROCK_DENSITY.bigRockScaleRange; // [1.50, 2.50]
+    }
+    return ROCK_DENSITY.normalScaleMin + roll * ROCK_DENSITY.normalScaleRange; // [0.76, 1.20]
+  }
   if (kind === 'mushroom') return 0.72 + roll * 0.58;
   return 0.86 + roll * 0.26;
 }
 
 function getNaturalClusterRadius(kind) {
-  if (kind === 'flower') return HEX_SIZE * 0.185;
+  if (kind === 'flower') return HEX_SIZE * 0.54;   // nappe plus dispersée (était 0.46)
   if (kind === 'mushroom') return HEX_SIZE * 0.095;
-  if (kind === 'reed') return HEX_SIZE * 0.115;
+  if (kind === 'reed') return HEX_SIZE * 0.16;     // ×1.4 : roseaux plus dispersés (était 0.115)
   return HEX_SIZE * 0.150;
 }
 
@@ -850,13 +958,14 @@ function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones = []) 
       bench.name = edgeType === EDGE_TYPES.forest ? 'forest-pathside-bench-glb' : 'grass-roadside-bench-glb';
       bench.position.copy(pos);
       const benchYaw = getEdgeOutwardAngle(edge) + Math.PI / 2 + (hashUnit(`${seed}:yaw`) - 0.5) * 0.55;
-      placeObjectOnTerrain(bench, getTileLocalPoint(pos, placedTile), edgeType, hashNumber(seed) % 97, {
+      const benchTopY = placeObjectOnTerrain(bench, getTileLocalPoint(pos, placedTile), edgeType, hashNumber(seed) % 97, {
         groundOffset: 0.012,
-        alignToSlope: true,
+        alignToSlope: false,
         yaw: benchYaw,
         edgeLockStart: 0.98,
         edgeLockEnd: 1.0
       });
+      if (benchTopY !== null) snapPropBottomToSurface(bench, benchTopY - 0.012, 0.004);
       group.add(bench);
     }
 
@@ -878,13 +987,14 @@ function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones = []) 
       sign.name = edgeType === EDGE_TYPES.forest ? 'forest-path-signpost-glb' : 'grass-road-signpost-glb';
       sign.position.copy(pos);
       const signYaw = getEdgeOutwardAngle(edge) + (hashUnit(`${seed}:yaw`) - 0.5) * 0.65;
-      placeObjectOnTerrain(sign, getTileLocalPoint(pos, placedTile), edgeType, hashNumber(seed) % 97, {
+      const signTopY = placeObjectOnTerrain(sign, getTileLocalPoint(pos, placedTile), edgeType, hashNumber(seed) % 97, {
         groundOffset: 0.006,
-        alignToSlope: true,
+        alignToSlope: false,
         yaw: signYaw,
         edgeLockStart: 0.98,
         edgeLockEnd: 1.0
       });
+      if (signTopY !== null) snapPropBottomToSurface(sign, signTopY - 0.006, 0.003);
       group.add(sign);
     }
 
@@ -905,13 +1015,14 @@ function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones = []) 
       sign.name = 'shoreline-signpost-glb';
       sign.position.copy(pos);
       const shoreSignYaw = getEdgeOutwardAngle(edge) + (hashUnit(`${seed}:yaw`) - 0.5) * 0.80;
-      placeObjectOnTerrain(sign, getTileLocalPoint(pos, placedTile), edgeType, hashNumber(seed) % 97, {
+      const shoreSignTopY = placeObjectOnTerrain(sign, getTileLocalPoint(pos, placedTile), edgeType, hashNumber(seed) % 97, {
         groundOffset: 0.006,
-        alignToSlope: true,
+        alignToSlope: false,
         yaw: shoreSignYaw,
         edgeLockStart: 0.98,
         edgeLockEnd: 1.0
       });
+      if (shoreSignTopY !== null) snapPropBottomToSurface(sign, shoreSignTopY - 0.006, 0.003);
       group.add(sign);
     }
   }

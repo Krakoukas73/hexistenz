@@ -94,6 +94,24 @@ export function updateCometSky(cometSky, camera, timeSeconds = 0) {
 
     updateComet(comet, t, camera);
   }
+
+  // ── Explosions visuelles ────────────────────────────────────────────────────
+  if (Array.isArray(state.explosions)) {
+    for (let i = state.explosions.length - 1; i >= 0; i--) {
+      const ex = state.explosions[i];
+      if (ex.startedAt === null) ex.startedAt = timeSeconds;
+      const t = (timeSeconds - ex.startedAt) / ex.duration;
+      if (t >= 1) {
+        cometSky.remove(ex.sprite);
+        ex.sprite.material.dispose();
+        state.explosions.splice(i, 1);
+        continue;
+      }
+      // Expansion rapide + fondu exponentiel
+      ex.sprite.scale.setScalar(ex.baseScale * (1 + t * 3.5));
+      ex.sprite.material.opacity = (1 - t) * (1 - t) * 0.90;
+    }
+  }
 }
 
 function spawnComet(cometSky, camera, timeSeconds) {
@@ -397,4 +415,70 @@ function smoothstep(edge0, edge1, x) {
 
 function easeInOutSine(t) {
   return -(Math.cos(Math.PI * THREE.MathUtils.clamp(t, 0, 1)) - 1) / 2;
+}
+
+// ─── API clic interactif ─────────────────────────────────────────────────────
+
+const _cometRayTmp = new THREE.Vector3();
+
+/**
+ * Teste si le rayon caméra touche la tête d'une comète active.
+ * hitMultiplier : facteur sur COMET_HEAD_HALO_SIZE * headSize (hitbox généreuse).
+ * Retourne la comète touchée ou null.
+ */
+export function tryCometHit(cometSky, ray, hitMultiplier = 1.2) {
+  const comets = cometSky?.userData?.comets;
+  if (!Array.isArray(comets) || comets.length === 0) return null;
+
+  for (let i = 0; i < comets.length; i++) {
+    const comet = comets[i];
+    _cometRayTmp.copy(comet.group.position).sub(ray.origin);
+    const proj = _cometRayTmp.dot(ray.direction);
+    if (proj < 0) continue; // derrière la caméra
+    const closest = ray.origin.clone().addScaledVector(ray.direction, proj);
+    const dist = closest.distanceTo(comet.group.position);
+    if (dist <= COMET_HEAD_HALO_SIZE * comet.headSize * hitMultiplier) return comet;
+  }
+
+  return null;
+}
+
+/**
+ * Retire une comète du ciel immédiatement (clic joueur, explosion, etc.).
+ */
+export function removeCometFromSky(cometSky, comet) {
+  const comets = cometSky?.userData?.comets;
+  if (!Array.isArray(comets)) return;
+  const idx = comets.indexOf(comet);
+  if (idx === -1) return;
+  cometSky.remove(comet.group);
+  disposeComet(comet);
+  comets.splice(idx, 1);
+}
+
+/**
+ * Crée un flash d'explosion visuel à la position de la comète cliquée.
+ * Le sprite s'étend et s'efface sur ~0.45 s, géré par updateCometSky.
+ */
+export function spawnCometExplosion(cometSky, comet) {
+  const state = cometSky?.userData;
+  if (!state) return;
+  if (!Array.isArray(state.explosions)) state.explosions = [];
+
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: state.haloTexture,
+    color: 0xc8e8ff,
+    transparent: true,
+    opacity: 0.90,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  }));
+  // Position dans l'espace local de cometSky (= world space, groupe à l'origine)
+  sprite.position.copy(comet.group.position);
+  const baseScale = COMET_HEAD_HALO_SIZE * comet.headSize * 1.8;
+  sprite.scale.setScalar(baseScale);
+  sprite.renderOrder = 25001;
+  cometSky.add(sprite);
+
+  state.explosions.push({ sprite, baseScale, startedAt: null, duration: 0.45 });
 }

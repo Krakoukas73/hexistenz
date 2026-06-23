@@ -69,9 +69,25 @@ export function createZoneBoundary(zone, placedTiles, options = {}) {
   const group = new THREE.Group();
   group.name = options.name ?? `${zone.type}-zone-halo`;
 
+  const lineWidth = options.radius ?? 0.025;
+
+  // Disques aux jonctions : remplissent les angles entre segments pour un contour fluide.
+  const junctionPoints = new Map();
   for (const segment of segments) {
-    const mesh = createFlatSegmentMesh(segment, options.radius ?? 0.025, material);
+    const kFrom = makePointKey(segment.from);
+    const kTo   = makePointKey(segment.to);
+    if (!junctionPoints.has(kFrom)) junctionPoints.set(kFrom, segment.from);
+    if (!junctionPoints.has(kTo))   junctionPoints.set(kTo,   segment.to);
+  }
+
+  for (const segment of segments) {
+    const mesh = createFlatSegmentMesh(segment, lineWidth, material);
     if (mesh) group.add(mesh);
+  }
+
+  for (const [, point] of junctionPoints) {
+    const disk = createJunctionDisk(point, lineWidth, material);
+    if (disk) group.add(disk);
   }
 
   return group;
@@ -246,20 +262,30 @@ function makePointKey(point) {
   return `${point.x.toFixed(4)},${point.z.toFixed(4)}`;
 }
 
-// ─── Mesh segment plat ────────────────────────────────────────────────────────
+// ─── Meshes segments et jonctions ────────────────────────────────────────────
 
 function createFlatSegmentMesh(segment, width, material) {
   const delta = segment.to.clone().sub(segment.from);
   const length = delta.length();
   if (length <= 0.001) return null;
 
-  // Bande rectangulaire sans extrémité ronde : évite les gros pâtés opaques aux coins.
   const geometry = new THREE.PlaneGeometry(length, width);
   const mesh = new THREE.Mesh(geometry, material);
+  // midpoint.y contient déjà le drop de courbure (via toWorldVector).
+  // markNoWorldCurvature empêche le shader de l'appliquer une seconde fois.
   const midpoint = segment.from.clone().add(segment.to).multiplyScalar(0.5);
   const angle = Math.atan2(delta.z, delta.x);
-
   mesh.position.copy(midpoint);
   mesh.rotation.set(-Math.PI / 2, 0, -angle);
+  return markNoWorldCurvature(mesh);
+}
+
+/** Disque plat positionné à une jonction de segments pour arrondir les angles. */
+function createJunctionDisk(point, width, material) {
+  const geometry = new THREE.CircleGeometry(width / 2, 10);
+  const mesh = new THREE.Mesh(geometry, material);
+  // point.y contient déjà le drop de courbure (via toWorldVector).
+  mesh.position.copy(point);
+  mesh.rotation.x = -Math.PI / 2;
   return markNoWorldCurvature(mesh);
 }

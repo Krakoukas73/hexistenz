@@ -93,15 +93,20 @@ float globalWindWave(vec2 p, float timeValue) {
 {
   #ifdef USE_INSTANCING
     vec4 gwWorld = modelMatrix * instanceMatrix * vec4(position, 1.0);
+    // Variation d'amplitude par instance : hash sur la position monde de la base de l'instance.
+    // Chaque arbre se balance légèrement différemment (facteur [0.70–1.30]) sans données CPU.
+    vec4 gwInstanceOrigin = modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+    float gwVariation = 0.70 + fract(sin(dot(gwInstanceOrigin.xz, vec2(127.1, 311.7))) * 43758.5) * 0.60;
   #else
     vec4 gwWorld = modelMatrix * vec4(position, 1.0);
+    float gwVariation = 1.0;
   #endif
   float gwHeight = smoothstep(${windOptions.heightStart.toFixed(4)}, ${windOptions.heightEnd.toFixed(4)}, position.y);
   gwHeight = gwHeight * gwHeight * (3.0 - 2.0 * gwHeight);
 
   float gwWave = globalWindWave(gwWorld.xz, uGlobalWindTime);
   vec2 gwDir = normalize(uGlobalWindDirection);
-  float gwBend = gwWave * ${windOptions.strength.toFixed(4)} * gwHeight;
+  float gwBend = gwWave * ${windOptions.strength.toFixed(4)} * gwHeight * gwVariation;
 
   transformed.xz += gwDir * gwBend;
 }`

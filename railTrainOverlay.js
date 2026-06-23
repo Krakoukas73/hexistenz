@@ -1,6 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
+import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, LOD_TRAIN_CULL_DISTANCE } from './config.js';
 import { hashUnit10k as hashUnit } from './stable/hashUtils.js';
 import { createOuterVertices } from './stable/hexGeometry.js';
 import { axialToWorld, makeHexKey } from './stable/hex.js';
@@ -49,6 +49,7 @@ export function rebuildRailTrainOverlay(group, placedTiles) {
   group.userData.lastPlacedTiles = placedTiles;
   clearGroup(group);
   group.userData.trains = [];
+  group.userData.stations = [];
 
   if (stationGlbLibrary.size < 1) ensureStationGlbModels(group);
 
@@ -72,12 +73,16 @@ export function rebuildRailTrainOverlay(group, placedTiles) {
     const trainObject = createTrainObject(wagonCount);
     trainObject.visible = true;
     group.add(trainObject);
+    const trackCenter = new THREE.Vector3();
+    for (const p of points) trackCenter.add(p);
+    trackCenter.divideScalar(Math.max(1, points.length));
     group.userData.trains.push({
       object: trainObject,
       points,
       distance,
       motionTrack: buildMotionTrack(points),
-      offset: component.index * 0.23
+      offset: component.index * 0.23,
+      trackCenter
     });
   }
 }
@@ -86,8 +91,19 @@ export function updateRailTrainOverlay(group, timeSeconds = 0) {
   const trains = group.userData.trains ?? [];
 
   for (const train of trains) {
+    if (!train.object.visible) continue;
     const progress = (timeSeconds * TRAIN_SPEED / Math.max(train.distance, 0.001) + train.offset) % 1;
     updateArticulatedTrain(train.object, train.motionTrack, progress, timeSeconds + train.offset * 10);
+  }
+}
+
+export function updateRailTrainLOD(group, camera) {
+  const distSq = LOD_TRAIN_CULL_DISTANCE * LOD_TRAIN_CULL_DISTANCE;
+  for (const train of (group.userData.trains ?? [])) {
+    train.object.visible = camera.position.distanceToSquared(train.trackCenter) < distSq;
+  }
+  for (const station of (group.userData.stations ?? [])) {
+    station.object.visible = camera.position.distanceToSquared(station.center) < distSq;
   }
 }
 
@@ -527,6 +543,8 @@ function addRailTerminusStations(group, graph, component) {
       .add(side.multiplyScalar(STATION_TRACK_CLEARANCE * sideSign));
     station.position.y = node.position.y - 0.075;
     station.rotation.y = Math.atan2(outward.x, outward.z) + (sideSign < 0 ? Math.PI : 0);
+    if (!Array.isArray(group.userData.stations)) group.userData.stations = [];
+    group.userData.stations.push({ object: station, center: station.position.clone() });
     group.add(station);
   }
 }

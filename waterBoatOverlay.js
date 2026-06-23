@@ -1,6 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, BOAT_TARGET_LENGTH, SECTOR_DEFS } from './config.js';
+import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, BOAT_TARGET_LENGTH, SECTOR_DEFS, LOD_BOAT_CULL_DISTANCE } from './config.js';
 import { axialToWorld, makeHexKey } from './stable/hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
@@ -112,10 +112,27 @@ export function updateWaterBoatOverlay(group, timeSeconds = 0) {
     const sample = samplePingPongMotionTrack(boat.motionTrack, progress);
     const bob = Math.sin((timeSeconds * 1.15) + boat.offset * Math.PI * 2) * 0.004;
 
+    if (!boat.object.visible) continue; // masqué par LOD — on saute l'animation
+
     boat.object.position.copy(sample.position);
     boat.object.position.y = WATER_SURFACE_Y + BOAT_Y_OFFSET + bob;
     boat.object.rotation.y = -Math.atan2(sample.tangent.z, sample.tangent.x) + BOAT_HEADING_OFFSET;
-    boat.object.visible = true;
+  }
+}
+
+/**
+ * Met à jour la visibilité des bateaux selon la distance caméra.
+ * À appeler tous les 3 frames depuis scene.js (même cadence que forestLOD).
+ */
+export function updateWaterBoatLOD(group, camera) {
+  const boats = group.userData.boats ?? [];
+  const distSq = LOD_BOAT_CULL_DISTANCE * LOD_BOAT_CULL_DISTANCE;
+  for (const boat of boats) {
+    // Distance XZ uniquement (cylindrique) : la hauteur caméra en Y fausserait
+    // une distance 3D et rendrait le LOD quasi-inopérant sur terrain plat.
+    const dx = camera.position.x - boat.trackCenter.x;
+    const dz = camera.position.z - boat.trackCenter.z;
+    boat.object.visible = dx * dx + dz * dz < distSq;
   }
 }
 
@@ -136,6 +153,11 @@ function addZoneBoats(group, zone, zoneIndex) {
     const boatCount = BOATS_PER_WATER_COMPONENT;
     const motionTrack = buildMotionTrack(points);
 
+    // Centre du trajet : utilisé par updateWaterBoatLOD pour le test de distance.
+    const trackCenter = new THREE.Vector3();
+    for (const p of points) trackCenter.add(p);
+    trackCenter.divideScalar(Math.max(1, points.length));
+
     for (let index = 0; index < boatCount; index++) {
       const seedKey = `water-zone:${zoneIndex}:component:${component.index}:boat:${index}`;
       const object = createBoatObject(seedKey);
@@ -146,7 +168,8 @@ function addZoneBoats(group, zone, zoneIndex) {
         object,
         motionTrack,
         distance,
-        offset: hashUnit(`${seedKey}:offset`)
+        offset: hashUnit(`${seedKey}:offset`),
+        trackCenter
       });
     }
   }

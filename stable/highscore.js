@@ -2,12 +2,12 @@ const API_URL = 'highscore.php';
 const DEFAULT_NAME = 'Joueur';
 
 const STAT_TYPES = [
-  ['grass', '🌿', 'stats-grass-chip'],
-  ['field', '🌾', 'stats-field-chip'],
-  ['forest', '🌲', 'stats-forest-chip'],
-  ['house', '🏘️', 'stats-house-chip'],
-  ['water', '💧', 'stats-water-chip'],
-  ['rail', '🛤️', 'stats-rail-chip']
+  ['grass',  '🌿', 'stats-grass-chip',  'Prairie'],
+  ['field',  '🌾', 'stats-field-chip',  'Champs'],
+  ['forest', '🌲', 'stats-forest-chip', 'Forêt'],
+  ['house',  '🏘️', 'stats-house-chip',  'Village'],
+  ['water',  '💧', 'stats-water-chip',  'Eau'],
+  ['rail',   '🛤️', 'stats-rail-chip',   'Rail']
 ];
 
 export function createHighscoreUI(ui) {
@@ -117,18 +117,21 @@ function renderCompactStats(stats) {
   if (!stats) return '';
 
   const textureChips = STAT_TYPES
-    .map(([type, emoji, className]) => {
+    .map(([type, emoji, className, label]) => {
       const total = safeInt(stats.totals?.[type]);
       const largest = safeInt(stats.largest?.[type]);
       if (total === 0 && largest === 0) return '';
-      return `<span class="highscore-stat-chip ${className}" title="${emoji} total / surface max">${emoji}${total}/${largest}</span>`;
+      const tooltip = `${label} : ${total} secteur(s) au total · zone max contiguë : ${largest}`;
+      return `<span class="highscore-stat-chip ${className}" title="${tooltip}">${emoji}${total}/${largest}</span>`;
     })
     .join('');
 
-  const tiles = safeInt(stats.tiles);
-  const trains = safeInt(stats.trainLines);
-  const boats = safeInt(stats.boatCount);
-  const summary = `<span class="highscore-stat-chip stats-summary-chip" title="Tuiles posées / trains / bateaux">⬢${tiles} 🚂${trains} ⛵${boats}</span>`;
+  const tiles   = safeInt(stats.tiles);
+  const trains  = safeInt(stats.trainLines);
+  const boats   = safeInt(stats.boatCount);
+  const comets  = safeInt(stats.cometHits);
+  const summaryTitle = `⬢ ${tiles} tuile(s) posée(s) · 🚂 ${trains} ligne(s) de train · ⛵ ${boats} bateau(x) · ☄️ ${comets} comète(s) interceptée(s)`;
+  const summary = `<span class="highscore-stat-chip stats-summary-chip" title="${summaryTitle}">⬢${tiles} 🚂${trains} ⛵${boats} ☄️${comets}</span>`;
 
   return `<div class="highscore-stats-line">${summary}${textureChips}</div>`;
 }
@@ -145,6 +148,7 @@ function sanitizeGameStats(stats) {
     tiles: safeInt(stats.tiles),
     trainLines: safeInt(stats.trainLines),
     boatCount: safeInt(stats.boatCount),
+    cometHits: safeInt(stats.cometHits),
     totals: {},
     largest: {}
   };

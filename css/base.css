@@ -41,6 +41,9 @@ body::after {
   z-index: 12;
   width: 360px;
   max-width: calc(100vw - 28px);
+  max-height: calc(100vh - 28px);
+  overflow-y: auto;
+  overflow-x: hidden;
   box-sizing: border-box;
   padding: 14px 16px;
   font-family: monospace;
@@ -49,6 +52,8 @@ body::after {
   border: 1px solid rgba(120, 180, 255, 0.38);
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 180, 255, 0.28) transparent;
 }
 
 .score-main-row {
@@ -89,153 +94,6 @@ body::after {
   color: #ffffff;
 }
 
-#debugHud {
-  right: 18px;
-  bottom: 286px;
-  width: 270px;
-  min-width: 0;
-  box-sizing: border-box;
-  padding: 10px;
-  background: linear-gradient(180deg, rgba(18, 27, 39, 0.86), rgba(4, 7, 11, 0.82));
-  border: 1px solid rgba(120, 180, 255, 0.34);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-  font-size: 10px;
-  line-height: 1.12;
-}
-
-#debugHud br {
-  display: none;
-}
-
-
-.debug-texture-title {
-  margin-top: 0;
-  margin-bottom: 8px;
-  padding-top: 0;
-  border-top: 0;
-  color: rgba(180, 215, 255, 0.86);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.debug-texture-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 5px 9px;
-  margin-top: 0;
-}
-
-.debug-texture-grid div {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-  color: rgba(220, 240, 255, 0.9);
-  font-size: 9px;
-  white-space: nowrap;
-}
-
-.debug-texture-grid .swatch {
-  width: 9px;
-  height: 9px;
-  border-radius: 3px;
-  flex: 0 0 auto;
-}
-
-.debug-keyboard-title {
-  margin-top: 10px;
-  margin-bottom: 8px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(120, 180, 255, 0.24);
-  color: rgba(180, 215, 255, 0.86);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-#keyboard {
-  box-sizing: border-box;
-  width: 100%;
-  margin-top: 0;
-  padding: 8px;
-  border: 1px solid rgba(120, 180, 255, 0.26);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.key-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  margin: 2px 0;
-}
-
-.command-row {
-  justify-content: flex-start;
-  margin-top: 2px;
-}
-
-.key,
-.key-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #1b1f2a;
-  border: 1px solid #3a3f55;
-  border-radius: 5px;
-  color: #aaa;
-  font-weight: bold;
-  user-select: none;
-  transition: transform 0.1s ease, background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
-}
-
-.key {
-  width: 22px;
-  height: 22px;
-}
-
-.key.empty {
-  background: transparent;
-  border: none;
-}
-
-.key.active {
-  background: #ff3b3b;
-  border-color: #ff3b3b;
-  color: white;
-  transform: scale(1.08);
-}
-
-.key-label {
-  color: #aaa;
-  font-size: 10px;
-  line-height: 22px;
-}
-
-.key-button {
-  width: 100%;
-  height: 24px;
-  margin-top: 7px;
-  cursor: pointer;
-  font-family: monospace;
-  font-size: 10px;
-}
-
-.key-button:hover {
-  background: #2a3142;
-  border-color: #5a6a8a;
-  color: white;
-}
-
-.key-button:active {
-  background: #ff3b3b;
-  border-color: #ff3b3b;
-  color: white;
-  transform: scale(0.98);
-}
 
 .stats-panel {
   margin-top: 12px;
@@ -471,7 +329,7 @@ body::after {
 }
 
 #statsPanel .stats-card-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 7px;
   min-width: 0;
 }
@@ -513,33 +371,94 @@ body::after {
 @media (max-width: 1050px) {
   #scorePanel {
     width: calc(100vw - 28px);
-    max-height: calc(100vh - 28px);
-    overflow-y: auto;
+  }
+}
+
+/* Compact layout pour les écrans ≤ 1100 px de hauteur (ex: 1920×1080). */
+@media (max-height: 1100px) {
+  #scorePanel {
+    padding: 10px 12px;
+  }
+
+  .score-value {
+    font-size: 32px;
+  }
+
+  .score-main-row {
+    gap: 18px;
+  }
+
+  .last-score-line {
+    margin-top: 5px;
+    font-size: 13px;
+  }
+
+  #statsPanel.stats-panel {
+    margin-top: 8px;
+    padding: 6px 0 0;
+  }
+
+  #statsPanel .stats-summary-row {
+    gap: 5px;
+    margin-bottom: 5px;
+  }
+
+  #statsPanel .stats-summary-card {
+    padding: 5px 7px;
+  }
+
+  #statsPanel .stats-summary-card strong {
+    font-size: 15px;
+  }
+
+  #statsPanel .stats-card-grid {
+    gap: 5px;
+  }
+
+  #statsPanel .stats-card {
+    padding: 5px 7px;
+  }
+
+  #statsPanel .stats-card-head {
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+
+  #statsPanel .stats-metrics div {
+    padding: 4px 5px 3px;
+  }
+
+  #statsPanel .stats-metrics strong {
+    font-size: 10px;
+  }
+
+  .highscore-panel {
+    margin-top: 10px;
+    padding-top: 8px;
+  }
+
+  .highscore-list li {
+    min-height: 20px;
+    margin: 4px 0;
+  }
+
+  .abandon-button,
+  .new-game-button {
+    margin-top: 7px;
+    padding: 6px 9px;
   }
 }
 
 body.grid-only-mode #scorePanel,
-body.grid-only-mode #debugHud,
+body.grid-only-mode #debugLightPanel,
 body.grid-only-mode .multiplayer-badge,
 body.grid-only-mode .help-overlay {
   display: none !important;
 }
 
-body.grid-only-mode #tileUI .deckRemainingBox,
 body.grid-only-mode #tileUI .missionsBox {
   display: none !important;
 }
 
-.key-space {
-  width: 58px;
-  font-size: 9px;
-}
-
-.key-combo {
-  width: auto;
-  min-width: 48px;
-  padding: 0 6px;
-  font-size: 9px;
-}
 
 .stats-boats { background: linear-gradient(135deg, rgba(80,180,255,0.18), rgba(0,120,255,0.08)); }

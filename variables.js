@@ -303,3 +303,92 @@ export const POSTPROCESS_DEFAULTS = Object.freeze({
 // Calques Three.js.
 export const WORLD_LAYER = 0;
 export const TEXT_LAYER = 1;
+
+// ----------------------------------------------------------------------------
+// LOD / FRUSTUM CULLING PAR CHUNKS
+// ----------------------------------------------------------------------------
+// Taille d'un chunk en coordonnées axiales (nombre de tuiles par dimension).
+// 3 donne ~9 tuiles par chunk ; pour GRID_RADIUS=6 → ~16 chunks actifs.
+export const HEX_CHUNK_SIZE = 3;
+
+// Distance caméra–centre-chunk (world units) au-delà de laquelle les micro-objets
+// (fleurs, roseaux, champignons) sont masqués, même s'ils sont dans le frustum.
+// +23 % (était 13.0) : compense le rayon de chunk qui causait un culling prématuré.
+export const LOD_MICRO_CULL_DISTANCE = 16.0;
+
+// Les arbres utilisent uniquement le frustum culling (pas de distance cutoff).
+// Constante réservée pour extension future (cartes très grandes).
+export const LOD_TREE_CULL_DISTANCE = 40.0;
+
+// Distance caméra–centre-chunk au-delà de laquelle les rochers sont masqués.
+// +18 % (était 22.0) : compense le rayon de chunk.
+export const LOD_ROCK_CULL_DISTANCE = 26.0;
+
+// Distance XZ (horizontale) au-delà de laquelle les bateaux animés (pirates) sont masqués.
+// Comparaison XZ uniquement dans updateWaterBoatLOD — seuil réduit pour effet plus marqué.
+export const LOD_BOAT_CULL_DISTANCE = 15.0;
+
+// Distance 3D au-delà de laquelle les barques échouées (shore-inert-boat) sont masquées.
+// Petits objets statiques → disparaissent avant les rochers (26) et les décorations (30).
+export const LOD_SHORE_BOAT_CULL_DISTANCE = 18.0;
+
+// Distance caméra au-delà de laquelle les trains et gares sont masqués.
+export const LOD_TRAIN_CULL_DISTANCE = 38.0;
+
+// Distance caméra au-delà de laquelle les bâtiments de village sont masqués.
+export const LOD_HOUSE_CULL_DISTANCE = 32.0;
+
+// Distance caméra au-delà de laquelle les rails (traverses, ballast) sont masqués.
+export const LOD_RAIL_TRACK_CULL_DISTANCE = 30.0;
+
+// Distance caméra au-delà de laquelle les réseaux de routes pavées (stone-road-glb)
+// sont masqués. Légèrement inférieure aux voies ferrées (objets plus fins, moins lisibles).
+export const LOD_PAVED_ROAD_CULL_DISTANCE = 28.0;
+
+// Distance caméra au-delà de laquelle les décorations de bord de route
+// (bancs, moulins, corbeaux) sont masquées. +20 % (était 25.0).
+export const LOD_ROAD_DECOR_CULL_DISTANCE = 30.0;
+
+// Distance caméra au-delà de laquelle les panneaux indicateurs sont masqués.
+// LOD sévère (petits objets, peu lisibles de loin).
+export const LOD_SIGN_CULL_DISTANCE = 17.0;
+
+// ----------------------------------------------------------------------------
+// VENT DES ARBRES (InstancedMesh GPU)
+// ----------------------------------------------------------------------------
+// Tous les paramètres de vent des arbres sont ici pour éviter les valeurs magiques
+// dans forestOverlay.js. heightEnd ≈ 0.37 = baseScale * TREE_SIZE_MULTIPLIER
+// (hauteur max des géométries cuites en world-units après applyMatrix4).
+export const TREE_WIND = {
+  strength: 0.062,
+  speed: 1.38,
+  frequency: 0.78,
+  turbulence: 0.30,
+  heightStart: 0.020,
+  heightEnd: 0.380,
+  gustStrength: 0.26,
+  detailStrength: 0.08
+};
+
+// ----------------------------------------------------------------------------
+// ROCHERS — DENSITÉ ET VARIÉTÉ
+// ----------------------------------------------------------------------------
+// Probabilités d'apparition et paramètres d'échelle pour les rochers naturels.
+// bigRockThreshold : seuil hash au-dessus duquel un gros rocher apparaît (~15 %).
+// bigRockScaleRange : intervalle ajouté au min → [bigRockScaleMin, bigRockScaleMin + range].
+export const ROCK_DENSITY = {
+  chanceNearWater:   0.93,  // +10 % (était 0.85)
+  chanceGrass:       0.43,  // +10 % (était 0.39)
+  chanceForest:      0.58,  // +10 % (était 0.53)
+  footprint:         0.038, // réduit (était 0.055) : rochers plus serrés → monticules
+  bigRockThreshold:  0.85,  // ~15 % de gros rochers
+  bigRockScaleMin:   1.10,
+  bigRockScaleRange: 0.30,  // → [1.10, 1.40]  (gros plus gros, sans excès)
+  normalScaleMin:    0.55,
+  normalScaleRange:  0.40   // → [0.55, 0.95]  (petits plus petits, médiane ≈ 0.75)
+};
+
+// ----------------------------------------------------------------------------
+// SCORE — ÉVÉNEMENTS SPÉCIAUX
+// ----------------------------------------------------------------------------
+export const COMET_HIT_SCORE = 75;
