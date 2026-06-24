@@ -1,5 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, LOD_HOUSE_CULL_DISTANCE } from './config.js';
+import { HITBOX_R } from './variables.js';
+import { registerPropHitbox } from './stable/propHitboxRegistry.js';
 import { hashUnit100k as hashUnit } from './stable/hashUtils.js';
 import { createOuterVertices } from './stable/hexGeometry.js';
 import { makeHexKey } from './stable/hex.js';
@@ -25,7 +27,7 @@ import {
 // pas sur l'ancien niveau flottant sectorY + 0.018.
 const HOUSE_GROUND_Y = (TILE_VISUAL.tileThickness ?? 0.12) * -0.30;
 const HOUSE_BASE_Y = HOUSE_GROUND_Y + 0.002;
-const HOUSE_SCALE = HEX_SIZE * 0.148;
+const HOUSE_SCALE = HEX_SIZE * 0.1332; // −10 %
 const HOUSE_CHIMNEY_TOP_Y = HOUSE_BASE_Y + HOUSE_SCALE * 1.62;
 const HOUSE_SMOKE_Y = HOUSE_CHIMNEY_TOP_Y + HOUSE_SCALE * 0.08;
 const PUFFS_PER_COLUMN = 18;
@@ -44,7 +46,7 @@ const WATCHTOWER_MAX_PER_ZONE = 6;
 const CEMETERY_MIN_HOUSES = 13;
 const CEMETERY_HOUSES_PER_EXTRA = 24;
 const CEMETERY_MAX_PER_ZONE = 3;
-const SPECIAL_BUILDING_HOUSE_SAFE_RADIUS = HEX_SIZE * 0.22;
+const SPECIAL_BUILDING_HOUSE_SAFE_RADIUS = HEX_SIZE * 0.198; // −10 %
 
 // ─── API publique — cycle de vie overlay ──────────────────────────────────────
 
@@ -215,6 +217,7 @@ function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, h
     const cemetery = createVillageCemeteryObject(`${tileKey}:${sector.key}:village-cemetery`, sector);
     cemetery.position.set(tileX + cemeteryLocal.x, HOUSE_BASE_Y + HOUSE_SCALE * 0.018, tileZ + cemeteryLocal.z);
     group.add(cemetery);
+    registerPropHitbox(tileX + cemeteryLocal.x, tileZ + cemeteryLocal.z, HITBOX_R.cemetery);
   }
 
   if (hasWatchtower) {
@@ -223,6 +226,7 @@ function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, h
     const towerSurfaceY = getTerrainSurfaceY(towerLocal, EDGE_TYPES.house, Math.floor(hashUnit(`${tileKey}:${sector.key}:watchtower`) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
     tower.position.set(tileX + towerLocal.x, towerSurfaceY + 0.010, tileZ + towerLocal.z);
     group.add(tower);
+    registerPropHitbox(tileX + towerLocal.x, tileZ + towerLocal.z, HITBOX_R.watchtower);
   }
 
   for (let i = 0; i < columnCount; i += 1) {
@@ -239,6 +243,7 @@ function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, h
     const houseSurfaceY = getTerrainSurfaceY(local, EDGE_TYPES.house, Math.floor(hashUnit(seed) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
     house.position.set(tileX + local.x, houseSurfaceY + 0.004, tileZ + local.z);
     group.add(house);
+    registerPropHitbox(tileX + local.x, tileZ + local.z, isChurch ? HITBOX_R.church : HITBOX_R.house);
   }
 }
 

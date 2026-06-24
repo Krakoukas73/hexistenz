@@ -8,7 +8,8 @@ import {
   TERRAIN_RELIEF,
   THIN_BIOME_DEPTH_RATIO,
   BIOME_HEIGHT_RATIO,
-  RAGGED_EDGE
+  RAGGED_EDGE,
+  FIELD_THICKNESS_RATIO
 } from './config.js';
 import { createOuterVertices } from './stable/hexGeometry.js';
 import { hashRaggedInnerEdge, hashRaggedEdge, hash01 } from './stable/raggedEdge.js';
@@ -30,6 +31,11 @@ export function getBiomeLocalTopY(type) {
 export function getBiomeSurfaceOffsetY(type) {
   if (type === EDGE_TYPES.water || type === 'water') return TILE_VISUAL.waterY ?? -0.075;
   if (type === EDGE_TYPES.rail || type === 'rail') return RAIL_SURFACE_Y;
+  // Secteur field : mesh décalé vers le bas pour ancrer le fond à −tileThickness
+  // (même logique que getBiomeSurfaceY dans tileMesh.js)
+  if (type === EDGE_TYPES.field || type === 'field') {
+    return (TILE_VISUAL.sectorY ?? 0) - (TILE_VISUAL.tileThickness ?? 0.12) * (1 - FIELD_THICKNESS_RATIO);
+  }
   return TILE_VISUAL.sectorY ?? 0;
 }
 

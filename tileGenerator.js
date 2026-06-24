@@ -45,7 +45,9 @@ export function rotateTile(tile, steps) {
   return {
     ...tile,
     edges,
-    center: pickCenterFromEdges(edges),
+    // center est fixé à la création et invariant par rotation.
+    // Le recalculer ici causerait des changements en cas d'égalité entre types
+    // (ex. 3 grass / 3 forest) à cause de l'ordre d'insertion dans le Map.
     rotation: normalizeRotation((tile.rotation ?? 0) + normalizedSteps)
   };
 }

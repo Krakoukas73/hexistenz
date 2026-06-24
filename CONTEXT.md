@@ -54,7 +54,7 @@ Helpers dans `tileGenerator.js` :
 - `getEdgeValue(edge)` → valeur numérique du secteur (1 par défaut).
 - `cloneEdge(edge)` → copie sûre préservant type + value.
 - `generateTile()` → crée une tuile avec respect des contraintes réseau.
-- `rotateTile(tile, steps)` → rotation immuable, préserve type+value ensemble.
+- `rotateTile(tile, steps)` → rotation immuable, préserve type+value ensemble. **Ne recalcule pas `center`** : le centre est fixé à la création et invariant par rotation. Le recalculer causait des changements visuels en cas d'égalité de comptage de biomes (bug sort Map non stable).
 
 Un `placedTile` est une tuile effectivement posée sur la grille :
 ```js
@@ -220,7 +220,13 @@ function ensureModels(group) {
 // Au rebuild : clone prototype, normalise scale/pivot, place sur terrain.
 ```
 
-Modèles connus : `bateau.glb`, `train.glb`, `wagon.glb`, `maison*.glb`, `church.glb`, `watchtower.glb`, `cemetery.glb`, `birch*.glb`, oiseaux (dans fieldWaterEffectsOverlay).
+Modèles connus : `bateau.glb`, `train.glb`, `wagon.glb`, `maison*.glb`, `church.glb`, `watchtower-1..5.glb`, `cemetery.glb`, `birch*.glb`, oiseaux, `moulin-1.glb`, `moulin-2.glb` (animé, pales), `fontaine-1.glb`, `fontaine-2.glb`, `botte-foin.glb`, `banc.glb`, `poteau-indicateur.glb`, `barque-1/2.glb`, `charrette.glb`, `tonneau-1/2.glb`, `flower-1..4.glb`, `rock-1..4.glb`, `roseau.glb`, `mushroom.glb`.
+
+**`decorOverlay.js`** est l'orchestrateur centralisé des props décor. Il définit `PROP_MODEL_DEFS` (tableau de defs `{ key, url, target, mode, correctionX?, sinkDepth? }`), charge tous les GLB via `GLTFLoader`, normalise chaque modèle dans `preparePropPrototype` (utilise `cloneSkeleton` de SkeletonUtils, pas `clone(true)`), et exporte `createPropModel(key, seedKey)`. Sous-fichiers : `fieldZonesOverlay.js`, `naturalPropsOverlay.js`, `villageDecorOverlay.js`.
+
+**GLBs animés** : `preparePropPrototype` utilise `cloneSkeleton(model)` (SkeletonUtils) pour conserver les références skeleton intactes, force `visible=true` + scale ≠ 0 + `skeleton.pose()` + `material.visible=true` sur tous les nœuds. Les `AnimationClip[]` sont conservés dans `propAnimationsLibrary` ; `createPropModel` crée un `AnimationMixer` si des clips existent. `updateDecorOverlay` appelle `mixer.update(delta)` via `userData.mixer` sur chaque frame.
+
+**Correction d'orientation GLB** : champ `correctionX` dans PROP_MODEL_DEFS (ex. `Math.PI/2` pour moulin-2 exporté Z-up). Appliqué sur `source.rotation.x` *avant* le calcul Box3, pour que la bounding box et le scale soient mesurés dans la bonne orientation.
 
 Avant d'utiliser un GLB : vérifier existence, orientation, échelle, pivot, hauteur terrain (`terrainHeight.js`), animations éventuelles.
 
@@ -385,7 +391,13 @@ Architecture HTTP polling (pas de WebSocket). Backend PHP (`multiplayer.php`), s
 ├── waterBoatOverlay.js    Bateaux GLB, graphe navigation eau
 ├── fieldWaterEffectsOverlay.js  Fleurs, roseaux, oiseaux, champignons, rochers
 ├── forestOverlay.js        Arbres GLB (6 variants) — InstancedMesh
-├── houseOverlay.js    Maisons GLB, église, cimetière, tour de guet
+├── houseOverlay.js         Maisons GLB, église, cimetière, tour de guet
+├── decorOverlay.js         Orchestrateur props décor : PROP_MODEL_DEFS, GLTFLoader, preparePropPrototype, createPropModel, AnimationMixer, propGlbLibrary
+├── fieldZonesOverlay.js    Moulins (field-flag / field-flag-2), drapeaux de zone blé
+├── naturalPropsOverlay.js  Props naturels InstancedMesh : fleurs, rochers, roseaux, champignons, bottes de foin (field-edge uniquement)
+├── villageDecorOverlay.js  Bancs, charrettes, tonneaux, poteaux, fontaines village + prairie
+├── houseVillageObjects.js  Tours de guet (watchtower-1..5, poids égaux, sinkDepth)
+├── propHitboxRegistry.js   registerPropHitbox / tryResolve — hitbox durs pour props
 ├── realisticWater.js       Shader eau réaliste (reflets, ripple)
 ├── visualEnvironment.js    Lumières, ciel, environnement visuel
 ├── soundDesign.js          Audio spatial
@@ -487,29 +499,32 @@ La caméra est positionnée à `radius = 15`, `phi = π/3` → hauteur Y ≈ 7.5
 
 | Constante | Valeur | Comparaison | Cible |
 |---|---|---|---|
-| `LOD_MICRO_CULL_DISTANCE` | 16.0 | 3D | Fleurs, roseaux, champignons (InstancedMesh chunks) |
-| `LOD_SIGN_CULL_DISTANCE` | 17.0 | 3D par item | Panneaux indicateurs |
-| `LOD_SHORE_BOAT_CULL_DISTANCE` | 18.0 | 3D par item | Barques échouées (shore-inert-boat) |
-| `LOD_BOAT_CULL_DISTANCE` | 15.0 | **XZ uniquement** | Bateaux animés (waterBoatOverlay) |
-| `LOD_ROCK_CULL_DISTANCE` | 26.0 | 3D (chunks) | Rochers (InstancedMesh chunks) |
-| `LOD_PAVED_ROAD_CULL_DISTANCE` | 28.0 | 3D | Réseaux de routes pavées GLB |
-| `LOD_RAIL_TRACK_CULL_DISTANCE` | 30.0 | 3D | Rails/traverses/ballast |
-| `LOD_ROAD_DECOR_CULL_DISTANCE` | 30.0 | 3D par item | Bancs, moulins, corbeaux, drapeaux |
-| `LOD_TRAIN_CULL_DISTANCE` | 38.0 | 3D | Trains + gares |
-| `LOD_HOUSE_CULL_DISTANCE` | 32.0 | 3D | Bâtiments village |
+| `LOD_MICRO_CULL_DISTANCE` | 14.4 | 3D | Fleurs, roseaux, champignons (InstancedMesh chunks) |
+| `LOD_SIGN_CULL_DISTANCE` | 15.3 | 3D par item | Panneaux indicateurs |
+| `LOD_SHORE_BOAT_CULL_DISTANCE` | 16.2 | 3D par item | Barques échouées (shore-inert-boat) |
+| `LOD_BOAT_CULL_DISTANCE` | 13.5 | **XZ uniquement** | Bateaux animés (waterBoatOverlay) |
+| `LOD_ROCK_CULL_DISTANCE` | 23.4 | 3D (chunks) | Rochers (InstancedMesh chunks) |
+| `LOD_VILLAGE_PROP_CULL_DISTANCE` | 19.8 | 3D par item | Tonneaux et charrettes de village |
+| `LOD_PAVED_ROAD_CULL_DISTANCE` | 25.2 | 3D | Réseaux de routes pavées GLB |
+| `LOD_RAIL_TRACK_CULL_DISTANCE` | 27.0 | 3D | Rails/traverses/ballast |
+| `LOD_ROAD_DECOR_CULL_DISTANCE` | 27.0 | 3D par item | Bancs, moulins, corbeaux, drapeaux |
+| `LOD_HOUSE_CULL_DISTANCE` | 28.8 | 3D | Bâtiments village |
+| `LOD_TRAIN_CULL_DISTANCE` | 34.2 | 3D | Trains + gares |
+| `LOD_TREE_CULL_DISTANCE` | 36.0 | 3D (chunks) | Arbres (réservé, non implémenté) |
 
-### Hiérarchie effective (petits → gros, disparition progressive)
+### Hiérarchie effective (petits → gros, disparition progressive) — seuils −10 % depuis juin 2026
 
 Distance XZ effective (avec Y≈7.5 de hauteur caméra) :
-1. Fleurs/roseaux/champignons → ~14.1 XZ
-2. Panneaux indicateurs → ~14.9 XZ
-3. Barques échouées → ~14.9 XZ
-4. Bateaux animés → 15.0 XZ (comparaison XZ directe)
-5. Rochers → ~24.9 XZ
-6. Routes pavées → ~26.9 XZ
-7. Rails/bancs/moulins/crows → ~28.9–29.1 XZ
-8. Bâtiments village → ~31.1 XZ
-9. Trains/gares → ~37.2 XZ
+1. Bateaux animés → 13.5 XZ (comparaison XZ directe)
+2. Fleurs/roseaux/champignons → ~12.8 XZ
+3. Panneaux indicateurs → ~13.4 XZ
+4. Barques échouées → ~14.4 XZ
+5. Tonneaux/charrettes → ~17.6 XZ
+6. Rochers → ~21.9 XZ
+7. Routes pavées → ~23.6 XZ
+8. Rails/bancs/moulins/crows → ~25.4–25.5 XZ
+9. Bâtiments village → ~27.4 XZ
+10. Trains/gares → ~32.5 XZ
 
 ### Implémentations
 
@@ -548,11 +563,24 @@ Distance XZ effective (avec Y≈7.5 de hauteur caméra) :
 
 **BFS zone** — `fieldWaterEffectsOverlay.js` utilise intentionnellement un `getTextureNeighbors` simplifié (pas d'adjacence intra-tuile). Ne pas le remplacer par `getFullTextureNeighbors`.
 
+**Charrettes dans l'eau/sur rail** — `villageDecorOverlay.js` vérifie que la tuile n'a aucune arête `water` ni `rail` avant de placer une charrette (blocs roadside *et* intérieur-village). Les tonneaux ne sont pas restreints. Fontaines : même garde `tileHasRailOrWater`. Ne jamais oublier d'appliquer la garde aux deux blocs (roadside + intérieur).
+
+**`clone(true)` brise les SkinnedMesh** — `Object3D.clone(true)` ne relie pas correctement les références skeleton des `SkinnedMesh` : les parties animées deviennent invisibles ou restent en pose neutre. Toujours utiliser `cloneSkeleton` de `SkeletonUtils` (Three.js, déjà importé dans `decorOverlay.js`) pour les objets GLB.
+
+**`tryResolve` inutilisable au centre de tuile** — `tryResolve` est conçu pour les props "doux" en bord de tile. Au centre d'une tuile village, les hitbox de bâtiments (rayon `HITBOX_R.house = HEX_SIZE * 0.22`) couvrent tout l'espace. Après 6 tentatives, `tryResolve` renvoie `null` et l'objet n'est jamais placé. Pour les fontaines (placées volontairement entre bâtiments), supprimer `tryResolve` et garder uniquement `isInsideSpecialBuildingSafeZone` comme garde.
+
+**Orientation GLB Z-up vs Y-up** — Certains GLB sont exportés avec l'axe Z vers le haut (Blender sans correction). Utiliser `correctionX: Math.PI / 2` dans `PROP_MODEL_DEFS`. La rotation doit être appliquée sur `source.rotation.x` *avant* le calcul `Box3`, sinon la bounding box est mesurée dans le mauvais repère.
+
+**Depth map eau (`waterZoneOverlay.js`)** — mapping arête→direction voisin : `EDGE_ORDER[i]` fait face à `_HEX_DIRS[(6-i)%6]` (PAS `(i+1)%6`). Dérivé de `createOuterVertices` qui utilise `z = +sin(angle)` (pas `-sin`). Arête opposée chez le voisin : `EDGE_ORDER[(i+3)%6]` (correct, inchangé). Rayon gradient : `hexPx * sqrt(3) * 1.5` pour couvrir 1.5 tile-spacings.
+
 ---
 
 ## 25. Ce qu'on fera / ne fera pas
 
 À faire : polish graphique, lisibilité HUD, rebuild incrémental des overlays.
+
+**TODO :**
+- Plages de mer plus claires (contour eau/terre quasi-blanc, écume) — tentatives précédentes abandonnées, à reprendre avec meilleure approche.
 
 Pas prévu : React, Vue, TypeScript, framework, WebSocket obligatoire, SQL pour scores, bundler obligatoire.
 

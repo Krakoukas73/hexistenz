@@ -78,7 +78,7 @@ function createStarUniverse({ radius = DEFAULT_RADIUS, starCount = DEFAULT_STAR_
   const material = new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
-      uPixelRatio: { value: Math.min(window.devicePixelRatio || 1, 1.75) }
+      uPixelRatio: { value: Math.min(window.devicePixelRatio || 1, 1.25) }
     },
     vertexShader: `
       attribute vec3 aColor;

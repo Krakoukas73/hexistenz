@@ -15,7 +15,7 @@ import { getGravelSvgMaterial, getHouseMaterial } from './houseVillageMaterials.
 
 // ─── Constantes locales ────────────────────────────────────────────────────────
 
-const HOUSE_SCALE = HEX_SIZE * 0.148;
+const HOUSE_SCALE = HEX_SIZE * 0.1332; // −10 %
 const HOUSE_GLB_SIZE_MULTIPLIER = 1.75;
 const HOUSE_GLB_SPACING_MULTIPLIER = 1.12;
 
@@ -29,14 +29,20 @@ const HOUSE_GLB_MODEL_DEFS = [
 ];
 const CHURCH_GLB_MODEL_DEF = { key: 'eglise', url: './glb/eglise.glb', size: 4.5 };
 const DOLMEN_GLB_MODEL_DEF = { key: 'dolmen', url: './glb/dolmen.glb', size: 4.5 };
-const WATCHTOWER_GLB_MODEL_DEF = { key: 'towerlight', url: './glb/towerlight.glb', size: 3.65 };
+const WATCHTOWER_GLB_MODEL_DEFS = [
+  { key: 'watchtower-1', url: './glb/watchtower-1.glb', size: 3.65, spawnWeight: 20 },
+  { key: 'watchtower-2', url: './glb/watchtower-2.glb', size: 3.65, spawnWeight: 20 },
+  { key: 'watchtower-3', url: './glb/watchtower-3.glb', size: 3.65, spawnWeight: 20 },
+  { key: 'watchtower-4', url: './glb/watchtower-4.glb', size: 3.65, spawnWeight: 20 },
+  { key: 'watchtower-5', url: './glb/watchtower-5.glb', size: 3.65, spawnWeight: 20, sinkDepth: 0.07 }
+];
 
 // ─── État GLB (module-level, partagé entre chargeur et créateurs) ─────────────
 
 const houseGlbLibrary = new Map();
 let churchGlbPrototype = null;
 let dolmenGlbPrototype = null;
-let watchtowerGlbPrototype = null;
+const watchtowerGlbLibrary = new Map();
 let houseModelsLoading = false;
 let houseModelsRequested = false;
 
@@ -52,7 +58,7 @@ export function ensureHouseGlbModels(group, onReady) {
   houseModelsLoading = true;
   houseModelsRequested = true;
 
-  let pending = HOUSE_GLB_MODEL_DEFS.length + 3;
+  let pending = HOUSE_GLB_MODEL_DEFS.length + 2 + WATCHTOWER_GLB_MODEL_DEFS.length;
   const finishOne = () => {
     pending -= 1;
     if (pending > 0) return;
@@ -101,18 +107,20 @@ export function ensureHouseGlbModels(group, onReady) {
     }
   );
 
-  new GLTFLoader().load(
-    WATCHTOWER_GLB_MODEL_DEF.url,
-    gltf => {
-      watchtowerGlbPrototype = prepareHouseGlbPrototype(gltf.scene, WATCHTOWER_GLB_MODEL_DEF);
-      finishOne();
-    },
-    undefined,
-    error => {
-      console.warn(`Modèle tour de garde GLB indisponible : ${WATCHTOWER_GLB_MODEL_DEF.url}`, error);
-      finishOne();
-    }
-  );
+  for (const def of WATCHTOWER_GLB_MODEL_DEFS) {
+    new GLTFLoader().load(
+      def.url,
+      gltf => {
+        watchtowerGlbLibrary.set(def.key, prepareHouseGlbPrototype(gltf.scene, def));
+        finishOne();
+      },
+      undefined,
+      error => {
+        console.warn(`Modèle tour de garde GLB indisponible : ${def.url}`, error);
+        finishOne();
+      }
+    );
+  }
 }
 
 /** Vrai si au moins un modèle maison GLB est disponible. */
@@ -236,6 +244,16 @@ export function createVillageChurchObject(seedKey, sector) {
   return group;
 }
 
+function pickWatchtowerGlbDefinition(seedKey) {
+  const totalWeight = WATCHTOWER_GLB_MODEL_DEFS.reduce((total, def) => total + (def.spawnWeight ?? 1), 0);
+  let roll = hashUnit(`${seedKey}:watchtower-variant`) * totalWeight;
+  for (const def of WATCHTOWER_GLB_MODEL_DEFS) {
+    roll -= def.spawnWeight ?? 1;
+    if (roll <= 0) return def;
+  }
+  return WATCHTOWER_GLB_MODEL_DEFS[0];
+}
+
 export function createVillageWatchtowerObject(seedKey, sector) {
   const group = new THREE.Group();
   group.name = 'village-watchtower-glb-zone-reward';
@@ -245,22 +263,26 @@ export function createVillageWatchtowerObject(seedKey, sector) {
   group.rotation.y = -sectorAngle + jitter;
   group.scale.setScalar(0.93 + hashUnit(`${seedKey}:watchtower-scale`) * 0.12);
 
-  if (!watchtowerGlbPrototype) {
+  const def = pickWatchtowerGlbDefinition(seedKey);
+  const prototype = watchtowerGlbLibrary.get(def.key);
+
+  if (!prototype) {
     if (!createVillageWatchtowerObject.warnedMissingModel) {
-      console.warn(`Tour de garde GLB indisponible ou non chargée : ${WATCHTOWER_GLB_MODEL_DEF.url}`);
+      console.warn(`Tour de garde GLB indisponible : ${def.url}`);
       createVillageWatchtowerObject.warnedMissingModel = true;
     }
     return group;
   }
 
-  const tower = watchtowerGlbPrototype.clone(true);
-  tower.name = 'towerlight-glb-village-watchtower-instance';
+  const tower = prototype.clone(true);
+  tower.name = `${def.key}-village-watchtower-instance`;
   tower.traverse(object => {
     if (!object.isMesh) return;
     object.castShadow = true;
     object.receiveShadow = true;
     object.userData.shadowFlagsApplied = true;
   });
+  if (def.sinkDepth) tower.position.y -= def.sinkDepth;
 
   group.add(tower);
   return group;

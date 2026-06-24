@@ -12,7 +12,7 @@ export const TEXT_LAYER = 1;
 // Initialisation Three.js isolée pour garder scene.js centré sur la logique de jeu.
 export function createRenderer(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.LinearToneMapping;
@@ -180,7 +180,7 @@ export function createCamera() {
 
 export function createPixelPostprocess(renderer, scene, camera) {
   const composer = new EffectComposer(renderer);
-  composer.setPixelRatio(window.devicePixelRatio);
+  composer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
   composer.setSize(window.innerWidth, window.innerHeight);
 
   const settings = {
@@ -342,6 +342,6 @@ export function resizeRenderer(renderer, camera, postprocess = null) {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  postprocess?.composer?.setPixelRatio?.(window.devicePixelRatio);
+  postprocess?.composer?.setPixelRatio?.(Math.min(window.devicePixelRatio, 1.25));
   postprocess?.composer?.setSize?.(window.innerWidth, window.innerHeight);
 }

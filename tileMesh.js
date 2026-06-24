@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { EDGE_ORDER, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
+import { EDGE_ORDER, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, FIELD_THICKNESS_RATIO } from './config.js';
 import { createOuterVertices } from './stable/hexGeometry.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getBiomeMaterial, getBiomeSideMaterial } from './tileTextures.js';
@@ -48,7 +48,7 @@ const BIOME_HEIGHT_RATIO = {
   // Champ de blé : plus épais au-dessus du niveau standard.
   // Prairie : dessus nettement abaissé pour obtenir une dalle plus fine,
   // tout en gardant le dessous sur la même base de grille que les autres tuiles.
-  field: 0.15,
+  field: 0.0525, // −65%
   grass: -0.45
 };
 
@@ -325,6 +325,8 @@ function getBiomeLocalTopY(type) {
 
 function getBiomeLocalBottomY(type, depth) {
   if (type === 'water' || type === 'rail') return -depth;
+  // Secteur field plus fin : face latérale réduite de 65%
+  if (type === 'field') return -(TILE_VISUAL.tileThickness ?? depth) * FIELD_THICKNESS_RATIO;
   return -(TILE_VISUAL.tileThickness ?? depth);
 }
 
@@ -544,6 +546,9 @@ function getBiomeSurfaceY(type, baseY) {
   // Les autres biomes ne sont pas translatés : leurs variations restent locales.
   if (type === 'water') return TILE_VISUAL.waterY;
   if (type === 'rail') return TILE_VISUAL.railSurfaceY ?? TILE_VISUAL.waterY;
+  // Secteur field plus mince : on translate le mesh vers le bas pour que son fond
+  // reste ancré à -tileThickness comme tous les autres biomes.
+  if (type === 'field') return baseY - (TILE_VISUAL.tileThickness ?? 0.12) * (1 - FIELD_THICKNESS_RATIO);
   return baseY;
 }
 

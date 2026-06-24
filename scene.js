@@ -18,12 +18,14 @@ import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay
 import { createRailTrainOverlay, rebuildRailTrainOverlay, updateRailTrainOverlay, updateRailTrainLOD } from './railTrainOverlay.js';
 import { createWaterBoatOverlay, rebuildWaterBoatOverlay, updateWaterBoatOverlay, updateWaterBoatLOD } from './waterBoatOverlay.js';
 import { createForestOverlay, rebuildForestOverlay, updateForestLOD } from './forestOverlay.js';
+import { createFieldWheatOverlay, rebuildFieldWheatOverlay, updateFieldWheatLOD } from './fieldWheatOverlay.js';
 import { createHouseOverlay, rebuildHouseOverlay, updateHouseOverlay, updateHouseLOD } from './houseOverlay.js';
-import { createFieldWaterEffectsOverlay, rebuildFieldWaterEffectsOverlay, updateFieldWaterEffectsOverlay, updateNaturalPropsLOD, updateFieldDecorLOD } from './fieldWaterEffectsOverlay.js';
+import { createDecorOverlay, rebuildDecorOverlay, updateDecorOverlay, updateNaturalPropsLOD, updateFieldDecorLOD } from './decorOverlay.js';
 import { createAmbientSoundDesign, startEndingMusic, startIngameMusic, toggleMute } from './soundDesign.js';
 import { createVisualEnvironment } from './visualEnvironment.js';
 import { createCometSky, updateCometSky, tryCometHit, removeCometFromSky, spawnCometExplosion } from './stable/cometSky.js';
 import { updateGlobalWind } from './stable/globalWind.js';
+import { resetPropHitboxRegistry } from './stable/propHitboxRegistry.js';
 import { createDebugLightUI } from './debugLightUi.js';
 import { askHighscoreSubmit, createHighscoreUI } from './stable/highscore.js';
 import { applySceneCurvatureFlags, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './stable/threeSetup.js';
@@ -88,8 +90,9 @@ export function initScene(options = {}) {
   const railTrainOverlay = createRailTrainOverlay();
   const waterBoatOverlay = createWaterBoatOverlay();
   const forestOverlay = createForestOverlay();
+  const fieldWheatOverlay = createFieldWheatOverlay();
   const houseOverlay = createHouseOverlay();
-  const fieldWaterEffectsOverlay = createFieldWaterEffectsOverlay();
+  const fieldWaterEffectsOverlay = createDecorOverlay();
   const cometSky = createCometSky();
   const ambientSoundDesign = createAmbientSoundDesign({ camera, canvas, placedTiles, fieldWaterEffectsOverlay, railTrainOverlay, waterBoatOverlay, houseOverlay });
   const gridOverlay = createGrid([...placedTiles.values()]);
@@ -98,7 +101,7 @@ export function initScene(options = {}) {
 
   ghostTile.visible = false;
 
-  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, houseOverlay, fieldWaterEffectsOverlay, cometSky, remoteGhosts, ghostTile);
+  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, houseOverlay, fieldWaterEffectsOverlay, cometSky, remoteGhosts, ghostTile);
   applySceneCurvatureFlags(gridOverlay);
   applySceneCurvatureFlags(specialCellsMesh);
   applySceneCurvatureFlags(bonusCellsMesh);
@@ -281,7 +284,7 @@ export function initScene(options = {}) {
     updateRailTrainOverlay(railTrainOverlay, timeSeconds);
     updateWaterBoatOverlay(waterBoatOverlay, timeSeconds);
     updateHouseOverlay(houseOverlay, timeSeconds);
-    updateFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, timeSeconds);
+    updateDecorOverlay(fieldWaterEffectsOverlay, timeSeconds);
     updateCometSky(cometSky, camera, timeSeconds);
     ambientSoundDesign.update(timeSeconds);
     updateSunShadowOrbit(scene, timeSeconds, controls.target);
@@ -291,8 +294,9 @@ export function initScene(options = {}) {
       applySceneShadowFlags(scene);
       visualEnvironment.apply();
     }
-    if ((shadowRefreshFrame % 3) === 0) {
+    if ((shadowRefreshFrame % 9) === 0) {
       updateForestLOD(forestOverlay, camera);
+      updateFieldWheatLOD(fieldWheatOverlay, camera);
       updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera);
       updateFieldDecorLOD(fieldWaterEffectsOverlay, camera);
       updateWaterBoatLOD(waterBoatOverlay, camera);
@@ -337,9 +341,11 @@ export function initScene(options = {}) {
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
     rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
+    resetPropHitboxRegistry();
     rebuildForestOverlay(forestOverlay, placedTiles);
+    rebuildFieldWheatOverlay(fieldWheatOverlay, placedTiles);
     rebuildHouseOverlay(houseOverlay, placedTiles);
-    rebuildFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, placedTiles);
+    rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles);
   }
 
   function refreshDeckUI() {
@@ -482,9 +488,11 @@ export function initScene(options = {}) {
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
     rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
+    resetPropHitboxRegistry();
     rebuildForestOverlay(forestOverlay, placedTiles);
+    rebuildFieldWheatOverlay(fieldWheatOverlay, placedTiles);
     rebuildHouseOverlay(houseOverlay, placedTiles);
-    rebuildFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, placedTiles);
+    rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles);
     if (gridOnlyMode) setGridLabelVisibility(false);
 
     ghostTile.visible = false;
@@ -627,9 +635,11 @@ export function initScene(options = {}) {
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
     rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
+    resetPropHitboxRegistry();
     rebuildForestOverlay(forestOverlay, placedTiles);
+    rebuildFieldWheatOverlay(fieldWheatOverlay, placedTiles);
     rebuildHouseOverlay(houseOverlay, placedTiles);
-    rebuildFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, placedTiles);
+    rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles);
     updateHoveredSpecialCellVisibility(hoveredHex);
     if (gridOnlyMode) setGridLabelVisibility(false);
     totalScore = Math.max(0, totalScore - (last.score ?? 0));
@@ -843,9 +853,10 @@ export function initScene(options = {}) {
       rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
       rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
       rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
+      resetPropHitboxRegistry();
       rebuildForestOverlay(forestOverlay, placedTiles);
       rebuildHouseOverlay(houseOverlay, placedTiles);
-      rebuildFieldWaterEffectsOverlay(fieldWaterEffectsOverlay, placedTiles);
+      rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles);
       refreshDeckUI();
       refreshGridAvailability();
       refreshMissionUI();

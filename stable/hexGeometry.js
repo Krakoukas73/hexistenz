@@ -29,3 +29,25 @@ export function createOuterVertices(radius = HEX_SIZE) {
   }
   return vertices;
 }
+
+/**
+ * Retourne le sommet d'index `index` de l'hexagone (flat-top, plan XZ).
+ * Équivalent à createOuterVertices()[index] sans allouer le tableau complet.
+ * @param {number} index — 0..5
+ * @returns {{ x: number, z: number }}
+ */
+export function getHexVertex(index) {
+  const angle = (Math.PI / 3) * index;
+  return { x: Math.cos(angle) * HEX_SIZE, z: Math.sin(angle) * HEX_SIZE };
+}
+
+/**
+ * Normalise un vecteur 2D (x, z). Retourne { x:0, z:1 } si le vecteur est nul.
+ * @param {number} x
+ * @param {number} z
+ * @returns {{ x: number, z: number }}
+ */
+export function normalize2(x, z) {
+  const length = Math.hypot(x, z) || 1;
+  return { x: x / length, z: z / length };
+}

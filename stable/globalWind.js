@@ -126,6 +126,9 @@ export function setGlobalWindDirection(x, z) {
   GLOBAL_WIND_UNIFORMS.uGlobalWindDirection.value.set(x / length, z / length);
 }
 
+/** Expose les objets uniform partagés pour les shaders externes (ex: fieldWheatOverlay). */
+export function getGlobalWindUniforms() { return GLOBAL_WIND_UNIFORMS; }
+
 function makeWindSignature(options) {
   return [
     options.strength,

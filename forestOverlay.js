@@ -7,7 +7,7 @@ import { axialToWorld } from './stable/hex.js';
 import { applyGlobalWindToObject } from './stable/globalWind.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { placeObjectOnTerrain } from './terrainHeight.js';
-import { collectSpecialBuildingSafeZones } from './fieldWaterEffectsOverlay.js';
+import { collectSpecialBuildingSafeZones } from './fieldZonesOverlay.js';
 import {
   TREE_MODEL_DEFS,
   TREE_SIZE_MULTIPLIER,
@@ -17,8 +17,10 @@ import {
   MAX_TREE_PLACEMENT_ATTEMPTS,
   TREE_WIND,
   HEX_CHUNK_SIZE,
-  LOD_TREE_CULL_DISTANCE
+  LOD_TREE_CULL_DISTANCE,
+  HITBOX_R
 } from './variables.js';
+import { registerPropHitbox } from './stable/propHitboxRegistry.js';
 
 const CENTER_SAFE_RADIUS = HEX_SIZE * (TILE_VISUAL.centerRadiusScale + TREE_CENTER_SAFE_RADIUS_EXTRA);
 const SPECIAL_BUILDING_TREE_SAFE_RADIUS = HEX_SIZE * 0.38;
@@ -208,6 +210,7 @@ function collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones 
       // La scale de base est cuite dans la géo (child.matrixWorld du prototype), on applique seulement le jitter ici.
       _instanceDummy.scale.setScalar(scaleJitter);
       _instanceDummy.updateMatrix();
+      registerPropHitbox(_instanceDummy.position.x, _instanceDummy.position.z, HITBOX_R.treeTrunk);
 
       if (!accumulator.has(variantKey)) accumulator.set(variantKey, new Map());
       const byChunk = accumulator.get(variantKey);
