@@ -465,28 +465,14 @@ function createJunctionRoutes(ports) {
 }
 
 function addTrackRoute(group, route) {
-  const centerline = build3DPath(route.points, route.closed, route.seedKey);
-  const length = getPathLength(centerline, route.closed);
-  if (length <= HEX_SIZE * 0.04) return;
-
-  const leftRail = buildOffsetRail(centerline, -1, route.closed, route.seedKey);
-  const rightRail = buildOffsetRail(centerline, 1, route.closed, route.seedKey);
-
-  const railMaterial = getRailMaterial('metal');
-  const leftMesh = createRailTube(leftRail, railMaterial, route.closed, `${route.seedKey}:left-rail`);
-  const rightMesh = createRailTube(rightRail, railMaterial, route.closed, `${route.seedKey}:right-rail`);
-
-  if (leftMesh) group.add(leftMesh);
-  if (rightMesh) group.add(rightMesh);
-
-  if (route.sleepers !== false) {
-    addSleepers(group, centerline, route);
-  }
-
+  // Rails et traverses remplacés par train_track.glb (instances dans railTrainOverlay.js).
+  // On garde uniquement le butoir de terminus (petit arrêt physique en bois).
   if (route.bumper) {
-    addTerminusBumper(group, centerline, route.seedKey);
+    const centerline = build3DPath(route.points, route.closed, route.seedKey);
+    if (getPathLength(centerline, route.closed) > HEX_SIZE * 0.04) {
+      addTerminusBumper(group, centerline, route.seedKey);
+    }
   }
-
 }
 
 function build3DPath(points2D, closed = false, seedKey = 'rail') {

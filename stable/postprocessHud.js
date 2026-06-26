@@ -10,8 +10,12 @@ const DEFAULTS = Object.freeze({
   worldShapeMode: 'bouliste'
 });
 
-export function createPostprocessHud(postprocess, options = {}) {
-  if (!postprocess) return null;
+/** @deprecated PIX HUD fusionné dans le panel CUSTOMISATION de debugLightUi.js */
+export function createPostprocessHud(_postprocess, _options = {}) {
+  // No-op : la gestion PIX est désormais intégrée dans createDebugLightUI
+  return null;
+  // eslint-disable-next-line no-unreachable
+  if (!_postprocess) return null;
 
   const settings = normalizeSettings({ ...DEFAULTS, ...postprocess.getSettings?.(), ...readStoredSettings(), ...options });
   postprocess.applySettings?.(settings);
@@ -24,12 +28,12 @@ export function createPostprocessHud(postprocess, options = {}) {
     <div class="postprocess-hud__head">
       <div>
         <div class="postprocess-hud__title">PIXELISATION DE LA GRILLE</div>
-        
       </div>
       <label class="postprocess-switch" title="Activer / désactiver le postprocess pixelisé">
         <input id="ppEnabled" type="checkbox" />
         <span></span>
       </label>
+      <button id="ppClose" class="postprocess-close-btn" type="button" title="Fermer">✕</button>
     </div>
 
     <label class="postprocess-control">
@@ -105,6 +109,13 @@ export function createPostprocessHud(postprocess, options = {}) {
   controls.reset.addEventListener('click', event => {
     event.stopPropagation();
     commit(DEFAULTS);
+  });
+
+  panel.querySelector('#ppClose').addEventListener('click', event => {
+    event.stopPropagation();
+    panel.style.display = 'none';
+    // Notifier debugLightUi pour re-syncer l'état du bouton PIX
+    document.dispatchEvent(new CustomEvent('postprocess-hud-closed'));
   });
 
   // Évite qu'un clic/drag sur le HUD déplace la caméra. Satan a déjà assez de boulot.

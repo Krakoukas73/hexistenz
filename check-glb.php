@@ -159,6 +159,26 @@ if (is_dir($rootDir)) {
       pointer-events: none;
     }
 
+    .unused-diagonal {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .quality-badge {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      font-size: 24px;
+      line-height: 1;
+      z-index: 11;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.9));
+      pointer-events: none;
+    }
+
     .info {
       padding: 10px 12px 12px;
       border-top: 1px solid var(--border);
@@ -277,7 +297,7 @@ if (is_dir($rootDir)) {
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-    const PER_PAGE = 10;
+    const PER_PAGE = 12;
 
     const allAssets = window.GLB_ASSETS || [];
     const grid = document.getElementById('grid');
@@ -383,6 +403,21 @@ if (is_dir($rootDir)) {
         note.textContent = 'Chargement...';
         viewport.appendChild(note);
 
+        if (asset.path.includes('/unused')) {
+          const diag = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          diag.setAttribute('class', 'unused-diagonal');
+          diag.setAttribute('viewBox', '0 0 100 100');
+          diag.setAttribute('preserveAspectRatio', 'none');
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', '0'); line.setAttribute('y1', '0');
+          line.setAttribute('x2', '100'); line.setAttribute('y2', '100');
+          line.setAttribute('stroke', '#f87171');
+          line.setAttribute('stroke-width', '2');
+          line.setAttribute('vector-effect', 'non-scaling-stroke');
+          diag.appendChild(line);
+          viewport.appendChild(diag);
+        }
+
         const info = document.createElement('div');
         info.className = 'info';
 
@@ -474,7 +509,8 @@ if (is_dir($rootDir)) {
 
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
-      controls.enablePan = false;
+      controls.enablePan = true;
+      controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, RIGHT: THREE.MOUSE.PAN };
       controls.autoRotate = true;
       controls.autoRotateSpeed = 0.8;
 
@@ -507,6 +543,14 @@ if (is_dir($rootDir)) {
           if (meta) {
             meta.innerHTML = buildMetaHtml(asset.size || 0, triangles, stats, animationCount);
           }
+
+          const gpuMbQ = stats.gpuBytes / (1024 * 1024);
+          const hasRed = stats.meshes >= 8 || gpuMbQ >= 40 || stats.textures >= 6 || stats.materials >= 5;
+          const hasOrange = stats.meshes >= 3 || gpuMbQ >= 10 || stats.textures >= 3 || stats.materials >= 2;
+          const badge = document.createElement('div');
+          badge.className = 'quality-badge';
+          badge.textContent = hasRed ? '❌' : (hasOrange ? '⚠️' : '✅');
+          container.appendChild(badge);
 
           if (animationCount) {
             const mixer = new THREE.AnimationMixer(object);

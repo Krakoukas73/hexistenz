@@ -12,9 +12,29 @@ const CENTER_RADIUS = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 
-const HALO_Y = 0.115;
-const HOVER_HALO_Y = 0.30;
+const HALO_Y = 0.010;       // ÷2 encore (était 0.022)
+const HOVER_HALO_Y = 0.022; // ÷2 encore (était 0.052)
 const HOVER_HALO_RADIUS = 0.056;
+
+// ─── Texture de pointillés (partagée, lazy-init) ─────────────────────────────
+
+let _dashTexture = null;
+function getDashTexture() {
+  if (_dashTexture) return _dashTexture;
+  const canvas = document.createElement('canvas');
+  canvas.width  = 64;
+  canvas.height = 4;
+  const ctx = canvas.getContext('2d');
+  // 40 px trait opaque, 24 px transparent → ratio 62.5 / 37.5
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, 40, 4);
+  _dashTexture = new THREE.CanvasTexture(canvas);
+  _dashTexture.wrapS          = THREE.RepeatWrapping;
+  _dashTexture.wrapT          = THREE.ClampToEdgeWrapping;
+  _dashTexture.generateMipmaps = false;
+  _dashTexture.minFilter      = THREE.LinearFilter;
+  return _dashTexture;
+}
 
 // ─── API publique ─────────────────────────────────────────────────────────────
 
@@ -48,6 +68,7 @@ export function createHoverZoneBoundary(zone, placedTiles) {
     radius: HOVER_HALO_RADIUS,
     opacity: 0.98,
     additive: false,
+    dashed: true,
     name: `${zone.type}-hover-zone-contour`
   }));
 
@@ -56,14 +77,16 @@ export function createHoverZoneBoundary(zone, placedTiles) {
 
 /** Crée un contour de zone (halo ou hover) à partir d'une zone BFS. */
 export function createZoneBoundary(zone, placedTiles, options = {}) {
-  const segments = getZoneBoundarySegments(zone, placedTiles, options.y ?? HALO_Y);
-  const material = new THREE.MeshBasicMaterial({
-    color: getZoneColor(zone.type),
+  const segments  = getZoneBoundarySegments(zone, placedTiles, options.y ?? HALO_Y);
+  const isDashed  = options.dashed ?? false;
+  const material  = new THREE.MeshBasicMaterial({
+    color:      getZoneColor(zone.type),
+    map:        isDashed ? getDashTexture() : null,
     transparent: true,
-    opacity: options.opacity ?? 0.95,
-    blending: options.additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+    opacity:    options.opacity ?? 0.95,
+    blending:   options.additive ? THREE.AdditiveBlending : THREE.NormalBlending,
     depthWrite: false,
-    side: THREE.DoubleSide
+    side:       THREE.DoubleSide
   });
 
   const group = new THREE.Group();
@@ -71,23 +94,25 @@ export function createZoneBoundary(zone, placedTiles, options = {}) {
 
   const lineWidth = options.radius ?? 0.025;
 
-  // Disques aux jonctions : remplissent les angles entre segments pour un contour fluide.
-  const junctionPoints = new Map();
   for (const segment of segments) {
-    const kFrom = makePointKey(segment.from);
-    const kTo   = makePointKey(segment.to);
-    if (!junctionPoints.has(kFrom)) junctionPoints.set(kFrom, segment.from);
-    if (!junctionPoints.has(kTo))   junctionPoints.set(kTo,   segment.to);
-  }
-
-  for (const segment of segments) {
-    const mesh = createFlatSegmentMesh(segment, lineWidth, material);
+    const mesh = createFlatSegmentMesh(segment, lineWidth, material, isDashed);
     if (mesh) group.add(mesh);
   }
 
-  for (const [, point] of junctionPoints) {
-    const disk = createJunctionDisk(point, lineWidth, material);
-    if (disk) group.add(disk);
+  // Disques de jonction : uniquement en mode plein (inutiles + visuellement gênants
+  // en mode pointillés où ils créent des points solides aux angles).
+  if (!isDashed) {
+    const junctionPoints = new Map();
+    for (const segment of segments) {
+      const kFrom = makePointKey(segment.from);
+      const kTo   = makePointKey(segment.to);
+      if (!junctionPoints.has(kFrom)) junctionPoints.set(kFrom, segment.from);
+      if (!junctionPoints.has(kTo))   junctionPoints.set(kTo,   segment.to);
+    }
+    for (const [, point] of junctionPoints) {
+      const disk = createJunctionDisk(point, lineWidth, material);
+      if (disk) group.add(disk);
+    }
   }
 
   return group;
@@ -264,17 +289,30 @@ function makePointKey(point) {
 
 // ─── Meshes segments et jonctions ────────────────────────────────────────────
 
-function createFlatSegmentMesh(segment, width, material) {
-  const delta = segment.to.clone().sub(segment.from);
+function createFlatSegmentMesh(segment, width, material, isDashed = false) {
+  const delta  = segment.to.clone().sub(segment.from);
   const length = delta.length();
   if (length <= 0.001) return null;
 
   const geometry = new THREE.PlaneGeometry(length, width);
-  const mesh = new THREE.Mesh(geometry, material);
+
+  // Mode pointillés : scaler les UVs le long du segment pour une période fixe en
+  // world units (0.25 u = un cycle trait/gap ≈ 3–4 tirets par côté d'hexagone).
+  if (isDashed) {
+    const DASH_PERIOD = 0.25; // en world units (HEX_SIZE = 1)
+    const uvScale     = length / DASH_PERIOD;
+    const uvAttr      = geometry.attributes.uv;
+    for (let i = 0; i < uvAttr.count; i++) {
+      uvAttr.setX(i, uvAttr.getX(i) * uvScale);
+    }
+    uvAttr.needsUpdate = true;
+  }
+
+  const mesh     = new THREE.Mesh(geometry, material);
   // midpoint.y contient déjà le drop de courbure (via toWorldVector).
   // markNoWorldCurvature empêche le shader de l'appliquer une seconde fois.
   const midpoint = segment.from.clone().add(segment.to).multiplyScalar(0.5);
-  const angle = Math.atan2(delta.z, delta.x);
+  const angle    = Math.atan2(delta.z, delta.x);
   mesh.position.copy(midpoint);
   mesh.rotation.set(-Math.PI / 2, 0, -angle);
   return markNoWorldCurvature(mesh);

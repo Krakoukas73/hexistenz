@@ -8,23 +8,27 @@ import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getTrainRailY } from './terrainHeight.js';
 
-const TRAIN_Y = (TILE_VISUAL.railY ?? 0.052) - 0.050; // fallback only
+const TRAIN_Y = (TILE_VISUAL.railY ?? -0.043) - 0.050; // centre train = sous la surface du rail
 const TRAIN_SPEED = 0.18;
 const TRAIN_CURVE_SLOW_DISTANCE = HEX_SIZE * 0.30;
 const TRAIN_ROTATION_SMOOTHING = 0.085;
 const TRAIN_TERMINUS_SLOW_DISTANCE = HEX_SIZE * 0.72;
 const TRAIN_VISUAL_SCALE = 0.75;
-const TRAIN_SCALE = HEX_SIZE * 0.153 * TRAIN_VISUAL_SCALE;
-const TRAIN_UNIT_SPACING = HEX_SIZE * 0.30 * TRAIN_VISUAL_SCALE;
-const TRAIN_MIN_WAGONS = 2;
-const TRAIN_MAX_WAGONS = 5;   // était 8 → réduit DC wagons sur grand réseau
+const TRAIN_SIZE_SCALE = 0.672 * 0.88 * 1.06 * 1.13;                  // −40% +12% −12% +6% +13% taille trains/wagons
+const TRAIN_SCALE = HEX_SIZE * 0.153 * TRAIN_VISUAL_SCALE * TRAIN_SIZE_SCALE;
+const TRAIN_UNIT_SPACING = HEX_SIZE * 0.30 * TRAIN_VISUAL_SCALE * TRAIN_SIZE_SCALE;
+// Interprétation de wagonCount dans createTrainObject :
+//   0 = locomotive seule
+//   1 = loco + wagon ravitaillement (wagon1)
+//   2–7 = loco + ravitaillement + 1–6 wagons voyageurs (wagon2)
+const TRAIN_MAX_WAGONS = 7; // 1 supply + 6 voyageurs max
 const PORT_SCALE = 1.002;
 const TRACK_HUB_RADIUS = HEX_SIZE * 0.185;
 const TRACK_MIN_CURVE_RADIUS = HEX_SIZE * 0.34;
 const MOTION_SAMPLE_SPACING = HEX_SIZE * 0.045;
 const MOTION_SMOOTH_PASSES = 3;
 const STATION_Y = (TILE_VISUAL.railY ?? 0.052) - 0.060;
-const STATION_TARGET_LENGTH = HEX_SIZE * 0.43;
+const STATION_TARGET_LENGTH = HEX_SIZE * 0.43 * 0.80; // −20%
 const STATION_TRACK_CLEARANCE = HEX_SIZE * 0.32;
 const STATION_TERMINUS_BACKSET = HEX_SIZE * 0.08;
 const STATION_MODEL_DEFS = [
@@ -37,11 +41,26 @@ const stationGlbLibrary = new Map();
 let stationModelsLoading = false;
 let stationModelsRequested = false;
 
+// ── wooden_train.glb — loco + wagon1 (ravitaillement) + wagon2 (voyageur) ──
+const WOODEN_TRAIN_URL = './glb/trains/wooden_train.glb';
+let woodenTrainLib     = null;   // { loco, wagon1, wagon2 } — prototypes normalisés
+let woodenTrainReady   = false;
+let woodenTrainLoading = false;
+
+// ── train_track.glb — portion de rail droite à répliquer sur le chemin ──
+const TRAIN_TRACK_URL = './glb/trains/train_track.glb';
+let trackGlbProto     = null;   // THREE.Group prototype clonable, orienté +Z
+let trackGlbLength    = 0;      // longueur en world-units d'un segment de rail
+let trackGlbReady     = false;
+let trackGlbLoading   = false;
+
 export function createRailTrainOverlay() {
   const group = new THREE.Group();
   group.name = 'rail-train-overlay';
   group.userData.trains = [];
   ensureStationGlbModels(group);
+  ensureWoodenTrainGlb(group);
+  ensureTrackGlb(group);
   return group;
 }
 
@@ -60,10 +79,11 @@ export function rebuildRailTrainOverlay(group, placedTiles) {
   const components = findComponents(graph);
   const _rT3 = performance.now();
 
+  // Chemins lisses collectés pour les rails GLB → même chemin que les trains (alignement parfait)
+  const smoothPaths = [];
+
   for (const component of components) {
     addRailTerminusStations(group, graph, component);
-
-    if (component.tileKeys.size < 2) continue;
 
     const path = findLongestPath(graph, component.nodes);
     if (path.length < 2) continue;
@@ -71,7 +91,12 @@ export function rebuildRailTrainOverlay(group, placedTiles) {
     const graphPoints = path.map(nodeId => graph.nodes.get(nodeId).position.clone());
     const points = smoothRailMotionPath(graphPoints);
     const distance = measurePath(points);
-    if (distance < HEX_SIZE * 1.05) continue;
+    if (distance < HEX_SIZE * 0.30) continue; // seuil minimal pour rails GLB (< 1 tuile suffit)
+
+    smoothPaths.push(points); // rails GLB pour tous les composants, y compris tuile isolée
+
+    // Train uniquement si le réseau couvre ≥ 2 tuiles et la distance est suffisante
+    if (component.tileKeys.size < 2 || distance < HEX_SIZE * 1.05) continue;
 
     const wagonCount = getWagonCountForRailNetwork(component.tileKeys.size, distance);
     const trainObject = createTrainObject(wagonCount);
@@ -90,7 +115,21 @@ export function rebuildRailTrainOverlay(group, placedTiles) {
     });
   }
   const _rT4 = performance.now();
-  console.log(`[FREEZE-DIAG rail-phases] clear=${(_rT1-_rT0).toFixed(0)}ms | graph=${(_rT2-_rT1).toFixed(0)}ms | components=${(_rT3-_rT2).toFixed(0)}ms | trains=${(_rT4-_rT3).toFixed(0)}ms | TOTAL=${(_rT4-_rT0).toFixed(0)}ms`);
+
+  // Rails GLB : même chemin lisse que les trains → rails et trains parfaitement alignés
+  if (trackGlbReady && trackGlbProto && trackGlbLength > 0) {
+    const railGroup = new THREE.Group();
+    railGroup.name = 'rail-glb-instances';
+    let totalRailInstances = 0;
+    for (const pts of smoothPaths) {
+      totalRailInstances += addTrackGLBToGroup(railGroup, pts, false);
+    }
+    group.add(railGroup);
+    console.debug(`[track-glb] ${totalRailInstances} instances (smooth path)`);
+  }
+
+  const _rT5 = performance.now();
+  console.log(`[FREEZE-DIAG rail-phases] clear=${(_rT1-_rT0).toFixed(0)}ms | graph=${(_rT2-_rT1).toFixed(0)}ms | components=${(_rT3-_rT2).toFixed(0)}ms | trains=${(_rT4-_rT3).toFixed(0)}ms | rails-glb=${(_rT5-_rT4).toFixed(0)}ms | TOTAL=${(_rT5-_rT0).toFixed(0)}ms`);
 }
 
 export function updateRailTrainOverlay(group, timeSeconds = 0) {
@@ -655,54 +694,66 @@ function cloneGlbMaterial(material) {
 }
 
 function getWagonCountForRailNetwork(tileCount, distance) {
-  const byTiles = Math.floor(Math.max(0, tileCount - 2) / 2) + TRAIN_MIN_WAGONS;
-  const byDistance = Math.floor(Math.max(0, distance - HEX_SIZE * 1.5) / (HEX_SIZE * 1.25)) + TRAIN_MIN_WAGONS;
-  return Math.max(TRAIN_MIN_WAGONS, Math.min(TRAIN_MAX_WAGONS, Math.max(byTiles, byDistance)));
+  // 0 = loco seule          (voie courte : < ~2 hexs)
+  // 1 = loco + ravitaillement (voie moyenne : 2–3 hexs)
+  // 2–7 = + wagons voyageurs progressifs jusqu'à 6 voyageurs (voie longue)
+  if (distance < HEX_SIZE * 2.0) return 0;
+  if (distance < HEX_SIZE * 3.5) return 1;
+  const passengers = Math.min(6, Math.floor((distance - HEX_SIZE * 3.5) / (HEX_SIZE * 1.2)) + 1);
+  return Math.min(TRAIN_MAX_WAGONS, 1 + passengers);
 }
 
-function createTrainObject(wagonCount = TRAIN_MIN_WAGONS) {
+function createTrainObject(wagonCount = 0) {
   const group = new THREE.Group();
   group.name = 'animatedRailTrainArticulated';
 
-  const units = [];
+  const units   = [];
   const couplers = [];
 
+  // ── Locomotive (toujours présente) ──
   const loco = new THREE.Group();
   loco.name = 'train-locomotive-independent';
-  addLocomotive(loco, 0);
+  if (woodenTrainLib?.loco) loco.add(woodenTrainLib.loco.clone(true));
   group.add(loco);
   units.push({ object: loco, followDistance: 0, type: 'locomotive' });
 
-  const wagonPalettes = [
-    { body: 0x0E0804, roof: 0x1C1814, cargo: 'coal' },    // bois carbonisé, métal nuit
-    { body: 0x501E06, roof: 0x7A4E28, cargo: 'freight' }, // rouille sombre, toile brute
-    { body: 0x260E02, roof: 0x3C2C18, cargo: 'freight' }, // acajou nuit, chanvre sombre
-    { body: 0x460A14, roof: 0xA08868, cargo: 'mail' },    // bordeaux nuit, crème ternie
-    { body: 0x0A280C, roof: 0x908058, cargo: 'mail' },    // vert forêt nuit, ivoire sombre
-    { body: 0x060402, roof: 0x100C0A, cargo: 'coal' },    // jais absolu, métal nuit
-    { body: 0x3E1C08, roof: 0x604828, cargo: 'freight' }, // acajou profond, chamois usé
-    { body: 0x0E1018, roof: 0x181410, cargo: 'freight' }  // acier nuit, kaki foncé
-  ];
+  if (wagonCount < 1) {
+    // Loco seule — pas de wagons
+  } else {
+    // ── Wagon de ravitaillement (wagon1, juste après la loco) ──
+    const supplyWagon = new THREE.Group();
+    supplyWagon.name = 'train-wagon-supply-independent';
+    const supplyProto = woodenTrainLib?.wagon1 ?? woodenTrainLib?.wagon2;
+    if (supplyProto) supplyWagon.add(supplyProto.clone(true));
+    group.add(supplyWagon);
+    units.push({ object: supplyWagon, followDistance: TRAIN_UNIT_SPACING, type: 'wagon' });
 
-  for (let i = 0; i < wagonCount; i += 1) {
-    const palette = wagonPalettes[i % wagonPalettes.length];
-    const wagon = new THREE.Group();
-    wagon.name = `train-wagon-${i + 1}-independent`;
-    addWagon(wagon, 0, palette.body, palette.roof, palette.cargo);
-    group.add(wagon);
-    units.push({
-      object: wagon,
-      followDistance: TRAIN_UNIT_SPACING * (i + 1),
-      type: 'wagon'
-    });
+    const coupler0 = new THREE.Group();
+    coupler0.name = 'train-coupler-1-articulated';
+    group.add(coupler0);
+    couplers.push({ object: coupler0, frontIndex: 0, rearIndex: 1 });
 
-    const coupler = new THREE.Group();
-    coupler.name = `train-coupler-${i + 1}-articulated`;
-    addCoupler(coupler, 0);
-    group.add(coupler);
-    couplers.push({ object: coupler, frontIndex: i, rearIndex: i + 1 });
+    // ── Wagons voyageurs (wagon2) — wagonCount-1 wagons, max 6 ──
+    const passengerCount = Math.min(6, wagonCount - 1);
+    for (let i = 0; i < passengerCount; i += 1) {
+      const wagon = new THREE.Group();
+      wagon.name = `train-wagon-${i + 2}-independent`;
+      if (woodenTrainLib?.wagon2) wagon.add(woodenTrainLib.wagon2.clone(true));
+      group.add(wagon);
+      units.push({
+        object: wagon,
+        followDistance: TRAIN_UNIT_SPACING * (i + 2),
+        type: 'wagon'
+      });
+
+      const coupler = new THREE.Group();
+      coupler.name = `train-coupler-${i + 2}-articulated`;
+      group.add(coupler);
+      couplers.push({ object: coupler, frontIndex: i + 1, rearIndex: i + 2 });
+    }
   }
 
+  // ── Fumée procédurale sur la locomotive ──
   const smokePuffs = [];
   const smokeMaterial = new THREE.MeshBasicMaterial({
     color: 0xEEF4F7,
@@ -713,7 +764,7 @@ function createTrainObject(wagonCount = TRAIN_MIN_WAGONS) {
     side: THREE.DoubleSide
   });
 
-  const SMOKE_COUNT = 20;  // était 64 → 20 réduit DC fumée de 64→20 par locomotive
+  const SMOKE_COUNT = 20;
   for (let i = 0; i < SMOKE_COUNT; i += 1) {
     const smoke = new THREE.Mesh(
       new THREE.CircleGeometry(TRAIN_SCALE * (0.13 + (i % 5) * 0.035), 12),
@@ -732,30 +783,9 @@ function createTrainObject(wagonCount = TRAIN_MIN_WAGONS) {
   }
 
   loco.userData.smokePuffs = smokePuffs;
-  group.userData.units = units;
+  group.userData.units   = units;
   group.userData.couplers = couplers;
-  group.userData.loco = loco;
-
-  // Limite les shadow casters aux grandes surfaces visibles uniquement.
-  // Les détails (roues, bandes, fenêtres, fumée) ne contribuent pas à l'ombre perçue.
-  // userData.shadowFlagsApplied=true empêche applySceneShadowFlags de tout réactiver.
-  const SHADOW_KEEPERS = new Set([
-    'loco-frame', 'loco-side-left', 'loco-side-right',
-    'cabin-body', 'cabin-roof',
-    'wagon-base', 'wagon-body', 'wagon-roof',
-  ]);
-  group.traverse(obj => {
-    if (!obj.isMesh) return;
-    obj.userData.shadowFlagsApplied = true;
-    if (SHADOW_KEEPERS.has(obj.name)) {
-      obj.castShadow = true;
-      obj.receiveShadow = true;
-    } else {
-      obj.castShadow = false;
-      obj.receiveShadow = true;
-      obj.userData.disableCastShadow = true;
-    }
-  });
+  group.userData.loco    = loco;
 
   return group;
 }
@@ -797,191 +827,6 @@ function updateArticulatedTrain(trainObject, motionTrack, progress, timeSeconds)
   updateTrainSmoke(trainObject.userData.loco, timeSeconds);
 }
 
-function addLocomotive(group, xOffset) {
-  addBox(group, 'loco-frame', xOffset + 0.12, 0.13, 0, 1.72, 0.20, 0.72, 0x232A30, 50);
-  addBox(group, 'loco-side-left', xOffset + 0.10, 0.29, -0.39, 1.62, 0.22, 0.055, 0x1B2025, 55);
-  addBox(group, 'loco-side-right', xOffset + 0.10, 0.29, 0.39, 1.62, 0.22, 0.055, 0x1B2025, 55);
-
-  const boiler = new THREE.Mesh(
-    new THREE.CylinderGeometry(TRAIN_SCALE * 0.27, TRAIN_SCALE * 0.27, TRAIN_SCALE * 1.02, 10),
-    getMaterial('loco-boiler', 0xB8322A, 1)
-  );
-  boiler.rotation.z = Math.PI / 2;
-  boiler.position.set(TRAIN_SCALE * (xOffset + 0.38), TRAIN_SCALE * 0.58, 0);
-  boiler.renderOrder = 56;
-  group.add(boiler);
-
-  const boilerBandXs = [-0.02, 0.34, 0.70];
-  for (const bandX of boilerBandXs) {
-    const band = new THREE.Mesh(
-      new THREE.CylinderGeometry(TRAIN_SCALE * 0.285, TRAIN_SCALE * 0.285, TRAIN_SCALE * 0.045, 10),
-      getMaterial('brass-bands', 0xD6A541, 1)
-    );
-    band.rotation.z = Math.PI / 2;
-    band.position.set(TRAIN_SCALE * (xOffset + bandX), TRAIN_SCALE * 0.58, 0);
-    band.renderOrder = 57;
-    group.add(band);
-  }
-
-  const boilerFront = new THREE.Mesh(
-    new THREE.CylinderGeometry(TRAIN_SCALE * 0.30, TRAIN_SCALE * 0.30, TRAIN_SCALE * 0.075, 10),
-    getMaterial('boiler-front', 0x2B3035, 1)
-  );
-  boilerFront.rotation.z = Math.PI / 2;
-  boilerFront.position.set(TRAIN_SCALE * (xOffset + 0.93), TRAIN_SCALE * 0.58, 0);
-  boilerFront.renderOrder = 58;
-  group.add(boilerFront);
-
-  addBox(group, 'cabin-body', xOffset - 0.62, 0.63, 0, 0.58, 0.72, 0.76, 0x6E2010, 58); // brique/bois brûlé profond
-  addBox(group, 'cabin-back', xOffset - 0.92, 0.54, 0, 0.10, 0.54, 0.70, 0x5A1E18, 59);
-  addBox(group, 'cabin-roof', xOffset - 0.62, 1.05, 0, 0.74, 0.14, 0.90, 0x15191E, 60);
-  addBox(group, 'cabin-roof-cap', xOffset - 0.62, 1.16, 0, 0.56, 0.08, 0.78, 0x333A40, 61);
-
-  for (const z of [-0.405, 0.405]) {
-    addSideWindow(group, xOffset - 0.62, 0.70, z, 0.26, 0.26);
-    addSideWindow(group, xOffset - 0.82, 0.70, z, 0.16, 0.22);
-  }
-
-  const chimney = new THREE.Mesh(
-    new THREE.CylinderGeometry(TRAIN_SCALE * 0.105, TRAIN_SCALE * 0.155, TRAIN_SCALE * 0.48, 8),
-    getMaterial('chimney', 0x111419, 1)
-  );
-  chimney.position.set(TRAIN_SCALE * (xOffset + 0.62), TRAIN_SCALE * 0.98, 0);
-  chimney.renderOrder = 62;
-  group.add(chimney);
-
-  const chimneyLip = new THREE.Mesh(
-    new THREE.CylinderGeometry(TRAIN_SCALE * 0.17, TRAIN_SCALE * 0.17, TRAIN_SCALE * 0.07, 8),
-    getMaterial('chimney-lip', 0x20252B, 1)
-  );
-  chimneyLip.position.set(TRAIN_SCALE * (xOffset + 0.62), TRAIN_SCALE * 1.24, 0);
-  chimneyLip.renderOrder = 63;
-  group.add(chimneyLip);
-
-  const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(TRAIN_SCALE * 0.17, 8, 6),
-    getMaterial('steam-dome', 0xD6A541, 1)
-  );
-  dome.scale.y = 0.75;
-  dome.position.set(TRAIN_SCALE * (xOffset + 0.12), TRAIN_SCALE * 0.91, 0);
-  dome.renderOrder = 62;
-  group.add(dome);
-
-  const headLamp = new THREE.Mesh(
-    new THREE.SphereGeometry(TRAIN_SCALE * 0.105, 7, 5),
-    getMaterial('head-lamp', 0xFFF1A8, 1)
-  );
-  headLamp.position.set(TRAIN_SCALE * (xOffset + 1.03), TRAIN_SCALE * 0.61, 0);
-  headLamp.renderOrder = 64;
-  group.add(headLamp);
-
-  const cowcatcher = new THREE.Mesh(
-    new THREE.ConeGeometry(TRAIN_SCALE * 0.28, TRAIN_SCALE * 0.30, 4),
-    getMaterial('cowcatcher', 0x394149, 1)
-  );
-  cowcatcher.rotation.z = -Math.PI / 2;
-  cowcatcher.rotation.y = Math.PI / 4;
-  cowcatcher.position.set(TRAIN_SCALE * (xOffset + 1.20), TRAIN_SCALE * 0.19, 0);
-  cowcatcher.renderOrder = 57;
-  group.add(cowcatcher);
-
-  addWheelSet(group, xOffset - 0.72, 0.17, 0.40);
-  addWheelSet(group, xOffset - 0.22, 0.16, 0.40);
-  addWheelSet(group, xOffset + 0.36, 0.18, 0.40);
-  addWheelSet(group, xOffset + 0.76, 0.14, 0.40);
-  addBox(group, 'drive-rod-left', xOffset + 0.05, 0.18, -0.47, 1.38, 0.035, 0.035, 0xC8CED3, 66);
-  addBox(group, 'drive-rod-right', xOffset + 0.05, 0.18, 0.47, 1.38, 0.035, 0.035, 0xC8CED3, 66);
-}
-
-function addWagon(group, xOffset, bodyColor, roofColor, cargoType) {
-  addBox(group, 'wagon-base', xOffset, 0.14, 0, 0.98, 0.17, 0.70, 0x22282E, 50);
-  addBox(group, 'wagon-body', xOffset, 0.43, 0, 0.92, 0.48, 0.68, bodyColor, 55);
-  addBox(group, 'wagon-roof', xOffset, 0.75, 0, 1.02, 0.13, 0.78, roofColor, 56);
-  addBox(group, 'wagon-ridge', xOffset, 0.85, 0, 0.82, 0.06, 0.56, 0x252B31, 57);
-
-  for (const z of [-0.36, 0.36]) {
-    addSideWindow(group, xOffset - 0.24, 0.48, z, 0.18, 0.20);
-    addSideWindow(group, xOffset + 0.08, 0.48, z, 0.18, 0.20);
-    addSideWindow(group, xOffset + 0.36, 0.48, z, 0.14, 0.18);
-  }
-
-  if (cargoType === 'coal') {
-    for (const cx of [-0.30, -0.10, 0.12, 0.32]) {
-      const coal = new THREE.Mesh(
-        new THREE.DodecahedronGeometry(TRAIN_SCALE * 0.10, 0),
-        getMaterial('coal', 0x111111, 1)
-      );
-      coal.position.set(TRAIN_SCALE * (xOffset + cx), TRAIN_SCALE * 0.82, TRAIN_SCALE * (cx % 0.2));
-      coal.renderOrder = 60;
-      group.add(coal);
-    }
-  } else {
-    addBox(group, 'wagon-crate-a', xOffset - 0.22, 0.83, -0.13, 0.26, 0.18, 0.22, 0xB8753B, 60);
-    addBox(group, 'wagon-crate-b', xOffset + 0.15, 0.83, 0.13, 0.30, 0.18, 0.22, 0x9C6534, 60);
-  }
-
-  addWheelSet(group, xOffset - 0.32, 0.125, 0.37);
-  addWheelSet(group, xOffset + 0.32, 0.125, 0.37);
-}
-
-function addCoupler(group, x) {
-  addBox(group, 'coupler', x, 0.22, 0, 0.38, 0.055, 0.10, 0x15191E, 64);
-}
-
-function addWheelSet(group, x, radius, z) {
-  for (const side of [-1, 1]) {
-    const wheel = new THREE.Mesh(
-      new THREE.CylinderGeometry(TRAIN_SCALE * radius, TRAIN_SCALE * radius, TRAIN_SCALE * 0.095, 10),
-      getMaterial('wheel', 0x0C0E11, 1)
-    );
-    wheel.rotation.x = Math.PI / 2;
-    wheel.position.set(TRAIN_SCALE * x, TRAIN_SCALE * 0.055, TRAIN_SCALE * z * side);
-    wheel.renderOrder = 67;
-    group.add(wheel);
-
-    const rim = new THREE.Mesh(
-      new THREE.TorusGeometry(TRAIN_SCALE * radius * 0.82, TRAIN_SCALE * radius * 0.12, 5, 10),
-      getMaterial('wheel-rim', 0x5E6872, 1)
-    );
-    rim.rotation.x = Math.PI / 2;
-    rim.position.copy(wheel.position);
-    rim.renderOrder = 68;
-    group.add(rim);
-
-    const hub = new THREE.Mesh(
-      new THREE.CylinderGeometry(TRAIN_SCALE * radius * 0.34, TRAIN_SCALE * radius * 0.34, TRAIN_SCALE * 0.105, 7),
-      getMaterial('wheel-hub', 0xD8DEE9, 1)
-    );
-    hub.rotation.x = Math.PI / 2;
-    hub.position.copy(wheel.position);
-    hub.renderOrder = 69;
-    group.add(hub);
-  }
-}
-
-function addBox(group, name, x, y, z, width, height, depth, color, renderOrder) {
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(TRAIN_SCALE * width, TRAIN_SCALE * height, TRAIN_SCALE * depth),
-    getMaterial(name, color, 1)
-  );
-  mesh.name = name; // nécessaire pour le shadow filtering dans createTrainObject
-  mesh.position.set(TRAIN_SCALE * x, TRAIN_SCALE * y, TRAIN_SCALE * z);
-  mesh.renderOrder = renderOrder;
-  group.add(mesh);
-  return mesh;
-}
-
-function addSideWindow(group, x, y, z, width, height) {
-  const window = new THREE.Mesh(
-    new THREE.PlaneGeometry(TRAIN_SCALE * width, TRAIN_SCALE * height),
-    getMaterial('window', 0x9BE7FF, 0.94)
-  );
-  window.rotation.y = z < 0 ? Math.PI / 2 : -Math.PI / 2;
-  window.position.set(TRAIN_SCALE * x, TRAIN_SCALE * y, TRAIN_SCALE * z);
-  window.renderOrder = 70;
-  group.add(window);
-}
-
 function updateTrainSmoke(trainObject, timeSeconds) {
   const smokePuffs = trainObject.userData.smokePuffs ?? [];
 
@@ -1005,24 +850,6 @@ function updateTrainSmoke(trainObject, timeSeconds) {
   }
 }
 
-function getMaterial(name, color, opacity) {
-  const key = `${name}:${color}:${opacity}`;
-  if (materialCache.has(key)) return materialCache.get(key);
-
-  const material = new THREE.MeshStandardMaterial({
-    color,
-    roughness: 1,
-    metalness: 0,
-    envMapIntensity: 0,   // neutralise l'IBL de scene.environment → évite le wash pastel
-    transparent: opacity < 1,
-    opacity,
-    depthWrite: opacity >= 1,
-    depthTest: true
-  });
-
-  materialCache.set(key, material);
-  return material;
-}
 
 function samplePingPongMotionTrack(track, progress, followDistance = 0) {
   if (!track || track.samples.length === 0) {
@@ -1234,12 +1061,254 @@ function measurePath(points) {
 }
 
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Chargement GLB — wooden_train.glb
+// ═══════════════════════════════════════════════════════════════════════════
+
+function ensureWoodenTrainGlb(group) {
+  if (woodenTrainLoading || woodenTrainReady) return;
+  woodenTrainLoading = true;
+
+  new GLTFLoader().load(WOODEN_TRAIN_URL, gltf => {
+    woodenTrainLib    = extractTrainParts(gltf.scene);
+    woodenTrainReady  = true;
+    woodenTrainLoading = false;
+    console.debug('[wooden-train] GLB chargé :', Object.keys(woodenTrainLib).join(', '));
+    if (group?.userData?.lastPlacedTiles) group.userData.pendingModelRebuild = true;
+  }, undefined, err => {
+    console.warn('[wooden-train] Erreur chargement GLB', err);
+    woodenTrainLoading = false;
+  });
+}
+
+function extractTrainParts(scene) {
+  const found = { loco: null, wagon1: null, wagon2: null };
+
+  scene.traverse(obj => {
+    const n = obj.name.toLowerCase();
+    if (!found.loco   && n === 'train')   found.loco   = obj;
+    if (!found.wagon1 && n === 'wagon1')  found.wagon1 = obj;
+    if (!found.wagon2 && n === 'wagon2')  found.wagon2 = obj;
+  });
+
+  // Fallback par enfants directs de la scène si les noms ne correspondent pas
+  const topLevel = scene.children.filter(c => c.isMesh || c.isGroup || (c.children?.length > 0));
+  if (!found.loco   && topLevel.length >= 1) found.loco   = topLevel[0];
+  if (!found.wagon1 && topLevel.length >= 2) found.wagon1 = topLevel[1];
+  if (!found.wagon2 && topLevel.length >= 3) found.wagon2 = topLevel[2];
+
+  console.debug('[wooden-train] Parts :', Object.entries(found).map(([k, v]) => `${k}="${v?.name ?? 'null'}"`).join(' | '));
+
+  const result = {};
+  for (const [key, src] of Object.entries(found)) {
+    if (src) result[key] = normalizeTrainUnit(src, key);
+    else     console.warn(`[wooden-train] Part introuvable : ${key}`);
+  }
+  return result;
+}
+
+function normalizeTrainUnit(source, unitName) {
+  const wrapper = new THREE.Group();
+  wrapper.name  = `train-unit-proto-${unitName}`;
+
+  const model = source.clone(true);
+
+  // CRITICAL : remettre à zéro la position héritée du fichier GLTF.
+  // Les modèles Blender (loco, wagon1, wagon2) sont placés à des offsets XZ différents
+  // dans la scène pour les séparer visuellement. Le clone hérite ces positions.
+  // Sans reset, bbox.center inclut l'offset → model.position = -center décale le visuel
+  // de -offset_hérité dans le wrapper → tourne latéralement avec l'unité → train à 5m du rail.
+  model.position.set(0, 0, 0);
+  model.updateMatrixWorld(true);
+
+  // Mesure initiale (position=0, sans rotation) pour déterminer l'axe long
+  const box0  = new THREE.Box3().setFromObject(model);
+  const size0 = new THREE.Vector3();
+  box0.getSize(size0);
+
+  // Aligner le devant sur +X (convention moteur : -atan2(tz, tx) attend un modèle +X-facing)
+  const isZLonger = size0.z >= size0.x;
+  model.rotation.y = isZLonger ? -Math.PI / 2 : 0;
+  model.updateMatrixWorld(true);
+
+  // Re-mesurer APRÈS rotation → centrage correct (sinon l'offset pré-rotation tourne avec l'unité)
+  const box    = new THREE.Box3().setFromObject(model);
+  const size   = new THREE.Vector3();
+  box.getSize(size);
+  const center = new THREE.Vector3();
+  box.getCenter(center);
+
+  // Centrer XZ sur l'origine du wrapper, coller le fond à y=0
+  model.position.set(-center.x, -box.min.y, -center.z);
+
+  // Longueur = X après rotation (direction de voyage dans le repère moteur)
+  const rawLength    = Math.max(size.x, 0.001);
+  const targetLength = TRAIN_UNIT_SPACING * 0.97;
+  const scale        = targetLength / rawLength;
+  wrapper.scale.setScalar(scale);
+  wrapper.add(model);
+
+  wrapper.traverse(obj => {
+    if (!obj.isMesh) return;
+    obj.castShadow    = true;
+    obj.receiveShadow = true;
+    obj.userData.shadowFlagsApplied = true;
+    // Protéger les matériaux GLB : clone(true) partage les refs → ne pas les disposer dans clearGroup
+    const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+    mats.forEach(m => { if (m) m.userData.glbPrototype = true; });
+  });
+
+  console.log(`[wooden-train] ${unitName}: bbox(xyz)=(${size.x.toFixed(4)},${size.y.toFixed(4)},${size.z.toFixed(4)}) isZLonger=${isZLonger} rawLength=${rawLength.toFixed(4)} targetLength=${targetLength.toFixed(4)} scale=${scale.toFixed(4)}`);
+  return wrapper;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Chargement GLB — train_track.glb
+// ═══════════════════════════════════════════════════════════════════════════
+
+function ensureTrackGlb(group) {
+  if (trackGlbLoading || trackGlbReady) return;
+  trackGlbLoading = true;
+
+  new GLTFLoader().load(TRAIN_TRACK_URL, gltf => {
+    const scene = gltf.scene;
+    scene.updateMatrixWorld(true);
+
+    const box  = new THREE.Box3().setFromObject(scene);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+
+    // Direction principale du rail : l'axe le plus long
+    const isXLonger = size.x > size.z * 1.1;
+
+    // Rotation AVANT centrage — si on centre avant, l'offset (-cx, 0, -cz) est en coords
+    // pré-rotation et se retrouve tourné par chaque instance → rails à côté du chemin
+    if (isXLonger) scene.rotation.y = Math.PI / 2;
+
+    // Re-mesurer la bbox APRÈS rotation pour un centrage correct
+    scene.updateMatrixWorld(true);
+    const box2    = new THREE.Box3().setFromObject(scene);
+    const size2   = new THREE.Vector3();
+    box2.getSize(size2);
+    const center2 = new THREE.Vector3();
+    box2.getCenter(center2);
+
+    // Centrer APRÈS rotation → centre visuel à (0,0,0) du wrapper quelle que soit l'instance
+    scene.position.set(-center2.x, -box2.min.y, -center2.z);
+
+    // Longueur du segment = Z après rotation (direction de voyage +Z des instances)
+    trackGlbLength = Math.max(size2.z, 0.001);
+
+    const wrapper = new THREE.Group();
+    wrapper.name = 'train-track-proto';
+    wrapper.add(scene);
+
+    wrapper.traverse(obj => {
+      if (!obj.isMesh) return;
+      obj.castShadow  = false;
+      obj.receiveShadow = true;
+      obj.userData.disableCastShadow  = true;
+      obj.userData.shadowFlagsApplied = true;
+      // Protéger les matériaux GLB : ne pas les disposer dans clearGroup
+      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+      mats.forEach(m => { if (m) m.userData.glbPrototype = true; });
+    });
+
+    // Segments courts = courbes plus lisses (+15% taille → moins de segments, GLB plus lisible)
+    const TARGET_SEGMENT = HEX_SIZE * 0.07 * 1.15 * 1.12 * 1.17 * 1.06 * 1.13; // +12% +17% rails +6% +13%
+    const segScale = TARGET_SEGMENT / Math.max(trackGlbLength, 0.001);
+    wrapper.scale.setScalar(segScale);
+    trackGlbLength = TARGET_SEGMENT;
+
+    trackGlbProto   = wrapper;
+    trackGlbReady   = true;
+    trackGlbLoading = false;
+    console.debug(`[track-glb] Chargé — brut: ${(isXLonger ? size.x : size.z).toFixed(4)} → segment: ${TARGET_SEGMENT.toFixed(4)} (scale=${segScale.toFixed(4)}, axe ${isXLonger ? 'X→Z' : 'Z'})`);
+    if (group?.userData?.lastPlacedTiles) group.userData.pendingModelRebuild = true;
+  }, undefined, err => {
+    console.warn('[track-glb] Erreur chargement GLB', err);
+    trackGlbLoading = false;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Génération des rails GLB pour tous les tiles
+// ═══════════════════════════════════════════════════════════════════════════
+
+function addAllRailGLBInstances(parentGroup, placedTiles) {
+  const railGroup = new THREE.Group();
+  railGroup.name  = 'rail-glb-instances';
+
+  let totalInstances = 0;
+  for (const tile of placedTiles.values()) {
+    const tileKey  = tile.key ?? makeHexKey(tile.q, tile.r);
+    const railPorts = getTileRailPorts(tile, tileKey);
+    if (railPorts.length === 0) continue;
+
+    const routes = createTileRailRoutes(railPorts);
+    for (const route of routes) {
+      const worldPoints = route.points.map(p => toWorldRailPoint(tile.q, tile.r, p));
+      totalInstances += addTrackGLBToGroup(railGroup, worldPoints, route.closed);
+    }
+  }
+
+  parentGroup.add(railGroup);
+  console.debug(`[track-glb] ${totalInstances} instances de rail générées`);
+}
+
+function addTrackGLBToGroup(group, worldPoints, closed = false) {
+  if (worldPoints.length < 2) return 0;
+
+  const sampled = resampleMotionPath(worldPoints, MOTION_SAMPLE_SPACING * 0.5);
+  const length  = measurePath(sampled);
+  if (length <= HEX_SIZE * 0.04 || trackGlbLength <= 0) return 0;
+
+  const segLen  = Math.max(trackGlbLength, HEX_SIZE * 0.02);
+  const count   = Math.max(1, Math.round(length / segLen));
+  const spacing = length / count;
+
+  // Le fond du rail (y=0 du wrapper, via -box.min.y) doit être sur la surface du biome rail.
+  // TILE_VISUAL.railY = surface rail = -0.043 (valeur réelle mesurée en console).
+  const RAIL_SURFACE_Y = TILE_VISUAL.railY ?? -0.043;
+
+  for (let i = 0; i < count; i++) {
+    const dist    = closed ? (i / count) * length : (i + 0.5) * spacing;
+    const pos     = getPointAtMotionDistance(sampled, dist);
+    const tangent = getTrackTangentAt(sampled, dist, length);
+
+    const instance = trackGlbProto.clone(true);
+    instance.position.copy(pos);
+    instance.position.y = TRAIN_Y; // même hauteur que les trains/wagons
+    instance.rotation.y = Math.atan2(tangent.x, tangent.z);
+    group.add(instance);
+  }
+
+  return count;
+}
+
+function getTrackTangentAt(points, dist, totalLength) {
+  const delta  = Math.min(HEX_SIZE * 0.018, totalLength * 0.05);
+  const before = getPointAtMotionDistance(points, Math.max(0, dist - delta));
+  const after  = getPointAtMotionDistance(points, Math.min(totalLength, dist + delta));
+  const t      = after.clone().sub(before);
+  if (t.lengthSq() <= 1e-10) return new THREE.Vector3(0, 0, 1);
+  return t.normalize();
+}
+
 function clearGroup(group) {
   for (const child of [...group.children]) {
     group.remove(child);
     child.traverse?.(object => {
       object.geometry?.dispose?.();
-      if (object.material && !materialCacheHasMaterial(object.material)) object.material.dispose?.();
+      // Ne pas disposer les matériaux GLB : clone(true) partage les références →
+      // disposer une instance détruit aussi le prototype. Les matériaux GLB sont
+      // marqués userData.glbPrototype = true par normalizeTrainUnit / ensureTrackGlb.
+      const mats = Array.isArray(object.material) ? object.material : [object.material];
+      for (const mat of mats) {
+        if (mat && !mat.userData?.glbPrototype && !materialCacheHasMaterial(mat)) {
+          mat.dispose?.();
+        }
+      }
     });
   }
 }

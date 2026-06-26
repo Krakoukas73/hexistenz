@@ -8,10 +8,10 @@ import { collectZone, getFullTextureNeighbors } from './stable/zoneUtils.js';
 import { createWaterBeachMesh } from './waterBeachGeometry.js';
 import { createHoverZoneBoundary, getZoneColor, toWorldVector } from './waterZoneBoundary.js';
 import { HEX_FONT_FAMILY, sharedLabelCache, hexFontReady } from './stable/hexLabelFont.js';
-import { LOD_ZONE_LABEL_CULL_DISTANCE } from './variables.js';
+import { LOD_ZONE_LABEL_CULL_DISTANCE, LOD_ZONE_LABEL_MIN_TOTAL, LOD_ZONE_LABEL_NEAR_FADE_START, LOD_ZONE_LABEL_NEAR_FADE_END } from './variables.js';
 
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
-const LABEL_Y = 0.72;
+const LABEL_Y = 0.576; // −20 % (était 0.72)
 const HOVER_LABEL_SCALE = 1.85;
 const HOVER_LABEL_Y_OFFSET = 0.285;
 // Base sprite scale (zone de valeur "1") — les grosses zones montent jusqu'à +35%.
@@ -161,7 +161,8 @@ function _addZoneObjects(overlay, zone, placedTiles, immersiveMode) {
     beach.userData.worldCenterZ = cz / zone.sectors.length;
     overlay.add(beach);
   }
-  const _label = createZoneLabel(zone, immersiveMode, involvedTileKeys, involvedSectorKeys);
+  const _isSmall = zone.total < LOD_ZONE_LABEL_MIN_TOTAL;
+  const _label = createZoneLabel(zone, immersiveMode, involvedTileKeys, involvedSectorKeys, _isSmall);
   registerCurvedSprite(_label);
   overlay.add(_label);
 }
@@ -172,22 +173,36 @@ function _addZoneObjects(overlay, zone, placedTiles, immersiveMode) {
  * À rappeler après chaque rebuild pour tenir compte de la nouvelle valeur max.
  */
 function rescaleZoneLabels(overlay) {
-  // 1. Trouver la valeur maximale par type de terrain
+  // 1. Trouver la valeur maximale par type de terrain — labels permanents uniquement
+  //    (les petites zones ont une taille fixe indépendante du ratio).
   const maxPerType = {};
   overlay.traverse(obj => {
-    if (!obj.userData?.isZoneLabel) return;
+    if (!obj.userData?.isZoneLabel || obj.userData.isSmallZoneLabel) return;
     const { zoneValue, zoneLabelType } = obj.userData;
     if (zoneValue > (maxPerType[zoneLabelType] ?? 0)) {
       maxPerType[zoneLabelType] = zoneValue;
     }
   });
 
-  // 2. Appliquer l'échelle proportionnelle par famille : factor ∈ [1.0, 1.35]
+  // 2a. Labels stratégiques (isSmallZoneLabel — survol uniquement) : taille fixe
+  //     proéminente = max actuel +75 % (1.70 × 1.75 = 2.975).
+  // 2b. Labels permanents (zones les plus grosses) : factor ∈ [0.55, 2.635] (+55 % max).
   overlay.traverse(obj => {
     if (!obj.userData?.isZoneLabel) return;
-    const max = maxPerType[obj.userData.zoneLabelType] ?? 1;
-    const factor = 1 + 0.35 * (obj.userData.zoneValue / max);
-    obj.scale.set(LABEL_BASE_W * factor, LABEL_BASE_H * factor, 1);
+    let bx, by;
+    if (obj.userData.isSmallZoneLabel) {
+      // Taille fixe : se distingue clairement au survol.
+      bx = LABEL_BASE_W * 2.975;
+      by = LABEL_BASE_H * 2.975;
+    } else {
+      const max   = maxPerType[obj.userData.zoneLabelType] ?? 1;
+      const ratio = obj.userData.zoneValue / max;
+      const factor = 0.55 + 2.085 * ratio; // [0.55, 2.635] — max +55 % vs précédent 1.70
+      bx = LABEL_BASE_W * factor;
+      by = LABEL_BASE_H * factor;
+    }
+    obj.scale.set(bx, by, 1);
+    obj.userData._baseScale = { x: bx, y: by }; // référence pour screen-space correction
   });
 }
 
@@ -266,7 +281,7 @@ function collectTextureZone(startTile, startEdge, type, placedTiles, visited) {
 
 // ─── Labels de zone ───────────────────────────────────────────────────────────
 
-function createZoneLabel(zone, immersiveMode = false, involvedTileKeys = null, involvedSectorKeys = null) {
+function createZoneLabel(zone, immersiveMode = false, involvedTileKeys = null, involvedSectorKeys = null, isSmallZone = false) {
   const center = new THREE.Vector3(0, LABEL_Y, 0);
 
   for (const sectorRef of zone.sectors) {
@@ -276,12 +291,17 @@ function createZoneLabel(zone, immersiveMode = false, involvedTileKeys = null, i
   center.divideScalar(zone.sectors.length);
   center.y = LABEL_Y;
 
-  const sprite = new THREE.Sprite(getTextSpriteMaterial(String(zone.total), zone.type));
+  // Clone du material : chaque sprite a sa propre instance pour permettre
+  // un contrôle d'opacité individuel (fade LOD). La texture est partagée.
+  const sprite = new THREE.Sprite(getTextSpriteMaterial(String(zone.total), zone.type).clone());
   sprite.layers.set(TEXT_LAYER);
   sprite.name = `${zone.type}-zone-label`;
   sprite.position.copy(center);
   sprite.scale.set(LABEL_BASE_W, LABEL_BASE_H, 1);
-  sprite.visible = !immersiveMode; // Fix flash labels : né caché en mode immersif
+  // Petites zones : label invisible par défaut, visible uniquement au survol.
+  sprite.visible = isSmallZone ? false : !immersiveMode;
+  sprite.userData.createdAt         = performance.now(); // pour pulse d'apparition
+  sprite.userData.isSmallZoneLabel  = isSmallZone;
   sprite.userData.isZoneLabel       = true;
   sprite.userData.zoneValue         = zone.total;
   sprite.userData.zoneLabelType     = zone.type;
@@ -442,10 +462,60 @@ export function updateBeachLOD(overlay, camera) {
 
 export function updateZoneLabelLOD(overlay, camera, immersiveMode = false) {
   if (!overlay) return;
+  const camPos = camera.position;
+  const camY   = camera.position.y; // altitude de la caméra au-dessus du sol
+  const now    = performance.now();
+
   overlay.traverse(object => {
     if (!object.userData?.isZoneLabel) return;
     if (immersiveMode) { object.visible = false; return; }
-    const dist = camera.position.distanceTo(object.position);
-    object.visible = dist < LOD_ZONE_LABEL_CULL_DISTANCE;
+
+    // Label au survol : toujours visible et opaque (géré par hover animation).
+    if (object.userData.isHoverHighlightedZoneLabel) {
+      if (object.material) object.material.opacity = 1.0;
+      object.visible = true;
+      return;
+    }
+
+    // Labels de petites zones : invisibles hors survol.
+    if (object.userData.isSmallZoneLabel) { object.visible = false; return; }
+
+    // Cull distance — distance XZ seulement (pas 3D) pour ne pas pénaliser
+    // les labels vus depuis un angle oblique où la distance diagonale explose.
+    const dx = camPos.x - object.position.x;
+    const dz = camPos.z - object.position.z;
+    const distXZ = Math.sqrt(dx * dx + dz * dz);
+
+    // Cull distance (vue lointaine)
+    if (distXZ >= LOD_ZONE_LABEL_CULL_DISTANCE) { object.visible = false; return; }
+    object.visible = true;
+
+    // ── Opacité : fondu progressif quand la caméra descend vers le sol ──
+    // Basé sur l'altitude Y caméra (pas la distance 3D) : un label vu de haut
+    // est proche en distance diagonale mais doit rester pleinement visible.
+    let opacity = 1.0;
+    if (camY < LOD_ZONE_LABEL_NEAR_FADE_START) {
+      opacity = Math.max(0, (camY - LOD_ZONE_LABEL_NEAR_FADE_END) /
+        (LOD_ZONE_LABEL_NEAR_FADE_START - LOD_ZONE_LABEL_NEAR_FADE_END));
+    }
+    if (object.material) object.material.opacity = opacity;
+    if (opacity <= 0) { object.visible = false; return; }
+
+    // ── Taille : compensation screen-space + pulse d'apparition ───────────
+    const base = object.userData._baseScale;
+    if (base) {
+      // Scale proportionnel à l'altitude caméra (maintient une taille angulaire stable).
+      const D_REF = 18.0; // altitude de référence (hauteur de jeu typique)
+      let sizeFactor = Math.min(1.0, camY / D_REF);
+
+      // Arc sin unique à la création du label (durée 0.7s, amplitude ±40 %).
+      const age = (now - (object.userData.createdAt ?? 0)) / 1000;
+      if (age < 0.7) {
+        const t = age / 0.7;
+        sizeFactor *= 1 + Math.sin(t * Math.PI) * 0.40;
+      }
+
+      object.scale.set(base.x * sizeFactor, base.y * sizeFactor, 1);
+    }
   });
 }

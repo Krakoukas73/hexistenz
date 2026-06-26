@@ -232,7 +232,8 @@ function createFieldFlagReward(zone) {
   const seed = hashNumber(`${zone.total}:${zone.sectors.length}:${Math.round(zone.center.x * 100)}:${Math.round(zone.center.z * 100)}`);
   group.rotation.y = hashUnit(`${seed}:rot`) * Math.PI * 2;
 
-  const flagVariant = hashUnit(`${seed}:moulin-variant`) < 0.5 ? 'field-flag' : 'field-flag-2';
+  const _mh = hashUnit(`${seed}:moulin-variant`);
+  const flagVariant = _mh < 0.50 ? 'field-flag-2' : 'field-flag-3'; // 50% / 50% (moulin-1 retiré)
   const flag = createPropModel(flagVariant, `${seed}:flag`);
   if (flag) {
     flag.name = 'field-zone-mill-glb';

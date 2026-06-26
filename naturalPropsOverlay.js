@@ -21,7 +21,7 @@ import { hashUnit10k as hashUnit, hashNumber } from './stable/hashUtils.js';
 import { axialToWorld, makeHexKey } from './stable/hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { getTileEdgeType } from './stable/tileUtils.js';
-import { placeObjectOnTerrain } from './terrainHeight.js';
+import { placeObjectOnTerrain, getTerrainNormalAt } from './terrainHeight.js';
 import { ROCK_DENSITY, HITBOX_R } from './variables.js';
 import { registerPropHitbox } from './stable/propHitboxRegistry.js';
 import { getHexVertex, normalize2 } from './stable/hexGeometry.js';
@@ -44,7 +44,8 @@ import {
   NATURAL_GRASS_TARGET_WIDTH,
   NATURAL_SHRUB_TARGET_WIDTH,
   NATURAL_MUSHROOM_TARGET_WIDTH,
-  NATURAL_DEER_TARGET_WIDTH
+  NATURAL_DEER_TARGET_WIDTH,
+  HAY_BALE_TARGET_WIDTH
 } from './decorOverlay.js';
 
 const SECTOR_BY_KEY    = Object.fromEntries(SECTOR_DEFS.map(s => [s.key, s]));
@@ -121,7 +122,7 @@ function collectNaturalPropInstances(accumulator, placedTile, edge, type, kind, 
     _propInstanceDummy.position.set(tilePos.x + local.x, 0, tilePos.z + local.z);
     placeObjectOnTerrain(_propInstanceDummy, local, type, hashNumber(`${seed}:terrain:${i}`) % 97, {
       groundOffset,
-      alignToSlope:    kind !== 'reed',
+      alignToSlope:    kind !== 'reed' && kind !== 'hay-bale',
       yaw,
       edgeLockStart:   0.98,
       edgeLockEnd:     1.0,
@@ -155,6 +156,20 @@ function collectNaturalPropInstances(accumulator, placedTile, edge, type, kind, 
       const baseRadius = halfTarget * 0.5 * jitter;
       const snapLift   = (clearance - groundOffset) + slopeSin * baseRadius;
       if (snapLift > 0.0005) _propInstanceDummy.position.y += snapLift;
+    }
+
+    // Botte de foin : upright sur terrain pentu → la face basse de la botte flotte au-dessus du sol.
+    // Compensation : baisser la botte de slopeSin × radius pour qu'elle repose sur le point le plus bas
+    // de son empreinte circulaire. Formule approchée valide pour les pentes douces à modérées.
+    if (kind === 'hay-bale') {
+      const hayNormal  = getTerrainNormalAt(local, type, hashNumber(`${seed}:terrain:${i}`) % 97, {
+        edgeLockStart: 0.98,
+        edgeLockEnd:   1.0
+      });
+      const slopeSin   = Math.sqrt(Math.max(0, 1 - hayNormal.y * hayNormal.y));
+      if (slopeSin > 0.02) {
+        _propInstanceDummy.position.y -= slopeSin * (HAY_BALE_TARGET_WIDTH * 0.5 * jitter);
+      }
     }
 
     _propInstanceDummy.scale.setScalar(jitter);
@@ -218,7 +233,8 @@ function buildNaturalPropInstancedMeshes(group, accumulator) {
         const noReceiveShadow = variantKey.startsWith('flower') || variantKey.startsWith('plant-') || variantKey === 'animal-chicken';
         const noCastShadow    = noReceiveShadow ||
           lodCategory === 'rock' || lodCategory === 'plant' || lodCategory === 'animal' ||
-          variantKey === 'mushroom' || variantKey.startsWith('mushroom');
+          variantKey === 'mushroom' || variantKey.startsWith('mushroom') ||
+          variantKey === 'brindille'; // minuscule déco — aucune ombre
         mesh.castShadow    = !noCastShadow;
         mesh.receiveShadow = !noReceiveShadow;
         if (noCastShadow) {
@@ -271,7 +287,7 @@ function addNaturalPropCluster(group, placedTile, edge, type, kind, placedTiles)
     const groundOffset = kind === 'flower' ? 0.006 : (kind === 'reed' ? 0.010 : (kind === 'mushroom' ? 0.004 : 0.000));
     const surfaceY = placeObjectOnTerrain(prop, local, type, hashNumber(`${seed}:terrain:${i}`) % 97, {
       groundOffset,
-      alignToSlope:    kind !== 'reed',
+      alignToSlope:    kind !== 'reed' && kind !== 'hay-bale',
       yaw,
       edgeLockStart:   0.98,
       edgeLockEnd:     1.0,

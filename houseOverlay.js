@@ -26,7 +26,7 @@ import {
 // pas sur l'ancien niveau flottant sectorY + 0.018.
 const HOUSE_GROUND_Y = (TILE_VISUAL.tileThickness ?? 0.12) * -0.30;
 const HOUSE_BASE_Y = HOUSE_GROUND_Y + 0.002;
-const HOUSE_SCALE = HEX_SIZE * 0.1332 * 0.90; // −10% −10%
+const HOUSE_SCALE = HEX_SIZE * 0.1332 * 0.90 * 0.94; // −10% −10% −6%
 const HOUSE_CHIMNEY_TOP_Y = HOUSE_BASE_Y + HOUSE_SCALE * 1.62;
 const HOUSE_SMOKE_Y = HOUSE_CHIMNEY_TOP_Y + HOUSE_SCALE * 0.08;
 const PUFFS_PER_COLUMN = 18;
@@ -216,8 +216,8 @@ function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, h
   const a = vertices[sector.a];
   const b = vertices[sector.b];
   const anchors = getColumnAnchors(columnCount);
-  const protectedLocals = getSectorSpecialBuildingSafeLocals(a, b, anchors, hasChurch, hasWatchtower);
 
+  // Tour : position fixe dans le triangle, bâtiment additionnel (hors quota maisons)
   if (hasWatchtower) {
     const towerLocal = trianglePoint(a, b, 0.18, 0.41, 0.41);
     const tower = createVillageWatchtowerObject(`${tileKey}:${sector.key}:village-watchtower`, sector);
@@ -227,21 +227,32 @@ function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, h
     registerPropHitbox(tileX + towerLocal.x, tileZ + towerLocal.z, HITBOX_R.watchtower);
   }
 
+  // Église : position anchor[0], bâtiment additionnel (hors quota maisons).
+  // Auparavant elle remplaçait le slot i=0, faisant que label ≠ maisons au sol.
+  // Désormais toutes les columnCount maisons sont placées en plus de l'église.
+  if (hasChurch) {
+    const anchor0 = anchors[0] ?? { centerWeight: 0.43, aWeight: 0.285, bWeight: 0.285 };
+    const churchLocal = trianglePoint(a, b, anchor0.centerWeight, anchor0.aWeight, anchor0.bWeight);
+    const church = createVillageChurchObject(`${tileKey}:${sector.key}:village-church`, sector);
+    const churchSurfaceY = getTerrainSurfaceY(churchLocal, EDGE_TYPES.house, Math.floor(hashUnit(`${tileKey}:${sector.key}:church`) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
+    church.position.set(tileX + churchLocal.x, churchSurfaceY + 0.004, tileZ + churchLocal.z);
+    group.add(church);
+    registerPropHitbox(tileX + churchLocal.x, tileZ + churchLocal.z, HITBOX_R.church);
+  }
+
+  // Maisons : exactement columnCount maisons — le label de zone reflétera ce compte précis.
+  // Aucun slot ne saute : la safe zone ne s'applique plus (tour et église sont additionnelles).
   for (let i = 0; i < columnCount; i += 1) {
     const anchor = anchors[i] ?? anchors[anchors.length - 1];
     const seed = `${tileKey}:${sector.key}:house:${i}`;
-    const isChurch = hasChurch && i === 0;
-    const baseLocal = trianglePoint(a, b, anchor.centerWeight, anchor.aWeight, anchor.bWeight);
-    const local = isChurch ? baseLocal : spreadVillageHouseLocalPoint(baseLocal);
-    if (!isChurch && isLocalInsideSpecialBuildingSafeZone(local, protectedLocals)) continue;
-
-    const house = isChurch
-      ? createVillageChurchObject(`${tileKey}:${sector.key}:village-church`, sector)
-      : createVillageHouseObject(seed, sector, i);
+    const local = spreadVillageHouseLocalPoint(
+      trianglePoint(a, b, anchor.centerWeight, anchor.aWeight, anchor.bWeight)
+    );
+    const house = createVillageHouseObject(seed, sector, i);
     const houseSurfaceY = getTerrainSurfaceY(local, EDGE_TYPES.house, Math.floor(hashUnit(seed) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
     house.position.set(tileX + local.x, houseSurfaceY + 0.004, tileZ + local.z);
     group.add(house);
-    registerPropHitbox(tileX + local.x, tileZ + local.z, isChurch ? HITBOX_R.church : HITBOX_R.house);
+    registerPropHitbox(tileX + local.x, tileZ + local.z, HITBOX_R.house);
   }
 }
 

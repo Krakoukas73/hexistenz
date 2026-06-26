@@ -23,7 +23,7 @@ import { axialToWorld } from './stable/hex.js';
 
 const CHEST_GLB_URL    = './glb/coffre.glb';
 // Taille cible du coffre : ~20% de HEX_SIZE, puis ×1.6 (+60%)
-const CHEST_TARGET_WIDTH = HEX_SIZE * 0.20 * 1.6 * 1.5 * 1.35; // +50% +35%
+const CHEST_TARGET_WIDTH = HEX_SIZE * 0.20 * 1.6 * 1.5 * 1.35 * 0.70; // +50% +35% −30%
 
 // Le coffre flotte légèrement au-dessus de la grille (star / halo)
 const CHEST_Y_OFFSET = 0.018;

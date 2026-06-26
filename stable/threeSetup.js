@@ -7,6 +7,7 @@ import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/
 import { OutputPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js';
 import { GRID_RADIUS, HEX_SIZE } from '../config.js';
 import { COLOR_GRADING_SHADER } from '../visualEnvironment.js';
+import { CINEMATIC_SHADER } from '../cinematicPass.js';
 import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS, getWorldCurvatureDrop, markNoWorldCurvature } from './worldCurvature.js';
 import { ensureStarUniverse, updateStarUniverse } from './starUniverse.js';
 
@@ -304,8 +305,37 @@ export function createPixelPostprocess(renderer, scene, camera) {
 
   const colorGradingPass = new ShaderPass(COLOR_GRADING_SHADER);
 
+  // ── Effets cinématiques (tilt-shift · vignette · grain · aberration) ──────
+  const cinemaPass = new ShaderPass(CINEMATIC_SHADER);
+  // uResolution nécessite un THREE.Vector2 pour le .set() dans render() ;
+  // on l'injecte ici car cinematicPass.js ne dépend pas de THREE.
+  cinemaPass.uniforms.uResolution = { value: new THREE.Vector2(window.innerWidth, window.innerHeight) };
+  const _cinemaSettings = {
+    enabled: false,
+    tilt: 0.60, focusCenter: 0.50, focusBand: 0.35,
+    vignette: 0.55, grain: 0.30, chromatic: 0.45,
+    halation: 0.0, barrel: 0.0, scanLines: 0.0,
+  };
+  let _cinemaListener   = null;
+  const _cinemaStartTime = performance.now();
+
+  function _applyCinemaUniforms(s) {
+    cinemaPass.uniforms.uEnabled.value     = s.enabled   ? 1.0 : 0.0;
+    cinemaPass.uniforms.uTilt.value        = s.tilt;
+    cinemaPass.uniforms.uFocusCenter.value = s.focusCenter;
+    cinemaPass.uniforms.uFocusBand.value   = s.focusBand;
+    cinemaPass.uniforms.uVignette.value    = s.vignette;
+    cinemaPass.uniforms.uGrain.value       = s.grain;
+    cinemaPass.uniforms.uChromatic.value   = s.chromatic;
+    cinemaPass.uniforms.uHalation.value    = s.halation;
+    cinemaPass.uniforms.uBarrel.value      = s.barrel;
+    cinemaPass.uniforms.uScanLines.value   = s.scanLines;
+  }
+  _applyCinemaUniforms(_cinemaSettings);
+
   composer.addPass(pixelPass);
   composer.addPass(colorGradingPass);
+  composer.addPass(cinemaPass);
   composer.addPass(new OutputPass());
 
   function renderWorldLayer() {
@@ -339,6 +369,7 @@ export function createPixelPostprocess(renderer, scene, camera) {
     composer,
     pixelPass,
     colorGradingPass,
+    cinemaPass,
     getSettings() {
       return { ...settings };
     },
@@ -357,11 +388,42 @@ export function createPixelPostprocess(renderer, scene, camera) {
     onExternalSettingsChange(cb) {
       _settingsListener = cb;
     },
+    getCinemaSettings() {
+      return { ..._cinemaSettings };
+    },
+    applyCinemaSettings(partial = {}) {
+      const c = _cinemaSettings;
+      if ('enabled'     in partial) c.enabled     = Boolean(partial.enabled);
+      if ('tilt'        in partial) c.tilt        = Math.max(0, Math.min(1, Number(partial.tilt)));
+      if ('focusCenter' in partial) c.focusCenter = Math.max(0, Math.min(1, Number(partial.focusCenter)));
+      if ('focusBand'   in partial) c.focusBand   = Math.max(0, Math.min(1, Number(partial.focusBand)));
+      if ('vignette'    in partial) c.vignette    = Math.max(0, Math.min(1, Number(partial.vignette)));
+      if ('grain'       in partial) c.grain       = Math.max(0, Math.min(1, Number(partial.grain)));
+      if ('chromatic'   in partial) c.chromatic   = Math.max(0, Math.min(1, Number(partial.chromatic)));
+      if ('halation'    in partial) c.halation    = Math.max(0, Math.min(1, Number(partial.halation)));
+      if ('barrel'      in partial) c.barrel      = Math.max(0, Math.min(1, Number(partial.barrel)));
+      if ('scanLines'   in partial) c.scanLines   = Math.max(0, Math.min(6, Number(partial.scanLines)));
+      _applyCinemaUniforms(c);
+      _cinemaListener?.({ ...c });
+    },
+    onExternalCinemaChange(cb) {
+      _cinemaListener = cb;
+    },
+    toggleCinema() {
+      _cinemaSettings.enabled = !_cinemaSettings.enabled;
+      _applyCinemaUniforms(_cinemaSettings);
+      _cinemaListener?.({ ..._cinemaSettings });
+    },
     render() {
       const previousMask = camera.layers.mask;
       const previousAutoClear = renderer.autoClear;
       const previousBackground = scene.background;
       const previousFog = scene.fog;
+
+      // Grain animé + résolution scan lines : mise à jour avant chaque frame
+      cinemaPass.uniforms.uTime.value          = (performance.now() - _cinemaStartTime) / 1000.0;
+      cinemaPass.uniforms.uResolution.value.x  = renderer.domElement.width;
+      cinemaPass.uniforms.uResolution.value.y  = renderer.domElement.height;
 
       renderWorldLayer();
       renderTextLayer();
@@ -399,7 +461,16 @@ function clamp01(value) {
 
 export function applySceneShadowFlags(scene) {
   scene.traverse(object => {
-    if (!object.isMesh || object.userData?.shadowFlagsApplied) return;
+    if (!object.isMesh) return;
+
+    if (object.userData?.shadowFlagsApplied) {
+      // Restaurer le castShadow d'origine pour les meshes dont l'état a été écrasé par applyShadowCulling.
+      // castShadowOriginal est stocké lors de la création de l'instance (bâtiment, prop GLB…).
+      if (typeof object.userData.castShadowOriginal === 'boolean') {
+        object.castShadow = object.userData.castShadowOriginal;
+      }
+      return;
+    }
 
     const materials = Array.isArray(object.material) ? object.material : [object.material];
     const hasLightAwareOpaqueMaterial = materials.some(material => material && !material.transparent && material.type !== 'MeshBasicMaterial');
@@ -407,6 +478,7 @@ export function applySceneShadowFlags(scene) {
 
     object.castShadow = object.userData?.disableCastShadow ? false : true;
     object.receiveShadow = object.userData?.disableReceiveShadow ? false : true;
+    object.userData.castShadowOriginal = object.castShadow; // mémoriser pour restauration post-culling
     object.userData.shadowFlagsApplied = true;
   });
 }

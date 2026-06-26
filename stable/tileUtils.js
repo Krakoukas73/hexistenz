@@ -17,8 +17,12 @@ export function clearGroup(group) {
     const child = group.children.pop();
     child.traverse?.(object => {
       object.geometry?.dispose?.();
-      if (Array.isArray(object.material)) object.material.forEach(m => m.dispose?.());
-      else object.material?.dispose?.();
+      // Ne pas disposer les matériaux partagés avec un prototype GLB (flag glbPrototype).
+      // Ces matériaux sont réutilisés par _reusePrototypeMaterials ; les disposer ici
+      // détruirait le prototype → objets blancs après rebuild.
+      const disposeMat = m => { if (m && !m.userData?.glbPrototype) m.dispose?.(); };
+      if (Array.isArray(object.material)) object.material.forEach(disposeMat);
+      else disposeMat(object.material);
       // Dispose la DataTexture bone matrix (Three.js r145+) — chaque cloneSkeleton() crée
       // un Skeleton propre (pas partagé), dispose() est donc toujours sûr ici.
       if (object.isSkinnedMesh && object.skeleton?.dispose) object.skeleton.dispose();

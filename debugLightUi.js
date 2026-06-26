@@ -1,4 +1,45 @@
 import { DEFAULT_VISUAL_ENVIRONMENT_CONFIG, cloneVisualConfig, applyColorGradingUniforms } from './visualEnvironment.js';
+import { getWorldShapeMode, setWorldShapeMode } from './stable/worldCurvature.js';
+
+// ─── PIX HUD constants (embedded inside CUSTOMISATION panel) ─────────────────
+const PIX_STORAGE_KEY = 'dorfoPixelPostprocessSettings.v4';
+// ─── CINEMA HUD constants ─────────────────────────────────────────────────────
+const CIN_STORAGE_KEY = 'hexistenz_cinema_v1';
+const CIN_DEFAULTS = Object.freeze({
+  enabled: false,
+  tilt: 0.60, focusCenter: 0.50, focusBand: 0.35,
+  vignette: 0.55, grain: 0.30, chromatic: 0.45,
+  halation: 0.0, barrel: 0.0, scanLines: 0.0,
+});
+function _normalizeCin(s) {
+  const clp = (v, d, mx) => Math.min(mx, Math.max(0, isFinite(Number(v)) ? Number(v) : d));
+  return {
+    enabled:     Boolean(s.enabled),
+    tilt:        clp(s.tilt,        CIN_DEFAULTS.tilt,        1),
+    focusCenter: clp(s.focusCenter, CIN_DEFAULTS.focusCenter, 1),
+    focusBand:   clp(s.focusBand,   CIN_DEFAULTS.focusBand,   1),
+    vignette:    clp(s.vignette,    CIN_DEFAULTS.vignette,    1),
+    grain:       clp(s.grain,       CIN_DEFAULTS.grain,       1),
+    chromatic:   clp(s.chromatic,   CIN_DEFAULTS.chromatic,   1),
+    halation:    clp(s.halation,    CIN_DEFAULTS.halation,    1),
+    barrel:      clp(s.barrel,      CIN_DEFAULTS.barrel,      1),
+    scanLines:   clp(s.scanLines,   CIN_DEFAULTS.scanLines,   6), // 0–6 px
+  };
+}
+function _readCinStored()     { try { const r = localStorage.getItem(CIN_STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; } }
+function _storeCinSettings(s) { try { localStorage.setItem(CIN_STORAGE_KEY, JSON.stringify(s)); } catch {} }
+const PIX_DEFAULTS = Object.freeze({ enabled: false, pixelSize: 2, normalEdgeStrength: 0.20, depthEdgeStrength: 0.25, worldShapeMode: 'bouliste' });
+function _normalizePix(s) {
+  return {
+    enabled: Boolean(s.enabled),
+    pixelSize: Math.min(50, Math.max(1, Math.round(Number(s.pixelSize) || PIX_DEFAULTS.pixelSize))),
+    normalEdgeStrength: Math.min(1, Math.max(0, Number(s.normalEdgeStrength) ?? 0)),
+    depthEdgeStrength: Math.min(1, Math.max(0, Number(s.depthEdgeStrength) ?? 0)),
+    worldShapeMode: s.worldShapeMode === 'platiste' ? 'platiste' : 'bouliste'
+  };
+}
+function _readPixStored() { try { const r = localStorage.getItem(PIX_STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; } }
+function _storePixSettings(s) { try { localStorage.setItem(PIX_STORAGE_KEY, JSON.stringify(s)); } catch {} }
 
 // ─── Perf HUD (module-level, self-contained) ─────────────────────────────────
 let _fpsFrameCount  = 0;
@@ -25,6 +66,9 @@ const _CATEGORY_ICONS = {
   'Chêne':            '🌳',
   'Pin':              '🌲',
   'Peuplier':         '🌲',
+  'Épicéa':           '🌲',
+  'Feuillu':          '🌳',
+  'Sapin':            '🌲',
   'Arbre mort':       '🪵',
   'Buisson':          '🫧',
   // Bâtiments — types individuels
@@ -46,6 +90,7 @@ const _CATEGORY_ICONS = {
   'Bottes foin':      '🌾',
   'Roseaux':          '🌿',
   'Plantes':          '🌱',
+  'Brindilles':       '🪵',
   'Arbustes':         '🫧',
   'Blé':              '🌾',
   'Brins de blé':     '🌾',
@@ -102,13 +147,14 @@ const _CATEGORY_ICONS = {
 const _ITEM_GROUP = {
   // Forêt
   'Bouleau': 'Forêt', 'Chêne': 'Forêt', 'Pin': 'Forêt', 'Peuplier': 'Forêt',
+  'Épicéa': 'Forêt', 'Feuillu': 'Forêt', 'Sapin': 'Forêt',
   'Arbre mort': 'Forêt', 'Buisson': 'Forêt',
   // Bâtiments
   'Maison-1': 'Bâtiments', 'Maison-2': 'Bâtiments', 'Maison-3': 'Bâtiments', 'Maison-4': 'Bâtiments',
   'Maisons': 'Bâtiments', 'Églises': 'Bâtiments', 'Tours de guet': 'Bâtiments',
   // Nature
   'Fleurs': 'Nature', 'Champignons': 'Nature', 'Rochers': 'Nature', 'Bottes foin': 'Nature',
-  'Roseaux': 'Nature', 'Plantes': 'Nature', 'Arbustes': 'Nature', 'Blé': 'Nature', 'Brins de blé': 'Nature',
+  'Roseaux': 'Nature', 'Plantes': 'Nature', 'Brindilles': 'Nature', 'Arbustes': 'Nature', 'Blé': 'Nature', 'Brins de blé': 'Nature',
   // Animaux champ
   'Poulets (champ)': 'Animaux', 'Cerfs': 'Animaux', 'Animaux (champ)': 'Animaux',
   // Village
@@ -134,7 +180,12 @@ const _GROUP_ORDER = ['Forêt', 'Bâtiments', 'Nature', 'Animaux', 'Village', 'T
 const _GROUP_ICONS = { 'Forêt': '🌲', 'Bâtiments': '🏠', 'Nature': '🌿', 'Animaux': '🐾', 'Village': '🏘️', 'Transport': '🚂', 'Eau': '🌊', 'Terrain': '🗺️', 'Divers': '✦' };
 
 // Espèces d'arbres connues (pour extraction depuis le nom InstancedMesh)
-const _TREE_SPECIES_MAP = { birch: 'Bouleau', bushy_mini: 'Buisson', pine_soft: 'Pin', poplar: 'Peuplier' }; // oak_round + dead retirés du pool
+const _TREE_SPECIES_MAP = {
+  birch: 'Bouleau', bushy_mini: 'Buisson', pine_soft: 'Pin', poplar: 'Peuplier',
+  tree_fir: 'Épicéa',
+  tree_complex_: 'Feuillu',   // préfixe → tree_complex_1, tree_complex_2
+  tree_sapin_: 'Sapin',       // préfixe → tree_sapin_1…4
+}; // oak_round + dead retirés du pool
 const _TREE_SPECIES_KEYS = Object.keys(_TREE_SPECIES_MAP); // pour recherche par startsWith
 
 // GLB individuels — testés par includes() sur le name du Group racine
@@ -199,6 +250,7 @@ function _classifyInstanced(obj) {
   if (n.startsWith('instanced-prop-hay'))            return 'Bottes foin';
   if (n.startsWith('instanced-prop-reed'))           return 'Roseaux';
   if (n.startsWith('instanced-prop-plant'))          return 'Plantes';
+  if (n.startsWith('instanced-prop-brindille'))      return 'Brindilles';
   if (n.startsWith('instanced-prop-shrub'))          return 'Arbustes';
   if (n.startsWith('hex-grid-fill'))                 return 'Grille';
   if (n.includes('wheat') || n.includes('blade'))    return 'Blé';
@@ -463,6 +515,7 @@ function _buildHud(fps, info) {
     `<div class="fps-hud-header">` +
       `<div class="fps-hud-fps">${fps} <span>FPS</span> <span class="fps-adj ${adj.cls}">${adj.text}</span></div>` +
       `<button class="fps-hud-copy" type="button" title="Copier le HUD">${_hudCopied ? '✓' : '⧉'}</button>` +
+      (_fpsHudExpanded ? `<button class="fps-hud-close" type="button" title="Fermer le HUD performances">✕</button>` : '') +
     `</div>` +
     `<div class="fps-hud-eff-row">` +
       `<div class="fps-hud-eff-item">` +
@@ -686,262 +739,13 @@ const COLORS = [
 ];
 
 
-// ─── Presets d'ambiance one-click ────────────────────────────────────────────
-// Chaque preset est un delta fusionné par-dessus le DEFAULT_VISUAL_ENVIRONMENT_CONFIG.
-// delta:null = retour aux valeurs par défaut.
-const VISUAL_PRESETS = [
-  { name: '⭐ Défaut',          bg: 'linear-gradient(135deg,#ffd36d,#b58239)', pixelization: { enabled: false, pixelSize: 1 }, delta: null },
-  {
-    name: '🌅 Matin doré',      bg: 'linear-gradient(135deg,#ffcc60,#e8841a)',
-    delta: {
-      renderer: { toneMappingExposure: 1.52 },
-      lights: { sunColor: '#ffb060', sunIntensity: 2.6, hemisphereGroundColor: '#9ab09c', hemisphereIntensity: 0.66, fillIntensity: 0.36 },
-      grading: { saturation: 1.05, vibrance: 0.28, red: 1.07, green: 1.01, blue: 0.90, contrast: 1.03 },
-      palette: { warmShift: 0.035 }
-    }
-  },
-  {
-    name: '🌇 Crépuscule',      bg: 'linear-gradient(135deg,#ff7030,#9a1a08)',
-    delta: {
-      renderer: { toneMappingExposure: 1.40 },
-      environment: { fogDensity: 0.006 },
-      lights: { sunColor: '#ff6820', sunIntensity: 1.8, hemisphereSkyColor: '#ffb080', hemisphereGroundColor: '#8a5030', hemisphereIntensity: 0.52, fillColor: '#d03820', fillIntensity: 0.28 },
-      grading: { contrast: 1.07, saturation: 1.10, vibrance: 0.32, red: 1.12, green: 0.96, blue: 0.86, gamma: 1.05 },
-      palette: { warmShift: 0.045 }
-    }
-  },
-  {
-    name: '🌫️ Brume côtière',   bg: 'linear-gradient(135deg,#90c8d8,#2860a0)',
-    delta: {
-      renderer: { toneMappingExposure: 1.28 },
-      environment: { fogDensity: 0.014, fogColor: '#b8ccd8', skyColor: '#0a1620' },
-      lights: { sunIntensity: 1.6, sunColor: '#d4e4f0', hemisphereSkyColor: '#b8d4e4', hemisphereGroundColor: '#7890a0', hemisphereIntensity: 0.65, fillIntensity: 0.32 },
-      grading: { contrast: 0.96, saturation: 0.78, vibrance: 0.06, red: 0.96, green: 1.01, blue: 1.08, gamma: 1.02 }
-    }
-  },
-  {
-    name: '🌑 Minuit',          bg: 'linear-gradient(135deg,#2840a0,#080c24)',
-    delta: {
-      renderer: { toneMappingExposure: 0.88 },
-      environment: { fogDensity: 0.010, skyColor: '#010208', fogColor: '#010208' },
-      lights: { sunColor: '#3858b8', sunIntensity: 0.8, hemisphereSkyColor: '#1828a0', hemisphereGroundColor: '#101828', hemisphereIntensity: 0.32, fillColor: '#101848', fillIntensity: 0.18 },
-      grading: { brightness: -0.03, contrast: 1.12, saturation: 0.68, vibrance: 0.04, blue: 1.14, red: 0.86, green: 0.94, gamma: 0.94 }
-    }
-  },
-  {
-    name: '🍂 Automne',         bg: 'linear-gradient(135deg,#e85820,#7a2808)',
-    delta: {
-      renderer: { toneMappingExposure: 1.42 },
-      lights: { sunColor: '#e07010', sunIntensity: 2.2, hemisphereGroundColor: '#9a8060', hemisphereIntensity: 0.60, fillIntensity: 0.30 },
-      grading: { saturation: 1.14, vibrance: 0.36, red: 1.13, green: 0.97, blue: 0.83, contrast: 1.06 },
-      palette: { warmShift: 0.048, targets: { field: '#c09038', forest: '#7a4018', grass: '#a07028', house: '#b88060', rail: '#c0b088', water: '#4a7898' } }
-    }
-  },
-  {
-    name: '☀️ Été vif',          bg: 'linear-gradient(135deg,#60d040,#187840)',
-    delta: {
-      renderer: { toneMappingExposure: 1.56 },
-      lights: { sunColor: '#ffffc0', sunIntensity: 2.9, hemisphereGroundColor: '#8ab890', hemisphereIntensity: 0.68, fillIntensity: 0.30 },
-      grading: { saturation: 1.22, vibrance: 0.42, contrast: 1.04, green: 1.05, blue: 1.02, red: 1.01 },
-      palette: { targets: { field: '#e8c858', forest: '#206820', grass: '#58c038', house: '#c0a878', rail: '#d0c8a4', water: '#28a8d6' } }
-    }
-  },
-  {
-    name: '📜 Vieux sépia',     bg: 'linear-gradient(135deg,#c09040,#6a4010)',
-    delta: {
-      renderer: { toneMappingExposure: 1.36 },
-      lights: { sunColor: '#c89850', sunIntensity: 1.8, hemisphereGroundColor: '#907050', hemisphereIntensity: 0.58, fillIntensity: 0.22 },
-      grading: { saturation: 0.62, vibrance: 0.08, contrast: 1.10, red: 1.20, green: 1.04, blue: 0.74, gamma: 1.06 },
-      palette: { strength: 0.18, warmShift: 0.060, saturation: 0.68 }
-    }
-  },
-  {
-    name: '🌲 Forêt nordique',  bg: 'linear-gradient(135deg,#4890a8,#0a2838)',
-    delta: {
-      renderer: { toneMappingExposure: 1.24 },
-      environment: { fogDensity: 0.008, fogColor: '#081c12' },
-      lights: { sunColor: '#c8e0e8', sunIntensity: 1.7, hemisphereSkyColor: '#98c0c8', hemisphereGroundColor: '#284838', hemisphereIntensity: 0.60, fillColor: '#508898', fillIntensity: 0.28 },
-      grading: { saturation: 0.88, vibrance: 0.18, contrast: 1.05, blue: 1.06, green: 1.04, red: 0.94, gamma: 1.03 },
-      palette: { warmShift: -0.012, targets: { forest: '#185020', grass: '#488038', field: '#b8a050' } }
-    }
-  },
-  {
-    name: '🏜️ Désert doré',     bg: 'linear-gradient(135deg,#f0b840,#a86010)',
-    delta: {
-      renderer: { toneMappingExposure: 1.64 },
-      environment: { fogDensity: 0.005 },
-      lights: { sunColor: '#fff0a8', sunIntensity: 3.2, hemisphereSkyColor: '#ffe8a0', hemisphereGroundColor: '#c0a060', hemisphereIntensity: 0.54, fillColor: '#d0a850', fillIntensity: 0.28 },
-      grading: { saturation: 0.88, vibrance: 0.28, red: 1.09, green: 1.02, blue: 0.83, contrast: 1.07, gamma: 1.02 },
-      palette: { warmShift: 0.058, targets: { field: '#e8d07a', forest: '#808040', grass: '#b8a048', house: '#d0b878' } }
-    }
-  },
-  {
-    name: '🌙 Clair de lune',   bg: 'linear-gradient(135deg,#6088d8,#102060)',
-    delta: {
-      renderer: { toneMappingExposure: 1.08 },
-      environment: { fogDensity: 0.006 },
-      lights: { sunColor: '#7890e0', sunIntensity: 1.2, hemisphereSkyColor: '#2840a8', hemisphereGroundColor: '#182030', hemisphereIntensity: 0.38, fillColor: '#1840a8', fillIntensity: 0.22 },
-      grading: { brightness: -0.02, saturation: 0.70, vibrance: 0.06, blue: 1.16, green: 1.00, red: 0.83, contrast: 1.07, gamma: 0.95 },
-      palette: { warmShift: -0.022 }
-    }
-  },
-  {
-    name: '🧚 Conte de fées',   bg: 'linear-gradient(135deg,#e060c8,#6020a8)',
-    delta: {
-      renderer: { toneMappingExposure: 1.52 },
-      lights: { sunColor: '#ffb0e0', sunIntensity: 2.4, hemisphereSkyColor: '#d8a0ff', hemisphereGroundColor: '#80a858', hemisphereIntensity: 0.60, fillColor: '#c058c0', fillIntensity: 0.32 },
-      grading: { saturation: 1.32, vibrance: 0.58, contrast: 1.05, red: 1.06, green: 0.98, blue: 1.10 },
-      palette: { warmShift: 0.008, strength: 0.38, targets: { forest: '#581878', grass: '#58b050', field: '#e0c048', house: '#c89068', water: '#4890d8' } }
-    }
-  },
-
-  {
-    name: '⚫ Noir & Blanc',    bg: 'linear-gradient(135deg,#999999,#111111)',
-    pixelization: { pixelSize: 3, enabled: true, normalEdgeStrength: 0, depthEdgeStrength: 0 },
-    delta: {
-      renderer: { toneMappingExposure: 1.45 },
-      grading: {
-        saturation: 0.0, vibrance: 0.0, contrast: 1.30, gamma: 1.02, brightness: -0.01,
-        paletteColors: ['#000000', '#ffffff'],
-        paletteDither: 0.7
-      }
-    }
-  },
-
-  {
-    // Moniteur phosphore vert — CRT rétro (Amstrad, Apple II, Kaypro…)
-    name: '🖥️ Noir & Vert',    bg: 'linear-gradient(135deg,#00cc44,#003311)',
-    pixelization: { pixelSize: 3, enabled: true, normalEdgeStrength: 0, depthEdgeStrength: 0 },
-    delta: {
-      renderer: { toneMappingExposure: 1.45 },
-      environment: { fogDensity: 0.003, skyColor: '#000000', fogColor: '#000000' },
-      lights: {
-        sunColor: '#00ff44', sunIntensity: 2.0,
-        hemisphereSkyColor: '#005522', hemisphereGroundColor: '#002211', hemisphereIntensity: 0.55,
-        fillColor: '#003311', fillIntensity: 0.25
-      },
-      grading: {
-        saturation: 0.0, vibrance: 0.0, contrast: 1.30, gamma: 1.02, brightness: -0.01,
-        paletteColors: ['#000000', '#003300', '#006600', '#009900', '#00cc00', '#00ff00'],
-        paletteDither: 0.7
-      }
-    }
-  },
-
-  {
-    // CGA palette 1 haute intensite : Noir / Cyan / Magenta / Blanc
-    // paletteDither → Bayer 4×4 pour simuler des couleurs intermédiaires
-    name: 'CGA',  bg: 'linear-gradient(135deg,#55ffff,#ff55ff)',
-    pixelization: { pixelSize: 3, enabled: true, normalEdgeStrength: 0, depthEdgeStrength: 0 },
-    delta: {
-      renderer: { toneMappingExposure: 1.75 },
-      environment: { fogDensity: 0.002, skyColor: '#000000', fogColor: '#000000' },
-      lights: {
-        sunColor: '#ffffff', sunIntensity: 2.4,
-        hemisphereSkyColor: '#55ffff', hemisphereGroundColor: '#ff55ff', hemisphereIntensity: 0.55,
-        fillColor: '#aaaaaa', fillIntensity: 0.35
-      },
-      grading: {
-        saturation: 1.0, vibrance: 0.0, contrast: 1.0, gamma: 1.0,
-        red: 1.0, green: 1.0, blue: 1.0, brightness: 0.0,
-        paletteColors: ['#000000', '#55ffff', '#ff55ff', '#ffffff'],
-        paletteDither: 0.7
-      },
-      palette: { enabled: false }
-    }
-  },
-
-  {
-    // EGA 16 couleurs — palette ADAPTÉE au jeu (pas IBM stricte)
-    // Principe : 2 verts forêt sombres bien séparés des 2 verts prairie clairs.
-    // Éclairage neutre-chaud, hémisphère faible pour garder le contraste forêt/prairie.
-    name: 'EGA', bg: 'linear-gradient(135deg,#55ffff,#aa0000)',
-    pixelization: { pixelSize: 3, enabled: true, normalEdgeStrength: 0, depthEdgeStrength: 0 },
-    delta: {
-      renderer: { toneMappingExposure: 2.40 },
-      environment: { fogDensity: 0.002, skyColor: '#000000', fogColor: '#000000' },
-      lights: {
-        sunColor: '#dddd44', sunIntensity: 2.4,
-        hemisphereSkyColor: '#224466', hemisphereGroundColor: '#224422', hemisphereIntensity: 0.45,
-        fillColor: '#553311', fillIntensity: 0.22
-      },
-      grading: {
-        saturation: 1.0, vibrance: 0.0, contrast: 1.0, gamma: 1.0,
-        red: 1.0, green: 1.0, blue: 1.0, brightness: 0.0,
-        paletteColors: [
-          // noirs/ombres
-          '#000000', '#110800',
-          // FORÊT — verts sombres (G channel 68–102) — zone basse
-          '#1a4418', '#2a6628',
-          // ←— GAP : aucune entrée entre G:102 et G:152 —→
-          // PRAIRIE — verts clairs (G channel 152–204) — zone haute
-          '#5a9828', '#88cc44',
-          // champs / blé
-          '#886600', '#ddcc44',
-          // maisons / routes
-          '#442211', '#886644', '#ccbb88',
-          // eau
-          '#225566', '#3388aa',
-          // gravillons rails
-          '#666666',
-          // crème / blanc
-          '#ddddbb', '#ffffff'
-        ],
-        paletteDither: 0.6
-      },
-      palette: { enabled: false }
-    }
-  },
-
-  {
-    // Amiga OCS 32 couleurs — adaptée aux biomes du jeu.
-    // GAP intentionnel entre verts forêt (G≤102) et verts prairie (G≥152)
-    // pour forcer deux snapshots distincts. Rails = gris. Troncs = bruns.
-    // Peu de bleu, zéro violet. Éclairage chaud, hémisphère faible.
-    name: 'Amiga',   bg: 'linear-gradient(135deg,#0066bb,#ff8800)',
-    pixelization: { pixelSize: 2, enabled: true, normalEdgeStrength: 0, depthEdgeStrength: 0 },
-    delta: {
-      renderer: { toneMappingExposure: 2.40 },
-      environment: { fogDensity: 0.003, skyColor: '#000022', fogColor: '#001133' },
-      lights: {
-        sunColor: '#ffdd66', sunIntensity: 2.4,
-        hemisphereSkyColor: '#446688', hemisphereGroundColor: '#225522', hemisphereIntensity: 0.30,
-        fillColor: '#aa7722', fillIntensity: 0.16
-      },
-      grading: {
-        saturation: 1.0, vibrance: 0.0, contrast: 1.0, gamma: 1.0,
-        red: 1.0, green: 1.0, blue: 1.0, brightness: 0.0,
-        paletteColors: [
-          // noirs et ombres chaudes (3)
-          '#000000', '#111100', '#332211',
-          // sols / brun sombre (2)
-          '#443322', '#665544',
-          // FORÊT — verts sombres/froids, G≤102 (4)
-          '#142a14', '#1e4420', '#2a5e2c', '#386636',
-          //   ←—— GAP intentionnel : aucune entrée entre #386636 (G:102) et #609c30 (G:156) ——→
-          // PRAIRIE — verts clairs/chauds, G≥156 (4)
-          '#609c30', '#78b040', '#90c450', '#aad860',
-          // champs / blé — ambre et or (5)
-          '#664400', '#886600', '#aa8800', '#ccaa00', '#eedd44',
-          // crème et blanc chaud (2)
-          '#f4eebb', '#ffffff',
-          // brun-gris maisons / routes (4)
-          '#553322', '#776655', '#998877', '#ccbbaa',
-          // troncs d'arbres / bois (3)
-          '#3a1e08', '#5a3014', '#7a4e22',
-          // eau / bleu (3)
-          '#1a3855', '#336688', '#558eaa',
-          // gris pierre bâtiments + métal trains/rails — 7 tons, du sombre au clair
-          '#333333', '#4d4d5a', '#666666', '#7a7a88', '#999999', '#aaaabb', '#cccccc',
-          // rouge Amiga typique — champignons
-          '#cc2200'
-        ],
-        paletteDither: 0.45
-      },
-      palette: { enabled: false }
-    }
-  }
-];
+// ─── Presets d'ambiance — chargés depuis ambiances.json ─────────────────────
+// Chaque preset : { name, bg, pixelization?, delta, cinema }
+// cinema contient la config cinématique (scan lines, halation, barrel…)
+// Presets rétro CRT : scanLines > 0 ; tous les autres : scanLines = 0.
+const VISUAL_PRESETS = await fetch('./ambiances.json')
+  .then(r => r.json())
+  .catch(e => { console.error('[debugLightUi] Impossible de charger ambiances.json :', e); return []; });
 
 const HELP_TEXT = {
   'renderer.toneMappingExposure': 'Exposition générale du renderer Three.js. Augmente ou réduit la quantité globale de lumière avant l’étalonnage.',
@@ -1011,14 +815,14 @@ export function createDebugLightUI({ visualEnvironment, postprocess }) {
       <div id="fps-counter" class="fps-counter">-- FPS</div>
       <div class="debug-light-btn-row">
         <button id="fpsHudToggle" class="debug-light-toggle debug-light-toggle--fps" type="button" title="Afficher/masquer le HUD performances avancé [F]">FPS</button>
-        <button id="pixToggle" class="debug-light-toggle debug-light-toggle--pix" type="button" title="Activer/désactiver la pixelisation [P]">PIX</button>
-        <button id="debugLightToggle" class="debug-light-toggle" type="button" title="Ouvrir ou fermer le panneau d’étalonnage LUT">LUT</button>
+        <button id="debugLightToggle" class="debug-light-toggle" type="button" title="Ouvrir ou fermer le panneau customisation [C]">CUSTOM</button>
       </div>
     </div>
     <div class="debug-light-body">
       <div class="debug-light-head">
-        <strong>LUT - ÉTALONNAGE</strong>
+        <strong>CUSTOMISATION</strong>
         <button id="debugLightReset" type="button">Reset</button>
+        <button id="debugLightClose" type="button" class="debug-light-close-btn" title="Fermer">✕</button>
       </div>
       <div class="debug-light-presets-label">AMBIANCES</div>
       <div id="debugLightPresets" class="debug-light-presets"></div>
@@ -1029,10 +833,95 @@ export function createDebugLightUI({ visualEnvironment, postprocess }) {
       </div>
       <div id="debugLightControls" class="debug-light-controls"></div>
       <div class="debug-light-export">
-        <button id="debugLightExport" type="button">Exporter JSON</button>
-        <button id="debugLightCopy" type="button">Copier</button>
+        <div class="debug-light-export-row">
+          <button id="debugLightCopy" type="button" title="Copier tous les paramètres LUT + PIX courants en JSON">📋 Copier</button>
+          <button id="debugLightUndo" type="button" disabled title="Annuler la dernière modification (Undo)">↩ Undo</button>
+          <button id="debugLightRedo" type="button" disabled title="Rétablir la modification annulée (Redo)">↪ Redo</button>
+          <button id="debugLightCompare" type="button" disabled title="Basculer entre paramètres courants et dernière ambiance">Comparer</button>
+          <span id="debugLightLastPreset" class="debug-light-last-preset" title="Dernière ambiance appliquée">—</span>
+        </div>
       </div>
-      <textarea id="debugLightJson" spellcheck="false"></textarea>
+
+      <div class="debug-light-pix-sep"></div>
+
+      <div class="debug-light-pix-section">
+        <div class="debug-light-pix-head">
+          <span>PIXELISATION</span>
+          <label class="pix-switch" title="Activer / désactiver la pixelisation">
+            <input id="pixEnabled" type="checkbox" />
+            <span></span>
+          </label>
+        </div>
+        <label class="pix-control">
+          <span>Rayon (pixels) <strong id="pixPixelSizeValue"></strong></span>
+          <input id="pixPixelSize" type="range" min="1" max="50" step="1" />
+        </label>
+        <label class="pix-control">
+          <span>Contour relief <strong id="pixNormalEdgeValue"></strong></span>
+          <input id="pixNormalEdge" type="range" min="0" max="1" step="0.01" />
+        </label>
+        <label class="pix-control">
+          <span>Contour profondeur <strong id="pixDepthEdgeValue"></strong></span>
+          <input id="pixDepthEdge" type="range" min="0" max="1" step="0.01" />
+        </label>
+        <label class="pix-control">
+          <span>Forme du monde <strong id="pixWorldShapeValue"></strong></span>
+          <select id="pixWorldShape" class="pix-select">
+            <option value="bouliste">Bouliste</option>
+            <option value="platiste">Platiste</option>
+          </select>
+        </label>
+        <button id="pixReset" class="pix-reset-btn" type="button">Réinitialiser pixelisation</button>
+      </div>
+
+      <div class="debug-light-pix-sep"></div>
+
+      <div class="debug-light-cinema-section">
+        <div class="debug-light-pix-head">
+          <span>CINÉMA [T]</span>
+          <label class="pix-switch" title="Activer / désactiver les effets cinématiques [T]">
+            <input id="cinEnabled" type="checkbox" />
+            <span></span>
+          </label>
+        </div>
+        <label class="pix-control">
+          <span>Tilt-shift <strong id="cinTiltValue"></strong></span>
+          <input id="cinTilt" type="range" min="0" max="1" step="0.01" />
+        </label>
+        <label class="pix-control">
+          <span>Centre focus <strong id="cinFocusCenterValue"></strong></span>
+          <input id="cinFocusCenter" type="range" min="0" max="1" step="0.01" />
+        </label>
+        <label class="pix-control">
+          <span>Zone nette <strong id="cinFocusBandValue"></strong></span>
+          <input id="cinFocusBand" type="range" min="0" max="1" step="0.01" />
+        </label>
+        <label class="pix-control">
+          <span>Vignette <strong id="cinVignetteValue"></strong></span>
+          <input id="cinVignette" type="range" min="0" max="1" step="0.01" />
+        </label>
+        <label class="pix-control">
+          <span>Grain film <strong id="cinGrainValue"></strong></span>
+          <input id="cinGrain" type="range" min="0" max="1" step="0.01" />
+        </label>
+        <label class="pix-control">
+          <span>Aberration chr. <strong id="cinChromaticValue"></strong></span>
+          <input id="cinChromatic" type="range" min="0" max="1" step="0.01" />
+        </label>
+        <label class="pix-control">
+          <span>Halation <strong id="cinHalationValue"></strong></span>
+          <input id="cinHalation" type="range" min="0" max="1" step="0.01" />
+        </label>
+        <label class="pix-control">
+          <span>Distorsion barillet <strong id="cinBarrelValue"></strong></span>
+          <input id="cinBarrel" type="range" min="0" max="0.5" step="0.01" />
+        </label>
+        <label class="pix-control">
+          <span>Scan lines <strong id="cinScanLinesValue"></strong></span>
+          <input id="cinScanLines" type="range" min="0" max="6" step="1" />
+        </label>
+        <button id="cinReset" class="pix-reset-btn" type="button">Réinitialiser cinéma</button>
+      </div>
     </div>
   `;
 
@@ -1040,7 +929,8 @@ export function createDebugLightUI({ visualEnvironment, postprocess }) {
   _fpsEl = root.querySelector('#fps-counter');
   // Délégation de clic sur le conteneur HUD → bouton copier (innerHTML est recréé à chaque frame)
   _fpsEl.addEventListener('click', e => {
-    if (e.target.closest('.fps-hud-copy')) { _copyHud(); return; }
+    if (e.target.closest('.fps-hud-copy'))  { _copyHud(); return; }
+    if (e.target.closest('.fps-hud-close')) { _toggleFpsHud(); return; }
     const sortEl = e.target.closest('[data-sort]');
     if (sortEl) {
       const key = sortEl.dataset.sort;
@@ -1050,8 +940,25 @@ export function createDebugLightUI({ visualEnvironment, postprocess }) {
     }
   });
 
-  const controls = root.querySelector('#debugLightControls');
-  const json = root.querySelector('#debugLightJson');
+  const controls    = root.querySelector('#debugLightControls');
+  const undoBtn     = root.querySelector('#debugLightUndo');
+  const redoBtn     = root.querySelector('#debugLightRedo');
+  const compareBtn  = root.querySelector('#debugLightCompare');
+  const lastPresetEl = root.querySelector('#debugLightLastPreset');
+
+  // ─── Undo / Redo stacks — modifications manuelles ────────────────────────
+  const UNDO_MAX   = 30;
+  const _undoStack = [];
+  const _redoStack = [];
+  // ─── Compare — bascule courant ↔ dernière ambiance ────────────────────────
+  let lastPresetState        = null;   // snapshot config après dernier clic preset
+  let lastPresetPixelization = null;  // pixelisation associée au dernier preset
+  let lastPresetCinema       = null;  // cinéma associé au dernier preset
+  let _comparing             = false;
+  let _stateBeforeCompare    = null;  // snapshot state au moment du clic "Comparer" → restauré par "⟳ Retour"
+  let _pixelBeforeCompare    = null;  // pixelisation en cours avant entrée en mode comparer
+  let _cinBeforeCompare      = null;  // cinéma en cours avant entrée en mode comparer
+
   const gradingEnabled = root.querySelector('#debugGradingEnabled');
   const paletteEnabled = root.querySelector('#debugPaletteEnabled');
   const sunOrbitEnabled = root.querySelector('#debugSunOrbitEnabled');
@@ -1076,11 +983,11 @@ export function createDebugLightUI({ visualEnvironment, postprocess }) {
   });
 
   for (const [path, label, min, max, step] of SLIDERS) {
-    controls.appendChild(createSlider(state, path, label, min, max, step, applyAll));
+    controls.appendChild(createSlider(state, path, label, min, max, step, applyAll, pushUndo));
   }
 
   for (const [path, label] of COLORS) {
-    controls.appendChild(createColorPicker(state, path, label, applyAll));
+    controls.appendChild(createColorPicker(state, path, label, applyAll, pushUndo));
   }
 
   // ─── Preset buttons ─────────────────────────────────────────────────────────
@@ -1093,6 +1000,7 @@ export function createDebugLightUI({ visualEnvironment, postprocess }) {
     btn.style.background = preset.bg;
     btn.title = preset.delta ? `Appliquer l'ambiance "${preset.name}"` : 'Retour aux valeurs par défaut';
     btn.addEventListener('click', () => {
+      pushUndo(); // capture avant le changement → annulable
       const fresh = cloneVisualConfig(DEFAULT_VISUAL_ENVIRONMENT_CONFIG);
       if (preset.delta) applyDelta(fresh, preset.delta);
       replaceDeep(state, fresh);
@@ -1100,9 +1008,20 @@ export function createDebugLightUI({ visualEnvironment, postprocess }) {
       // Pixelisation indépendante du LUT config.
       // Presets retro : leur pixelization inclut enabled:true → active la grille.
       // Autres presets : désactive explicitement la pixelisation (enabled:false).
-      postprocess?.applySettings?.(preset.pixelization ?? { enabled: false, pixelSize: 1 });
+      const pix = preset.pixelization ?? { enabled: false, pixelSize: 1 };
+      _commitPix(pix);
+      // Cinéma : config intégrée dans ambiances.json (scanLines > 0 pour presets rétro CRT)
+      const cin = preset.cinema ?? { enabled: true };
+      _commitCin(cin);
       applyAll();
-      exportJson();
+      // Snapshot pour "Comparer"
+      lastPresetState        = JSON.parse(JSON.stringify(state));
+      lastPresetPixelization = pix;
+      lastPresetCinema       = cin;
+      lastPresetEl.textContent = preset.name;
+      compareBtn.disabled   = false;
+      _comparing            = false;
+      _updateCompareBtn();
     });
     presetsContainer.appendChild(btn);
   }
@@ -1114,14 +1033,19 @@ export function createDebugLightUI({ visualEnvironment, postprocess }) {
     // Re-sync la largeur à chaque ouverture (le panel était caché → offsetWidth = 0)
     if (!root.classList.contains('collapsed')) _syncLutWidth();
   });
-  // Touche L : synchroniser le bouton LUT
+  // Bouton × dans l'en-tête LUT → fermer le panel
+  root.querySelector('#debugLightClose').addEventListener('click', () => {
+    root.classList.add('collapsed');
+    lutToggleBtn.classList.remove('debug-light-toggle--lut-active');
+  });
+  // Touche C : ouvrir/fermer le panel CUSTOMISATION
   document.addEventListener('keydown', e => {
-    if (e.key === 'l' || e.key === 'L') {
+    if (e.key === 'c' || e.key === 'C') {
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-      setTimeout(() => {
-        lutToggleBtn.classList.toggle('debug-light-toggle--lut-active', !root.classList.contains('collapsed'));
-      }, 0);
+      root.classList.toggle('collapsed');
+      lutToggleBtn.classList.toggle('debug-light-toggle--lut-active', !root.classList.contains('collapsed'));
+      if (!root.classList.contains('collapsed')) _syncLutWidth();
     }
   });
 
@@ -1149,63 +1073,211 @@ export function createDebugLightUI({ visualEnvironment, postprocess }) {
     }
   });
 
-  // ─── Bouton PIX + touche P : afficher/masquer le HUD pixelisation ──────────
-  const pixBtn = root.querySelector('#pixToggle');
+  // ─── Contrôles PIX embarqués dans le panel CUSTOMISATION ────────────────────
+  // Initialiser depuis localStorage + appliquer au postprocess
+  const _pixInitStored = _readPixStored();
+  // Fallback worldShapeMode depuis le stockage dédié (dorfromantik.worldShapeMode)
+  let _pixCurrent = _normalizePix({ worldShapeMode: getWorldShapeMode(), ...PIX_DEFAULTS, ...(_pixInitStored ?? {}) });
+  postprocess?.applySettings?.(_pixCurrent);
+  setWorldShapeMode(_pixCurrent.worldShapeMode);
 
-  function _syncPixBtn() {
-    const panel = document.getElementById('postprocessHud');
-    // getComputedStyle tient compte de !important (mode immersif)
-    const visible = panel ? getComputedStyle(panel).display !== 'none' : false;
-    pixBtn.classList.toggle('debug-light-toggle--pix-active', visible);
+  const pixEnabledEl  = root.querySelector('#pixEnabled');
+  const pixSizeEl     = root.querySelector('#pixPixelSize');
+  const pixSizeValEl  = root.querySelector('#pixPixelSizeValue');
+  const pixNormalEl   = root.querySelector('#pixNormalEdge');
+  const pixNormalValEl= root.querySelector('#pixNormalEdgeValue');
+  const pixDepthEl    = root.querySelector('#pixDepthEdge');
+  const pixDepthValEl = root.querySelector('#pixDepthEdgeValue');
+  const pixShapeEl    = root.querySelector('#pixWorldShape');
+  const pixShapeValEl = root.querySelector('#pixWorldShapeValue');
+
+  function _renderPixControls(s) {
+    _pixCurrent = _normalizePix(s);
+    pixEnabledEl.checked     = _pixCurrent.enabled;
+    pixSizeEl.value          = String(_pixCurrent.pixelSize);
+    pixSizeValEl.textContent = String(_pixCurrent.pixelSize);
+    pixNormalEl.value        = String(_pixCurrent.normalEdgeStrength);
+    pixNormalValEl.textContent = _pixCurrent.normalEdgeStrength.toFixed(2);
+    pixDepthEl.value         = String(_pixCurrent.depthEdgeStrength);
+    pixDepthValEl.textContent  = _pixCurrent.depthEdgeStrength.toFixed(2);
+    pixShapeEl.value         = _pixCurrent.worldShapeMode;
+    pixShapeValEl.textContent= _pixCurrent.worldShapeMode === 'platiste' ? 'plat' : 'courbé';
+    root.querySelector('.debug-light-pix-section').classList.toggle('pix-section--disabled', !_pixCurrent.enabled);
   }
 
-  function _togglePixPanel() {
-    const panel = document.getElementById('postprocessHud');
-    if (!panel) return;
-    const visible = getComputedStyle(panel).display !== 'none';
-    if (visible) {
-      panel.style.removeProperty('display');
-      panel.style.display = 'none';
+  function _commitPix(partial) {
+    const next = _normalizePix({ ..._pixCurrent, ...partial });
+    postprocess?.applySettings?.(next);
+    setWorldShapeMode(next.worldShapeMode);
+    _renderPixControls(next);
+    _storePixSettings(next);
+  }
+
+  // Sync depuis l'extérieur (presets appliquent pixelisation via postprocess)
+  function _syncPixControls() {
+    const ext = postprocess?.getSettings?.();
+    if (ext) _renderPixControls({ ..._pixCurrent, ...ext });
+  }
+
+  pixEnabledEl.addEventListener('change', () => _commitPix({ enabled: pixEnabledEl.checked }));
+  pixSizeEl.addEventListener('input', () => _commitPix({ pixelSize: Number(pixSizeEl.value) }));
+  pixNormalEl.addEventListener('input', () => _commitPix({ normalEdgeStrength: Number(pixNormalEl.value) }));
+  pixDepthEl.addEventListener('input', () => _commitPix({ depthEdgeStrength: Number(pixDepthEl.value) }));
+  pixShapeEl.addEventListener('change', () => _commitPix({ worldShapeMode: pixShapeEl.value }));
+  root.querySelector('#pixReset').addEventListener('click', () => _commitPix(PIX_DEFAULTS));
+
+  // Hook pour que les presets puissent notifier le HUD de changements PIX
+  postprocess?.onExternalSettingsChange?.(_syncPixControls);
+
+  _renderPixControls(_pixCurrent);
+
+  // ─── Contrôles CINÉMA embarqués dans le panel CUSTOMISATION ─────────────────
+  let _cinCurrent = _normalizeCin({ ...CIN_DEFAULTS, ...(_readCinStored() ?? {}) });
+  postprocess?.applyCinemaSettings?.(_cinCurrent);
+
+  const cinEnabledEl        = root.querySelector('#cinEnabled');
+  const cinTiltEl           = root.querySelector('#cinTilt');
+  const cinTiltValEl        = root.querySelector('#cinTiltValue');
+  const cinFocusCenterEl    = root.querySelector('#cinFocusCenter');
+  const cinFocusCenterValEl = root.querySelector('#cinFocusCenterValue');
+  const cinFocusBandEl      = root.querySelector('#cinFocusBand');
+  const cinFocusBandValEl   = root.querySelector('#cinFocusBandValue');
+  const cinVignetteEl       = root.querySelector('#cinVignette');
+  const cinVignetteValEl    = root.querySelector('#cinVignetteValue');
+  const cinGrainEl          = root.querySelector('#cinGrain');
+  const cinGrainValEl       = root.querySelector('#cinGrainValue');
+  const cinChromaticEl      = root.querySelector('#cinChromatic');
+  const cinChromaticValEl   = root.querySelector('#cinChromaticValue');
+  const cinHalationEl       = root.querySelector('#cinHalation');
+  const cinHalationValEl    = root.querySelector('#cinHalationValue');
+  const cinBarrelEl         = root.querySelector('#cinBarrel');
+  const cinBarrelValEl      = root.querySelector('#cinBarrelValue');
+  const cinScanLinesEl      = root.querySelector('#cinScanLines');
+  const cinScanLinesValEl   = root.querySelector('#cinScanLinesValue');
+
+  function _renderCinControls(s) {
+    _cinCurrent = _normalizeCin(s);
+    cinEnabledEl.checked              = _cinCurrent.enabled;
+    cinTiltEl.value                   = String(_cinCurrent.tilt);
+    cinTiltValEl.textContent          = _cinCurrent.tilt.toFixed(2);
+    cinFocusCenterEl.value            = String(_cinCurrent.focusCenter);
+    cinFocusCenterValEl.textContent   = _cinCurrent.focusCenter.toFixed(2);
+    cinFocusBandEl.value              = String(_cinCurrent.focusBand);
+    cinFocusBandValEl.textContent     = _cinCurrent.focusBand.toFixed(2);
+    cinVignetteEl.value               = String(_cinCurrent.vignette);
+    cinVignetteValEl.textContent      = _cinCurrent.vignette.toFixed(2);
+    cinGrainEl.value                  = String(_cinCurrent.grain);
+    cinGrainValEl.textContent         = _cinCurrent.grain.toFixed(2);
+    cinChromaticEl.value              = String(_cinCurrent.chromatic);
+    cinChromaticValEl.textContent     = _cinCurrent.chromatic.toFixed(2);
+    cinHalationEl.value               = String(_cinCurrent.halation);
+    cinHalationValEl.textContent      = _cinCurrent.halation.toFixed(2);
+    cinBarrelEl.value                 = String(_cinCurrent.barrel);
+    cinBarrelValEl.textContent        = _cinCurrent.barrel.toFixed(2);
+    cinScanLinesEl.value              = String(Math.round(_cinCurrent.scanLines));
+    cinScanLinesValEl.textContent     = String(Math.round(_cinCurrent.scanLines)) + 'px';
+    root.querySelector('.debug-light-cinema-section').classList.toggle('cinema-section--disabled', !_cinCurrent.enabled);
+  }
+
+  function _commitCin(partial) {
+    const next = _normalizeCin({ ..._cinCurrent, ...partial });
+    postprocess?.applyCinemaSettings?.(next);
+    _renderCinControls(next);
+    _storeCinSettings(next);
+  }
+
+  // Sync depuis l'extérieur (touche T dans scene.js → postprocess.toggleCinema)
+  function _syncCinControls() {
+    const ext = postprocess?.getCinemaSettings?.();
+    if (ext) _renderCinControls({ ..._cinCurrent, ...ext });
+  }
+
+  cinEnabledEl.addEventListener('change',    () => _commitCin({ enabled:     cinEnabledEl.checked }));
+  cinTiltEl.addEventListener('input',         () => _commitCin({ tilt:        Number(cinTiltEl.value) }));
+  cinFocusCenterEl.addEventListener('input',  () => _commitCin({ focusCenter: Number(cinFocusCenterEl.value) }));
+  cinFocusBandEl.addEventListener('input',    () => _commitCin({ focusBand:   Number(cinFocusBandEl.value) }));
+  cinVignetteEl.addEventListener('input',     () => _commitCin({ vignette:    Number(cinVignetteEl.value) }));
+  cinGrainEl.addEventListener('input',        () => _commitCin({ grain:       Number(cinGrainEl.value) }));
+  cinChromaticEl.addEventListener('input',    () => _commitCin({ chromatic:   Number(cinChromaticEl.value) }));
+  cinHalationEl.addEventListener('input',     () => _commitCin({ halation:    Number(cinHalationEl.value) }));
+  cinBarrelEl.addEventListener('input',       () => _commitCin({ barrel:      Number(cinBarrelEl.value) }));
+  cinScanLinesEl.addEventListener('input',    () => _commitCin({ scanLines:   Number(cinScanLinesEl.value) }));
+  root.querySelector('#cinReset').addEventListener('click', () => _commitCin(CIN_DEFAULTS));
+
+  // Hook pour que la touche T puisse notifier le panel (sync checkbox + disabled state)
+  postprocess?.onExternalCinemaChange?.(_syncCinControls);
+
+  _renderCinControls(_cinCurrent);
+
+  undoBtn.addEventListener('click', () => {
+    if (_undoStack.length === 0) return;
+    _redoStack.push(JSON.stringify(state)); // mémoriser l'état courant pour pouvoir refaire
+    redoBtn.disabled = false;
+    replaceDeep(state, JSON.parse(_undoStack.pop()));
+    undoBtn.disabled = _undoStack.length === 0;
+    _comparing = false;
+    _updateCompareBtn();
+    refreshInputs(root, state);
+    applyAll();
+  });
+
+  redoBtn.addEventListener('click', () => {
+    if (_redoStack.length === 0) return;
+    _undoStack.push(JSON.stringify(state)); // permettre de ré-annuler
+    undoBtn.disabled = false;
+    replaceDeep(state, JSON.parse(_redoStack.pop()));
+    redoBtn.disabled = _redoStack.length === 0;
+    _comparing = false;
+    _updateCompareBtn();
+    refreshInputs(root, state);
+    applyAll();
+  });
+
+  compareBtn.addEventListener('click', () => {
+    if (!lastPresetState) return;
+    _comparing = !_comparing;
+    _updateCompareBtn();
+    if (_comparing) {
+      // Mémoriser l'état AVANT d'entrer en mode comparer pour le restaurer sur "⟳ Retour"
+      _stateBeforeCompare = JSON.parse(JSON.stringify(state));
+      _pixelBeforeCompare = { ..._pixCurrent }; // snapshot courant des settings PIX
+      _cinBeforeCompare   = { ..._cinCurrent }; // snapshot courant des settings CINÉMA
+      // Afficher la dernière ambiance preset
+      visualEnvironment.apply(lastPresetState);
+      applyColorGradingUniforms(postprocess?.colorGradingPass, lastPresetState);
+      if (lastPresetPixelization) _commitPix(lastPresetPixelization);
+      if (lastPresetCinema)       _commitCin(lastPresetCinema);
     } else {
-      // setProperty avec priorité 'important' pour passer outre la règle
-      // body.grid-only-mode .postprocess-hud { display: none !important }
-      panel.style.setProperty('display', 'block', 'important');
-    }
-    _syncPixBtn();
-  }
-
-  // Initialiser : cacher le panel par défaut → bouton gris ; 1er clic = afficher
-  requestAnimationFrame(() => {
-    const panel = document.getElementById('postprocessHud');
-    if (panel) panel.style.display = 'none';
-    _syncPixBtn();
-  });
-
-  pixBtn.addEventListener('click', _togglePixPanel);
-
-  // Touche P : afficher/masquer le HUD pixelisation
-  document.addEventListener('keydown', e => {
-    if (e.key === 'p' || e.key === 'P') {
-      const tag = document.activeElement?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-      e.preventDefault();
-      _togglePixPanel();
+      // Restaurer exactement ce qui était affiché AVANT de cliquer "Comparer"
+      if (_stateBeforeCompare) {
+        replaceDeep(state, _stateBeforeCompare);
+        refreshInputs(root, state);
+        _stateBeforeCompare = null;
+      }
+      visualEnvironment.apply(state);
+      applyColorGradingUniforms(postprocess?.colorGradingPass, state);
+      if (_pixelBeforeCompare) { _commitPix(_pixelBeforeCompare); _pixelBeforeCompare = null; }
+      if (_cinBeforeCompare)   { _commitCin(_cinBeforeCompare);   _cinBeforeCompare   = null; }
     }
   });
-  root.querySelector('#debugLightExport').addEventListener('click', () => exportJson());
-  root.querySelector('#debugLightCopy').addEventListener('click', async () => {
-    exportJson();
-    try { await navigator.clipboard.writeText(json.value); } catch (error) { console.warn('[debugLightUI] copie presse-papiers impossible', error); }
+
+  root.querySelector('#debugLightCopy').addEventListener('click', async function () {
+    const combined = { lut: visualEnvironment.exportConfig(), pix: _pixCurrent, cinema: _cinCurrent };
+    const text = JSON.stringify(combined, null, 2);
+    await _copyToClipboard(text).catch(err => console.warn('[debugLightUI] copie impossible', err));
+    const btn = this;
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copié !';
+    setTimeout(() => { btn.textContent = orig; }, 1600);
   });
   root.querySelector('#debugLightReset').addEventListener('click', () => {
     replaceDeep(state, cloneVisualConfig(DEFAULT_VISUAL_ENVIRONMENT_CONFIG));
     localStorage.removeItem(LUT_STORAGE_KEY);
-    // Réinitialiser aussi la pixelisation (désactivée dans le rendu par défaut)
-    localStorage.removeItem('dorfoPixelPostprocessSettings.v4');
-    postprocess?.applySettings?.({ pixelSize: 2, enabled: false });
+    // Réinitialiser aussi la pixelisation et le cinéma
+    _commitPix(PIX_DEFAULTS);
+    _commitCin(CIN_DEFAULTS);
     refreshInputs(root, state);
     applyAll();
-    exportJson();
   });
 
   // ─── Synchroniser la largeur du LUT panel avec #tileUI ─────────────────────
@@ -1234,26 +1306,39 @@ export function createDebugLightUI({ visualEnvironment, postprocess }) {
   document.body.appendChild(kbdHint);
 
   applyAll();
-  exportJson();
 
   return {
     element: root,
-    exportJson,
     applyAll
   };
 
   function applyAll() {
+    // Toute modification manuelle quitte le mode comparer
+    _comparing = false;
+    _updateCompareBtn();
     visualEnvironment.apply(state);
     applyColorGradingUniforms(postprocess?.colorGradingPass, state);
     saveLutConfig(visualEnvironment.exportConfig());
   }
 
-  function exportJson() {
-    json.value = JSON.stringify(visualEnvironment.exportConfig(), null, 2);
+  function pushUndo() {
+    _undoStack.push(JSON.stringify(state));
+    if (_undoStack.length > UNDO_MAX) _undoStack.shift();
+    undoBtn.disabled = false;
+    // Toute nouvelle modification manuelle efface le redo
+    _redoStack.length = 0;
+    redoBtn.disabled = true;
+    // Quitter le mode comparer : une modif manuelle revient à l'état courant
+    if (_comparing) { _comparing = false; _updateCompareBtn(); }
+  }
+
+  function _updateCompareBtn() {
+    compareBtn.textContent = _comparing ? '⟳ Retour' : 'Comparer';
+    compareBtn.classList.toggle('debug-light-compare-btn--active', _comparing);
   }
 }
 
-function createSlider(state, path, label, min, max, step, onChange) {
+function createSlider(state, path, label, min, max, step, onChange, onBeforeChange) {
   const row = document.createElement('label');
   row.className = 'debug-light-row';
 
@@ -1268,6 +1353,10 @@ function createSlider(state, path, label, min, max, step, onChange) {
 
   const input = row.querySelector('input');
   const output = row.querySelector('output');
+  // Capturer l'état AVANT que le drag commence (pour undo)
+  let _dragPushed = false;
+  input.addEventListener('pointerdown', () => { if (!_dragPushed) { onBeforeChange?.(); _dragPushed = true; } });
+  input.addEventListener('pointerup',   () => { _dragPushed = false; });
   input.addEventListener('input', () => {
     const next = Number(input.value);
     setPath(state, path, next);
@@ -1278,7 +1367,7 @@ function createSlider(state, path, label, min, max, step, onChange) {
   return row;
 }
 
-function createColorPicker(state, path, label, onChange) {
+function createColorPicker(state, path, label, onChange, onBeforeChange) {
   const row = document.createElement('label');
   row.className = 'debug-light-row color-row';
 
@@ -1293,6 +1382,8 @@ function createColorPicker(state, path, label, onChange) {
 
   const input = row.querySelector('input');
   const output = row.querySelector('output');
+  // Capturer l'état AVANT l'ouverture du sélecteur de couleur (pour undo)
+  input.addEventListener('mousedown', () => { onBeforeChange?.(); });
   input.addEventListener('input', () => {
     setPath(state, path, input.value);
     output.textContent = input.value;
@@ -1384,12 +1475,13 @@ function installDebugLightCss() {
     .fps-hud-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       gap: 6px;
       margin-bottom: 2px;
     }
 
-    .fps-hud-copy {
+    .fps-hud-copy,
+    .fps-hud-close {
       background: rgba(255,255,255,0.10);
       border: 1px solid rgba(255,255,255,0.22);
       border-radius: 4px;
@@ -1400,8 +1492,10 @@ function installDebugLightCss() {
       padding: 2px 5px;
       flex-shrink: 0;
     }
+    .fps-hud-copy { margin-left: auto; }
 
-    .fps-hud-copy:hover {
+    .fps-hud-copy:hover,
+    .fps-hud-close:hover {
       background: rgba(255,255,255,0.20);
       color: #fff;
     }
@@ -1605,8 +1699,9 @@ function installDebugLightCss() {
       position: relative;
       pointer-events: auto;
       flex-shrink: 0;
-      width: 64px;
+      min-width: 48px;
       height: 34px;
+      padding: 0 10px;
       border: 1px solid rgba(255,255,255,0.18);
       border-radius: 10px;
       color: rgba(247,239,225,0.7);
@@ -1635,17 +1730,156 @@ function installDebugLightCss() {
       border-color: rgba(255,255,255,0.28);
     }
 
-    .debug-light-toggle--pix {
-      background: linear-gradient(135deg, #4a5568, #2d3748);
-      color: rgba(247,239,225,0.7);
-      border-color: rgba(255,255,255,0.18);
+    /* ─── PIX section inside CUSTOMISATION panel ─────────────────────────── */
+    .debug-light-pix-sep {
+      height: 1px;
+      background: rgba(120,180,255,0.22);
+      margin: 12px 0;
     }
 
-    .debug-light-toggle--pix.debug-light-toggle--pix-active {
-      background: linear-gradient(135deg, #ffd36d, #b58239);
-      color: #1c140c;
-      border-color: rgba(255,255,255,0.28);
+    .debug-light-pix-section { }
+
+    .debug-light-pix-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
     }
+    .debug-light-pix-head > span {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      color: rgba(180,215,255,0.85);
+    }
+
+    /* Toggle switch (same style as postprocessHud) */
+    .pix-switch {
+      flex: 0 0 auto;
+      position: relative;
+      width: 36px;
+      height: 20px;
+      cursor: pointer;
+    }
+    .pix-switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .pix-switch span {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.22);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+      transition: background 0.16s, box-shadow 0.16s;
+    }
+    .pix-switch span::after {
+      content: '';
+      position: absolute;
+      left: 3px; top: 3px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #f7efe1;
+      box-shadow: 0 2px 7px rgba(0,0,0,0.35);
+      transition: transform 0.16s;
+    }
+    .pix-switch input:checked + span { background: rgba(88,228,153,0.55); box-shadow: inset 0 0 0 1px rgba(175,255,213,0.45), 0 0 14px rgba(88,228,153,0.22); }
+    .pix-switch input:checked + span::after { transform: translateX(16px); }
+
+    .pix-control {
+      display: block;
+      margin-top: 8px;
+    }
+    .pix-control span {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+      font-size: 9px;
+      font-weight: 800;
+      color: rgba(180,215,255,0.82);
+      text-transform: uppercase;
+      letter-spacing: 0.045em;
+    }
+    .pix-control strong {
+      min-width: 28px;
+      text-align: right;
+      color: #fff;
+      font-variant-numeric: tabular-nums;
+    }
+    .pix-control input[type="range"],
+    .debug-light-row input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(120,170,255,0.22);
+      outline: none;
+      cursor: pointer;
+      margin: 5px 0;
+    }
+    .pix-control input[type="range"]::-webkit-slider-thumb,
+    .debug-light-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(200,225,255,0.92);
+      box-shadow: 0 0 0 2px rgba(120,180,255,0.30), 0 1px 4px rgba(0,0,0,0.45);
+      cursor: pointer;
+      transition: background 0.12s, box-shadow 0.12s;
+    }
+    .pix-control input[type="range"]::-webkit-slider-thumb:hover,
+    .debug-light-row input[type="range"]::-webkit-slider-thumb:hover {
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(140,200,255,0.45), 0 1px 6px rgba(0,0,0,0.50);
+    }
+    .pix-control input[type="range"]::-moz-range-thumb,
+    .debug-light-row input[type="range"]::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(200,225,255,0.92);
+      box-shadow: 0 0 0 2px rgba(120,180,255,0.30), 0 1px 4px rgba(0,0,0,0.45);
+      cursor: pointer;
+    }
+    .pix-control input[type="range"]::-moz-range-track,
+    .debug-light-row input[type="range"]::-moz-range-track {
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(120,170,255,0.22);
+    }
+    .pix-select {
+      width: 100%;
+      margin-top: 2px;
+      padding: 5px 7px;
+      border: 1px solid rgba(120,180,255,0.30);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.10);
+      color: rgba(220,235,255,0.90);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .pix-select option { color: #111827; }
+    .pix-reset-btn {
+      width: 100%;
+      margin-top: 7px;
+      padding: 5px 7px;
+      border: 0;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.10);
+      color: rgba(180,215,255,0.80);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .pix-reset-btn:hover { background: rgba(255,255,255,0.24); }
+    .pix-section--disabled .pix-control { opacity: 0.55; }
+    .debug-light-cinema-section { }
+    .cinema-section--disabled .pix-control { opacity: 0.55; }
 
     .debug-light-body {
       pointer-events: auto;
@@ -1661,28 +1895,76 @@ function installDebugLightCss() {
       background: rgba(0,0,0,0.68);
       backdrop-filter: blur(7px);
       box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(120,180,255,0.35) transparent;
     }
+    .debug-light-body::-webkit-scrollbar { width: 4px; }
+    .debug-light-body::-webkit-scrollbar-thumb { background: rgba(120,180,255,0.35); border-radius: 2px; }
+    .debug-light-body::-webkit-scrollbar-track { background: transparent; }
 
     .debug-light-panel.collapsed .debug-light-body { display: none; }
 
     .debug-light-head,
-    .debug-light-switches,
-    .debug-light-export {
+    .debug-light-switches {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
       margin-bottom: 10px;
+      font-size: 11px;
+      color: rgba(180,215,255,0.82);
+    }
+
+    .debug-light-export {
+      margin-bottom: 10px;
+    }
+
+    .debug-light-export-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .debug-light-head button,
     .debug-light-export button {
       border: 1px solid rgba(255,255,255,0.22);
       border-radius: 8px;
-      color: #f6ecd6;
+      color: rgba(200,220,255,0.85);
       background: rgba(255,255,255,0.08);
       cursor: pointer;
       padding: 4px 8px;
+      white-space: nowrap;
+    }
+
+    .debug-light-close-btn {
+      margin-left: auto;
+      padding: 2px 7px !important;
+      font-size: 13px;
+      opacity: 0.65;
+    }
+    .debug-light-close-btn:hover { opacity: 1; }
+
+    #debugLightUndo:disabled,
+    #debugLightRedo:disabled,
+    #debugLightCompare:disabled {
+      opacity: 0.32;
+      cursor: default;
+    }
+
+    .debug-light-compare-btn--active {
+      background: rgba(90,140,255,0.30) !important;
+      border-color: rgba(120,180,255,0.55) !important;
+      color: #b0d0ff !important;
+    }
+
+    .debug-light-last-preset {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 11px;
+      color: rgba(180,215,255,0.60);
+      font-style: italic;
     }
 
     .debug-light-controls {
@@ -1699,9 +1981,12 @@ function installDebugLightCss() {
       grid-template-columns: 122px 1fr 58px;
       align-items: center;
       gap: 8px;
+      font-size: 11px;
+      line-height: 1.55;
+      color: rgba(180,215,255,0.82);
     }
 
-    .debug-light-row input[type="range"] { width: 100%; }
+    /* .debug-light-row input[type="range"] → style mutualisé avec .pix-control ci-dessus */
     .debug-light-row input[type="color"] {
       width: 100%;
       height: 24px;
@@ -1710,7 +1995,7 @@ function installDebugLightCss() {
     }
 
     .debug-light-row output {
-      color: #ffd995;
+      color: rgba(240,250,255,0.96);
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
@@ -1719,7 +2004,7 @@ function installDebugLightCss() {
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.10em;
-      color: rgba(244,234,214,0.55);
+      color: rgba(180,215,255,0.55);
       margin-bottom: 5px;
     }
 
@@ -1754,10 +2039,6 @@ function installDebugLightCss() {
 
     .debug-light-preset-btn:active { transform: translateY(0); }
 
-    #debugLightJson {
-      display: none;
-    }
-
     /* ── Mini HUD clavier (bottom-right) ── */
     #kbdHintHud {
       position: fixed;
@@ -1776,9 +2057,8 @@ function installDebugLightCss() {
 
     body.grid-only-mode #kbdHintHud { display: none; }
 
-    /* Super-immersif (SHIFT+ESPACE) : masque les HUDs FPS / PIX / LUT */
+    /* Super-immersif (SHIFT+ESPACE) : masque les HUDs FPS / CUSTOM */
     body.huds-force-hidden #debugLightPanel { display: none !important; }
-    body.huds-force-hidden #postprocessHud  { display: none !important; }
   `;
   document.head.appendChild(style);
 }

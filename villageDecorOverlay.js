@@ -353,7 +353,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
         // Pas de tryResolve : la fontaine est intentionnellement au cœur du village,
         // entre les bâtiments — tryResolve échouerait systématiquement sur leurs hitbox.
         if (!isInsideSpecialBuildingSafeZone(fPos, specialBuildingSafeZones)) {
-          const fountainKey = 'fountain-1'; // fontaine-2 supprimée
+          const fountainKey = hashUnit(`${seedF}:variant`) < 0.5 ? 'fountain-1' : 'fountain-2';
           const fountain    = createPropModel(fountainKey, seedF);
           if (fountain) {
             fountain.name     = 'village-fountain-glb';
@@ -713,7 +713,38 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
   return group;
 }
 
-// ─── Fusion des poulets village ───────────────────────────────────────────────
+// ─── Fusion des animaux village ───────────────────────────────────────────────
+
+/**
+ * Retourne true si le matériau est un "helper blanc" : aucune texture et couleur
+ * très proche du blanc pur. Ces meshes sont des proxies collision/armature exportés
+ * depuis Blender avec le matériau par défaut — ils ne doivent pas piloter la couleur.
+ */
+function _isHelperWhiteMaterial(m) {
+  if (!m) return true;
+  if (m.map) return false; // a une texture → pas blanc helper
+  if (!m.color) return true;
+  // Seuil 0.97 : blanc TRÈS pur uniquement (proxy Blender non coloré).
+  // Les matériaux crème/ambrés post-teinture (preparePropPrototype) ne sont plus filtrés.
+  return m.color.r > 0.97 && m.color.g > 0.97 && m.color.b > 0.97;
+}
+
+/**
+ * Sélectionne le meilleur matériau parmi ceux d'un mesh fusionné.
+ * Priorité : (1) matériau avec texture map, (2) matériau non-blanc, (3) n'importe lequel.
+ * Évite de prendre un mesh helper/collision blanc comme unique matériau de la fusion.
+ */
+function _pickBestMaterial(current, obj) {
+  const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+  for (const m of mats) {
+    if (!m) continue;
+    if (!current) { current = m; continue; }
+    if (current.map) continue;                                      // déjà optimal (texture)
+    if (m.map) { current = m; continue; }                          // m a texture → meilleur
+    if (_isHelperWhiteMaterial(current) && !_isHelperWhiteMaterial(m)) current = m; // éviter blanc
+  }
+  return current;
+}
 
 /**
  * Convertit les InterleavedBufferAttributes d'une géométrie GLB en BufferAttribute
@@ -768,12 +799,16 @@ function _mergeVillageChickens(group) {
   for (const chk of chickenGroups) {
     chk.traverse(obj => {
       if (!obj.isMesh && !obj.isSkinnedMesh) return;
+      // Ignorer les meshes helpers/collision (matériau blanc sans texture) exportés
+      // involontairement depuis Blender — ils faussent la couleur de la fusion.
+      const firstMat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+      if (_isHelperWhiteMaterial(firstMat)) return;
       // _deinterleaveGeo : convertit InterleavedBufferAttribute → BufferAttribute standard
       // (poule.glb utilise le format GLTF compact, incompatible avec mergeGeometries)
       const geo = _deinterleaveGeo(obj.geometry);
       geo.applyMatrix4(obj.matrixWorld);
       geoList.push(geo);
-      if (!mat) mat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+      mat = _pickBestMaterial(mat, obj);
     });
     group.remove(chk);
   }
@@ -818,10 +853,13 @@ function _mergeVillageAnimalsByName(group, animalName) {
   for (const animal of animals) {
     animal.traverse(obj => {
       if (!obj.isMesh && !obj.isSkinnedMesh) return;
+      // Ignorer les meshes helpers/collision (matériau blanc sans texture)
+      const firstMat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+      if (_isHelperWhiteMaterial(firstMat)) return;
       const geo = _deinterleaveGeo(obj.geometry);
       geo.applyMatrix4(obj.matrixWorld);
       geoList.push(geo);
-      if (!mat) mat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+      mat = _pickBestMaterial(mat, obj);
     });
     group.remove(animal);
   }

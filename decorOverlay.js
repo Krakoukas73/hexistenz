@@ -70,36 +70,38 @@ const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(d => [d.edge, d]
 const WATER_SURFACE_Y = (TILE_VISUAL.waterY ?? -0.075) + 0.012;
 export const FIELD_SURFACE_Y                 = 0.070;
 export const FIELD_FLAG_MIN_TOTAL            = 5;
-const        FIELD_FLAG_TARGET_HEIGHT        = HEX_SIZE * 0.384 * 1.06 * 0.90 * 0.85; // moulin-1: +20% +6% −10% −15%
-const        FIELD_FLAG_2_TARGET_HEIGHT      = HEX_SIZE * 0.384 * 1.06 * 1.05 * 1.11; // moulin-2: +20% +6% +5% +11%
-const        FOUNTAIN_TARGET_WIDTH           = HEX_SIZE * 0.18 * 0.93; // −7%
-const        HAY_BALE_TARGET_WIDTH           = HEX_SIZE * 0.14 * 2.2 * 1.3 * 1.15 * 1.15 * 1.06 * 0.92; // +15% +6% −8%
-const        BENCH_TARGET_LENGTH             = HEX_SIZE * 0.16 * 0.85 * 0.93; // −15% −7%
-const        SIGNPOST_TARGET_HEIGHT          = HEX_SIZE * 0.28 * 0.85 * 0.93 * 0.75; // −15% −7% −25%
-const        SHORE_BOAT_TARGET_LENGTH        = HEX_SIZE * 0.175 * 0.88; // −12%
+const        FIELD_FLAG_2_TARGET_HEIGHT      = HEX_SIZE * 0.384 * 1.06 * 1.05 * 1.11 * 0.92 * 0.88 * 0.93 * 0.88; // moulin-2: +20% +6% +5% +11% −8% −12% −7% −12%
+const        FIELD_FLAG_3_TARGET_HEIGHT      = HEX_SIZE * 0.384 * 1.06 * 1.05 * 1.11 * 0.92 * 0.88 * 0.93 * 0.88; // moulin-3: même base que moulin-2 −12%
+const        FOUNTAIN_1_TARGET_WIDTH         = HEX_SIZE * 0.18 * 0.93 * 0.90; // −7% −10%
+const        FOUNTAIN_2_TARGET_WIDTH         = HEX_SIZE * 0.18 * 0.93 * 0.80; // −7% −20%
+export const HAY_BALE_TARGET_WIDTH           = HEX_SIZE * 0.14 * 2.2 * 1.3 * 1.15 * 1.15 * 1.06 * 0.92 * 0.92; // +15% +6% −8% −8%
+const        BENCH_TARGET_LENGTH             = HEX_SIZE * 0.16 * 0.85 * 0.93 * 0.92; // −15% −7% −8%
+const        SIGNPOST_TARGET_HEIGHT          = HEX_SIZE * 0.28 * 0.85 * 0.93 * 0.75 * 0.88; // −15% −7% −25% −12%
+const        SHORE_BOAT_TARGET_LENGTH        = HEX_SIZE * 0.175 * 0.88 * 0.92; // −12% −8%
 export const SPECIAL_BUILDING_SAFE_RADIUS    = HEX_SIZE * 0.34;
 export const SPECIAL_BUILDING_BOAT_SAFE_RADIUS = HEX_SIZE * 0.18;
-export const NATURAL_FLOWER_TARGET_WIDTH     = HEX_SIZE * 0.047 * 0.85 * 0.93 * 0.85 * 0.85 * 0.90 * 0.88; // −15% −7% −15% −15% −10% −12%
-export const NATURAL_GRASS_TARGET_WIDTH      = HEX_SIZE * 0.058 * 1.15 * 0.91; // herbes/touffes/jeunes pousses (plantes.glb) — +15% −9%
-export const NATURAL_SHRUB_TARGET_WIDTH      = HEX_SIZE * 0.095 * 0.91; // fougères et buissons — forêts uniquement (plantes.glb) — −9%
+export const NATURAL_FLOWER_TARGET_WIDTH     = HEX_SIZE * 0.047 * 0.85 * 0.93 * 0.85 * 0.85 * 0.90 * 0.88 * 0.94; // −15% −7% −15% −15% −10% −12% −6%
+export const NATURAL_GRASS_TARGET_WIDTH      = HEX_SIZE * 0.058 * 1.15 * 0.91 * 0.87 * 0.94; // herbes/touffes/jeunes pousses (plantes.glb) — +15% −9% −13% −6%
+export const NATURAL_SHRUB_TARGET_WIDTH      = HEX_SIZE * 0.095 * 0.91 * 0.87 * 0.94; // fougères et buissons — forêts uniquement (plantes.glb) — −9% −13% −6%
 const        NATURAL_ROCK_TARGET_LENGTH      = HEX_SIZE * 0.106 * 0.85 * 0.93 * 0.88 * 0.85; // −15% −7% −12% −15%
-const        NATURAL_REED_TARGET_HEIGHT      = HEX_SIZE * 0.105 * 0.85 * 0.93 * 0.88 * 0.85; // −15% −7% −12% −15%
+const        NATURAL_REED_TARGET_HEIGHT      = HEX_SIZE * 0.105 * 0.85 * 0.93 * 0.88 * 0.85 * 0.92 * 0.94; // −15% −7% −12% −15% −8% −6%
 export const NATURAL_MUSHROOM_TARGET_WIDTH   = HEX_SIZE * 0.043 * 0.85 * 0.93 * 0.88 * 0.88 * 0.95; // −15% −7% −12% −12% −5%
-export const BARREL_TARGET_WIDTH             = HEX_SIZE * 0.1031 * 0.85 * 0.88 * 0.93; // −15% −12% −7%
-const        CART_TARGET_LENGTH              = HEX_SIZE * 0.291 * 0.85 * 0.85; // −15% −15%
-export const NATURAL_DEER_TARGET_WIDTH       = HEX_SIZE * 0.16 * 0.88;  // cerf sauvage (forêt / prairie / champ) — −12%
+export const BARREL_TARGET_WIDTH             = HEX_SIZE * 0.1031 * 0.85 * 0.88 * 0.93 * 0.88 * 0.92 * 0.92; // −15% −12% −7% −12% −8% −8%
+const        CART_TARGET_LENGTH              = HEX_SIZE * 0.291 * 0.85 * 0.85 * 0.88; // −15% −15% −12%
+export const NATURAL_DEER_TARGET_WIDTH       = HEX_SIZE * 0.16 * 0.88 * 0.92 * 0.92 * 0.92;  // cerf sauvage (forêt / prairie / champ) — −12% −8% −8% −8%
 const        ANIMAL_CHICKEN_TARGET_WIDTH     = HEX_SIZE * 0.055 * 0.50 * 1.12 * 1.10; // poule de village — ×0.50 +12% +10%
 const        ANIMAL_DOG_TARGET_WIDTH         = HEX_SIZE * 0.085; // chien de village
 const        ANIMAL_CAT_TARGET_WIDTH         = HEX_SIZE * 0.060 * 1.08 * 1.07; // chat de village +8% +7%
-const        ANIMAL_HORSE_TARGET_WIDTH       = HEX_SIZE * 0.20;  // cheval de village
+const        ANIMAL_HORSE_TARGET_WIDTH       = HEX_SIZE * 0.20 * 0.88 * 0.92 * 0.92;  // cheval de village −12% −8% −8%
 export const ROAD_DECOR_Y                    = ((TILE_VISUAL.tileThickness ?? 0.12) * -0.30) + 0.010;
 export const SHORE_BOAT_Y                    = WATER_SURFACE_Y + 0.012;
 
 export const NATURAL_DECOR_VARIANTS = {
   flower:   ['flower-1', 'flower-2', 'flower-3', 'flower-4'],
-  grass:    ['plant-misc2', 'plant-misc3', 'plant-misc4', 'plant-misc5',
+  grass:    ['brindille', 'brindille', 'brindille', 'brindille', // ×4 → ~33% du pool herbes
+             'plant-misc2', 'plant-misc3', 'plant-misc4', 'plant-misc5',
              'plant-grass1', 'plant-grass2', 'plant-sapling1', 'plant-sapling2'],
-  shrub:    ['shrub-fern', 'shrub-bush1', 'shrub-bush2', 'shrub-monstera1', 'shrub-monstera2', 'shrub-misc1'],
+  shrub:    ['shrub-fern', 'shrub-monstera1', 'shrub-monstera2', 'shrub-misc1'],
   chicken:  ['animal-chicken'],
   deer:     ['animal-deer'],
   rock:     ['rock-1', 'rock-2', 'rock-3', 'rock-4'],
@@ -111,10 +113,11 @@ export const NATURAL_DECOR_VARIANTS = {
 export const BARREL_VARIANTS = ['barrel-1', 'barrel-2', 'barrel-3', 'barrel-4', 'barrel-5'];
 
 const PROP_MODEL_DEFS = [
-  { key: 'field-flag',   url: './glb/batiments/moulin-1.glb', target: FIELD_FLAG_TARGET_HEIGHT   * 1.70, mode: 'height' },
   { key: 'field-flag-2', url: './glb/batiments/moulin-2.glb', target: FIELD_FLAG_2_TARGET_HEIGHT * 1.70, mode: 'height', correctionX: Math.PI / 2 },
+  { key: 'field-flag-3', url: './glb/batiments/moulin-3.glb', target: FIELD_FLAG_3_TARGET_HEIGHT * 1.70, mode: 'height', noSkeletonPose: true },
   { key: 'hay-bale',     url: './glb/botte-foin.glb',          target: HAY_BALE_TARGET_WIDTH,                   mode: 'length', kind: 'hay-bale' },
-  { key: 'fountain-1',   url: './glb/fontaine-1.glb',         target: FOUNTAIN_TARGET_WIDTH,                   mode: 'length' },
+  { key: 'fountain-1',   url: './glb/fontaine-1.glb',         target: FOUNTAIN_1_TARGET_WIDTH,                 mode: 'length' },
+  { key: 'fountain-2',   url: './glb/fontaine-2.glb',         target: FOUNTAIN_2_TARGET_WIDTH,                 mode: 'length' },
   { key: 'road-bench',   url: './glb/banc.glb',               target: BENCH_TARGET_LENGTH,             mode: 'length' },
   { key: 'road-signpost-1', url: './glb/poteau-indicateur-1.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
   { key: 'road-signpost-2', url: './glb/poteau-indicateur-2.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
@@ -126,9 +129,8 @@ const PROP_MODEL_DEFS = [
   { key: 'flower-4',     url: './glb/flower-4.glb',           target: NATURAL_FLOWER_TARGET_WIDTH,     mode: 'length', kind: 'flower' },
   // Pool d'herbes/touffes/jeunes pousses — prairies et champs (plantes.glb package)
   // Fougères et buissons — forêts uniquement (shrub-* → castShadow actif, volume significatif)
+  { key: 'brindille',       url: './glb/brindille.glb',                          target: NATURAL_GRASS_TARGET_WIDTH * 0.70, mode: 'length', kind: 'grass' }, // −30%
   { key: 'shrub-fern',      url: './glb/plantes.glb', asset: 'Plant_Fern',      target: NATURAL_SHRUB_TARGET_WIDTH * 1.60, mode: 'length', kind: 'shrub' }, // +60%
-  { key: 'shrub-bush1',     url: './glb/plantes.glb', asset: 'Plant_Bush1',     target: NATURAL_SHRUB_TARGET_WIDTH, mode: 'length', kind: 'shrub' },
-  { key: 'shrub-bush2',     url: './glb/plantes.glb', asset: 'Plant_Bush2',     target: NATURAL_SHRUB_TARGET_WIDTH, mode: 'length', kind: 'shrub' },
   { key: 'shrub-monstera1', url: './glb/plantes.glb', asset: 'Plant_Monstera1', target: NATURAL_SHRUB_TARGET_WIDTH,        mode: 'length', kind: 'shrub' },
   { key: 'shrub-monstera2', url: './glb/plantes.glb', asset: 'Plant_Monstera2', target: NATURAL_SHRUB_TARGET_WIDTH,        mode: 'length', kind: 'shrub' },
   { key: 'shrub-misc1',     url: './glb/plantes.glb', asset: 'Plant_Misc1',     target: NATURAL_SHRUB_TARGET_WIDTH * 1.45, mode: 'length', kind: 'shrub' }, // grande plante
@@ -538,7 +540,7 @@ export function updateDecorOverlay(overlay, elapsedSeconds, camera = null) {
 // Y >= HIGH_Y → factor 1.0 (plein champ), Y <= LOW_Y → factor MIN_FACTOR (vue rase-mottes).
 const _LOD_HEIGHT_LOW_Y    = 1.5;
 const _LOD_HEIGHT_HIGH_Y   = 7.0;
-const _LOD_HEIGHT_MIN_FACTOR = 0.50; // réduction max 50 %
+const _LOD_HEIGHT_MIN_FACTOR = 0.92; // réduction max 8 % (0.75 encore trop agressif proche du sol)
 export function computeLodHeightFactor(camera) {
   const y = camera.position.y;
   if (y >= _LOD_HEIGHT_HIGH_Y) return 1.0;
@@ -765,14 +767,20 @@ function preparePropPrototype(model, def) {
   source.traverse(o => {
     o.visible = true;
     if (o.scale.x === 0 && o.scale.y === 0 && o.scale.z === 0) o.scale.set(1, 1, 1);
-    if (o.isSkinnedMesh && o.skeleton) o.skeleton.pose();
+    if (o.isSkinnedMesh && o.skeleton && !def.noSkeletonPose) o.skeleton.pose();
     if (o.isMesh && o.material) {
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       for (const m of mats) {
         if (!m) continue;
         m.visible = true;
-        // Strategy C : teinture ambrée chaude (lerp 8%) pour unifier les GLBs hétérogènes
-        if (m.color) m.color.lerp(new THREE.Color(0xC8A060), 0.08);
+        if (m.color) {
+          // Teinture ambrée chaude — factor fort (40 %) pour les matériaux sans texture
+          // quasi-blancs (ex. poule/chien/chat exportés sans couleur depuis Blender) afin
+          // qu'ils ne s'affichent pas en blanc pur. Factor faible (8 %) pour les matériaux
+          // déjà colorés ou texturés → cohérence visuelle globale préservée.
+          const isNearWhite = !m.map && m.color.r > 0.85 && m.color.g > 0.85 && m.color.b > 0.85;
+          m.color.lerp(new THREE.Color(0xC8A060), isNearWhite ? 0.40 : 0.08);
+        }
       }
     }
   });
@@ -796,7 +804,14 @@ function preparePropPrototype(model, def) {
     if (!object.isMesh) return;
     object.castShadow    = true;
     object.receiveShadow = true;
-    if (object.material) object.material = clonePropMaterial(object.material);
+    if (object.material) {
+      object.material = clonePropMaterial(object.material);
+      // Marquer les matériaux prototype pour que clearGroup (tileUtils) ne les dispose pas.
+      // _reusePrototypeMaterials() partage ces objets matériaux avec toutes les instances :
+      // sans ce flag, dispose() sur une instance détruit le prototype → animaux blancs.
+      const mats = Array.isArray(object.material) ? object.material : [object.material];
+      mats.forEach(m => { if (m) m.userData.glbPrototype = true; });
+    }
   });
 
   return wrapper;
@@ -866,7 +881,8 @@ export function createPropModel(key, seedKey = key) {
     if (!child.isMesh) return;
     child.castShadow              = false;  // réinitialisé — 1 seul caster via _applySingleShadowCaster
     child.receiveShadow           = true;
-    child.userData.shadowFlagsApplied = true; // empêche applySceneShadowFlags() de réinitialiser
+    child.userData.castShadowOriginal = false;    // sera true sur le plus grand mesh après _applySingleShadowCaster
+    child.userData.shadowFlagsApplied = true;     // empêche applySceneShadowFlags() de réinitialiser
   });
   _applySingleShadowCaster(object); // 1 shadow caster max par prop (le plus grand mesh)
   object.rotation.y += (hashUnit(`${seedKey}:base-yaw`) - 0.5) * 0.16;
@@ -903,7 +919,10 @@ function _applySingleShadowCaster(root) {
     const t = _geomTriCount(obj.geometry);
     if (t > bestTris) { bestTris = t; best = obj; }
   });
-  if (best) best.castShadow = true;
+  if (best) {
+    best.castShadow = true;
+    best.userData.castShadowOriginal = true; // restaurable par applySceneShadowFlags après culling
+  }
 }
 
 function clonePropMaterial(material) {

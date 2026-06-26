@@ -15,7 +15,7 @@ import { getGravelSvgMaterial, getHouseMaterial } from './houseVillageMaterials.
 
 // ─── Constantes locales ────────────────────────────────────────────────────────
 
-const HOUSE_SCALE = HEX_SIZE * 0.1332 * 0.93 * 0.90; // −10% −7% −10%
+const HOUSE_SCALE = HEX_SIZE * 0.1332 * 0.93 * 0.90 * 0.93; // −10% −7% −10% −7%
 const HOUSE_GLB_SIZE_MULTIPLIER = 1.75;
 const HOUSE_GLB_SPACING_MULTIPLIER = 1.12;
 
@@ -23,26 +23,29 @@ const HOUSE_GLB_SPACING_MULTIPLIER = 1.12;
 
 const HOUSE_GLB_MODEL_DEFS = [
   // maison-1 retirée du pool (8 911 tris/instance — trop lourde, GLB à remplacer)
-  { key: 'maison-fantasy-1', url: './glb/batiments/fantasy/maison-1.glb', size: 1.55 * 0.95 * 0.80, spawnWeight: 55 }, // −20%
-  { key: 'maison-fantasy-2', url: './glb/batiments/fantasy/maison-2.glb', size: 1.60 * 0.95 * 0.90, spawnWeight: 22 }, // −10%
-  { key: 'maison-fantasy-3', url: './glb/batiments/fantasy/maison-3.glb', size: 1.75 * 0.95 * 0.90, spawnWeight: 15 }, // −10% total=100
+  { key: 'maison-fantasy-1', url: './glb/batiments/fantasy/maison-1.glb', size: 1.55 * 0.95 * 0.80 * 1.08 * 0.94, spawnWeight: 55 }, // −20% +8% −6%
+  { key: 'maison-fantasy-2', url: './glb/batiments/fantasy/maison-2.glb', size: 1.60 * 0.95 * 0.90 * 0.94, spawnWeight: 22 }, // −10% −6%
+  { key: 'maison-fantasy-3', url: './glb/batiments/fantasy/maison-3.glb', size: 1.75 * 0.95 * 0.90 * 0.94, spawnWeight: 15 }, // −10% −6% total=100
 ];
-const CHURCH_GLB_MODEL_DEF = { key: 'eglise', url: './glb/batiments/eglise.glb', size: 4.5 * 0.93 };          // −7%
+const CHURCH_GLB_MODEL_DEFS = [
+  { key: 'eglise-1', url: './glb/batiments/eglise.glb',   size: 4.5 * 0.93 * 0.92        }, // −7% −8%
+  { key: 'eglise-3', url: './glb/batiments/eglise-3.glb', size: 4.5 * 0.93 * 0.92 * 0.78 }, // −7% −8% −22%
+];
 const DOLMEN_GLB_MODEL_DEF = { key: 'dolmen', url: './glb/batiments/dolmen.glb', size: 4.5 * 0.70, sinkDepth: 0.035 };
 // Pack unique — les 3 tours sont des nodes dans le même fichier GLB.
 // Chargement 1×, extraction par nodeName, worldMatrix bakée → filtrage COLLIDER.
 const WATCHTOWER_PACK_URL = './glb/batiments/low_poly_medieval_towers_pack.glb';
 const WATCHTOWER_PACK_DEFS = [
-  { key: 'tower-castle004', nodeName: 'Castle.004', size: 5.5 * 0.605, spawnWeight: 33, sinkDepth: 0.05 }, // −50% +10% +10%
-  { key: 'tower-castle008', nodeName: 'Castle.008', size: 5.5 * 0.88,  spawnWeight: 33, sinkDepth: 0.05 }, // −20% +10%
-  { key: 'tower-castle010', nodeName: 'Castle.010', size: 5.5 * 1.242, spawnWeight: 34, sinkDepth: 0.05 }, // +35% −8% — total=100
+  { key: 'tower-castle004', nodeName: 'Castle.004', size: 5.5 * 0.605 * 1.07 * 0.94, spawnWeight: 33, sinkDepth: 0.05 }, // −50% +10% +10% +7% −6%
+  { key: 'tower-castle008', nodeName: 'Castle.008', size: 5.5 * 0.88  * 1.07 * 0.94, spawnWeight: 33, sinkDepth: 0.05 }, // −20% +10% +7% −6%
+  { key: 'tower-castle010', nodeName: 'Castle.010', size: 5.5 * 1.242 * 1.07 * 0.94, spawnWeight: 34, sinkDepth: 0.05 }, // +35% −8% +7% −6% — total=100
 ];
 
 // ─── État GLB (module-level, partagé entre chargeur et créateurs) ─────────────
 
-const houseGlbLibrary = new Map();
-let churchGlbPrototype = null;
-let dolmenGlbPrototype = null;
+const houseGlbLibrary   = new Map();
+const churchGlbLibrary  = new Map(); // eglise-1 / eglise-3 — tirage 50/50
+let dolmenGlbPrototype  = null;
 const watchtowerGlbLibrary = new Map();
 let houseModelsLoading = false;
 let houseModelsRequested = false;
@@ -59,7 +62,7 @@ export function ensureHouseGlbModels(group, onReady) {
   houseModelsLoading = true;
   houseModelsRequested = true;
 
-  let pending = HOUSE_GLB_MODEL_DEFS.length + 2 + 1; // maisons + (église + dolmen) + 1 pack tours
+  let pending = HOUSE_GLB_MODEL_DEFS.length + CHURCH_GLB_MODEL_DEFS.length + 1 + 1; // maisons + églises + dolmen + pack tours
   const finishOne = () => {
     pending -= 1;
     if (pending > 0) return;
@@ -82,18 +85,20 @@ export function ensureHouseGlbModels(group, onReady) {
     );
   }
 
-  new GLTFLoader().load(
-    CHURCH_GLB_MODEL_DEF.url,
-    gltf => {
-      churchGlbPrototype = prepareHouseGlbPrototype(gltf.scene, CHURCH_GLB_MODEL_DEF);
-      finishOne();
-    },
-    undefined,
-    error => {
-      console.warn(`Modèle église GLB indisponible : ${CHURCH_GLB_MODEL_DEF.url}`, error);
-      finishOne();
-    }
-  );
+  for (const def of CHURCH_GLB_MODEL_DEFS) {
+    new GLTFLoader().load(
+      def.url,
+      gltf => {
+        churchGlbLibrary.set(def.key, prepareHouseGlbPrototype(gltf.scene, def));
+        finishOne();
+      },
+      undefined,
+      error => {
+        console.warn(`Modèle église GLB indisponible : ${def.url}`, error);
+        finishOne();
+      }
+    );
+  }
 
   new GLTFLoader().load(
     DOLMEN_GLB_MODEL_DEF.url,
@@ -209,7 +214,10 @@ function _applySingleShadowCaster(root) {
     const t = _geomTriCount(obj.geometry);
     if (t > bestTris) { bestTris = t; best = obj; }
   });
-  if (best) best.castShadow = true;
+  if (best) {
+    best.castShadow = true;
+    best.userData.castShadowOriginal = true; // restaurable par applySceneShadowFlags après culling
+  }
 }
 
 function prepareHouseGlbPrototype(model, def) {
@@ -279,8 +287,9 @@ export function createVillageHouseObject(seedKey, sector, index) {
   group.name = `village-house-glb-${def.key}`;   // ex: village-house-glb-maison-1 (HUD per-type)
 
   const sectorAngle = (SECTOR_DEFS.findIndex(item => item.key === sector.key) * Math.PI / 3) + Math.PI / 6;
-  const jitter = (hashUnit(`${seedKey}:house-rotation`) - 0.5) * 0.42;
-  group.rotation.y = -sectorAngle + jitter;
+  // Rotation libre 360° par index → maisons du même type jamais parallèles sur un même triangle
+  const jitter = hashUnit(`${seedKey}:house-rotation:${index ?? 0}`) * Math.PI * 2;
+  group.rotation.y = jitter;
   group.scale.setScalar((0.94 + hashUnit(`${seedKey}:house-scale`) * 0.18) * HOUSE_GLB_SIZE_MULTIPLIER);
 
   const prototype = houseGlbLibrary.get(def.key);
@@ -293,6 +302,7 @@ export function createVillageHouseObject(seedKey, sector, index) {
     if (!object.isMesh) return;
     // castShadow hérité du prototype (1 seul mesh par bâtiment via _applySingleShadowCaster)
     object.receiveShadow = true;
+    object.userData.castShadowOriginal = object.castShadow; // hérité : true pour le caster, false pour les autres
     object.userData.shadowFlagsApplied = true;
   });
 
@@ -310,9 +320,11 @@ export function createVillageChurchObject(seedKey, sector) {
   group.scale.setScalar(0.88);
 
   const useDolmen = hashUnit(`${seedKey}:church-or-dolmen`) >= 0.5;
+  const _churchKey = hashUnit(`${seedKey}:church-variant`) < 0.5 ? 'eglise-1' : 'eglise-3';
+  const churchProto = churchGlbLibrary.get(_churchKey) ?? churchGlbLibrary.values().next().value ?? null;
   const prototype = useDolmen
-    ? (dolmenGlbPrototype || churchGlbPrototype)
-    : (churchGlbPrototype || dolmenGlbPrototype);
+    ? (dolmenGlbPrototype || churchProto)
+    : (churchProto || dolmenGlbPrototype);
   if (!prototype) return group;
 
   const monument = prototype.clone(true);
@@ -325,6 +337,7 @@ export function createVillageChurchObject(seedKey, sector) {
     if (!object.isMesh) return;
     // castShadow hérité du prototype (1 seul mesh par monument)
     object.receiveShadow = true;
+    object.userData.castShadowOriginal = object.castShadow; // hérité : true pour le caster, false pour les autres
     object.userData.shadowFlagsApplied = true;
   });
 
@@ -369,6 +382,7 @@ export function createVillageWatchtowerObject(seedKey, sector) {
     if (!object.isMesh) return;
     // castShadow hérité du prototype (1 seul mesh par tour)
     object.receiveShadow = true;
+    object.userData.castShadowOriginal = object.castShadow; // hérité : true pour le caster, false pour les autres
     object.userData.shadowFlagsApplied = true;
   });
 

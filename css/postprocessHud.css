@@ -137,6 +137,22 @@
   opacity: 0.55;
 }
 
+.postprocess-close-btn {
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 6px;
+  color: rgba(247,239,225,0.70);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 6px;
+}
+.postprocess-close-btn:hover {
+  background: rgba(255,255,255,0.22);
+  color: #fff;
+}
+
 body.grid-only-mode .postprocess-hud {
   display: none !important;
 }

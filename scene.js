@@ -33,7 +33,7 @@ import { askHighscoreSubmit, createHighscoreUI } from './stable/highscore.js';
 import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './stable/threeSetup.js';
 import { applyShadowCulling, rebuildShadowCasters } from './stable/shadowCulling.js';
 import { addTileToTerrainMerge, createTerrainMergeGroup, hideTerrainMeshes, rebuildTerrainMerge } from './stable/terrainMerge.js';
-import { createPostprocessHud } from './stable/postprocessHud.js';
+// createPostprocessHud supprimé : PIX HUD fusionné dans debugLightUi (panel CUSTOMISATION)
 import { getBonusTilesAwarded, normalizeRotation } from './stable/gameRules.js';
 import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, setMissionTurn } from './missions.js';
 import { pollRoom, updateCursor, updateRoomState } from './stable/multiplayerClient.js';
@@ -50,7 +50,6 @@ export function initScene(options = {}) {
   const controls = new CameraControls(camera, canvas);
   const ui = createUI();
   const highscoreUI = createHighscoreUI(ui);
-  createPostprocessHud(postprocess, { worldShapeMode: options.worldShapeMode });
 
   // État de partie : carte posée, historique annulable, deck et score.
   const multiplayer = options.multiplayer ?? null;
@@ -190,6 +189,9 @@ export function initScene(options = {}) {
     else controls.zoom(deltaY, boosted);
   };
 
+  // Interdire le menu contextuel sur tout le document
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
   window.addEventListener('keydown', event => {
     const key = event.key.toLowerCase();
 
@@ -236,12 +238,6 @@ export function initScene(options = {}) {
       return;
     }
 
-    if (key === 'l') {
-      event.preventDefault();
-      document.getElementById('debugLightPanel')?.classList.toggle('collapsed');
-      return;
-    }
-
     if (key === 'm') {
       event.preventDefault();
       toggleMute(ambientSoundDesign);
@@ -267,9 +263,13 @@ export function initScene(options = {}) {
       return;
     }
 
+    if (key === 't') {
+      postprocess?.toggleCinema?.();
+      return;
+    }
+
     if (key !== 'r' || helpVisible) return;
-    rotationKeyActive = true;
-    rotateActiveTile(1);
+    controls.reset();
   });
 
   window.addEventListener('keyup', event => {
@@ -377,11 +377,15 @@ export function initScene(options = {}) {
       applySceneCurvatureFlags(scene);
       const _d20b = performance.now();
       applySceneShadowFlags(scene);     // restaure castShadow (écrase le culling précédent)
+      // Fix scintillement ombres : re-appliquer le culling immédiatement après la restauration
+      // pour éviter la fenêtre ~120f où tous les casters distants sont actifs simultanément.
+      const _shadowExtent120 = Math.max(8, Math.min(18, camera.position.y * 0.58));
+      applyShadowCulling(controls.target, _shadowExtent120 * 1.5);
       const _d20c = performance.now();
       visualEnvironment.apply();
       console.log(
         `[FREEZE-DIAG 120f] curvature=${(_d20b-_d20a).toFixed(0)}ms` +
-        ` | shadowFlags=${(_d20c-_d20b).toFixed(0)}ms` +
+        ` | shadowFlags+reculling=${(_d20c-_d20b).toFixed(0)}ms` +
         ` | TOTAL=${(_d20c-_d20a).toFixed(0)}ms`
       );
     }

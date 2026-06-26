@@ -29,7 +29,15 @@ export function createValueLabel(edge, vertexA, vertexB) {
 
 export function getMiniValueLabel(edge) {
   const value = getEdgeValue(edge);
-  return (value != null && value > 1) ? `<span class="mini-value">${value}</span>` : '';
+  if (value != null && value > 1) return `<span class="mini-value">${value}</span>`;
+  // Afficher "1" pour les portions blé/arbres/maisons (valeur implicite = 1)
+  if (value === 1) {
+    const type = getEdgeType(edge);
+    if (type === EDGE_TYPES.field || type === EDGE_TYPES.forest || type === EDGE_TYPES.house) {
+      return `<span class="mini-value">1</span>`;
+    }
+  }
+  return '';
 }
 
 // Hexagone paysage centré sur (cx,cy), demi-largeur w2, demi-hauteur h2, encoche = notch.

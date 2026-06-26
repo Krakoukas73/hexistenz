@@ -202,15 +202,15 @@
             <div><kbd>Q</kbd><span>Déplacer à gauche</span></div>
             <div><kbd>S</kbd><span>Reculer caméra</span></div>
             <div><kbd>D</kbd><span>Déplacer à droite</span></div>
-            <div><kbd>R</kbd><span>Tourner la tuile active</span></div>
+            <div><kbd>R</kbd><span>Réinitialiser la caméra</span></div>
             <div><kbd>+</kbd><span>Zoomer la caméra</span></div>
             <div><kbd>-</kbd><span>Dézoomer la caméra</span></div>
             <div><kbd>Ctrl+Z</kbd><span>Annuler le dernier mouvement</span></div>
             <div><kbd>H</kbd><span>Afficher / masquer cette aide</span></div>
             <div><kbd>M</kbd><span>Couper / activer tous les sons</span></div>
             <div><kbd>F</kbd><span>Afficher / masquer le HUD performances avancé</span></div>
-            <div><kbd>L</kbd><span>Afficher / masquer l'étalonnage visuel (LUT)</span></div>
-            <div><kbd>P</kbd><span>Activer / désactiver la pixelisation de la grille</span></div>
+            <div><kbd>C</kbd><span>Afficher / masquer la customisation visuelle (LUT + PIX)</span></div>
+            <div><kbd>T</kbd><span>Activer / désactiver les effets cinématiques (tilt-shift, vignette, grain, aberration)</span></div>
             <div><kbd>ESPACE</kbd><span>Mode immersif : masque interface, HUD et nombres</span></div>
             <div><kbd>SHIFT+ESPACE</kbd><span>Super-immersif : immersif + masque les boutons FPS / PIX / LUT</span></div>
             <div><kbd>SHIFT</kbd><span>Accélère les déplacements clavier et le zoom</span></div>

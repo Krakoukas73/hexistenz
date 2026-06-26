@@ -215,9 +215,14 @@ export const TREE_MODEL_DEFS = [
   { key: 'pine_soft', url: './glb/arbres/tree_pine_soft.glb', baseScale: 0.250 },
   { key: 'poplar', url: './glb/arbres/tree_poplar.glb', baseScale: 0.250 },
   { key: 'tree_fir', url: './glb/arbres/tree_fir.glb', baseScale: 0.250 },
-  { key: 'tree_complex', url: './glb/arbres/tree_complex.glb', baseScale: 0.250 },
+  { key: 'tree_complex_1', url: './glb/arbres/tree_complex_1.glb', baseScale: 0.250 },
+  { key: 'tree_complex_2', url: './glb/arbres/tree_complex_2.glb', baseScale: 0.250 },
+  { key: 'tree_sapin_1', url: './glb/arbres/tree_sapin-1.glb', baseScale: 0.250 },
+  { key: 'tree_sapin_2', url: './glb/arbres/tree_sapin-2.glb', baseScale: 0.250 },
+  { key: 'tree_sapin_3', url: './glb/arbres/tree_sapin-3.glb', baseScale: 0.250 },
+  { key: 'tree_sapin_4', url: './glb/arbres/tree_sapin-4.glb', baseScale: 0.250 },
 ];
-export const TREE_SIZE_MULTIPLIER = 1.65 * 0.88; // −12%
+export const TREE_SIZE_MULTIPLIER = 1.65 * 0.88 * 0.94 * 0.93 * 0.94; // −12% −6% −7% −6%
 // Alignement sol réel des forêts : les dalles forest sont abaissées de 30% d'épaisseur (0.12 * -0.30 = -0.036).
 // Léger enfouissement pour éviter tout flottement visible sur le relief.
 export const TREE_GROUND_OFFSET = -0.010;
@@ -435,6 +440,15 @@ export const LOD_WHEAT_CULL_DISTANCE = 6.6;  // −8 % (était 7.2)
 
 // Distance caméra au-delà de laquelle les labels de zones contigüe sont masqués.
 export const LOD_ZONE_LABEL_CULL_DISTANCE = 28.2;     // −8 % (était 30.6)
+
+// Valeur totale minimale pour afficher le label d'une zone contigüe.
+// Les zones en-dessous de ce seuil sont trop petites pour avoir un intérêt stratégique.
+export const LOD_ZONE_LABEL_MIN_TOTAL = 6;
+
+// Fade progressif des labels quand la caméra descend vers le sol (altitude Y caméra).
+// Entre NEAR_FADE_START_Y et NEAR_FADE_END_Y, l'opacité passe de 1 → 0.
+export const LOD_ZONE_LABEL_NEAR_FADE_START =  7.5; // altitude Y début du fondu (÷2)
+export const LOD_ZONE_LABEL_NEAR_FADE_END   =  2.5; // altitude Y complètement transparent (÷2)
 
 // ----------------------------------------------------------------------------
 // ROCHERS — DENSITÉ ET VARIÉTÉ
