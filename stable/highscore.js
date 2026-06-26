@@ -36,7 +36,7 @@ export function askHighscoreSubmit(elements, score, gridPercent = 0, stats = nul
   elements.currentGridPercent = normalizedGridPercent;
   elements.currentStats = sanitizeGameStats(stats);
   elements.submitBox?.classList.remove('hidden');
-  setStatus(elements, `Score final : ${score} · Grille : ${normalizedGridPercent.toFixed(1)}%`);
+  setStatus(elements, `Score final : ${score}`);
   elements.nameInput?.focus();
 }
 
@@ -97,7 +97,6 @@ function renderHighscores(elements, scores) {
   elements.list.innerHTML = scores
     .slice(0, 10)
     .map((entry, index) => {
-      const gridPercent = normalizeGridPercent(entry.gridPercent ?? 0);
       const rankBadge = getRankBadge(index);
       const stats = sanitizeGameStats(entry.stats);
       const statLine = renderCompactStats(stats);
@@ -107,7 +106,7 @@ function renderHighscores(elements, scores) {
             <span class="highscore-player">${rankBadge}${escapeHtml(entry.name)}</span>
             ${statLine}
           </div>
-          <strong>${Number(entry.score) || 0}<em>${gridPercent.toFixed(1)}%</em></strong>
+          <strong>${Number(entry.score) || 0}</strong>
         </li>`;
     })
     .join('');

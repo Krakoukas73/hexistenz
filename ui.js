@@ -88,9 +88,8 @@ export function updateScoreUI(ui, totalScore, lastScore = 0, placedTileCount = n
   setText(ui.score, String(totalScore));
   setText(ui.lastScore, lastScore > 0 ? `+${lastScore}` : String(lastScore));
 
-  if (placedTileCount !== null && totalGridTiles !== null) {
-    const percentage = totalGridTiles > 0 ? (placedTileCount / totalGridTiles) * 100 : 0;
-    setText(ui.gridPercent, `${percentage.toFixed(1)}%`);
+  if (placedTileCount !== null) {
+    setText(ui.gridPercent, String(placedTileCount));
   }
 }
 

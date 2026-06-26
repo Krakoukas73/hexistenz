@@ -41,7 +41,10 @@ import {
   createPropModel,
   NATURAL_DECOR_VARIANTS,
   NATURAL_FLOWER_TARGET_WIDTH,
-  NATURAL_MUSHROOM_TARGET_WIDTH
+  NATURAL_GRASS_TARGET_WIDTH,
+  NATURAL_SHRUB_TARGET_WIDTH,
+  NATURAL_MUSHROOM_TARGET_WIDTH,
+  NATURAL_DEER_TARGET_WIDTH
 } from './decorOverlay.js';
 
 const SECTOR_BY_KEY    = Object.fromEntries(SECTOR_DEFS.map(s => [s.key, s]));
@@ -63,17 +66,25 @@ export function createNaturalGroundProps(placedTiles) {
       if (!isSafePropGroundType(type)) continue;
 
       collectNaturalPropInstances(accumulator, placedTile, edge, type, 'flower',   placedTiles);
+      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'grass',    placedTiles);
+      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'shrub',    placedTiles);
+      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'chicken',  placedTiles);
+      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'deer',     placedTiles);
       collectNaturalPropInstances(accumulator, placedTile, edge, type, 'rock',     placedTiles);
       collectNaturalPropInstances(accumulator, placedTile, edge, type, 'reed',     placedTiles);
       collectNaturalPropInstances(accumulator, placedTile, edge, type, 'mushroom', placedTiles);
     }
   }
 
-  // Bottes de foin — uniquement sur les arêtes de type field (non couvert par isSafePropGroundType)
+  // Bottes de foin — arêtes field ET arêtes grass directement adjacentes à un field
   for (const placedTile of placedTiles.values()) {
     for (const edge of EDGE_ORDER) {
-      if (getTileEdgeType(placedTile, edge) !== EDGE_TYPES.field) continue;
-      collectNaturalPropInstances(accumulator, placedTile, edge, EDGE_TYPES.field, 'hay-bale', placedTiles);
+      const type = getTileEdgeType(placedTile, edge);
+      if (type === EDGE_TYPES.field) {
+        collectNaturalPropInstances(accumulator, placedTile, edge, EDGE_TYPES.field, 'hay-bale', placedTiles);
+      } else if (type === EDGE_TYPES.grass && isGrassAdjacentToField(placedTile, edge, placedTiles)) {
+        collectNaturalPropInstances(accumulator, placedTile, edge, EDGE_TYPES.grass, 'hay-bale', placedTiles);
+      }
     }
   }
 
@@ -100,11 +111,11 @@ function collectNaturalPropInstances(accumulator, placedTile, edge, type, kind, 
     const footprintRadius = getNaturalPropFootprint(kind);
     if (!isSingleTerrainFootprint(local, placedTile, type, footprintRadius)) continue;
 
-    const variantKey = pickNaturalPropVariant(kind, `${seed}:variant:${i}`);
+    const variantKey = pickNaturalPropVariant(kind, `${seed}:variant:${i}`, seed);
     if (!variantKey || !propGlbLibrary.has(variantKey)) continue;
 
     const yaw         = hashUnit(`${seed}:yaw:${i}`) * Math.PI * 2;
-    const groundOffset = kind === 'flower' ? 0.006 : (kind === 'reed' ? 0.010 : (kind === 'mushroom' ? 0.004 : 0.000));
+    const groundOffset = kind === 'flower' ? 0.006 : (kind === 'grass' ? 0.006 : (kind === 'shrub' ? 0.005 : (kind === 'reed' ? 0.010 : (kind === 'mushroom' ? 0.004 : 0.000))));
 
     _propInstanceDummy.rotation.set(0, 0, 0);
     _propInstanceDummy.position.set(tilePos.x + local.x, 0, tilePos.z + local.z);
@@ -132,11 +143,15 @@ function collectNaturalPropInstances(accumulator, placedTile, edge, type, kind, 
     }
 
     // Snap analogue à snapPropBottomToSurface — compense le pivot imparfait des petits GLB.
-    if (kind === 'flower' || kind === 'mushroom') {
+    if (kind === 'flower' || kind === 'grass' || kind === 'shrub' || kind === 'mushroom' || kind === 'deer') {
       _snapNormal.set(0, 1, 0).applyQuaternion(_propInstanceDummy.quaternion);
       const slopeSin   = Math.sqrt(Math.max(0, 1 - _snapNormal.y * _snapNormal.y));
       const clearance  = getNaturalPropGroundClearance(kind);
-      const halfTarget = kind === 'flower' ? NATURAL_FLOWER_TARGET_WIDTH : NATURAL_MUSHROOM_TARGET_WIDTH;
+      const halfTarget = kind === 'flower' ? NATURAL_FLOWER_TARGET_WIDTH
+                       : kind === 'grass'  ? NATURAL_GRASS_TARGET_WIDTH
+                       : kind === 'shrub'  ? NATURAL_SHRUB_TARGET_WIDTH
+                       : kind === 'deer'   ? NATURAL_DEER_TARGET_WIDTH
+                       : NATURAL_MUSHROOM_TARGET_WIDTH;
       const baseRadius = halfTarget * 0.5 * jitter;
       const snapLift   = (clearance - groundOffset) + slopeSin * baseRadius;
       if (snapLift > 0.0005) _propInstanceDummy.position.y += snapLift;
@@ -164,31 +179,53 @@ function buildNaturalPropInstancedMeshes(group, accumulator) {
     const prototype = propGlbLibrary.get(variantKey);
     if (!prototype) continue;
 
-    // 'micro' : fleurs, roseaux, champignons  — cachés au-delà de LOD_MICRO_CULL_DISTANCE
-    // 'rock'  : rochers, bottes de foin       — cachés au-delà de LOD_ROCK_CULL_DISTANCE
-    const lodCategory = (variantKey.startsWith('rock') || variantKey === 'hay-bale') ? 'rock' : 'micro';
+    // 'micro'  : fleurs, champignons            — cachés au-delà de LOD_MICRO_CULL_DISTANCE
+    // 'plant'  : plantes.glb (plant-*, shrub-*), roseaux — LOD_PLANT_CULL_DISTANCE
+    // 'rock'   : rochers, bottes de foin       — cachés au-delà de LOD_ROCK_CULL_DISTANCE
+    // 'animal' : animaux sauvages (cerf, poule InstancedMesh) — LOD_ANIMAL_CULL_DISTANCE
+    const lodCategory = variantKey.startsWith('animal-')
+                      ? 'animal'
+                      : (variantKey.startsWith('rock') || variantKey === 'hay-bale') ? 'rock'
+                      : (variantKey.startsWith('plant-') || variantKey.startsWith('shrub-') || variantKey === 'reed') ? 'plant'
+                      : 'micro';
 
+    // ── Pré-cuire les géométries UNE SEULE FOIS par variant (hors boucle chunks) ──
+    // Évite N applyMatrix4() (un par chunk) → réduit à 1 par sous-mesh.
     prototype.updateMatrixWorld(true);
+    const _bakedSubs = [];
+    prototype.traverse(child => {
+      if (!child.isMesh) return;
+      child.updateWorldMatrix(true, false);
+      const _bg = child.geometry.clone();
+      _bg.applyMatrix4(child.matrixWorld);
+      _bakedSubs.push({ _bg, child });
+    });
 
     for (const [chunkKey, matrices] of byChunk) {
       if (matrices.length === 0) continue;
       const sphere = computePropBoundingSphere(matrices, 0.25);
 
-      prototype.traverse(child => {
-        if (!child.isMesh) return;
-        child.updateWorldMatrix(true, false);
-
-        const geo = child.geometry.clone();
-        geo.applyMatrix4(child.matrixWorld);
+      for (const { _bg, child } of _bakedSubs) {
+        const geo = _bg.clone(); // clone rapide (sans applyMatrix4)
 
         const mat = Array.isArray(child.material)
           ? child.material.map(m => m.clone())
           : child.material.clone();
 
         const mesh = new THREE.InstancedMesh(geo, mat, matrices.length);
-        // Fleurs seulement : pas de castShadow (économie GPU significative sur de grandes nappes)
-        mesh.castShadow    = !variantKey.startsWith('flower');
-        mesh.receiveShadow = !variantKey.startsWith('flower');
+        // castShadow désactivé sur fleurs, plantes, rochers, petits animaux et champignons.
+        // receiveShadow conservé sur rochers/plantes pour ne pas les aplatir visuellement.
+        const noReceiveShadow = variantKey.startsWith('flower') || variantKey.startsWith('plant-') || variantKey === 'animal-chicken';
+        const noCastShadow    = noReceiveShadow ||
+          lodCategory === 'rock' || lodCategory === 'plant' || lodCategory === 'animal' ||
+          variantKey === 'mushroom' || variantKey.startsWith('mushroom');
+        mesh.castShadow    = !noCastShadow;
+        mesh.receiveShadow = !noReceiveShadow;
+        if (noCastShadow) {
+          // Verrouiller : applySceneShadowFlags ne doit pas réactiver ces ombres
+          mesh.userData.disableCastShadow  = true;
+          mesh.userData.shadowFlagsApplied = true;
+        }
         // frustumCulled = false : géo cuite à l'origine. Culling manuel via updateNaturalPropsLOD().
         mesh.frustumCulled = false;
         mesh.name          = `instanced-prop-${variantKey}-${chunkKey}`;
@@ -200,8 +237,10 @@ function buildNaturalPropInstancedMeshes(group, accumulator) {
         }
         mesh.instanceMatrix.needsUpdate = true;
         group.add(mesh);
-      });
+      }
     }
+    // Dispose les géos pré-cuites (chaque chunk a sa propre copie)
+    for (const { _bg } of _bakedSubs) _bg.dispose();
   }
 }
 
@@ -221,7 +260,7 @@ function addNaturalPropCluster(group, placedTile, edge, type, kind, placedTiles)
     const footprintRadius = getNaturalPropFootprint(kind);
     if (!isSingleTerrainFootprint(local, placedTile, type, footprintRadius)) continue;
 
-    const key  = pickNaturalPropVariant(kind, `${seed}:variant:${i}`);
+    const key  = pickNaturalPropVariant(kind, `${seed}:variant:${i}`, seed);
     const prop = createPropModel(key, `${seed}:model:${i}`);
     if (!prop) continue;
 
@@ -261,10 +300,31 @@ function addNaturalPropCluster(group, placedTile, edge, type, kind, placedTiles)
 function getNaturalPropChance(kind, type, placedTile, edge, placedTiles) {
   const nearWater = placedTile && edge && placedTiles && isNearWaterDecorArea(placedTile, edge, placedTiles);
   if (kind === 'flower')   return type === EDGE_TYPES.grass ? 1.0 : 0.96;
+  // Prairie (grass/field) et forêt partagent les mêmes règles pour l'instant.
+  // Quand les règles divergent : brancher ici sur type (EDGE_TYPES.forest vs grass/field).
+  if (kind === 'grass')    return (type === EDGE_TYPES.grass || type === EDGE_TYPES.field || type === EDGE_TYPES.forest) ? 0.82 : 0;
+  if (kind === 'shrub')    return type === EDGE_TYPES.forest ? 0.93 : 0; // fougères/buissons — forêt uniquement, priorité haute
+  if (kind === 'chicken') {
+    // Poules en prairie et champ — errent librement hors village (−25 %)
+    if (type === EDGE_TYPES.grass)  return 0.30;
+    if (type === EDGE_TYPES.field)  return 0.19;
+    return 0;
+  }
+  if (kind === 'deer') {
+    // Rare — 1 cerf par ~10 secteurs forêt, ~15 prairie, ~20 champ
+    if (type === EDGE_TYPES.forest) return 0.10;
+    if (type === EDGE_TYPES.grass)  return 0.07;
+    if (type === EDGE_TYPES.field)  return 0.05;
+    return 0;
+  }
   if (kind === 'rock')     return nearWater ? ROCK_DENSITY.chanceNearWater : (type === EDGE_TYPES.grass ? ROCK_DENSITY.chanceGrass : ROCK_DENSITY.chanceForest);
   if (kind === 'reed')     return nearWater ? 1.0 : (type === EDGE_TYPES.grass ? 0.12 : 0.08);
   if (kind === 'mushroom') return type === EDGE_TYPES.forest ? 1.0 : 0.51;
-  if (kind === 'hay-bale') return type === EDGE_TYPES.field ? 0.315 : 0;
+  if (kind === 'hay-bale') {
+    if (type === EDGE_TYPES.field) return 0.315;
+    if (type === EDGE_TYPES.grass && isGrassAdjacentToField(placedTile, edge, placedTiles)) return 0.200;
+    return 0;
+  }
   return 0;
 }
 
@@ -272,9 +332,14 @@ function getNaturalPropCount(kind, type, seed, placedTile = null, edge = null, p
   const nearWater = placedTile && edge && placedTiles && isNearWaterDecorArea(placedTile, edge, placedTiles);
   if (kind === 'flower') {
     return type === EDGE_TYPES.grass
-      ? 20 + Math.floor(hashUnit(`${seed}:count`) * 20)
-      :  5 + Math.floor(hashUnit(`${seed}:count`) * 7);
+      ? 22 + Math.floor(hashUnit(`${seed}:count`) * 24) // +12% (moy 30→34)
+      :  5 + Math.floor(hashUnit(`${seed}:count`) * 8); // +12% (moy 8.5→9.5)
   }
+  // Prairie et forêt : même densité pour l'instant — différencier ici sur type quand besoin.
+  if (kind === 'grass') return 8 + Math.floor(hashUnit(`${seed}:count`) * 9); // +15% (moy 11→12.5)
+  if (kind === 'shrub') return 3 + Math.floor(hashUnit(`${seed}:count`) * 5); // +15% (moy 4.5→5.5)
+  if (kind === 'chicken') return 3 + Math.floor(hashUnit(`${seed}:count`) * 5); // 3–7 poules par groupe (+35%)
+  if (kind === 'deer')    return 1; // toujours 1 seul cerf par cluster
   if (kind === 'rock') {
     return (nearWater || type === EDGE_TYPES.grass)
       ? 2 + Math.floor(hashUnit(`${seed}:count`) * 4)
@@ -292,6 +357,10 @@ function getNaturalPropCount(kind, type, seed, placedTile = null, edge = null, p
 
 function getNaturalPropFootprint(kind) {
   if (kind === 'flower')   return HEX_SIZE * 0.036;
+  if (kind === 'grass')    return HEX_SIZE * 0.042;
+  if (kind === 'shrub')    return HEX_SIZE * 0.060;
+  if (kind === 'chicken')  return HEX_SIZE * 0.038;
+  if (kind === 'deer')     return HEX_SIZE * 0.10;
   if (kind === 'rock')     return HEX_SIZE * ROCK_DENSITY.footprint;
   if (kind === 'mushroom') return HEX_SIZE * 0.024;
   if (kind === 'reed')     return HEX_SIZE * 0.026;
@@ -301,6 +370,10 @@ function getNaturalPropFootprint(kind) {
 
 function getNaturalPropGroundClearance(kind) {
   if (kind === 'flower')   return 0.007;
+  if (kind === 'grass')    return 0.007;
+  if (kind === 'shrub')    return 0.006;
+  if (kind === 'chicken')  return 0.003;
+  if (kind === 'deer')     return 0.002;
   if (kind === 'reed')     return 0.012;
   if (kind === 'mushroom') return 0.006;
   if (kind === 'rock')     return 0.0015;
@@ -311,6 +384,8 @@ function getNaturalPropGroundClearance(kind) {
 function getNaturalPropScaleJitter(kind, seed, index) {
   const roll = hashUnit(`${seed}:scale:${index}`);
   if (kind === 'flower')   return 0.66 + roll * 0.62;
+  if (kind === 'grass')    return 0.70 + roll * 0.55;
+  if (kind === 'shrub')    return 0.72 + roll * 0.60; // variation plus large — buissons très hétérogènes
   if (kind === 'rock') {
     const bigRoll = hashUnit(`${seed}:bigrock:${index}`);
     if (bigRoll > ROCK_DENSITY.bigRockThreshold) {
@@ -318,22 +393,37 @@ function getNaturalPropScaleJitter(kind, seed, index) {
     }
     return ROCK_DENSITY.normalScaleMin + roll * ROCK_DENSITY.normalScaleRange;
   }
+  if (kind === 'chicken')  return 0.78 + roll * 0.44; // poules de tailles variées
+  if (kind === 'deer')     return 0.80 + roll * 0.40;
   if (kind === 'mushroom') return 0.72 + roll * 0.58;
   if (kind === 'hay-bale') return 0.85 + roll * 0.30;
   return 0.86 + roll * 0.26;
 }
 
 function getNaturalClusterRadius(kind) {
+  if (kind === 'chicken')  return HEX_SIZE * 0.10; // groupe compact de poules
+  if (kind === 'deer')     return HEX_SIZE * 0.36;
   if (kind === 'flower')   return HEX_SIZE * 0.54;
+  if (kind === 'grass')    return HEX_SIZE * 0.48;
+  if (kind === 'shrub')    return HEX_SIZE * 0.44;
   if (kind === 'mushroom') return HEX_SIZE * 0.095;
   if (kind === 'reed')     return HEX_SIZE * 0.16;
   if (kind === 'hay-bale') return HEX_SIZE * 0.22;
   return HEX_SIZE * 0.150;
 }
 
-function pickNaturalPropVariant(kind, seed) {
+function pickNaturalPropVariant(kind, seed, clusterSeed = null) {
   const variants = NATURAL_DECOR_VARIANTS[kind] ?? [];
   if (variants.length === 0) return null;
+
+  // Champignons : clustering par type dominant (80% même couleur par colonie, 20% mélange)
+  if (kind === 'mushroom' && clusterSeed && variants.length > 1) {
+    const dominantIdx = Math.floor(hashUnit(`${clusterSeed}:mushroom-dominant`) * variants.length) % variants.length;
+    return hashUnit(seed) < 0.80
+      ? variants[dominantIdx]
+      : variants[Math.floor(hashUnit(`${seed}:alt`) * variants.length) % variants.length];
+  }
+
   return variants[Math.floor(hashUnit(seed) * variants.length) % variants.length];
 }
 
@@ -365,6 +455,22 @@ function getNaturalClusterPoint(edge, center, seed, radius) {
   }
 
   return center;
+}
+
+// Retourne true si un secteur 'grass' est directement adjacent (même tuile ou voisine) à un secteur 'field'.
+// Permet de placer des bottes de foin dans une prairie bordant un champ.
+function isGrassAdjacentToField(placedTile, edge, placedTiles) {
+  const idx = EDGE_ORDER.indexOf(edge);
+  const n   = EDGE_ORDER.length;
+  // Secteurs voisins sur la même tuile
+  if (getTileEdgeType(placedTile, EDGE_ORDER[(idx - 1 + n) % n]) === EDGE_TYPES.field) return true;
+  if (getTileEdgeType(placedTile, EDGE_ORDER[(idx + 1) % n])       === EDGE_TYPES.field) return true;
+  // Tuile voisine face à ce secteur
+  const direction = DIRECTION_BY_EDGE[edge];
+  if (!direction) return false;
+  const neighbor = placedTiles.get(makeHexKey(placedTile.q + direction.q, placedTile.r + direction.r));
+  if (neighbor && getTileEdgeType(neighbor, getOppositeEdge(edge)) === EDGE_TYPES.field) return true;
+  return false;
 }
 
 function isNearWaterDecorArea(placedTile, edge, placedTiles) {

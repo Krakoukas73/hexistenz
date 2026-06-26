@@ -6,6 +6,7 @@ import { getBiomeMaterial, getBiomeSideMaterial } from './tileTextures.js';
 import { createRailCenterOverlay } from './tileRailOverlay.js';
 import { createRoadCenterOverlay } from './tileRoadOverlay.js';
 import { createValueLabel, getMiniValueLabel } from './tileLabels.js';
+import { registerCurvedSprite } from './stable/threeSetup.js';
 
 const RAGGED_EDGE = {
   // Morcelage visuel des bords : les bords externes débordent vers
@@ -48,7 +49,7 @@ const BIOME_HEIGHT_RATIO = {
   // Champ de blé : plus épais au-dessus du niveau standard.
   // Prairie : dessus nettement abaissé pour obtenir une dalle plus fine,
   // tout en gardant le dessous sur la même base de grille que les autres tuiles.
-  field: 0.0525, // −65%
+  field: 0.0462, // −65% −12%
   grass: -0.45
 };
 
@@ -123,6 +124,7 @@ function createSectorMeshes(edges, opacity) {
     );
     const materials = [getBiomeMaterial(type, opacity), getBiomeSideMaterial(type, opacity)];
     const mesh = new THREE.Mesh(geometry, materials);
+    mesh.name = `hex-sector-${type}`;  // pour le HUD perf
     mesh.receiveShadow = true;
     mesh.castShadow = false;
     mesh.userData.disableCastShadow = true;
@@ -136,6 +138,7 @@ function createSectorMeshes(edges, opacity) {
     if (label) {
       label.userData.isValueLabel = true;
       label.userData.edgeKey = sector.key;
+      registerCurvedSprite(label);
       group.add(label);
     }
 
@@ -478,6 +481,7 @@ function createCenterMesh(centerType, opacity) {
     getBiomeSideMaterial(centerType, opacity)
   ]);
 
+  mesh.name = `hex-center-${centerType}`;  // pour le HUD perf
   mesh.receiveShadow = true;
   mesh.castShadow = false;
   mesh.userData.disableCastShadow = true;

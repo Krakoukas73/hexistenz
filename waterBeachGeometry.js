@@ -4,42 +4,32 @@ import { axialToWorld, makeHexKey } from './stable/hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
 import { createOuterVertices } from './stable/hexGeometry.js';
 import { makeNodeKey, getTileCenterType } from './stable/tileUtils.js';
-import { hashRaggedInnerEdge, hashRaggedEdge, hash01 } from './stable/raggedEdge.js';
 
 // ─── Constantes plage ─────────────────────────────────────────────────────────
+// REWRITE v2 : plage lowpoly monobloc — 2 rangs, 0 turbulence, 1 matériau.
+// La polyline suit les arêtes droites de l'hexagone (pas de turbulence).
+// Le profil est une simple marche inclinée : bord terre → bord eau.
 
 const BEACH = {
-  // Plage volumique créée seulement pour les zones d'eau en contact avec
-  // une texture terrestre. Elle reprend les mêmes points turbulents que les
-  // tuiles : pas de segments droits entre deux sommets de l'hexagone.
-  width: HEX_SIZE * 0.130,
-  segmentsAlongOuterEdge: 16,
-  segmentsAlongInnerEdge: 12,
-  raggedOuterAmplitude: 0.090,
-  raggedInnerAmplitude: 0.044,
-  // Niveaux abaissés : la plage doit rester une berge, pas un barrage débile
-  // construit par des castors alcooliques.
-  landLipY: -0.035,
-  crownY: -0.010,
-  waterLipY: (TILE_VISUAL.waterY ?? -0.075) + 0.004,
-  bottomY: (TILE_VISUAL.waterY ?? -0.075) - 0.070,
-  seaFloorWidth: HEX_SIZE * 0.070,
-  // Les bandes sont générées par tronçons, donc on les fait se chevaucher un
-  // peu aux extrémités pour combler les trous dans les angles et jonctions.
-  // Chevauchement réduit : il bouche les micro-fentes sans créer de doubles
-  // couches visibles aux angles. Le reste est fusionné dans un mesh unique.
-  // Continuité par soudure/chevauchement discret uniquement : pas de rustines
-  // circulaires aux angles, elles créaient des pâtés façon bunker de plage.
-  jointOverlap: HEX_SIZE * 0.070,
+  width:            HEX_SIZE * 0.130,  // largeur totale côté eau
+  landLipY:         -0.065,            // Y côté terre : sous la surface du terrain pour être invisible sous blé/forêt
+  waterLipY:        (TILE_VISUAL.waterY ?? -0.075) + 0.004, // Y côté eau
+  landOffset:       -HEX_SIZE * 0.085, // retrait profond côté terre : la plage mord sous la texture terrain (couvre les trous)
+  jointOverlap:     HEX_SIZE * 0.030,  // chevauchement aux extrémités libres
   vertexWeldEpsilon: 0.026
 };
+
+// Hash pseudo-aléatoire déterministe 0→1 (texture sable)
+function _hash01(n) {
+  let x = Math.sin(n + 1) * 43758.5453123;
+  return x - Math.floor(x);
+}
 
 const CENTER_RADIUS = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 
 let beachMaterial = null;
-let beachSideMaterial = null;
 
 // ─── API publique ─────────────────────────────────────────────────────────────
 
@@ -80,7 +70,7 @@ export function createWaterBeachMesh(zone, placedTiles) {
   const mergedGeometry = mergeBeachGeometries(beachGeometries);
   if (!mergedGeometry) return group;
 
-  const mesh = new THREE.Mesh(mergedGeometry, [getBeachMaterial(), getBeachSideMaterial()]);
+  const mesh = new THREE.Mesh(mergedGeometry, getBeachMaterial());
   mesh.name = 'continuous-sand-beach-step';
   mesh.receiveShadow = true;
   mesh.castShadow = false;
@@ -112,38 +102,38 @@ function addSectorBeachPolylines(beachPolylines, sectorRef, sectorKeys, centerKe
     : null;
   const oppositeEdge = getOppositeEdge(edge);
   const hasOuterWaterNeighbor = neighborTile && sectorKeys.has(makeNodeKey(neighborTile.key, oppositeEdge));
+
+  // Arête extérieure (entre deux sommets hex) — droite, sans turbulence
   if (!hasOuterWaterNeighbor && neighborTile) {
     addBeachPolylineFromLocalPolyline(
-      beachPolylines,
-      world,
-      createRaggedOuterBeachEdge(outerVertices[sector.a], outerVertices[sector.b], EDGE_TYPES.water),
+      beachPolylines, world,
+      createStraightBeachEdge(outerVertices[sector.a], outerVertices[sector.b], 1),
       waterCenter
     );
   }
 
+  // Arêtes latérales (bords du secteur) — droites, sans turbulence
   if (!sectorKeys.has(makeNodeKey(placedTile.key, previousEdge))) {
     addBeachPolylineFromLocalPolyline(
-      beachPolylines,
-      world,
-      createRaggedInnerBeachEdge(innerVertices[sector.a], outerVertices[sector.a], sector.a),
+      beachPolylines, world,
+      createStraightBeachEdge(innerVertices[sector.a], outerVertices[sector.a], 1),
       waterCenter
     );
   }
 
   if (!sectorKeys.has(makeNodeKey(placedTile.key, nextEdge))) {
     addBeachPolylineFromLocalPolyline(
-      beachPolylines,
-      world,
-      createRaggedInnerBeachEdge(innerVertices[sector.b], outerVertices[sector.b], sector.b).reverse(),
+      beachPolylines, world,
+      createStraightBeachEdge(outerVertices[sector.b], innerVertices[sector.b], 1),
       waterCenter
     );
   }
 
+  // Arête intérieure (côté centre de tuile) — droite
   if (!centerKeys.has(placedTile.key)) {
     addBeachPolylineFromLocalPolyline(
-      beachPolylines,
-      world,
-      createStraightBeachEdge(innerVertices[sector.b], innerVertices[sector.a], BEACH.segmentsAlongInnerEdge),
+      beachPolylines, world,
+      createStraightBeachEdge(innerVertices[sector.b], innerVertices[sector.a], 1),
       waterCenter
     );
   }
@@ -160,7 +150,7 @@ function addCenterBeachPolylines(beachPolylines, placedTile, sectorKeys) {
     addBeachPolylineFromLocalPolyline(
       beachPolylines,
       world,
-      createStraightBeachEdge(innerVertices[sector.a], innerVertices[sector.b], BEACH.segmentsAlongInnerEdge),
+      createStraightBeachEdge(innerVertices[sector.a], innerVertices[sector.b], 1),
       waterCenter
     );
   }
@@ -390,223 +380,99 @@ function pointDistance(a, b) {
 
 // ─── Géométrie mesh de la plage ───────────────────────────────────────────────
 
+// Fusionne toutes les géométries de bande en un mesh unique — matériau unique.
 function mergeBeachGeometries(geometries) {
   if (!geometries.length) return null;
 
   const positions = [];
   const uvs = [];
-  const topIndices = [];
-  const sideIndices = [];
-  const vertexMap = new Map();
-
-  const addVertex = (x, y, z, u, v) => {
-    const key = `${Math.round(x / BEACH.vertexWeldEpsilon)}:${Math.round(y / BEACH.vertexWeldEpsilon)}:${Math.round(z / BEACH.vertexWeldEpsilon)}`;
-    const existing = vertexMap.get(key);
-    if (existing !== undefined) return existing;
-
-    const index = positions.length / 3;
-    vertexMap.set(key, index);
-    positions.push(x, y, z);
-    uvs.push(u, v);
-    return index;
-  };
+  const indices = [];
+  let indexOffset = 0;
 
   for (const geometry of geometries) {
-    const sourcePositions = geometry.getAttribute('position');
-    const sourceUvs = geometry.getAttribute('uv');
-    const sourceIndex = geometry.getIndex();
-    const remap = [];
+    const pos = geometry.getAttribute('position');
+    const uv  = geometry.getAttribute('uv');
+    const idx = geometry.getIndex();
+    if (!pos || !idx) continue;
 
-    for (let i = 0; i < sourcePositions.count; i++) {
-      remap[i] = addVertex(
-        sourcePositions.getX(i),
-        sourcePositions.getY(i),
-        sourcePositions.getZ(i),
-        sourceUvs.getX(i),
-        sourceUvs.getY(i)
-      );
+    for (let i = 0; i < pos.count; i++) {
+      positions.push(pos.getX(i), pos.getY(i), pos.getZ(i));
+      uvs.push(uv.getX(i), uv.getY(i));
     }
-
-    for (const group of geometry.groups) {
-      const target = group.materialIndex === 0 ? topIndices : sideIndices;
-      for (let i = group.start; i < group.start + group.count; i++) {
-        target.push(remap[sourceIndex.getX(i)]);
-      }
+    for (let i = 0; i < idx.count; i++) {
+      indices.push(idx.getX(i) + indexOffset);
     }
+    indexOffset += pos.count;
   }
 
-  const indices = topIndices.concat(sideIndices);
+  if (!positions.length) return null;
+
   const merged = new THREE.BufferGeometry();
   merged.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
-  merged.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+  merged.setAttribute('uv',       new THREE.BufferAttribute(new Float32Array(uvs),       2));
   merged.setIndex(indices);
-  merged.clearGroups();
-  merged.addGroup(0, topIndices.length, 0);
-  merged.addGroup(topIndices.length, sideIndices.length, 1);
   merged.computeVertexNormals();
   return merged;
 }
 
+// REWRITE v2 : bande lowpoly 2 rangs — côté terre (rang 0) + côté eau (rang 1).
+// Chaque segment de la polyline → 1 quad = 2 triangles.
+// Aucun cap, aucune face ventrale, matériau unique.
 function createBeachStripGeometryFromWorldPolyline(worldPolyline, worldWaterCenter) {
+  if (!worldPolyline || worldPolyline.length < 2) return null;
+
   const positions = [];
   const uvs = [];
   const indices = [];
-  const profile = createSmoothBeachProfile();
-  const rowCount = profile.length;
-  const cumulative = [0];
 
+  const cumulative = [0];
   for (let i = 1; i < worldPolyline.length; i++) {
-    const a = worldPolyline[i - 1];
-    const b = worldPolyline[i];
+    const a = worldPolyline[i - 1], b = worldPolyline[i];
     cumulative.push(cumulative[i - 1] + Math.hypot(b.x - a.x, b.z - a.z));
   }
-
   const totalLength = Math.max(cumulative[cumulative.length - 1], 0.001);
 
   for (let i = 0; i < worldPolyline.length; i++) {
     const point = worldPolyline[i];
     const tangent = getPolylineTangent(worldPolyline, i);
+    // La normale pointe vers l'eau (vérifiée par produit scalaire)
     let normal = { x: -tangent.z, z: tangent.x };
     const toWater = { x: worldWaterCenter.x - point.x, z: worldWaterCenter.z - point.z };
-    if ((normal.x * toWater.x + normal.z * toWater.z) < 0) {
-      normal = { x: -normal.x, z: -normal.z };
-    }
+    if ((normal.x * toWater.x + normal.z * toWater.z) < 0) normal = { x: -normal.x, z: -normal.z };
 
-    const alongU = cumulative[i] / totalLength;
+    const u = cumulative[i] / totalLength;
 
-    for (const sample of profile) {
-      const x = point.x + normal.x * sample.offset;
-      const z = point.z + normal.z * sample.offset;
-      const y = sample.y;
-      positions.push(x, y, z);
-      uvs.push(alongU * 3.4, sample.v);
-    }
+    // Rang 0 : lèvre côté terre (légèrement sous la texture terrain)
+    positions.push(
+      point.x + normal.x * BEACH.landOffset, BEACH.landLipY,
+      point.z + normal.z * BEACH.landOffset
+    );
+    uvs.push(u, 0);
+
+    // Rang 1 : lèvre côté eau
+    positions.push(
+      point.x + normal.x * BEACH.width, BEACH.waterLipY,
+      point.z + normal.z * BEACH.width
+    );
+    uvs.push(u, 1);
   }
 
+  // Quad strip : 2 tris par segment (DoubleSide → pas besoin de faces inverses)
   for (let i = 0; i < worldPolyline.length - 1; i++) {
-    const base = i * rowCount;
-    const next = (i + 1) * rowCount;
-    for (let j = 0; j < rowCount - 1; j++) {
-      indices.push(base + j, next + j, next + j + 1);
-      indices.push(base + j, next + j + 1, base + j + 1);
-    }
-  }
-
-  const topIndexCount = indices.length;
-
-  // Petite tranche sous la pente : donne la lecture "marche d'escalier" au lieu
-  // d'un simple tapis plat sans volume. Invisible de haut, utile en caméra basse.
-  const topVertexCount = positions.length / 3;
-  for (let i = 0; i < topVertexCount; i++) {
-    positions.push(positions[i * 3], BEACH.bottomY, positions[i * 3 + 2]);
-    uvs.push(uvs[i * 2], uvs[i * 2 + 1]);
-  }
-
-  for (let i = 0; i < worldPolyline.length - 1; i++) {
-    const base = i * rowCount;
-    const next = (i + 1) * rowCount;
-
-    // On ferme uniquement le flanc côté terre. Côté mer, le profil se prolonge
-    // maintenant en fond marin incliné : plus de face verticale abrupte façon
-    // marche d'escalier de piscine municipale soviétique.
-    const j = 0;
-    const a = base + j;
-    const b = next + j;
-    const c = topVertexCount + next + j;
-    const d = topVertexCount + base + j;
-    indices.push(a, b, c);
-    indices.push(a, c, d);
-  }
-
-  // Les caps ne sont gardés que sur les vrais bouts libres. Les jonctions déjà
-  // soudées en chaîne continue ne reçoivent plus de faces de fermeture internes,
-  // donc plus de cassure/pâté à l'angle.
-  if (!worldPolyline.isClosedBeachChain) {
-    if (!worldPolyline.skipStartCap) addBeachEndCapIndices(indices, 0, rowCount, topVertexCount);
-    if (!worldPolyline.skipEndCap) addBeachEndCapIndices(indices, worldPolyline.length - 1, rowCount, topVertexCount);
-  }
-
-  // Sous-face discrète : sécurité caméra basse. Sans ça, certains angles en
-  // bord de vide peuvent encore montrer l'intérieur du mesh, ce qui fait cheap
-  // comme un décor de cinéma fauché.
-  for (let i = 0; i < worldPolyline.length - 1; i++) {
-    const base = topVertexCount + i * rowCount;
-    const next = topVertexCount + (i + 1) * rowCount;
-    for (let j = 0; j < rowCount - 1; j++) {
-      indices.push(base + j, next + j + 1, next + j);
-      indices.push(base + j, base + j + 1, next + j + 1);
-    }
+    const a0 = i * 2,       a1 = i * 2 + 1;
+    const b0 = (i + 1) * 2, b1 = (i + 1) * 2 + 1;
+    indices.push(a0, b0, b1, a0, b1, a1);
   }
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
-  geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+  geometry.setAttribute('uv',       new THREE.BufferAttribute(new Float32Array(uvs),       2));
   geometry.setIndex(indices);
-  geometry.clearGroups();
-  geometry.addGroup(0, topIndexCount, 0);
-  geometry.addGroup(topIndexCount, indices.length - topIndexCount, 1);
   geometry.computeVertexNormals();
   return geometry;
 }
 
-function addBeachEndCapIndices(indices, pointIndex, rowCount, bottomOffset) {
-  const base = pointIndex * rowCount;
-  for (let j = 0; j < rowCount - 1; j++) {
-    const topA = base + j;
-    const topB = base + j + 1;
-    const bottomA = bottomOffset + topA;
-    const bottomB = bottomOffset + topB;
-    indices.push(topA, bottomA, bottomB);
-    indices.push(topA, bottomB, topB);
-  }
-}
-
-function createSmoothBeachProfile() {
-  const samples = [];
-  const beachSteps = 7;
-  const seaSteps = 4;
-
-  for (let i = 0; i < beachSteps; i++) {
-    const t = i / (beachSteps - 1);
-    const eased = smoothstep(t);
-
-    // Petite lèvre côté terre, puis pente douce jusqu'au ras de l'eau. Le
-    // premier point mord un peu sous la texture voisine pour masquer les
-    // micro-vides sans remonter la plage en barrage.
-    const offset = mix(-BEACH.width * 0.18, BEACH.width * 0.96, eased);
-    const terrace = Math.sin(Math.PI * t) * 0.006;
-    const y = mix(BEACH.landLipY, BEACH.waterLipY, eased) + terrace;
-    samples.push({ offset, y, v: t * 0.74 });
-  }
-
-  const lastBeach = samples[samples.length - 1];
-  for (let i = 1; i <= seaSteps; i++) {
-    const t = i / seaSteps;
-    const eased = smoothstep(t);
-
-    // Fond marin progressif : on prolonge la plage SOUS l'eau au lieu de
-    // terminer par une face verticale. Ça supprime l'effet palier/marche côté
-    // mer tout en gardant la pente et la largeur validées côté terre.
-    samples.push({
-      offset: lastBeach.offset + BEACH.seaFloorWidth * eased,
-      y: mix(BEACH.waterLipY, BEACH.bottomY, eased),
-      v: mix(0.74, 1.0, eased)
-    });
-  }
-
-  return samples;
-}
-
 // ─── Utilitaires géométrie plage ─────────────────────────────────────────────
-
-function smoothstep(t) {
-  const x = Math.max(0, Math.min(1, t));
-  return x * x * (3 - 2 * x);
-}
-
-function mix(a, b, t) {
-  return a + (b - a) * t;
-}
 
 function getWaterSectorLocalCentroid(sector, outerVertices, innerVertices) {
   const a = outerVertices[sector.a];
@@ -628,46 +494,6 @@ function getPolylineTangent(points, index) {
   return { x: dx / length, z: dz / length };
 }
 
-function createRaggedOuterBeachEdge(a, b, type) {
-  const points = [];
-  const seed = hashRaggedEdge(a, b, type);
-
-  for (let i = 0; i <= BEACH.segmentsAlongOuterEdge; i++) {
-    const t = i / BEACH.segmentsAlongOuterEdge;
-    const x = THREE.MathUtils.lerp(a.x, b.x, t);
-    const z = THREE.MathUtils.lerp(a.z, b.z, t);
-    const endFade = Math.sin(Math.PI * t);
-    const broadWave = 0.55 + 0.45 * Math.sin((Math.PI * t * 2) + hash01(seed + 17) * Math.PI * 2);
-    const localChaos = 0.65 + 0.35 * hash01(seed + i * 97);
-    const bite = BEACH.raggedOuterAmplitude * endFade * (0.55 + broadWave * localChaos);
-    const length = Math.hypot(x, z) || 1;
-    points.push({ x: x + (x / length) * bite, z: z + (z / length) * bite });
-  }
-
-  return points;
-}
-
-function createRaggedInnerBeachEdge(innerPoint, outerPoint, vertexIndex) {
-  const points = [];
-  const seed = hashRaggedInnerEdge(vertexIndex);
-  const dx = outerPoint.x - innerPoint.x;
-  const dz = outerPoint.z - innerPoint.z;
-  const length = Math.hypot(dx, dz) || 1;
-  const normal = { x: -dz / length, z: dx / length };
-
-  for (let i = 0; i <= BEACH.segmentsAlongInnerEdge; i++) {
-    const t = i / BEACH.segmentsAlongInnerEdge;
-    const x = THREE.MathUtils.lerp(innerPoint.x, outerPoint.x, t);
-    const z = THREE.MathUtils.lerp(innerPoint.z, outerPoint.z, t);
-    const endFade = Math.sin(Math.PI * t);
-    const wave = Math.sin((Math.PI * t * 3) + hash01(seed + 23) * Math.PI * 2);
-    const localChaos = (hash01(seed + i * 131) - 0.5) * 2;
-    const bite = BEACH.raggedInnerAmplitude * endFade * ((wave * 0.65) + (localChaos * 0.35));
-    points.push({ x: x + normal.x * bite, z: z + normal.z * bite });
-  }
-
-  return points;
-}
 
 function createStraightBeachEdge(a, b, segments) {
   const points = [];
@@ -689,29 +515,12 @@ function getBeachMaterial() {
   beachMaterial = new THREE.MeshStandardMaterial({
     name: 'dorfromantik-sand-beach-material',
     map: texture,
-    color: 0xd6c08f,
+    color: 0xd2b87a,
     roughness: 0.96,
     metalness: 0.0,
-    side: THREE.DoubleSide
+    side: THREE.DoubleSide   // DoubleSide = pas besoin de face ventrale
   });
   return beachMaterial;
-}
-
-function getBeachSideMaterial() {
-  if (beachSideMaterial) return beachSideMaterial;
-  const texture = createSandTexture();
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(1.8, 0.9);
-  beachSideMaterial = new THREE.MeshStandardMaterial({
-    name: 'dorfromantik-sand-beach-side-material',
-    map: texture,
-    color: 0xb9975e,
-    roughness: 1.0,
-    metalness: 0.0,
-    side: THREE.DoubleSide
-  });
-  return beachSideMaterial;
 }
 
 function createSandTexture() {
@@ -723,13 +532,13 @@ function createSandTexture() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   for (let i = 0; i < 1400; i++) {
-    const warm = 178 + Math.floor(hash01(i * 911 + 17) * 48);
-    const green = 151 + Math.floor(hash01(i * 577 + 41) * 42);
-    const blue = 102 + Math.floor(hash01(i * 313 + 9) * 34);
-    const alpha = 0.10 + hash01(i * 389 + 5) * 0.22;
-    const radius = 0.28 + hash01(i * 271 + 3) * 0.85;
-    const x = hash01(i * 421 + 11) * canvas.width;
-    const y = hash01(i * 719 + 13) * canvas.height;
+    const warm = 178 + Math.floor(_hash01(i * 911 + 17) * 48);
+    const green = 151 + Math.floor(_hash01(i * 577 + 41) * 42);
+    const blue = 102 + Math.floor(_hash01(i * 313 + 9) * 34);
+    const alpha = 0.10 + _hash01(i * 389 + 5) * 0.22;
+    const radius = 0.28 + _hash01(i * 271 + 3) * 0.85;
+    const x = _hash01(i * 421 + 11) * canvas.width;
+    const y = _hash01(i * 719 + 13) * canvas.height;
     ctx.fillStyle = `rgba(${warm}, ${green}, ${blue}, ${alpha})`;
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -737,13 +546,13 @@ function createSandTexture() {
   }
 
   for (let i = 0; i < 32; i++) {
-    const y = hash01(i * 823 + 19) * canvas.height;
-    ctx.strokeStyle = `rgba(255, 239, 190, ${0.035 + hash01(i * 337 + 23) * 0.045})`;
-    ctx.lineWidth = 0.6 + hash01(i * 643 + 29) * 1.1;
+    const y = _hash01(i * 823 + 19) * canvas.height;
+    ctx.strokeStyle = `rgba(255, 239, 190, ${0.035 + _hash01(i * 337 + 23) * 0.045})`;
+    ctx.lineWidth = 0.6 + _hash01(i * 643 + 29) * 1.1;
     ctx.beginPath();
     ctx.moveTo(0, y);
     for (let x = 0; x <= canvas.width; x += 8) {
-      ctx.lineTo(x, y + Math.sin((x * 0.075) + i) * (1.2 + hash01(i * 97 + x) * 1.8));
+      ctx.lineTo(x, y + Math.sin((x * 0.075) + i) * (1.2 + _hash01(i * 97 + x) * 1.8));
     }
     ctx.stroke();
   }

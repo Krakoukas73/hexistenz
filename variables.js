@@ -67,7 +67,7 @@ export const NETWORK_EDGE_TYPES = [EDGE_TYPES.water, EDGE_TYPES.rail];
 // Couleurs principales des biomes et overlays. Format hexadécimal Three.js.
 export const EDGE_COLOR = {
   field: 0xE5C65A,
-  forest: 0x1F5A2B,
+  forest: 0x3A8A40,  // éclairci : #1F5A2B trop sombre → quasi-noir sous ACESFilmicToneMapping
   water: 0x5FA8D3,
   rail: 0xDDDDDD,
   house: 0x8B8069,
@@ -111,7 +111,7 @@ export const THIN_BIOME_DEPTH_RATIO = {
 // Variation du dessus des biomes pour éviter les glitchs aux jonctions.
 // Le dessous reste collé à la grille : c'est la règle sacrée, gravée au burin.
 export const BIOME_HEIGHT_RATIO = {
-  field: 0.0525, // −65% (sync avec tileMesh.js)
+  field: 0.0462, // −65% −12% (sync avec tileMesh.js)
   grass: -0.45
 };
 
@@ -200,27 +200,24 @@ export const HOUSE_SCALE_FACTOR = 0.1332; // −10 %
 export const HOUSE_BASE_Y_OFFSET = 0.002;
 export const HOUSE_CHIMNEY_TOP_SCALE = 1.62;
 export const HOUSE_SMOKE_Y_SCALE = 0.08;
-export const PUFFS_PER_COLUMN = 18;
+export const PUFFS_PER_COLUMN = 11; // −39 % (était 18)
 
 export const CHURCH_MIN_HOUSES = 8;
 export const CHURCH_HOUSES_PER_EXTRA = 18;
 export const CHURCH_MAX_PER_ZONE = 4;
-export const CEMETERY_MIN_HOUSES = 13;
-export const CEMETERY_HOUSES_PER_EXTRA = 24;
-export const CEMETERY_MAX_PER_ZONE = 3;
-
 // ----------------------------------------------------------------------------
 // FORÊTS / ARBRES GLB
 // ----------------------------------------------------------------------------
 export const TREE_MODEL_DEFS = [
   { key: 'birch', url: './glb/arbres/tree_birch.glb', baseScale: 0.225 },
   { key: 'bushy_mini', url: './glb/arbres/tree_bushy_mini.glb', baseScale: 0.225 },
-  { key: 'oak_round', url: './glb/arbres/tree_oak_round.glb', baseScale: 0.225 },
+  // oak_round + dead retirés du pool (trop lourds : ~10k tris chacun)
   { key: 'pine_soft', url: './glb/arbres/tree_pine_soft.glb', baseScale: 0.250 },
-  { key: 'dead', url: './glb/arbres/tree_dead.glb', baseScale: 0.190 },
-  { key: 'poplar', url: './glb/arbres/tree_poplar.glb', baseScale: 0.250 }
+  { key: 'poplar', url: './glb/arbres/tree_poplar.glb', baseScale: 0.250 },
+  { key: 'tree_fir', url: './glb/arbres/tree_fir.glb', baseScale: 0.250 },
+  { key: 'tree_complex', url: './glb/arbres/tree_complex.glb', baseScale: 0.250 },
 ];
-export const TREE_SIZE_MULTIPLIER = 1.65;
+export const TREE_SIZE_MULTIPLIER = 1.65 * 0.88; // −12%
 // Alignement sol réel des forêts : les dalles forest sont abaissées de 30% d'épaisseur (0.12 * -0.30 = -0.036).
 // Léger enfouissement pour éviter tout flottement visible sur le relief.
 export const TREE_GROUND_OFFSET = -0.010;
@@ -237,7 +234,7 @@ export const BOATS_PER_WATER_COMPONENT = 1;
 export const BOAT_SPEED = 0.13;
 export const BOAT_HEADING_OFFSET = Math.PI;
 export const BOAT_MODEL_URL = './glb/bateau.glb';
-export const BOAT_TARGET_LENGTH = 0.735;
+export const BOAT_TARGET_LENGTH = 0.735 * 0.88 * 0.92; // −12% −8%
 export const BOAT_Y_OFFSET = -0.018;
 export const WATER_PORT_INSET = 0.52;
 
@@ -315,45 +312,65 @@ export const HEX_CHUNK_SIZE = 3;
 // Distance caméra–centre-chunk (world units) au-delà de laquelle les micro-objets
 // (fleurs, roseaux, champignons) sont masqués, même s'ils sont dans le frustum.
 // +23 % (était 13.0) : compense le rayon de chunk qui causait un culling prématuré.
-export const LOD_MICRO_CULL_DISTANCE = 14.4;          // −10 % (était 16.0)
+export const LOD_MICRO_CULL_DISTANCE = 6.6;           // −8 % (était 7.2) — fleurs, champignons
+
+// Distance caméra au-delà de laquelle les plantes/plantes.glb (plant-*, shrub-*, reed) sont masquées.
+export const LOD_PLANT_CULL_DISTANCE = 5.6;           // −8 % (était 6.1)
 
 // Les arbres utilisent uniquement le frustum culling (pas de distance cutoff).
 // Constante réservée pour extension future (cartes très grandes).
-export const LOD_TREE_CULL_DISTANCE = 36.0;           // −10 % (était 40.0)
+export const LOD_TREE_CULL_DISTANCE = 12.2;           // −8 % (était 13.3)
 
 // Distance caméra–centre-chunk au-delà de laquelle les rochers sont masqués.
-export const LOD_ROCK_CULL_DISTANCE = 23.4;           // −10 % (était 26.0)
+export const LOD_ROCK_CULL_DISTANCE = 7.2;            // −8 % (était 7.8)
 
-// Distance XZ (horizontale) au-delà de laquelle les bateaux animés (pirates) sont masqués.
-// Comparaison XZ uniquement dans updateWaterBoatLOD — seuil réduit pour effet plus marqué.
-export const LOD_BOAT_CULL_DISTANCE = 13.5;           // −10 % (était 15.0)
+// Distance 3D au-delà de laquelle les bateaux animés sont masqués.
+// Distance 3D complète (Y inclus) : correcte en vue top-down où la caméra est haute.
+// Valeur augmentée vs XZ-only pour conserver une portée similaire en jeu normal (caméra Y ~8-12).
+export const LOD_BOAT_CULL_DISTANCE = 10.3;           // −8 % (était 11.2)
 
 // Distance 3D au-delà de laquelle les barques échouées (shore-inert-boat) sont masquées.
-export const LOD_SHORE_BOAT_CULL_DISTANCE = 16.2;     // −10 % (était 18.0)
+export const LOD_SHORE_BOAT_CULL_DISTANCE = 9.2;      // −8 % (était 10.0)
 
 // Distance caméra au-delà de laquelle les trains et gares sont masqués.
-export const LOD_TRAIN_CULL_DISTANCE = 34.2;          // −10 % (était 38.0)
+export const LOD_TRAIN_CULL_DISTANCE = 9.9;           // −8 % (était 10.8)
 
 // Distance caméra au-delà de laquelle les bâtiments de village sont masqués.
-export const LOD_HOUSE_CULL_DISTANCE = 28.8;          // −10 % (était 32.0)
+export const LOD_HOUSE_CULL_DISTANCE = 12.7;          // −8 % (était 13.8)
+
+// Distance caméra au-delà de laquelle les watchtowers sont masquées (LOD plus sévère que les maisons).
+export const LOD_WATCHTOWER_CULL_DISTANCE = 13.2;     // −8 % (était 14.3)
 
 // Distance caméra au-delà de laquelle les rails (traverses, ballast) sont masqués.
-export const LOD_RAIL_TRACK_CULL_DISTANCE = 27.0;     // −10 % (était 30.0)
+export const LOD_RAIL_TRACK_CULL_DISTANCE = 14.4;     // −8 % (était 15.7)
 
 // Distance caméra au-delà de laquelle les réseaux de routes pavées (stone-road-glb)
 // sont masqués. Légèrement inférieure aux voies ferrées (objets plus fins, moins lisibles).
-export const LOD_PAVED_ROAD_CULL_DISTANCE = 25.2;     // −10 % (était 28.0)
+export const LOD_PAVED_ROAD_CULL_DISTANCE = 9.1;      // −8 % (était 9.9)
 
 // Distance caméra au-delà de laquelle les décorations de bord de route
-// (bancs, moulins, corbeaux) sont masquées.
-export const LOD_ROAD_DECOR_CULL_DISTANCE = 27.0;     // −10 % (était 30.0)
+// (bancs) sont masquées.
+export const LOD_ROAD_DECOR_CULL_DISTANCE = 8.3;      // −8 % (était 9.0)
+
+// Distance caméra au-delà de laquelle les corbeaux animés sont masqués.
+export const LOD_CROW_CULL_DISTANCE = 9.7;            // −8 % (était 10.5)
+
+// Distance caméra au-delà de laquelle les moulins (moulin-1/2) sont masqués.
+export const LOD_MILL_CULL_DISTANCE = 12.6;           // −8 % (était 13.7)
 
 // Distance caméra au-delà de laquelle les panneaux indicateurs sont masqués.
 // LOD sévère (petits objets, peu lisibles de loin).
-export const LOD_SIGN_CULL_DISTANCE = 15.3;           // −10 % (était 17.0)
+export const LOD_SIGN_CULL_DISTANCE = 7.9;            // −8 % (était 8.6)
 
 // Distance caméra au-delà de laquelle les tonneaux et charrettes de village sont masqués.
-export const LOD_VILLAGE_PROP_CULL_DISTANCE = 19.8;   // −10 % (était 22.0)
+export const LOD_VILLAGE_PROP_CULL_DISTANCE = 8.6;    // −8 % (était 9.4)
+
+// Distance caméra au-delà de laquelle les animaux (village + sauvages) sont masqués.
+// Catégorie dédiée, séparée des charrettes/tonneaux pour un contrôle indépendant.
+export const LOD_ANIMAL_CULL_DISTANCE = 9.6;          // −8 % (était 10.4)
+
+// Distance caméra au-delà de laquelle les fontaines de village sont masquées.
+export const LOD_FOUNTAIN_CULL_DISTANCE = 9.8;        // −8 % (était 10.7)
 
 // ----------------------------------------------------------------------------
 // HITBOX — Registre spatial des objets GLB volumineux (stable/propHitboxRegistry.js)
@@ -365,16 +382,15 @@ export const HITBOX_RESOLVE_MAX_ITER = 6;
 // Objets durs (enregistrés en premier) : arbres, rochers, bâtiments.
 // Objets mous (utilisent tryResolve) : tonneaux, charrettes, bancs, panneaux.
 export const HITBOX_R = {
-  treeTrunk:  HEX_SIZE * 0.09,
-  rockLarge:  HEX_SIZE * 0.10,
-  house:      HEX_SIZE * 0.198, // −10 %
+  treeTrunk:  HEX_SIZE * 0.09 * 0.88,               // −12%
+  rockLarge:  HEX_SIZE * 0.10 * 0.85 * 0.85,        // −15% −15%
+  house:      HEX_SIZE * 0.198 * 0.93 * 0.90,        // −10% −7% −10%
   church:     HEX_SIZE * 0.30,
-  cemetery:   HEX_SIZE * 0.24,
-  watchtower: HEX_SIZE * 0.18,
-  barrel:     HEX_SIZE * 0.065,
-  cart:       HEX_SIZE * 0.17,
-  bench:      HEX_SIZE * 0.10,
-  signpost:   HEX_SIZE * 0.06,
+  watchtower: HEX_SIZE * 0.18 * 1.10 * 1.10,        // +10% +10%
+  barrel:     HEX_SIZE * 0.065 * 0.93,               // −7%
+  cart:       HEX_SIZE * 0.17 * 0.85,                // −15%
+  bench:      HEX_SIZE * 0.10 * 0.85,                // −15%
+  signpost:   HEX_SIZE * 0.06 * 0.85 * 0.75,        // −15% −25%
   fountain:   HEX_SIZE * 0.13,
 };
 
@@ -401,21 +417,24 @@ export const TREE_WIND = {
 // Géométrie GPU-only (InstancedBufferGeometry + ShaderMaterial).
 // Un seul ShaderMaterial partagé pour toute la grille, uTime = globalWind.
 // Modifier librement ces valeurs pour ajuster le rendu.
-export const WHEAT_BLADE_COUNT    = 240;    // brins par secteur field
-export const WHEAT_BLADE_WIDTH    = 0.0065; // demi-largeur du brin (HEX_SIZE=1) — −65% −25% +60% −10%
+export const WHEAT_BLADE_COUNT    = 200;    // brins par secteur field — −33 % (était 300)
+export const WHEAT_BLADE_WIDTH    = 0.0024; // demi-largeur du brin (HEX_SIZE=1) — −65% −25% +60% −10% −63%
 export const WHEAT_BLADE_SEGMENTS = 4;      // segments verticaux (qualité du bend)
 export const WHEAT_INNER_RATIO    = 0.20;   // bord intérieur du trapèze (0=centre, 1=bord)
 export const WHEAT_HEIGHT_MIN     = 0.62;   // hauteur min (scale local brin)
 export const WHEAT_HEIGHT_MAX     = 1.20;   // hauteur max (scale local brin)
-export const WHEAT_WIDTH_MIN      = 0.75;   // largeur min (scale local brin)
-export const WHEAT_WIDTH_MAX      = 1.40;   // largeur max (scale local brin)
-export const WHEAT_GLOBAL_HEIGHT  = 0.0945; // scale global Y — −65% −25% +60% −10%
-export const WHEAT_WIND_STRENGTH  = 0.115;  // amplitude balancement (0=immobile, 0.32=fort)
+export const WHEAT_WIDTH_MIN      = 0.30;   // largeur min (scale local brin)
+export const WHEAT_WIDTH_MAX      = 0.65;   // largeur max (scale local brin)
+export const WHEAT_GLOBAL_HEIGHT  = 0.0774; // scale global Y — −65% −25% +60% −10% −7% −12%
+export const WHEAT_WIND_STRENGTH  = 0.075;  // amplitude balancement (0=immobile, 0.32=fort) — −35%
 export const WHEAT_WIND_SPEED     = 1.10;   // vitesse animation (multiplicateur temps)
 export const WHEAT_BOTTOM_COLOR   = 0x8f7a20; // couleur base de tige
-export const WHEAT_TOP_COLOR      = 0xf1c84f; // couleur haut de tige
-export const WHEAT_EAR_COLOR      = 0xffdf75; // couleur épi
-export const LOD_WHEAT_CULL_DISTANCE = 16.0; // distance LOD masquage (world units)
+export const WHEAT_TOP_COLOR      = 0xB8821E; // couleur haut de tige (ambré chaud)
+export const WHEAT_EAR_COLOR      = 0xCE9C28; // couleur épi (or ambré)
+export const LOD_WHEAT_CULL_DISTANCE = 6.6;  // −8 % (était 7.2)
+
+// Distance caméra au-delà de laquelle les labels de zones contigüe sont masqués.
+export const LOD_ZONE_LABEL_CULL_DISTANCE = 28.2;     // −8 % (était 30.6)
 
 // ----------------------------------------------------------------------------
 // ROCHERS — DENSITÉ ET VARIÉTÉ

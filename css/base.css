@@ -450,11 +450,12 @@ body::after {
 }
 
 body.grid-only-mode #scorePanel,
-body.grid-only-mode #debugLightPanel,
 body.grid-only-mode .multiplayer-badge,
 body.grid-only-mode .help-overlay {
   display: none !important;
 }
+
+/* En mode immersif le panneau LUT est entièrement fonctionnel (utile pour régler les visuels) */
 
 body.grid-only-mode #tileUI .missionsBox {
   display: none !important;

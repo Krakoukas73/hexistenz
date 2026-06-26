@@ -29,17 +29,25 @@
 
 .deckRemainingBox {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  justify-content: flex-start;
 }
 
+/* Même style que .score-value (#dbgScore, #dbgGridPercent) */
 #deckRemaining {
-  font-size: 28px;
+  /* Prend tout l'espace vertical restant après le titre, centre le nombre dedans */
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Typographie */
+  font-size: 42px;
   line-height: 1;
   font-weight: 900;
   color: #ffffff;
-  text-shadow: 0 0 14px rgba(90, 170, 255, 0.5);
+  text-shadow: 0 0 16px rgba(90, 170, 255, 0.42);
+  font-variant-numeric: tabular-nums;
 }
 
 .title {
@@ -50,9 +58,7 @@
   opacity: 1;
 }
 
-.deckRemainingBox .title {
-  margin-bottom: 0;
-}
+/* Le titre de deckRemainingBox hérite du margin standard (plus d'override) */
 
 .mini-hex-tile {
   position: relative;

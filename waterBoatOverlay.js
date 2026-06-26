@@ -124,15 +124,15 @@ export function updateWaterBoatOverlay(group, timeSeconds = 0) {
  * Met à jour la visibilité des bateaux selon la distance caméra.
  * À appeler tous les 3 frames depuis scene.js (même cadence que forestLOD).
  */
-export function updateWaterBoatLOD(group, camera) {
+export function updateWaterBoatLOD(group, camera, lodFactor = 1.0) {
   const boats = group.userData.boats ?? [];
-  const distSq = LOD_BOAT_CULL_DISTANCE * LOD_BOAT_CULL_DISTANCE;
+  const eff = LOD_BOAT_CULL_DISTANCE * lodFactor;
+  const distSq = eff * eff;
+  // Distance 3D complète (X + Y + Z) : corrige le bug vue top-down où camera XZ ≈ bateau XZ
+  // → dist2D ≈ 0 → bateau toujours visible. En vue verticale, la hauteur Y de la caméra
+  // est grande → distance 3D correcte → cull effectif.
   for (const boat of boats) {
-    // Distance XZ uniquement (cylindrique) : la hauteur caméra en Y fausserait
-    // une distance 3D et rendrait le LOD quasi-inopérant sur terrain plat.
-    const dx = camera.position.x - boat.trackCenter.x;
-    const dz = camera.position.z - boat.trackCenter.z;
-    boat.object.visible = dx * dx + dz * dz < distSq;
+    boat.object.visible = camera.position.distanceToSquared(boat.trackCenter) < distSq;
   }
 }
 

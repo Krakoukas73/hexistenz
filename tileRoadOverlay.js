@@ -1,21 +1,89 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import { mergeGeometries } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/BufferGeometryUtils.js';
 import { EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { getEdgeType } from './tileGenerator.js';
 
 const ROAD_STRAIGHT_URL = './glb/stone-road-droite.glb';
-const ROAD_CURVE_URL = './glb/stone-road-curve60.glb';
+const ROAD_CURVE_URL    = './glb/stone-road-curve60.glb';
 
-// Les modèles restent réduits de 35%, mais les segments sont allongés et se
+// Les modèles restent réduits de 35 %, mais les segments sont allongés et se
 // recouvrent franchement pour former de vrais chemins, pas des miettes de route.
 const STONE_ROAD_VISUAL_SCALE = 0.455;
-const STONE_ROAD_OVERLAP = 3.45;
-const STONE_ROAD_Y_OFFSET = 0.004;
-
-const roadModelCache = new Map();
-const loader = new GLTFLoader();
+const STONE_ROAD_OVERLAP      = 3.45;
+const STONE_ROAD_Y_OFFSET     = 0.004;
 
 const ROAD_TYPE = EDGE_TYPES.house;
+
+// ── Prototype cache ────────────────────────────────────────────────────────────
+// Chaque entrée : Promise<{ geo, mat, baseLength, baseWidth, baseHeight }|null>
+// • geo : BufferGeometry centrée sur XZ, bas posé à Y=0 (prête pour compose())
+// • baseLength/Width/Height : dimensions avant centrage (pour calcul du scale uniforme)
+const _roadProtoCache = new Map();
+const _gltfLoader     = new GLTFLoader();
+
+function _loadRoadProto(url) {
+  if (_roadProtoCache.has(url)) return _roadProtoCache.get(url);
+
+  const p = new Promise(resolve => {
+    _gltfLoader.load(url, gltf => {
+      const scene = gltf.scene;
+
+      // Applique les flags shadow/depth sur les meshes source
+      scene.traverse(c => {
+        if (!c.isMesh) return;
+        c.castShadow               = false;
+        c.userData.disableCastShadow = true;
+        c.receiveShadow            = true;
+        if (c.material) { c.material.depthWrite = true; c.material.needsUpdate = true; }
+      });
+
+      // Borne de la scène complète (tient compte de toute la hiérarchie)
+      const box  = new THREE.Box3().setFromObject(scene);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+
+      // Extraction de la géométrie + matériau, en appliquant les transforms hiérarchiques
+      scene.updateWorldMatrix(true, true);
+      let mat = null;
+      const geoList = [];
+      scene.traverse(c => {
+        if (!c.isMesh) return;
+        if (!mat) mat = c.material;
+        const g = c.geometry.clone();
+        g.applyMatrix4(c.matrixWorld);
+        geoList.push(g);
+      });
+
+      if (geoList.length === 0 || !mat) { resolve(null); return; }
+
+      const geo = geoList.length === 1
+        ? geoList[0]
+        : (mergeGeometries(geoList) ?? geoList[0]);
+      geoList.slice(1).forEach(g => g.dispose());
+
+      // Axe "longueur" du modèle (Z ou X selon orientation GLB)
+      const alongZ     = size.z >= size.x;
+      const baseLength = Math.max(alongZ ? size.z : size.x, 0.0001);
+      const baseWidth  = Math.max(alongZ ? size.x : size.z, 0.0001);
+      const baseHeight = Math.max(size.y,                   0.0001);
+
+      // Centre XZ, pose le bas à Y=0 — la compose() par instance suffira ensuite
+      const cx = (box.min.x + box.max.x) / 2;
+      const cz = (box.min.z + box.max.z) / 2;
+      geo.translate(-cx, -box.min.y, -cz);
+
+      resolve({ geo, mat, baseLength, baseWidth, baseHeight });
+    }, undefined, () => resolve(null));
+  });
+
+  _roadProtoCache.set(url, p);
+  return p;
+}
+
+// (warm-up retiré — routes désactivées, GLBs archivés)
+
+// ── API publique ──────────────────────────────────────────────────────────────
 
 // Les anciennes routes par secteur produisaient des bouts isolés et cassés.
 // Tout le réseau routier est maintenant généré au centre de la tuile, comme les
@@ -24,21 +92,118 @@ export function createRoadOverlay() {
   return null;
 }
 
-export function createRoadCenterOverlay(edges, sectorDefs, createOuterVertices) {
-  const ports = getRoadPorts(edges, sectorDefs, createOuterVertices);
-  if (ports.length < 1) return null;
+// Routes désactivées temporairement — les GLBs stone-road utilisent des
+// InterleavedBufferAttributes incompatibles avec mergeGeometries (Three.js r160).
+// Les fichiers GLB sont archivés en .glb.bak. À réactiver quand les modèles
+// seront remplacés par des meshes lowpoly avec attributs standard.
+export function createRoadCenterOverlay(_edges, _sectorDefs, _createOuterVertices) {
+  return null;
+}
 
-  const group = new THREE.Group();
-  group.name = 'village-stone-road-glb-network';
+// ── Collecte synchrone des données de segments ────────────────────────────────
 
-  const routes = createRoadRoutes(ports, edges);
-  for (const route of routes) {
-    const road = createStoneRoadFromPath(route.points, route.seedKey);
-    if (road) group.add(road);
+function _collectSegments(points, out) {
+  const samples = samplePolyline(points, getRoadSpacing());
+  if (samples.length < 6) return;
+
+  for (let i = 0; i < samples.length - 1; i += 1) {
+    const a = samples[i];
+    const b = samples[i + 1];
+    const dir = b.clone().sub(a);
+    const length = dir.length();
+    if (length <= 0.001) continue;
+
+    const prev = samples[Math.max(0, i - 1)];
+    const next = samples[Math.min(samples.length - 1, i + 2)];
+    const incoming = a.clone().sub(prev);
+    const outgoing = next.clone().sub(b);
+    const turn     = cross2D(incoming, outgoing);
+    const useCurve = i > 0 && i < samples.length - 2
+                     && (Math.abs(turn) > 0.0012 || i % 3 !== 0);
+
+    out.push({
+      mid: a.clone().lerp(b, 0.5),
+      rotY: Math.atan2(dir.x, dir.z) + (useCurve && turn < 0 ? Math.PI : 0),
+      useCurve,
+      targetLength: length         * STONE_ROAD_OVERLAP * STONE_ROAD_VISUAL_SCALE,
+      targetWidth:  getRoadWidth() * STONE_ROAD_VISUAL_SCALE,
+      targetHeight: getRoadHeight()* STONE_ROAD_VISUAL_SCALE,
+    });
+  }
+}
+
+// ── Construction asynchrone du Mesh fusionné (1 DC par tuile) ─────────────────
+
+async function _buildMergedRoad(group, segments) {
+  const [sp, cp] = await Promise.all([
+    _loadRoadProto(ROAD_STRAIGHT_URL),
+    _loadRoadProto(ROAD_CURVE_URL),
+  ]);
+
+  const straightProto = sp ?? _makeFallbackProto(false);
+  const curvedProto   = cp ?? _makeFallbackProto(true);
+
+  const geoList = [];
+  let mat = straightProto?.mat ?? curvedProto?.mat ?? null;
+
+  const dummy = new THREE.Object3D();
+
+  for (const seg of segments) {
+    const proto = seg.useCurve ? curvedProto : straightProto;
+    if (!proto) continue;
+
+    const uniform = Math.min(
+      seg.targetLength / proto.baseLength,
+      seg.targetWidth  / proto.baseWidth,
+      seg.targetHeight / proto.baseHeight,
+    );
+
+    // Chaque segment clone la géométrie de base (centrée, bas à Y=0)
+    // et y applique : scale uniforme + rotation Y + position monde
+    const segGeo = proto.geo.clone();
+    dummy.position.set(seg.mid.x, getRoadSurfaceY(seg.mid) + STONE_ROAD_Y_OFFSET, seg.mid.z);
+    dummy.rotation.set(0, seg.rotY, 0);
+    dummy.scale.setScalar(uniform);
+    dummy.updateMatrix();
+    segGeo.applyMatrix4(dummy.matrix);
+    geoList.push(segGeo);
   }
 
-  return group.children.length > 0 ? group : null;
+  if (geoList.length === 0 || !mat) return;
+
+  const merged = mergeGeometries(geoList);
+  geoList.forEach(g => g.dispose());
+  if (!merged) return;
+
+  const mesh = new THREE.Mesh(merged, mat);
+  mesh.name              = 'village-stone-road-merged';
+  mesh.receiveShadow     = true;
+  mesh.castShadow        = false;
+  mesh.userData.disableCastShadow  = true;
+  mesh.userData.shadowFlagsApplied = true;
+
+  group.add(mesh);
+  console.debug(`[roads] mesh fusionné : ${segments.length} segments → 1 DC`);
 }
+
+// Prototype procédural de secours si le GLB est indisponible au chargement
+function _makeFallbackProto(curved) {
+  const fb = createFallbackStoneRoad(curved);
+  let srcGeo = null, mat = null;
+  fb.traverse(c => { if (c.isMesh && !srcGeo) { srcGeo = c.geometry; mat = c.material; } });
+  if (!srcGeo) return null;
+  const geo = srcGeo.clone();
+  geo.computeBoundingBox();
+  const bb   = geo.boundingBox;
+  const size = new THREE.Vector3(); bb.getSize(size);
+  const baseLength = Math.max(size.z, size.x, 0.0001);
+  const baseWidth  = size.z >= size.x ? size.x : size.z;
+  const baseHeight = Math.max(size.y, 0.0001);
+  geo.translate(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2);
+  return { geo, mat, baseLength, baseWidth, baseHeight };
+}
+
+// ── Génération du réseau routier (inchangée) ──────────────────────────────────
 
 function getRoadPorts(edges, sectorDefs, createOuterVertices) {
   const vertices = createOuterVertices();
@@ -72,7 +237,7 @@ function createRoadRoutes(ports, edges) {
     return [createPortStubRoute(ports[0], true)];
   }
 
-  // Réseau “place de village” : chaque grappe de secteurs village reçoit un hub
+  // Réseau "place de village" : chaque grappe de secteurs village reçoit un hub
   // interne, puis chaque maison/port tente de s'y raccorder. C'est plus proche
   // des voies ferrées : un tracé continu, sinueux, avec des branches lisibles,
   // au lieu de petits bouts de gravier jetés par un hamster ivre.
@@ -145,7 +310,7 @@ function createVillageHubPoint(group) {
   hub.multiplyScalar(1 / group.length);
 
   // Le hub reste vers l'intérieur du paquet de maisons, pas sur le bord : cela
-  // donne l'effet “petite place” visible dans les villages denses.
+  // donne l'effet "petite place" visible dans les villages denses.
   hub.multiplyScalar(group.length >= 4 ? 0.42 : 0.50);
   hub.y = getRoadY();
   return hub;
@@ -242,108 +407,6 @@ function addOrganicWobble(points, seedKey) {
   }
 }
 
-function createStoneRoadFromPath(points, seedKey) {
-  const group = new THREE.Group();
-  const samples = samplePolyline(points, getRoadSpacing());
-
-  // En dessous de cette longueur, c'est visuellement lu comme un bout cassé.
-  if (samples.length < 6) return null;
-
-  for (let i = 0; i < samples.length - 1; i += 1) {
-    const a = samples[i];
-    const b = samples[i + 1];
-    const dir = b.clone().sub(a);
-    const length = dir.length();
-    if (length <= 0.001) continue;
-
-    const prev = samples[Math.max(0, i - 1)];
-    const next = samples[Math.min(samples.length - 1, i + 2)];
-    const incoming = a.clone().sub(prev);
-    const outgoing = next.clone().sub(b);
-    const turn = cross2D(incoming, outgoing);
-    const useCurve = i > 0 && i < samples.length - 2 && (Math.abs(turn) > 0.0012 || i % 3 !== 0);
-
-    const object = new THREE.Group();
-    const mid = a.clone().lerp(b, 0.5);
-    object.position.copy(mid);
-    object.position.y = getRoadSurfaceY(mid);
-    object.rotation.y = Math.atan2(dir.x, dir.z) + (useCurve && turn < 0 ? Math.PI : 0);
-    object.userData.roadTargetLength = length * STONE_ROAD_OVERLAP * STONE_ROAD_VISUAL_SCALE;
-    object.userData.roadTargetWidth = getRoadWidth() * STONE_ROAD_VISUAL_SCALE;
-    object.userData.roadTargetHeight = getRoadHeight() * STONE_ROAD_VISUAL_SCALE;
-
-    addRoadModelToObject(object, useCurve ? ROAD_CURVE_URL : ROAD_STRAIGHT_URL);
-    group.add(object);
-  }
-
-  group.name = `village-stone-road-route-${seedKey}`;
-  return group.children.length > 0 ? group : null;
-}
-
-function addRoadModelToObject(parent, url) {
-  getRoadModel(url).then(model => {
-    const clone = model.clone(true);
-    normalizeRoadClone(clone, parent.userData.roadTargetLength, parent.userData.roadTargetWidth, parent.userData.roadTargetHeight);
-    parent.add(clone);
-  });
-}
-
-function getRoadModel(url) {
-  if (roadModelCache.has(url)) return roadModelCache.get(url);
-
-  const promise = new Promise(resolve => {
-    loader.load(
-      url,
-      gltf => {
-        const model = gltf.scene;
-        model.traverse(child => {
-          if (!child.isMesh) return;
-          child.castShadow = false;
-          child.receiveShadow = true;
-          if (child.material) {
-            child.material.depthWrite = true;
-            child.material.needsUpdate = true;
-          }
-        });
-        resolve(model);
-      },
-      undefined,
-      () => resolve(createFallbackStoneRoad(url === ROAD_CURVE_URL))
-    );
-  });
-
-  roadModelCache.set(url, promise);
-  return promise;
-}
-
-function normalizeRoadClone(clone, targetLength, targetWidth, targetHeight) {
-  const box = new THREE.Box3().setFromObject(clone);
-  const size = new THREE.Vector3();
-  box.getSize(size);
-
-  const lengthAxis = size.z >= size.x ? 'z' : 'x';
-  const currentLength = Math.max(lengthAxis === 'z' ? size.z : size.x, 0.0001);
-  const currentWidth = Math.max(lengthAxis === 'z' ? size.x : size.z, 0.0001);
-  const currentHeight = Math.max(size.y, 0.0001);
-
-  const uniform = Math.min(
-    targetLength / currentLength,
-    targetWidth / currentWidth,
-    targetHeight / currentHeight
-  );
-
-  clone.scale.multiplyScalar(uniform);
-
-  const normalizedBox = new THREE.Box3().setFromObject(clone);
-  const center = new THREE.Vector3();
-  normalizedBox.getCenter(center);
-  const minY = normalizedBox.min.y;
-
-  clone.position.x -= center.x;
-  clone.position.z -= center.z;
-  clone.position.y -= minY - STONE_ROAD_Y_OFFSET;
-}
-
 function createFallbackStoneRoad(curved = false) {
   const group = new THREE.Group();
   const material = new THREE.MeshLambertMaterial({ color: 0xc9c9b7, roughness: 0.85 });
@@ -358,11 +421,14 @@ function createFallbackStoneRoad(curved = false) {
     mesh.position.x = curved ? Math.sin(t * Math.PI * 0.65) * 0.34 : ((i % 2) - 0.5) * 0.18;
     mesh.rotation.y = curved ? t * 0.8 : ((i % 3) - 1) * 0.18;
     mesh.castShadow = false;
+    mesh.userData.disableCastShadow = true;
     mesh.receiveShadow = true;
     group.add(mesh);
   }
   return group;
 }
+
+// ── Helpers géométriques (inchangés) ─────────────────────────────────────────
 
 function sampleCubic(p0, p1, p2, p3, steps) {
   const points = [];
@@ -409,7 +475,7 @@ function samplePolyline(points, spacing) {
 }
 
 function getRoadSpacing() {
-  return HEX_SIZE * 0.062;
+  return HEX_SIZE * 0.248; // ×4 vs 0.062 → −75% segments (STONE_ROAD_OVERLAP=3.45 garantit un recouvrement massif, visuellement seamless)
 }
 
 function getRoadWidth() {
@@ -437,19 +503,6 @@ function circularGap(a, b) {
 
 function areAdjacentIndexes(a, b) {
   return circularGap(a, b) === 1;
-}
-
-function isVillageArc(a, b, edges) {
-  const keys = ['n', 'ne', 'se', 's', 'sw', 'nw'];
-  const forward = [];
-  for (let i = a; i !== b; i = (i + 1) % 6) forward.push(i);
-  forward.push(b);
-
-  const backward = [];
-  for (let i = a; i !== b; i = (i + 5) % 6) backward.push(i);
-  backward.push(b);
-
-  return [forward, backward].some(path => path.every(index => getEdgeType(edges[keys[index]]) === ROAD_TYPE));
 }
 
 function cross2D(a, b) {

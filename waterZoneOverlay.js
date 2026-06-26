@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { TEXT_LAYER } from './stable/threeSetup.js';
+import { TEXT_LAYER, registerCurvedSprite } from './stable/threeSetup.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
 import { axialToWorld, makeHexKey } from './stable/hex.js';
 import { createOuterVertices } from './stable/hexGeometry.js';
@@ -7,13 +7,24 @@ import { makeNodeKey, getTileEdgeType, clearGroup } from './stable/tileUtils.js'
 import { collectZone, getFullTextureNeighbors } from './stable/zoneUtils.js';
 import { createWaterBeachMesh } from './waterBeachGeometry.js';
 import { createHoverZoneBoundary, getZoneColor, toWorldVector } from './waterZoneBoundary.js';
+import { HEX_FONT_FAMILY, sharedLabelCache, hexFontReady } from './stable/hexLabelFont.js';
+import { LOD_ZONE_LABEL_CULL_DISTANCE } from './variables.js';
 
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
 const LABEL_Y = 0.72;
 const HOVER_LABEL_SCALE = 1.85;
 const HOVER_LABEL_Y_OFFSET = 0.285;
+// Base sprite scale (zone de valeur "1") — les grosses zones montent jusqu'à +35%.
+const LABEL_BASE_W = 0.82;
+const LABEL_BASE_H = 0.71;
 
-const textTextureCache = new Map();
+// Directions axiales hexagonales — pour le rebuild ciblé (affectedHex + 6 voisins).
+const _HEX_DIR = [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
+function _computeAffectedKeys(hex) {
+  const keys = new Set([makeHexKey(hex.q, hex.r)]);
+  for (const [dq, dr] of _HEX_DIR) keys.add(makeHexKey(hex.q + dq, hex.r + dr));
+  return keys;
+}
 
 // ─── API publique — création overlays ────────────────────────────────────────
 
@@ -66,26 +77,118 @@ export function updateHoverZoneOverlayAnimation(overlay, zoneOverlay = null, ela
   });
 }
 
-export function rebuildWaterZoneOverlay(overlay, placedTiles) {
-  clearGroup(overlay);
-  resetPlacedValueLabels(placedTiles);
+export function rebuildWaterZoneOverlay(overlay, placedTiles, immersiveMode = false, affectedHex = null) {
+  if (affectedHex === null) {
+    // ── Rebuild complet (chargement initial, undo, multiplayer sync) ────────────
+    clearGroup(overlay);
+    resetPlacedValueLabels(placedTiles);
+    const visited = new Set();
+    for (const placedTile of placedTiles.values()) {
+      for (const edge of EDGE_ORDER) {
+        const type = getTileEdgeType(placedTile, edge);
+        const nodeKey = makeNodeKey(placedTile.key, edge);
+        if (visited.has(nodeKey) || !isSupportedZoneType(type)) continue;
+        const zone = collectTextureZone(placedTile, edge, type, placedTiles, visited);
+        if (zone.sectors.length < 2) continue;
+        hideZoneDetailLabels(zone);
+        _addZoneObjects(overlay, zone, placedTiles, immersiveMode);
+      }
+    }
+    rescaleZoneLabels(overlay);
+    return;
+  }
 
-  const visited = new Set();
+  // ── Rebuild ciblé : seulement les zones touchant affectedHex + ses 6 voisins ──
+  // Avantage : O(zones_locales) au lieu de O(toutes_tuiles).
+  const affectedKeys = _computeAffectedKeys(affectedHex);
 
-  for (const placedTile of placedTiles.values()) {
+  // 1. Retirer les objets de zone dont au moins une tuile est dans affectedKeys ;
+  //    pré-remplir visited avec les secteurs des zones entièrement hors de la zone touchée.
+  const preVisited = new Set();
+  const toRemove = [];
+  for (const child of overlay.children) {
+    const tileKeys = child.userData?.involvedTileKeys;
+    if (!tileKeys) { toRemove.push(child); continue; } // objet legacy sans tracking → purge
+    if (tileKeys.some(k => affectedKeys.has(k))) {
+      toRemove.push(child);
+    } else {
+      for (const sk of child.userData.involvedSectorKeys ?? []) preVisited.add(sk);
+    }
+  }
+  for (const obj of toRemove) overlay.remove(obj);
+
+  // 2. Ré-afficher les labels valeur des tuiles affectées (hideZoneDetailLabels les masquera si besoin).
+  for (const key of affectedKeys) {
+    const tile = placedTiles.get(key);
+    if (tile) setTileValueLabelsVisible(tile, true);
+  }
+
+  // 3. BFS uniquement depuis les tuiles affectées ; preVisited blinde les zones non touchées.
+  const visited = new Set(preVisited);
+  for (const key of affectedKeys) {
+    const placedTile = placedTiles.get(key);
+    if (!placedTile) continue;
     for (const edge of EDGE_ORDER) {
       const type = getTileEdgeType(placedTile, edge);
       const nodeKey = makeNodeKey(placedTile.key, edge);
       if (visited.has(nodeKey) || !isSupportedZoneType(type)) continue;
-
       const zone = collectTextureZone(placedTile, edge, type, placedTiles, visited);
       if (zone.sectors.length < 2) continue;
-
       hideZoneDetailLabels(zone);
-      if (zone.type === EDGE_TYPES.water) overlay.add(createWaterBeachMesh(zone, placedTiles));
-      overlay.add(createZoneLabel(zone));
+      _addZoneObjects(overlay, zone, placedTiles, immersiveMode);
     }
   }
+
+  rescaleZoneLabels(overlay);
+}
+
+/** Crée et ajoute les objets Three.js pour une zone (beach mesh + label sprite), en les taguant
+ *  avec les clés de tracking nécessaires au rebuild ciblé. */
+function _addZoneObjects(overlay, zone, placedTiles, immersiveMode) {
+  const involvedTileKeys    = [...new Set(zone.sectors.map(s => s.tile.key))];
+  const involvedSectorKeys  = zone.sectors.map(s => makeNodeKey(s.tile.key, s.edge));
+  if (zone.type === EDGE_TYPES.water) {
+    const beach = createWaterBeachMesh(zone, placedTiles);
+    beach.userData.involvedTileKeys   = involvedTileKeys;
+    beach.userData.involvedSectorKeys = involvedSectorKeys;
+    // Centroïde monde pour LOD distance
+    let cx = 0, cz = 0;
+    for (const sec of zone.sectors) {
+      const wp = axialToWorld(sec.tile.q, sec.tile.r);
+      cx += wp.x; cz += wp.z;
+    }
+    beach.userData.worldCenterX = cx / zone.sectors.length;
+    beach.userData.worldCenterZ = cz / zone.sectors.length;
+    overlay.add(beach);
+  }
+  const _label = createZoneLabel(zone, immersiveMode, involvedTileKeys, involvedSectorKeys);
+  registerCurvedSprite(_label);
+  overlay.add(_label);
+}
+
+/**
+ * Redimensionne tous les labels de zone proportionnellement à leur valeur
+ * par rapport au maximum courant : de 100 % (valeur 1) à 125 % (valeur max).
+ * À rappeler après chaque rebuild pour tenir compte de la nouvelle valeur max.
+ */
+function rescaleZoneLabels(overlay) {
+  // 1. Trouver la valeur maximale par type de terrain
+  const maxPerType = {};
+  overlay.traverse(obj => {
+    if (!obj.userData?.isZoneLabel) return;
+    const { zoneValue, zoneLabelType } = obj.userData;
+    if (zoneValue > (maxPerType[zoneLabelType] ?? 0)) {
+      maxPerType[zoneLabelType] = zoneValue;
+    }
+  });
+
+  // 2. Appliquer l'échelle proportionnelle par famille : factor ∈ [1.0, 1.35]
+  overlay.traverse(obj => {
+    if (!obj.userData?.isZoneLabel) return;
+    const max = maxPerType[obj.userData.zoneLabelType] ?? 1;
+    const factor = 1 + 0.35 * (obj.userData.zoneValue / max);
+    obj.scale.set(LABEL_BASE_W * factor, LABEL_BASE_H * factor, 1);
+  });
 }
 
 // ─── Hover et labels — helpers internes ──────────────────────────────────────
@@ -128,7 +231,10 @@ function highlightHoverZoneLabel(zoneOverlay, zone) {
     if (!object.userData?.isZoneLabel || object.userData.zoneSignature !== signature) return;
 
     if (!object.userData.hoverBaseScale) object.userData.hoverBaseScale = object.scale.clone();
-    if (object.userData.hoverBaseY === undefined) object.userData.hoverBaseY = object.position.y;
+    if (object.userData.hoverBaseY === undefined) {
+      // Stocker le Y "plat" (avant courbure) pour éviter le double-drop en mode bouliste.
+      object.userData.hoverBaseY = object.userData.worldCurvatureFlatY ?? object.position.y;
+    }
 
     object.userData.isHoverHighlightedZoneLabel = true;
     object.scale.set(
@@ -160,7 +266,7 @@ function collectTextureZone(startTile, startEdge, type, placedTiles, visited) {
 
 // ─── Labels de zone ───────────────────────────────────────────────────────────
 
-function createZoneLabel(zone) {
+function createZoneLabel(zone, immersiveMode = false, involvedTileKeys = null, involvedSectorKeys = null) {
   const center = new THREE.Vector3(0, LABEL_Y, 0);
 
   for (const sectorRef of zone.sectors) {
@@ -174,10 +280,16 @@ function createZoneLabel(zone) {
   sprite.layers.set(TEXT_LAYER);
   sprite.name = `${zone.type}-zone-label`;
   sprite.position.copy(center);
-  sprite.scale.set(0.88, 0.54, 1);
-  sprite.userData.isZoneLabel = true;
-  sprite.userData.zoneSignature = makeZoneSignature(zone);
+  sprite.scale.set(LABEL_BASE_W, LABEL_BASE_H, 1);
+  sprite.visible = !immersiveMode; // Fix flash labels : né caché en mode immersif
+  sprite.userData.isZoneLabel       = true;
+  sprite.userData.zoneValue         = zone.total;
+  sprite.userData.zoneLabelType     = zone.type;
+  sprite.userData.zoneSignature     = makeZoneSignature(zone);
   sprite.userData.worldCurvatureFlatY = sprite.position.y;
+  // Tracking pour rebuild ciblé
+  sprite.userData.involvedTileKeys   = involvedTileKeys   ?? [...new Set(zone.sectors.map(s => s.tile.key))];
+  sprite.userData.involvedSectorKeys = involvedSectorKeys ?? zone.sectors.map(s => makeNodeKey(s.tile.key, s.edge));
   return sprite;
 }
 
@@ -202,41 +314,73 @@ function getSectorCentroid(placedTile, edge) {
   );
 }
 
+// Hexagone paysage centré sur (cx,cy), demi-largeur w2, demi-hauteur h2, encoche = notch.
+function hexPath(ctx, cx, cy, w2, h2, notch) {
+  ctx.beginPath();
+  ctx.moveTo(cx - w2 + notch, cy - h2);
+  ctx.lineTo(cx + w2 - notch, cy - h2);
+  ctx.lineTo(cx + w2, cy);
+  ctx.lineTo(cx + w2 - notch, cy + h2);
+  ctx.lineTo(cx - w2 + notch, cy + h2);
+  ctx.lineTo(cx - w2, cy);
+  ctx.closePath();
+}
+
 function getTextSpriteMaterial(text, type) {
-  const cacheKey = `${type}:${text}`;
-  if (textTextureCache.has(cacheKey)) return textTextureCache.get(cacheKey);
+  const cacheKey = `zone:${type}:${text}`;
+  if (sharedLabelCache.has(cacheKey)) return sharedLabelCache.get(cacheKey);
 
+  // Résolution doublée (384×332) pour netteté HD.
+  // Ratio 384/332 ≈ 1.157 ≈ 2/√3 : hexagone régulier à sommet plat.
   const canvas = document.createElement('canvas');
-  canvas.width = 192;
-  canvas.height = 96;
+  canvas.width = 384;
+  canvas.height = 332;
 
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetY = 3;
-  ctx.fillStyle = getLabelBackground(type);
-  ctx.roundRect(22, 12, 148, 70, 20);
-  ctx.fill();
+  function draw() {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  ctx.shadowBlur = 0;
-  ctx.lineWidth = 5;
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
-  ctx.roundRect(25, 15, 142, 64, 17);
-  ctx.stroke();
+    // Ombre portée : w2=176, h2=176×0.866=152, notch=88
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 4;
+    ctx.fillStyle = getLabelBackground(type);
+    hexPath(ctx, 192, 166, 176, 152, 88);
+    ctx.fill();
 
-  ctx.font = '900 52px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.lineWidth = 8;
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.62)';
-  ctx.strokeText(text, 96, 50);
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText(text, 96, 50);
+    // Bordure interne
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+    hexPath(ctx, 192, 166, 170, 147, 85);
+    ctx.stroke();
+
+    // Texte — 35% plus grand, letter-spacing augmenté
+    ctx.font = `900 130px ${HEX_FONT_FAMILY}`;
+    ctx.letterSpacing = text.length > 1 ? '7px' : '0px';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 18;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.62)';
+    ctx.strokeText(text, 192, 172);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(text, 192, 172);
+  }
+
+  draw();
 
   const texture = new THREE.CanvasTexture(canvas);
+  texture.generateMipmaps = false;
+  texture.minFilter = THREE.LinearFilter;
   const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
-  textTextureCache.set(cacheKey, material);
+  sharedLabelCache.set(cacheKey, material);
+
+  // Redessiner après chargement de DeltaBlock (corrige la race condition au 1er frame)
+  hexFontReady?.then?.(() => {
+    draw();
+    texture.needsUpdate = true;
+  });
+
   return material;
 }
 
@@ -258,4 +402,50 @@ function getHoveredEdge(placedTile, worldPoint) {
 
 function isSupportedZoneType(type) {
   return Object.values(EDGE_TYPES).includes(type);
+}
+
+// ─── LOD labels de zone ────────────────────────────────────────────────────────
+
+/**
+ * Masque/affiche les labels de zones contigüe selon la distance caméra.
+ * À appeler dans le bloc LOD de scene.js (tous les N frames).
+ */
+// Altitude max au-delà de laquelle les plages sont cachées (vue aérienne lointaine)
+const BEACH_CULL_CAM_HEIGHT     = 9.0;
+// Distance horizontale max caméra→centroïde quand caméra basse (zoom in)
+const BEACH_CULL_DIST_SQ_LOW    = 20 * 20;  // caméra Y ≤ 6
+// Distance réduite quand caméra mi-hauteur
+const BEACH_CULL_DIST_SQ_MID    = 15 * 15;  // caméra Y entre 6 et BEACH_CULL_CAM_HEIGHT
+
+/**
+ * LOD des plages : masque les beach meshes trop loin ou vus de haut.
+ * Appelé dans le RAF, à côté de updateZoneLabelLOD.
+ */
+export function updateBeachLOD(overlay, camera) {
+  if (!overlay) return;
+  const camY  = camera.position.y;
+  const hideAll = camY > BEACH_CULL_CAM_HEIGHT;
+  const camX  = camera.position.x;
+  const camZ  = camera.position.z;
+  const distSq = camY <= 6 ? BEACH_CULL_DIST_SQ_LOW : BEACH_CULL_DIST_SQ_MID;
+  overlay.traverse(object => {
+    if (object.name !== 'water-zone-sand-beach') return;
+    if (hideAll) { object.visible = false; return; }
+    const cx = object.userData.worldCenterX;
+    const cz = object.userData.worldCenterZ;
+    if (cx === undefined) { object.visible = true; return; }
+    const dx = cx - camX;
+    const dz = cz - camZ;
+    object.visible = (dx * dx + dz * dz) < distSq;
+  });
+}
+
+export function updateZoneLabelLOD(overlay, camera, immersiveMode = false) {
+  if (!overlay) return;
+  overlay.traverse(object => {
+    if (!object.userData?.isZoneLabel) return;
+    if (immersiveMode) { object.visible = false; return; }
+    const dist = camera.position.distanceTo(object.position);
+    object.visible = dist < LOD_ZONE_LABEL_CULL_DISTANCE;
+  });
 }

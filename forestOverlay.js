@@ -67,7 +67,9 @@ export function createForestOverlay() {
 
 export function rebuildForestOverlay(group, placedTiles) {
   group.userData.lastPlacedTiles = placedTiles;
+  const _rfT0 = performance.now();
   disposeOverlayChildren(group);
+  const _rfT1 = performance.now();
 
   if (treeLibrary.size === 0) {
     ensureTreeModels(group);
@@ -75,15 +77,19 @@ export function rebuildForestOverlay(group, placedTiles) {
   }
 
   const specialBuildingSafeZones = collectSpecialBuildingSafeZones(placedTiles);
+  const _rfT2 = performance.now();
 
   // Phase 1 : collecter toutes les matrices d'instances par variant + chunk
   const accumulator = new Map(); // variantKey → Map<chunkKey, Matrix4[]>
   for (const placedTile of placedTiles.values()) {
     collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones);
   }
+  const _rfT3 = performance.now();
 
   // Phase 2 : construire les InstancedMesh
   buildTreeInstancedMeshes(group, accumulator);
+  const _rfT4 = performance.now();
+  console.log(`[FREEZE-DIAG forest-phases] dispose=${(_rfT1-_rfT0).toFixed(0)}ms | safeZones=${(_rfT2-_rfT1).toFixed(0)}ms | collect=${(_rfT3-_rfT2).toFixed(0)}ms | build=${(_rfT4-_rfT3).toFixed(0)}ms | TOTAL=${(_rfT4-_rfT0).toFixed(0)}ms`);
 }
 
 function ensureTreeModels(group) {
@@ -98,7 +104,8 @@ function ensureTreeModels(group) {
 
     modelsLoading = false;
     const lastPlacedTiles = group.userData.lastPlacedTiles;
-    if (lastPlacedTiles) rebuildForestOverlay(group, lastPlacedTiles);
+    // Flag RAF (comme maybeRebuildWhenReady dans decorOverlay) → LOD immédiat, pas de flash
+    if (lastPlacedTiles) group.userData.pendingModelRebuild = true;
   };
 
   for (const def of TREE_MODEL_DEFS) {
@@ -146,6 +153,8 @@ function cloneVisibleMaterial(material) {
   // Pas d'émissif forcé : sinon les arbres deviennent blancs/cramés.
   if ('emissiveIntensity' in cloned) cloned.emissiveIntensity = 0;
   if ('toneMapped' in cloned) cloned.toneMapped = true;
+  // Strategy C : teinture ambrée chaude (lerp 8%) pour unifier les GLBs hétérogènes
+  if (cloned.color) cloned.color.lerp(new THREE.Color(0xC8A060), 0.08);
 
   cloned.needsUpdate = true;
   return cloned;
@@ -174,10 +183,15 @@ function collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones 
   const tileWorld = axialToWorld(placedTile.q, placedTile.r);
   const vertices = createOuterVertices();
 
-  const availableKeys = TREE_MODEL_DEFS
-    .map(def => def.key)
-    .filter(key => treeLibrary.has(key));
-  if (availableKeys.length === 0) return;
+  // Pool pondéré : les arbres rares (spawnWeight bas) apparaissent moins souvent.
+  // Les arbres sans spawnWeight ont un poids par défaut de 10.
+  const weightedKeys = [];
+  for (const def of TREE_MODEL_DEFS) {
+    if (!treeLibrary.has(def.key)) continue;
+    const w = def.spawnWeight ?? 10;
+    for (let j = 0; j < w; j++) weightedKeys.push(def.key);
+  }
+  if (weightedKeys.length === 0) return;
 
   for (const sector of SECTOR_DEFS) {
     const edge = placedTile.tile?.edges?.[sector.key];
@@ -191,15 +205,19 @@ function collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones 
       const pos = positions[i];
       if (isTreeInsideSpecialBuildingSafeZone(tileWorld.x + pos.x, tileWorld.z + pos.z, specialBuildingSafeZones)) continue;
 
-      const modelIndex = pickMixedModelIndex(placedTile.key, sector.key, i, positions.length, availableKeys.length);
-      const variantKey = availableKeys[modelIndex];
+      const modelIndex = pickMixedModelIndex(placedTile.key, sector.key, i, positions.length, weightedKeys.length);
+      const variantKey = weightedKeys[modelIndex];
+
+      // Sinkdepth par variant : certains arbres s'enfoncent légèrement dans le sol.
+      const treeDef = TREE_MODEL_DEFS.find(d => d.key === variantKey);
+      const treeGroundOffset = TREE_GROUND_OFFSET - (treeDef?.sinkDepth ?? 0);
 
       const scaleJitter = 0.80 + hashToUnit(`${placedTile.key}:${sector.key}:scale:${i}`) * 0.40;
       const treeYaw = hashToUnit(`${placedTile.key}:${sector.key}:rot:${i}`) * Math.PI * 2;
 
       _instanceDummy.position.set(tileWorld.x + pos.x, 0, tileWorld.z + pos.z);
       placeObjectOnTerrain(_instanceDummy, pos, EDGE_TYPES.forest, hashNumber(`${placedTile.key}:${sector.key}:tree:${i}`) % 97, {
-        groundOffset: TREE_GROUND_OFFSET,
+        groundOffset: treeGroundOffset,
         alignToSlope: false,
         yaw: treeYaw,
         edgeLockStart: 0.98,
@@ -224,24 +242,34 @@ function collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones 
 // Phase 2 : crée un InstancedMesh par (chunk × sous-mesh) de chaque variant.
 // Chaque mesh reçoit une bounding sphere réelle pour le frustum culling manuel (updateForestLOD).
 function buildTreeInstancedMeshes(group, accumulator) {
+  const _t2a = performance.now();
+  let _subCount = 0, _imCount = 0;
+
   for (const [variantKey, byChunk] of accumulator) {
     const prototype = treeLibrary.get(variantKey);
     if (!prototype) continue;
 
-    // Précalcule les matrices monde de chaque sous-mesh du prototype (non attaché à la scène)
+    // ── Pré-cuire les géométries UNE SEULE FOIS par variant (hors boucle chunks) ──
+    // Avant : geo.clone() + applyMatrix4() répétés N fois (une fois par chunk).
+    // Après : calculé 1×, puis cloné (copie rapide sans applyMatrix4) par chunk.
     prototype.updateMatrixWorld(true);
+    const _bakedSubMeshes = [];
+    prototype.traverse(child => {
+      if (!child.isMesh) return;
+      child.updateWorldMatrix(true, false);
+      const bakedGeo = child.geometry.clone();
+      bakedGeo.applyMatrix4(child.matrixWorld); // 1 seul applyMatrix4 par sous-mesh
+      _bakedSubMeshes.push({ bakedGeo, child });
+      _subCount++;
+    });
 
     for (const [chunkKey, matrices] of byChunk) {
       if (matrices.length === 0) continue;
       const sphere = computeInstancesBoundingSphere(matrices, 0.6);
 
-      prototype.traverse(child => {
-        if (!child.isMesh) return;
-        child.updateWorldMatrix(true, false);
-
-        // Cuit la transformation locale (position/scale du wrapper normalizeModel) dans la géo
-        const geo = child.geometry.clone();
-        geo.applyMatrix4(child.matrixWorld);
+      for (const { bakedGeo, child } of _bakedSubMeshes) {
+        // Clone la géo pré-cuite (sans applyMatrix4) — rapide
+        const geo = bakedGeo.clone();
 
         const mat = Array.isArray(child.material)
           ? child.material.map(m => m.clone())
@@ -262,23 +290,30 @@ function buildTreeInstancedMeshes(group, accumulator) {
         }
         mesh.instanceMatrix.needsUpdate = true;
         group.add(mesh);
-      });
+        _imCount++;
+      }
     }
+
+    // Dispose les géos pré-cuites (chaque chunk a sa propre copie, celles-ci sont des templates)
+    for (const { bakedGeo } of _bakedSubMeshes) bakedGeo.dispose();
   }
+
+  console.log(`[FREEZE-DIAG forest-build] ${_imCount} IMs | ${_subCount} sous-mesh pré-cuits | ${(performance.now()-_t2a).toFixed(0)}ms`);
 }
 
 // Met à jour la visibilité de chaque InstancedMesh d'arbres selon le frustum caméra.
 // À appeler depuis scene.js dans la boucle animate (tous les 3 frames suffisent).
-export function updateForestLOD(group, camera) {
+export function updateForestLOD(group, camera, lodFactor = 1.0) {
   _lodProjMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
   _lodFrustum.setFromProjectionMatrix(_lodProjMatrix);
+  const effectiveDist = LOD_TREE_CULL_DISTANCE * lodFactor;
 
   group.traverse(obj => {
     if (!obj.isInstancedMesh || !obj.userData.worldBoundingSphere) return;
     const sphere = obj.userData.worldBoundingSphere;
     const inFrustum = _lodFrustum.intersectsSphere(sphere);
     const dist = camera.position.distanceTo(sphere.center);
-    obj.visible = inFrustum && dist < LOD_TREE_CULL_DISTANCE;
+    obj.visible = inFrustum && dist < effectiveDist;
   });
 }
 

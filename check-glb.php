@@ -221,17 +221,11 @@ if (is_dir($rootDir)) {
 <body>
   <header>
     <div>
-      <h1>GLB Asset Browser</h1>
+      <h1>GLB browser des assets de Hexistenz</h1>
       <div class="stats"><span id="visibleCount">0</span> / <span id="totalCount">0</span> assets</div>
     </div>
     <div class="tools">
       <input id="search" type="search" placeholder="Filtrer par nom ou dossier...">
-      <select id="perPage">
-        <option value="12">12/page</option>
-        <option value="24" selected>24/page</option>
-        <option value="48">48/page</option>
-        <option value="96">96/page</option>
-      </select>
       <button id="prevBtn">◀</button>
       <span id="pageLabel">Page 1/1</span>
       <button id="nextBtn">▶</button>
@@ -246,6 +240,32 @@ if (is_dir($rootDir)) {
       <span id="pageLabel2">Page 1/1</span>
       <button id="nextBtn2">Suivant ▶</button>
     </div>
+
+    <section id="log-section" style="margin-top:32px; border-top:1px solid var(--border); padding-top:20px;">
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:14px; flex-wrap:wrap;">
+        <h2 style="margin:0; font-size:16px; text-transform:uppercase; letter-spacing:0.04em;">Rapport complet — tous les GLB</h2>
+        <span id="log-status" style="color:var(--muted); font-size:13px;">Chargement des stats…</span>
+        <button id="log-copy-btn" style="margin-left:auto; display:none;" title="Copier toutes les stats pour Claude">📋 Copier le rapport</button>
+      </div>
+      <div id="log-table-wrap" style="overflow-x:auto;">
+        <table id="log-table" style="width:100%; border-collapse:collapse; font-family:Consolas,Monaco,monospace; font-size:12px; display:none;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border); color:var(--muted); text-align:left;">
+              <th style="padding:6px 10px; cursor:pointer;" data-col="name">Fichier ↕</th>
+              <th style="padding:6px 8px; cursor:pointer; text-align:right;" data-col="size">Taille ↕</th>
+              <th style="padding:6px 8px; cursor:pointer; text-align:right;" data-col="tris">Polys ↕</th>
+              <th style="padding:6px 8px; cursor:pointer; text-align:right;" data-col="dc">DC ↕</th>
+              <th style="padding:6px 8px; cursor:pointer; text-align:right;" data-col="tex">Tex ↕</th>
+              <th style="padding:6px 8px; cursor:pointer; text-align:right;" data-col="gpu">~GPU ↕</th>
+              <th style="padding:6px 8px; cursor:pointer; text-align:right;" data-col="mat">Mat ↕</th>
+              <th style="padding:6px 8px; cursor:pointer; text-align:right;" data-col="anim">Anim ↕</th>
+              <th style="padding:6px 10px;">Dimensions tex</th>
+            </tr>
+          </thead>
+          <tbody id="log-tbody"></tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -257,11 +277,12 @@ if (is_dir($rootDir)) {
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+    const PER_PAGE = 10;
+
     const allAssets = window.GLB_ASSETS || [];
     const grid = document.getElementById('grid');
     const empty = document.getElementById('empty');
     const searchInput = document.getElementById('search');
-    const perPageSelect = document.getElementById('perPage');
     const totalCount = document.getElementById('totalCount');
     const visibleCount = document.getElementById('visibleCount');
     const pageLabels = [document.getElementById('pageLabel'), document.getElementById('pageLabel2')];
@@ -319,7 +340,7 @@ if (is_dir($rootDir)) {
     }
 
     function getPageCount() {
-      return Math.max(1, Math.ceil(filtered.length / Number(perPageSelect.value)));
+      return Math.max(1, Math.ceil(filtered.length / PER_PAGE));
     }
 
     function updatePager() {
@@ -348,9 +369,8 @@ if (is_dir($rootDir)) {
       }
 
       empty.style.display = 'none';
-      const perPage = Number(perPageSelect.value);
-      const start = (page - 1) * perPage;
-      const items = filtered.slice(start, start + perPage);
+      const start = (page - 1) * PER_PAGE;
+      const items = filtered.slice(start, start + PER_PAGE);
 
       items.forEach(asset => {
         const card = document.createElement('article');
@@ -368,9 +388,9 @@ if (is_dir($rootDir)) {
 
         const filename = document.createElement('div');
         filename.className = 'filename';
-        filename.textContent = asset.name;
-        filename.title = 'Cliquer pour copier le nom';
-        filename.addEventListener('click', () => copyText(asset.name));
+        filename.textContent = assetDisplayPath(asset);
+        filename.title = 'Cliquer pour copier le chemin relatif';
+        filename.addEventListener('click', () => copyText(assetDisplayPath(asset)));
 
         const meta = document.createElement('div');
         meta.className = 'meta';
@@ -410,11 +430,29 @@ if (is_dir($rootDir)) {
       return new Intl.NumberFormat('fr-FR').format(Math.round(value || 0));
     }
 
+    /** Chemin relatif au dossier /glb/ : "/sous-dossier/fichier.glb" ou "fichier.glb" */
+    function assetDisplayPath(asset) {
+      return asset.folder ? `/${asset.folder}/${asset.name}` : asset.name;
+    }
+
     async function copyText(text) {
+      // Fallback execCommand pour HTTP local (XAMPP / pas de HTTPS)
       try {
         await navigator.clipboard.writeText(text);
+        return true;
+      } catch (_) {}
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;width:1px;height:1px;';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
       } catch (e) {
-        console.log(text);
+        console.error('Copie échouée', e);
+        return false;
       }
     }
 
@@ -463,10 +501,11 @@ if (is_dir($rootDir)) {
           prepareMaterials(object);
           fitObject(object, camera, controls);
 
-          const triangles = countTriangles(object);
+          const triangles     = countTriangles(object);
+          const stats         = countStats(object);
           const animationCount = Array.isArray(gltf.animations) ? gltf.animations.length : 0;
           if (meta) {
-            meta.textContent = `${formatBytes(asset.size || 0)} · ${formatNumber(triangles)} polys` + (animationCount ? ` · ${animationCount} anim.` : '');
+            meta.innerHTML = buildMetaHtml(asset.size || 0, triangles, stats, animationCount);
           }
 
           if (animationCount) {
@@ -508,6 +547,78 @@ if (is_dir($rootDir)) {
         }
       });
       return triangles;
+    }
+
+    /** Compte meshes (= DC), textures uniques (avec dimensions) et matériaux uniques dans un objet GLB. */
+    function countStats(object) {
+      let meshes = 0;
+      const texMap = new Map(); // uuid → {w, h}
+      const matSet = new Set();
+      const TEX_SLOTS = ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap','alphaMap','lightMap'];
+      object.traverse(child => {
+        if (!child.isMesh) return;
+        meshes++;
+        const mats = Array.isArray(child.material) ? child.material : [child.material];
+        mats.forEach(mat => {
+          if (!mat) return;
+          matSet.add(mat.uuid);
+          TEX_SLOTS.forEach(slot => {
+            const tex = mat[slot];
+            if (tex?.uuid && !texMap.has(tex.uuid)) {
+              const w = tex.image?.width  ?? 0;
+              const h = tex.image?.height ?? 0;
+              texMap.set(tex.uuid, { w, h });
+            }
+          });
+        });
+      });
+      const texSizes = [...texMap.values()];
+      // Estimation VRAM GPU : w×h×4 octets × 4/3 (mipmaps)
+      const gpuBytes = texSizes.reduce((s, t) => s + (t.w * t.h * 4 * 4 / 3), 0);
+      return { meshes, textures: texMap.size, materials: matSet.size, texSizes, gpuBytes };
+    }
+
+    /** Résume les dimensions de texture de façon compacte : "3×2048 + 2×1024" */
+    function formatTexSizes(texSizes) {
+      if (!texSizes.length) return '';
+      const groups = {};
+      texSizes.forEach(({ w, h }) => {
+        const dim = Math.max(w, h);
+        const key = dim > 0 ? `${dim}` : '?';
+        groups[key] = (groups[key] || 0) + 1;
+      });
+      return Object.entries(groups)
+        .sort((a, b) => Number(b[0]) - Number(a[0]))
+        .map(([dim, cnt]) => cnt > 1 ? `${cnt}×${dim}px` : `${dim}px`)
+        .join(' + ');
+    }
+
+    /** Construit le HTML de la ligne meta avec code couleur. */
+    function buildMetaHtml(sizeBytes, triangles, stats, animCount) {
+      const col = (v, lo, hi, loC, midC, hiC) =>
+        `color:${v >= hi ? hiC : v >= lo ? midC : loC}`;
+
+      const dcC   = col(stats.meshes,   3, 8,  'var(--accent)', '#fbbf24', '#f87171');
+      const texC  = col(stats.textures, 3, 6,  'var(--accent)', '#fbbf24', '#f87171');
+      const matC  = col(stats.materials,2, 5,  'var(--accent)', '#fbbf24', '#f87171');
+
+      // GPU VRAM : vert < 10 MB, orange 10-40 MB, rouge > 40 MB
+      const gpuMb   = stats.gpuBytes / (1024 * 1024);
+      const gpuC    = gpuMb >= 40 ? '#f87171' : gpuMb >= 10 ? '#fb923c' : 'var(--accent)';
+      const gpuStr  = stats.texSizes.length ? formatTexSizes(stats.texSizes) : '';
+      const gpuTitle = gpuStr ? `${gpuStr} — ~${gpuMb.toFixed(0)} MB GPU (avec mipmaps)` : '';
+
+      let html = `${formatBytes(sizeBytes)}`
+               + ` <span style="color:var(--muted)">·</span> ${formatNumber(triangles)} ▲`
+               + ` <span style="color:var(--muted)">·</span> <span style="${dcC}">${stats.meshes} DC</span>`
+               + ` <span style="color:var(--muted)">·</span> <span style="${texC}" title="${gpuTitle}">${stats.textures} tex</span>`;
+      if (stats.gpuBytes > 0)
+        html += ` <span style="color:var(--muted)">·</span> <span style="color:${gpuC}" title="${gpuTitle}">~${gpuMb.toFixed(0)} MB GPU</span>`;
+      if (stats.materials > 1)
+        html += ` <span style="color:var(--muted)">·</span> <span style="${matC}">${stats.materials} mat</span>`;
+      if (animCount)
+        html += ` <span style="color:var(--muted)">·</span> 🎬 ${animCount} anim`;
+      return html;
     }
 
     function prepareMaterials(object) {
@@ -559,13 +670,161 @@ if (is_dir($rootDir)) {
     }
 
     searchInput.addEventListener('input', applyFilter);
-    perPageSelect.addEventListener('change', () => { page = 1; renderPage(); });
     prevButtons.forEach(btn => btn.addEventListener('click', () => changePage(-1)));
     nextButtons.forEach(btn => btn.addEventListener('click', () => changePage(1)));
 
     window.addEventListener('resize', () => renderPage());
 
     renderPage();
+
+    // ===== RAPPORT COMPLET — chargement en arrière-plan =====
+    const logStatus   = document.getElementById('log-status');
+    const logCopyBtn  = document.getElementById('log-copy-btn');
+    const logTable    = document.getElementById('log-table');
+    const logTbody    = document.getElementById('log-tbody');
+
+    let _logRows  = [];      // résultats triés
+    let _logSort  = { col: 'gpu', dir: -1 }; // tri initial : GPU desc
+
+    const COL_NUM = new Set(['size','tris','dc','tex','gpu','mat','anim']);
+
+    async function initLog() {
+      if (!allAssets.length) { logStatus.textContent = 'Aucun GLB.'; return; }
+      const CONCURRENCY = 4;
+      const results = new Array(allAssets.length).fill(null);
+      let done = 0;
+
+      function updateProgress() {
+        logStatus.textContent = `Chargement des stats… ${done}/${allAssets.length}`;
+      }
+      updateProgress();
+
+      async function loadOne(i) {
+        const asset = allAssets[i];
+        return new Promise(resolve => {
+          new GLTFLoader().load(asset.path, gltf => {
+            const triangles  = countTriangles(gltf.scene);
+            const stats      = countStats(gltf.scene);
+            const animCount  = Array.isArray(gltf.animations) ? gltf.animations.length : 0;
+            results[i] = { asset, triangles, stats, animCount };
+            // Libérer la mémoire du chargement background
+            gltf.scene.traverse(o => {
+              if (o.geometry) o.geometry.dispose();
+              if (o.material) {
+                const mats = Array.isArray(o.material) ? o.material : [o.material];
+                mats.forEach(m => { for (const k in m) { if (m[k]?.isTexture) m[k].dispose(); } m.dispose(); });
+              }
+            });
+            done++; updateProgress(); resolve();
+          }, undefined, () => {
+            results[i] = { asset, error: true, triangles: 0, stats: { meshes: 0, textures: 0, materials: 0, texSizes: [], gpuBytes: 0 }, animCount: 0 };
+            done++; updateProgress(); resolve();
+          });
+        });
+      }
+
+      // Batches de CONCURRENCY
+      for (let i = 0; i < allAssets.length; i += CONCURRENCY) {
+        const batch = [];
+        for (let j = i; j < Math.min(i + CONCURRENCY, allAssets.length); j++) batch.push(loadOne(j));
+        await Promise.all(batch);
+      }
+
+      _logRows = results.filter(Boolean);
+      logStatus.textContent = `${_logRows.length} GLB chargés`;
+      logCopyBtn.style.display = '';
+      sortAndRenderLog();
+    }
+
+    function sortAndRenderLog() {
+      const { col, dir } = _logSort;
+      _logRows.sort((a, b) => {
+        let va, vb;
+        switch (col) {
+          case 'name': va = a.asset.name.toLowerCase(); vb = b.asset.name.toLowerCase(); return dir * (va < vb ? -1 : va > vb ? 1 : 0);
+          case 'size': va = a.asset.size || 0; vb = b.asset.size || 0; break;
+          case 'tris': va = a.triangles; vb = b.triangles; break;
+          case 'dc':   va = a.stats.meshes;    vb = b.stats.meshes;    break;
+          case 'tex':  va = a.stats.textures;  vb = b.stats.textures;  break;
+          case 'gpu':  va = a.stats.gpuBytes;  vb = b.stats.gpuBytes;  break;
+          case 'mat':  va = a.stats.materials; vb = b.stats.materials; break;
+          case 'anim': va = a.animCount;       vb = b.animCount;       break;
+          default: va = 0; vb = 0;
+        }
+        return dir * (va - vb);
+      });
+      renderLogTable();
+    }
+
+    function renderLogTable() {
+      logTbody.innerHTML = '';
+      _logRows.forEach(row => {
+        const { asset, triangles, stats, animCount, error } = row;
+        const gpuMb  = stats.gpuBytes / (1024 * 1024);
+        const gpuC   = gpuMb >= 40 ? '#f87171' : gpuMb >= 10 ? '#fb923c' : '#4ade80';
+        const dcC    = stats.meshes >= 8 ? '#f87171' : stats.meshes >= 3 ? '#fbbf24' : '#4ade80';
+        const texDims = formatTexSizes(stats.texSizes);
+
+        const isUnused = asset.path.includes('/unused');
+        const tr = document.createElement('tr');
+        tr.style.cssText = `border-bottom:1px solid rgba(58,70,82,0.5);${isUnused ? ' opacity:0.42; filter:grayscale(0.5);' : ''}`;
+        tr.innerHTML = `
+          <td style="padding:5px 10px; color:${isUnused ? 'var(--muted)' : 'var(--text)'};">${error ? '⚠ ' : ''}${assetDisplayPath(asset)}</td>
+          <td style="padding:5px 8px; text-align:right; color:var(--muted);">${formatBytes(asset.size || 0)}</td>
+          <td style="padding:5px 8px; text-align:right; color:var(--muted);">${formatNumber(triangles)}</td>
+          <td style="padding:5px 8px; text-align:right; color:${dcC};">${stats.meshes}</td>
+          <td style="padding:5px 8px; text-align:right; color:var(--muted);">${stats.textures}</td>
+          <td style="padding:5px 8px; text-align:right; font-weight:bold; color:${gpuC};">${gpuMb > 0 ? '~' + gpuMb.toFixed(0) + ' MB' : '—'}</td>
+          <td style="padding:5px 8px; text-align:right; color:var(--muted);">${stats.materials || '—'}</td>
+          <td style="padding:5px 8px; text-align:right; color:${animCount ? '#fbbf24' : 'var(--muted)'};">${animCount || '—'}</td>
+          <td style="padding:5px 10px; color:var(--muted);">${texDims || '—'}</td>
+        `;
+        logTbody.appendChild(tr);
+      });
+      logTable.style.display = '';
+    }
+
+    // Tri au clic sur les en-têtes
+    document.querySelectorAll('#log-table th[data-col]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (_logSort.col === col) {
+          _logSort.dir *= -1;
+        } else {
+          _logSort.col = col;
+          _logSort.dir = COL_NUM.has(col) ? -1 : 1; // nombres desc, texte asc
+        }
+        sortAndRenderLog();
+      });
+    });
+
+    // Bouton copier
+    logCopyBtn.addEventListener('click', async () => {
+      const date = new Date().toLocaleDateString('fr-FR');
+      const lines = [
+        `=== GLB Rapport Hexistenz — ${date} ===`,
+        `Fichier                                 | Taille   |   Polys | DC  | Tex | ~GPU     | Mat | Anim | Dimensions tex`,
+        `----------------------------------------|----------|---------|-----|-----|----------|-----|------|-----------------------------`,
+      ];
+      // Pour le copié : trié par GPU desc
+      const sorted = [..._logRows].sort((a, b) => b.stats.gpuBytes - a.stats.gpuBytes);
+      sorted.forEach(row => {
+        const { asset, triangles, stats, animCount } = row;
+        const gpuMb  = stats.gpuBytes > 0 ? `~${(stats.gpuBytes / (1024*1024)).toFixed(0)} MB` : '—';
+        const texDims = formatTexSizes(stats.texSizes) || '—';
+        const pad = (s, n) => String(s).padStart(n);
+        const padL = (s, n) => String(s).padEnd(n);
+        lines.push(
+          `${padL(assetDisplayPath(asset), 40)}| ${padL(formatBytes(asset.size||0), 9)}| ${pad(formatNumber(triangles), 7)} | ${pad(stats.meshes, 3)} | ${pad(stats.textures, 3)} | ${padL(gpuMb, 9)}| ${pad(stats.materials||0, 3)} | ${pad(animCount||0, 4)} | ${texDims}`
+        );
+      });
+      const text = lines.join('\n');
+      const ok = await copyText(text);
+      logCopyBtn.textContent = ok ? '✅ Copié !' : '❌ Échec — voir console';
+      setTimeout(() => { logCopyBtn.textContent = '📋 Copier le rapport'; }, 2000);
+    });
+
+    initLog();
   </script>
 </body>
 </html>

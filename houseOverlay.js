@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, LOD_HOUSE_CULL_DISTANCE } from './config.js';
+import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, LOD_HOUSE_CULL_DISTANCE, LOD_WATCHTOWER_CULL_DISTANCE } from './config.js';
 import { HITBOX_R } from './variables.js';
 import { registerPropHitbox } from './stable/propHitboxRegistry.js';
 import { hashUnit100k as hashUnit } from './stable/hashUtils.js';
@@ -15,8 +15,7 @@ import {
   spreadVillageHouseLocalPoint,
   createVillageHouseObject,
   createVillageChurchObject,
-  createVillageWatchtowerObject,
-  createVillageCemeteryObject
+  createVillageWatchtowerObject
 } from './houseVillageObjects.js';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -27,7 +26,7 @@ import {
 // pas sur l'ancien niveau flottant sectorY + 0.018.
 const HOUSE_GROUND_Y = (TILE_VISUAL.tileThickness ?? 0.12) * -0.30;
 const HOUSE_BASE_Y = HOUSE_GROUND_Y + 0.002;
-const HOUSE_SCALE = HEX_SIZE * 0.1332; // −10 %
+const HOUSE_SCALE = HEX_SIZE * 0.1332 * 0.90; // −10% −10%
 const HOUSE_CHIMNEY_TOP_Y = HOUSE_BASE_Y + HOUSE_SCALE * 1.62;
 const HOUSE_SMOKE_Y = HOUSE_CHIMNEY_TOP_Y + HOUSE_SCALE * 0.08;
 const PUFFS_PER_COLUMN = 18;
@@ -43,9 +42,6 @@ const CHURCH_MAX_PER_ZONE = 5;
 const WATCHTOWER_MIN_HOUSES = 4;
 const WATCHTOWER_HOUSES_PER_EXTRA = 8;
 const WATCHTOWER_MAX_PER_ZONE = 6;
-const CEMETERY_MIN_HOUSES = 13;
-const CEMETERY_HOUSES_PER_EXTRA = 24;
-const CEMETERY_MAX_PER_ZONE = 3;
 const SPECIAL_BUILDING_HOUSE_SAFE_RADIUS = HEX_SIZE * 0.198; // −10 %
 
 // ─── API publique — cycle de vie overlay ──────────────────────────────────────
@@ -72,13 +68,12 @@ export function rebuildHouseOverlay(group, placedTiles) {
   const churchSectors = collectVillageChurchSectors(placedTiles);
   const watchtowerSectors = collectVillageWatchtowerSectors(placedTiles, churchSectors);
   const blockedRewardSectors = new Set([...churchSectors, ...watchtowerSectors]);
-  const cemeterySectors = collectVillageCemeterySectors(placedTiles, blockedRewardSectors);
 
   for (const placedTile of placedTiles.values()) {
     const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
     activeKeys.add(tileKey);
 
-    const signature = getTileHouseOverlaySignature(placedTile, churchSectors, watchtowerSectors, cemeterySectors);
+    const signature = getTileHouseOverlaySignature(placedTile, churchSectors, watchtowerSectors);
     const cached = tileHouseGroups.get(tileKey);
     if (cached && cached.userData?.houseOverlaySignature === signature) continue;
 
@@ -90,7 +85,7 @@ export function rebuildHouseOverlay(group, placedTiles) {
     const tileGroup = new THREE.Group();
     tileGroup.name = `house-tile-${tileKey}`;
     tileGroup.userData.houseOverlaySignature = signature;
-    buildHouseTileGroup(tileGroup, placedTile, placedTiles, churchSectors, watchtowerSectors, cemeterySectors);
+    buildHouseTileGroup(tileGroup, placedTile, placedTiles, churchSectors, watchtowerSectors);
     tileHouseGroups.set(tileKey, tileGroup);
     group.add(tileGroup);
   }
@@ -130,14 +125,26 @@ export function updateHouseOverlay(group, timeSeconds = 0) {
   }
 }
 
-export function updateHouseLOD(group, camera) {
-  const distSq = LOD_HOUSE_CULL_DISTANCE * LOD_HOUSE_CULL_DISTANCE;
+export function updateHouseLOD(group, camera, lodFactor = 1.0) {
+  const houseEff         = LOD_HOUSE_CULL_DISTANCE     * lodFactor;
+  const watchtowerEff    = LOD_WATCHTOWER_CULL_DISTANCE * lodFactor;
+  const houseDistSq      = houseEff      * houseEff;
+  const watchtowerDistSq = watchtowerEff * watchtowerEff;
   const tileHouseGroups = group.userData.tileHouseGroups;
   if (!tileHouseGroups) return;
   for (const tileGroup of tileHouseGroups.values()) {
     const center = tileGroup.userData.worldCenter;
     if (!center) continue;
-    tileGroup.visible = camera.position.distanceToSquared(center) < distSq;
+    const distSq = camera.position.distanceToSquared(center);
+    const tileVisible = distSq < houseDistSq;
+    tileGroup.visible = tileVisible;
+    // Watchtowers : LOD plus sévère — masquées avant les maisons (−22 % vs −20 %)
+    if (tileVisible) {
+      const withinWatchtower = distSq < watchtowerDistSq;
+      for (const child of tileGroup.children) {
+        if (child.name === 'village-watchtower-glb-zone-reward') child.visible = withinWatchtower;
+      }
+    }
   }
 }
 
@@ -152,7 +159,7 @@ function ensureHouseGlbModelsAndRebuild(group) {
 
 // ─── Construction par tuile ───────────────────────────────────────────────────
 
-function buildHouseTileGroup(group, placedTile, placedTiles, churchSectors, watchtowerSectors, cemeterySectors) {
+function buildHouseTileGroup(group, placedTile, placedTiles, churchSectors, watchtowerSectors) {
   group.userData.columns = [];
 
   const edges = placedTile.tile?.edges;
@@ -178,14 +185,14 @@ function buildHouseTileGroup(group, placedTile, placedTiles, churchSectors, watc
       tileKey,
       churchSectors.has(makeSectorKey(tileKey, sector.key)),
       watchtowerSectors.has(makeSectorKey(tileKey, sector.key)),
-      cemeterySectors.has(makeSectorKey(tileKey, sector.key)),
       placedTile,
       placedTiles
     );
   }
+
 }
 
-function getTileHouseOverlaySignature(placedTile, churchSectors, watchtowerSectors, cemeterySectors) {
+function getTileHouseOverlaySignature(placedTile, churchSectors, watchtowerSectors) {
   const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
   const edges = placedTile.tile?.edges ?? {};
 
@@ -197,28 +204,19 @@ function getTileHouseOverlaySignature(placedTile, churchSectors, watchtowerSecto
       getEdgeType(edge),
       Math.max(1, Math.min(4, Math.round(getEdgeValue(edge)))) || 0,
       churchSectors.has(sectorKey) ? 'church' : '',
-      watchtowerSectors.has(sectorKey) ? 'watchtower' : '',
-      cemeterySectors.has(sectorKey) ? 'cemetery' : ''
+      watchtowerSectors.has(sectorKey) ? 'watchtower' : ''
     ].join(':');
   }).join('|');
 }
 
 // ─── Placement des bâtiments par secteur ─────────────────────────────────────
 
-function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, hasChurch = false, hasWatchtower = false, hasCemetery = false, placedTile = null, placedTiles = null) {
+function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, hasChurch = false, hasWatchtower = false, placedTile = null, placedTiles = null) {
   const vertices = createOuterVertices();
   const a = vertices[sector.a];
   const b = vertices[sector.b];
   const anchors = getColumnAnchors(columnCount);
   const protectedLocals = getSectorSpecialBuildingSafeLocals(a, b, anchors, hasChurch, hasWatchtower);
-
-  if (hasCemetery) {
-    const cemeteryLocal = trianglePoint(a, b, 0.18, 0.41, 0.41);
-    const cemetery = createVillageCemeteryObject(`${tileKey}:${sector.key}:village-cemetery`, sector);
-    cemetery.position.set(tileX + cemeteryLocal.x, HOUSE_BASE_Y + HOUSE_SCALE * 0.018, tileZ + cemeteryLocal.z);
-    group.add(cemetery);
-    registerPropHitbox(tileX + cemeteryLocal.x, tileZ + cemeteryLocal.z, HITBOX_R.cemetery);
-  }
 
   if (hasWatchtower) {
     const towerLocal = trianglePoint(a, b, 0.18, 0.41, 0.41);
@@ -386,48 +384,6 @@ export function collectVillageWatchtowerSectors(placedTiles, churchSectors = new
   return selected;
 }
 
-function collectVillageCemeterySectors(placedTiles, blockedSectors = new Set()) {
-  const selected = new Set();
-  const visited = new Set();
-
-  for (const placedTile of placedTiles.values()) {
-    const edges = placedTile.tile?.edges;
-    if (!edges) continue;
-
-    for (const edge of EDGE_ORDER) {
-      if (getTileEdgeType(placedTile, edge) !== EDGE_TYPES.house) continue;
-      const nodeKey = makeSectorKey(placedTile.key, edge);
-      if (visited.has(nodeKey)) continue;
-
-      const zone = collectHouseZone(placedTile, edge, placedTiles, visited);
-      if (zone.total < CEMETERY_MIN_HOUSES) continue;
-
-      const cemeteryCount = Math.min(
-        CEMETERY_MAX_PER_ZONE,
-        Math.max(1, 1 + Math.floor((zone.total - CEMETERY_MIN_HOUSES) / CEMETERY_HOUSES_PER_EXTRA))
-      );
-
-      const churchRefs = zone.sectors.filter(sectorRef => blockedSectors.has(makeSectorKey(sectorRef.tile.key, sectorRef.edge)));
-      const ordered = [...zone.sectors]
-        .filter(sectorRef => !blockedSectors.has(makeSectorKey(sectorRef.tile.key, sectorRef.edge)))
-        .sort((a, b) => rankCemeteryCandidate(a, zone, churchRefs) - rankCemeteryCandidate(b, zone, churchRefs));
-      const fallback = [...zone.sectors]
-        .sort((a, b) => rankCemeteryCandidate(a, zone, churchRefs) - rankCemeteryCandidate(b, zone, churchRefs));
-      const candidates = ordered.length > 0 ? ordered : fallback;
-      const usedTiles = new Set();
-
-      for (const candidate of candidates) {
-        if (usedTiles.has(candidate.tile.key)) continue;
-        selected.add(makeSectorKey(candidate.tile.key, candidate.edge));
-        usedTiles.add(candidate.tile.key);
-        if (usedTiles.size >= cemeteryCount) break;
-      }
-    }
-  }
-
-  return selected;
-}
-
 function collectHouseZone(startTile, startEdge, placedTiles, visited) {
   const stack = [{ tile: startTile, edge: startEdge }];
   const sectors = [];
@@ -504,33 +460,6 @@ function rankWatchtowerCandidate(sectorRef, zone, selectedSectors = new Set()) {
   const edgeBias = EDGE_ORDER.indexOf(sectorRef.edge);
   const seed = hashUnit(`${zone.total}:${zone.sectors.length}:${sectorRef.tile.key}:${sectorRef.edge}:watchtower-rank`);
   return -(alreadySelectedPenalty + value * 90 + edgeBias * 4 + seed);
-}
-
-function rankCemeteryCandidate(sectorRef, zone, churchRefs = []) {
-  const value = getEdgeValue(sectorRef.tile.tile.edges[sectorRef.edge]);
-  const edgeIndex = EDGE_ORDER.indexOf(sectorRef.edge);
-  const edgeBias = Math.abs(2.5 - edgeIndex) * 4;
-  const churchProximity = getNearestChurchProximityScore(sectorRef, churchRefs);
-  const seed = hashUnit(`${zone.total}:${zone.sectors.length}:${sectorRef.tile.key}:${sectorRef.edge}:cemetery-rank`);
-  return -(churchProximity * 260 + value * 62 + edgeBias + seed);
-}
-
-function getNearestChurchProximityScore(sectorRef, churchRefs) {
-  if (!churchRefs.length) return 0;
-
-  let best = 0;
-  const sectorEdgeIndex = EDGE_ORDER.indexOf(sectorRef.edge);
-
-  for (const churchRef of churchRefs) {
-    const tileDistance = getHexDistance(sectorRef.tile.q, sectorRef.tile.r, churchRef.tile.q, churchRef.tile.r);
-    const churchEdgeIndex = EDGE_ORDER.indexOf(churchRef.edge);
-    const edgeDistance = Math.abs(sectorEdgeIndex - churchEdgeIndex);
-    const circularEdgeDistance = Math.min(edgeDistance, EDGE_ORDER.length - edgeDistance);
-    const score = Math.max(0, 4 - tileDistance) * 1.6 + Math.max(0, 3 - circularEdgeDistance) * 0.7;
-    best = Math.max(best, score);
-  }
-
-  return best;
 }
 
 function getHexDistance(q1, r1, q2, r2) {

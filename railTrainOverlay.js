@@ -17,7 +17,7 @@ const TRAIN_VISUAL_SCALE = 0.75;
 const TRAIN_SCALE = HEX_SIZE * 0.153 * TRAIN_VISUAL_SCALE;
 const TRAIN_UNIT_SPACING = HEX_SIZE * 0.30 * TRAIN_VISUAL_SCALE;
 const TRAIN_MIN_WAGONS = 2;
-const TRAIN_MAX_WAGONS = 8;
+const TRAIN_MAX_WAGONS = 5;   // était 8 → réduit DC wagons sur grand réseau
 const PORT_SCALE = 1.002;
 const TRACK_HUB_RADIUS = HEX_SIZE * 0.185;
 const TRACK_MIN_CURVE_RADIUS = HEX_SIZE * 0.34;
@@ -28,8 +28,8 @@ const STATION_TARGET_LENGTH = HEX_SIZE * 0.43;
 const STATION_TRACK_CLEARANCE = HEX_SIZE * 0.32;
 const STATION_TERMINUS_BACKSET = HEX_SIZE * 0.08;
 const STATION_MODEL_DEFS = [
-  { key: 'maison-3-station', url: './glb/maison-3.glb', weight: 3 },
-  { key: 'maison-4-station', url: './glb/maison-4.glb', weight: 2 }
+  { key: 'maison-fantasy-2-station', url: './glb/batiments/fantasy/maison-2.glb', weight: 3 },
+  { key: 'maison-fantasy-3-station', url: './glb/batiments/fantasy/maison-3.glb', weight: 2 }
 ];
 
 const materialCache = new Map();
@@ -47,14 +47,18 @@ export function createRailTrainOverlay() {
 
 export function rebuildRailTrainOverlay(group, placedTiles) {
   group.userData.lastPlacedTiles = placedTiles;
+  const _rT0 = performance.now();
   clearGroup(group);
   group.userData.trains = [];
   group.userData.stations = [];
+  const _rT1 = performance.now();
 
   if (stationGlbLibrary.size < 1) ensureStationGlbModels(group);
 
   const graph = buildRailGraph(placedTiles);
+  const _rT2 = performance.now();
   const components = findComponents(graph);
+  const _rT3 = performance.now();
 
   for (const component of components) {
     addRailTerminusStations(group, graph, component);
@@ -85,6 +89,8 @@ export function rebuildRailTrainOverlay(group, placedTiles) {
       trackCenter
     });
   }
+  const _rT4 = performance.now();
+  console.log(`[FREEZE-DIAG rail-phases] clear=${(_rT1-_rT0).toFixed(0)}ms | graph=${(_rT2-_rT1).toFixed(0)}ms | components=${(_rT3-_rT2).toFixed(0)}ms | trains=${(_rT4-_rT3).toFixed(0)}ms | TOTAL=${(_rT4-_rT0).toFixed(0)}ms`);
 }
 
 export function updateRailTrainOverlay(group, timeSeconds = 0) {
@@ -97,8 +103,9 @@ export function updateRailTrainOverlay(group, timeSeconds = 0) {
   }
 }
 
-export function updateRailTrainLOD(group, camera) {
-  const distSq = LOD_TRAIN_CULL_DISTANCE * LOD_TRAIN_CULL_DISTANCE;
+export function updateRailTrainLOD(group, camera, lodFactor = 1.0) {
+  const eff = LOD_TRAIN_CULL_DISTANCE * lodFactor;
+  const distSq = eff * eff;
   for (const train of (group.userData.trains ?? [])) {
     train.object.visible = camera.position.distanceToSquared(train.trackCenter) < distSq;
   }
@@ -575,8 +582,10 @@ function ensureStationGlbModels(group) {
     if (pending > 0) return;
 
     stationModelsLoading = false;
-    const lastPlacedTiles = group.userData.lastPlacedTiles;
-    if (lastPlacedTiles) rebuildRailTrainOverlay(group, lastPlacedTiles);
+    // ⚠️ NE PAS appeler rebuildRailTrainOverlay() directement ici :
+    // le callback GLB fire entre deux RAF → nouveaux objets visible=true sans LOD → FLASH.
+    // On passe par pendingModelRebuild → scene.js le queue avec lod?.() immédiat.
+    if (group.userData.lastPlacedTiles) group.userData.pendingModelRebuild = true;
   };
 
   for (const def of STATION_MODEL_DEFS) {
@@ -665,14 +674,14 @@ function createTrainObject(wagonCount = TRAIN_MIN_WAGONS) {
   units.push({ object: loco, followDistance: 0, type: 'locomotive' });
 
   const wagonPalettes = [
-    { body: 0x4F6D7A, roof: 0xE9C46A, cargo: 'coal' },
-    { body: 0x8F5E3C, roof: 0xF4A261, cargo: 'freight' },
-    { body: 0x5B7C48, roof: 0xD9B56A, cargo: 'freight' },
-    { body: 0x6B5B95, roof: 0xC8B6E2, cargo: 'mail' },
-    { body: 0xA24936, roof: 0xE9C46A, cargo: 'freight' },
-    { body: 0x386F8F, roof: 0xA8DADC, cargo: 'mail' },
-    { body: 0x71543A, roof: 0xD6A541, cargo: 'coal' },
-    { body: 0x495867, roof: 0xF2CC8F, cargo: 'freight' }
+    { body: 0x0E0804, roof: 0x1C1814, cargo: 'coal' },    // bois carbonisé, métal nuit
+    { body: 0x501E06, roof: 0x7A4E28, cargo: 'freight' }, // rouille sombre, toile brute
+    { body: 0x260E02, roof: 0x3C2C18, cargo: 'freight' }, // acajou nuit, chanvre sombre
+    { body: 0x460A14, roof: 0xA08868, cargo: 'mail' },    // bordeaux nuit, crème ternie
+    { body: 0x0A280C, roof: 0x908058, cargo: 'mail' },    // vert forêt nuit, ivoire sombre
+    { body: 0x060402, roof: 0x100C0A, cargo: 'coal' },    // jais absolu, métal nuit
+    { body: 0x3E1C08, roof: 0x604828, cargo: 'freight' }, // acajou profond, chamois usé
+    { body: 0x0E1018, roof: 0x181410, cargo: 'freight' }  // acier nuit, kaki foncé
   ];
 
   for (let i = 0; i < wagonCount; i += 1) {
@@ -704,9 +713,10 @@ function createTrainObject(wagonCount = TRAIN_MIN_WAGONS) {
     side: THREE.DoubleSide
   });
 
-  for (let i = 0; i < 64; i += 1) {
+  const SMOKE_COUNT = 20;  // était 64 → 20 réduit DC fumée de 64→20 par locomotive
+  for (let i = 0; i < SMOKE_COUNT; i += 1) {
     const smoke = new THREE.Mesh(
-      new THREE.CircleGeometry(TRAIN_SCALE * (0.13 + (i % 5) * 0.035), 20),
+      new THREE.CircleGeometry(TRAIN_SCALE * (0.13 + (i % 5) * 0.035), 12),
       smokeMaterial.clone()
     );
     smoke.name = 'chimney-slow-animated-smoke';
@@ -715,7 +725,7 @@ function createTrainObject(wagonCount = TRAIN_MIN_WAGONS) {
     loco.add(smoke);
     smokePuffs.push({
       mesh: smoke,
-      phase: i / 64,
+      phase: i / SMOKE_COUNT,
       drift: (i % 2 === 0 ? 1 : -1) * (0.035 + (i % 5) * 0.014),
       wobble: 0.48 + (i % 5) * 0.13
     });
@@ -725,6 +735,28 @@ function createTrainObject(wagonCount = TRAIN_MIN_WAGONS) {
   group.userData.units = units;
   group.userData.couplers = couplers;
   group.userData.loco = loco;
+
+  // Limite les shadow casters aux grandes surfaces visibles uniquement.
+  // Les détails (roues, bandes, fenêtres, fumée) ne contribuent pas à l'ombre perçue.
+  // userData.shadowFlagsApplied=true empêche applySceneShadowFlags de tout réactiver.
+  const SHADOW_KEEPERS = new Set([
+    'loco-frame', 'loco-side-left', 'loco-side-right',
+    'cabin-body', 'cabin-roof',
+    'wagon-base', 'wagon-body', 'wagon-roof',
+  ]);
+  group.traverse(obj => {
+    if (!obj.isMesh) return;
+    obj.userData.shadowFlagsApplied = true;
+    if (SHADOW_KEEPERS.has(obj.name)) {
+      obj.castShadow = true;
+      obj.receiveShadow = true;
+    } else {
+      obj.castShadow = false;
+      obj.receiveShadow = true;
+      obj.userData.disableCastShadow = true;
+    }
+  });
+
   return group;
 }
 
@@ -771,7 +803,7 @@ function addLocomotive(group, xOffset) {
   addBox(group, 'loco-side-right', xOffset + 0.10, 0.29, 0.39, 1.62, 0.22, 0.055, 0x1B2025, 55);
 
   const boiler = new THREE.Mesh(
-    new THREE.CylinderGeometry(TRAIN_SCALE * 0.27, TRAIN_SCALE * 0.27, TRAIN_SCALE * 1.02, 24),
+    new THREE.CylinderGeometry(TRAIN_SCALE * 0.27, TRAIN_SCALE * 0.27, TRAIN_SCALE * 1.02, 10),
     getMaterial('loco-boiler', 0xB8322A, 1)
   );
   boiler.rotation.z = Math.PI / 2;
@@ -782,7 +814,7 @@ function addLocomotive(group, xOffset) {
   const boilerBandXs = [-0.02, 0.34, 0.70];
   for (const bandX of boilerBandXs) {
     const band = new THREE.Mesh(
-      new THREE.CylinderGeometry(TRAIN_SCALE * 0.285, TRAIN_SCALE * 0.285, TRAIN_SCALE * 0.045, 24),
+      new THREE.CylinderGeometry(TRAIN_SCALE * 0.285, TRAIN_SCALE * 0.285, TRAIN_SCALE * 0.045, 10),
       getMaterial('brass-bands', 0xD6A541, 1)
     );
     band.rotation.z = Math.PI / 2;
@@ -792,7 +824,7 @@ function addLocomotive(group, xOffset) {
   }
 
   const boilerFront = new THREE.Mesh(
-    new THREE.CylinderGeometry(TRAIN_SCALE * 0.30, TRAIN_SCALE * 0.30, TRAIN_SCALE * 0.075, 24),
+    new THREE.CylinderGeometry(TRAIN_SCALE * 0.30, TRAIN_SCALE * 0.30, TRAIN_SCALE * 0.075, 10),
     getMaterial('boiler-front', 0x2B3035, 1)
   );
   boilerFront.rotation.z = Math.PI / 2;
@@ -800,8 +832,8 @@ function addLocomotive(group, xOffset) {
   boilerFront.renderOrder = 58;
   group.add(boilerFront);
 
-  addBox(group, 'cabin-body', xOffset - 0.62, 0.63, 0, 0.58, 0.72, 0.76, 0xC84B31, 58);
-  addBox(group, 'cabin-back', xOffset - 0.92, 0.54, 0, 0.10, 0.54, 0.70, 0x7F2D2A, 59);
+  addBox(group, 'cabin-body', xOffset - 0.62, 0.63, 0, 0.58, 0.72, 0.76, 0x6E2010, 58); // brique/bois brûlé profond
+  addBox(group, 'cabin-back', xOffset - 0.92, 0.54, 0, 0.10, 0.54, 0.70, 0x5A1E18, 59);
   addBox(group, 'cabin-roof', xOffset - 0.62, 1.05, 0, 0.74, 0.14, 0.90, 0x15191E, 60);
   addBox(group, 'cabin-roof-cap', xOffset - 0.62, 1.16, 0, 0.56, 0.08, 0.78, 0x333A40, 61);
 
@@ -811,7 +843,7 @@ function addLocomotive(group, xOffset) {
   }
 
   const chimney = new THREE.Mesh(
-    new THREE.CylinderGeometry(TRAIN_SCALE * 0.105, TRAIN_SCALE * 0.155, TRAIN_SCALE * 0.48, 18),
+    new THREE.CylinderGeometry(TRAIN_SCALE * 0.105, TRAIN_SCALE * 0.155, TRAIN_SCALE * 0.48, 8),
     getMaterial('chimney', 0x111419, 1)
   );
   chimney.position.set(TRAIN_SCALE * (xOffset + 0.62), TRAIN_SCALE * 0.98, 0);
@@ -819,7 +851,7 @@ function addLocomotive(group, xOffset) {
   group.add(chimney);
 
   const chimneyLip = new THREE.Mesh(
-    new THREE.CylinderGeometry(TRAIN_SCALE * 0.17, TRAIN_SCALE * 0.17, TRAIN_SCALE * 0.07, 18),
+    new THREE.CylinderGeometry(TRAIN_SCALE * 0.17, TRAIN_SCALE * 0.17, TRAIN_SCALE * 0.07, 8),
     getMaterial('chimney-lip', 0x20252B, 1)
   );
   chimneyLip.position.set(TRAIN_SCALE * (xOffset + 0.62), TRAIN_SCALE * 1.24, 0);
@@ -827,7 +859,7 @@ function addLocomotive(group, xOffset) {
   group.add(chimneyLip);
 
   const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(TRAIN_SCALE * 0.17, 18, 10),
+    new THREE.SphereGeometry(TRAIN_SCALE * 0.17, 8, 6),
     getMaterial('steam-dome', 0xD6A541, 1)
   );
   dome.scale.y = 0.75;
@@ -836,7 +868,7 @@ function addLocomotive(group, xOffset) {
   group.add(dome);
 
   const headLamp = new THREE.Mesh(
-    new THREE.SphereGeometry(TRAIN_SCALE * 0.105, 16, 10),
+    new THREE.SphereGeometry(TRAIN_SCALE * 0.105, 7, 5),
     getMaterial('head-lamp', 0xFFF1A8, 1)
   );
   headLamp.position.set(TRAIN_SCALE * (xOffset + 1.03), TRAIN_SCALE * 0.61, 0);
@@ -899,7 +931,7 @@ function addCoupler(group, x) {
 function addWheelSet(group, x, radius, z) {
   for (const side of [-1, 1]) {
     const wheel = new THREE.Mesh(
-      new THREE.CylinderGeometry(TRAIN_SCALE * radius, TRAIN_SCALE * radius, TRAIN_SCALE * 0.095, 20),
+      new THREE.CylinderGeometry(TRAIN_SCALE * radius, TRAIN_SCALE * radius, TRAIN_SCALE * 0.095, 10),
       getMaterial('wheel', 0x0C0E11, 1)
     );
     wheel.rotation.x = Math.PI / 2;
@@ -908,7 +940,7 @@ function addWheelSet(group, x, radius, z) {
     group.add(wheel);
 
     const rim = new THREE.Mesh(
-      new THREE.TorusGeometry(TRAIN_SCALE * radius * 0.82, TRAIN_SCALE * radius * 0.12, 8, 20),
+      new THREE.TorusGeometry(TRAIN_SCALE * radius * 0.82, TRAIN_SCALE * radius * 0.12, 5, 10),
       getMaterial('wheel-rim', 0x5E6872, 1)
     );
     rim.rotation.x = Math.PI / 2;
@@ -917,7 +949,7 @@ function addWheelSet(group, x, radius, z) {
     group.add(rim);
 
     const hub = new THREE.Mesh(
-      new THREE.CylinderGeometry(TRAIN_SCALE * radius * 0.34, TRAIN_SCALE * radius * 0.34, TRAIN_SCALE * 0.105, 14),
+      new THREE.CylinderGeometry(TRAIN_SCALE * radius * 0.34, TRAIN_SCALE * radius * 0.34, TRAIN_SCALE * 0.105, 7),
       getMaterial('wheel-hub', 0xD8DEE9, 1)
     );
     hub.rotation.x = Math.PI / 2;
@@ -932,6 +964,7 @@ function addBox(group, name, x, y, z, width, height, depth, color, renderOrder) 
     new THREE.BoxGeometry(TRAIN_SCALE * width, TRAIN_SCALE * height, TRAIN_SCALE * depth),
     getMaterial(name, color, 1)
   );
+  mesh.name = name; // nécessaire pour le shadow filtering dans createTrainObject
   mesh.position.set(TRAIN_SCALE * x, TRAIN_SCALE * y, TRAIN_SCALE * z);
   mesh.renderOrder = renderOrder;
   group.add(mesh);
@@ -976,8 +1009,11 @@ function getMaterial(name, color, opacity) {
   const key = `${name}:${color}:${opacity}`;
   if (materialCache.has(key)) return materialCache.get(key);
 
-  const material = new THREE.MeshBasicMaterial({
+  const material = new THREE.MeshStandardMaterial({
     color,
+    roughness: 1,
+    metalness: 0,
+    envMapIntensity: 0,   // neutralise l'IBL de scene.environment → évite le wash pastel
     transparent: opacity < 1,
     opacity,
     depthWrite: opacity >= 1,

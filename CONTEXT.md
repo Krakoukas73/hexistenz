@@ -2,473 +2,225 @@
 
 ## 1. Nature du projet
 
-Hexistenz est un jeu web de pose de tuiles hexagonales inspiré de Dorfromantik.
+Jeu web de pose de tuiles hexagonales inspiré de Dorfromantik. Le joueur pioche une tuile, la tourne, la pose sur une grille hexagonale. Chaque tuile a 6 secteurs triangulaires (biomes ou réseaux). Objectif : connecter les biomes, compléter des missions, maximiser le score.
 
-Le joueur pioche une tuile, la tourne, puis la pose sur une grille hexagonale. Chaque tuile est divisée en 6 secteurs triangulaires correspondant aux 6 directions d'un hexagone. Ces secteurs portent un biome ou un réseau : prairie, forêt, champ, village, eau, rail.
-
-L'objectif est de construire une carte cohérente, connecter les biomes, compléter des missions, exploiter les cellules bonus et maximiser le score.
-
-Stack technique volontairement minimal :
-
-- JavaScript ES Modules natifs, sans bundler, sans transpileur.
-- Three.js r160 chargé depuis CDN (`https://cdn.jsdelivr.net/npm/three@0.160.0/...`).
-- PHP minimal pour highscores, multiplayer et services simples.
-- JSON comme stockage.
-- Pas de framework JS, pas de base SQL.
+Stack : JavaScript ES Modules natifs, sans bundler. Three.js r160 (CDN). PHP pour highscores/multiplayer. JSON stockage. Pas de framework, pas de SQL.
 
 ---
 
 ## 2. Coordonnées hexagonales
 
-La grille utilise des **coordonnées axiales (q, r)** — un système à deux axes obliques standard pour les grilles hexagonales.
-
-Conversions clés dans `stable/hex.js` :
-- `axialToWorld(q, r)` → `{ x, y, z }` Three.js. Formule : `x = HEX_SIZE * 1.5 * q`, `z = HEX_SIZE * √3 * (r + q/2)`.
-- `worldToAxial(x, z)` → `{ q, r }` avec arrondi cube correct.
-- `makeHexKey(q, r)` → clé string `"q,r"` utilisée comme clé de Map pour `placedTiles`.
-
-Les 6 directions voisines sont définies dans `HEX_DIRECTIONS` (`stable/placementRules.js`) avec leur arête correspondante (`n`, `ne`, `se`, `s`, `sw`, `nw`).
+Grille **axiale (q, r)** — `stable/hex.js` :
+- `axialToWorld(q, r)` → `{ x, y, z }` : `x = HEX_SIZE * 1.5 * q`, `z = HEX_SIZE * √3 * (r + q/2)`
+- `worldToAxial(x, z)` → `{ q, r }` avec arrondi cube
+- `makeHexKey(q, r)` → clé string `"q,r"` pour `placedTiles` (Map)
 
 ---
 
 ## 3. Structure d'une tuile
 
 ```js
-{
-  id: string,           // identifiant unique
-  edges: {              // 6 secteurs indexés par direction
-    n:  { type: 'grass', value: 1 },
-    ne: 'water',        // peut être string ou objet
-    se: { type: 'field', value: 3 },
-    s:  'rail',
-    sw: 'forest',
-    nw: 'house'
-  },
-  center: 'grass',      // biome majoritaire, relie les secteurs via le centre
-  rotation: 0           // 0-5 crans de 60°
-}
+{ id, edges: { n, ne, se, s, sw, nw }, center, rotation }
+// edge = string ou { type, value }
 ```
 
-Helpers dans `tileGenerator.js` :
-- `getEdgeType(edge)` → string du biome (supporte string ou objet).
-- `getEdgeValue(edge)` → valeur numérique du secteur (1 par défaut).
-- `cloneEdge(edge)` → copie sûre préservant type + value.
-- `generateTile()` → crée une tuile avec respect des contraintes réseau.
-- `rotateTile(tile, steps)` → rotation immuable, préserve type+value ensemble. **Ne recalcule pas `center`** : le centre est fixé à la création et invariant par rotation. Le recalculer causait des changements visuels en cas d'égalité de comptage de biomes (bug sort Map non stable).
-
-Un `placedTile` est une tuile effectivement posée sur la grille :
-```js
-{
-  tile: Tile,   // la tuile brute
-  q: number,    // coordonnée axiale
-  r: number,
-  key: string   // makeHexKey(q, r)
-}
-```
-
-`placedTiles` est une `Map<string, placedTile>` passée en paramètre à presque toutes les fonctions.
+- `getEdgeType(edge)`, `getEdgeValue(edge)`, `cloneEdge(edge)` dans `tileGenerator.js`
+- `rotateTile(tile, steps)` — immuable, **ne recalcule pas `center`** (invariant volontaire)
+- `placedTile = { tile, q, r, key }` — `placedTiles: Map<string, placedTile>`
 
 ---
 
-## 4. Types de biomes (EDGE_TYPES)
+## 4. Biomes
 
-```
-grass   → prairie (transition neutre)
-field   → champ de blé (valeur variable, animation vent)
-forest  → forêt (densité arbres, GLB)
-house   → village (GLB maisons, fumée, bâtiments spéciaux)
-water   → eau/rivière (plage, bateaux, sons)
-rail    → voie ferrée (rails procéduraux, trains GLB)
-```
+`grass` prairie · `field` champ (vent) · `forest` forêt (GLB) · `house` village (GLB) · `water` eau/rivière · `rail` voie ferrée
 
-Les biomes `water` et `rail` sont des **réseaux** (`NETWORK_EDGE_TYPES`) : ils doivent former des continuités. La génération (`tileGenerator.js`) applique `enforceNetworkContinuity` pour garantir que chaque réseau a au moins deux arêtes connectées ou forme une terminaison valide.
+`water` et `rail` sont des **réseaux** : continuité obligatoire imposée par `enforceNetworkContinuity` dans `tileGenerator.js`.
 
 ---
 
 ## 5. Boucle de jeu
 
-1. Tuile courante affichée + tuile suivante prévisualisée.
-2. Joueur choisit une cellule disponible et tourne la tuile.
-3. Validation de placement (`canPlaceTileAt`, `getPlacementValidation`).
-4. Pose → score calculé (`calculatePlacementScore` in `stable/scoring.js`).
-5. Missions progressent (`advanceMissionTurn`, `maybeGenerateMissionForTile`).
-6. Bonus vérifiés (`stable/bonusCells.js`, `stable/specialCells.js`).
-7. Overlays visuels reconstruits (voir §9).
-8. Grille étendue si nécessaire (`ensureGridCellsAroundHex`).
-9. Tuile suivante devient courante.
+Pioche → rotation → pose → score → missions → bonus → overlays rebuild → extension grille → tuile suivante.
+
+Score (`stable/scoring.js`) : +2 pose, +10 arête compatible, +25 réseau compatible, +50 tuile entourée + bonus cellules.
 
 ---
 
 ## 6. Règles de placement
 
-Module : `stable/placementRules.js`
+`stable/placementRules.js` — `getPlacementValidation(hex, placedTiles, tile, specialCells)` → `{ valid, reason, conflicts }`.
 
-Conditions de placement valide :
-- Cellule dans la grille active.
-- Cellule non occupée.
-- Au moins une arête adjacente à une tuile existante (sauf premier placement).
-- Pas de conflit réseau : si une arête voisine est `water` ou `rail`, la nouvelle tuile doit avoir le même type en face (ou une terminaison valide).
-
-Fonction centrale : `getPlacementValidation(hex, placedTiles, tile, specialCells)` retourne `{ valid, reason, conflicts }`.
-
-`getOppositeEdge(edge)` retourne le nom de l'arête opposée : `n`↔`s`, `ne`↔`sw`, `se`↔`nw`.
+Conditions : cellule libre dans grille active, au moins un voisin posé, pas de conflit réseau (`water`/`rail` doivent se prolonger ou terminer).
 
 ---
 
-## 7. BFS de zones (flood-fill biome)
+## 7. BFS de zones (`stable/zoneUtils.js`)
 
-Le jeu regroupe les secteurs contigus de même biome en **zones**. Ces zones servent à : rendre les plages, placer les bateaux, compter les missions, afficher les labels, orienter les overlays visuels.
+`collectZone(startTile, startEdge, type, placedTiles, visited, getNeighborsFn)` → `{ type, sectors, total }`
 
-### Algorithme commun (`stable/zoneUtils.js`)
-
-```js
-collectZone(startTile, startEdge, type, placedTiles, visited, getNeighborsFn)
-// → { type, sectors: [{ tile, edge }], total }
-```
-
-BFS iteratif sur une pile. Chaque nœud est un `{ tile, edge }`. La clé de nœud est `makeNodeKey(tile.key, edge)` = `"q,r:direction"`.
-
-**Deux variantes de voisinage :**
-
-`getFullTextureNeighbors` (waterZoneOverlay, missions) :
-1. Secteurs de même type sur la même tuile reliés via le `center`.
-2. Secteurs contigus (prev/next dans EDGE_ORDER).
-3. Secteur opposé sur la tuile hexagonale voisine.
-
-`getTextureNeighbors` local (fieldWaterEffectsOverlay) :
-1. Secteurs reliés via le `center`.
-2. Secteur opposé sur la tuile voisine.
-— Pas d'adjacence intra-tuile via EDGE_ORDER : les zones champ se propagent uniquement par le centre et les voisins hexagonaux.
-
-`collectWaterZone` (waterBoatOverlay) :
-- Variante autonome spécifique à `water` : utilise `isWaterEdge` et ne calcule pas de `total`.
-
-### Où chaque fichier utilise le BFS
-
-| Fichier | Fonction locale | Utilise |
-|---|---|---|
-| `waterZoneOverlay.js` | `collectTextureZone` | `collectZone` + `getFullTextureNeighbors` |
-| `missions.js` | `collectTextureZone` | `collectZone` + `getFullTextureNeighbors` |
-| `fieldWaterEffectsOverlay.js` | `collectTextureZone` | `collectZone` + local `getTextureNeighbors` |
-| `waterBoatOverlay.js` | `collectWaterZone` | BFS autonome (eau uniquement) |
-| `houseOverlay.js` | `collectHouseZone` | BFS autonome (villages) |
+Deux variantes de voisinage :
+- `getFullTextureNeighbors` (waterZoneOverlay, missions) : centre + intra-tuile + cross-tuile
+- `getTextureNeighbors` local (fieldWaterEffectsOverlay) : centre + voisin hexagonal uniquement — **ne pas remplacer**
 
 ---
 
-## 8. Système de terrain et hauteur (`terrainHeight.js`)
+## 8. Terrain (`terrainHeight.js`)
 
-Chaque biome a une hauteur de surface différente (`BIOME_HEIGHT_RATIO`, `THIN_BIOME_DEPTH_RATIO` in `variables.js`).
-
-Fonctions exportées principales :
-- `getTerrainSurfaceY(point, type, salt, options)` → Y monde d'un point sur une tuile.
-- `getTerrainNormalAt(point, type, salt, options)` → normale de surface pour orienter les objets.
-- `placeObjectOnTerrain(object, point, type, salt, options)` → positionne + oriente un objet 3D.
-- `getRailCenterY(point, salt)` / `getTrainRailY(point, salt)` → Y rail selon le relief.
-
-Le relief procédural (`TERRAIN_RELIEF` in config) est généré via une somme de sinus + bruit FNV-1a. Il est désactivable par biome.
+- `getTerrainSurfaceY(point, type, salt)` → Y monde
+- `getTerrainNormalAt(...)` → normale surface
+- `placeObjectOnTerrain(object, point, type, salt)` → position + orientation
+- Relief procédural : somme sinus + bruit FNV-1a, désactivable par biome
 
 ---
 
 ## 9. Overlays visuels
 
-Les overlays sont des `THREE.Group` indépendants ajoutés à la scène au-dessus des tuiles. Chacun est responsable d'un aspect visuel d'un biome ou réseau.
+Cycle : `createXxxOverlay()` → `rebuildXxxOverlay(group, placedTiles)` → `updateXxxOverlay(group, time)`. Orchestré par `scene.js`.
 
-### Cycle de vie d'un overlay
-
-```
-createXxxOverlay()         → crée le Group vide, l'ajoute à la scène
-rebuildXxxOverlay(group, placedTiles)  → reconstruit entièrement au placement
-updateXxxOverlay(group, time)          → animation en temps réel (animate loop)
-```
-
-`scene.js` orchestre tous les overlays. À chaque placement, il appelle les `rebuild` nécessaires. Dans la boucle d'animation, il appelle les `update`.
-
-### Overlays actifs
-
-| Fichier | Biome | Contenu |
-|---|---|---|
-| `waterZoneOverlay.js` | eau + hover | API publique, BFS zone, hover, labels valeur |
-| `waterBeachGeometry.js` | eau | Plages procédurales (géométrie seulement) |
-| `waterZoneBoundary.js` | eau + hover | Halos et contours de zone, couleur de zone |
-| `waterBoatOverlay.js` | eau | Bateaux GLB animés, graphe de navigation |
-| `fieldWaterEffectsOverlay.js` | champ + eau bord | Fleurs, roseaux, champignons, oiseaux GLB animés, rochers |
-| `forestOverlay.js` | forêt | Arbres GLB (bouleaux + mixte), placement procédural |
-| `houseOverlay.js` | village | Maisons GLB, église, cimetière, tour de guet |
-| `tileRailOverlay.js` | rail | Rails procéduraux, traverses, ballast |
-| `railTrainOverlay.js` | rail | Trains GLB, wagons, réseau ferré, sons |
-
-### Règle de performance
-
-Ne pas reconstruire tous les overlays à chaque placement. Chaque `rebuild` reçoit `placedTiles` complet, mais doit être rapide. Les géométries Three.js et les matériaux sont déposés (`dispose`) dans `clearGroup` avant reconstruction.
+| Fichier | Contenu |
+|---|---|
+| `waterZoneOverlay.js` | BFS zones eau, hover, labels valeur |
+| `waterBeachGeometry.js` | Plages procédurales (v2 — strip quads 2▲/segment) |
+| `waterZoneBoundary.js` | Halos/contours de zone |
+| `waterBoatOverlay.js` | Bateaux GLB animés, graphe nav |
+| `fieldWaterEffectsOverlay.js` | Fleurs, roseaux, champignons, oiseaux, rochers |
+| `forestOverlay.js` | Arbres GLB (InstancedMesh) |
+| `houseOverlay.js` | Maisons, église, cimetière, tours de guet |
+| `tileRailOverlay.js` | Rails procéduraux, traverses, ballast |
+| `railTrainOverlay.js` | Trains GLB, wagons (couleurs bois/métal/tissu) |
+| `tileRoadOverlay.js` | **Routes désactivées** — GLBs archivés (.bak) |
+| `decorOverlay.js` | Orchestrateur props : moulins, tonneaux, bancs, fontaines... |
 
 ---
 
 ## 10. Modèles GLB
 
-Chargés via `GLTFLoader` (`three@0.160.0/examples/jsm/loaders/GLTFLoader.js`).
+Chargés via `GLTFLoader`. Pattern : prototype singleton, clone à chaque rebuild. GLBs animés : `cloneSkeleton` (SkeletonUtils) — **jamais `clone(true)`** (brise SkinnedMesh).
 
-Pattern de chargement (exemple maisons) :
+**`decorOverlay.js`** est l'orchestrateur centralisé des props. `PROP_MODEL_DEFS` tableau `{ key, url, target, mode, correctionX?, sinkDepth? }`. `correctionX: Math.PI/2` pour GLB exportés Z-up (ex. moulin-2).
+
+### Pools actifs (juin 2026)
+
+**Maisons** (`houseVillageObjects.js`) — 3 variantes, maison-1 retirée (8 911 tris) :
 ```js
-let prototype = null;
-function ensureModels(group) {
-  if (prototype) return; // déjà chargé
-  loader.load(url, gltf => {
-    prototype = preparePrototype(gltf.scene, def);
-    rebuildIfReady(group);
-  });
-}
-// Au rebuild : clone prototype, normalise scale/pivot, place sur terrain.
+{ key: 'maison-2', spawnWeight: 55 }
+{ key: 'maison-3', spawnWeight: 30 }
+{ key: 'maison-4', spawnWeight: 15 }
 ```
 
-Modèles connus : `bateau.glb`, `train.glb`, `wagon.glb`, `maison*.glb`, `church.glb`, `watchtower-1..5.glb`, `cemetery.glb`, `birch*.glb`, oiseaux, `moulin-1.glb`, `moulin-2.glb` (animé, pales), `fontaine-1.glb`, `fontaine-2.glb`, `botte-foin.glb`, `banc.glb`, `poteau-indicateur.glb`, `barque-1/2.glb`, `charrette.glb`, `tonneau-1/2.glb`, `flower-1..4.glb`, `rock-1..4.glb`, `roseau.glb`, `mushroom.glb`.
-
-**`decorOverlay.js`** est l'orchestrateur centralisé des props décor. Il définit `PROP_MODEL_DEFS` (tableau de defs `{ key, url, target, mode, correctionX?, sinkDepth? }`), charge tous les GLB via `GLTFLoader`, normalise chaque modèle dans `preparePropPrototype` (utilise `cloneSkeleton` de SkeletonUtils, pas `clone(true)`), et exporte `createPropModel(key, seedKey)`. Sous-fichiers : `fieldZonesOverlay.js`, `naturalPropsOverlay.js`, `villageDecorOverlay.js`.
-
-**GLBs animés** : `preparePropPrototype` utilise `cloneSkeleton(model)` (SkeletonUtils) pour conserver les références skeleton intactes, force `visible=true` + scale ≠ 0 + `skeleton.pose()` + `material.visible=true` sur tous les nœuds. Les `AnimationClip[]` sont conservés dans `propAnimationsLibrary` ; `createPropModel` crée un `AnimationMixer` si des clips existent. `updateDecorOverlay` appelle `mixer.update(delta)` via `userData.mixer` sur chaque frame.
-
-**Correction d'orientation GLB** : champ `correctionX` dans PROP_MODEL_DEFS (ex. `Math.PI/2` pour moulin-2 exporté Z-up). Appliqué sur `source.rotation.x` *avant* le calcul Box3, pour que la bounding box et le scale soient mesurés dans la bonne orientation.
-
-Avant d'utiliser un GLB : vérifier existence, orientation, échelle, pivot, hauteur terrain (`terrainHeight.js`), animations éventuelles.
-
----
-
-## 11. Hash procédural (FNV-1a)
-
-Utilisé pour le placement déterministe : mêmes coordonnées → même résultat visuel.
-
-Trois variantes de précision dans `stable/hashUtils.js` (ne pas les unifier — changer la précision change le placement visuel) :
-
-| Export | Formule | Usage |
-|---|---|---|
-| `hashUnitFull(text)` | `fnv1a / 4294967295` | forestOverlay, tileRailOverlay |
-| `hashUnit100k(text)` | `(fnv1a % 100000) / 100000` | houseOverlay, waterBoatOverlay |
-| `hashUnit10k(text)` | `(fnv1a % 10000) / 10000` | fieldWaterEffectsOverlay, railTrainOverlay |
-| `hashNumber(value)` | `fnv1a brut (uint32)` | forestOverlay, fieldWaterEffectsOverlay, tileRailOverlay |
-
----
-
-## 12. Géométrie hexagonale partagée
-
-`stable/hexGeometry.js` exporte `createOuterVertices(radius)` — génère les 6 sommets du contour hexagonal :
+**Arbres** (`forestOverlay.js`) — 4 espèces, oak_round + dead retirés (~10k tris/instance) :
 ```js
-for i in 0..5: { x: cos(π/3 * i) * radius, z: sin(π/3 * i) * radius }
+TREE_MODEL_DEFS = [ birch, bushy_mini, pine_soft, poplar ]
 ```
 
-Le paramètre `radius` doit toujours être passé explicitement depuis les overlays qui utilisent `HEX_SIZE * TILE_VISUAL.radiusScale` (≠ `HEX_SIZE` par défaut).
-
----
-
-## 13. Utilitaires partagés (`stable/`)
-
-### `stable/tileUtils.js`
-- `makeNodeKey(tileKey, edge)` → `"q,r:direction"` — clé de nœud BFS.
-- `getTileEdgeType(placedTile, edge)` → type string du secteur.
-- `getTileCenterType(placedTile)` → biome du centre, ou `null`.
-- `clearGroup(group)` → vide un `THREE.Group` en disposant géométries et matériaux.
-- `smoothstep(edge0, edge1, value)` → interpolation cubique clampée.
-
-### `stable/zoneUtils.js`
-- `collectZone(...)` → BFS flood-fill générique (voir §7).
-- `getFullTextureNeighbors(...)` → adjacences complètes (centre + intra-tuile + cross-tuile).
-
-### `stable/hashUtils.js`
-Trois variantes FNV-1a (voir §11).
-
-### `stable/hexGeometry.js`
-`createOuterVertices(radius)` (voir §12).
-
-### `stable/hex.js`
-`axialToWorld`, `worldToAxial`, `makeHexKey`, `createHexFill`.
-
-### `stable/placementRules.js`
-`canPlaceTileAt`, `getPlacementValidation`, `HEX_DIRECTIONS`, `getOppositeEdge`, `setPlacementGridKeys`.
-
-### `stable/scoring.js`
-`calculatePlacementScore` — arêtes compatibles, réseaux, tuile entourée.
-
-### `stable/worldCurvature.js`
-Courbure du monde (mode platiste vs bouliste). `getWorldCurvatureDrop`, `markNoWorldCurvature`.
-
-### `stable/threeSetup.js`
-`createRenderer`, `createCamera`, `createPixelPostprocess` (EffectComposer + RenderPixelatedPass + OutputPass), `updateWorldCurvedSprites`.
-
----
-
-## 14. Configuration centrale (`config.js` / `variables.js`)
-
-`config.js` ne fait que `export * from './variables.js'`. Tout est dans `variables.js`.
-
-Constantes critiques (ne pas renommer les clés) :
-- `HEX_SIZE = 1` — taille logique d'un hex Three.js. Tout le monde 3D en dépend.
-- `EDGE_ORDER = ['n', 'ne', 'se', 's', 'sw', 'nw']` — ordre canonique des 6 arêtes. Ne pas modifier.
-- `SECTOR_DEFS` — définit `a` et `b` (indices de sommets) pour chaque secteur.
-- `TILE_VISUAL` — `radiusScale`, `centerRadiusScale`, `waterY`, `railSurfaceY`, `tileThickness`, `sectorY`.
-- `TERRAIN_RELIEF` — `enabled`, `baseAmplitude`, `typeAmplitude`, `edgeFadeStart`, `segments`, `innerSegments`.
-- `EDGE_COLOR` — couleurs Three.js par biome (format `0xRRGGBB`).
-- `EDGE_WEIGHTS` — poids génération aléatoire des biomes.
-
----
-
-## 15. Rendu et post-processing
-
-Three.js r160, WebGL renderer, ombres optionnelles.
-
-Pipeline : `RenderPixelatedPass` → `OutputPass` via `EffectComposer`.
-
-Le HUD post-processing (`stable/postprocessHud.js`) expose des sliders pour : luminosité, contraste, saturation, vibrance, teinte, gamma, noirs, blancs, canaux RGB, force palette, mode monde. C'est un LUT maison via uniforms shader.
-
-Modes monde :
-- **Platiste** : grille plane standard.
-- **Bouliste** : courbure appliquée via `worldCurvature.js` — les tuiles semblent poser sur une planète. Sprites et labels doivent utiliser `markNoWorldCurvature` pour rester plats.
-
----
-
-## 16. Score
-
-`stable/scoring.js` — `calculatePlacementScore(hex, placedTiles, tile, specialCells)` :
-- `+2` par tuile posée.
-- `+10` par arête compatible (biome identique en face).
-- `+25` par arête réseau compatible (`water` ou `rail`).
-- `+50` si la tuile est entourée de 6 voisins.
-- Bonus cellules spéciales.
-
----
-
-## 17. Missions
-
-`missions.js` — objectifs dynamiques générés pendant la partie.
-
-Types de missions : zone eau, forêt, champ, village, rail, trains, bateaux.
-
-Le BFS `collectTextureZone` (via `collectZone` de `zoneUtils.js`) comptabilise la taille totale des zones pour chaque mission.
-
-Récompenses : `MISSION_REWARD = 100` points + `MISSION_TILE_REWARD = 3` tuiles supplémentaires.
-
-Les missions ont un seuil croissant. `maybeGenerateMissionForTile` génère une mission à la pose si les conditions sont réunies (probabilité `MISSION_CHANCE = 0.20`).
-
----
-
-## 18. Audio (`soundDesign.js`)
-
-Son spatialisé selon la carte. Sons connus : forêt, village, plage/eau, bateau, train, corbeaux, musique menu, musique ingame.
-
-Règle importante : les sons train ne se déclenchent qu'à la présence réelle d'un train (objet GLB existant), pas d'un simple secteur rail.
-
-**Touche M** — `toggleMute(ambientSoundDesign)` (exportée depuis `soundDesign.js`) coupe/rétablit tous les sons (musique HTML Audio + ambiance THREE.Audio). `AmbientSoundDesign.setMuted(bool)` force immédiatement les volumes à 0 et court-circuite `update()` tant que muet.
-
----
-
-## 19. Multiplayer
-
-Architecture HTTP polling (pas de WebSocket). Backend PHP (`multiplayer.php`), stockage JSON (`/games`). Client : `stable/multiplayerClient.js` + `multiplayerUi.js`. Room code partagé, synchronisation de l'état de carte, curseurs des joueurs.
-
----
-
-## 20. Highscores
-
-`highscore.php` + `highscores.json` + `stable/highscore.js`. Pas de compte joueur, pas de SQL. Envoi en fin de partie, tri et affichage public.
-
----
-
-## 21. Architecture fichiers
-
-```
-/
-├── index.php               Point d'entrée HTML
-├── config.js               Re-export de variables.js (alias historique)
-├── variables.js            Toutes les constantes réglables du jeu
-├── main.js                 Bootstrap : options, init scène
-├── scene.js                Orchestrateur : état jeu, boucle, overlays, UI
-├── tileGenerator.js        Génération et rotation de tuiles
-├── tileMesh.js             Géométrie 3D des tuiles (maillage sectorisé)
-├── tileTextures.js         Textures procédurales par biome
-├── terrainHeight.js        Surface Y, relief, normale terrain, placement objets
-├── tileRailOverlay.js      Rails procéduraux, traverses, ballast
-├── railTrainOverlay.js     Trains GLB, wagons, animation réseau ferré
-├── waterZoneOverlay.js     API zone eau : BFS, hover, labels
-├── waterBeachGeometry.js   Géométrie plage procédurale
-├── waterZoneBoundary.js    Halos et contours de zone, couleur
-├── waterBoatOverlay.js    Bateaux GLB, graphe navigation eau
-├── fieldWaterEffectsOverlay.js  Fleurs, roseaux, oiseaux, champignons, rochers
-├── forestOverlay.js        Arbres GLB (6 variants) — InstancedMesh
-├── houseOverlay.js         Maisons GLB, église, cimetière, tour de guet
-├── decorOverlay.js         Orchestrateur props décor : PROP_MODEL_DEFS, GLTFLoader, preparePropPrototype, createPropModel, AnimationMixer, propGlbLibrary
-├── fieldZonesOverlay.js    Moulins (field-flag / field-flag-2), drapeaux de zone blé
-├── naturalPropsOverlay.js  Props naturels InstancedMesh : fleurs, rochers, roseaux, champignons, bottes de foin (field-edge uniquement)
-├── villageDecorOverlay.js  Bancs, charrettes, tonneaux, poteaux, fontaines village + prairie
-├── houseVillageObjects.js  Tours de guet (watchtower-1..5, poids égaux, sinkDepth)
-├── propHitboxRegistry.js   registerPropHitbox / tryResolve — hitbox durs pour props
-├── realisticWater.js       Shader eau réaliste (reflets, ripple)
-├── visualEnvironment.js    Lumières, ciel, environnement visuel
-├── soundDesign.js          Audio spatial
-├── missions.js             Système de missions dynamiques
-├── ui.js                   HUD (score, deck, missions, aide)
-├── multiplayerUi.js        UI multiplayer
-├── debugLightUi.js         Panneau debug lumière
-├── tileLabels.js           Labels texte sur tuiles
-├── variables.js            Réglages humains (couleurs, tailles, weights...)
-│
-└── stable/                 Modules matures, peu modifiés
-    ├── hex.js              Coordonnées axiales, makeHexKey, axialToWorld
-    ├── grid.js             Grille hexagonale, cellules disponibles, expansion
-    ├── gridRegions.js      Régions de grille, expansion dynamique
-    ├── placementRules.js   Validation placement, HEX_DIRECTIONS, getOppositeEdge
-    ├── scoring.js          Calcul score placement
-    ├── gameRules.js        Règles deck, bonus tuiles
-    ├── controls.js         CameraControls (orbit + zoom)
-    ├── worldCurvature.js   Courbure monde (platiste/bouliste)
-    ├── threeSetup.js       Renderer, caméra, post-processing, ombres
-    ├── postprocessHud.js   HUD réglages post-processing
-    ├── placementOverlay.js Feedback visuel de placement (preview)
-    ├── bonusCells.js       Cellules bonus (étoiles, score multiplié)
-    ├── specialCells.js     Cellules spéciales
-    ├── highscore.js        Highscores client
-    ├── globalWind.js       Vent global (direction, force)
-    ├── starUniverse.js     Fond étoilé
-    ├── cometSky.js         Comètes animées
-    ├── random.js           pickRandom, pickWeighted
-    ├── multiplayerClient.js  Client HTTP polling multiplayer
-    │
-    ├── hashUtils.js        FNV-1a : hashUnitFull / hashUnit100k / hashUnit10k / hashNumber
-    ├── hexGeometry.js      createOuterVertices(radius)
-    ├── tileUtils.js        makeNodeKey, getTileEdgeType, getTileCenterType, clearGroup, smoothstep
-    └── zoneUtils.js        collectZone (BFS), getFullTextureNeighbors
+**Watchtowers** — 3 variantes, watchtower-2/3/6 retirées :
+```js
+{ key: 'watchtower-1', spawnWeight: 10 }
+{ key: 'watchtower-4', spawnWeight: 30 }
+{ key: 'watchtower-5', spawnWeight: 30 }
 ```
 
+### Tailles modèles clés
+
+- `HOUSE_SCALE = HEX_SIZE * 0.1332 * 0.93`
+- Église : `4.5 * 0.93`
+- `BARREL_TARGET_WIDTH = HEX_SIZE * 0.1031 * 0.85`
+- `BOAT_TARGET_LENGTH = 0.735 * 0.88 * 0.92`
+- `NATURAL_FLOWER_TARGET_WIDTH` : cumulatif −12% (v0.8)
+- `ANIMAL_CHICKEN_TARGET_WIDTH` : +10% (v0.8)
+- `ANIMAL_CAT_TARGET_WIDTH` : +7% (v0.8)
+
+### Routes — désactivées temporairement
+
+`createRoadCenterOverlay` retourne `null`. `stone-road-droite.glb` et `stone-road-curve60.glb` archivés en `.glb.bak`. Raison : ces GLBs utilisent des `InterleavedBufferAttributes` incompatibles avec `mergeGeometries` (Three.js r160). À reprendre quand les GLBs seront remplacés par des meshes lowpoly à attributs standard.
+
+### Architecture future — GLB packs et thèmes/biomes
+
+Inspiré de `plantes.glb` (accès par index dans un pack multi-mesh) : regrouper les habitations dans des fichiers pack par thème/biome.
+
+Structure cible :
+```
+/glb/habitations/
+  medieval/pack-habitations.glb      ← variante actuelle
+  neige/pack-habitations.glb         ← futur
+  desert/pack-habitations.glb        ← futur
+  ...
+```
+
+Avantages : 1 seul chargement GLB par biome → fort gain DC et VRAM (partage matériaux), sélection par index plutôt que par URL. Même logique déjà fonctionnelle avec `plantes.glb`.
+
 ---
 
-## 22. InstancedMesh — stratégie rendu haute-fréquence
+## 11. Hash procédural (`stable/hashUtils.js`)
 
-### Pourquoi
+FNV-1a — **ne pas unifier les variantes** (changer la précision change le placement visuel) :
 
-Sur les grandes grilles, le nombre de draw calls WebGL explose (~3000–6000+ avec le rendu clone-par-clone). `THREE.InstancedMesh` permet de dessiner N copies d'une géométrie en un seul draw call via une matrice par instance (`Matrix4`).
+| Export | Usage |
+|---|---|
+| `hashUnitFull(text)` | forestOverlay, tileRailOverlay |
+| `hashUnit100k(text)` | houseOverlay, waterBoatOverlay |
+| `hashUnit10k(text)` | fieldWaterEffectsOverlay, railTrainOverlay |
+| `hashNumber(value)` | forestOverlay, fieldWaterEffectsOverlay, tileRailOverlay |
 
-### Fichiers concernés
+---
 
-| Fichier | Props instanciées | Props clone (inchangé) |
-|---|---|---|
-| `forestOverlay.js` | Tous les arbres (6 variants : birch, bushy_mini, oak_round, pine_soft, dead, poplar) | — |
-| `fieldWaterEffectsOverlay.js` | Fleurs (4 variants), roseaux, champignons | Rochers (taille côtière variable) |
+## 12. Utilitaires partagés (`stable/`)
 
-### Pattern collect → build
+- `hex.js` : `axialToWorld`, `worldToAxial`, `makeHexKey`, `createHexFill`
+- `hexGeometry.js` : `createOuterVertices(radius)` — toujours passer `radius = HEX_SIZE * TILE_VISUAL.radiusScale`
+- `tileUtils.js` : `makeNodeKey`, `getTileEdgeType`, `clearGroup`, `smoothstep`
+- `zoneUtils.js` : `collectZone`, `getFullTextureNeighbors`
+- `placementRules.js` : `canPlaceTileAt`, `getPlacementValidation`, `HEX_DIRECTIONS`, `getOppositeEdge`
+- `scoring.js` : `calculatePlacementScore`
+- `worldCurvature.js` : `getWorldCurvatureDrop`, `markNoWorldCurvature`
+- `threeSetup.js` : `createRenderer`, `createCamera`, `createPixelPostprocess`, `updateWorldCurvedSprites`
+- `hexLabelFont.js` : `HEX_FONT_FAMILY`, `sharedLabelCache`, `hexFontReady` (Promise FontFace DeltaBlock)
 
-1. **Collect** : parcourir toutes les tuiles, calculer chaque matrice d'instance avec un `Object3D` dummy réutilisé (`_instanceDummy` / `_propInstanceDummy`), stocker `matrix.clone()` dans un `Map<variantKey, Matrix4[]>`.
-2. **Build** : pour chaque variant, traverser le prototype, `geometry.clone().applyMatrix4(child.matrixWorld)` (cuit la transform du wrapper `normalizeModel`/`preparePropPrototype` dans la géo), `material.clone()`, créer `InstancedMesh(geo, mat, count)`, affecter les matrices, `instanceMatrix.needsUpdate = true`.
+---
 
-Le prototype n'est **jamais** ajouté à la scène. Il faut appeler `prototype.updateMatrixWorld(true)` avant de lire `child.matrixWorld`.
+## 13. Configuration (`variables.js` / `config.js`)
 
-### Scale
+`config.js` = `export * from './variables.js'`. Constantes critiques :
+- `HEX_SIZE = 1`, `EDGE_ORDER = ['n','ne','se','s','sw','nw']`, `SECTOR_DEFS`
+- `TILE_VISUAL` : `radiusScale`, `waterY`, `railSurfaceY`, `tileThickness`
+- `TERRAIN_RELIEF`, `EDGE_COLOR`, `EDGE_WEIGHTS`
 
-La scale de base (issue du wrapper) est cuite dans la géométrie. La matrice d'instance ne contient que le **jitter** (`setScalar(jitter)`). Ne pas passer wrapper.scale dans la matrice d'instance.
+---
 
-### Dispose
+## 14. Rendu et post-processing
 
-Les géométries et matériaux clonés à chaque rebuild sont **la propriété des InstancedMesh** — pas des prototypes. Le chemin `clearGroup` (arbres) et `disposeOverlayChildren` (arbres) dispose correctement les clones sans toucher aux prototypes.
+Pipeline Three.js r160 : `RenderPixelatedPass → ShaderPass(COLOR_GRADING_SHADER) → OutputPass` via `EffectComposer`.
 
-### globalWind + InstancedMesh
+`colorGradingPass` toujours actif — quand pixelisation off, `pixelPass` neutralisé (size=1, strengths=0) mais composer tourne quand même. `debugLightUi.js` (bouton bas-gauche, panel bas-droite) applique `applyColorGradingUniforms` à chaque slider. Préférences persistées en localStorage (`hexistenz_lut_v1`).
 
-Le shader vent (`stable/globalWind.js`) utilisait `modelMatrix * vec4(position, 1.0)` pour calculer la position monde. Avec `InstancedMesh`, `modelMatrix` est la transform du mesh, pas de l'instance. Patch appliqué :
+LUT defaults (juin 2026) : `toneMappingExposure: 2.40`, `brightness: 0.000`, `contrast: 1.020`, `saturation: 1.02`, `vibrance: 0.10`, `gamma: 1.030`, `sunIntensity: 2.15`, `hemisphereIntensity: 0.38`.
 
+**Quantification palette rétro** (`visualEnvironment.js`) : uniforms `uPaletteColors[32]` + `uPaletteSize` + `uPaletteDither`. Comparaison en espace sRGB (raw hex parsing — **ne pas passer par `new THREE.Color()`**). `paletteDither = 0.7` pour NB/CGA/EGA, `0.5` pour Amiga.
+
+**Dithering couleur-hash** (pas Bayer) : `RenderPixelatedPass` garantit que tous les pixels d'un même bloc ont la même couleur → `hash(color)` identique → décision uniforme par bloc. Quantification 8 bits avant le hash. **Ne pas revenir au Bayer** : grille secondaire visible à l'intérieur des blocs.
+
+**Monkey-patch `RenderPixelatedPass`** (`stable/threeSetup.js`) : r160 rend la scène deux fois. Le patch surcharge `pixelPass.render` pour sauter le rendu normals quand `normalEdgeStrength < 0.005`.
+
+**SHIFT+Espace — super-immersif** : active `gridOnlyMode` ET masque tous les HUDs via `body.huds-force-hidden`. `toggleGridOnlyMode(false)` retire le class automatiquement.
+
+---
+
+## 15. Labels de zones (`tileLabels.js` + `waterZoneOverlay.js`)
+
+Sprites canvas hexagonaux — ratio W/H = 2/√3 ≈ 1.155. Font **DeltaBlock** (`fonts/DeltaBlock-Regular.ttf`).
+
+- Chargement garanti : `document.fonts.load('900 96px DeltaBlock')` (unique API garantissant la dispo canvas). URL **relative** (`./fonts/`) obligatoire.
+- Texte : `ctx.font = '900 130px DeltaBlock'`, `ctx.letterSpacing = '7px'` (multi-chars).
+- **Échelle proportionnelle par famille** : `rescaleZoneLabels(overlay)` — `factor = 1 + 0.35 * (value / maxOfType)`.
+- LOD : `LOD_ZONE_LABEL_CULL_DISTANCE = 40.0`
+
+---
+
+## 16. InstancedMesh
+
+`forestOverlay.js` (arbres) et `fieldWaterEffectsOverlay.js` (fleurs/roseaux/champignons) et `tileRailOverlay.js` (traverses) utilisent `THREE.InstancedMesh`. Pattern : collect matrices → build mesh.
+
+Patch vent `stable/globalWind.js` requis pour `USE_INSTANCING` :
 ```glsl
 #ifdef USE_INSTANCING
   vec4 gwWorld = modelMatrix * instanceMatrix * vec4(position, 1.0);
@@ -477,116 +229,195 @@ Le shader vent (`stable/globalWind.js`) utilisait `modelMatrix * vec4(position, 
 #endif
 ```
 
-`position.y` (espace local) pour `heightStart`/`heightEnd` reste correct pour les deux chemins.
+---
 
-### Variante stable par TREE_MODEL_DEFS
+## 17. LOD
 
-`collectTreeInstances` utilise `TREE_MODEL_DEFS.map(d => d.key).filter(k => treeLibrary.has(k))` pour un ordre stable indépendant de l'ordre de chargement async des GLB. L'index `pickMixedModelIndex` pointe dans cette liste triée.
+Seuils dans `variables.js` (−8% par rapport aux valeurs v0.8 — ×0.92, juin 2026) :
+
+| Cible | Constante | Valeur |
+|---|---|---|
+| Plantes/fleurs/champignons | `LOD_MICRO_CULL_DISTANCE` | 6.6 |
+| Plantes (végétation) | `LOD_PLANT_CULL_DISTANCE` | 5.6 |
+| Blé (chunks) | `LOD_WHEAT_CULL_DISTANCE` | 6.6 |
+| Panneaux | `LOD_SIGN_CULL_DISTANCE` | 7.9 |
+| Rochers | `LOD_ROCK_CULL_DISTANCE` | 7.2 |
+| Props village (bancs…) | `LOD_VILLAGE_PROP_CULL_DISTANCE` | 8.6 |
+| Barques échouées | `LOD_SHORE_BOAT_CULL_DISTANCE` | 9.2 |
+| Animaux | `LOD_ANIMAL_CULL_DISTANCE` | 9.6 |
+| Fontaines | `LOD_FOUNTAIN_CULL_DISTANCE` | 9.8 |
+| Bateaux animés | `LOD_BOAT_CULL_DISTANCE` | 10.3 (XZ seul) |
+| Moulins | `LOD_MILL_CULL_DISTANCE` | 12.6 |
+| Bâtiments | `LOD_HOUSE_CULL_DISTANCE` | 12.7 |
+| Arbres | `LOD_TREE_CULL_DISTANCE` | 12.2 |
+| Watchtowers | `LOD_WATCHTOWER_CULL_DISTANCE` | 13.2 |
+| Rails | `LOD_RAIL_TRACK_CULL_DISTANCE` | 14.4 |
+| Trains | `LOD_TRAIN_CULL_DISTANCE` | 9.9 |
+| Corbeaux | `LOD_CROW_CULL_DISTANCE` | 9.7 |
+| Labels zones | `LOD_ZONE_LABEL_CULL_DISTANCE` | 40.0 |
+
+Test dans `animate()` bloc `(shadowRefreshFrame % 9) === 0`. Exception : après un rebuild via `overlayRebuildQueue`, `lod()` est appelé **immédiatement** dans le même frame.
 
 ---
 
-## 23. Système LOD (Level Of Detail)
+## 18. Pipeline perf — rebuild différé (`scene.js`)
 
-### Principe
+**Différés** : `overlayRebuildQueue = new Map<name, {rebuild, lod}>()` — coalescing automatique, 1 overlay traité par frame.
 
-Les objets Three.js sont masqués (`visible = false`) au-delà d'une distance caméra seuil. Le test est effectué dans la boucle `animate()` de `scene.js`, dans le bloc `(shadowRefreshFrame % 3) === 0` — soit ~20 Hz à 60 fps.
+| Clé queue | rebuild | lod |
+|---|---|---|
+| `'rail'` | `rebuildRailTrainOverlay` | `updateRailTrainLOD` |
+| `'boat'` | `rebuildWaterBoatOverlay` | `updateWaterBoatLOD` |
+| `'wheat'` | `rebuildFieldWheatOverlay` | `updateFieldWheatLOD` |
+| `'forest'` | `rebuildForestOverlay` | `updateForestLOD` |
+| `'house'` | `rebuildHouseOverlay` | `updateHouseLOD` |
+| `'decor'` | `rebuildDecorOverlay` | `updateNaturalPropsLOD` + `updateFieldDecorLOD` |
 
-La caméra est positionnée à `radius = 15`, `phi = π/3` → hauteur Y ≈ 7.5, décalage horizontal XZ ≈ 13 unités depuis la cible. La composante Y² (≈ 56) gonfle les distances 3D pour les objets posés au sol (Y ≈ 0), ce dont les seuils 3D tiennent compte.
+**BFS ciblé waterZone** : `affectedHex` → BFS partiel sur 7 hexes. Full rebuild si `null` (undo, chargement, multijoueur).
 
-**Exception bateaux animés** (`waterBoatOverlay.js`) : la comparaison est **XZ uniquement** (`dx*dx + dz*dz`) pour éviter que Y² consomme tout le budget de distance sur terrain plat.
+---
 
-### Seuils centralisés dans `variables.js`
+## 19. Merge géométrique (`mergeGeometries`)
 
-| Constante | Valeur | Comparaison | Cible |
-|---|---|---|---|
-| `LOD_MICRO_CULL_DISTANCE` | 14.4 | 3D | Fleurs, roseaux, champignons (InstancedMesh chunks) |
-| `LOD_SIGN_CULL_DISTANCE` | 15.3 | 3D par item | Panneaux indicateurs |
-| `LOD_SHORE_BOAT_CULL_DISTANCE` | 16.2 | 3D par item | Barques échouées (shore-inert-boat) |
-| `LOD_BOAT_CULL_DISTANCE` | 13.5 | **XZ uniquement** | Bateaux animés (waterBoatOverlay) |
-| `LOD_ROCK_CULL_DISTANCE` | 23.4 | 3D (chunks) | Rochers (InstancedMesh chunks) |
-| `LOD_VILLAGE_PROP_CULL_DISTANCE` | 19.8 | 3D par item | Tonneaux et charrettes de village |
-| `LOD_PAVED_ROAD_CULL_DISTANCE` | 25.2 | 3D | Réseaux de routes pavées GLB |
-| `LOD_RAIL_TRACK_CULL_DISTANCE` | 27.0 | 3D | Rails/traverses/ballast |
-| `LOD_ROAD_DECOR_CULL_DISTANCE` | 27.0 | 3D par item | Bancs, moulins, corbeaux, drapeaux |
-| `LOD_HOUSE_CULL_DISTANCE` | 28.8 | 3D | Bâtiments village |
-| `LOD_TRAIN_CULL_DISTANCE` | 34.2 | 3D | Trains + gares |
-| `LOD_TREE_CULL_DISTANCE` | 36.0 | 3D (chunks) | Arbres (réservé, non implémenté) |
+Pattern utilisé pour fusionner N objets identiques en 1 Mesh (1 DC). Import : `BufferGeometryUtils.js` (CDN Three.js r160).
 
-### Hiérarchie effective (petits → gros, disparition progressive) — seuils −10 % depuis juin 2026
+**Traverses rail** (`tileRailOverlay.js`) : InstancedMesh partagé entre tiles — 1 DC pour toutes les traverses.
 
-Distance XZ effective (avec Y≈7.5 de hauteur caméra) :
-1. Bateaux animés → 13.5 XZ (comparaison XZ directe)
-2. Fleurs/roseaux/champignons → ~12.8 XZ
-3. Panneaux indicateurs → ~13.4 XZ
-4. Barques échouées → ~14.4 XZ
-5. Tonneaux/charrettes → ~17.6 XZ
-6. Rochers → ~21.9 XZ
-7. Routes pavées → ~23.6 XZ
-8. Rails/bancs/moulins/crows → ~25.4–25.5 XZ
-9. Bâtiments village → ~27.4 XZ
-10. Trains/gares → ~32.5 XZ
+**Poulets village** (`villageDecorOverlay.js`) : `_mergeVillageChickens(group)` appelée à la fin de `createRoadsideVillageProps`. Fusionne tous les `'village-animal-chicken-glb'` en 1 Mesh centré sur le centroïde (pour que `child.position` reste valide pour le scan LOD). Résultat : **57 DC → 1 DC**.
 
-### Implémentations
+**Piège InterleavedBufferAttributes** : les GLBs exportés en GLTF compact ont des attributs entrelacés. `mergeGeometries` ne les supporte pas (`mergeAttributes() failed`). Solution : `_deinterleaveGeo(src)` — accès direct via `attr.data.array`, `attr.data.stride`, `attr.offset`. Three.js r160 **n'a pas de `getComponent(i, c)`** — erreur si utilisé.
 
-**Chunks LOD** (forêt + micro-props) : `InstancedMesh` regroupé en chunks de `HEX_CHUNK_SIZE` tuiles. Le test compare la distance caméra au centre (`worldBoundingSphere`) du chunk. Seuil élargi ~20 % par rapport à la distance visible pour compenser : le centre peut être loin alors que le bord du chunk est encore proche.
+**Piège routes** : `stone-road-*.glb` utilisent aussi des InterleavedBufferAttributes → routes désactivées (voir §10).
 
-**Per-item LOD** (`roadsideDecorObjects`) : liste plate `{ object, center, lodDistSq }` construite dans `rebuildFieldWaterEffectsOverlay`. Inclut : drapeaux, bancs, panneaux, **barques échouées** (`water-shore-inert-boat-glb`). Mise à jour par `updateFieldDecorLOD()`.
+---
 
-**Inline LOD** (scene.js, bloc %3) : scan direct de `placedTiles`, `mesh.getObjectByName(...)`, toggle `visible`. Utilisé pour `procedural-volume-rail-track` et `village-stone-road-glb-network` — une seule boucle, `distanceToSquared` calculé une fois par tile.
+## 20. Audio (`soundDesign.js`)
 
-**Overlay LOD** (fonctions dédiées, bloc %3) : `updateWaterBoatLOD`, `updateRailTrainLOD`, `updateHouseLOD`.
+Sons spatiaux : forêt, village, plage/eau, bateau, train, corbeaux, musique. Sons train : uniquement à la présence d'un train GLB réel. **Touche M** : `toggleMute(ambientSoundDesign)` coupe tout.
 
-### Règles
+---
 
-- Toutes les constantes LOD dans `variables.js`. Zéro valeur magique dispersée.
-- Ne jamais comparer en 3D pour des objets posés au sol quand la hauteur caméra perturbe le résultat — préférer XZ ou calibrer le seuil.
-- Les petits objets disparaissent **avant** les gros quand on dézoome.
-- Aucun impact sur le rendu proche (les seuils sont calibrés bien au-delà du rayon de tuile visible).
+## 21. Architecture fichiers (principaux)
+
+```
+/
+├── config.js / variables.js     Constantes
+├── main.js                      Bootstrap
+├── scene.js                     Orchestrateur
+├── tileGenerator.js             Génération tuiles
+├── tileMesh.js / tileTextures.js  Géométrie et textures
+├── terrainHeight.js             Surface Y, relief, normale
+├── tileRailOverlay.js           Rails procéduraux
+├── tileRoadOverlay.js           Routes (désactivées — GLBs archivés)
+├── railTrainOverlay.js          Trains GLB, wagons
+├── waterZoneOverlay.js          BFS zones eau, labels
+├── waterBeachGeometry.js        Plages (v2 strip quads)
+├── waterBoatOverlay.js          Bateaux GLB
+├── fieldWaterEffectsOverlay.js  Micro-props naturels
+├── forestOverlay.js             Arbres InstancedMesh
+├── houseOverlay.js              Village GLB
+├── decorOverlay.js              Orchestrateur props décor
+├── fieldZonesOverlay.js         Moulins, drapeaux, oiseaux
+├── naturalPropsOverlay.js       Fleurs, rochers, roseaux (InstancedMesh)
+├── villageDecorOverlay.js       Bancs, animaux, charrettes, tonneaux
+├── houseVillageObjects.js       Maisons, tours, église
+├── realisticWater.js            Shader eau (depth map)
+├── visualEnvironment.js         LUT, lumières, environnement
+├── debugLightUi.js              Panneau ÉTALONNAGE VISUEL + HUD perf
+├── soundDesign.js               Audio spatial
+│
+└── stable/
+    ├── hex.js / hexGeometry.js / tileUtils.js / zoneUtils.js
+    ├── placementRules.js / scoring.js / gameRules.js
+    ├── threeSetup.js / worldCurvature.js / postprocessHud.js
+    ├── terrainMerge.js          Fusion meshes terrain par biome
+    ├── globalWind.js / starUniverse.js / cometSky.js
+    ├── hashUtils.js / hexLabelFont.js
+    ├── bonusCells.js / specialCells.js / highscore.js
+    └── multiplayerClient.js / controls.js
+```
+
+---
+
+## 22. État perf (juin 2026)
+
+**Cible actuelle** : ~35 FPS, GPU-bound (render ~28ms / 16.7ms budget).
+
+| Catégorie | DC | État |
+|---|---|---|
+| Forêt (4 espèces) | ~12 | ✅ InstancedMesh |
+| Traverses | 17 | ✅ InstancedMesh |
+| Poulets village | 1 | ✅ mergeGeometries |
+| Poulets champ | 2 | ✅ InstancedMesh |
+| Routes | 0 | ⏸️ désactivées |
+| Maison-2 | ~93 | ⚠️ 3 mat/maison → atlas Blender |
+| Maison-3 | ~72 | ⚠️ idem |
+| Tours de guet | ~18 | ⚠️ ~4 700 tris/instance |
+| Trains | ~144 | ⚠️ architecture CSS/SVG à remplacer par GLB InstancedMesh |
+| Eau (filets+brume+gouttes) | ~240 | ⚠️ 1 obj = 1 DC |
+| Voies ferrées | ~91 | ⚠️ à merger comme les traverses |
+
+**Ombres** : `applySceneShadowFlags` (toutes les 20 frames) — verrouillage :
+```js
+mesh.castShadow = false;
+mesh.userData.disableCastShadow  = true;   // lu par applySceneShadowFlags
+mesh.userData.shadowFlagsApplied = true;   // skip au prochain passage
+```
+`_applySingleShadowCaster(root)` : 1 caster par GLB bâtiment (le mesh le plus grand).
+
+---
+
+## 23. HUD Perf (`debugLightUi.js`)
+
+`tickFps(renderer, scene, perfTiming?)` : scan toutes les 2s, refresh 500ms. Boutons bas-gauche : **F** (HUD), **P** (pixelisation), **L** (LUT).
+
+Contenu HUD :
+- FPS + indices 🎮 GPU% / ⚙️ CPU% inline
+- Draw calls / Triangles / Textures / Shaders
+- **Colonnes triables** par obj/DC/☂/▲
+- **Catégories** : Forêt / Bâtiments / Nature / Animaux / Village / Transport / Eau / Terrain / Divers
+
+Classification : `_traverseNode` distingue InstancedMesh (préfixe nom), GLB Group (substring), Mesh ordinaire (biome/effet). `_TREE_SPECIES_MAP` : `{ birch, bushy_mini, pine_soft, poplar }` (oak_round + dead retirés).
 
 ---
 
 ## 24. Pièges connus
 
-**Grille invisible** — import cassé, erreur JS au chargement, `scene.js`, `stable/grid.js`, `stable/worldCurvature.js`.
+**Hexagone plat** — canvas labels : ratio W/H doit être 2/√3 ≈ 1.155.
 
-**Clipping** — near/far plane caméra, shader courbure, mauvais calcul de hauteur.
+**Font pas appliquée** — `hexFontReady` est async. Sans `.then(() => texture.needsUpdate = true)`, le cache garde la version system-ui. URL **relative** (`./fonts/`) obligatoire.
 
-**Objets flottants** — placement Y codé en dur, non-utilisation de `terrainHeight.js`, mauvais pivot ou scale du GLB.
+**Hash procédural** — ne pas unifier les 3 précisions FNV-1a.
 
-**Hash procédural** — ne jamais unifier les 3 variantes de précision FNV-1a. Changer la précision change le placement visuel (positions des arbres, maisons, trains).
+**`createOuterVertices`** — toujours passer `radius = HEX_SIZE * TILE_VISUAL.radiusScale`.
 
-**createOuterVertices** — toujours passer `radius` explicitement quand on veut `HEX_SIZE * TILE_VISUAL.radiusScale`. La valeur par défaut dans `hexGeometry.js` est `HEX_SIZE` seul.
+**`clone(true)` brise SkinnedMesh** — utiliser `cloneSkeleton` (SkeletonUtils).
 
-**Sons incorrects** — sons train déclenchés par rail au lieu de train GLB réel.
+**InterleavedBufferAttributes** — `mergeGeometries` échoue silencieusement. Three.js r160 n'a pas de `getComponent()`. Désentrelacer via `attr.data.array[i * stride + offset + c]`.
 
-**Constantes fantômes** — une constante déclarée n'est pas forcément utilisée. Chercher son usage avant de modifier.
+**GLB Z-up** — `correctionX: Math.PI/2` dans PROP_MODEL_DEFS, appliqué *avant* calcul Box3.
 
-**BFS zone** — `fieldWaterEffectsOverlay.js` utilise intentionnellement un `getTextureNeighbors` simplifié (pas d'adjacence intra-tuile). Ne pas le remplacer par `getFullTextureNeighbors`.
+**BFS fieldWaterEffects** — `getTextureNeighbors` simplifié (pas d'adjacence intra-tuile) — intentionnel.
 
-**Charrettes dans l'eau/sur rail** — `villageDecorOverlay.js` vérifie que la tuile n'a aucune arête `water` ni `rail` avant de placer une charrette (blocs roadside *et* intérieur-village). Les tonneaux ne sont pas restreints. Fontaines : même garde `tileHasRailOrWater`. Ne jamais oublier d'appliquer la garde aux deux blocs (roadside + intérieur).
+**Charrettes** — vérifier absence arête `water`/`rail` avant placement.
 
-**`clone(true)` brise les SkinnedMesh** — `Object3D.clone(true)` ne relie pas correctement les références skeleton des `SkinnedMesh` : les parties animées deviennent invisibles ou restent en pose neutre. Toujours utiliser `cloneSkeleton` de `SkeletonUtils` (Three.js, déjà importé dans `decorOverlay.js`) pour les objets GLB.
+**Sons train** — déclencher sur train GLB réel, pas sur secteur rail.
 
-**`tryResolve` inutilisable au centre de tuile** — `tryResolve` est conçu pour les props "doux" en bord de tile. Au centre d'une tuile village, les hitbox de bâtiments (rayon `HITBOX_R.house = HEX_SIZE * 0.22`) couvrent tout l'espace. Après 6 tentatives, `tryResolve` renvoie `null` et l'objet n'est jamais placé. Pour les fontaines (placées volontairement entre bâtiments), supprimer `tryResolve` et garder uniquement `isInsideSpecialBuildingSafeZone` comme garde.
+**Dithering palette rétro** — saturation/vibrance élevée → bruit de speckle. Presets rétro : `saturation: 1.0, vibrance: 0.0` obligatoire.
 
-**Orientation GLB Z-up vs Y-up** — Certains GLB sont exportés avec l'axe Z vers le haut (Blender sans correction). Utiliser `correctionX: Math.PI / 2` dans `PROP_MODEL_DEFS`. La rotation doit être appliquée sur `source.rotation.x` *avant* le calcul `Box3`, sinon la bounding box est mesurée dans le mauvais repère.
+**`normalEdgeStrength`/`depthEdgeStrength` presets rétro** — mettre à `0`. `RenderPixelatedPass` dessine sinon des contours 1px parasites.
 
-**Depth map eau (`waterZoneOverlay.js`)** — mapping arête→direction voisin : `EDGE_ORDER[i]` fait face à `_HEX_DIRS[(6-i)%6]` (PAS `(i+1)%6`). Dérivé de `createOuterVertices` qui utilise `z = +sin(angle)` (pas `-sin`). Arête opposée chez le voisin : `EDGE_ORDER[(i+3)%6]` (correct, inchangé). Rayon gradient : `hexPx * sqrt(3) * 1.5` pour couvrir 1.5 tile-spacings.
+**colorGradingPass** — toujours passer par `composer.render()`. `renderer.render()` direct bypasse l'étalonnage.
 
----
+**Depth map eau** — arête→voisin : `EDGE_ORDER[i]` face à `_HEX_DIRS[(6-i)%6]` (pas `(i+1)%6`).
 
-## 25. Ce qu'on fera / ne fera pas
+**LUT panel CSS** — `pointer-events: none` sur `.debug-light-panel` ; `pointer-events: auto` sur toggle et body uniquement.
 
-À faire : polish graphique, lisibilité HUD, rebuild incrémental des overlays.
-
-**TODO :**
-- Plages de mer plus claires (contour eau/terre quasi-blanc, écume) — tentatives précédentes abandonnées, à reprendre avec meilleure approche.
-
-Pas prévu : React, Vue, TypeScript, framework, WebSocket obligatoire, SQL pour scores, bundler obligatoire.
+**SHIFT+Espace** — entre en super-immersif. Regular Espace ne déclenche plus si `event.shiftKey`. `toggleGridOnlyMode(false)` retire `body.huds-force-hidden`.
 
 ---
 
-## 26. Philosophie
+## 25. Philosophie
 
 1. Ne pas casser la grille.
 2. Ne pas casser le gameplay validé.

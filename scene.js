@@ -1,5 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { DECK_SIZE, GRID_RADIUS, COMET_HIT_SCORE, LOD_RAIL_TRACK_CULL_DISTANCE, LOD_PAVED_ROAD_CULL_DISTANCE } from './config.js';
+import { EDGE_TYPES } from './variables.js';
 import { WORLD_CURVATURE } from './stable/worldCurvature.js';
 import { CameraControls } from './stable/controls.js';
 import { createGrid, ensureGridCellsAroundHex, getGridCellCount, getGridKeys, updateGridAvailability } from './stable/grid.js';
@@ -11,24 +12,27 @@ import { updateAnimatedBiomeTextures } from './tileTextures.js';
 import { isRealisticWaterMaterial, triggerRealisticWaterRipple, updateRealisticWater } from './realisticWater.js';
 import { canPlaceTileAt, getPlacementValidation, setPlacementGridKeys } from './stable/placementRules.js';
 import { calculatePlacementScore } from './stable/scoring.js';
-import { createDeck, rotateTile } from './tileGenerator.js';
+import { createDeck, getEdgeType, rotateTile } from './tileGenerator.js';
 import { createUI, setGridOnlyModeVisible, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateMissionUI, updateScoreUI, updateStatsUI } from './ui.js';
 import { createPlacementFeedbackOverlay, getPlacementLabel } from './stable/placementOverlay.js';
-import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay, rebuildWaterZoneOverlay, updateHoverZoneOverlayAnimation } from './waterZoneOverlay.js';
+import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay, rebuildWaterZoneOverlay, updateHoverZoneOverlayAnimation, updateZoneLabelLOD, updateBeachLOD } from './waterZoneOverlay.js';
 import { createRailTrainOverlay, rebuildRailTrainOverlay, updateRailTrainOverlay, updateRailTrainLOD } from './railTrainOverlay.js';
 import { createWaterBoatOverlay, rebuildWaterBoatOverlay, updateWaterBoatOverlay, updateWaterBoatLOD } from './waterBoatOverlay.js';
 import { createForestOverlay, rebuildForestOverlay, updateForestLOD } from './forestOverlay.js';
 import { createFieldWheatOverlay, rebuildFieldWheatOverlay, updateFieldWheatLOD } from './fieldWheatOverlay.js';
 import { createHouseOverlay, rebuildHouseOverlay, updateHouseOverlay, updateHouseLOD } from './houseOverlay.js';
-import { createDecorOverlay, rebuildDecorOverlay, updateDecorOverlay, updateNaturalPropsLOD, updateFieldDecorLOD } from './decorOverlay.js';
+import { addSingleTileToDecorOverlay, createDecorOverlay, rebuildDecorOverlay, updateDecorOverlay, updateNaturalPropsLOD, updateFieldDecorLOD, computeLodHeightFactor } from './decorOverlay.js';
+import { addBonusCellChest, createBonusCellChestOverlay, rebuildBonusCellChestOverlay, removeBonusCellChest, updateBonusCellChestOverlay, updateBonusCellChestLOD } from './bonusCellChestOverlay.js';
 import { createAmbientSoundDesign, startEndingMusic, startIngameMusic, toggleMute } from './soundDesign.js';
 import { createVisualEnvironment } from './visualEnvironment.js';
 import { createCometSky, updateCometSky, tryCometHit, removeCometFromSky, spawnCometExplosion } from './stable/cometSky.js';
 import { updateGlobalWind } from './stable/globalWind.js';
 import { resetPropHitboxRegistry } from './stable/propHitboxRegistry.js';
-import { createDebugLightUI } from './debugLightUi.js';
+import { createDebugLightUI, tickFps } from './debugLightUi.js';
 import { askHighscoreSubmit, createHighscoreUI } from './stable/highscore.js';
-import { applySceneCurvatureFlags, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './stable/threeSetup.js';
+import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './stable/threeSetup.js';
+import { applyShadowCulling, rebuildShadowCasters } from './stable/shadowCulling.js';
+import { addTileToTerrainMerge, createTerrainMergeGroup, hideTerrainMeshes, rebuildTerrainMerge } from './stable/terrainMerge.js';
 import { createPostprocessHud } from './stable/postprocessHud.js';
 import { getBonusTilesAwarded, normalizeRotation } from './stable/gameRules.js';
 import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, setMissionTurn } from './missions.js';
@@ -38,6 +42,7 @@ export function initScene(options = {}) {
   const canvas = document.getElementById('app');
   const renderer = createRenderer(canvas);
   const scene = createThreeScene();
+  applySceneEnvironment(scene, renderer); // Strategy B : env map IBL partagée
   const camera = createCamera();
   const postprocess = createPixelPostprocess(renderer, scene, camera);
   const visualEnvironment = createVisualEnvironment(scene, renderer);
@@ -93,25 +98,38 @@ export function initScene(options = {}) {
   const fieldWheatOverlay = createFieldWheatOverlay();
   const houseOverlay = createHouseOverlay();
   const fieldWaterEffectsOverlay = createDecorOverlay();
+  const bonusCellChestOverlay = createBonusCellChestOverlay();
   const cometSky = createCometSky();
+  // File de rebuild différé : Map<name, {rebuild, lod}> — coalescing automatique (dernier écrase).
+  // 1 overlay/frame dans animate() : rebuild() puis lod() immédiat pour éviter pop-in et flash labels.
+  const overlayRebuildQueue = new Map();
   const ambientSoundDesign = createAmbientSoundDesign({ camera, canvas, placedTiles, fieldWaterEffectsOverlay, railTrainOverlay, waterBoatOverlay, houseOverlay });
   const gridOverlay = createGrid([...placedTiles.values()]);
   syncPlacementGridKeys();
   totalGridTiles = getGridCellCount(gridOverlay);
 
+  // Terrain fusionné : 1 Mesh par matériau au lieu de 1 par tuile (912 DC → 14 DC).
+  const terrainMergeGroup = createTerrainMergeGroup();
+
   ghostTile.visible = false;
 
-  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, houseOverlay, fieldWaterEffectsOverlay, cometSky, remoteGhosts, ghostTile);
+  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, bonusCellChestOverlay, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, houseOverlay, fieldWaterEffectsOverlay, cometSky, remoteGhosts, ghostTile, terrainMergeGroup);
   applySceneCurvatureFlags(gridOverlay);
   applySceneCurvatureFlags(specialCellsMesh);
   applySceneCurvatureFlags(bonusCellsMesh);
+  rebuildBonusCellChestOverlay(bonusCellChestOverlay, bonusCells);
+  applySceneCurvatureFlags(bonusCellChestOverlay);
   for (const placedTile of placedTiles.values()) {
     const position = axialToWorld(placedTile.q, placedTile.r);
     const mesh = createTileMesh(placedTile.tile);
     mesh.position.set(position.x, 0.003, position.z);
+    hideTerrainMeshes(mesh);   // Les terrain meshes sont gérés par terrainMergeGroup
     placedTile.mesh = mesh;
     scene.add(mesh);
   }
+  // Fusion initiale de tous les terrains chargés depuis la sauvegarde
+  rebuildTerrainMerge(terrainMergeGroup, placedTiles);
+  applySceneCurvatureFlags(terrainMergeGroup);
 
   // Une save déjà remplie arrive avec ses tuiles, mais les overlays décoratifs
   // (maisons, bateaux, trains, effets d'eau/champs/forêt) sont des groupes dérivés.
@@ -183,9 +201,31 @@ export function initScene(options = {}) {
       return;
     }
 
-    if ((key === ' ' || key === 'spacebar') && !event.repeat) {
+    if ((key === ' ' || key === 'spacebar') && !event.repeat && !event.shiftKey) {
       event.preventDefault();
       toggleGridOnlyMode();
+      return;
+    }
+
+    // SHIFT+Espace : super-immersif — immersif + masquer les boutons/HUDs FPS, PIX, LUT
+    if ((key === ' ' || key === 'spacebar') && !event.repeat && event.shiftKey) {
+      event.preventDefault();
+      const nextHudsHidden = !document.body.classList.contains('huds-force-hidden');
+      if (nextHudsHidden && !gridOnlyMode) toggleGridOnlyMode(true);
+      if (nextHudsHidden) {
+        // Désactiver chaque bouton HUD (→ gris) via .click() AVANT d'appliquer la classe CSS
+        // (les fonctions internes utilisent getComputedStyle ; il faut que huds-force-hidden
+        //  ne soit pas encore actif pour que les états visibles soient corrects)
+        const fpsBtn = document.getElementById('fpsHudToggle');
+        if (fpsBtn?.classList.contains('debug-light-toggle--fps-active')) fpsBtn.click();
+        const pixBtn = document.getElementById('pixToggle');
+        if (pixBtn?.classList.contains('debug-light-toggle--pix-active')) pixBtn.click();
+        const lutRoot = document.getElementById('debugLightPanel');
+        if (lutRoot && !lutRoot.classList.contains('collapsed')) {
+          document.getElementById('debugLightToggle')?.click();
+        }
+      }
+      document.body.classList.toggle('huds-force-hidden', nextHudsHidden);
       return;
     }
 
@@ -193,6 +233,12 @@ export function initScene(options = {}) {
       event.preventDefault();
       if (gridOnlyMode) toggleGridOnlyMode(false);
       toggleHelp();
+      return;
+    }
+
+    if (key === 'l') {
+      event.preventDefault();
+      document.getElementById('debugLightPanel')?.classList.toggle('collapsed');
       return;
     }
 
@@ -268,44 +314,106 @@ export function initScene(options = {}) {
     }
   });
 
+  // FLASH-DIAG : déclaré AVANT animate() pour éviter la temporal dead zone
+  let _flashPrevVisCount = -1;
+
   animate();
 
   function animate() {
     requestAnimationFrame(animate);
+
+    // ── PERF-TIMING : log toutes les 120 frames ─────────────────────────────
+    const _PT_ENABLE = (shadowRefreshFrame % 120 === 1);
+    let _pt0, _ptFlash, _ptCtrl, _ptAnim, _ptDecor, _ptSound, _ptRest;
+    if (_PT_ENABLE) _pt0 = performance.now();
+
+    // ── FLASH-DIAG frame-start ──────────────────────────────────────────────
+    // Compare le nombre de Mesh visibles au début de CETTE frame avec la fin
+    // de la PRÉCÉDENTE. Un pic ici = la visibilité a changé ENTRE deux frames
+    // (hors de tout code JS contrôlé → Three.js interne ou autre).
+    // NOTE: scene.traverse() ici coûte ~20-40ms/frame → exécuté 1×/120f seulement.
+    if (shadowRefreshFrame % 120 === 0) {
+      let _visNow = 0;
+      scene.traverse(o => { if (o.isMesh && o.visible) _visNow++; });
+      const _delta = _visNow - _flashPrevVisCount;
+      if (_flashPrevVisCount >= 0 && Math.abs(_delta) > 20) {
+        console.warn(`[FLASH-DIAG frame-start] SPIKE: ${_flashPrevVisCount} → ${_visNow} (${_delta > 0 ? '+' : ''}${_delta}) | frame=${shadowRefreshFrame} queueSize=${overlayRebuildQueue.size}`);
+      }
+      _flashPrevVisCount = _visNow;
+    }
+    if (_PT_ENABLE) _ptFlash = performance.now();
+    // ───────────────────────────────────────────────────────────────────────
+
     controls.update();
+    if (_PT_ENABLE) _ptCtrl = performance.now();
+
     const timeSeconds = performance.now() * 0.001;
     updateAnimatedBiomeTextures(timeSeconds);
     updateGlobalWind(timeSeconds);
     updateRealisticWater(timeSeconds);
     updateSpecialCellsMeshAnimation(specialCellsMesh, timeSeconds);
     updateBonusCellsMeshAnimation(bonusCellsMesh, timeSeconds);
+    updateBonusCellChestOverlay(bonusCellChestOverlay, timeSeconds);
     updateKeyboardUI(ui, controls.keys, rotationKeyActive, gridOnlyMode);
     updateHoverZoneOverlayAnimation(hoverZoneOverlay, waterZoneOverlay);
     updateRailTrainOverlay(railTrainOverlay, timeSeconds);
     updateWaterBoatOverlay(waterBoatOverlay, timeSeconds);
     updateHouseOverlay(houseOverlay, timeSeconds);
-    updateDecorOverlay(fieldWaterEffectsOverlay, timeSeconds);
+    if (_PT_ENABLE) _ptAnim = performance.now();
+
+    updateDecorOverlay(fieldWaterEffectsOverlay, timeSeconds, camera);
+    if (_PT_ENABLE) _ptDecor = performance.now();
+
     updateCometSky(cometSky, camera, timeSeconds);
     ambientSoundDesign.update(timeSeconds);
-    updateSunShadowOrbit(scene, timeSeconds, controls.target);
+    if (_PT_ENABLE) _ptSound = performance.now();
+
+    updateSunShadowOrbit(scene, timeSeconds, controls.target, camera.position.y);
     updateWorldCurvedSprites(scene);
-    if ((shadowRefreshFrame++ % 20) === 0) {
+    // curvature + shadowFlags : chaque passe coûte 40-55ms → réduit à 1×/120f (~2s @ 60fps).
+    // Avant : 1×/20f = freeze de 50ms toutes les 333ms. Maintenant : 1×/2s.
+    if ((shadowRefreshFrame++ % 120) === 0) {
+      const _d20a = performance.now();
       applySceneCurvatureFlags(scene);
-      applySceneShadowFlags(scene);
+      const _d20b = performance.now();
+      applySceneShadowFlags(scene);     // restaure castShadow (écrase le culling précédent)
+      const _d20c = performance.now();
       visualEnvironment.apply();
+      console.log(
+        `[FREEZE-DIAG 120f] curvature=${(_d20b-_d20a).toFixed(0)}ms` +
+        ` | shadowFlags=${(_d20c-_d20b).toFixed(0)}ms` +
+        ` | TOTAL=${(_d20c-_d20a).toFixed(0)}ms`
+      );
+    }
+    // rebuildShadowCasters : coûteux (20-25ms, scene.traverse), réduit à 1×/180f (~3s @ 60fps).
+    if ((shadowRefreshFrame % 180) === 0) {
+      const _d60a = performance.now();
+      rebuildShadowCasters(scene);
+      const _d60b = performance.now();
+      const _shadowExtent = Math.max(8, Math.min(18, camera.position.y * 0.58));
+      applyShadowCulling(controls.target, _shadowExtent * 1.5);
+      console.log(`[FREEZE-DIAG 180f] shadowCasters=${(_d60b-_d60a).toFixed(0)}ms`);
     }
     if ((shadowRefreshFrame % 9) === 0) {
-      updateForestLOD(forestOverlay, camera);
-      updateFieldWheatLOD(fieldWheatOverlay, camera);
-      updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera);
-      updateFieldDecorLOD(fieldWaterEffectsOverlay, camera);
-      updateWaterBoatLOD(waterBoatOverlay, camera);
-      updateRailTrainLOD(railTrainOverlay, camera);
-      updateHouseLOD(houseOverlay, camera);
+      const lodFactor = computeLodHeightFactor(camera);
+      updateForestLOD(forestOverlay, camera, lodFactor);
+      updateFieldWheatLOD(fieldWheatOverlay, camera, lodFactor);
+      updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera, lodFactor);
+      updateFieldDecorLOD(fieldWaterEffectsOverlay, camera, lodFactor);
+      updateWaterBoatLOD(waterBoatOverlay, camera, lodFactor);
+      updateRailTrainLOD(railTrainOverlay, camera, lodFactor);
+      updateHouseLOD(houseOverlay, camera, lodFactor);
+      updateBonusCellChestLOD(bonusCellChestOverlay, camera, lodFactor);
+      updateZoneLabelLOD(waterZoneOverlay, camera, gridOnlyMode);
+      updateBeachLOD(waterZoneOverlay, camera);
       // Rail track LOD — inline: scan placed tiles for rail track child meshes
-      const railTrackDistSq = LOD_RAIL_TRACK_CULL_DISTANCE * LOD_RAIL_TRACK_CULL_DISTANCE;
+      const railTrackDistSq = (LOD_RAIL_TRACK_CULL_DISTANCE * lodFactor) ** 2;
       // Paved road LOD — même patron, groupe village-stone-road-glb-network
-      const pavedRoadDistSq = LOD_PAVED_ROAD_CULL_DISTANCE * LOD_PAVED_ROAD_CULL_DISTANCE;
+      const pavedRoadDistSq = (LOD_PAVED_ROAD_CULL_DISTANCE * lodFactor) ** 2;
+      // Terrain tile LOD — le rendu terrain est géré par terrainMergeGroup (frustumCulled=false).
+      // Les tile groups restent visibles (pour les sub-meshes rail/route) mais leurs meshes
+      // hex-sector-* / hex-center-* sont masqués par hideTerrainMeshes().
+      // LOD rail track et route pavée : distance caméra uniquement.
       for (const placedTile of placedTiles.values()) {
         const mesh = placedTile.mesh;
         if (!mesh) continue;
@@ -316,7 +424,64 @@ export function initScene(options = {}) {
         if (roadNet) roadNet.visible = distSq < pavedRoadDistSq;
       }
     }
+    // ── Modèles chargés async → rebuild via queue (LOD immédiat, évite le flash) ──
+    if (forestOverlay.userData.pendingModelRebuild) {
+      forestOverlay.userData.pendingModelRebuild = false;
+      overlayRebuildQueue.set('forest', { rebuild: () => rebuildForestOverlay(forestOverlay, placedTiles), lod: () => updateForestLOD(forestOverlay, camera) });
+    }
+    if (railTrainOverlay.userData.pendingModelRebuild) {
+      railTrainOverlay.userData.pendingModelRebuild = false;
+      overlayRebuildQueue.set('rail', { rebuild: () => rebuildRailTrainOverlay(railTrainOverlay, placedTiles), lod: () => updateRailTrainLOD(railTrainOverlay, camera) });
+    }
+    if (fieldWaterEffectsOverlay.userData.pendingModelRebuild) {
+      fieldWaterEffectsOverlay.userData.pendingModelRebuild = false;
+      overlayRebuildQueue.set('decor', { rebuild: () => rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles), lod: () => { updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera); updateFieldDecorLOD(fieldWaterEffectsOverlay, camera); } });
+    }
+    // ── Rebuilds différés : 1 overlay/frame — étale le travail lourd sans bloquer le RAF ──
+    if (overlayRebuildQueue.size > 0) {
+      const [[name, entry]] = overlayRebuildQueue;
+      overlayRebuildQueue.delete(name);
+      const _dQa = performance.now();
+      entry.rebuild();
+      const _dQb = performance.now();
+      // Flash diagnostic : meshes visibles avant/après LOD
+      let _visB = 0; scene.traverse(o => { if (o.isMesh && o.visible) _visB++; });
+      entry.lod?.(); // LOD immédiat → évite le pop-in des objets lointains recréés visibles=true
+      let _visA = 0; scene.traverse(o => { if (o.isMesh && o.visible) _visA++; });
+      console.log(
+        `[FREEZE-DIAG queue] '${name}' rebuild=${(_dQb-_dQa).toFixed(0)}ms` +
+        ` | vis_before_lod=${_visB} vis_after_lod=${_visA}` +
+        ` | remaining=${overlayRebuildQueue.size}`
+      );
+    }
+    // Mode immersif : masquer labels à chaque frame — un rebuild ciblé peut en créer de nouveaux
+    if (gridOnlyMode) updateZoneLabelLOD(waterZoneOverlay, camera, true);
+
+    // Shadow throttle : recalcul 1 frame sur 3 — entre deux updates la shadow map
+    // précédente est réutilisée. Imperceptible en mouvement, économise ~66% du shadow pass.
+    // Le culling persistant (applyShadowCulling dans le bloc 20-frames) réduit le nombre
+    // de casters actifs → frames shadow moins coûteuses.
+    renderer.shadowMap.autoUpdate = (shadowRefreshFrame % 3 === 0);
+
+    if (_PT_ENABLE) _ptRest = performance.now();
+    renderer.info.reset();   // reset unique avant toutes les passes (autoReset=false)
     postprocess.render();
+    if (_PT_ENABLE) {
+      const _ptEnd = performance.now();
+      tickFps(renderer, scene, { jsMs: _ptRest - _pt0, renderMs: _ptEnd - _ptRest });
+      console.log(
+        `[PERF-TIMING 120f] flash=${(_ptFlash-_pt0).toFixed(1)}ms` +
+        ` | ctrl=${(_ptCtrl-_ptFlash).toFixed(1)}ms` +
+        ` | anim=${(_ptAnim-_ptCtrl).toFixed(1)}ms` +
+        ` | decor=${(_ptDecor-_ptAnim).toFixed(1)}ms` +
+        ` | sound=${(_ptSound-_ptDecor).toFixed(1)}ms` +
+        ` | rest+LOD=${(_ptRest-_ptSound).toFixed(1)}ms` +
+        ` | render=${(_ptEnd-_ptRest).toFixed(1)}ms` +
+        ` | TOTAL-JS=${(_ptEnd-_pt0).toFixed(1)}ms`
+      );
+    } else {
+      tickFps(renderer, scene); // lu APRÈS render → stats complètes de toutes les passes
+    }
   }
 
 
@@ -371,6 +536,8 @@ export function initScene(options = {}) {
       helpVisible = false;
       setHelpVisible(ui, false);
     }
+    // En sortie d'immersif : retire aussi le super-immersif (huds-force-hidden)
+    if (!gridOnlyMode) document.body.classList.remove('huds-force-hidden');
     setGridOnlyModeVisible(ui, gridOnlyMode);
     setGridLabelVisibility(!gridOnlyMode);
     if (gridOnlyMode) rebuildHoverZoneOverlay(hoverZoneOverlay, null, null, placedTiles, waterZoneOverlay);
@@ -445,12 +612,14 @@ export function initScene(options = {}) {
     if (consumedBonusCell) {
       bonusCells.delete(key);
       removeBonusCellMesh(bonusCellsMesh, key);
+      removeBonusCellChest(bonusCellChestOverlay, key);
     }
 
     const scoreResult = calculatePlacementScore(hex, placedTiles, tile, specialCells);
     const mesh = createTileMesh(tile);
 
     mesh.position.set(position.x, 0.003, position.z);
+    hideTerrainMeshes(mesh);   // Terrain géré par terrainMergeGroup
     scene.add(mesh);
 
     const placedTile = {
@@ -481,19 +650,57 @@ export function initScene(options = {}) {
     totalScore += placedTile.score;
 
     placedTiles.set(key, placedTile);
+    // Merge incrémental O(1) — ajoute uniquement la nouvelle tuile aux meshes fusionnés.
+    // rebuildTerrainMerge (O(N)) est réservé au undo / applyRemoteGameState.
+    const _diagT0 = performance.now();
+    addTileToTerrainMerge(terrainMergeGroup, mesh);
+    const _diagT1 = performance.now();
+    applySceneCurvatureFlags(terrainMergeGroup);
+    const _diagT2 = performance.now();
     placementHistory.push(placedTile);
     expandGridAroundPlacedTile(hex);
-    rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+    const _diagT3 = performance.now();
+    // ── Rebuilds IMMÉDIATS : synchrones, légers, nécessaires pour le feedback visuel ──
+    rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles, gridOnlyMode, hex);
+    const _diagT4 = performance.now();
     refreshGridAvailability();
+    const _diagT5 = performance.now();
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
-    rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
-    rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
-    resetPropHitboxRegistry();
-    rebuildForestOverlay(forestOverlay, placedTiles);
-    rebuildFieldWheatOverlay(fieldWheatOverlay, placedTiles);
-    rebuildHouseOverlay(houseOverlay, placedTiles);
-    rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles);
+    const _diagT6 = performance.now();
+    resetPropHitboxRegistry(); // doit précéder les rebuilds props (forest/house/decor)
+    console.log(
+      `[FREEZE-DIAG placeTile] terrainMerge=${(_diagT1-_diagT0).toFixed(0)}ms` +
+      ` | curvature(tile)=${(_diagT2-_diagT1).toFixed(0)}ms` +
+      ` | expandGrid=${(_diagT3-_diagT2).toFixed(0)}ms` +
+      ` | waterZone=${(_diagT4-_diagT3).toFixed(0)}ms` +
+      ` | gridAvail#1=${(_diagT5-_diagT4).toFixed(0)}ms` +
+      ` | hoverZone=${(_diagT6-_diagT5).toFixed(0)}ms` +
+      ` | TOTAL=${(_diagT6-_diagT0).toFixed(0)}ms`
+    );
     if (gridOnlyMode) setGridLabelVisibility(false);
+
+    // ── Rebuilds DIFFÉRÉS : conditionnels selon le type de la tuile posée ──────────────────────
+    // Skip les overlays dont le contenu ne peut PAS changer quand ce type de tuile est posé.
+    // Logique : chaque overlay ne dépend que des edges/center du tile concerné.
+    // Exception conservatrice : field/house triggent aussi le rebuild forest (safe zones mills/church).
+    const _tEdgeTypes = new Set(Object.values(tile.edges).map(e => getEdgeType(e)));
+    const _needsRail   = _tEdgeTypes.has(EDGE_TYPES.rail);
+    const _needsWater  = _tEdgeTypes.has(EDGE_TYPES.water);
+    const _needsField  = _tEdgeTypes.has(EDGE_TYPES.field);
+    const _needsHouse  = _tEdgeTypes.has(EDGE_TYPES.house);
+    // Forest rebuild si : edge forest direct OU field/house (peuvent créer une safe zone moulin/église)
+    const _needsForest = _tEdgeTypes.has(EDGE_TYPES.forest) || _needsField || _needsHouse;
+
+    console.log(`[FREEZE-DIAG queue-plan] rail=${_needsRail} boat=${_needsWater} wheat=${_needsField} forest=${_needsForest} house=${_needsHouse}`);
+
+    if (_needsRail)   overlayRebuildQueue.set('rail',   { rebuild: () => rebuildRailTrainOverlay(railTrainOverlay, placedTiles),   lod: () => updateRailTrainLOD(railTrainOverlay, camera) });
+    if (_needsWater)  overlayRebuildQueue.set('boat',   { rebuild: () => rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles),   lod: () => updateWaterBoatLOD(waterBoatOverlay, camera) });
+    if (_needsField)  overlayRebuildQueue.set('wheat',  { rebuild: () => rebuildFieldWheatOverlay(fieldWheatOverlay, placedTiles), lod: () => updateFieldWheatLOD(fieldWheatOverlay, camera) });
+    if (_needsForest) overlayRebuildQueue.set('forest', { rebuild: () => rebuildForestOverlay(forestOverlay, placedTiles),         lod: () => updateForestLOD(forestOverlay, camera) });
+    if (_needsHouse)  overlayRebuildQueue.set('house',  { rebuild: () => rebuildHouseOverlay(houseOverlay, placedTiles),           lod: () => updateHouseLOD(houseOverlay, camera) });
+    // Décor incrémental : toujours exécuté (O(1), 28ms, gère tous les biomes).
+    // rebuildDecorOverlay complet reste utilisé pour undo/init/applyRemoteGameState.
+    overlayRebuildQueue.set('decor', { rebuild: () => addSingleTileToDecorOverlay(fieldWaterEffectsOverlay, placedTile, placedTiles), lod: () => { updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera); updateFieldDecorLOD(fieldWaterEffectsOverlay, camera); } });
 
     ghostTile.visible = false;
     deck.shift();
@@ -621,6 +828,8 @@ export function initScene(options = {}) {
     });
 
     placedTiles.delete(last.key);
+    rebuildTerrainMerge(terrainMergeGroup, placedTiles);
+    applySceneCurvatureFlags(terrainMergeGroup);
     if (last.consumedSpecialCell) {
       specialCells.set(last.key, last.consumedSpecialCell);
       addSpecialCellMesh(specialCellsMesh, last.consumedSpecialCell);
@@ -630,18 +839,23 @@ export function initScene(options = {}) {
       bonusCells.set(last.key, last.consumedBonusCell);
       addBonusCellMesh(bonusCellsMesh, last.consumedBonusCell);
       applySceneCurvatureFlags(bonusCellsMesh);
+      addBonusCellChest(bonusCellChestOverlay, last.consumedBonusCell);
+      applySceneCurvatureFlags(bonusCellChestOverlay);
     }
-    rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+    // ── Rebuilds IMMÉDIATS (undo : rebuild complet, pas de ciblage) ──────────────
+    rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles, gridOnlyMode);
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
-    rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
-    rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
     resetPropHitboxRegistry();
-    rebuildForestOverlay(forestOverlay, placedTiles);
-    rebuildFieldWheatOverlay(fieldWheatOverlay, placedTiles);
-    rebuildHouseOverlay(houseOverlay, placedTiles);
-    rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles);
     updateHoveredSpecialCellVisibility(hoveredHex);
     if (gridOnlyMode) setGridLabelVisibility(false);
+
+    // ── Rebuilds DIFFÉRÉS : {rebuild, lod} — lod() appliqué immédiatement pour éviter pop-in ──
+    overlayRebuildQueue.set('rail',   { rebuild: () => rebuildRailTrainOverlay(railTrainOverlay, placedTiles),     lod: () => updateRailTrainLOD(railTrainOverlay, camera) });
+    overlayRebuildQueue.set('boat',   { rebuild: () => rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles),     lod: () => updateWaterBoatLOD(waterBoatOverlay, camera) });
+    overlayRebuildQueue.set('wheat',  { rebuild: () => rebuildFieldWheatOverlay(fieldWheatOverlay, placedTiles),   lod: () => updateFieldWheatLOD(fieldWheatOverlay, camera) });
+    overlayRebuildQueue.set('forest', { rebuild: () => rebuildForestOverlay(forestOverlay, placedTiles),           lod: () => updateForestLOD(forestOverlay, camera) });
+    overlayRebuildQueue.set('house',  { rebuild: () => rebuildHouseOverlay(houseOverlay, placedTiles),             lod: () => updateHouseLOD(houseOverlay, camera) });
+    overlayRebuildQueue.set('decor',  { rebuild: () => rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles), lod: () => { updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera); updateFieldDecorLOD(fieldWaterEffectsOverlay, camera); } });
     totalScore = Math.max(0, totalScore - (last.score ?? 0));
 
     if (last.generatedMission) removeMissionById(missionManager, last.generatedMission.id);
@@ -786,25 +1000,48 @@ export function initScene(options = {}) {
     try {
       localMultiplayerStateVersion = Number(snapshot.stateVersion ?? localMultiplayerStateVersion);
 
-      for (const placedTile of placedTiles.values()) {
-        if (placedTile.mesh) {
-          scene.remove(placedTile.mesh);
-          disposeObject(placedTile.mesh);
-        }
-      }
-      placedTiles.clear();
-
+      // ── Sync des tuiles : delta incrémental si possible ──────────────────────
+      // Recréer 170 maillages = routes/rails de toutes les tuiles existantes
+      // repassent visible=true → FLASH. On ne recrée QUE les tuiles nouvelles.
       const remotePlacedTiles = hydratePlacedTiles(snapshot.placedTiles);
-      for (const [key, placedTile] of remotePlacedTiles.entries()) {
-        const position = axialToWorld(placedTile.q, placedTile.r);
-        const mesh = createTileMesh(placedTile.tile);
-        mesh.position.set(position.x, 0.003, position.z);
-        placedTile.mesh = mesh;
-        placedTiles.set(key, placedTile);
-        scene.add(mesh);
-      }
+      const _prevPlacedKeys   = new Set(placedTiles.keys());
+      const _newKeys  = [...remotePlacedTiles.keys()].filter(k => !_prevPlacedKeys.has(k));
+      const _goneKeys = [..._prevPlacedKeys]         .filter(k => !remotePlacedTiles.has(k));
 
-      for (const placedTile of placedTiles.values()) ensureGridCellsAroundHex(gridOverlay, placedTile, 3);
+      if (_goneKeys.length === 0) {
+        // ── Chemin rapide : seulement des ajouts (cas habituel en multi) ──────
+        for (const key of _newKeys) {
+          const placedTile = remotePlacedTiles.get(key);
+          const position = axialToWorld(placedTile.q, placedTile.r);
+          const mesh = createTileMesh(placedTile.tile);
+          mesh.position.set(position.x, 0.003, position.z);
+          hideTerrainMeshes(mesh);
+          placedTile.mesh = mesh;
+          placedTiles.set(key, placedTile);
+          scene.add(mesh);
+          addTileToTerrainMerge(terrainMergeGroup, mesh);
+          applySceneCurvatureFlags(mesh);
+          ensureGridCellsAroundHex(gridOverlay, placedTile, 3);
+        }
+      } else {
+        // ── Chemin complet : tuiles retirées (undo, réinitialisation) ────────
+        for (const placedTile of placedTiles.values()) {
+          if (placedTile.mesh) { scene.remove(placedTile.mesh); disposeObject(placedTile.mesh); }
+        }
+        placedTiles.clear();
+        for (const [key, placedTile] of remotePlacedTiles.entries()) {
+          const position = axialToWorld(placedTile.q, placedTile.r);
+          const mesh = createTileMesh(placedTile.tile);
+          mesh.position.set(position.x, 0.003, position.z);
+          hideTerrainMeshes(mesh);
+          placedTile.mesh = mesh;
+          placedTiles.set(key, placedTile);
+          scene.add(mesh);
+        }
+        rebuildTerrainMerge(terrainMergeGroup, placedTiles);
+        applySceneCurvatureFlags(terrainMergeGroup);
+        for (const placedTile of placedTiles.values()) ensureGridCellsAroundHex(gridOverlay, placedTile, 3);
+      }
       syncPlacementGridKeys();
       totalGridTiles = getGridCellCount(gridOverlay);
       applySceneCurvatureFlags(gridOverlay);
@@ -820,6 +1057,8 @@ export function initScene(options = {}) {
       for (const [key, cell] of remoteBonusCells.entries()) bonusCells.set(key, cell);
       rebuildCellMeshGroup(bonusCellsMesh, bonusCells, addBonusCellMesh);
       applySceneCurvatureFlags(bonusCellsMesh);
+      rebuildBonusCellChestOverlay(bonusCellChestOverlay, bonusCells);
+      applySceneCurvatureFlags(bonusCellChestOverlay);
 
       const remoteDeck = hydratePlayerDeck(snapshot, playerId);
       if (remoteDeck) deck.splice(0, deck.length, ...remoteDeck);
@@ -849,14 +1088,29 @@ export function initScene(options = {}) {
       else startIngameMusic();
       rotationIndex = Number(snapshot.players?.[playerId]?.rotationIndex ?? rotationIndex ?? 0);
 
+      // ── Calculer le delta pour choisir rebuild incrémental vs complet ──────────
+      const _addedKeys = [];
+      for (const key of placedTiles.keys()) { if (!_prevPlacedKeys.has(key)) _addedKeys.push(key); }
+      const _removedCount = [..._prevPlacedKeys].filter(k => !placedTiles.has(k)).length;
+      // Incrémental possible seulement si exactement 1 tuile ajoutée, aucune retirée
+      const _singleTileSync = _addedKeys.length === 1 && _removedCount === 0;
+      const _newTile = _singleTileSync ? placedTiles.get(_addedKeys[0]) : null;
+
       rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
       rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
-      rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
-      rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
       resetPropHitboxRegistry();
-      rebuildForestOverlay(forestOverlay, placedTiles);
-      rebuildHouseOverlay(houseOverlay, placedTiles);
-      rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles);
+      // ⚠️ Tous les overlays via queue → LOD immédiat, évite le flash (visible=true hors RAF)
+      overlayRebuildQueue.set('boat',   { rebuild: () => rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles),     lod: () => updateWaterBoatLOD(waterBoatOverlay, camera) });
+      overlayRebuildQueue.set('wheat',  { rebuild: () => rebuildFieldWheatOverlay(fieldWheatOverlay, placedTiles),   lod: () => updateFieldWheatLOD(fieldWheatOverlay, camera) });
+      overlayRebuildQueue.set('house',  { rebuild: () => rebuildHouseOverlay(houseOverlay, placedTiles),             lod: () => updateHouseLOD(houseOverlay, camera) });
+      overlayRebuildQueue.set('rail',   { rebuild: () => rebuildRailTrainOverlay(railTrainOverlay, placedTiles),     lod: () => updateRailTrainLOD(railTrainOverlay, camera) });
+      overlayRebuildQueue.set('forest', { rebuild: () => rebuildForestOverlay(forestOverlay, placedTiles),           lod: () => updateForestLOD(forestOverlay, camera) });
+      // Décor : incrémental si 1 seule tuile ajoutée (évite le rebuild complet O(N) ~1200ms)
+      if (_singleTileSync && _newTile) {
+        overlayRebuildQueue.set('decor', { rebuild: () => addSingleTileToDecorOverlay(fieldWaterEffectsOverlay, _newTile, placedTiles), lod: () => { updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera); updateFieldDecorLOD(fieldWaterEffectsOverlay, camera); } });
+      } else {
+        overlayRebuildQueue.set('decor', { rebuild: () => rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles), lod: () => { updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera); updateFieldDecorLOD(fieldWaterEffectsOverlay, camera); } });
+      }
       refreshDeckUI();
       refreshGridAvailability();
       refreshMissionUI();

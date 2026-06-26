@@ -33,8 +33,6 @@ const TRACK = {
   edgeLockStart: 0.78,
   edgeLockEnd: 0.985,
   ySmoothPasses: 2,
-  stoneSideOffset: HEX_SIZE * 0.185 * RAIL_VISUAL_SCALE,
-  stoneSpacing: HEX_SIZE * 0.30,
   biomeStoneCount: 3
 };
 
@@ -130,6 +128,7 @@ function addRailZoneBoundaryOverlay(group, edges, sectorDefs, createOuterVertice
   mesh.name = 'procedural-rail-zone-turbulent-border';
   mesh.receiveShadow = true;
   mesh.castShadow = false;
+  mesh.userData.disableCastShadow = true; // empêche applySceneShadowFlags de réactiver
   mesh.renderOrder = 118;
   group.add(mesh);
 }
@@ -405,7 +404,6 @@ function createTerminusRoute(port) {
     points: sampleCubic(start, c1, c2, end, 20),
     closed: false,
     sleepers: true,
-    stones: true,
     bumper: true
   };
 }
@@ -431,8 +429,7 @@ function createPortToPortRoute(a, b) {
     seedKey: `rail-pair:${a.index}:${b.index}`,
     points: sampleCubic(start, c1, c2, end, 34),
     closed: false,
-    sleepers: true,
-    stones: true
+    sleepers: true
   };
 }
 
@@ -444,8 +441,7 @@ function createJunctionRoutes(ports) {
     points: createHubRingPoints(44),
     closed: true,
     sleepers: true,
-    sleeperSpacing: TRACK.sleeperSpacing * 1.35,
-    stones: false
+    sleeperSpacing: TRACK.sleeperSpacing * 1.35
   });
 
   for (const port of ports) {
@@ -461,8 +457,7 @@ function createJunctionRoutes(ports) {
       seedKey: `rail-branch:${port.index}`,
       points: sampleCubic(start, c1, c2, end, 22),
       closed: false,
-      sleepers: true,
-      stones: true
+      sleepers: true
     });
   }
 
@@ -492,9 +487,6 @@ function addTrackRoute(group, route) {
     addTerminusBumper(group, centerline, route.seedKey);
   }
 
-  if (route.stones !== false) {
-    addRailsideStones(group, centerline, route.seedKey, route.closed);
-  }
 }
 
 function build3DPath(points2D, closed = false, seedKey = 'rail') {
@@ -538,11 +530,16 @@ function createRailTube(points, material, closed = false, name = 'rail-tube') {
 
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = name;
-  mesh.castShadow = true;
+  mesh.castShadow = false;
   mesh.receiveShadow = true;
   mesh.renderOrder = 126;
+  mesh.userData.disableCastShadow  = true;
+  mesh.userData.shadowFlagsApplied = true;
   return mesh;
 }
+
+// Objet réutilisable pour éviter les allocations dans la boucle
+const _sleeperDummy = new THREE.Object3D();
 
 function addSleepers(group, centerline, route) {
   const length = getPathLength(centerline, route.closed);
@@ -550,27 +547,44 @@ function addSleepers(group, centerline, route) {
 
   const material = getRailMaterial('wood');
   const geometry = getSleeperGeometry();
-  const spacing = route.sleeperSpacing ?? TRACK.sleeperSpacing;
-  const start = route.closed ? 0 : TRACK.sleeperEdgeMargin;
-  const end = route.closed ? length : Math.max(start, length - TRACK.sleeperEdgeMargin);
+  const spacing  = route.sleeperSpacing ?? TRACK.sleeperSpacing;
+  const start    = route.closed ? 0 : TRACK.sleeperEdgeMargin;
+  const end      = route.closed ? length : Math.max(start, length - TRACK.sleeperEdgeMargin);
+  const yOffset  = TRACK.railRadius * 1.05 + TRACK.sleeperHeight * 0.18;
 
+  // Passe 1 : collecter les matrices (pas d'allocation GPU avant de connaître le count)
+  const matrices = [];
   for (let distance = start; distance <= end; distance += spacing) {
-    const center = getPointAtDistance(centerline, distance, route.closed);
+    const center  = getPointAtDistance(centerline, distance, route.closed);
     const tangent = getTangentAtDistance(centerline, distance, route.closed);
-    const side = getHorizontalSide(tangent);
-    const up = new THREE.Vector3().crossVectors(tangent, side).normalize();
-    const basis = new THREE.Matrix4().makeBasis(side, up, tangent.clone().normalize());
+    const side    = getHorizontalSide(tangent);
+    const up      = new THREE.Vector3().crossVectors(tangent, side).normalize();
+    const basis   = new THREE.Matrix4().makeBasis(side, up, tangent.clone().normalize());
 
-    const sleeper = new THREE.Mesh(geometry, material);
-    sleeper.name = `${route.seedKey}:wood-sleeper`;
-    sleeper.position.copy(center);
-    sleeper.position.y -= TRACK.railRadius * 1.05 + TRACK.sleeperHeight * 0.18;
-    sleeper.quaternion.setFromRotationMatrix(basis);
-    sleeper.castShadow = true;
-    sleeper.receiveShadow = true;
-    sleeper.renderOrder = 124;
-    group.add(sleeper);
+    _sleeperDummy.position.copy(center);
+    _sleeperDummy.position.y -= yOffset;
+    _sleeperDummy.quaternion.setFromRotationMatrix(basis);
+    _sleeperDummy.updateMatrix();
+    matrices.push(_sleeperDummy.matrix.clone());
   }
+
+  if (matrices.length === 0) return;
+
+  // Passe 2 : un seul InstancedMesh pour toute la route (1 draw call au lieu de N)
+  const mesh = new THREE.InstancedMesh(geometry, material, matrices.length);
+  mesh.name          = `${route.seedKey}:wood-sleeper-instanced`;
+  mesh.castShadow    = false;
+  mesh.receiveShadow = true;
+  mesh.renderOrder   = 124;
+  mesh.userData.disableCastShadow  = true;
+  mesh.userData.shadowFlagsApplied = true;
+
+  for (let i = 0; i < matrices.length; i++) {
+    mesh.setMatrixAt(i, matrices[i]);
+  }
+  mesh.instanceMatrix.needsUpdate = true;
+
+  group.add(mesh);
 }
 
 function addTerminusBumper(group, centerline, seedKey) {
@@ -587,46 +601,13 @@ function addTerminusBumper(group, centerline, seedKey) {
   bumper.position.copy(end).add(tangent.clone().multiplyScalar(HEX_SIZE * 0.035));
   bumper.position.y -= TRACK.railRadius * 0.35;
   bumper.quaternion.setFromRotationMatrix(basis);
-  bumper.castShadow = true;
+  bumper.castShadow = false;
   bumper.receiveShadow = true;
   bumper.renderOrder = 127;
+  bumper.userData.disableCastShadow  = true;
+  bumper.userData.shadowFlagsApplied = true;
   group.add(bumper);
 }
-
-function addRailsideStones(group, centerline, seedKey, closed = false) {
-  const length = getPathLength(centerline, closed);
-  if (length <= HEX_SIZE * 0.10) return;
-
-  const stoneCount = Math.max(2, Math.min(7, Math.round(length / TRACK.stoneSpacing)));
-  for (let i = 0; i < stoneCount; i += 1) {
-    const t = (i + 0.7 + hashUnit(`${seedKey}:stone-t:${i}`) * 0.6) / (stoneCount + 0.4);
-    const distance = (t % 1) * length;
-    const base = getPointAtDistance(centerline, distance, closed);
-    const tangent = getTangentAtDistance(centerline, distance, closed);
-    const side = getHorizontalSide(tangent);
-    const sideSign = hashUnit(`${seedKey}:stone-side:${i}`) < 0.5 ? -1 : 1;
-    const lateral = TRACK.stoneSideOffset * (0.76 + hashUnit(`${seedKey}:stone-lateral:${i}`) * 0.48);
-    const longitudinal = (hashUnit(`${seedKey}:stone-longitudinal:${i}`) - 0.5) * HEX_SIZE * 0.09;
-
-    const position = base.clone()
-      .add(side.clone().multiplyScalar(sideSign * lateral))
-      .add(tangent.clone().multiplyScalar(longitudinal));
-    position.y = getSurfaceY(position, RAIL_TYPE) + HEX_SIZE * 0.002;
-
-    const stone = createStoneMesh(`${seedKey}:stone:${i}`);
-    stone.position.copy(position);
-    alignScatterStoneToTerrain(stone, position, RAIL_TYPE, hashUnit(`${seedKey}:stone-ry:${i}`) * Math.PI * 2, `${seedKey}:stone:${i}`);
-    const scale = 0.74 + hashUnit(`${seedKey}:stone-scale:${i}`) * 0.52;
-    stone.scale.set(
-      scale * (0.78 + hashUnit(`${seedKey}:stone-sx:${i}`) * 0.45),
-      scale * (0.54 + hashUnit(`${seedKey}:stone-sy:${i}`) * 0.32),
-      scale * (0.80 + hashUnit(`${seedKey}:stone-sz:${i}`) * 0.42)
-    );
-    snapStoneBottomToSurface(stone, getSurfaceY(position, RAIL_TYPE), HEX_SIZE * 0.001);
-    group.add(stone);
-  }
-}
-
 
 function addBiomeScatterStones(group, edges, sectorDefs, createOuterVertices) {
   const vertices = createOuterVertices();
@@ -719,9 +700,11 @@ function alignScatterStoneToTerrain(stone, position, type, yaw, seedKey) {
 function createStoneMesh(seedKey) {
   const mesh = new THREE.Mesh(getStoneGeometry(seedKey), getRailMaterial('stone'));
   mesh.name = 'procedural-rail-side-stone';
-  mesh.castShadow = true;
+  mesh.castShadow = false;
   mesh.receiveShadow = true;
   mesh.renderOrder = 122;
+  mesh.userData.disableCastShadow  = true;
+  mesh.userData.shadowFlagsApplied = true;
   return mesh;
 }
 
@@ -951,7 +934,7 @@ function getStoneGeometry(seedKey) {
   const variant = Math.floor(hashUnit(seedKey) * 3);
   const key = `stone:${variant}`;
   if (!geometryCache.has(key)) {
-    const radius = HEX_SIZE * (variant === 0 ? 0.032 : variant === 1 ? 0.040 : 0.050) * RAIL_VISUAL_SCALE;
+    const radius = HEX_SIZE * (variant === 0 ? 0.032 : variant === 1 ? 0.040 : 0.050) * RAIL_VISUAL_SCALE * 0.35; // −65%
     const geometry = variant === 1
       ? new THREE.IcosahedronGeometry(radius, 0)
       : new THREE.DodecahedronGeometry(radius, 0);

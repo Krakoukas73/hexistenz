@@ -234,7 +234,10 @@ function createFieldFlagReward(zone) {
 
   const flagVariant = hashUnit(`${seed}:moulin-variant`) < 0.5 ? 'field-flag' : 'field-flag-2';
   const flag = createPropModel(flagVariant, `${seed}:flag`);
-  if (flag) group.add(flag);
+  if (flag) {
+    flag.name = 'field-zone-mill-glb';
+    group.add(flag);
+  }
 
   const flockCount = Math.min(3, 1 + Math.floor(zone.total / 8));
   for (let i = 0; i < flockCount; i += 1) {

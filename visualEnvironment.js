@@ -5,7 +5,7 @@ import { applyRealisticWaterPalette } from './realisticWater.js';
 export const DEFAULT_VISUAL_ENVIRONMENT_CONFIG = {
   presetName: 'hexistenz-default',
   renderer: {
-    toneMappingExposure: 1.24
+    toneMappingExposure: 2.40  // compensé pour ACESFilmicToneMapping
   },
   environment: {
     skyColor: '#02040a',
@@ -17,34 +17,36 @@ export const DEFAULT_VISUAL_ENVIRONMENT_CONFIG = {
   },
   lights: {
     hemisphereSkyColor: '#fff4d6',
-    hemisphereGroundColor: '#5b725d',
-    hemisphereIntensity: 0.50,
+    hemisphereGroundColor: '#8aaa8e',  // claire : sol des forêts non-noir sous ACES
+    hemisphereIntensity: 0.62,          // compensé ACESFilmicToneMapping toe agressif
     sunColor: '#ffe2b0',
-    sunIntensity: 2.75,
+    sunIntensity: 2.10,
     sunOrbitEnabled: true,
     sunOrbitRadius: 10.5,
     sunOrbitHeight: 8.4,
     sunOrbitSpeed: 0.06,
     sunVisualScale: 0.78,
-    fillColor: '#a8d4f2',
-    fillIntensity: 0.13
+    fillColor: '#c4d8f0',               // légèrement plus chaud
+    fillIntensity: 0.30                 // débouche les ombres profondes sous ACES
   },
   grading: {
     enabled: true,
-    brightness: 0.022,
-    contrast: 1.055,
-    saturation: 1.04,
-    vibrance: 0.20,
+    brightness: 0.000,
+    contrast: 1.025,
+    saturation: 0.96,                   // désaturation très légère (−4%)
+    vibrance: 0.16,
     hue: -0.006,
-    gamma: 1.055,
+    gamma: 1.035,
     blackLevel: 0.000,
     whiteLevel: 0.998,
-    red: 1.02,
+    red: 1.03,                          // warm tint sépia subtil
     green: 1.00,
-    blue: 0.98,
+    blue: 0.97,                         // retire très légèrement le froid
     redCurve: 1.00,
     greenCurve: 1.00,
-    blueCurve: 1.00
+    blueCurve: 1.00,
+    paletteColors: [],     // [] = désactivé ; rempli = quantification vers palette rétro
+    paletteDither: 0       // 0 = pas de dithering ; > 0 = Bayer 4×4 (style CGA)
   },
   palette: {
     enabled: true,
@@ -77,7 +79,11 @@ export const COLOR_GRADING_SHADER = {
     uBlackLevel: { value: 0 },
     uWhiteLevel: { value: 1 },
     uRgb: { value: new THREE.Vector3(1, 1, 1) },
-    uRgbCurve: { value: new THREE.Vector3(1, 1, 1) }
+    uRgbCurve: { value: new THREE.Vector3(1, 1, 1) },
+    uPaletteSize: { value: 0 },
+    uPaletteColors: { value: Array.from({ length: 40 }, () => new THREE.Vector3(2, 2, 2)) },
+    uPaletteDither: { value: 0.0 },
+    uPixelSize: { value: 1.0 }
   },
   vertexShader: `
     varying vec2 vUv;
@@ -99,7 +105,28 @@ export const COLOR_GRADING_SHADER = {
     uniform float uWhiteLevel;
     uniform vec3 uRgb;
     uniform vec3 uRgbCurve;
+    uniform float uPaletteSize;
+    uniform vec3 uPaletteColors[40];
+    uniform float uPaletteDither;
+    uniform float uPixelSize;
     varying vec2 vUv;
+
+    // Conversion linéaire ↔ sRGB (approximation gamma 2.2)
+    vec3 toSRGB(vec3 c)   { return pow(clamp(c, 0.0, 1.0), vec3(1.0 / 2.2)); }
+    vec3 toLinear(vec3 c) { return pow(clamp(c, 0.0, 1.0), vec3(2.2)); }
+
+    // Dithering ordonné Bayer 4×4 — retourne offset dans [-0.5, 0.5)
+    // Utilise gl_FragCoord.xy pour s'ancrer sur les pixels écran.
+    float bayer4x4(vec2 p) {
+      float x = mod(floor(p.x), 4.0);
+      float y = mod(floor(p.y), 4.0);
+      float r0 = mix(mix( 0.0, 8.0, step(1.0,x)), mix( 2.0,10.0, step(3.0,x)), step(2.0,x));
+      float r1 = mix(mix(12.0, 4.0, step(1.0,x)), mix(14.0, 6.0, step(3.0,x)), step(2.0,x));
+      float r2 = mix(mix( 3.0,11.0, step(1.0,x)), mix( 1.0, 9.0, step(3.0,x)), step(2.0,x));
+      float r3 = mix(mix(15.0, 7.0, step(1.0,x)), mix(13.0, 5.0, step(3.0,x)), step(2.0,x));
+      float v  = mix(mix(r0, r1, step(1.0,y)), mix(r2, r3, step(3.0,y)), step(2.0,y));
+      return v / 15.0 - 0.5;
+    }
 
     vec3 applyHue(vec3 color, float angle) {
       float s = sin(angle * 6.28318530718);
@@ -136,6 +163,58 @@ export const COLOR_GRADING_SHADER = {
         color = pow(max(color, vec3(0.0)), max(vec3(0.01), uRgbCurve));
         color = pow(max(color, vec3(0.0)), vec3(1.0 / max(0.01, uGamma)));
         color = clamp(color, 0.0, 1.0);
+
+        // ── Quantification palette rétro (CGA / EGA / Amiga) ──────────────────
+        // Comparaison en espace sRGB pour coller à la perception humaine.
+        // Les couleurs de palette sont passées en sRGB brut (hex parsé côté JS).
+        // Les slots vides contiennent vec3(2,2,2) hors-gamme → jamais sélectionnés.
+        if (uPaletteSize > 0.5) {
+          // Convertir le pixel linéaire → sRGB pour la recherche de couleur proche
+          vec3 srgbColor = toSRGB(color);
+
+          // Trouver les 2 couleurs les plus proches dans la palette (espace sRGB perceptuel)
+          float dist1 = 9.0, dist2 = 9.0;
+          vec3 best1 = srgbColor, best2 = srgbColor;
+          for (int i = 0; i < 40; i++) {
+            vec3 diff = srgbColor - uPaletteColors[i];
+            float d = dot(diff, diff);
+            if (d < dist1) {
+              dist2 = dist1; best2 = best1;
+              dist1 = d;     best1 = uPaletteColors[i];
+            } else if (d < dist2) {
+              dist2 = d; best2 = uPaletteColors[i];
+            }
+          }
+
+          // Dithering ordonné Bayer 4×4 authentique (style CGA / LucasArts années 90) :
+          // – pixels clairement d'une couleur → 100% solides (aucun dithering)
+          // – pixels à la frontière entre deux couleurs → checkerboard 50/50 propre
+          //
+          // Formule : projection de srgbColor sur l'axe best1→best2, normalisée [0,1].
+          // t=0 : pixel = best1 exact → jamais best2.
+          // t=0.5 : pixel équidistant → 50% best2 (seuil Bayer = 0.5).
+          // t>0.5 impossible (best1 est toujours le plus proche).
+          // Condition : b < t * dither → choisir best2, sinon best1.
+          vec3 chosen = best1;
+          if (uPaletteDither > 0.001 && dist2 < 8.0) {
+            vec3 dir = best2 - best1;
+            float len2 = dot(dir, dir);
+            float t = clamp(dot(srgbColor - best1, dir) / max(0.0001, len2), 0.0, 1.0);
+            // Hash basé sur la couleur d'entrée (pas sur la position écran).
+            // RenderPixelatedPass garantit que tous les pixels d'un même bloc ont
+            // exactement la même couleur → hash identique → décision uniforme par bloc.
+            // Évite tout pattern parasite (checkerboard ou grille secondaire).
+            // Quantification 8 bits avant le hash : les micro-variations sub-1/255
+            // dues à la précision float ou à l'anti-aliasing ne font pas basculer
+            // la décision frame-à-frame → élimine le "bruit neige" en mouvement.
+            vec3 stableColor = floor(srgbColor * 255.0 + 0.5) / 255.0;
+            float b = fract(sin(dot(stableColor, vec3(127.1, 311.7, 74.4))) * 43758.5453);
+            chosen = (b < t * uPaletteDither) ? best2 : best1;
+          }
+
+          // Reconvertir la couleur palette sRGB → linéaire pour la sortie
+          color = toLinear(chosen);
+        }
       }
 
       gl_FragColor = vec4(color, texel.a);
@@ -191,6 +270,25 @@ export function applyColorGradingUniforms(pass, config = DEFAULT_VISUAL_ENVIRONM
   pass.uniforms.uWhiteLevel.value = Number(grading.whiteLevel ?? 1);
   pass.uniforms.uRgb.value.set(Number(grading.red ?? 1), Number(grading.green ?? 1), Number(grading.blue ?? 1));
   pass.uniforms.uRgbCurve.value.set(Number(grading.redCurve ?? 1), Number(grading.greenCurve ?? 1), Number(grading.blueCurve ?? 1));
+
+  // Palette quantization (retro modes)
+  // IMPORTANT : les couleurs sont passées en sRGB brut (hex/255) — PAS via THREE.Color
+  // qui convertirait en espace linéaire et fausserait les distances perceptuelles.
+  const palColors = grading.paletteColors ?? [];
+  const palSize = Math.min(40, palColors.length);
+  pass.uniforms.uPaletteSize.value = palSize;
+  for (let i = 0; i < 40; i++) {
+    if (i < palSize) {
+      const h = palColors[i].replace('#', '');
+      const r = parseInt(h.slice(0, 2), 16) / 255;
+      const g = parseInt(h.slice(2, 4), 16) / 255;
+      const b = parseInt(h.slice(4, 6), 16) / 255;
+      pass.uniforms.uPaletteColors.value[i].set(r, g, b);
+    } else {
+      pass.uniforms.uPaletteColors.value[i].set(2, 2, 2); // hors-gamme → jamais sélectionné
+    }
+  }
+  pass.uniforms.uPaletteDither.value = Number(grading.paletteDither ?? 0);
 }
 
 export function applyEnvironment(scene, renderer, dome, config = DEFAULT_VISUAL_ENVIRONMENT_CONFIG) {
@@ -255,7 +353,7 @@ export function applyScenePalette(scene, palette = DEFAULT_VISUAL_ENVIRONMENT_CO
       const key = inferPaletteKey(object, material);
       if (!key || !targets[key]) continue;
 
-      if (!material.userData.hexistenzBaseColor) {
+      if (!material.userData.hexistenzBaseColor || !(material.userData.hexistenzBaseColor instanceof THREE.Color)) {
         material.userData.hexistenzBaseColor = material.color.clone();
       }
 

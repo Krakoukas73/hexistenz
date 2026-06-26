@@ -17,6 +17,7 @@ import { createOuterVertices } from './stable/hexGeometry.js';
 import { axialToWorld } from './stable/hex.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getGlobalWindUniforms } from './stable/globalWind.js';
+import { WORLD_CURVATURE_UNIFORMS } from './stable/worldCurvature.js';
 import { getTerrainSurfaceY } from './terrainHeight.js';
 import {
   WHEAT_BLADE_COUNT, WHEAT_BLADE_WIDTH, WHEAT_BLADE_SEGMENTS,
@@ -115,7 +116,8 @@ function getWheatMaterial() {
       uGlobalHeight: { value: WHEAT_GLOBAL_HEIGHT },
       uBottomColor:  { value: new THREE.Color(WHEAT_BOTTOM_COLOR) },
       uTopColor:     { value: new THREE.Color(WHEAT_TOP_COLOR) },
-      uEarColor:     { value: new THREE.Color(WHEAT_EAR_COLOR) }
+      uEarColor:     { value: new THREE.Color(WHEAT_EAR_COLOR) },
+      uWorldCurvatureEnabled: WORLD_CURVATURE_UNIFORMS.uWorldCurvatureEnabled
     },
     vertexShader: /* glsl */`
       attribute vec2  aOffset;
@@ -131,6 +133,7 @@ function getWheatMaterial() {
       uniform float uWindSpeed;
       uniform float uGlobalHeight;
       uniform vec2  uWindDir;
+      uniform float uWorldCurvatureEnabled;
 
       varying float vHeight;
       varying float vPart;
@@ -167,7 +170,14 @@ function getWheatMaterial() {
         vHeight   = h;
         vPart     = part;
         vColorMix = aColorMix;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+
+        // Courbure monde (mode bouliste) : passer par l'espace monde
+        vec4 worldPos = modelMatrix * vec4(p, 1.0);
+        if (uWorldCurvatureEnabled > 0.5) {
+          float dist2 = dot(worldPos.xz, worldPos.xz);
+          worldPos.y -= min(240.0, dist2 / (2.0 * 22.0));
+        }
+        gl_Position = projectionMatrix * viewMatrix * worldPos;
       }
     `,
     fragmentShader: /* glsl */`
@@ -351,15 +361,16 @@ export function rebuildFieldWheatOverlay(group, placedTiles) {
  * Met à jour la visibilité des chunks de blé selon frustum + distance caméra.
  * À appeler dans le bloc LOD de scene.js (tous les N frames).
  */
-export function updateFieldWheatLOD(group, camera) {
+export function updateFieldWheatLOD(group, camera, lodFactor = 1.0) {
   _lodProjMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
   _lodFrustum.setFromProjectionMatrix(_lodProjMatrix);
+  const effectiveDist = LOD_WHEAT_CULL_DISTANCE * lodFactor;
 
   for (const chunkGroup of group.children) {
     const sphere = chunkGroup.userData.worldBoundingSphere;
     if (!sphere) continue;
     const dist = camera.position.distanceTo(sphere.center);
-    chunkGroup.visible = _lodFrustum.intersectsSphere(sphere) && dist < LOD_WHEAT_CULL_DISTANCE;
+    chunkGroup.visible = _lodFrustum.intersectsSphere(sphere) && dist < effectiveDist;
   }
 }
 

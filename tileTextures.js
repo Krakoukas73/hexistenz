@@ -286,7 +286,7 @@ function drawFieldTexture(ctx) {
 }
 
 function drawForestTexture(ctx) {
-  ctx.fillStyle = '#1f5a2b';
+  ctx.fillStyle = '#3a8a40';  // éclairci pour ACESFilmicToneMapping (shadow toe)
   ctx.fillRect(0, 0, 128, 128);
 
   // Forêt : canopée irrégulière avec nuances, ombres et quelques troncs.

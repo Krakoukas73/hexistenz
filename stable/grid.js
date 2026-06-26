@@ -4,16 +4,91 @@ import { axialToWorld, makeHexKey } from './hex.js';
 
 const GRID_EXPANSION_RADIUS = 3;
 
+// Capacité pré-allouée — grille initiale + expansions max
+const MAX_CELLS = 600;
+// 6 segments × 2 points par hexagone pour LineSegments
+const WIRE_VERTS_PER_CELL = 12;
+
+// Couleurs par état (hex integer)
+const CLR_VALID_FILL    = 0x7fc7b7;
+const CLR_INVALID_FILL  = 0x070d13;
+const CLR_VALID_WIRE    = 0xb6eee0;
+const CLR_INVALID_WIRE  = 0x3a4652;
+const OPA_VALID_FILL    = 0.20;
+const OPA_INVALID_FILL  = 0.105;
+const OPA_VALID_WIRE    = 0.50;
+const OPA_INVALID_WIRE  = 0.34;
+
+// ─── Géométrie fill partagée ──────────────────────────────────────────────────
+function _makeFillGeo() {
+  const geo = new THREE.CircleGeometry(HEX_SIZE * 0.965, 6);
+  geo.rotateZ(Math.PI / 3);
+  geo.rotateX(-Math.PI / 2);
+  return geo;
+}
+
+// ─── API publique ─────────────────────────────────────────────────────────────
+
 export function createGrid(seedHexes = []) {
   const group = new THREE.Group();
   group.name = 'placement-grid';
   group.userData.gridKeys = new Set();
-  group.userData.gridCellPairs = new Map();
+  // Map<key, { q, r, x, z, wireY, fillMatrix: THREE.Matrix4 }>
+  group.userData.cells = new Map();
 
+  const fillGeo = _makeFillGeo();
+
+  // ── InstancedMesh fills (valid / invalid) ────────────────────────────────
+  const _makeFillIM = (color, opacity, name) => {
+    const im = new THREE.InstancedMesh(
+      fillGeo,
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, side: THREE.DoubleSide }),
+      MAX_CELLS
+    );
+    im.count           = 0;
+    im.name            = name;
+    im.castShadow      = false;
+    im.receiveShadow   = false;
+    im.frustumCulled   = false;
+    im.renderOrder     = -20;
+    // Empêche applySceneShadowFlags de réactiver castShadow
+    im.userData.disableCastShadow  = true;
+    im.userData.shadowFlagsApplied = true;
+    return im;
+  };
+
+  const validFillIM   = _makeFillIM(CLR_VALID_FILL,   OPA_VALID_FILL,   'hex-grid-fill-valid');
+  const invalidFillIM = _makeFillIM(CLR_INVALID_FILL,  OPA_INVALID_FILL, 'hex-grid-fill-invalid');
+
+  // ── LineSegments wires (valid / invalid) — buffers dynamiques pré-alloués ─
+  const _makeWireLS = (color, opacity, name) => {
+    const geo = new THREE.BufferGeometry();
+    const buf = new Float32Array(MAX_CELLS * WIRE_VERTS_PER_CELL * 3);
+    const attr = new THREE.BufferAttribute(buf, 3);
+    attr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('position', attr);
+    geo.setDrawRange(0, 0);
+    const ls = new THREE.LineSegments(geo,
+      new THREE.LineBasicMaterial({ color, transparent: true, opacity }));
+    ls.name         = name;
+    ls.renderOrder  = -20;
+    ls.frustumCulled = false;
+    return ls;
+  };
+
+  const validWireLS   = _makeWireLS(CLR_VALID_WIRE,   OPA_VALID_WIRE,   'hex-grid-wire-valid');
+  const invalidWireLS = _makeWireLS(CLR_INVALID_WIRE,  OPA_INVALID_WIRE, 'hex-grid-wire-invalid');
+
+  group.add(validFillIM, invalidFillIM, validWireLS, invalidWireLS);
+  group.userData.validFillIM   = validFillIM;
+  group.userData.invalidFillIM = invalidFillIM;
+  group.userData.validWireLS   = validWireLS;
+  group.userData.invalidWireLS = invalidWireLS;
+
+  // ── Grille de base ───────────────────────────────────────────────────────
   for (let q = -GRID_RADIUS; q <= GRID_RADIUS; q++) {
     for (let r = -GRID_RADIUS; r <= GRID_RADIUS; r++) {
-      if (!isBaseGridHex(q, r)) continue;
-      addGridCell(group, q, r);
+      if (_isBaseHex(q, r)) _addCell(group, q, r);
     }
   }
 
@@ -28,18 +103,16 @@ export function ensureGridCellsAroundHex(gridGroup, centerHex, radius = GRID_EXP
   if (!gridGroup || !centerHex) return 0;
 
   let added = 0;
-  const centerQ = Number(centerHex.q);
-  const centerR = Number(centerHex.r);
-  const safeRadius = Math.max(0, Math.floor(Number(radius) || 0));
+  const cq = Number(centerHex.q);
+  const cr = Number(centerHex.r);
+  const sr = Math.max(0, Math.floor(Number(radius) || 0));
 
-  for (let dq = -safeRadius; dq <= safeRadius; dq += 1) {
-    for (let dr = -safeRadius; dr <= safeRadius; dr += 1) {
-      const ds = -dq - dr;
-      if (Math.max(Math.abs(dq), Math.abs(dr), Math.abs(ds)) > safeRadius) continue;
-      if (addGridCell(gridGroup, centerQ + dq, centerR + dr)) added += 1;
+  for (let dq = -sr; dq <= sr; dq++) {
+    for (let dr = -sr; dr <= sr; dr++) {
+      if (Math.max(Math.abs(dq), Math.abs(dr), Math.abs(-dq - dr)) > sr) continue;
+      if (_addCell(gridGroup, cq + dq, cr + dr)) added++;
     }
   }
-
   return added;
 }
 
@@ -51,97 +124,89 @@ export function getGridCellCount(gridGroup) {
   return getGridKeys(gridGroup).size;
 }
 
-function isBaseGridHex(q, r) {
+/**
+ * Met à jour les InstancedMesh et LineSegments selon les cases placed/valid/invalid.
+ * Remplace l'ancienne approche per-Mesh (259 DC → 4 DC).
+ */
+export function updateGridAvailability(gridGroup, placedTiles, currentTile, specialCells, getValidation) {
+  if (!gridGroup || typeof getValidation !== 'function') return;
+  const ud = gridGroup.userData;
+  if (!ud.validFillIM) return; // sécurité init
+
+  const cells        = ud.cells;
+  const validFillIM  = ud.validFillIM;
+  const invalidFillIM = ud.invalidFillIM;
+  const validWireLS  = ud.validWireLS;
+  const invalidWireLS = ud.invalidWireLS;
+
+  const vwBuf  = validWireLS.geometry.attributes.position.array;
+  const ivwBuf = invalidWireLS.geometry.attributes.position.array;
+
+  let vf = 0, ivf = 0; // InstancedMesh counts
+  let vw = 0, ivw = 0; // wire vertex counts
+
+  for (const [key, cell] of cells) {
+    if (placedTiles.has(key)) continue;
+
+    const validation = currentTile
+      ? getValidation({ q: cell.q, r: cell.r }, placedTiles, currentTile, specialCells)
+      : { valid: false };
+    const valid = Boolean(validation.valid);
+
+    // Fill InstancedMesh
+    if (valid) validFillIM.setMatrixAt(vf++, cell.fillMatrix);
+    else       invalidFillIM.setMatrixAt(ivf++, cell.fillMatrix);
+
+    // Wire LineSegments — 6 segments par hex = 12 verts = 36 floats
+    const buf = valid ? vwBuf : ivwBuf;
+    let   ptr = (valid ? vw : ivw) * 3;
+    const cx  = cell.x;
+    const cy  = cell.wireY;
+    const cz  = cell.z;
+
+    for (let s = 0; s < 6; s++) {
+      const a0 = (Math.PI / 3) * s;
+      const a1 = (Math.PI / 3) * ((s + 1) % 6);
+      buf[ptr++] = cx + HEX_SIZE * Math.cos(a0); buf[ptr++] = cy; buf[ptr++] = cz + HEX_SIZE * Math.sin(a0);
+      buf[ptr++] = cx + HEX_SIZE * Math.cos(a1); buf[ptr++] = cy; buf[ptr++] = cz + HEX_SIZE * Math.sin(a1);
+    }
+    if (valid) vw  += WIRE_VERTS_PER_CELL;
+    else       ivw += WIRE_VERTS_PER_CELL;
+  }
+
+  // Appliquer les counts
+  validFillIM.count  = vf;
+  invalidFillIM.count = ivf;
+  validFillIM.instanceMatrix.needsUpdate  = true;
+  invalidFillIM.instanceMatrix.needsUpdate = true;
+
+  validWireLS.geometry.setDrawRange(0, vw);
+  invalidWireLS.geometry.setDrawRange(0, ivw);
+  validWireLS.geometry.attributes.position.needsUpdate  = true;
+  invalidWireLS.geometry.attributes.position.needsUpdate = true;
+}
+
+// ─── Internes ─────────────────────────────────────────────────────────────────
+
+function _isBaseHex(q, r) {
   return Math.max(Math.abs(q), Math.abs(r), Math.abs(-q - r)) <= GRID_RADIUS;
 }
 
-function addGridCell(group, q, r) {
+function _addCell(group, q, r) {
   const key = makeHexKey(q, r);
   if (group.userData.gridKeys?.has(key)) return false;
-
   if (!group.userData.gridKeys) group.userData.gridKeys = new Set();
-  if (!group.userData.gridCellPairs) group.userData.gridCellPairs = new Map();
+  if (!group.userData.cells)    group.userData.cells    = new Map();
 
   const { x, z } = axialToWorld(q, r);
-  const gridY = (TILE_VISUAL.waterY ?? -0.075) - (TILE_VISUAL.waterThickness ?? 0.08) - 0.012;
-  const fill = createHexFill(x, gridY - 0.002, z, createFillMaterial(), q, r);
-  const wire = createHexWire(x, gridY, z, createWireMaterial(), q, r);
+  const wireY     = (TILE_VISUAL.waterY ?? -0.075) - (TILE_VISUAL.waterThickness ?? 0.08) - 0.012;
+  const fillY     = wireY - 0.002;
+
   group.userData.gridKeys.add(key);
-  group.userData.gridCellPairs.set(key, [fill, wire]);
-  group.add(fill, wire);
+  group.userData.cells.set(key, {
+    q, r, x, z,
+    wireY,
+    fillMatrix: new THREE.Matrix4().setPosition(x, fillY, z),
+  });
   return true;
-}
-
-function createWireMaterial() {
-  return new THREE.LineBasicMaterial({ color: 0x141b22, transparent: true, opacity: 0.18 });
-}
-
-function createFillMaterial() {
-  return new THREE.MeshBasicMaterial({
-    color: 0x10161c,
-    transparent: true,
-    opacity: 0.08,
-    depthWrite: false,
-    side: THREE.DoubleSide
-  });
-}
-
-function createHexWire(x, y, z, material, q, r) {
-  const points = [];
-
-  for (let i = 0; i <= 6; i++) {
-    const angle = (Math.PI / 3) * i;
-    points.push(new THREE.Vector3(
-      x + HEX_SIZE * Math.cos(angle),
-      y,
-      z + HEX_SIZE * Math.sin(angle)
-    ));
-  }
-
-  const geometry = new THREE.BufferGeometry().setFromPoints(points);
-  const line = new THREE.Line(geometry, material);
-  line.userData = { gridCell: true, gridWire: true, q, r };
-  return line;
-}
-
-function createHexFill(x, y, z, material, q, r) {
-  const geometry = new THREE.CircleGeometry(HEX_SIZE * 0.965, 6);
-  // Rotate in 2D before laying the fill flat on the grid; doing Z after X tilts the mesh.
-  geometry.rotateZ(Math.PI / 3);
-  geometry.rotateX(-Math.PI / 2);
-
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.set(x, y, z);
-  mesh.renderOrder = -20;
-  mesh.userData = { gridCell: true, gridFill: true, q, r };
-  return mesh;
-}
-
-export function updateGridAvailability(gridGroup, placedTiles, currentTile, specialCells, getValidation) {
-  if (!gridGroup || typeof getValidation !== 'function') return;
-
-  gridGroup.children.forEach(child => {
-    if (!child.userData?.gridCell) return;
-
-    const q = child.userData.q;
-    const r = child.userData.r;
-    const key = `${q},${r}`;
-
-    if (placedTiles.has(key)) {
-      child.visible = false;
-      return;
-    }
-
-    child.visible = true;
-    const validation = currentTile ? getValidation({ q, r }, placedTiles, currentTile, specialCells) : { valid: false };
-    const valid = Boolean(validation.valid);
-
-    if (child.userData.gridFill) {
-      child.material.color.setHex(valid ? 0x7fc7b7 : 0x070d13);
-      child.material.opacity = valid ? 0.20 : 0.105;
-    } else if (child.userData.gridWire) {
-      child.material.color.setHex(valid ? 0xb6eee0 : 0x3a4652);
-      child.material.opacity = valid ? 0.50 : 0.34;
-    }
-  });
 }

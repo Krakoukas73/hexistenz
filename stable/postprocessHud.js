@@ -3,7 +3,7 @@ import { getWorldShapeMode, setWorldShapeMode } from './worldCurvature.js';
 const STORAGE_KEY = 'dorfoPixelPostprocessSettings.v4';
 
 const DEFAULTS = Object.freeze({
-  enabled: true,
+  enabled: false,
   pixelSize: 2,
   normalEdgeStrength: 0.20,
   depthEdgeStrength: 0.25,
@@ -34,7 +34,7 @@ export function createPostprocessHud(postprocess, options = {}) {
 
     <label class="postprocess-control">
       <span>Rayon (pixels) <strong id="ppPixelSizeValue"></strong></span>
-      <input id="ppPixelSize" type="range" min="1" max="10" step="1" />
+      <input id="ppPixelSize" type="range" min="1" max="50" step="1" />
     </label>
 
     <label class="postprocess-control">
@@ -113,13 +113,19 @@ export function createPostprocessHud(postprocess, options = {}) {
   }
 
   renderControls(current);
+
+  // Synchroniser le HUD si les settings sont modifiés depuis l'extérieur (ex: preset clic)
+  postprocess.onExternalSettingsChange?.(changed => {
+    renderControls({ ...current, ...changed });
+  });
+
   return { element: panel, getSettings: () => ({ ...current }) };
 }
 
 function normalizeSettings(settings) {
   return {
     enabled: Boolean(settings.enabled),
-    pixelSize: clamp(Math.round(Number(settings.pixelSize) || DEFAULTS.pixelSize), 1, 10),
+    pixelSize: clamp(Math.round(Number(settings.pixelSize) || DEFAULTS.pixelSize), 1, 50),
     normalEdgeStrength: clamp(Number(settings.normalEdgeStrength) || 0, 0, 1),
     depthEdgeStrength: clamp(Number(settings.depthEdgeStrength) || 0, 0, 1),
     worldShapeMode: normalizeWorldShapeMode(settings.worldShapeMode ?? getWorldShapeMode())

@@ -33,8 +33,8 @@
         <div id="dbgScore" class="score-value">0</div>
       </div>
       <div>
-        <div class="score-title">GRILLE CONQUISE</div>
-        <div id="dbgGridPercent" class="score-value">0.0%</div>
+        <div class="score-title">TUILES POSÉES</div>
+        <div id="dbgGridPercent" class="score-value">0</div>
       </div>
     </div>
     <div class="last-score-line">Dernier coup <span id="dbgLastScore">0</span></div>
@@ -104,11 +104,11 @@
         <div class="title">TUILE SUIVANTE</div>
         <div id="nextTile"></div>
       </div>
-    </div>
 
-    <div class="deckRemainingBox">
-      <div class="title">TUILES RESTANTES</div>
-      <div id="deckRemaining">50</div>
+      <div class="deckRemainingBox">
+        <div class="title">TUILES RESTANTES</div>
+        <div id="deckRemaining">50</div>
+      </div>
     </div>
 
     <div class="missionsBox">
@@ -208,7 +208,11 @@
             <div><kbd>Ctrl+Z</kbd><span>Annuler le dernier mouvement</span></div>
             <div><kbd>H</kbd><span>Afficher / masquer cette aide</span></div>
             <div><kbd>M</kbd><span>Couper / activer tous les sons</span></div>
+            <div><kbd>F</kbd><span>Afficher / masquer le HUD performances avancé</span></div>
+            <div><kbd>L</kbd><span>Afficher / masquer l'étalonnage visuel (LUT)</span></div>
+            <div><kbd>P</kbd><span>Activer / désactiver la pixelisation de la grille</span></div>
             <div><kbd>ESPACE</kbd><span>Mode immersif : masque interface, HUD et nombres</span></div>
+            <div><kbd>SHIFT+ESPACE</kbd><span>Super-immersif : immersif + masque les boutons FPS / PIX / LUT</span></div>
             <div><kbd>SHIFT</kbd><span>Accélère les déplacements clavier et le zoom</span></div>
             <div><kbd>Molette</kbd><span>Zoom sur tuile posée, rotation sur case disponible</span></div>
             <div><kbd>Clic gauche</kbd><span>Poser ou déplacer la caméra en glissant</span></div>

@@ -19,6 +19,9 @@ export function clearGroup(group) {
       object.geometry?.dispose?.();
       if (Array.isArray(object.material)) object.material.forEach(m => m.dispose?.());
       else object.material?.dispose?.();
+      // Dispose la DataTexture bone matrix (Three.js r145+) — chaque cloneSkeleton() crée
+      // un Skeleton propre (pas partagé), dispose() est donc toujours sûr ici.
+      if (object.isSkinnedMesh && object.skeleton?.dispose) object.skeleton.dispose();
     });
   }
 }

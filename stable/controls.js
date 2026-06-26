@@ -27,25 +27,24 @@ export class CameraControls {
 
     // Zoom minimum abaissé : on peut enfin descendre près de la surface
     // sans heurter un plafond invisible comme un pigeon contre une baie vitrée.
-    this.minRadius = 1.55;
+    this.minRadius = 0.45; // −71% (mode photo rapproché)
     this.maxRadius = 80;
     this.rotateSpeed = 0.0026;
-    // Zoom amorti : une molette Windows ne doit pas catapulter la caméra
-    // comme un ascenseur de mine sans frein.
+    // Zoom amorti : easing cinéma, la molette glisse vers la cible.
     this.zoomStep = 0.58;
-    this.zoomDamping = 0.24;
-    // Déplacement clavier volontairement amorti : ZQSD ne doit pas transformer
-    // la caméra en mobylette volée par un gobelin sous amphétamines.
-    this.keySpeed = 0.06325;
-    this.keyNearSpeed = 0.12;
-    this.keyFarSpeed = 2.80;
-    this.keyDistanceExponent = 2.0;
-    this.keySmoothing = 0.16;
-    this.keyNearSmoothing = 0.105;
-    this.keyFarSmoothing = 0.245;
-    this.keyStopSmoothing = 0.20;
-    this.keyNearStopSmoothing = 0.14;
-    this.keyFarStopSmoothing = 0.30;
+    this.zoomDamping = 0.18;   // original 0.24 → compromis cinéma
+    // Vitesse clavier adaptée à l'altitude.
+    // Cinéma = entre l'original abrupte et la version trop molle.
+    this.keySpeed = 0.065;
+    this.keyNearSpeed = 0.035;   // original 0.12 (trop vite) → 0.0088 (mort) → 0.035
+    this.keyFarSpeed = 1.8;      // original 2.80 (trop vite) → 0.605 (mort) → 1.8
+    this.keyDistanceExponent = 1.8;
+    this.keySmoothing = 0.130;
+    this.keyNearSmoothing = 0.090;   // original 0.105 — léger cinéma
+    this.keyFarSmoothing = 0.160;    // original 0.245
+    this.keyStopSmoothing = 0.110;
+    this.keyNearStopSmoothing = 0.080; // original 0.14 — glide doux à l'arrêt
+    this.keyFarStopSmoothing = 0.150;  // original 0.30
     this.keyboardVelocity = new THREE.Vector3();
     this.panDragScale = 0.45;
     this.desiredRadius = this.spherical.radius;
@@ -237,7 +236,7 @@ export class CameraControls {
 
   getKeyboardMoveSpeed(distanceFactor) {
     const radiusScale = Math.pow(
-      THREE.MathUtils.clamp(this.spherical.radius / DEFAULT_CAMERA.radius, 0.25, 5.5),
+      THREE.MathUtils.clamp(this.spherical.radius / DEFAULT_CAMERA.radius, 0.20, 5.0),
       this.keyDistanceExponent
     );
     const scaledSpeed = this.keySpeed * radiusScale;

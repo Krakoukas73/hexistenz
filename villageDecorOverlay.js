@@ -13,6 +13,7 @@
  */
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { mergeGeometries } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/BufferGeometryUtils.js';
 import {
   EDGE_ORDER,
   EDGE_TYPES,
@@ -40,10 +41,12 @@ import { isInsideSpecialBuildingSafeZone } from './fieldZonesOverlay.js';
 // Import circulaire résolu via live bindings ES modules — uniquement dans des corps de fonctions.
 import {
   createPropModel,
+  propGlbLibrary,
   ROAD_DECOR_Y,
   BARREL_TARGET_WIDTH,
   SHORE_BOAT_Y,
-  SPECIAL_BUILDING_BOAT_SAFE_RADIUS
+  SPECIAL_BUILDING_BOAT_SAFE_RADIUS,
+  BARREL_VARIANTS
 } from './decorOverlay.js';
 
 const SECTOR_BY_KEY     = Object.fromEntries(SECTOR_DEFS.map(s => [s.key, s]));
@@ -105,7 +108,8 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
       if (!snapPropToSafeSurface(pos, placedTile, edge, seed)) continue;
       if (isInsideSpecialBuildingSafeZone(pos, specialBuildingSafeZones)) continue;
 
-      const sign = createPropModel('road-signpost', seed);
+      const _signVariant = 'road-signpost-' + (Math.floor(hashUnit(`${seed}:signpost-variant`) * 3) + 1);
+      const sign = createPropModel(_signVariant, seed);
       if (!sign) continue;
       sign.name = edgeType === EDGE_TYPES.forest ? 'forest-path-signpost-glb' : 'grass-road-signpost-glb';
       sign.position.copy(pos);
@@ -135,7 +139,8 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
       if (!snapPropToSafeSurface(pos, placedTile, edge, seed)) continue;
       if (isInsideSpecialBuildingSafeZone(pos, specialBuildingSafeZones)) continue;
 
-      const sign = createPropModel('road-signpost', seed);
+      const _signVariant = 'road-signpost-' + (Math.floor(hashUnit(`${seed}:signpost-variant`) * 3) + 1);
+      const sign = createPropModel(_signVariant, seed);
       if (!sign) continue;
       sign.name = 'shoreline-signpost-glb';
       sign.position.copy(pos);
@@ -215,7 +220,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
           if (!_barrelR) continue;
           bPos.x = _barrelR.x; bPos.z = _barrelR.z;
 
-          const barrelKey  = hashUnit(`${bSeed}:variant`) > 0.5 ? 'barrel-1' : 'barrel-2';
+          const barrelKey  = BARREL_VARIANTS[Math.floor(hashUnit(`${bSeed}:variant`) * BARREL_VARIANTS.length)];
           const barrel     = createPropModel(barrelKey, bSeed);
           if (!barrel) continue;
           barrel.name = 'village-barrel-glb';
@@ -235,86 +240,89 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
       }
     }
 
-    // ── Tonneaux et charrettes à l'intérieur des villages (arêtes house) ──
-    for (const edge of EDGE_ORDER) {
-      if (getTileEdgeType(placedTile, edge) !== EDGE_TYPES.house) continue;
+    // ── Slot allocation : une arête house dédiée par catégorie d'objet ──────
+    // Chaque tuile dispose de N arêtes house. On les trie par hash pour que
+    // tonneaux, charrettes et animaux atterrissent sur des côtés différents.
+    // slot(i) = arête assignée au slot i (wraps si la tuile a peu d'arêtes house).
+    const houseEdges  = EDGE_ORDER.filter(e => getTileEdgeType(placedTile, e) === EDGE_TYPES.house);
+    const sortedSlots = houseEdges.length >= 1
+      ? [...houseEdges].sort((a, b) =>
+          hashUnit(`${placedTile.key}:slot:${a}`) - hashUnit(`${placedTile.key}:slot:${b}`)
+        )
+      : [];
+    const hSlot = (i) => sortedSlots[i % sortedSlots.length];
 
-      const seedInt = `${placedTile.key}:village-interior-prop:${edge}`;
-      if (hashUnit(seedInt) > 0.46) continue;
-
-      const center = getSectorWorldCenter(placedTile, edge);
-      const pos    = new THREE.Vector3(center.x, ROAD_DECOR_Y, center.z).lerp(tileCenter, 0.65);
+    // Helper interne : place un tonneau ou une charrette sur un slot donné
+    const placeInteriorProp = (slotIdx, seedKey, chancePct, allowCart) => {
+      if (sortedSlots.length < 1) return;
+      if (hashUnit(`${placedTile.key}:${seedKey}`) > chancePct) return;
+      const edge    = hSlot(slotIdx);
+      const seedInt = `${placedTile.key}:${seedKey}:${edge}`;
+      const center  = getSectorWorldCenter(placedTile, edge);
+      const pos     = new THREE.Vector3(center.x, ROAD_DECOR_Y, center.z).lerp(tileCenter, 0.65);
       nudgeRoadsideProp(pos, placedTile, edge, seedInt, 0.028);
-      if (isInsideSpecialBuildingSafeZone(pos, specialBuildingSafeZones)) continue;
+      if (isInsideSpecialBuildingSafeZone(pos, specialBuildingSafeZones)) return;
 
-      const isCartInt = hashUnit(`${seedInt}:kind`) > 0.34; // 55 %
-      // Pas de charrette intérieure sur tuile avec eau ou rail
-      if (isCartInt && EDGE_ORDER.some(e => {
-        const t = getTileEdgeType(placedTile, e);
+      const tileHasRailOrWater = EDGE_ORDER.some(e2 => {
+        const t = getTileEdgeType(placedTile, e2);
         return t === EDGE_TYPES.water || t === EDGE_TYPES.rail;
-      })) continue;
-      if (isCartInt) {
-        const _cartIntR = tryResolve(pos.x, pos.z, HITBOX_R.cart);
-        if (!_cartIntR) continue;
-        pos.x = _cartIntR.x; pos.z = _cartIntR.z;
+      });
+      const isCartInt = allowCart && !tileHasRailOrWater && hashUnit(`${seedInt}:kind`) > 0.34;
 
+      if (isCartInt) {
+        const _r = tryResolve(pos.x, pos.z, HITBOX_R.cart);
+        if (!_r) return;
+        pos.x = _r.x; pos.z = _r.z;
         const cart = createPropModel('cart', seedInt);
-        if (!cart) continue;
+        if (!cart) return;
         cart.name = 'village-cart-glb';
         cart.position.copy(pos);
         const cartYaw  = getEdgeOutwardAngle(edge) + (hashUnit(`${seedInt}:yaw`) - 0.5) * 1.20;
         const cartTopY = placeObjectOnTerrain(cart, getTileLocalPoint(pos, placedTile), EDGE_TYPES.house, hashNumber(seedInt) % 97, {
-          groundOffset:  0.005,
-          alignToSlope:  false,
-          yaw:           cartYaw,
-          edgeLockStart: 0.98,
-          edgeLockEnd:   1.0
+          groundOffset: 0.005, alignToSlope: false, yaw: cartYaw,
+          edgeLockStart: 0.98, edgeLockEnd: 1.0
         });
         if (cartTopY !== null) snapPropBottomToSurface(cart, cartTopY - 0.005, 0.003);
         group.add(cart);
         registerPropHitbox(cart.position.x, cart.position.z, HITBOX_R.cart);
       } else {
-        const count      = hashUnit(`${seedInt}:count`) < 0.25 ? 1 : hashUnit(`${seedInt}:count`) < 0.65 ? 2 : 3;
-        const sectorInt  = SECTOR_BY_KEY[edge];
-        const vAi        = getHexVertex(sectorInt.a);
-        const vBi        = getHexVertex(sectorInt.b);
-        const tangentInt = normalize2(vBi.x - vAi.x, vBi.z - vAi.z);
-        const barrelSpacingInt = BARREL_TARGET_WIDTH * 1.20;
-
-        for (let b = 0; b < count; b += 1) {
-          const offset = (b - (count - 1) * 0.5) * barrelSpacingInt;
-          const bPos   = pos.clone();
-          bPos.x += tangentInt.x * offset;
-          bPos.z += tangentInt.z * offset;
+        const count     = hashUnit(`${seedInt}:count`) < 0.25 ? 1 : hashUnit(`${seedInt}:count`) < 0.65 ? 2 : 3;
+        const sec       = SECTOR_BY_KEY[edge];
+        const tangent   = normalize2(getHexVertex(sec.b).x - getHexVertex(sec.a).x,
+                                     getHexVertex(sec.b).z - getHexVertex(sec.a).z);
+        const spacing   = BARREL_TARGET_WIDTH * 1.20;
+        for (let b = 0; b < count; b++) {
+          const off  = (b - (count - 1) * 0.5) * spacing;
+          const bPos = pos.clone();
+          bPos.x += tangent.x * off; bPos.z += tangent.z * off;
           if (isInsideSpecialBuildingSafeZone(bPos, specialBuildingSafeZones)) continue;
-
-          const bSeed    = `${seedInt}:barrel:${b}`;
-          const _barrelIntR = tryResolve(bPos.x, bPos.z, HITBOX_R.barrel);
-          if (!_barrelIntR) continue;
-          bPos.x = _barrelIntR.x; bPos.z = _barrelIntR.z;
-
-          const barrelKey  = hashUnit(`${bSeed}:variant`) > 0.5 ? 'barrel-1' : 'barrel-2';
+          const bSeed = `${seedInt}:barrel:${b}`;
+          const _r    = tryResolve(bPos.x, bPos.z, HITBOX_R.barrel);
+          if (!_r) continue;
+          bPos.x = _r.x; bPos.z = _r.z;
+          const barrelKey  = BARREL_VARIANTS[Math.floor(hashUnit(`${bSeed}:variant`) * BARREL_VARIANTS.length)];
           const barrel     = createPropModel(barrelKey, bSeed);
           if (!barrel) continue;
           barrel.name = 'village-barrel-glb';
           barrel.position.copy(bPos);
-          const barrelYaw  = hashUnit(`${bSeed}:yaw`) * Math.PI * 2;
           const barrelTopY = placeObjectOnTerrain(barrel, getTileLocalPoint(bPos, placedTile), EDGE_TYPES.house, hashNumber(bSeed) % 97, {
-            groundOffset:  0.005,
-            alignToSlope:  false,
-            yaw:           barrelYaw,
-            edgeLockStart: 0.98,
-            edgeLockEnd:   1.0
+            groundOffset: 0.005, alignToSlope: false,
+            yaw: hashUnit(`${bSeed}:yaw`) * Math.PI * 2,
+            edgeLockStart: 0.98, edgeLockEnd: 1.0
           });
           if (barrelTopY !== null) snapPropBottomToSurface(barrel, barrelTopY - 0.005, 0.003);
           group.add(barrel);
           registerPropHitbox(barrel.position.x, barrel.position.z, HITBOX_R.barrel);
         }
       }
-    }
+    };
+
+    // Slot 0 : tonneau(x) ou charrette — 46 % de chance
+    placeInteriorProp(0, 'vip-s0', 0.46, /*allowCart*/ true);
+    // Slot 1 : tonneaux supplémentaires (seulement si ≥ 2 arêtes house) — 38 %
+    if (sortedSlots.length >= 2) placeInteriorProp(1, 'vip-s1', 0.38, /*allowCart*/ false);
 
     // ── Fontaines — tuiles avec maisons (44 %) ou prairie adjacente à un village (8 %) ──
-    const houseEdges = EDGE_ORDER.filter(e => getTileEdgeType(placedTile, e) === EDGE_TYPES.house);
     if (houseEdges.length >= 1) {
       // Pas de fontaine sur tuile avec rail ou eau
       const tileHasRailOrWater = EDGE_ORDER.some(e => {
@@ -345,11 +353,18 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
         // Pas de tryResolve : la fontaine est intentionnellement au cœur du village,
         // entre les bâtiments — tryResolve échouerait systématiquement sur leurs hitbox.
         if (!isInsideSpecialBuildingSafeZone(fPos, specialBuildingSafeZones)) {
-          const fountainKey = hashUnit(`${seedF}:variant`) < 0.5 ? 'fountain-1' : 'fountain-2';
+          const fountainKey = 'fountain-1'; // fontaine-2 supprimée
           const fountain    = createPropModel(fountainKey, seedF);
           if (fountain) {
             fountain.name     = 'village-fountain-glb';
             fountain.position.copy(fPos);
+            // Snap Y to actual terrain surface (corrige le flottement sur biome champ/blé)
+            const _fLocal   = getTileLocalPoint(fountain.position, placedTile);
+            const _fEdge    = getEdgeFromLocalPoint(_fLocal) ?? EDGE_ORDER[0];
+            const _fTopY    = placeObjectOnTerrain(fountain, _fLocal,
+              getTileEdgeType(placedTile, _fEdge), hashNumber(seedF) % 97,
+              { groundOffset: 0.005, alignToSlope: false, edgeLockStart: 0.98, edgeLockEnd: 1.0 });
+            if (_fTopY !== null) snapPropBottomToSurface(fountain, _fTopY - 0.005, 0.004);
             fountain.rotation.y = hashUnit(`${seedF}:rot`) * Math.PI * 2;
             group.add(fountain);
             registerPropHitbox(fountain.position.x, fountain.position.z, HITBOX_R.fountain);
@@ -389,6 +404,13 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
               if (fountain) {
                 fountain.name       = 'village-fountain-glb';
                 fountain.position.copy(fPos);
+                // Snap Y to actual terrain surface (corrige le flottement sur biome champ/blé)
+                const _fpLocal  = getTileLocalPoint(fountain.position, placedTile);
+                const _fpEdge   = getEdgeFromLocalPoint(_fpLocal) ?? EDGE_ORDER[0];
+                const _fpTopY   = placeObjectOnTerrain(fountain, _fpLocal,
+                  getTileEdgeType(placedTile, _fpEdge), hashNumber(seedFP) % 97,
+                  { groundOffset: 0.005, alignToSlope: false, edgeLockStart: 0.98, edgeLockEnd: 1.0 });
+                if (_fpTopY !== null) snapPropBottomToSurface(fountain, _fpTopY - 0.005, 0.004);
                 fountain.rotation.y = hashUnit(`${seedFP}:rot`) * Math.PI * 2;
                 group.add(fountain);
                 registerPropHitbox(fountain.position.x, fountain.position.z, HITBOX_R.fountain);
@@ -398,9 +420,432 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
         }
       }
     }
+
+    // ── Animaux de village (poules, chien, chat, cheval) ──────────────────────
+    // houseEdges est déjà calculé plus haut pour les fontaines.
+    if (houseEdges.length >= 1) {
+      // Position dans la cour (pull 0.65–0.85, même zone que fontaine)
+      const animalPos = (edge, seed, spread) => {
+        const sc   = getSectorWorldCenter(placedTile, edge);
+        const pull = 0.65 + hashUnit(`${seed}:pull`) * 0.20;
+        return new THREE.Vector3(
+          sc.x + (tilePos.x - sc.x) * pull + (hashUnit(`${seed}:ox`) - 0.5) * spread,
+          ROAD_DECOR_Y,
+          sc.z + (tilePos.z - sc.z) * pull + (hashUnit(`${seed}:oz`) - 0.5) * spread
+        );
+      };
+
+      // Position à la cellule centrale de la tuile
+      const centerPos = (seed, spread) => new THREE.Vector3(
+        tilePos.x + (hashUnit(`${seed}:cx`) - 0.5) * spread,
+        ROAD_DECOR_Y,
+        tilePos.z + (hashUnit(`${seed}:cz`) - 0.5) * spread
+      );
+
+      // Helper commun : place un animal (même pattern que fontaine)
+      const placeAnimal = (key, seed, pos, groundOff, shadowCast) => {
+        if (isInsideSpecialBuildingSafeZone(pos, specialBuildingSafeZones)) return null;
+        const model = createPropModel(key, seed);
+        if (!model) return null;
+        model.position.copy(pos);
+        model.castShadow = shadowCast;
+        if (!shadowCast) {
+          // Propager le verrouillage aux meshes enfants pour éviter que
+          // applySceneShadowFlags (toutes les 20 frames) réactive les ombres.
+          model.traverse(child => {
+            if (!child.isMesh && !child.isSkinnedMesh) return;
+            child.castShadow                   = false;
+            child.userData.disableCastShadow   = true;
+            child.userData.shadowFlagsApplied  = true;
+          });
+        }
+        const local = getTileLocalPoint(pos, placedTile);
+        const edge  = getEdgeFromLocalPoint(local) ?? houseEdges[0];
+        const type  = getTileEdgeType(placedTile, edge);
+        const topY  = placeObjectOnTerrain(model, local, type, hashNumber(seed) % 97,
+          { groundOffset: groundOff, alignToSlope: false,
+            yaw: hashUnit(`${seed}:yaw`) * Math.PI * 2,
+            edgeLockStart: 0.98, edgeLockEnd: 1.0 });
+        if (topY === null) return null;
+        snapPropBottomToSurface(model, topY - groundOff, 0.002);
+        return model;
+      };
+
+      // Poules : 2–5, chance 49 % (−25 %) — slot 2 (arête distincte des tonneaux)
+      const seedChk = `${placedTile.key}:animals:chicken`;
+      if (hashUnit(seedChk) <= 0.49) {
+        const chkEdge  = hSlot(2);
+        const chkCount = 3 + Math.floor(hashUnit(`${seedChk}:count`) * 5); // 3–7 (+35%)
+        for (let c = 0; c < chkCount; c++) {
+          const cs  = `${seedChk}:${c}`;
+          const pos = animalPos(chkEdge, cs, HEX_SIZE * 0.08);
+          const chk = placeAnimal('animal-chicken', cs, pos, 0.003, false);
+          if (!chk) continue;
+          chk.name = 'village-animal-chicken-glb';
+          chk.scale.multiplyScalar(0.85 + hashUnit(`${cs}:scale`) * 0.30);
+          group.add(chk);
+        }
+      }
+
+      // Chien : 1–2, chance 60 % — slot 3
+      const seedDog = `${placedTile.key}:animals:dog`;
+      if (hashUnit(seedDog) <= 0.60) {
+        const dogCount = hashUnit(`${seedDog}:count`) < 0.45 ? 1 : 2;
+        for (let d = 0; d < dogCount; d++) {
+          const ds  = `${seedDog}:${d}`;
+          const pos = d === 0
+            ? centerPos(ds, HEX_SIZE * 0.10)
+            : animalPos(hSlot(3), ds, HEX_SIZE * 0.07);
+          const dog = placeAnimal('animal-dog', ds, pos, 0.004, false);
+          if (!dog) continue;
+          dog.name = 'village-animal-dog-glb';
+          dog.scale.multiplyScalar(0.88 + hashUnit(`${ds}:scale`) * 0.25);
+          group.add(dog);
+        }
+      }
+
+      // Chat(s) : 1–2, chance 65 % — slot 4
+      const seedCat = `${placedTile.key}:animals:cat`;
+      if (hashUnit(seedCat) <= 0.65) {
+        const catCount = hashUnit(`${seedCat}:count`) < 0.55 ? 1 : 2;
+        for (let c = 0; c < catCount; c++) {
+          const cs  = `${seedCat}:${c}`;
+          const pos = animalPos(hSlot(4), cs, HEX_SIZE * 0.07);
+          const cat = placeAnimal('animal-cat', cs, pos, 0.003, false);
+          if (!cat) continue;
+          cat.name = 'village-animal-cat-glb';
+          cat.scale.multiplyScalar(0.82 + hashUnit(`${cs}:scale`) * 0.35);
+          group.add(cat);
+        }
+      }
+
+      // Cheval : chance 35 %, placé à la cellule centrale (plus dégagé)
+      const seedHorse = `${placedTile.key}:animals:horse`;
+      if (hashUnit(seedHorse) <= 0.35) {
+        const pos   = centerPos(seedHorse, HEX_SIZE * 0.08);
+        const horse = placeAnimal('animal-horse', seedHorse, pos, 0.005, true);
+        if (horse) {
+          horse.name = 'village-animal-horse-glb';
+          horse.scale.multiplyScalar(0.88 + hashUnit(`${seedHorse}:scale`) * 0.24);
+          group.add(horse);
+        }
+      }
+    }
+
+    // ── Animaux à la frontière village-nature ─────────────────────────────────
+    // Tuile prairie/forêt adjacente à un village : poulets errants + chats
+    if (houseEdges.length === 0) {
+      const hasGrassOrForest = EDGE_ORDER.some(e => {
+        const t = getTileEdgeType(placedTile, e);
+        return t === EDGE_TYPES.grass || t === EDGE_TYPES.forest;
+      });
+      if (hasGrassOrForest) {
+        const villageEdges = EDGE_ORDER.filter(e => {
+          const dir = DIRECTION_BY_EDGE[e];
+          if (!dir) return false;
+          const nb = placedTiles.get(makeHexKey(placedTile.q + dir.q, placedTile.r + dir.r));
+          return nb && EDGE_ORDER.some(ne => getTileEdgeType(nb, ne) === EDGE_TYPES.house);
+        });
+        if (villageEdges.length >= 1) {
+          const borderEdge = villageEdges[Math.floor(hashUnit(`${placedTile.key}:bdr:edge`) * villageEdges.length)];
+          const sc = getSectorWorldCenter(placedTile, borderEdge);
+
+          const placeBorderAnimal = (key, seed, pos, groundOff, shadowCast) => {
+            const model = createPropModel(key, seed);
+            if (!model) return null;
+            model.position.copy(pos);
+            model.castShadow = shadowCast;
+            if (!shadowCast) {
+              model.traverse(child => {
+                if (!child.isMesh && !child.isSkinnedMesh) return;
+                child.castShadow                   = false;
+                child.userData.disableCastShadow   = true;
+                child.userData.shadowFlagsApplied  = true;
+              });
+            }
+            const local = getTileLocalPoint(pos, placedTile);
+            const edgeK = getEdgeFromLocalPoint(local) ?? borderEdge;
+            const type  = getTileEdgeType(placedTile, edgeK);
+            const topY  = placeObjectOnTerrain(model, local, type, hashNumber(seed) % 97,
+              { groundOffset: groundOff, alignToSlope: false,
+                yaw: hashUnit(`${seed}:yaw`) * Math.PI * 2,
+                edgeLockStart: 0.98, edgeLockEnd: 1.0 });
+            if (topY === null) return null;
+            snapPropBottomToSurface(model, topY - groundOff, 0.002);
+            return model;
+          };
+
+          // Poulets errants à la lisière (38 % — −25 %)
+          if (hashUnit(`${placedTile.key}:bdr:chk`) <= 0.38) {
+            const bCount = 2 + Math.floor(hashUnit(`${placedTile.key}:bdr:chkn`) * 4); // 2–5 (+35%)
+            for (let c = 0; c < bCount; c++) {
+              const cs   = `${placedTile.key}:bdr:chk:${c}`;
+              const pull = 0.55 + hashUnit(`${cs}:pull`) * 0.25;
+              const pos  = new THREE.Vector3(
+                sc.x + (tilePos.x - sc.x) * pull + (hashUnit(`${cs}:ox`) - 0.5) * HEX_SIZE * 0.07,
+                ROAD_DECOR_Y,
+                sc.z + (tilePos.z - sc.z) * pull + (hashUnit(`${cs}:oz`) - 0.5) * HEX_SIZE * 0.07
+              );
+              const chk = placeBorderAnimal('animal-chicken', cs, pos, 0.003, false);
+              if (!chk) continue;
+              chk.name = 'village-animal-chicken-glb';
+              chk.scale.multiplyScalar(0.85 + hashUnit(`${cs}:scale`) * 0.30);
+              group.add(chk);
+            }
+          }
+
+          // Chat errant à la lisière (30 %)
+          if (hashUnit(`${placedTile.key}:bdr:cat`) <= 0.30) {
+            const cs   = `${placedTile.key}:bdr:cat:0`;
+            const pull = 0.55 + hashUnit(`${cs}:pull`) * 0.25;
+            const pos  = new THREE.Vector3(
+              sc.x + (tilePos.x - sc.x) * pull + (hashUnit(`${cs}:ox`) - 0.5) * HEX_SIZE * 0.06,
+              ROAD_DECOR_Y,
+              sc.z + (tilePos.z - sc.z) * pull + (hashUnit(`${cs}:oz`) - 0.5) * HEX_SIZE * 0.06
+            );
+            const cat = placeBorderAnimal('animal-cat', cs, pos, 0.003, false);
+            if (cat) {
+              cat.name = 'village-animal-cat-glb';
+              cat.scale.multiplyScalar(0.82 + hashUnit(`${cs}:scale`) * 0.35);
+              group.add(cat);
+            }
+          }
+        }
+      }
+    }
+
+    // ── Animaux sur tuiles rail — côté berme, jamais sur les voies ───────────
+    // Condition : tuile avec au moins une arête rail, sans arêtes house (déjà géré)
+    // Placement : pull FAIBLE (0.12–0.28) vers le centre = animal proche du bord
+    // de tuile (la berme), loin du centre où cheminent les rails.
+    if (houseEdges.length === 0) {
+      const railEdges = EDGE_ORDER.filter(e => getTileEdgeType(placedTile, e) === EDGE_TYPES.rail);
+      if (railEdges.length >= 1) {
+        // Préférer les arêtes qui font face à un voisin non-rail non-eau
+        const bermeEdges = railEdges.filter(e => {
+          const dir = DIRECTION_BY_EDGE[e];
+          if (!dir) return true;
+          const nb = placedTiles.get(makeHexKey(placedTile.q + dir.q, placedTile.r + dir.r));
+          if (!nb) return true;
+          return EDGE_ORDER.some(ne => {
+            const nt = getTileEdgeType(nb, ne);
+            return nt !== EDGE_TYPES.rail && nt !== EDGE_TYPES.water;
+          });
+        });
+        const candidate = bermeEdges.length >= 1 ? bermeEdges : railEdges;
+
+        const pickRailEdge = (seed) => candidate[Math.floor(hashUnit(seed) * candidate.length)];
+        // pull faible = proche bord de tuile = loin des rails au centre
+        const bermePos = (edge, seed, spread) => {
+          const sc   = getSectorWorldCenter(placedTile, edge);
+          const pull = 0.12 + hashUnit(`${seed}:pull`) * 0.16;
+          return new THREE.Vector3(
+            sc.x + (tilePos.x - sc.x) * pull + (hashUnit(`${seed}:ox`) - 0.5) * spread,
+            ROAD_DECOR_Y,
+            sc.z + (tilePos.z - sc.z) * pull + (hashUnit(`${seed}:oz`) - 0.5) * spread
+          );
+        };
+        const placeRailAnimal = (key, seed, pos, groundOff, shadowCast) => {
+          const model = createPropModel(key, seed);
+          if (!model) return null;
+          model.position.copy(pos);
+          model.castShadow = shadowCast;
+          const local = getTileLocalPoint(pos, placedTile);
+          const edgeK = getEdgeFromLocalPoint(local) ?? railEdges[0];
+          const type  = getTileEdgeType(placedTile, edgeK);
+          const topY  = placeObjectOnTerrain(model, local, type, hashNumber(seed) % 97,
+            { groundOffset: groundOff, alignToSlope: false,
+              yaw: hashUnit(`${seed}:yaw`) * Math.PI * 2,
+              edgeLockStart: 0.98, edgeLockEnd: 1.0 });
+          if (topY === null) return null;
+          snapPropBottomToSurface(model, topY - groundOff, 0.002);
+          return model;
+        };
+
+        // Poule(s) côté voie (30 % — −25 %)
+        if (hashUnit(`${placedTile.key}:rail:chk`) <= 0.30) {
+          const rEdge  = pickRailEdge(`${placedTile.key}:rail:chk:edge`);
+          const bCount = 2 + Math.floor(hashUnit(`${placedTile.key}:rail:chkn`) * 4); // 2–5 (+35%)
+          for (let c = 0; c < bCount; c++) {
+            const cs  = `${placedTile.key}:rail:chk:${c}`;
+            const pos = bermePos(rEdge, cs, HEX_SIZE * 0.06);
+            const chk = placeRailAnimal('animal-chicken', cs, pos, 0.003, false);
+            if (!chk) continue;
+            chk.name = 'village-animal-chicken-glb';
+            chk.scale.multiplyScalar(0.85 + hashUnit(`${cs}:scale`) * 0.30);
+            group.add(chk);
+          }
+        }
+
+        // Chien côté voie (25 %)
+        if (hashUnit(`${placedTile.key}:rail:dog`) <= 0.25) {
+          const cs  = `${placedTile.key}:rail:dog:0`;
+          const pos = bermePos(pickRailEdge(`${cs}:edge`), cs, HEX_SIZE * 0.05);
+          const dog = placeRailAnimal('animal-dog', cs, pos, 0.004, false);
+          if (dog) {
+            dog.name = 'village-animal-dog-glb';
+            dog.scale.multiplyScalar(0.88 + hashUnit(`${cs}:scale`) * 0.25);
+            group.add(dog);
+          }
+        }
+
+        // Chat côté voie (20 %)
+        if (hashUnit(`${placedTile.key}:rail:cat`) <= 0.20) {
+          const cs  = `${placedTile.key}:rail:cat:0`;
+          const pos = bermePos(pickRailEdge(`${cs}:edge`), cs, HEX_SIZE * 0.05);
+          const cat = placeRailAnimal('animal-cat', cs, pos, 0.003, false);
+          if (cat) {
+            cat.name = 'village-animal-cat-glb';
+            cat.scale.multiplyScalar(0.82 + hashUnit(`${cs}:scale`) * 0.35);
+            group.add(cat);
+          }
+        }
+      }
+    }
   }
 
+  // Fusionne toutes les poules en 1 seul Mesh (57 DC → 1 DC)
+  _mergeVillageChickens(group);
+  // Fusionne chiens + chats (statiques, même pattern que les poulets)
+  _mergeVillageAnimalsByName(group, 'village-animal-dog-glb');
+  _mergeVillageAnimalsByName(group, 'village-animal-cat-glb');
+
   return group;
+}
+
+// ─── Fusion des poulets village ───────────────────────────────────────────────
+
+/**
+ * Convertit les InterleavedBufferAttributes d'une géométrie GLB en BufferAttribute
+ * standard, seul format accepté par mergeGeometries (Three.js r160).
+ * Retourne toujours une copie indépendante (pas de mutation de l'original).
+ */
+function _deinterleaveGeo(src) {
+  const hasInterleaved = Object.values(src.attributes)
+    .some(a => a.isInterleavedBufferAttribute);
+  if (!hasInterleaved) return src.clone();
+
+  const dst = new THREE.BufferGeometry();
+  for (const [name, attr] of Object.entries(src.attributes)) {
+    if (attr.isInterleavedBufferAttribute) {
+      // Three.js r160 : pas de getComponent() — accès direct via le tableau entrelacé
+      const ib     = attr.data;          // InterleavedBuffer
+      const stride = ib.stride;
+      const off    = attr.offset;
+      const src_a  = ib.array;
+      const buf    = new Float32Array(attr.count * attr.itemSize);
+      for (let i = 0; i < attr.count; i++) {
+        for (let c = 0; c < attr.itemSize; c++) {
+          buf[i * attr.itemSize + c] = src_a[i * stride + off + c];
+        }
+      }
+      dst.setAttribute(name, new THREE.BufferAttribute(buf, attr.itemSize, attr.normalized));
+    } else {
+      dst.setAttribute(name, attr.clone());
+    }
+  }
+  if (src.index) dst.setIndex(src.index.clone());
+  return dst;
+}
+
+/**
+ * Post-traitement : collecte tous les 'village-animal-chicken-glb' du groupe,
+ * fusionne leurs géométries en 1 Mesh centré sur le centroïde de la grappe.
+ *
+ * Le Mesh centré permet au scan LOD de decorOverlay (child.position) d'obtenir
+ * un centre approximatif représentatif, au lieu de (0,0,0).
+ */
+function _mergeVillageChickens(group) {
+  // Calcul des matrixWorld avec parent = identity (group pas encore en scène)
+  group.updateMatrixWorld(true);
+
+  const chickenGroups = group.children.filter(c => c.name === 'village-animal-chicken-glb');
+  if (chickenGroups.length === 0) return;
+
+  const geoList = [];
+  let mat = null;
+
+  for (const chk of chickenGroups) {
+    chk.traverse(obj => {
+      if (!obj.isMesh && !obj.isSkinnedMesh) return;
+      // _deinterleaveGeo : convertit InterleavedBufferAttribute → BufferAttribute standard
+      // (poule.glb utilise le format GLTF compact, incompatible avec mergeGeometries)
+      const geo = _deinterleaveGeo(obj.geometry);
+      geo.applyMatrix4(obj.matrixWorld);
+      geoList.push(geo);
+      if (!mat) mat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+    });
+    group.remove(chk);
+  }
+
+  if (geoList.length === 0 || !mat) return;
+
+  const merged = mergeGeometries(geoList);
+  geoList.forEach(g => g.dispose());
+  if (!merged) return;
+
+  // Centrer le Mesh sur le centroïde des vertices → child.position utilisable par LOD
+  merged.computeBoundingSphere();
+  const centroid = merged.boundingSphere.center.clone();
+  merged.translate(-centroid.x, -centroid.y, -centroid.z);
+
+  const mesh = new THREE.Mesh(merged, mat);
+  mesh.position.copy(centroid);
+  mesh.name              = 'village-animal-chicken-glb';
+  mesh.receiveShadow     = true;
+  mesh.castShadow        = false;
+  mesh.userData.disableCastShadow  = true;
+  mesh.userData.shadowFlagsApplied = true;
+
+  group.add(mesh);
+  console.debug(`[chickens] ${chickenGroups.length} poulets fusionnés → 1 DC`);
+}
+
+/**
+ * Version générique de _mergeVillageChickens : fusionne tous les enfants du groupe
+ * dont le name === animalName en un seul Mesh (1 DC).
+ * Utilisé pour chiens et chats (GLBs statiques, pas d'animation).
+ */
+function _mergeVillageAnimalsByName(group, animalName) {
+  group.updateMatrixWorld(true);
+
+  const animals = group.children.filter(c => c.name === animalName);
+  if (animals.length === 0) return;
+
+  const geoList = [];
+  let mat = null;
+
+  for (const animal of animals) {
+    animal.traverse(obj => {
+      if (!obj.isMesh && !obj.isSkinnedMesh) return;
+      const geo = _deinterleaveGeo(obj.geometry);
+      geo.applyMatrix4(obj.matrixWorld);
+      geoList.push(geo);
+      if (!mat) mat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+    });
+    group.remove(animal);
+  }
+
+  if (geoList.length === 0 || !mat) return;
+
+  const merged = mergeGeometries(geoList);
+  geoList.forEach(g => g.dispose());
+  if (!merged) return;
+
+  merged.computeBoundingSphere();
+  const centroid = merged.boundingSphere.center.clone();
+  merged.translate(-centroid.x, -centroid.y, -centroid.z);
+
+  const mesh = new THREE.Mesh(merged, mat);
+  mesh.position.copy(centroid);
+  mesh.name              = animalName;
+  mesh.receiveShadow     = true;
+  mesh.castShadow        = false;
+  mesh.userData.disableCastShadow  = true;
+  mesh.userData.shadowFlagsApplied = true;
+
+  group.add(mesh);
+  console.debug(`[animals] ${animals.length} ${animalName} fusionnés → 1 DC`);
 }
 
 // ─── Bateaux côtiers ─────────────────────────────────────────────────────────
@@ -423,9 +868,10 @@ export function createShoreBoats(placedTiles, specialBuildingSafeZones = []) {
       const mid    = new THREE.Vector3((a.x + b.x) / 2, SHORE_BOAT_Y, (a.z + b.z) / 2);
       const inward = getShoreBoatBeachDirection(placedTile, edge, placedTiles, mid);
 
-      const boat = createPropModel(pickShoreBoatVariant(seed), seed);
+      const boatVariant = pickShoreBoatVariant(seed);
+      const boat = createPropModel(boatVariant, seed);
       if (!boat) continue;
-      boat.name = 'water-shore-inert-boat-glb';
+      boat.name = `water-shore-inert-boat-glb-${boatVariant}`;  // ex: ...-shore-boat-1 (HUD per-type)
       boat.position.set(
         tilePos.x + mid.x + inward.x * HEX_SIZE * 0.5,
         SHORE_BOAT_Y,
@@ -499,7 +945,7 @@ function getAdjacentBeachLandVector(placedTile, edge) {
 }
 
 function pickShoreBoatVariant(seedKey) {
-  return hashUnit(`${seedKey}:shore-boat-variant`) < 0.5 ? 'shore-boat-1' : 'shore-boat-2';
+  return 'shore-boat-2'; // barque-1 retirée du pool
 }
 
 // ─── Helpers placement ────────────────────────────────────────────────────────
