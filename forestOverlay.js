@@ -1,10 +1,10 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import { createGLTFLoader } from './glbLoader.js';
 import { EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
-import { hashUnitFull as hashToUnit, hashNumber } from './stable/hashUtils.js';
-import { createOuterVertices } from './stable/hexGeometry.js';
-import { axialToWorld } from './stable/hex.js';
-import { applyGlobalWindToObject } from './stable/globalWind.js';
+import { hashUnitFull as hashToUnit, hashNumber } from './hashUtils.js';
+import { createOuterVertices } from './hexGeometry.js';
+import { axialToWorld } from './hex.js';
+import { applyGlobalWindToObject } from './globalWind.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { placeObjectOnTerrain } from './terrainHeight.js';
 import { collectSpecialBuildingSafeZones } from './fieldZonesOverlay.js';
@@ -20,7 +20,8 @@ import {
   LOD_TREE_CULL_DISTANCE,
   HITBOX_R
 } from './variables.js';
-import { registerPropHitbox } from './stable/propHitboxRegistry.js';
+import { registerPropHitbox } from './propHitboxRegistry.js';
+import { getCurvatureTiltQuaternion } from './worldCurvature.js';
 
 const CENTER_SAFE_RADIUS = HEX_SIZE * (TILE_VISUAL.centerRadiusScale + TREE_CENTER_SAFE_RADIUS_EXTRA);
 const SPECIAL_BUILDING_TREE_SAFE_RADIUS = HEX_SIZE * 0.38;
@@ -30,6 +31,8 @@ let modelsRequested = false;
 
 // Dummy réutilisé pour calculer les matrices d'instance sans allocation par arbre
 const _instanceDummy = new THREE.Object3D();
+// Pré-alloué pour le tilt de courbure monde (bouliste)
+const _curvTiltQuat  = new THREE.Quaternion();
 
 // Pré-alloués pour updateForestLOD() — évite GC chaque frame
 const _lodFrustum = new THREE.Frustum();
@@ -65,8 +68,49 @@ export function createForestOverlay() {
   return group;
 }
 
-export function rebuildForestOverlay(group, placedTiles) {
+export function rebuildForestOverlay(group, placedTiles, changedTile = null) {
   group.userData.lastPlacedTiles = placedTiles;
+
+  // ── Rebuild incrémental : uniquement le chunk de la tuile posée ──────────────
+  // Utilisé lors de chaque pose de tuile (changedTile != null).
+  // Les autres cas (undo, init, import, multiplayer) passent changedTile=null → rebuild complet.
+  if (changedTile != null && treeLibrary.size > 0) {
+    const _t0 = performance.now();
+    const chunkKey = getChunkKey(changedTile.q, changedTile.r);
+
+    // Supprimer uniquement les IMs du chunk affecté — O(children actifs) scan, dispose ciblé
+    const toRemove = [];
+    for (const child of group.children) {
+      if (child.isInstancedMesh && child.userData.chunkKey === chunkKey) toRemove.push(child);
+    }
+    for (const child of toRemove) {
+      child.geometry?.dispose();
+      if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+      else child.material?.dispose();
+      group.remove(child);
+    }
+    const _t1 = performance.now();
+
+    // Safe zones : O(N total) mais ~0ms — nécessaire (moulin/église peuvent être sur ce chunk)
+    const specialBuildingSafeZones = collectSpecialBuildingSafeZones(placedTiles);
+    const _t2 = performance.now();
+
+    // Collecter uniquement les tuiles du chunk affecté
+    const accumulator = new Map();
+    for (const pt of placedTiles.values()) {
+      if (getChunkKey(pt.q, pt.r) === chunkKey) {
+        collectTreeInstances(accumulator, pt, specialBuildingSafeZones);
+      }
+    }
+    const _t3 = performance.now();
+
+    buildTreeInstancedMeshes(group, accumulator);
+    const _t4 = performance.now();
+    console.log(`[FOREST-INCR chunk=${chunkKey}] remove=${(_t1-_t0).toFixed(1)}ms | safeZ=${(_t2-_t1).toFixed(1)}ms | collect=${(_t3-_t2).toFixed(1)}ms | build=${(_t4-_t3).toFixed(1)}ms | TOTAL=${(_t4-_t0).toFixed(1)}ms`);
+    return;
+  }
+
+  // ── Rebuild complet (init, undo, import, async model load) ───────────────────
   const _rfT0 = performance.now();
   disposeOverlayChildren(group);
   const _rfT1 = performance.now();
@@ -79,14 +123,12 @@ export function rebuildForestOverlay(group, placedTiles) {
   const specialBuildingSafeZones = collectSpecialBuildingSafeZones(placedTiles);
   const _rfT2 = performance.now();
 
-  // Phase 1 : collecter toutes les matrices d'instances par variant + chunk
   const accumulator = new Map(); // variantKey → Map<chunkKey, Matrix4[]>
   for (const placedTile of placedTiles.values()) {
     collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones);
   }
   const _rfT3 = performance.now();
 
-  // Phase 2 : construire les InstancedMesh
   buildTreeInstancedMeshes(group, accumulator);
   const _rfT4 = performance.now();
   console.log(`[FREEZE-DIAG forest-phases] dispose=${(_rfT1-_rfT0).toFixed(0)}ms | safeZones=${(_rfT2-_rfT1).toFixed(0)}ms | collect=${(_rfT3-_rfT2).toFixed(0)}ms | build=${(_rfT4-_rfT3).toFixed(0)}ms | TOTAL=${(_rfT4-_rfT0).toFixed(0)}ms`);
@@ -109,7 +151,7 @@ function ensureTreeModels(group) {
   };
 
   for (const def of TREE_MODEL_DEFS) {
-    new GLTFLoader().load(
+    createGLTFLoader().load(
       def.url,
       gltf => {
         treeLibrary.set(def.key, prepareTreePrototype(gltf.scene, def));
@@ -223,8 +265,12 @@ function collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones 
         edgeLockStart: 0.98,
         edgeLockEnd: 1.0
       });
-      _instanceDummy.rotation.x = (hashToUnit(`${placedTile.key}:${sector.key}:tiltx:${i}`) - 0.5) * 0.18;
-      _instanceDummy.rotation.z = (hashToUnit(`${placedTile.key}:${sector.key}:tiltz:${i}`) - 0.5) * 0.18;
+      // Inclinaison aléatoire locale + tilt de courbure monde (mode bouliste)
+      const _tiltX = (hashToUnit(`${placedTile.key}:${sector.key}:tiltx:${i}`) - 0.5) * 0.18;
+      const _tiltZ = (hashToUnit(`${placedTile.key}:${sector.key}:tiltz:${i}`) - 0.5) * 0.18;
+      _instanceDummy.rotation.set(_tiltX, treeYaw, _tiltZ);
+      getCurvatureTiltQuaternion(tileWorld.x + pos.x, tileWorld.z + pos.z, _curvTiltQuat);
+      _instanceDummy.quaternion.premultiply(_curvTiltQuat);
       // La scale de base est cuite dans la géo (child.matrixWorld du prototype), on applique seulement le jitter ici.
       _instanceDummy.scale.setScalar(scaleJitter);
       _instanceDummy.updateMatrix();
@@ -282,8 +328,14 @@ function buildTreeInstancedMeshes(group, accumulator) {
         // via mesh.visible dans updateForestLOD() en utilisant worldBoundingSphere.
         mesh.frustumCulled = false;
         mesh.name = `instanced-tree-${variantKey}-${chunkKey}`;
+        mesh.userData.chunkKey = chunkKey;          // lookup O(1) pour le rebuild incrémental
         mesh.userData.worldBoundingSphere = sphere;
         mesh.userData.lodCategory = 'tree';
+        // La géométrie est cuite à l'origine → matrixWorld.position = (0,0,0).
+        // applyShadowCulling() lirait la distance focus↔origine au lieu de focus↔arbres,
+        // ce qui couperait les ombres de TOUS les arbres dès que la caméra s'éloigne de l'origine.
+        // Le LOD (updateForestLOD → visible=false) suffit à éviter le shadow pass sur les lointains.
+        mesh.userData.skipShadowCulling = true;
 
         for (let i = 0; i < matrices.length; i++) {
           mesh.setMatrixAt(i, matrices[i]);

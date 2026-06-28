@@ -11,6 +11,11 @@
 // ============================================================================
 
 // ----------------------------------------------------------------------------
+// VERSION
+// ----------------------------------------------------------------------------
+export const HEXISTENZ_VERSION = 'v0.9.1.2 beta';
+
+// ----------------------------------------------------------------------------
 // GRILLE / DECK
 // ----------------------------------------------------------------------------
 // Taille logique d'un hexagone dans la scène Three.js. Toucher à ça redimensionne
@@ -89,11 +94,12 @@ export const TILE_VISUAL = {
   // Épaisseurs générales. Les biomes peuvent être affinés plus bas.
   tileThickness: 0.12,
   waterThickness: 0.06,
-  railThickness: 0.06,
+  railThickness: 0.075, // légèrement au-dessus de l'eau (0.06)
 
-  // Rails posés sur un lit plus bas, puis overlays ajustés par railY.
-  railSurfaceY: -0.095,
-  railY: -0.043,
+  // Surface du biome rail = railThickness (fond à y=0, dessus à +0.075).
+  // railY = surface de la voie ferrée réelle, 5.2 cm au-dessus de la surface de tuile.
+  railSurfaceY: 0.075,
+  railY: 0.127, // 0.075 + 0.052 (offset rail au-dessus de la tuile, inchangé)
 
   outlineY: 0.036,
   labelY: 0.58,
@@ -102,22 +108,24 @@ export const TILE_VISUAL = {
   outlineOpacity: 0.75
 };
 
-// Réduction d'épaisseur locale des biomes. 0.70 = 30% plus fin.
+// Épaisseur relative de chaque biome (ratio × tileThickness = épaisseur réelle).
+// Utilisé par tileRailOverlay pour positionner les rails à la bonne hauteur de surface.
+// Sync avec getSectorDepth() dans tileMesh.js.
 export const THIN_BIOME_DEPTH_RATIO = {
-  house: 0.70,
-  forest: 0.70
+  house:  0.708, // 0.708 × 0.12 ≈ 0.085
+  forest: 0.733, // 0.733 × 0.12 ≈ 0.088
+  grass:  0.683, // 0.683 × 0.12 ≈ 0.082
 };
 
 // Variation du dessus des biomes pour éviter les glitchs aux jonctions.
 // Le dessous reste collé à la grille : c'est la règle sacrée, gravée au burin.
 export const BIOME_HEIGHT_RATIO = {
-  field: 0.0462, // −65% −12% (sync avec tileMesh.js)
-  grass: -0.45
+  field: 0.0462, // légèrement surélevé (sync avec tileMesh.js)
 };
 
-// Relief appliqué aux tuiles pour casser l'aspect plat.
+// Relief désactivé : tuiles plates depuis la refonte épaisseur uniforme.
 export const TERRAIN_RELIEF = {
-  enabled: true,
+  enabled: false,
   baseAmplitude: 0.064,
   typeAmplitude: {
     grass: 0.085,
@@ -202,30 +210,34 @@ export const HOUSE_CHIMNEY_TOP_SCALE = 1.62;
 export const HOUSE_SMOKE_Y_SCALE = 0.08;
 export const PUFFS_PER_COLUMN = 11; // −39 % (était 18)
 
-export const CHURCH_MIN_HOUSES = 8;
-export const CHURCH_HOUSES_PER_EXTRA = 18;
-export const CHURCH_MAX_PER_ZONE = 4;
 // ----------------------------------------------------------------------------
 // FORÊTS / ARBRES GLB
 // ----------------------------------------------------------------------------
 export const TREE_MODEL_DEFS = [
-  { key: 'birch', url: './glb/arbres/tree_birch.glb', baseScale: 0.225 },
-  { key: 'bushy_mini', url: './glb/arbres/tree_bushy_mini.glb', baseScale: 0.225 },
+  { key: 'bouleau-1',    url: './glb/arbres/bouleau-1.glb',    baseScale: 0.191 },               // −15%
+  { key: 'bouleau-2',    url: './glb/arbres/bouleau-2.glb',    baseScale: 0.259, spawnWeight: 18 }, // +15%
+  { key: 'buisson',      url: './glb/arbres/buisson.glb',      baseScale: 0.225 },
   // oak_round + dead retirés du pool (trop lourds : ~10k tris chacun)
-  { key: 'pine_soft', url: './glb/arbres/tree_pine_soft.glb', baseScale: 0.250 },
-  { key: 'poplar', url: './glb/arbres/tree_poplar.glb', baseScale: 0.250 },
-  { key: 'tree_fir', url: './glb/arbres/tree_fir.glb', baseScale: 0.250 },
-  { key: 'tree_complex_1', url: './glb/arbres/tree_complex_1.glb', baseScale: 0.250 },
-  { key: 'tree_complex_2', url: './glb/arbres/tree_complex_2.glb', baseScale: 0.250 },
-  { key: 'tree_sapin_1', url: './glb/arbres/tree_sapin-1.glb', baseScale: 0.250 },
-  { key: 'tree_sapin_2', url: './glb/arbres/tree_sapin-2.glb', baseScale: 0.250 },
-  { key: 'tree_sapin_3', url: './glb/arbres/tree_sapin-3.glb', baseScale: 0.250 },
-  { key: 'tree_sapin_4', url: './glb/arbres/tree_sapin-4.glb', baseScale: 0.250 },
+  { key: 'sapin-6',      url: './glb/arbres/sapin-6.glb',      baseScale: 0.250 },
+  { key: 'peuplier',     url: './glb/arbres/peuplier.glb',     baseScale: 0.250 },
+  { key: 'sapin-5',      url: './glb/arbres/sapin-5.glb',      baseScale: 0.250 },
+  { key: 'gros-arbre-2', url: './glb/arbres/gros-arbre-2.glb', baseScale: 0.195 },               // −22%
+  { key: 'sapin-1',      url: './glb/arbres/sapin-1.glb',      baseScale: 0.225 },               // −10%
+  { key: 'sapin-2',      url: './glb/arbres/sapin-2.glb',      baseScale: 0.225 },               // −10%
+  { key: 'sapin-3',      url: './glb/arbres/sapin-3.glb',      baseScale: 0.225 },               // −10%
+  { key: 'sapin-4',      url: './glb/arbres/sapin-4.glb',      baseScale: 0.250 },
+  { key: 'gros-arbre-1', url: './glb/arbres/gros-arbre-1.glb', baseScale: 0.250 },
+  { key: 'gros-arbre-3', url: './glb/arbres/gros-arbre-3.glb', baseScale: 0.250 },
+  { key: 'sapin-7',      url: './glb/arbres/sapin-7.glb',      baseScale: 0.250 },
+  { key: 'sapin-8',      url: './glb/arbres/sapin-8.glb',      baseScale: 0.250 },
+  { key: 'sapin-9',      url: './glb/arbres/sapin-9.glb',      baseScale: 0.290, spawnWeight: 18 }, // +16%
+  { key: 'sapin-10',     url: './glb/arbres/sapin-10.glb',     baseScale: 0.250 },
+  { key: 'sapin-11',     url: './glb/arbres/sapin-11.glb',     baseScale: 0.250 },
 ];
-export const TREE_SIZE_MULTIPLIER = 1.65 * 0.88 * 0.94 * 0.93 * 0.94; // −12% −6% −7% −6%
+export const TREE_SIZE_MULTIPLIER = 1.65 * 0.88 * 0.94 * 0.93 * 0.94 * 0.96 * 1.08 * 0.92 * 0.94 * 0.94 * 1.09; // −12% −6% −7% −6% −4% +8% −8% −6% −6% +9%
 // Alignement sol réel des forêts : les dalles forest sont abaissées de 30% d'épaisseur (0.12 * -0.30 = -0.036).
 // Léger enfouissement pour éviter tout flottement visible sur le relief.
-export const TREE_GROUND_OFFSET = -0.010;
+export const TREE_GROUND_OFFSET = -0.005; // +10 mm (était -0.015)
 export const TREE_CENTER_SAFE_RADIUS_EXTRA = 0.08;
 export const MIN_TREE_DISTANCE = 0.115;
 export const MAX_TREE_PLACEMENT_ATTEMPTS = 36;
@@ -238,8 +250,8 @@ export const MIN_WATER_ZONE_SECTORS = 2;
 export const BOATS_PER_WATER_COMPONENT = 1;
 export const BOAT_SPEED = 0.13;
 export const BOAT_HEADING_OFFSET = Math.PI;
-export const BOAT_MODEL_URL = './glb/bateau.glb';
-export const BOAT_TARGET_LENGTH = 0.735 * 0.88 * 0.92; // −12% −8%
+export const BOAT_MODEL_URL = './glb/decor/bateau.glb';
+export const BOAT_TARGET_LENGTH = 0.735 * 0.88 * 0.92 * 0.80; // −12% −8% −20%
 export const BOAT_Y_OFFSET = -0.018;
 export const WATER_PORT_INSET = 0.52;
 
@@ -249,7 +261,7 @@ export const WATER_PORT_INSET = 0.52;
 
 // Éclaboussures en bordure d'eau + épouvantails/corbeaux des champs.
 export const WATER_EDGE_SPLASH_Y_OFFSET = 0.012;
-export const FIELD_SURFACE_Y = 0.070;
+export const FIELD_SURFACE_Y = 0.094; // surface dessus tuile field = 0.12 × 0.783 (sync decorOverlay.js)
 export const FIELD_THICKNESS_RATIO = 0.298; // côtés du secteur field −15%
 export const SCARECROW_MIN_FIELD_TOTAL = 5;
 export const SCARECROW_SCALE = 0.62;
@@ -257,7 +269,7 @@ export const SCARECROW_SCALE = 0.62;
 // Oiseaux GLB animés des champs.
 // Le fichier contient déjà 5 oiseaux avec battement d'ailes ; le code ne fait
 // que lancer l'AnimationMixer et déplacer tout le groupe sur une orbite.
-export const FIELD_BIRD_FLOCK_MODEL_URL = './glb/birds.glb';
+export const FIELD_BIRD_FLOCK_MODEL_URL = './glb/animaux/birds.glb';
 export const FIELD_BIRD_FLOCK_TARGET_WIDTH = 0.0312;
 export const FIELD_BIRD_FLOCK_ANIMATION_SPEED = 1.0;
 
@@ -268,7 +280,7 @@ export const TRAIN_Y_OFFSET = 0.025;
 export const TRAIN_SPEED = 0.18;
 export const TRAIN_CURVE_SLOW_DISTANCE = 0.42;
 export const TRAIN_TERMINUS_SLOW_DISTANCE = 0.72;
-export const TRAIN_SCALE = 0.153;
+export const TRAIN_SCALE = 0.1454; // −5% (était 0.153)
 export const TRAIN_UNIT_SPACING = 0.30;
 export const TRAIN_MIN_WAGONS = 2;
 export const TRAIN_MAX_WAGONS = 8;
@@ -320,7 +332,7 @@ export const HEX_CHUNK_SIZE = 3;
 export const LOD_MICRO_CULL_DISTANCE = 6.6;           // −8 % (était 7.2) — fleurs, champignons
 
 // Distance caméra au-delà de laquelle les plantes/plantes.glb (plant-*, shrub-*, reed) sont masquées.
-export const LOD_PLANT_CULL_DISTANCE = 5.6;           // −8 % (était 6.1)
+export const LOD_PLANT_CULL_DISTANCE = 4.8;           // −15 % (était 5.6)
 
 // Les arbres utilisent uniquement le frustum culling (pas de distance cutoff).
 // Constante réservée pour extension future (cartes très grandes).
@@ -385,17 +397,15 @@ export const HITBOX_RESOLVE_MAX_ITER = 6;
 
 // Rayons de hitbox par catégorie d'objet (en unités world, HEX_SIZE = 1).
 // Objets durs (enregistrés en premier) : arbres, rochers, bâtiments.
-// Objets mous (utilisent tryResolve) : tonneaux, charrettes, bancs, panneaux.
+// Objets mous (utilisent tryResolve) : tonneaux, charrettes, panneaux.
 export const HITBOX_R = {
-  treeTrunk:  HEX_SIZE * 0.09 * 0.88,               // −12%
-  rockLarge:  HEX_SIZE * 0.10 * 0.85 * 0.85,        // −15% −15%
-  house:      HEX_SIZE * 0.198 * 0.93 * 0.90,        // −10% −7% −10%
-  church:     HEX_SIZE * 0.30,
-  watchtower: HEX_SIZE * 0.18 * 1.10 * 1.10,        // +10% +10%
-  barrel:     HEX_SIZE * 0.065 * 0.93,               // −7%
-  cart:       HEX_SIZE * 0.17 * 0.85,                // −15%
-  bench:      HEX_SIZE * 0.10 * 0.85,                // −15%
-  signpost:   HEX_SIZE * 0.06 * 0.85 * 0.75,        // −15% −25%
+  treeTrunk:  HEX_SIZE * 0.09 * 0.88 * 0.96,               // −12% −4%
+  rockLarge:  HEX_SIZE * 0.10 * 0.85 * 0.85 * 0.96,        // −15% −15% −4%
+  house:      HEX_SIZE * 0.198 * 0.93 * 0.90 * 0.96,        // −10% −7% −10% −4%
+  watchtower: HEX_SIZE * 0.18 * 1.10 * 1.10,               // +10% +10%
+  barrel:     HEX_SIZE * 0.065 * 0.93 * 0.90,               // −7% −10%
+  cart:       HEX_SIZE * 0.17 * 0.85 * 0.94,                // −15% −6%
+  signpost:   HEX_SIZE * 0.06 * 0.85 * 0.75,               // −15% −25%
   fountain:   HEX_SIZE * 0.13,
 };
 
@@ -422,21 +432,44 @@ export const TREE_WIND = {
 // Géométrie GPU-only (InstancedBufferGeometry + ShaderMaterial).
 // Un seul ShaderMaterial partagé pour toute la grille, uTime = globalWind.
 // Modifier librement ces valeurs pour ajuster le rendu.
-export const WHEAT_BLADE_COUNT    = 200;    // brins par secteur field — −33 % (était 300)
-export const WHEAT_BLADE_WIDTH    = 0.0024; // demi-largeur du brin (HEX_SIZE=1) — −65% −25% +60% −10% −63%
+export const WHEAT_BLADE_COUNT    = 2321;   // +9% (était 2129)
+export const WHEAT_BLADE_WIDTH    = 0.00187; // demi-largeur du brin (HEX_SIZE=1) — −65% −25% +60% −10% −63% −22%
 export const WHEAT_BLADE_SEGMENTS = 4;      // segments verticaux (qualité du bend)
 export const WHEAT_INNER_RATIO    = 0.20;   // bord intérieur du trapèze (0=centre, 1=bord)
-export const WHEAT_HEIGHT_MIN     = 0.62;   // hauteur min (scale local brin)
-export const WHEAT_HEIGHT_MAX     = 1.20;   // hauteur max (scale local brin)
-export const WHEAT_WIDTH_MIN      = 0.30;   // largeur min (scale local brin)
-export const WHEAT_WIDTH_MAX      = 0.65;   // largeur max (scale local brin)
-export const WHEAT_GLOBAL_HEIGHT  = 0.0774; // scale global Y — −65% −25% +60% −10% −7% −12%
-export const WHEAT_WIND_STRENGTH  = 0.075;  // amplitude balancement (0=immobile, 0.32=fort) — −35%
-export const WHEAT_WIND_SPEED     = 1.10;   // vitesse animation (multiplicateur temps)
+export const WHEAT_HEIGHT_MIN     = 0.505;  // hauteur min (scale local brin) — +20% (était 0.421)
+export const WHEAT_HEIGHT_MAX     = 0.977;  // hauteur max (scale local brin) — +20% (était 0.814)
+export const WHEAT_WIDTH_MIN      = 0.204;  // largeur min (scale local brin) — −22 % (était 0.261)
+export const WHEAT_WIDTH_MAX      = 0.441;  // largeur max (scale local brin) — −22 % (était 0.566)
+export const WHEAT_GLOBAL_HEIGHT  = 0.0630; // scale global Y — +20% (était 0.0525)
+export const WHEAT_WIND_STRENGTH  = 0.0255; // amplitude balancement (0=immobile, 0.32=fort) — −15%
+export const WHEAT_WIND_SPEED     = 1.65;   // vitesse animation (multiplicateur temps)
 export const WHEAT_BOTTOM_COLOR   = 0x8f7a20; // couleur base de tige
 export const WHEAT_TOP_COLOR      = 0xB8821E; // couleur haut de tige (ambré chaud)
 export const WHEAT_EAR_COLOR      = 0xCE9C28; // couleur épi (or ambré)
-export const LOD_WHEAT_CULL_DISTANCE = 6.6;  // −8 % (était 7.2)
+export const LOD_WHEAT_CULL_DISTANCE = 5.6;  // −15 % (était 6.6)
+
+// ── Prairie (Bezier Grass) — inspiré du shader ShaderToy lslGR8 ──────────────
+// Spine Bezier cubique + vent value-noise (Dave Hoskins), 2 strips croisés.
+export const GRASS_BLADE_COUNT    = 1280;   // brins par secteur prairie — +17 % (était 1094)
+export const GRASS_BLADE_WIDTH    = 0.001766;// demi-largeur brin (HEX_SIZE=1) — −16 % (était 0.002102)
+export const GRASS_BLADE_SEGMENTS = 3;       // segments vertx (ShaderToy BLADE_SEGMENTS default)
+export const GRASS_INNER_RATIO    = 0.15;    // bord intérieur trapèze (plus proche du centre que blé)
+export const GRASS_HEIGHT_MIN     = 0.319;   // scale hauteur min — −25 % (était 0.425)
+export const GRASS_HEIGHT_MAX     = 0.574;   // scale hauteur max — −25 % (était 0.765)
+export const GRASS_WIDTH_MIN      = 0.365;   // scale largeur min — −35 % (était 0.561)
+export const GRASS_WIDTH_MAX      = 0.763;   // scale largeur max — −35 % (était 1.173)
+export const GRASS_GLOBAL_HEIGHT  = 0.02716; // scale global Y — −16 % (était 0.03233)
+export const GRASS_TILT_MIN       = 0.25;   // BLADE_TILT min (penchement avant)
+export const GRASS_TILT_MAX       = 0.42;   // BLADE_TILT max
+export const GRASS_BEND_MIN       = 0.12;   // BLADE_BEND min (courbure)
+export const GRASS_BEND_MAX       = 0.22;   // BLADE_BEND max
+export const GRASS_WIND_STRENGTH  = 1.50;   // amplitude vent — proportionnel ShaderToy
+export const GRASS_WIND_SPEED     = 0.5625; // vitesse vent +25 % (était 0.45)
+export const GRASS_WIND_SWAY      = 0.08;   // balancement sinus (ShaderToy WIND_SWAY = 0.08)
+export const GRASS_BOTTOM_COLOR   = 0x3a6a18; // vert sombre base de tige
+export const GRASS_MID_COLOR      = 0x5a8a28; // vert moyen milieu de tige
+export const GRASS_TIP_COLOR      = 0x8abc38; // vert clair / jaune pointe
+export const LOD_GRASS_CULL_DISTANCE = 6.4;   // −15 % (était 7.5)
 
 // Distance caméra au-delà de laquelle les labels de zones contigüe sont masqués.
 export const LOD_ZONE_LABEL_CULL_DISTANCE = 28.2;     // −8 % (était 30.6)
@@ -461,9 +494,9 @@ export const ROCK_DENSITY = {
   chanceGrass:       0.43,  // +10 % (était 0.39)
   chanceForest:      0.58,  // +10 % (était 0.53)
   footprint:         0.038, // réduit (était 0.055) : rochers plus serrés → monticules
-  bigRockThreshold:  0.85,  // ~15 % de gros rochers
+  bigRockThreshold:  0.92,  // ~8 % de gros rochers (exceptionnels)
   bigRockScaleMin:   1.10,
-  bigRockScaleRange: 0.30,  // → [1.10, 1.40]  (gros plus gros, sans excès)
+  bigRockScaleRange: 0.78,  // → [1.10, 1.88]  (max +12 %)
   normalScaleMin:    0.55,
   normalScaleRange:  0.40   // → [0.55, 0.95]  (petits plus petits, médiane ≈ 0.75)
 };

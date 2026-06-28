@@ -12,13 +12,15 @@
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_TYPES, HEX_SIZE, SECTOR_DEFS } from './config.js';
-import { hashUnitFull as hashUnit } from './stable/hashUtils.js';
-import { createOuterVertices } from './stable/hexGeometry.js';
-import { axialToWorld } from './stable/hex.js';
+import { hashUnitFull as hashUnit } from './hashUtils.js';
+import { createOuterVertices } from './hexGeometry.js';
+import { axialToWorld } from './hex.js';
 import { getEdgeType } from './tileGenerator.js';
-import { getGlobalWindUniforms } from './stable/globalWind.js';
-import { WORLD_CURVATURE_UNIFORMS } from './stable/worldCurvature.js';
+import { getGlobalWindUniforms } from './globalWind.js';
+import { WORLD_CURVATURE_UNIFORMS } from './worldCurvature.js';
 import { getTerrainSurfaceY } from './terrainHeight.js';
+import { wheatVertexShader, wheatFragmentShader } from './shaders/shaderChampBle.js';
+import { getSectorContour, getTileCenterType, getCenterContour } from './tileMesh.js';
 import {
   WHEAT_BLADE_COUNT, WHEAT_BLADE_WIDTH, WHEAT_BLADE_SEGMENTS,
   WHEAT_INNER_RATIO,
@@ -119,83 +121,9 @@ function getWheatMaterial() {
       uEarColor:     { value: new THREE.Color(WHEAT_EAR_COLOR) },
       uWorldCurvatureEnabled: WORLD_CURVATURE_UNIFORMS.uWorldCurvatureEnabled
     },
-    vertexShader: /* glsl */`
-      attribute vec2  aOffset;
-      attribute float aYaw;
-      attribute float aHeight;
-      attribute float aWidth;
-      attribute float aPhase;
-      attribute float aColorMix;
-      attribute float part;
-
-      uniform float uTime;
-      uniform float uWindStrength;
-      uniform float uWindSpeed;
-      uniform float uGlobalHeight;
-      uniform vec2  uWindDir;
-      uniform float uWorldCurvatureEnabled;
-
-      varying float vHeight;
-      varying float vPart;
-      varying float vColorMix;
-
-      mat2 rot2(float a) {
-        float s = sin(a), c = cos(a);
-        return mat2(c, -s, s, c);
-      }
-
-      void main() {
-        vec3 p = position;
-        float h = clamp(p.y, 0.0, 1.15);
-
-        // Scale hauteur et largeur par les attributs per-instance
-        p.y  *= aHeight * uGlobalHeight;
-        p.xz *= aWidth;
-
-        // Rotation locale de chaque brin
-        p.xz = rot2(aYaw) * p.xz;
-
-        // Vent : deux fréquences déphasées pour éviter le balancement mécanique
-        vec2  dir  = normalize(uWindDir);
-        float wA = sin(uTime * uWindSpeed + aPhase + aOffset.x * 1.45 + aOffset.y * 0.85);
-        float wB = sin(uTime * (uWindSpeed * 0.63) + aPhase * 0.47 + aOffset.y * 1.75);
-        float bend = (wA * 0.72 + wB * 0.28) * uWindStrength * h * h;
-        p.xz += dir * bend;
-        // Petit twist latéral pour donner de la vie sans effet algue
-        p.xz += vec2(-dir.y, dir.x) * wB * uWindStrength * 0.18 * h;
-
-        // Offset monde (position du brin dans la tuile)
-        p.xz += aOffset;
-
-        vHeight   = h;
-        vPart     = part;
-        vColorMix = aColorMix;
-
-        // Courbure monde (mode bouliste) : passer par l'espace monde
-        vec4 worldPos = modelMatrix * vec4(p, 1.0);
-        if (uWorldCurvatureEnabled > 0.5) {
-          float dist2 = dot(worldPos.xz, worldPos.xz);
-          worldPos.y -= min(240.0, dist2 / (2.0 * 22.0));
-        }
-        gl_Position = projectionMatrix * viewMatrix * worldPos;
-      }
-    `,
-    fragmentShader: /* glsl */`
-      uniform vec3 uBottomColor;
-      uniform vec3 uTopColor;
-      uniform vec3 uEarColor;
-
-      varying float vHeight;
-      varying float vPart;
-      varying float vColorMix;
-
-      void main() {
-        vec3 blade = mix(uBottomColor, uTopColor, smoothstep(0.0, 1.0, vHeight));
-        blade = mix(blade, vec3(1.0, 0.74, 0.23), vColorMix * 0.22);
-        vec3 col  = mix(blade, uEarColor, step(0.5, vPart));
-        gl_FragColor = vec4(col, 1.0);
-      }
-    `
+    // Shaders externalisés dans shaders/shaderChampBle.js
+    vertexShader:   wheatVertexShader,
+    fragmentShader: wheatFragmentShader
   });
   return _wheatMaterial;
 }
@@ -211,21 +139,44 @@ function mulberry32(seed) {
   };
 }
 
-// ─── Distribution uniforme dans un trapèze convexe ───────────────────────────
-function triArea(a, b, c) {
-  return Math.abs((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)) * 0.5;
+// ─── Sampler polygone (contour réel après turbulence) ────────────────────────
+// Remplace randomPointInTrapezoid : utilise le polygone retourné par getSectorContour
+// plutôt qu'un trapèze idéal, pour aligner le semis sur la géométrie réellement rendue.
+//
+// Convention : getSectorContour renvoie {x, z}. On mappe z → y (= Z tile-local)
+// pour rester compatible avec l'attribut aOffset {x, y→z} du shader blé.
+
+function buildPolygonSampler(contour) {
+  const pts  = contour.map(p => ({ x: p.x, y: p.z }));
+  const tris = THREE.ShapeUtils.triangulateShape(
+    pts.map(p => new THREE.Vector2(p.x, p.y)), []
+  );
+  let total = 0;
+  const areas = tris.map(([ai, bi, ci]) => {
+    const pa = pts[ai], pb = pts[bi], pc = pts[ci];
+    const a = Math.abs((pb.x - pa.x) * (pc.y - pa.y) - (pc.x - pa.x) * (pb.y - pa.y)) * 0.5;
+    total += a;
+    return a;
+  });
+  total = total || 1;
+  const cdf = [];
+  let cum = 0;
+  for (const a of areas) { cum += a / total; cdf.push(cum); }
+  return { pts, tris, cdf };
 }
 
-function randomPointInTrapezoid(rng, quad) {
-  const [a, b, c, d] = quad;
-  const s1 = triArea(a, b, c);
-  const s2 = triArea(a, c, d);
+function randomPointInPolygon(rng, sampler) {
+  // Consomme 3 appels rng() — identique à l'ancienne randomPointInTrapezoid.
+  const r = rng();
+  let idx = sampler.cdf.findIndex(w => r <= w);
+  if (idx < 0) idx = sampler.tris.length - 1;
+  const [ai, bi, ci] = sampler.tris[idx];
+  const pa = sampler.pts[ai], pb = sampler.pts[bi], pc = sampler.pts[ci];
   let u = rng(), v = rng();
-  const [p, q, r] = rng() < s1 / (s1 + s2) ? [a, b, c] : [a, c, d];
   if (u + v > 1) { u = 1 - u; v = 1 - v; }
   return {
-    x: p.x + u * (q.x - p.x) + v * (r.x - p.x),
-    y: p.y + u * (q.y - p.y) + v * (r.y - p.y)   // y = Z en coordonnées tile-local
+    x: pa.x + u * (pb.x - pa.x) + v * (pc.x - pa.x),
+    y: pa.y + u * (pb.y - pa.y) + v * (pc.y - pa.y)  // y = Z tile-local
   };
 }
 
@@ -260,6 +211,10 @@ export function rebuildFieldWheatOverlay(group, placedTiles) {
   // byChunk : chunkKey → { meshes[], centers[] }
   const byChunk = new Map();
 
+  // Centre hexagonal : hexagone régulier sans turbulence, identique pour toutes les tuiles.
+  // Pré-calculé une seule fois avant la boucle pour éviter N reconstructions inutiles.
+  const _centerSampler = buildPolygonSampler(getCenterContour());
+
   for (const placedTile of placedTiles.values()) {
     const tileWorld = axialToWorld(placedTile.q, placedTile.r);
     const vertices  = createOuterVertices();  // tile-local, rayon HEX_SIZE
@@ -282,12 +237,9 @@ export function rebuildFieldWheatOverlay(group, placedTiles) {
       };
       const surfaceY = getTerrainSurfaceY(sectorCenterLocal, EDGE_TYPES.field, 0);
 
-      const quad = [
-        { x: vA.x * WHEAT_INNER_RATIO, y: vA.z * WHEAT_INNER_RATIO },
-        { x: vA.x,                     y: vA.z                     },
-        { x: vB.x,                     y: vB.z                     },
-        { x: vB.x * WHEAT_INNER_RATIO, y: vB.z * WHEAT_INNER_RATIO }
-      ];
+      // Contour réel du secteur après turbulence (bords grignotés, identique au rendu)
+      const contour = getSectorContour(sector, placedTile.tile.edges, EDGE_TYPES.field);
+      const sampler = buildPolygonSampler(contour);
 
       // Génération per-instance (PRNG seedé depuis FNV-1a, déterministe)
       const count   = WHEAT_BLADE_COUNT;
@@ -302,7 +254,7 @@ export function rebuildFieldWheatOverlay(group, placedTiles) {
       const rng  = mulberry32(seed);
 
       for (let i = 0; i < count; i++) {
-        const p         = randomPointInTrapezoid(rng, quad);
+        const p         = randomPointInPolygon(rng, sampler);
         offsets[i * 2]     = p.x;
         offsets[i * 2 + 1] = p.y;
         yaws[i]    = rng() * Math.PI * 2;
@@ -337,12 +289,69 @@ export function rebuildFieldWheatOverlay(group, placedTiles) {
       mesh.receiveShadow  = false;
       mesh.userData.disableCastShadow = true;  // protège contre la traversée de threeSetup.js
       // Positionné à la vraie surface du champ (terrain relief inclus)
-      mesh.position.set(tileWorld.x, surfaceY, tileWorld.z);
+      mesh.position.set(tileWorld.x, surfaceY + 0.004, tileWorld.z); // +4 mm : base des brins au-dessus de la surface visuelle
 
       if (!byChunk.has(chunkKey)) byChunk.set(chunkKey, { meshes: [], centers: [] });
       const chunk = byChunk.get(chunkKey);
       chunk.meshes.push(mesh);
       chunk.centers.push(new THREE.Vector3(tileWorld.x, surfaceY, tileWorld.z));
+    }
+
+    // ─── Centre de la tuile (field) ───────────────────────────────────────────
+    // createCenterMesh() utilise le même hexagone régulier (centerRadiusScale, sans turbulence).
+    // On génère ici le mesh brins de blé correspondant pour couvrir le centre.
+    const _cType = getTileCenterType(placedTile.tile);
+    if (_cType === EDGE_TYPES.field) {
+      const _cSurfaceY  = getTerrainSurfaceY({ x: 0, z: 0 }, EDGE_TYPES.field, 0);
+      const _cCount     = WHEAT_BLADE_COUNT;
+      const _cOffsets   = new Float32Array(_cCount * 2);
+      const _cYaws      = new Float32Array(_cCount);
+      const _cHeights   = new Float32Array(_cCount);
+      const _cWidths    = new Float32Array(_cCount);
+      const _cPhases    = new Float32Array(_cCount);
+      const _cColors    = new Float32Array(_cCount);
+
+      const _cSeed = hashUnit(`${placedTile.key}:center:wheat`);
+      const _cRng  = mulberry32(_cSeed);
+
+      for (let i = 0; i < _cCount; i++) {
+        const p = randomPointInPolygon(_cRng, _centerSampler);
+        _cOffsets[i * 2]     = p.x;
+        _cOffsets[i * 2 + 1] = p.y;
+        _cYaws[i]    = _cRng() * Math.PI * 2;
+        _cHeights[i] = WHEAT_HEIGHT_MIN + _cRng() * (WHEAT_HEIGHT_MAX - WHEAT_HEIGHT_MIN);
+        _cWidths[i]  = WHEAT_WIDTH_MIN  + _cRng() * (WHEAT_WIDTH_MAX  - WHEAT_WIDTH_MIN);
+        _cPhases[i]  = _cRng() * Math.PI * 2;
+        _cColors[i]  = _cRng();
+      }
+
+      const _cGeo = baseGeo.clone();
+      const _cBsH = WHEAT_HEIGHT_MAX * WHEAT_GLOBAL_HEIGHT * 1.08;
+      // centerRadiusScale = 0.33 → rayon bounding sphere légèrement supérieur
+      _cGeo.boundingSphere = new THREE.Sphere(
+        new THREE.Vector3(0, _cBsH * 0.5, 0),
+        HEX_SIZE * 0.40 + _cBsH
+      );
+      _cGeo.setAttribute('aOffset',   new THREE.InstancedBufferAttribute(_cOffsets,  2));
+      _cGeo.setAttribute('aYaw',      new THREE.InstancedBufferAttribute(_cYaws,     1));
+      _cGeo.setAttribute('aHeight',   new THREE.InstancedBufferAttribute(_cHeights,  1));
+      _cGeo.setAttribute('aWidth',    new THREE.InstancedBufferAttribute(_cWidths,   1));
+      _cGeo.setAttribute('aPhase',    new THREE.InstancedBufferAttribute(_cPhases,   1));
+      _cGeo.setAttribute('aColorMix', new THREE.InstancedBufferAttribute(_cColors,   1));
+      _cGeo.instanceCount = _cCount;
+
+      const _cMesh = new THREE.Mesh(_cGeo, material);
+      _cMesh.name           = `wheat-${placedTile.key}-center`;
+      _cMesh.frustumCulled  = false;
+      _cMesh.castShadow     = false;
+      _cMesh.receiveShadow  = false;
+      _cMesh.userData.disableCastShadow = true;
+      _cMesh.position.set(tileWorld.x, _cSurfaceY + 0.004, tileWorld.z); // +4 mm cohérent avec les secteurs
+
+      if (!byChunk.has(chunkKey)) byChunk.set(chunkKey, { meshes: [], centers: [] });
+      const _cChunk = byChunk.get(chunkKey);
+      _cChunk.meshes.push(_cMesh);
+      _cChunk.centers.push(new THREE.Vector3(tileWorld.x, _cSurfaceY, tileWorld.z));
     }
   }
 

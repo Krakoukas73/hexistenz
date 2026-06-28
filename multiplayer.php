@@ -6,7 +6,7 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
 $rootDir = __DIR__;
-$gamesDir = $rootDir . DIRECTORY_SEPARATOR . 'games';
+$gamesDir = $rootDir . DIRECTORY_SEPARATOR . 'json' . DIRECTORY_SEPARATOR . 'games';
 
 try {
     if (!is_dir($gamesDir)) {

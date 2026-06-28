@@ -1,7 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_COLOR, EDGE_TYPES } from './config.js';
 import { getRealisticWaterMaterial } from './realisticWater.js';
-import { applyGlobalWindToMaterial } from './stable/globalWind.js';
 
 const materialCache = new Map();
 const generatedTextureCache = new Map();
@@ -38,21 +37,6 @@ export function getBiomeMaterial(type, opacity = 1) {
 
   const material = new THREE.MeshLambertMaterial(materialConfig);
   material.name = `biome-${type}-top-material`;
-
-  if (type === EDGE_TYPES.field) {
-    applyGlobalWindToMaterial(material, {
-      strength: 0.052,
-      speed: 1.62,
-      frequency: 0.84,
-      turbulence: 0.44,
-      // Même rampe que les flancs : le bord supérieur des côtés et le dessus
-      // reçoivent exactement le même décalage, sinon ça ouvre des trous.
-      heightStart: -0.160,
-      heightEnd: 0.036,
-      gustStrength: 0.32,
-      detailStrength: 0.14
-    });
-  }
 
   materialCache.set(key, material);
   return material;
@@ -93,20 +77,6 @@ export function getBiomeSideMaterial(type, opacity = 1) {
 
   const material = new THREE.MeshLambertMaterial(materialConfig);
   material.name = `biome-${type}-side-material`;
-
-  if (type === EDGE_TYPES.field) {
-    applyGlobalWindToMaterial(material, {
-      strength: 0.052,
-      speed: 1.62,
-      frequency: 0.84,
-      turbulence: 0.44,
-      // Bas du flanc ancré, haut du flanc solidaire du dessus.
-      heightStart: -0.160,
-      heightEnd: 0.036,
-      gustStrength: 0.32,
-      detailStrength: 0.14
-    });
-  }
 
   materialCache.set(key, material);
   return material;
@@ -451,34 +421,38 @@ function drawHouseTexture(ctx) {
 }
 
 function drawRailGroundTexture(ctx) {
-  ctx.fillStyle = '#8d877c';
+  // Base : gris ballast (granit concassé)
+  ctx.fillStyle = '#6e7275';
   ctx.fillRect(0, 0, 128, 128);
 
   const gradient = ctx.createLinearGradient(0, 0, 128, 128);
-  gradient.addColorStop(0, 'rgba(188, 184, 171, 0.44)');
-  gradient.addColorStop(0.5, 'rgba(104, 99, 91, 0.32)');
-  gradient.addColorStop(1, 'rgba(215, 205, 180, 0.30)');
+  gradient.addColorStop(0, 'rgba(190, 194, 198, 0.38)');
+  gradient.addColorStop(0.5, 'rgba(80, 84, 88, 0.28)');
+  gradient.addColorStop(1, 'rgba(160, 165, 170, 0.30)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 128, 128);
 
-  // Ballast : lit de gravier sous les rails 3D/overlay.
-  for (let i = 0; i < 170; i++) {
+  // Ballast : graviers gris variés (granit, calcaire, ardoise)
+  for (let i = 0; i < 200; i++) {
     const x = (i * 43 + (i % 9) * 17) % 128;
     const y = (i * 61 + (i % 7) * 11) % 128;
-    const radius = 1.1 + (i % 4) * 0.55;
-    const tone = i % 5;
-    ctx.fillStyle = tone === 0 ? 'rgba(235, 230, 212, 0.40)'
-      : tone === 1 ? 'rgba(55, 55, 52, 0.24)'
-      : tone === 2 ? 'rgba(120, 114, 104, 0.34)'
-      : 'rgba(164, 155, 137, 0.34)';
+    const radius = 1.0 + (i % 4) * 0.55;
+    const tone = i % 6;
+    ctx.fillStyle = tone === 0 ? 'rgba(210, 215, 218, 0.45)'  // clair
+      : tone === 1 ? 'rgba(45, 48, 52, 0.30)'                 // sombre
+      : tone === 2 ? 'rgba(100, 105, 110, 0.40)'              // moyen
+      : tone === 3 ? 'rgba(140, 145, 150, 0.38)'              // gris clair
+      : tone === 4 ? 'rgba(75, 80, 85, 0.35)'                 // gris foncé
+      : 'rgba(175, 180, 182, 0.32)';                          // gris pâle
     ctx.beginPath();
     ctx.ellipse(x, y, radius * 1.4, radius, (i % 6) * 0.42, 0, Math.PI * 2);
     ctx.fill();
   }
 
+  // Légères stries diagonales (ombres entre les rails)
   for (let x = -130; x < 260; x += 24) {
-    ctx.strokeStyle = 'rgba(74, 70, 64, 0.22)';
-    ctx.lineWidth = 6;
+    ctx.strokeStyle = 'rgba(50, 53, 56, 0.18)';
+    ctx.lineWidth = 5;
     ctx.beginPath();
     ctx.moveTo(x, -10);
     ctx.lineTo(x + 128, 138);

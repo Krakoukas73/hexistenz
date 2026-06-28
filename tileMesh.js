@@ -1,12 +1,13 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_ORDER, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, FIELD_THICKNESS_RATIO } from './config.js';
-import { createOuterVertices } from './stable/hexGeometry.js';
+import { WORLD_CURVATURE } from './worldCurvature.js';
+import { createOuterVertices } from './hexGeometry.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getBiomeMaterial, getBiomeSideMaterial } from './tileTextures.js';
 import { createRailCenterOverlay } from './tileRailOverlay.js';
 import { createRoadCenterOverlay } from './tileRoadOverlay.js';
 import { createValueLabel, getMiniValueLabel } from './tileLabels.js';
-import { registerCurvedSprite } from './stable/threeSetup.js';
+import { registerCurvedSprite } from './threeSetup.js';
 
 const RAGGED_EDGE = {
   // Morcelage visuel des bords : les bords externes débordent vers
@@ -35,32 +36,30 @@ const TERRAIN_RELIEF = {
   edgeFadeStart: 0.30
 };
 
+// NB : constantes ci-dessous conservées pour référence — la géométrie réelle
+// est contrôlée par getSectorDepth() et TILE_VISUAL dans variables.js.
 const THIN_BIOME_DEPTH_RATIO = {
-  // Maisons et forêts validées : dalles 30% moins épaisses,
-  // dessus toujours au niveau de pose, dessous remonté uniquement pour ces biomes.
-  house: 0.70,
-  forest: 0.70
+  house:  0.708, // sync variables.js
+  forest: 0.733,
+  grass:  0.683,
 };
 
 const BIOME_HEIGHT_RATIO = {
-  // Règle immuable : le volume complet reste ancré sur la grille.
-  // On ne translate pas les tuiles : on change seulement la hauteur locale
-  // du dessus des biomes pour casser les coplanarités aux jonctions.
-  // Champ de blé : plus épais au-dessus du niveau standard.
-  // Prairie : dessus nettement abaissé pour obtenir une dalle plus fine,
-  // tout en gardant le dessous sur la même base de grille que les autres tuiles.
-  field: 0.0462, // −65% −12%
-  grass: -0.45
+  field: 0.0462, // sync variables.js
 };
 
 export function createTileMesh(tileOrEdges, options = {}) {
   const edges = tileOrEdges.edges ?? tileOrEdges;
   const center = countEdgesOfType(edges, 'water') >= 2 ? 'water' : (tileOrEdges.center ?? pickCenterType(edges));
   const opacity = options.opacity ?? 1;
+  const worldX  = options.worldX ?? 0;
+  const worldZ  = options.worldZ ?? 0;
+  // Nombre de tuiles voisines qui sont de l'eau (0–6) → profondeur bathymétrique.
+  const waterNeighborCount = options.waterNeighborCount ?? 0;
   const group = new THREE.Group();
 
-  group.add(...createSectorMeshes(edges, opacity));
-  group.add(createCenterMesh(center, opacity));
+  group.add(...createSectorMeshes(edges, opacity, worldX, worldZ, waterNeighborCount));
+  group.add(createCenterMesh(center, opacity, worldX, worldZ, waterNeighborCount));
 
   const roadCenterOverlay = createRoadCenterOverlay(edges, SECTOR_DEFS, createOuterVertices);
   if (roadCenterOverlay) group.add(roadCenterOverlay);
@@ -99,7 +98,7 @@ export function renderMiniTile(tile) {
   `;
 }
 
-function createSectorMeshes(edges, opacity) {
+function createSectorMeshes(edges, opacity, worldX = 0, worldZ = 0, waterNeighborCount = 0) {
   const vertices = createOuterVertices(HEX_SIZE * TILE_VISUAL.radiusScale);
 
   return SECTOR_DEFS.map((sector, sectorIndex) => {
@@ -120,7 +119,10 @@ function createSectorMeshes(edges, opacity) {
       sector.a,
       sector.b,
       previousType !== type,
-      nextType !== type
+      nextType !== type,
+      worldX,
+      worldZ,
+      waterNeighborCount
     );
     const materials = [getBiomeMaterial(type, opacity), getBiomeSideMaterial(type, opacity)];
     const mesh = new THREE.Mesh(geometry, materials);
@@ -128,7 +130,7 @@ function createSectorMeshes(edges, opacity) {
     mesh.receiveShadow = true;
     mesh.castShadow = false;
     mesh.userData.disableCastShadow = true;
-    mesh.position.y = getBiomeSurfaceY(type, TILE_VISUAL.sectorY);
+    mesh.position.y = getBiomeSurfaceY(type);
 
     const group = new THREE.Group();
     group.userData.edgeKey = sector.key;
@@ -146,31 +148,51 @@ function createSectorMeshes(edges, opacity) {
   });
 }
 
-function createSectorGeometry(a, b, type, aIndex, bIndex, raggedLeft = true, raggedRight = true) {
-  return createThickSectorGeometry(a, b, getSectorDepth(type), type, aIndex, bIndex, raggedLeft, raggedRight);
+function createSectorGeometry(a, b, type, aIndex, bIndex, raggedLeft = true, raggedRight = true, worldX = 0, worldZ = 0, waterNeighborCount = 0) {
+  return createThickSectorGeometry(a, b, getSectorDepth(type), type, aIndex, bIndex, raggedLeft, raggedRight, worldX, worldZ, waterNeighborCount);
 }
 
 function getSectorDepth(type) {
-  if (type === 'water') {
-    return TILE_VISUAL.waterThickness ?? ((TILE_VISUAL.tileThickness ?? 0.16) * 0.5);
-  }
-
-  if (type === 'rail') {
-    return TILE_VISUAL.railThickness ?? TILE_VISUAL.waterThickness ?? ((TILE_VISUAL.tileThickness ?? 0.16) * 0.5);
-  }
-
-  const baseDepth = TILE_VISUAL.tileThickness ?? 0.16;
-
-  // Maisons/forêts : le bug venait de la réduction d'épaisseur appliquée
-  // vers le bas uniquement, ce qui remontait leur dessous au-dessus de la
-  // grille. On garde donc la base commune, et leur faible épaisseur est
-  // portée par getBiomeLocalTopY().
-  if (THIN_BIOME_DEPTH_RATIO[type]) return baseDepth;
-
-  return baseDepth + getBiomeLocalTopY(type);
+  // Eau : minimum absolu.
+  if (type === 'water') return TILE_VISUAL.waterThickness ?? ((TILE_VISUAL.tileThickness ?? 0.12) * 0.5);
+  // Rail : légèrement au-dessus de l'eau.
+  if (type === 'rail') return TILE_VISUAL.railThickness ?? TILE_VISUAL.waterThickness ?? ((TILE_VISUAL.tileThickness ?? 0.12) * 0.5);
+  // Terre : field max (0.12), les autres regroupés à mi-chemin eau/field ≈ 0.082–0.088.
+  // Écart de 3 mm par palier pour supprimer le Z-fight même caméra haute.
+  const base = TILE_VISUAL.tileThickness ?? 0.12;
+  if (type === 'field')  return base * 0.783; // ≈ 0.094 (forest + 1 palier de 0.050)
+  if (type === 'forest') return base * 0.733; // ≈ 0.088
+  if (type === 'house')  return base * 0.708; // ≈ 0.085
+  if (type === 'grass')  return base * 0.683; // ≈ 0.082
+  return base; // fallback
 }
 
-function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bIndex = 1, raggedLeft = true, raggedRight = true) {
+/**
+ * Calcule le décalage XZ à appliquer au BAS des faces latérales en mode bouliste,
+ * pour qu'elles paraissent perpendiculaires à la surface courbée après le drop GPU.
+ *
+ * Formule exacte : après le drop GPU ΔY = -(wx·Δx + wz·Δz)/R, pour que la direction
+ * visuelle de la tranche soit la normale de surface (wx/R, 1, wz/R), le décalage
+ * bottom XZ doit être k·depth·(wx, wz)/R avec k = R²/(R²+r²).
+ *
+ * @param {number} localX  X local du vertex (relatif au centre de la tuile)
+ * @param {number} localZ  Z local du vertex
+ * @param {number} worldX  X monde du centre de la tuile
+ * @param {number} worldZ  Z monde du centre de la tuile
+ * @param {number} depth   épaisseur de la tranche (profondeur de la face latérale)
+ * @returns {{ dx: number, dz: number }}
+ */
+function _sideBottomShift(localX, localZ, worldX, worldZ, depth) {
+  if (!WORLD_CURVATURE.enabled) return { dx: 0, dz: 0 };
+  const R  = WORLD_CURVATURE.radius;
+  const wx = worldX + localX;
+  const wz = worldZ + localZ;
+  const R2 = R * R;
+  const k  = R2 / (R2 + wx * wx + wz * wz); // pré-compensation GPU
+  return { dx: depth * k * wx / R, dz: depth * k * wz / R };
+}
+
+function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bIndex = 1, raggedLeft = true, raggedRight = true, worldX = 0, worldZ = 0, waterNeighborCount = 0) {
   const geometry = new THREE.BufferGeometry();
   const innerRadius = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
   const innerA = pointAtRadius(a, innerRadius);
@@ -188,7 +210,9 @@ function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bInd
   const vertexData = [];
   const uvData = [];
 
-  const topHeights = topPoints.map((point, index) => getTerrainTopY(point, type, index) + RAGGED_EDGE.lift);
+  // Surface plate : plus de relief vertical sur la face supérieure.
+  // Les bords grignotés (XZ) sont conservés via createRaggedOuterEdge / createRaggedInnerEdge.
+  const topHeights = topPoints.map(() => getBiomeLocalTopY(type) + RAGGED_EDGE.lift);
   const bottomHeights = topHeights.map(() => getBiomeLocalBottomY(type, depth));
 
   for (let i = 0; i < topPoints.length; i += 1) {
@@ -248,13 +272,19 @@ function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bInd
     const u1 = perimeterLengths[i + 1] / perimeter;
     const baseIndex = vertexData.length / 3;
 
-    vertexData.push(aPoint.x, topHeights[i], aPoint.z);
+    // En mode bouliste, les sommets du bas des faces latérales sont décalés vers
+    // l'intérieur (vers le centre mondial) pour que les tranches semblent
+    // perpendiculaires à la surface courbée après le drop GPU.
+    const sa = _sideBottomShift(aPoint.x, aPoint.z, worldX, worldZ, depth);
+    const sb = _sideBottomShift(bPoint.x, bPoint.z, worldX, worldZ, depth);
+
+    vertexData.push(aPoint.x,          topHeights[i],    aPoint.z);
     uvData.push(u0, 1);
-    vertexData.push(aPoint.x, bottomHeights[i], aPoint.z);
+    vertexData.push(aPoint.x - sa.dx,  bottomHeights[i], aPoint.z - sa.dz);
     uvData.push(u0, 0);
-    vertexData.push(bPoint.x, bottomHeights[next], bPoint.z);
+    vertexData.push(bPoint.x - sb.dx,  bottomHeights[next], bPoint.z - sb.dz);
     uvData.push(u1, 0);
-    vertexData.push(bPoint.x, topHeights[next], bPoint.z);
+    vertexData.push(bPoint.x,          topHeights[next], bPoint.z);
     uvData.push(u1, 1);
 
     indices.push(baseIndex, baseIndex + 1, baseIndex + 2);
@@ -271,6 +301,15 @@ function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bInd
   geometry.addGroup(0, topIndexCount, 0);
   geometry.addGroup(topIndexCount, bottomIndexCount + sideIndexCount, 1);
   geometry.computeVertexNormals();
+
+  // Attribute bathymétrique pour le water ShaderMaterial (aShoreDepth).
+  // 0 = rive isolée, 1 = eau ouverte (waterNeighborCount / 6).
+  // Les secteurs non-eau n'ont pas cet attribute : le shader recevra 0 (fallback rive).
+  if (type === 'water') {
+    const nVerts = vertexData.length / 3;
+    geometry.setAttribute('aShoreDepth',
+      new THREE.BufferAttribute(new Float32Array(nVerts).fill(waterNeighborCount / 6.0), 1));
+  }
 
   return geometry;
 }
@@ -313,24 +352,14 @@ function hashTerrainPoint(point, type, salt) {
 }
 
 function getBiomeLocalTopY(type) {
-  if (type === 'water') return 0;
-
-  const baseDepth = TILE_VISUAL.tileThickness ?? 0.16;
-  const thinRatio = THIN_BIOME_DEPTH_RATIO[type];
-
-  // Forêt/maison sont 30% moins épaisses, mais leur dessous doit rester
-  // collé au même plan que les autres tuiles. Leur dessus est donc abaissé,
-  // au lieu de laisser le dessous flotter.
-  if (thinRatio) return baseDepth * (thinRatio - 1);
-
-  return baseDepth * (BIOME_HEIGHT_RATIO[type] ?? 0);
+  // Surface plate : toutes les tuiles ont leur dessus au niveau local 0.
+  // Le positionnement monde est assuré par getBiomeSurfaceY (mesh.position.y).
+  return 0;
 }
 
 function getBiomeLocalBottomY(type, depth) {
-  if (type === 'water' || type === 'rail') return -depth;
-  // Secteur field plus fin : face latérale réduite de 65%
-  if (type === 'field') return -(TILE_VISUAL.tileThickness ?? depth) * FIELD_THICKNESS_RATIO;
-  return -(TILE_VISUAL.tileThickness ?? depth);
+  // Fond toujours à -depth (local). Eau : depth=waterThickness. Terre : depth=tileThickness.
+  return -depth;
 }
 
 function createRaggedOuterEdge(a, b, type) {
@@ -466,7 +495,7 @@ function uvForPoint(point) {
   ];
 }
 
-function createCenterMesh(centerType, opacity) {
+function createCenterMesh(centerType, opacity, worldX = 0, worldZ = 0, waterNeighborCount = 0) {
   const depth = getSectorDepth(centerType);
   const radius = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
   const vertices = createOuterVertices(radius);
@@ -475,7 +504,7 @@ function createCenterMesh(centerType, opacity) {
   // CylinderGeometry peut avoir une orientation/triangulation différente selon
   // Three.js ; ici on ferme explicitement la zone centrale contre les 6 côtés
   // internes pour supprimer les micro-trous visuels.
-  const geometry = createPrismGeometry(vertices, depth, centerType);
+  const geometry = createPrismGeometry(vertices, depth, centerType, worldX, worldZ, waterNeighborCount);
   const mesh = new THREE.Mesh(geometry, [
     getBiomeMaterial(centerType, opacity),
     getBiomeSideMaterial(centerType, opacity)
@@ -485,16 +514,17 @@ function createCenterMesh(centerType, opacity) {
   mesh.receiveShadow = true;
   mesh.castShadow = false;
   mesh.userData.disableCastShadow = true;
-  mesh.position.y = getBiomeSurfaceY(centerType, TILE_VISUAL.centerY);
+  mesh.position.y = getBiomeSurfaceY(centerType);
   return mesh;
 }
 
-function createPrismGeometry(topPoints, depth, type = 'grass') {
+function createPrismGeometry(topPoints, depth, type = 'grass', worldX = 0, worldZ = 0, waterNeighborCount = 0) {
   const geometry = new THREE.BufferGeometry();
   const vertexData = [];
   const uvData = [];
 
-  const topHeights = topPoints.map((point, index) => getTerrainTopY(point, type, index + 31));
+  // Surface plate : même Y pour tous les sommets du centre (cohérent avec les secteurs).
+  const topHeights = topPoints.map(() => getBiomeLocalTopY(type));
   const bottomHeights = topHeights.map(() => getBiomeLocalBottomY(type, depth));
 
   for (let i = 0; i < topPoints.length; i += 1) {
@@ -505,8 +535,10 @@ function createPrismGeometry(topPoints, depth, type = 'grass') {
 
   for (let i = 0; i < topPoints.length; i += 1) {
     const point = topPoints[i];
-    vertexData.push(point.x, bottomHeights[i], point.z);
-    uvData.push(...uvForPoint(point));
+    // En bouliste : décaler le bas vers le centre monde pour aligner les tranches.
+    const s = _sideBottomShift(point.x, point.z, worldX, worldZ, depth);
+    vertexData.push(point.x - s.dx, bottomHeights[i], point.z - s.dz);
+    uvData.push(...uvForPoint(point)); // UV basés sur la position originale
   }
 
   const topCount = topPoints.length;
@@ -541,19 +573,24 @@ function createPrismGeometry(topPoints, depth, type = 'grass') {
   geometry.addGroup(topIndexCount, indices.length - topIndexCount, 1);
   geometry.computeVertexNormals();
 
+  // Attribute bathymétrique pour le centre eau (même convention que les secteurs).
+  if (type === 'water') {
+    const nVerts = vertexData.length / 3;
+    geometry.setAttribute('aShoreDepth',
+      new THREE.BufferAttribute(new Float32Array(nVerts).fill(waterNeighborCount / 6.0), 1));
+  }
+
   return geometry;
 }
 
-function getBiomeSurfaceY(type, baseY) {
-  // Les biomes en lit bas (eau + rail) sont plus fins, donc leur dessus est
-  // abaissé pour conserver un dessous plaqué sur la même base visuelle.
-  // Les autres biomes ne sont pas translatés : leurs variations restent locales.
-  if (type === 'water') return TILE_VISUAL.waterY;
-  if (type === 'rail') return TILE_VISUAL.railSurfaceY ?? TILE_VISUAL.waterY;
-  // Secteur field plus mince : on translate le mesh vers le bas pour que son fond
-  // reste ancré à -tileThickness comme tous les autres biomes.
-  if (type === 'field') return baseY - (TILE_VISUAL.tileThickness ?? 0.12) * (1 - FIELD_THICKNESS_RATIO);
-  return baseY;
+function getBiomeSurfaceY(type) {
+  // Tous les biomes : fond ancré à y=0 monde, dessus à +depth.
+  // mesh.position.y = depth → local bottom (y=−depth) arrive à y=0 en monde.
+  // Sync avec terrainHeight.js::getBiomeSurfaceOffsetY.
+  if (type === 'water') return TILE_VISUAL.waterThickness ?? (TILE_VISUAL.tileThickness ?? 0.12) * 0.5;
+  if (type === 'rail')  return TILE_VISUAL.railSurfaceY ?? (TILE_VISUAL.railThickness ?? 0.075);
+  // Terre : les 3 mm d'écart dans getSectorDepth assurent l'anti Z-fight.
+  return getSectorDepth(type); // grass→0.082, house→0.085, forest→0.088, field→0.094
 }
 
 function createOutlineMesh(opacity) {
@@ -600,4 +637,66 @@ function mostCommonEdgeType(types) {
   }
 
   return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+}
+
+/**
+ * Retourne le contour 2D final (après turbulence) d'un secteur de tuile.
+ *
+ * Exposé pour grassBladeOverlay et fieldWheatOverlay : aligne le semis de brins
+ * sur la géométrie réellement rendue plutôt que sur un trapèze idéal.
+ *
+ * Déterministe : même (sector, edges, type) → même polygone, grâce aux hashs
+ * FNV-1a de createRaggedOuterEdge et au hash Knuth de createRaggedInnerEdge.
+ *
+ * @param {Object} sector  — entrée SECTOR_DEFS : {key, a, b}
+ * @param {Object} edges   — edges de la tuile {n, ne, se, s, sw, nw}
+ * @param {string} type    — type du secteur ('grass', 'forest', 'field'…)
+ * @returns {Array<{x: number, z: number}>} polygone 2D en coordonnées tile-local
+ */
+/**
+ * Retourne le type de biome du centre d'une tuile, en répliquant exactement la
+ * logique de createTileMesh (eau si ≥2 secteurs eau, sinon tile.center ou pickCenterType).
+ * Exposé pour grassBladeOverlay et fieldWheatOverlay.
+ *
+ * @param {Object} tile — objet tuile {edges, center}
+ * @returns {string}
+ */
+export function getTileCenterType(tile) {
+  const edges = tile?.edges ?? tile;
+  return countEdgesOfType(edges, 'water') >= 2
+    ? 'water'
+    : (tile?.center ?? pickCenterType(edges));
+}
+
+/**
+ * Retourne le contour 2D du centre hexagonal (hexagone régulier, sans turbulence).
+ * Cohérent avec createCenterMesh() qui utilise createOuterVertices(centerRadiusScale).
+ * Exposé pour grassBladeOverlay et fieldWheatOverlay.
+ *
+ * @returns {Array<{x: number, z: number}>}
+ */
+export function getCenterContour() {
+  return createOuterVertices(HEX_SIZE * TILE_VISUAL.centerRadiusScale);
+}
+
+export function getSectorContour(sector, edges, type) {
+  const outerVertices = createOuterVertices(HEX_SIZE * TILE_VISUAL.radiusScale);
+  const a = outerVertices[sector.a];
+  const b = outerVertices[sector.b];
+
+  const sectorIndex = SECTOR_DEFS.findIndex(s => s.key === sector.key);
+  const prevSector = SECTOR_DEFS[(sectorIndex + SECTOR_DEFS.length - 1) % SECTOR_DEFS.length];
+  const nextSector = SECTOR_DEFS[(sectorIndex + 1) % SECTOR_DEFS.length];
+  const raggedLeft  = getEdgeType(edges[prevSector.key]) !== type;
+  const raggedRight = getEdgeType(edges[nextSector.key]) !== type;
+
+  const innerRadius = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
+  const innerA = pointAtRadius(a, innerRadius);
+  const innerB = pointAtRadius(b, innerRadius);
+
+  const leftInnerEdge  = createInnerEdge(innerA, a, sector.a, raggedLeft);
+  const outerPoints    = createRaggedOuterEdge(a, b, type);
+  const rightInnerEdge = createInnerEdge(innerB, b, sector.b, raggedRight).reverse();
+
+  return compactPointLoop([...leftInnerEdge, ...outerPoints, ...rightInnerEdge]);
 }

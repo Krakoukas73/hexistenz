@@ -2,12 +2,13 @@ import { initScene } from './scene.js';
 import { startMenuMusic, startIngameMusic } from './soundDesign.js';
 import { DECK_SIZE } from './config.js';
 import { createDeck } from './tileGenerator.js';
-import { createSpecialCells } from './stable/specialCells.js';
-import { createBonusCells } from './stable/bonusCells.js';
+import { createSpecialCells } from './specialCells.js';
+import { createBonusCells } from './bonusCells.js';
 import { createMissionManager } from './missions.js';
-import { makeHexKey } from './stable/hex.js';
-import { createRoom, generateRoomCode, getOrCreatePlayerId, joinRoom, listRooms } from './stable/multiplayerClient.js';
-import { getWorldShapeMode } from './stable/worldCurvature.js';
+import { makeHexKey } from './hex.js';
+import { createRoom, generateRoomCode, getOrCreatePlayerId, joinRoom, listRooms } from './multiplayerClient.js';
+import { getWorldShapeMode } from './worldCurvature.js';
+import { LUT_HELP, ensureHelpTooltip, attachHelpTooltip, hideHelpTooltip } from './help.js';
 
 const MENU_BACKGROUND_ENDPOINT = './backgrounds.php';
 const MENU_BACKGROUND_INTERVAL_MS = 12000;
@@ -26,13 +27,14 @@ function renderShell(screen = 'home', initialCode = '') {
     <div class="mode-background-carousel" aria-hidden="true"></div>
     <section class="mode-panel">
       <img class="mode-logo" src="images/logo2.png" alt="Hexistenz" draggable="false" />
-      
+
       <p class="mode-copy"></p>
       <div class="mode-content"></div>
       <div class="multi-status" aria-live="polite"></div>
     </section>
   `;
   document.body.appendChild(overlay);
+  ensureHelpTooltip();
   ensureMenuBackgroundStyles();
   setupMenuBackgroundCarousel(overlay);
 
@@ -149,6 +151,16 @@ function ensureMenuBackgroundStyles() {
       user-select: none;
       pointer-events: none;
       filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.52));
+    }
+
+    @media (max-height: 1080px) {
+      .mode-screen--with-background .mode-panel {
+        padding-top: clamp(220px, 28vh, 300px);
+      }
+      .mode-logo {
+        width: min(380px, 60vw);
+        top: clamp(-190px, -20vh, -120px);
+      }
     }
 
     @media (max-height: 760px) {
@@ -398,6 +410,7 @@ function savePlayerNameCookie(name) {
  * Le nom est toujours demandé (pré-rempli avec la valeur cookie).
  */
 function renderNameChoice(overlay, onConfirmed) {
+  hideHelpTooltip();
   const savedName = getPlayerNameFromCookie();
   overlay.querySelector('.mode-copy').textContent = 'Comment tu t\'appelles ?';
   overlay.querySelector('.mode-content').innerHTML = `
@@ -409,6 +422,7 @@ function renderNameChoice(overlay, onConfirmed) {
   `;
   setStatus(overlay, '');
 
+  attachHelpTooltip(overlay.querySelector('[data-action="confirm"]'), LUT_HELP['menu.confirm']);
   const input = overlay.querySelector('[data-field="player-name"]');
   requestAnimationFrame(() => { input.focus(); input.select(); });
 
@@ -425,6 +439,7 @@ function renderNameChoice(overlay, onConfirmed) {
 }
 
 function renderHome(overlay) {
+  hideHelpTooltip();
   overlay.querySelector('.mode-copy').textContent = 'Choisis le mode de jeu : solo ou multijoueur.';
   overlay.querySelector('.mode-content').innerHTML = `
     <div class="mode-actions">
@@ -432,11 +447,14 @@ function renderHome(overlay) {
       <button data-action="multi" class="secondary">MULTI</button>
     </div>
   `;
+  attachHelpTooltip(overlay.querySelector('[data-action="solo"]'), LUT_HELP['menu.solo']);
+  attachHelpTooltip(overlay.querySelector('[data-action="multi"]'), LUT_HELP['menu.multi']);
 
   overlay.querySelector('[data-action="solo"]').addEventListener('click', () => {
     renderNameChoice(overlay, playerName => {
       renderWorldShapeChoice(overlay, worldShapeMode => {
         startIngameMusic();
+        hideHelpTooltip();
         overlay.remove();
         initScene({ mode: 'solo', worldShapeMode, playerName });
       });
@@ -450,6 +468,7 @@ function renderHome(overlay) {
 
 
 function renderWorldShapeChoice(overlay, onSelected) {
+  hideHelpTooltip();
   const storedMode = normalizeWorldShapeMode(localStorage.getItem('dorfromantik.worldShapeMode') || getWorldShapeMode());
   overlay.querySelector('.mode-copy').textContent = 'Choisis la géométrie de ta planète :';
   overlay.querySelector('.mode-content').innerHTML = `
@@ -461,6 +480,8 @@ function renderWorldShapeChoice(overlay, onSelected) {
     <p class="mode-copy mode-shape-note">On te conseille "<i>platiste</i>" pour débuter. Tu pourras changer de faction à n'importe quel moment en jeu, parce que même les planètes ont droit à une crise identitaire.</p>
   `;
   setStatus(overlay, '');
+  attachHelpTooltip(overlay.querySelector('[data-action="platiste"]'), LUT_HELP['menu.platiste']);
+  attachHelpTooltip(overlay.querySelector('[data-action="bouliste"]'), LUT_HELP['menu.bouliste']);
 
   for (const mode of ['bouliste', 'platiste']) {
     overlay.querySelector(`[data-action="${mode}"]`).addEventListener('click', () => {
@@ -472,6 +493,7 @@ function renderWorldShapeChoice(overlay, onSelected) {
 }
 
 function renderMulti(overlay, initialCode = '') {
+  hideHelpTooltip();
   overlay.querySelector('.mode-copy').textContent = 'Créer une partie ou rejoindre une partie existante avec un code.';
   overlay.querySelector('.mode-content').innerHTML = `
     <label>Pseudo</label>
@@ -490,6 +512,9 @@ function renderMulti(overlay, initialCode = '') {
   `;
   setStatus(overlay, '');
 
+  attachHelpTooltip(overlay.querySelector('[data-action="create"]'), LUT_HELP['menu.create']);
+  attachHelpTooltip(overlay.querySelector('[data-action="join"]'), LUT_HELP['menu.join']);
+  attachHelpTooltip(overlay.querySelector('[data-action="back"]'), LUT_HELP['menu.back']);
   overlay.querySelector('[data-action="back"]').addEventListener('click', () => renderHome(overlay));
   overlay.querySelector('[data-action="create"]').addEventListener('click', () => handleCreate(overlay));
   overlay.querySelector('[data-action="join"]').addEventListener('click', () => handleJoin(overlay));
@@ -514,7 +539,7 @@ async function refreshAvailableRooms(overlay) {
 
     const empty = document.createElement('option');
     empty.value = '';
-    empty.textContent = rooms.length ? 'Sélectionner une partie existante' : 'Aucune partie trouvée dans /games';
+    empty.textContent = rooms.length ? 'Sélectionner une partie existante' : 'Aucune partie trouvée dans /json/games';
     select.appendChild(empty);
 
     for (const room of rooms) {
@@ -607,6 +632,7 @@ function startMultiplayerScene(overlay, { roomCode, playerId, playerName, state 
   const worldShapeMode = normalizeWorldShapeMode(overlay.dataset.worldShapeMode);
   localStorage.setItem('dorfromantik.worldShapeMode', worldShapeMode);
   startIngameMusic();
+  hideHelpTooltip();
   overlay.remove();
   initScene({
     mode: 'multi',

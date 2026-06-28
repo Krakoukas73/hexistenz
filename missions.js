@@ -1,9 +1,9 @@
 import { EDGE_ORDER, EDGE_TYPES, MISSION_REWARD, MISSION_TILE_REWARD, MISSION_CHANCE, COMPLETED_MISSION_VISIBLE_TURNS } from './config.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
-import { makeHexKey } from './stable/hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
+import { makeHexKey } from './hex.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
-import { makeNodeKey, getTileEdgeType, getTileCenterType } from './stable/tileUtils.js';
-import { collectZone, getFullTextureNeighbors } from './stable/zoneUtils.js';
+import { makeNodeKey, getTileEdgeType, getTileCenterType } from './tileUtils.js';
+import { collectZone, getFullTextureNeighbors } from './zoneUtils.js';
 import { countWaterBoats } from './waterBoatOverlay.js';
 
 export { MISSION_REWARD, MISSION_TILE_REWARD, MISSION_CHANCE, COMPLETED_MISSION_VISIBLE_TURNS };
@@ -63,7 +63,7 @@ const MISSION_TYPES = [
   },
   {
     type: EDGE_TYPES.field,
-    label: 'Surface agricole',
+    label: 'Champs de blé',
     unit: 'champs de blé',
     targets: [12, 24, 38, 56, 78, 105]
   }
@@ -204,10 +204,51 @@ function purgeOldCompletedMissions(manager) {
   return purged;
 }
 
+export const MISSION_TYPE_ICON = {
+  [EDGE_TYPES.forest]: '🌲',
+  [EDGE_TYPES.house]:  '🛖',
+  [EDGE_TYPES.rail]:   '🛤️',
+  [EDGE_TYPES.water]:  '💧',
+  [EDGE_TYPES.grass]:  '🌿',
+  [EDGE_TYPES.field]:  '🌾',
+  train:               '🚂',
+  boat:                '⛵',
+};
+
+const MISSION_TYPE_LABEL = Object.fromEntries(MISSION_TYPES.map(m => [m.type, m.label]));
+
+export const MISSION_HELP = {
+  [EDGE_TYPES.forest]: `Pose des tuiles avec des secteurs forêt 🌲.
+Chaque triangle de forêt placé sur le plateau fait progresser cette mission.
+Les zones denses rapportent davantage de points en fin de partie.`,
+  [EDGE_TYPES.house]:  `Pose des tuiles avec des secteurs village 🛖.
+Chaque triangle de maison placé fait progresser cette mission.
+Les villages connectés au réseau ferré sont particulièrement rentables.`,
+  [EDGE_TYPES.rail]:   `Pose des tuiles avec des rails 🛤️.
+Chaque triangle de voie ferrée placé fait progresser cette mission.
+Les rails seuls ne rapportent rien sans gare à chaque extrémité.`,
+  [EDGE_TYPES.water]:  `Pose des tuiles avec des secteurs eau 💧.
+Chaque triangle d'eau placé fait progresser cette mission.
+Les grandes étendues d'eau peuvent accueillir des bateaux.`,
+  [EDGE_TYPES.grass]:  `Pose des tuiles avec des secteurs prairie 🌿.
+Chaque triangle de prairie placé fait progresser cette mission.
+Les grandes zones contiguës de prairie rapportent un bonus de surface.`,
+  [EDGE_TYPES.field]:  `Pose des tuiles avec des secteurs champ de blé 🌾.
+Chaque triangle de champ placé fait progresser cette mission.
+Les champs proches de villages ou de rivières donnent des bonus.`,
+  train: `Relie deux gares avec des rails continus 🚂.
+Chaque nouvelle ligne de train complétée fait progresser cette mission.
+Plus la ligne est longue, plus le score est élevé.`,
+  boat:  `Crée des étendues d'eau entourées de terres ⛵.
+Un bateau apparaît automatiquement sur chaque lac fermé par des tuiles terrestres.
+Chaque nouveau bateau fait progresser cette mission.`,
+};
+
 export function formatMissionLabel(mission, progressByType = new Map()) {
   const progress = Math.min(progressByType.get(mission.type) ?? 0, mission.target);
   const unit = mission.unit ? ` ${mission.unit}` : '';
-  return `${mission.label} : ${progress}/${mission.target}${unit}`;
+  const label = MISSION_TYPE_LABEL[mission.type] ?? mission.label;
+  return `${label} : ${progress}/${mission.target}${unit}`;
 }
 
 

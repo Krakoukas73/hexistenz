@@ -2,7 +2,7 @@
  * villageDecorOverlay.js — Props de décoration de village et bateaux côtiers.
  *
  * Contient :
- *   - createRoadsideVillageProps : bancs, panneaux, tonneaux, charrettes
+ *   - createRoadsideVillageProps : panneaux, tonneaux, charrettes
  *   - createShoreBoats           : bateaux statiques sur les plages
  *   + tous les helpers de placement (isRoadDecorEdge, isShoreDecorEdge,
  *     isVillageVicinityEdge, snapPropToSafeSurface, nudgeRoadsideProp,
@@ -20,15 +20,15 @@ import {
   HEX_SIZE,
   SECTOR_DEFS
 } from './config.js';
-import { hashUnit10k as hashUnit, hashNumber } from './stable/hashUtils.js';
-import { axialToWorld, makeHexKey } from './stable/hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
-import { getTileEdgeType } from './stable/tileUtils.js';
+import { hashUnit10k as hashUnit, hashNumber } from './hashUtils.js';
+import { axialToWorld, makeHexKey } from './hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
+import { getTileEdgeType, getTileCenterType } from './tileUtils.js';
 import { placeObjectOnTerrain, getTerrainSurfaceY } from './terrainHeight.js';
 import { HITBOX_R } from './variables.js';
-import { registerPropHitbox } from './stable/propHitboxRegistry.js';
-import { tryResolve } from './stable/propHitboxRegistry.js';
-import { getHexVertex, normalize2 } from './stable/hexGeometry.js';
+import { registerPropHitbox } from './propHitboxRegistry.js';
+import { tryResolve } from './propHitboxRegistry.js';
+import { getHexVertex, normalize2 } from './hexGeometry.js';
 import {
   snapPropBottomToSurface,
   isSingleTerrainFootprint,
@@ -36,7 +36,7 @@ import {
   getEdgeFromLocalPoint,
   getTileLocalPoint,
   getSectorWorldCenter
-} from './stable/propPlacement.js';
+} from './propPlacement.js';
 import { isInsideSpecialBuildingSafeZone } from './fieldZonesOverlay.js';
 // Import circulaire résolu via live bindings ES modules — uniquement dans des corps de fonctions.
 import {
@@ -62,37 +62,6 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
     const tilePos    = axialToWorld(placedTile.q, placedTile.r);
     const tileCenter = new THREE.Vector3(tilePos.x, ROAD_DECOR_Y, tilePos.z);
     const roadEdges  = EDGE_ORDER.filter(edge => isRoadDecorEdge(placedTile, edge));
-
-    // ── Bancs ──
-    for (const edge of roadEdges) {
-      const edgeType = getTileEdgeType(placedTile, edge);
-      const seed     = `${placedTile.key}:bench:${edge}`;
-      const chance   = edgeType === EDGE_TYPES.forest ? 0.24 : 0.18;
-      if (hashUnit(seed) > chance) continue;
-
-      const center = getSectorWorldCenter(placedTile, edge);
-      const pos    = new THREE.Vector3(center.x, ROAD_DECOR_Y, center.z)
-        .lerp(tileCenter, edgeType === EDGE_TYPES.forest ? 0.22 : 0.26);
-      nudgeRoadsideProp(pos, placedTile, edge, seed, edgeType === EDGE_TYPES.forest ? 0.038 : 0.032);
-      if (!snapPropToSafeSurface(pos, placedTile, edge, seed, { footprintRadius: HEX_SIZE * 0.075 })) continue;
-      if (isInsideSpecialBuildingSafeZone(pos, specialBuildingSafeZones)) continue;
-
-      const bench = createPropModel('road-bench', seed);
-      if (!bench) continue;
-      bench.name = edgeType === EDGE_TYPES.forest ? 'forest-pathside-bench-glb' : 'grass-roadside-bench-glb';
-      bench.position.copy(pos);
-      const benchYaw  = getEdgeOutwardAngle(edge) + Math.PI / 2 + (hashUnit(`${seed}:yaw`) - 0.5) * 0.55;
-      const benchTopY = placeObjectOnTerrain(bench, getTileLocalPoint(pos, placedTile), edgeType, hashNumber(seed) % 97, {
-        groundOffset:  0.012,
-        alignToSlope:  false,
-        yaw:           benchYaw,
-        edgeLockStart: 0.98,
-        edgeLockEnd:   1.0
-      });
-      if (benchTopY !== null) snapPropBottomToSurface(bench, benchTopY - 0.012, 0.004);
-      group.add(bench);
-      registerPropHitbox(bench.position.x, bench.position.z, HITBOX_R.bench);
-    }
 
     // ── Panneaux de signalisation (bords de route) ──
     for (const edge of roadEdges) {
@@ -183,7 +152,9 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
         if (!_cartR) continue;
         basePos.x = _cartR.x; basePos.z = _cartR.z;
 
-        const cart = createPropModel('cart', seed);
+        const _cr = hashUnit(`${seed}:cart-variant`);
+        const cartVariant = _cr < 0.5 ? 'cart-2' : 'cart-3'; // charrette-1 retirée du pool
+        const cart = createPropModel(cartVariant, seed);
         if (!cart) continue;
         cart.name = 'village-cart-glb';
         cart.position.copy(basePos);
@@ -273,7 +244,9 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
         const _r = tryResolve(pos.x, pos.z, HITBOX_R.cart);
         if (!_r) return;
         pos.x = _r.x; pos.z = _r.z;
-        const cart = createPropModel('cart', seedInt);
+        const _cri = hashUnit(`${seedInt}:cart-variant`);
+        const _cartKeyInt = _cri < 0.5 ? 'cart-2' : 'cart-3'; // charrette-1 retirée du pool
+        const cart = createPropModel(_cartKeyInt, seedInt);
         if (!cart) return;
         cart.name = 'village-cart-glb';
         cart.position.copy(pos);
@@ -365,6 +338,8 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
               getTileEdgeType(placedTile, _fEdge), hashNumber(seedF) % 97,
               { groundOffset: 0.005, alignToSlope: false, edgeLockStart: 0.98, edgeLockEnd: 1.0 });
             if (_fTopY !== null) snapPropBottomToSurface(fountain, _fTopY - 0.005, 0.004);
+            const _fGD = fountain.userData.groundOffsetDelta ?? 0;
+            if (_fGD !== 0) fountain.position.y += _fGD;
             fountain.rotation.y = hashUnit(`${seedF}:rot`) * Math.PI * 2;
             group.add(fountain);
             registerPropHitbox(fountain.position.x, fountain.position.z, HITBOX_R.fountain);
@@ -411,11 +386,44 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
                   getTileEdgeType(placedTile, _fpEdge), hashNumber(seedFP) % 97,
                   { groundOffset: 0.005, alignToSlope: false, edgeLockStart: 0.98, edgeLockEnd: 1.0 });
                 if (_fpTopY !== null) snapPropBottomToSurface(fountain, _fpTopY - 0.005, 0.004);
+                const _fpGD = fountain.userData.groundOffsetDelta ?? 0;
+                if (_fpGD !== 0) fountain.position.y += _fpGD;
                 fountain.rotation.y = hashUnit(`${seedFP}:rot`) * Math.PI * 2;
                 group.add(fountain);
                 registerPropHitbox(fountain.position.x, fountain.position.z, HITBOX_R.fountain);
               }
             }
+          }
+        }
+      }
+    }
+
+    // ── Meule — un par tuile village (80 % de chance) ────────────────────────
+    if (houseEdges.length >= 1) {
+      const seedMl = `${placedTile.key}:meule`;
+      if (hashUnit(seedMl) <= 0.80) {
+        // Positionnée dans la cour : mi-chemin centre / premier secteur maison
+        const _mhe  = houseEdges[Math.floor(hashUnit(`${seedMl}:slot`) * houseEdges.length)];
+        const _msc  = getSectorWorldCenter(placedTile, _mhe);
+        const _pull = 0.55 + hashUnit(`${seedMl}:pull`) * 0.20;
+        const mPos  = new THREE.Vector3(
+          _msc.x + (tilePos.x - _msc.x) * _pull + (hashUnit(`${seedMl}:ox`) - 0.5) * HEX_SIZE * 0.10,
+          ROAD_DECOR_Y,
+          _msc.z + (tilePos.z - _msc.z) * _pull + (hashUnit(`${seedMl}:oz`) - 0.5) * HEX_SIZE * 0.10
+        );
+        if (!isInsideSpecialBuildingSafeZone(mPos, specialBuildingSafeZones)) {
+          const meule = createPropModel('meule', seedMl);
+          if (meule) {
+            meule.name = 'village-meule-glb';
+            meule.position.copy(mPos);
+            const _mlLocal = getTileLocalPoint(mPos, placedTile);
+            const _mlEdge  = getEdgeFromLocalPoint(_mlLocal) ?? EDGE_ORDER[0];
+            const _mlTopY  = placeObjectOnTerrain(meule, _mlLocal,
+              getTileEdgeType(placedTile, _mlEdge), hashNumber(seedMl) % 97,
+              { groundOffset: 0.004, alignToSlope: false, yaw: hashUnit(`${seedMl}:rot`) * Math.PI * 2, edgeLockStart: 0.98, edgeLockEnd: 1.0 });
+            if (_mlTopY !== null) snapPropBottomToSurface(meule, _mlTopY - 0.004, 0.003);
+            group.add(meule);
+            // pas de hitbox : meule = objet décoratif sans collision
           }
         }
       }
@@ -443,7 +451,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
       );
 
       // Helper commun : place un animal (même pattern que fontaine)
-      const placeAnimal = (key, seed, pos, groundOff, shadowCast) => {
+      const placeAnimal = (key, seed, pos, groundOff, shadowCast, snapClearance = 0.002) => {
         if (isInsideSpecialBuildingSafeZone(pos, specialBuildingSafeZones)) return null;
         const model = createPropModel(key, seed);
         if (!model) return null;
@@ -467,25 +475,9 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
             yaw: hashUnit(`${seed}:yaw`) * Math.PI * 2,
             edgeLockStart: 0.98, edgeLockEnd: 1.0 });
         if (topY === null) return null;
-        snapPropBottomToSurface(model, topY - groundOff, 0.002);
+        snapPropBottomToSurface(model, topY - groundOff, snapClearance);
         return model;
       };
-
-      // Poules : 2–5, chance 49 % (−25 %) — slot 2 (arête distincte des tonneaux)
-      const seedChk = `${placedTile.key}:animals:chicken`;
-      if (hashUnit(seedChk) <= 0.49) {
-        const chkEdge  = hSlot(2);
-        const chkCount = 3 + Math.floor(hashUnit(`${seedChk}:count`) * 5); // 3–7 (+35%)
-        for (let c = 0; c < chkCount; c++) {
-          const cs  = `${seedChk}:${c}`;
-          const pos = animalPos(chkEdge, cs, HEX_SIZE * 0.08);
-          const chk = placeAnimal('animal-chicken', cs, pos, 0.003, false);
-          if (!chk) continue;
-          chk.name = 'village-animal-chicken-glb';
-          chk.scale.multiplyScalar(0.85 + hashUnit(`${cs}:scale`) * 0.30);
-          group.add(chk);
-        }
-      }
 
       // Chien : 1–2, chance 60 % — slot 3
       const seedDog = `${placedTile.key}:animals:dog`;
@@ -493,10 +485,12 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
         const dogCount = hashUnit(`${seedDog}:count`) < 0.45 ? 1 : 2;
         for (let d = 0; d < dogCount; d++) {
           const ds  = `${seedDog}:${d}`;
+          // d===0 est placé au centre : sauter si le centre est eau.
+          if (d === 0 && getTileCenterType(placedTile) === EDGE_TYPES.water) continue;
           const pos = d === 0
             ? centerPos(ds, HEX_SIZE * 0.10)
             : animalPos(hSlot(3), ds, HEX_SIZE * 0.07);
-          const dog = placeAnimal('animal-dog', ds, pos, 0.004, false);
+          const dog = placeAnimal('animal-dog', ds, pos, 0.004, false, 0.008);
           if (!dog) continue;
           dog.name = 'village-animal-dog-glb';
           dog.scale.multiplyScalar(0.88 + hashUnit(`${ds}:scale`) * 0.25);
@@ -504,24 +498,11 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
         }
       }
 
-      // Chat(s) : 1–2, chance 65 % — slot 4
-      const seedCat = `${placedTile.key}:animals:cat`;
-      if (hashUnit(seedCat) <= 0.65) {
-        const catCount = hashUnit(`${seedCat}:count`) < 0.55 ? 1 : 2;
-        for (let c = 0; c < catCount; c++) {
-          const cs  = `${seedCat}:${c}`;
-          const pos = animalPos(hSlot(4), cs, HEX_SIZE * 0.07);
-          const cat = placeAnimal('animal-cat', cs, pos, 0.003, false);
-          if (!cat) continue;
-          cat.name = 'village-animal-cat-glb';
-          cat.scale.multiplyScalar(0.82 + hashUnit(`${cs}:scale`) * 0.35);
-          group.add(cat);
-        }
-      }
 
       // Cheval : chance 35 %, placé à la cellule centrale (plus dégagé)
+      // Guard centre-eau : pas de cheval si le centre de la tuile est eau.
       const seedHorse = `${placedTile.key}:animals:horse`;
-      if (hashUnit(seedHorse) <= 0.35) {
+      if (hashUnit(seedHorse) <= 0.35 && getTileCenterType(placedTile) !== EDGE_TYPES.water) {
         const pos   = centerPos(seedHorse, HEX_SIZE * 0.08);
         const horse = placeAnimal('animal-horse', seedHorse, pos, 0.005, true);
         if (horse) {
@@ -533,7 +514,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
     }
 
     // ── Animaux à la frontière village-nature ─────────────────────────────────
-    // Tuile prairie/forêt adjacente à un village : poulets errants + chats
+    // Tuile prairie/forêt adjacente à un village : animaux errants à la lisière
     if (houseEdges.length === 0) {
       const hasGrassOrForest = EDGE_ORDER.some(e => {
         const t = getTileEdgeType(placedTile, e);
@@ -575,41 +556,6 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
             return model;
           };
 
-          // Poulets errants à la lisière (38 % — −25 %)
-          if (hashUnit(`${placedTile.key}:bdr:chk`) <= 0.38) {
-            const bCount = 2 + Math.floor(hashUnit(`${placedTile.key}:bdr:chkn`) * 4); // 2–5 (+35%)
-            for (let c = 0; c < bCount; c++) {
-              const cs   = `${placedTile.key}:bdr:chk:${c}`;
-              const pull = 0.55 + hashUnit(`${cs}:pull`) * 0.25;
-              const pos  = new THREE.Vector3(
-                sc.x + (tilePos.x - sc.x) * pull + (hashUnit(`${cs}:ox`) - 0.5) * HEX_SIZE * 0.07,
-                ROAD_DECOR_Y,
-                sc.z + (tilePos.z - sc.z) * pull + (hashUnit(`${cs}:oz`) - 0.5) * HEX_SIZE * 0.07
-              );
-              const chk = placeBorderAnimal('animal-chicken', cs, pos, 0.003, false);
-              if (!chk) continue;
-              chk.name = 'village-animal-chicken-glb';
-              chk.scale.multiplyScalar(0.85 + hashUnit(`${cs}:scale`) * 0.30);
-              group.add(chk);
-            }
-          }
-
-          // Chat errant à la lisière (30 %)
-          if (hashUnit(`${placedTile.key}:bdr:cat`) <= 0.30) {
-            const cs   = `${placedTile.key}:bdr:cat:0`;
-            const pull = 0.55 + hashUnit(`${cs}:pull`) * 0.25;
-            const pos  = new THREE.Vector3(
-              sc.x + (tilePos.x - sc.x) * pull + (hashUnit(`${cs}:ox`) - 0.5) * HEX_SIZE * 0.06,
-              ROAD_DECOR_Y,
-              sc.z + (tilePos.z - sc.z) * pull + (hashUnit(`${cs}:oz`) - 0.5) * HEX_SIZE * 0.06
-            );
-            const cat = placeBorderAnimal('animal-cat', cs, pos, 0.003, false);
-            if (cat) {
-              cat.name = 'village-animal-cat-glb';
-              cat.scale.multiplyScalar(0.82 + hashUnit(`${cs}:scale`) * 0.35);
-              group.add(cat);
-            }
-          }
         }
       }
     }
@@ -662,21 +608,6 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
           return model;
         };
 
-        // Poule(s) côté voie (30 % — −25 %)
-        if (hashUnit(`${placedTile.key}:rail:chk`) <= 0.30) {
-          const rEdge  = pickRailEdge(`${placedTile.key}:rail:chk:edge`);
-          const bCount = 2 + Math.floor(hashUnit(`${placedTile.key}:rail:chkn`) * 4); // 2–5 (+35%)
-          for (let c = 0; c < bCount; c++) {
-            const cs  = `${placedTile.key}:rail:chk:${c}`;
-            const pos = bermePos(rEdge, cs, HEX_SIZE * 0.06);
-            const chk = placeRailAnimal('animal-chicken', cs, pos, 0.003, false);
-            if (!chk) continue;
-            chk.name = 'village-animal-chicken-glb';
-            chk.scale.multiplyScalar(0.85 + hashUnit(`${cs}:scale`) * 0.30);
-            group.add(chk);
-          }
-        }
-
         // Chien côté voie (25 %)
         if (hashUnit(`${placedTile.key}:rail:dog`) <= 0.25) {
           const cs  = `${placedTile.key}:rail:dog:0`;
@@ -689,26 +620,12 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
           }
         }
 
-        // Chat côté voie (20 %)
-        if (hashUnit(`${placedTile.key}:rail:cat`) <= 0.20) {
-          const cs  = `${placedTile.key}:rail:cat:0`;
-          const pos = bermePos(pickRailEdge(`${cs}:edge`), cs, HEX_SIZE * 0.05);
-          const cat = placeRailAnimal('animal-cat', cs, pos, 0.003, false);
-          if (cat) {
-            cat.name = 'village-animal-cat-glb';
-            cat.scale.multiplyScalar(0.82 + hashUnit(`${cs}:scale`) * 0.35);
-            group.add(cat);
-          }
-        }
       }
     }
   }
 
-  // Fusionne toutes les poules en 1 seul Mesh (57 DC → 1 DC)
-  _mergeVillageChickens(group);
-  // Fusionne chiens + chats (statiques, même pattern que les poulets)
+  // Fusionne les chiens (statiques)
   _mergeVillageAnimalsByName(group, 'village-animal-dog-glb');
-  _mergeVillageAnimalsByName(group, 'village-animal-cat-glb');
 
   return group;
 }
@@ -780,66 +697,8 @@ function _deinterleaveGeo(src) {
 }
 
 /**
- * Post-traitement : collecte tous les 'village-animal-chicken-glb' du groupe,
- * fusionne leurs géométries en 1 Mesh centré sur le centroïde de la grappe.
- *
- * Le Mesh centré permet au scan LOD de decorOverlay (child.position) d'obtenir
- * un centre approximatif représentatif, au lieu de (0,0,0).
- */
-function _mergeVillageChickens(group) {
-  // Calcul des matrixWorld avec parent = identity (group pas encore en scène)
-  group.updateMatrixWorld(true);
-
-  const chickenGroups = group.children.filter(c => c.name === 'village-animal-chicken-glb');
-  if (chickenGroups.length === 0) return;
-
-  const geoList = [];
-  let mat = null;
-
-  for (const chk of chickenGroups) {
-    chk.traverse(obj => {
-      if (!obj.isMesh && !obj.isSkinnedMesh) return;
-      // Ignorer les meshes helpers/collision (matériau blanc sans texture) exportés
-      // involontairement depuis Blender — ils faussent la couleur de la fusion.
-      const firstMat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
-      if (_isHelperWhiteMaterial(firstMat)) return;
-      // _deinterleaveGeo : convertit InterleavedBufferAttribute → BufferAttribute standard
-      // (poule.glb utilise le format GLTF compact, incompatible avec mergeGeometries)
-      const geo = _deinterleaveGeo(obj.geometry);
-      geo.applyMatrix4(obj.matrixWorld);
-      geoList.push(geo);
-      mat = _pickBestMaterial(mat, obj);
-    });
-    group.remove(chk);
-  }
-
-  if (geoList.length === 0 || !mat) return;
-
-  const merged = mergeGeometries(geoList);
-  geoList.forEach(g => g.dispose());
-  if (!merged) return;
-
-  // Centrer le Mesh sur le centroïde des vertices → child.position utilisable par LOD
-  merged.computeBoundingSphere();
-  const centroid = merged.boundingSphere.center.clone();
-  merged.translate(-centroid.x, -centroid.y, -centroid.z);
-
-  const mesh = new THREE.Mesh(merged, mat);
-  mesh.position.copy(centroid);
-  mesh.name              = 'village-animal-chicken-glb';
-  mesh.receiveShadow     = true;
-  mesh.castShadow        = false;
-  mesh.userData.disableCastShadow  = true;
-  mesh.userData.shadowFlagsApplied = true;
-
-  group.add(mesh);
-  console.debug(`[chickens] ${chickenGroups.length} poulets fusionnés → 1 DC`);
-}
-
-/**
- * Version générique de _mergeVillageChickens : fusionne tous les enfants du groupe
- * dont le name === animalName en un seul Mesh (1 DC).
- * Utilisé pour chiens et chats (GLBs statiques, pas d'animation).
+ * Fusionne tous les enfants du groupe dont le name === animalName en un seul Mesh (1 DC).
+ * Utilisé pour les animaux statiques (chien, cheval…).
  */
 function _mergeVillageAnimalsByName(group, animalName) {
   group.updateMatrixWorld(true);
@@ -906,14 +765,18 @@ export function createShoreBoats(placedTiles, specialBuildingSafeZones = []) {
       const mid    = new THREE.Vector3((a.x + b.x) / 2, SHORE_BOAT_Y, (a.z + b.z) / 2);
       const inward = getShoreBoatBeachDirection(placedTile, edge, placedTiles, mid);
 
-      const boatVariant = pickShoreBoatVariant(seed);
+      // 70 % barque-1 (vide, tirée sur la rive), 30 % barque-2 (pêcheur, flottant).
+      const boatVariant = hashUnit(`${seed}:boat-type`) < 0.70 ? 'shore-boat-1' : 'shore-boat-2';
       const boat = createPropModel(boatVariant, seed);
       if (!boat) continue;
       boat.name = `water-shore-inert-boat-glb-${boatVariant}`;  // ex: ...-shore-boat-1 (HUD per-type)
+      // barque-1 (échouée sur la plage) : facteur minimal pour rester au bord de l'eau.
+      // barque-2 (pêcheur) : position actuelle validée, en eau à mi-distance.
+      const inwardPush = boatVariant === 'shore-boat-1' ? HEX_SIZE * 0.10 : HEX_SIZE * 0.50;
       boat.position.set(
-        tilePos.x + mid.x + inward.x * HEX_SIZE * 0.5,
+        tilePos.x + mid.x + inward.x * inwardPush,
         SHORE_BOAT_Y,
-        tilePos.z + mid.z + inward.z * HEX_SIZE * 0.5
+        tilePos.z + mid.z + inward.z * inwardPush
       );
       if (isInsideSpecialBuildingSafeZone(boat.position, specialBuildingSafeZones, SPECIAL_BUILDING_BOAT_SAFE_RADIUS)) continue;
       boat.rotation.y = Math.atan2(inward.x, inward.z) + Math.PI / 2 + (hashUnit(`${seed}:yaw`) - 0.5) * 0.50;
@@ -983,7 +846,7 @@ function getAdjacentBeachLandVector(placedTile, edge) {
 }
 
 function pickShoreBoatVariant(seedKey) {
-  return 'shore-boat-2'; // barque-1 retirée du pool
+  return 'shore-boat-1'; // barque-1.glb
 }
 
 // ─── Helpers placement ────────────────────────────────────────────────────────

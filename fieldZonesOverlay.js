@@ -4,7 +4,7 @@
  * Contient :
  *   - collectFieldZones     : BFS des zones de type 'field'
  *   - createFieldFlags      : moulins + oiseaux au centre de chaque zone
- *   - collectSpecialBuildingSafeZones : zones d'exclusion churches / tours / moulins
+ *   - collectSpecialBuildingSafeZones : zones d'exclusion tours / moulins
  *   - isInsideSpecialBuildingSafeZone : test d'appartenance (exporté pour villageDecorOverlay)
  *
  * Import circulaire avec decorOverlay (createPropModel, createBirdFlock, constantes)
@@ -17,16 +17,16 @@ import {
   EDGE_TYPES,
   SECTOR_DEFS
 } from './config.js';
-import { hashUnit10k as hashUnit, hashNumber } from './stable/hashUtils.js';
-import { axialToWorld, makeHexKey } from './stable/hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
+import { hashUnit10k as hashUnit, hashNumber } from './hashUtils.js';
+import { axialToWorld, makeHexKey } from './hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeValue } from './tileGenerator.js';
 import { getTerrainSurfaceY } from './terrainHeight.js';
-import { collectVillageChurchSectors, collectVillageWatchtowerSectors } from './houseOverlay.js';
-import { makeNodeKey, getTileEdgeType } from './stable/tileUtils.js';
-import { collectZone } from './stable/zoneUtils.js';
-import { getHexVertex } from './stable/hexGeometry.js';
-import { getTileLocalPoint, getSectorWorldCenter } from './stable/propPlacement.js';
+import { collectVillageWatchtowerSectors } from './houseOverlay.js';
+import { makeNodeKey, getTileEdgeType } from './tileUtils.js';
+import { collectZone } from './zoneUtils.js';
+import { getHexVertex } from './hexGeometry.js';
+import { getTileLocalPoint, getSectorWorldCenter } from './propPlacement.js';
 // Import circulaire résolu via live bindings ES modules — uniquement dans des corps de fonctions.
 import {
   FIELD_FLAG_MIN_TOTAL,
@@ -51,16 +51,9 @@ export function isInsideSpecialBuildingSafeZone(pos, safeZones, fallbackRadius =
 
 export function collectSpecialBuildingSafeZones(placedTiles) {
   const zones = [];
-  const churchSectors     = collectVillageChurchSectors(placedTiles);
-  const watchtowerSectors = collectVillageWatchtowerSectors(placedTiles, churchSectors);
-
-  for (const sectorKey of churchSectors) {
-    const zone = getVillageSpecialBuildingSafeZone(placedTiles, sectorKey, 'church');
-    if (zone) zones.push(zone);
-  }
+  const watchtowerSectors = collectVillageWatchtowerSectors(placedTiles);
 
   for (const sectorKey of watchtowerSectors) {
-    if (churchSectors.has(sectorKey)) continue;
     const zone = getVillageSpecialBuildingSafeZone(placedTiles, sectorKey, 'watchtower');
     if (zone) zones.push(zone);
   }
@@ -90,41 +83,14 @@ function getVillageSpecialBuildingSafeZone(placedTiles, sectorKey, kind) {
   const tilePos = axialToWorld(placedTile.q, placedTile.r);
   const a       = getHexVertex(sector.a);
   const b       = getHexVertex(sector.b);
-  const local   = kind === 'watchtower'
-    ? trianglePoint(a, b, 0.18, 0.41, 0.41)
-    : getChurchRewardLocalPoint(placedTile, edge, a, b);
+  const local   = trianglePoint(a, b, 0.18, 0.41, 0.41);
 
   return {
     x:      tilePos.x + local.x,
     z:      tilePos.z + local.z,
-    radius: kind === 'church' ? SPECIAL_BUILDING_SAFE_RADIUS * 1.15 : SPECIAL_BUILDING_SAFE_RADIUS,
+    radius: SPECIAL_BUILDING_SAFE_RADIUS,
     kind
   };
-}
-
-function getChurchRewardLocalPoint(placedTile, edge, a, b) {
-  const houseCount = Math.max(1, Math.min(4, Math.round(getEdgeValue(placedTile.tile?.edges?.[edge]))));
-  const anchor = getHouseColumnAnchors(houseCount)[0] ?? { centerWeight: 0.43, aWeight: 0.285, bWeight: 0.285 };
-  return trianglePoint(a, b, anchor.centerWeight, anchor.aWeight, anchor.bWeight);
-}
-
-function getHouseColumnAnchors(columnCount) {
-  if (columnCount >= 4) return [
-    { centerWeight: 0.54, aWeight: 0.33, bWeight: 0.13 },
-    { centerWeight: 0.54, aWeight: 0.13, bWeight: 0.33 },
-    { centerWeight: 0.30, aWeight: 0.48, bWeight: 0.22 },
-    { centerWeight: 0.30, aWeight: 0.22, bWeight: 0.48 }
-  ];
-  if (columnCount === 3) return [
-    { centerWeight: 0.56, aWeight: 0.32, bWeight: 0.12 },
-    { centerWeight: 0.56, aWeight: 0.12, bWeight: 0.32 },
-    { centerWeight: 0.30, aWeight: 0.35, bWeight: 0.35 }
-  ];
-  if (columnCount === 2) return [
-    { centerWeight: 0.52, aWeight: 0.34, bWeight: 0.14 },
-    { centerWeight: 0.52, aWeight: 0.14, bWeight: 0.34 }
-  ];
-  return [{ centerWeight: 0.43, aWeight: 0.285, bWeight: 0.285 }];
 }
 
 function trianglePoint(a, b, centerWeight, aWeight, bWeight) {
@@ -233,7 +199,7 @@ function createFieldFlagReward(zone) {
   group.rotation.y = hashUnit(`${seed}:rot`) * Math.PI * 2;
 
   const _mh = hashUnit(`${seed}:moulin-variant`);
-  const flagVariant = _mh < 0.50 ? 'field-flag-2' : 'field-flag-3'; // 50% / 50% (moulin-1 retiré)
+  const flagVariant = _mh < 0.50 ? 'field-flag-2' : 'field-flag-3'; // 50% moulin-2 / 50% moulin-1 (ex moulin-3)
   const flag = createPropModel(flagVariant, `${seed}:flag`);
   if (flag) {
     flag.name = 'field-zone-mill-glb';
@@ -245,8 +211,8 @@ function createFieldFlagReward(zone) {
     const flock = createBirdFlock(`${seed}:bird-flock:${i}`);
     if (!flock) continue;
 
-    const heightMultiplier = 1.75 + hashUnit(`${seed}:birdheight:${i}`) * 1.65;
-    const altitudeStagger  = i * 0.42 + hashUnit(`${seed}:bird-altitude-stagger:${i}`) * 0.95;
+    const heightMultiplier = (1.75 + hashUnit(`${seed}:birdheight:${i}`) * 1.65) * 0.40; // ÷2.5 (2,5× plus près du sol)
+    const altitudeStagger  = (i * 0.42 + hashUnit(`${seed}:bird-altitude-stagger:${i}`) * 0.95) * 0.40;
     flock.userData = {
       ...flock.userData,
       effectKind:    'bird-flock-orbit',

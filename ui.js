@@ -1,7 +1,9 @@
 import { renderMiniTile } from './tileMesh.js';
+import { LUT_HELP, ensureHelpTooltip, delegateHelpTooltip, attachHelpTooltip } from './help.js';
+import { MISSION_TYPE_ICON, MISSION_HELP } from './missions.js';
 
 export function createUI() {
-  return {
+  const ui = {
     resetCamera: document.getElementById('btnResetCamera'),
     undoLastTile: document.getElementById('btnUndoLastTile'),
     abandonGame: document.getElementById('btnAbandonGame'),
@@ -46,11 +48,66 @@ export function createUI() {
     },
     helpOverlay: document.getElementById('helpOverlay'),
     closeHelp: document.getElementById('btnCloseHelp')
+  }; // fin objet ui
+
+  // ── Tooltips élégants sur les nombres du panneau STATISTIQUES DE LA PARTIE ──
+  const _statHelpMap = {
+    statTiles:        'game.tiles',
+    statTrains:       'game.trains',
+    statBoats:        'game.boats',
+    statComets:       'game.comets',
+    statGrass:        'game.grass',
+    statLargestGrass: 'game.largestGrass',
+    statField:        'game.field',
+    statLargestField: 'game.largestField',
+    statForest:       'game.forest',
+    statLargestForest:'game.largestForest',
+    statHouse:        'game.house',
+    statLargestHouse: 'game.largestHouse',
+    statWater:        'game.water',
+    statLargestWater: 'game.largestWater',
+    statRail:         'game.rail',
+    statLargestRail:  'game.largestRail',
   };
+  for (const [id, helpKey] of Object.entries(_statHelpMap)) {
+    const el = document.getElementById(id);
+    if (el) el.dataset.statHelp = helpKey;
+  }
+  const statsPanel = document.getElementById('statsPanel');
+  if (statsPanel) {
+    ensureHelpTooltip();
+    delegateHelpTooltip(statsPanel, 'stat-help', LUT_HELP);
+  }
+
+  // Tooltips sur les boutons de partie
+  attachHelpTooltip(ui.newGame, LUT_HELP['game.newGame']);
+  attachHelpTooltip(ui.abandonGame, LUT_HELP['game.abandonGame']);
+
+  // Tooltips sur les valeurs du HUD principal (tuiles posées, dernier coup)
+  // On attache sur le wrapper qui englobe titre + nombre pour une zone de hover plus large
+  attachHelpTooltip(ui.gridPercent?.parentElement, LUT_HELP['game.gridPercent']);
+  attachHelpTooltip(ui.lastScore?.parentElement, LUT_HELP['game.lastScore']);
+
+  // Tooltips sur les 3 boîtes tuiles (tileUI droite)
+  attachHelpTooltip(ui.activeTile?.parentElement,   LUT_HELP['game.activeTile']);
+  attachHelpTooltip(ui.nextTile?.parentElement,     LUT_HELP['game.nextTile']);
+  attachHelpTooltip(ui.deckRemaining?.parentElement, LUT_HELP['game.deckRemaining']);
+
+  // Délégation tooltip sur la liste de missions (reconstruite à chaque tour)
+  if (ui.missionList) {
+    ensureHelpTooltip();
+    delegateHelpTooltip(ui.missionList, 'mission-tip', MISSION_HELP);
+  }
+
+  return ui;
 }
 
 export function setText(element, value) {
   if (element) element.textContent = value;
+}
+
+function setStatHTML(element, html) {
+  if (element) element.innerHTML = html;
 }
 
 export function updateDeckUI(ui, deck) {
@@ -98,27 +155,26 @@ export function updateStatsUI(ui, stats) {
   if (!ui?.stats || !stats) return;
 
   setText(ui.stats.tiles, String(stats.tiles ?? 0));
-  setText(ui.stats.grass, formatStatValue(stats.totals?.grass, 'unité', 'unités'));
-  setText(ui.stats.field, formatStatValue(stats.totals?.field, 'champ de blé', 'champs de blé'));
-  setText(ui.stats.forest, formatStatValue(stats.totals?.forest, 'arbre', 'arbres'));
-  setText(ui.stats.house, formatStatValue(stats.totals?.house, 'maison', 'maisons'));
-  setText(ui.stats.water, formatStatValue(stats.totals?.water, 'unité', 'unités'));
-  setText(ui.stats.rail, formatStatValue(stats.totals?.rail, 'rail', 'rails'));
+  setStatHTML(ui.stats.grass, formatStatValue(stats.totals?.grass));
+  setStatHTML(ui.stats.field, formatStatValue(stats.totals?.field));
+  setStatHTML(ui.stats.forest, formatStatValue(stats.totals?.forest));
+  setStatHTML(ui.stats.house, formatStatValue(stats.totals?.house));
+  setStatHTML(ui.stats.water, formatStatValue(stats.totals?.water));
+  setStatHTML(ui.stats.rail, formatStatValue(stats.totals?.rail));
   setText(ui.stats.trains, String(stats.trainLines ?? 0));
   setText(ui.stats.boats, String(stats.boatCount ?? 0));
-  setText(ui.stats.largestGrass, formatStatValue(stats.largest?.grass, 'unité', 'unités'));
-  setText(ui.stats.largestField, formatStatValue(stats.largest?.field, 'champ de blé', 'champs de blé'));
-  setText(ui.stats.largestForest, formatStatValue(stats.largest?.forest, 'arbre', 'arbres'));
-  setText(ui.stats.largestHouse, formatStatValue(stats.largest?.house, 'maison', 'maisons'));
-  setText(ui.stats.largestWater, formatStatValue(stats.largest?.water, 'unité', 'unités'));
-  setText(ui.stats.largestRail, formatStatValue(stats.largest?.rail, 'rail', 'rails'));
+  setStatHTML(ui.stats.largestGrass, formatStatValue(stats.largest?.grass));
+  setStatHTML(ui.stats.largestField, formatStatValue(stats.largest?.field));
+  setStatHTML(ui.stats.largestForest, formatStatValue(stats.largest?.forest));
+  setStatHTML(ui.stats.largestHouse, formatStatValue(stats.largest?.house));
+  setStatHTML(ui.stats.largestWater, formatStatValue(stats.largest?.water));
+  setStatHTML(ui.stats.largestRail, formatStatValue(stats.largest?.rail));
   setText(ui.stats.comets, String(stats.cometHits ?? 0));
 }
 
-function formatStatValue(value, singularUnit, pluralUnit) {
+function formatStatValue(value) {
   const amount = Number(value ?? 0);
-  const unit = amount <= 1 ? singularUnit : pluralUnit;
-  return `${amount} ${unit}`;
+  return `<span class="stat-num">${amount}</span>`;
 }
 
 export function updateMissionUI(ui, missions, formatter, progressByType = new Map()) {
@@ -133,7 +189,8 @@ export function updateMissionUI(ui, missions, formatter, progressByType = new Ma
     const className = mission.completed ? ' class="mission-completed"' : '';
     const icon = mission.completed ? '✅' : '🎯';
 
-    return `<li${className}><span class="mission-icon">${icon}</span><span class="mission-text">${escapeHtml(formatter(mission, progressByType))}</span></li>`;
+    const typeIcon = MISSION_TYPE_ICON[mission.type] ?? '';
+    return `<li${className} data-mission-tip="${mission.type}"><span class="mission-icon">${icon}</span><span class="mission-type-icon">${typeIcon}</span><span class="mission-text">${escapeHtml(formatter(mission, progressByType))}</span></li>`;
   }).join('');
 }
 

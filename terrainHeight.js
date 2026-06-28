@@ -6,37 +6,36 @@ import {
   HEX_SIZE,
   TILE_VISUAL,
   TERRAIN_RELIEF,
-  THIN_BIOME_DEPTH_RATIO,
-  BIOME_HEIGHT_RATIO,
-  RAGGED_EDGE,
-  FIELD_THICKNESS_RATIO
+  RAGGED_EDGE
 } from './config.js';
-import { createOuterVertices } from './stable/hexGeometry.js';
-import { hashRaggedInnerEdge, hashRaggedEdge, hash01 } from './stable/raggedEdge.js';
+import { createOuterVertices } from './hexGeometry.js';
+import { hashRaggedInnerEdge, hashRaggedEdge, hash01 } from './raggedEdge.js';
 
 export const RAIL_SURFACE_Y = TILE_VISUAL.railSurfaceY ?? TILE_VISUAL.waterY ?? -0.075;
 export const RAIL_OVERLAY_LIFT = HEX_SIZE * 0.026;
 export const TRAIN_OVERLAY_LIFT = HEX_SIZE * 0.070;
 
 export function getBiomeLocalTopY(type) {
-  if (type === EDGE_TYPES.water || type === 'water') return 0;
-
-  const baseDepth = TILE_VISUAL.tileThickness ?? 0.16;
-  const thinRatio = THIN_BIOME_DEPTH_RATIO?.[type];
-  if (thinRatio) return baseDepth * (thinRatio - 1);
-
-  return baseDepth * (BIOME_HEIGHT_RATIO?.[type] ?? 0);
+  // Surface plate : toutes les tuiles ont leur dessus au niveau local 0.
+  // Le décalage monde est porté par getBiomeSurfaceOffsetY.
+  return 0;
 }
 
 export function getBiomeSurfaceOffsetY(type) {
-  if (type === EDGE_TYPES.water || type === 'water') return TILE_VISUAL.waterY ?? -0.075;
-  if (type === EDGE_TYPES.rail || type === 'rail') return RAIL_SURFACE_Y;
-  // Secteur field : mesh décalé vers le bas pour ancrer le fond à −tileThickness
-  // (même logique que getBiomeSurfaceY dans tileMesh.js)
-  if (type === EDGE_TYPES.field || type === 'field') {
-    return (TILE_VISUAL.sectorY ?? 0) - (TILE_VISUAL.tileThickness ?? 0.12) * (1 - FIELD_THICKNESS_RATIO);
+  // Synchronisé avec tileMesh.js::getBiomeSurfaceY — doit rester identique.
+  // Eau et rail : niveaux propres à leur rendu.
+  if (type === EDGE_TYPES.water || type === 'water') {
+    return TILE_VISUAL.waterThickness ?? (TILE_VISUAL.tileThickness ?? 0.12) * 0.5; // fond à y=0, dessus à +0.06
   }
-  return TILE_VISUAL.sectorY ?? 0;
+  if (type === EDGE_TYPES.rail || type === 'rail') return RAIL_SURFACE_Y;
+  // Terre : fond ancré à y=0, dessus = depth par biome (sync getSectorDepth dans tileMesh.js).
+  // Les 3 mm d'écart assurent l'anti Z-fight aux jonctions.
+  const base = TILE_VISUAL.tileThickness ?? 0.12;
+  if (type === EDGE_TYPES.field  || type === 'field')  return base * 0.783; // ≈ 0.094
+  if (type === EDGE_TYPES.grass  || type === 'grass')  return base * 0.683; // ≈ 0.082
+  if (type === EDGE_TYPES.house  || type === 'house')  return base * 0.708; // ≈ 0.085
+  if (type === EDGE_TYPES.forest || type === 'forest') return base * 0.733; // ≈ 0.088
+  return base; // fallback
 }
 
 export function getTerrainLocalTopY(point, type = EDGE_TYPES.grass ?? 'grass', salt = 0) {

@@ -1,10 +1,10 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_COLOR, EDGE_ORDER, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
-import { axialToWorld, makeHexKey } from './stable/hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
-import { createOuterVertices } from './stable/hexGeometry.js';
-import { makeNodeKey, getTileCenterType } from './stable/tileUtils.js';
-import { getWorldCurvatureDrop, markNoWorldCurvature } from './stable/worldCurvature.js';
+import { axialToWorld, makeHexKey } from './hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
+import { createOuterVertices } from './hexGeometry.js';
+import { makeNodeKey, getTileCenterType } from './tileUtils.js';
+import { getWorldCurvatureDrop, markNoWorldCurvature } from './worldCurvature.js';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -12,8 +12,8 @@ const CENTER_RADIUS = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 
-const HALO_Y = 0.010;       // ÷2 encore (était 0.022)
-const HOVER_HALO_Y = 0.022; // ÷2 encore (était 0.052)
+const HALO_Y = 0.118;       // légèrement sous l'original (0.130), au-dessus du trop-bas (0.082)
+const HOVER_HALO_Y = 0.126; // hover légèrement au-dessus du halo permanent
 const HOVER_HALO_RADIUS = 0.056;
 
 // ─── Texture de pointillés (partagée, lazy-init) ─────────────────────────────
@@ -290,32 +290,60 @@ function makePointKey(point) {
 // ─── Meshes segments et jonctions ────────────────────────────────────────────
 
 function createFlatSegmentMesh(segment, width, material, isDashed = false) {
-  const delta  = segment.to.clone().sub(segment.from);
-  const length = delta.length();
-  if (length <= 0.001) return null;
+  // Longueur horizontale (XZ) du segment
+  const dx = segment.to.x - segment.from.x;
+  const dz = segment.to.z - segment.from.z;
+  const horizLen = Math.hypot(dx, dz);
+  if (horizLen <= 0.001) return null;
 
-  const geometry = new THREE.PlaneGeometry(length, width);
+  // Direction tangente et perpendiculaire dans le plan XZ
+  const ux = dx / horizLen, uz = dz / horizLen; // tangente
+  const px = -uz, pz = ux;                      // perpendiculaire (gauche)
+  const halfW = width / 2;
 
-  // Mode pointillés : scaler les UVs le long du segment pour une période fixe en
-  // world units (0.25 u = un cycle trait/gap ≈ 3–4 tirets par côté d'hexagone).
-  if (isDashed) {
-    const DASH_PERIOD = 0.25; // en world units (HEX_SIZE = 1)
-    const uvScale     = length / DASH_PERIOD;
-    const uvAttr      = geometry.attributes.uv;
-    for (let i = 0; i < uvAttr.count; i++) {
-      uvAttr.setX(i, uvAttr.getX(i) * uvScale);
-    }
-    uvAttr.needsUpdate = true;
+  // Nombre de subdivisions : ~1 par demi-côté d'hexagone pour suivre la courbure
+  const SUB = Math.max(1, Math.ceil(horizLen / (HEX_SIZE * 0.5)));
+
+  const DASH_PERIOD = 0.25; // en world units
+
+  const positions = [];
+  const uvs       = [];
+  const idxBuf    = [];
+
+  // from.y/to.y contiennent déjà le drop (via toWorldVector) → on sépare flat + drop
+  const fromFlat = segment.from.y - getWorldCurvatureDrop(segment.from.x, segment.from.z);
+  const toFlat   = segment.to.y   - getWorldCurvatureDrop(segment.to.x,   segment.to.z);
+
+  for (let i = 0; i <= SUB; i++) {
+    const t  = i / SUB;
+    const wx = segment.from.x + dx * t;
+    const wz = segment.from.z + dz * t;
+    // Y baked : interpole le Y plat puis ajoute le drop exact pour ce sous-point
+    const bakedY = fromFlat + (toFlat - fromFlat) * t + getWorldCurvatureDrop(wx, wz);
+    const u = isDashed ? (t * horizLen / DASH_PERIOD) : t;
+
+    // Deux vertices par colonne : côté gauche et côté droit
+    positions.push(
+      wx - px * halfW, bakedY, wz - pz * halfW,
+      wx + px * halfW, bakedY, wz + pz * halfW,
+    );
+    uvs.push(u, 0, u, 1);
   }
 
-  const mesh     = new THREE.Mesh(geometry, material);
-  // midpoint.y contient déjà le drop de courbure (via toWorldVector).
-  // markNoWorldCurvature empêche le shader de l'appliquer une seconde fois.
-  const midpoint = segment.from.clone().add(segment.to).multiplyScalar(0.5);
-  const angle    = Math.atan2(delta.z, delta.x);
-  mesh.position.copy(midpoint);
-  mesh.rotation.set(-Math.PI / 2, 0, -angle);
-  return markNoWorldCurvature(mesh);
+  for (let i = 0; i < SUB; i++) {
+    const a = i * 2;
+    // Triangle 1 : a, a+2, a+1  — Triangle 2 : a+1, a+2, a+3
+    idxBuf.push(a, a + 2, a + 1,  a + 1, a + 2, a + 3);
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute('uv',       new THREE.Float32BufferAttribute(uvs, 2));
+  geo.setIndex(idxBuf);
+  geo.computeVertexNormals();
+
+  // markNoWorldCurvature : le Y est déjà baked, pas de double-application du shader.
+  return markNoWorldCurvature(new THREE.Mesh(geo, material));
 }
 
 /** Disque plat positionné à une jonction de segments pour arrondir les angles. */

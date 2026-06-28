@@ -26,7 +26,7 @@
  */
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import { createGLTFLoader } from './glbLoader.js';
 import { clone as cloneSkeleton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js';
 import {
   EDGE_ORDER,
@@ -38,9 +38,9 @@ import {
   FIELD_BIRD_FLOCK_TARGET_WIDTH,
   FIELD_BIRD_FLOCK_ANIMATION_SPEED
 } from './config.js';
-import { hashUnit10k as hashUnit, hashNumber } from './stable/hashUtils.js';
-import { axialToWorld, makeHexKey } from './stable/hex.js';
-import { HEX_DIRECTIONS } from './stable/placementRules.js';
+import { hashUnit10k as hashUnit, hashNumber } from './hashUtils.js';
+import { axialToWorld, makeHexKey } from './hex.js';
+import { HEX_DIRECTIONS } from './placementRules.js';
 import {
   HEX_CHUNK_SIZE,
   LOD_MICRO_CULL_DISTANCE,
@@ -55,8 +55,8 @@ import {
   LOD_CROW_CULL_DISTANCE,
   LOD_MILL_CULL_DISTANCE
 } from './variables.js';
-import { getTileEdgeType, clearGroup } from './stable/tileUtils.js';
-import { getHexVertex, normalize2 } from './stable/hexGeometry.js';
+import { getTileEdgeType, clearGroup } from './tileUtils.js';
+import { getHexVertex, normalize2 } from './hexGeometry.js';
 // Sous-fichiers — imports circulaires valides (accès dans des corps de fonctions uniquement)
 import { createFieldFlags, collectSpecialBuildingSafeZones } from './fieldZonesOverlay.js';
 import { createNaturalGroundProps } from './naturalPropsOverlay.js';
@@ -67,42 +67,49 @@ const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(d => [d.edge, d]
 
 // ─── Constantes exportées (partagées avec sous-fichiers) ──────────────────────
 
-const WATER_SURFACE_Y = (TILE_VISUAL.waterY ?? -0.075) + 0.012;
-export const FIELD_SURFACE_Y                 = 0.070;
+const WATER_SURFACE_Y = TILE_VISUAL.waterThickness ?? 0.06; // fond eau à y=0, surface à +waterThickness
+export const FIELD_SURFACE_Y = (TILE_VISUAL.tileThickness ?? 0.12) * 0.783; // surface champ = dessus tuile field (≈ 0.094)
 export const FIELD_FLAG_MIN_TOTAL            = 5;
-const        FIELD_FLAG_2_TARGET_HEIGHT      = HEX_SIZE * 0.384 * 1.06 * 1.05 * 1.11 * 0.92 * 0.88 * 0.93 * 0.88; // moulin-2: +20% +6% +5% +11% −8% −12% −7% −12%
-const        FIELD_FLAG_3_TARGET_HEIGHT      = HEX_SIZE * 0.384 * 1.06 * 1.05 * 1.11 * 0.92 * 0.88 * 0.93 * 0.88; // moulin-3: même base que moulin-2 −12%
-const        FOUNTAIN_1_TARGET_WIDTH         = HEX_SIZE * 0.18 * 0.93 * 0.90; // −7% −10%
-const        FOUNTAIN_2_TARGET_WIDTH         = HEX_SIZE * 0.18 * 0.93 * 0.80; // −7% −20%
-export const HAY_BALE_TARGET_WIDTH           = HEX_SIZE * 0.14 * 2.2 * 1.3 * 1.15 * 1.15 * 1.06 * 0.92 * 0.92; // +15% +6% −8% −8%
-const        BENCH_TARGET_LENGTH             = HEX_SIZE * 0.16 * 0.85 * 0.93 * 0.92; // −15% −7% −8%
-const        SIGNPOST_TARGET_HEIGHT          = HEX_SIZE * 0.28 * 0.85 * 0.93 * 0.75 * 0.88; // −15% −7% −25% −12%
-const        SHORE_BOAT_TARGET_LENGTH        = HEX_SIZE * 0.175 * 0.88 * 0.92; // −12% −8%
+const        FIELD_FLAG_2_TARGET_HEIGHT      = HEX_SIZE * 0.384 * 1.06 * 1.05 * 1.11 * 0.92 * 0.88 * 0.93 * 0.88 * 0.96 * 0.93 * 0.95 * 0.94; // moulin-2: +20% +6% +5% +11% −8% −12% −7% −12% −4% −7% −5% −6%
+const        FIELD_FLAG_3_TARGET_HEIGHT      = HEX_SIZE * 0.384 * 1.06 * 1.05 * 1.11 * 0.92 * 0.88 * 0.93 * 0.88 * 0.96 * 0.93 * 0.95 * 0.94; // moulin-1: même base −6%
+const        FOUNTAIN_1_TARGET_WIDTH         = HEX_SIZE * 0.18 * 0.93 * 0.90 * 0.96 * 0.91 * 0.93; // −7% −10% −4% −9% −7%
+const        FOUNTAIN_2_TARGET_WIDTH         = HEX_SIZE * 0.18 * 0.93 * 0.80 * 0.96 * 0.91 * 0.93; // −7% −20% −4% −9% −7%
+export const HAY_BALE_TARGET_WIDTH           = HEX_SIZE * 0.14 * 2.2 * 1.3 * 1.15 * 1.15 * 1.06 * 0.92 * 0.92 * 0.93 * 0.87 * 0.90 * 0.90 * 0.94; // +15% +6% −8% −8% −7% −13% −10% −10% −6%
+const        SIGNPOST_TARGET_HEIGHT          = HEX_SIZE * 0.28 * 0.85 * 0.93 * 0.75 * 0.88 * 0.83 * 0.87 * 0.82; // −15% −7% −25% −12% −17% −13% −18%
+const        SHORE_BOAT_TARGET_LENGTH        = HEX_SIZE * 0.175 * 0.88 * 0.92 * 0.80 * 0.90; // −12% −8% −20% −10%
+export const PILE_DE_BOIS_TARGET_LENGTH      = HEX_SIZE * 0.14 * 1.08 * 1.07; // piles de bois en forêt — +8% +7%
 export const SPECIAL_BUILDING_SAFE_RADIUS    = HEX_SIZE * 0.34;
 export const SPECIAL_BUILDING_BOAT_SAFE_RADIUS = HEX_SIZE * 0.18;
-export const NATURAL_FLOWER_TARGET_WIDTH     = HEX_SIZE * 0.047 * 0.85 * 0.93 * 0.85 * 0.85 * 0.90 * 0.88 * 0.94; // −15% −7% −15% −15% −10% −12% −6%
-export const NATURAL_GRASS_TARGET_WIDTH      = HEX_SIZE * 0.058 * 1.15 * 0.91 * 0.87 * 0.94; // herbes/touffes/jeunes pousses (plantes.glb) — +15% −9% −13% −6%
-export const NATURAL_SHRUB_TARGET_WIDTH      = HEX_SIZE * 0.095 * 0.91 * 0.87 * 0.94; // fougères et buissons — forêts uniquement (plantes.glb) — −9% −13% −6%
-const        NATURAL_ROCK_TARGET_LENGTH      = HEX_SIZE * 0.106 * 0.85 * 0.93 * 0.88 * 0.85; // −15% −7% −12% −15%
-const        NATURAL_REED_TARGET_HEIGHT      = HEX_SIZE * 0.105 * 0.85 * 0.93 * 0.88 * 0.85 * 0.92 * 0.94; // −15% −7% −12% −15% −8% −6%
-export const NATURAL_MUSHROOM_TARGET_WIDTH   = HEX_SIZE * 0.043 * 0.85 * 0.93 * 0.88 * 0.88 * 0.95; // −15% −7% −12% −12% −5%
-export const BARREL_TARGET_WIDTH             = HEX_SIZE * 0.1031 * 0.85 * 0.88 * 0.93 * 0.88 * 0.92 * 0.92; // −15% −12% −7% −12% −8% −8%
-const        CART_TARGET_LENGTH              = HEX_SIZE * 0.291 * 0.85 * 0.85 * 0.88; // −15% −15% −12%
-export const NATURAL_DEER_TARGET_WIDTH       = HEX_SIZE * 0.16 * 0.88 * 0.92 * 0.92 * 0.92;  // cerf sauvage (forêt / prairie / champ) — −12% −8% −8% −8%
-const        ANIMAL_CHICKEN_TARGET_WIDTH     = HEX_SIZE * 0.055 * 0.50 * 1.12 * 1.10; // poule de village — ×0.50 +12% +10%
-const        ANIMAL_DOG_TARGET_WIDTH         = HEX_SIZE * 0.085; // chien de village
-const        ANIMAL_CAT_TARGET_WIDTH         = HEX_SIZE * 0.060 * 1.08 * 1.07; // chat de village +8% +7%
-const        ANIMAL_HORSE_TARGET_WIDTH       = HEX_SIZE * 0.20 * 0.88 * 0.92 * 0.92;  // cheval de village −12% −8% −8%
+export const NATURAL_FLOWER_TARGET_WIDTH     = HEX_SIZE * 0.047 * 0.85 * 0.93 * 0.85 * 0.85 * 0.90 * 0.88 * 0.94 * 0.96 * 0.92 * 0.88 * 0.93 * 0.83 * 0.92; // −15% −7% −15% −15% −10% −12% −6% −4% −8% −12% −7% −17% −8%
+export const NATURAL_GRASS_TARGET_WIDTH      = HEX_SIZE * 0.058 * 1.15 * 0.91 * 0.87 * 0.94 * 0.96 * 0.90 * 0.88 * 0.90 * 0.85 * 0.87 * 0.92; // herbes/touffes/jeunes pousses (plantes.glb) — +15% −9% −13% −6% −4% −10% −12% −10% −15% −13% −8%
+export const NATURAL_BRINDILLE_TARGET_WIDTH  = NATURAL_GRASS_TARGET_WIDTH * 0.525 * 0.92 * 1.30;     // fougere.glb — +30% (hérite −8% de grass)
+export const NATURAL_SHRUB_TARGET_WIDTH      = HEX_SIZE * 0.095 * 0.91 * 0.87 * 0.94 * 0.96 * 0.90 * 0.92; // fougères et buissons — forêts uniquement (plantes.glb) — −9% −13% −6% −4% −10% −8%
+const        NATURAL_ROCK_TARGET_LENGTH      = HEX_SIZE * 0.106 * 0.85 * 0.93 * 0.88 * 0.85 * 0.96 * 0.88; // −15% −7% −12% −15% −4% −12%
+const        NATURAL_REED_TARGET_HEIGHT      = HEX_SIZE * 0.105 * 0.85 * 0.93 * 0.88 * 0.85 * 0.92 * 0.94 * 0.90 * 0.93 * 0.88 * 0.90 * 0.86 * 0.83 * 0.92; // −15% −7% −12% −15% −8% −6% −10% −7% −12% −10% −14% −17% −8%
+export const NATURAL_MUSHROOM_TARGET_WIDTH   = HEX_SIZE * 0.043 * 0.85 * 0.93 * 0.88 * 0.88 * 0.95 * 0.96 * 0.90 * 0.88 * 0.88 * 0.90 * 0.93 * 0.83 * 0.88 * 0.92 * 1.08; // +8%
+export const BARREL_TARGET_WIDTH             = HEX_SIZE * 0.1031 * 0.85 * 0.88 * 0.93 * 0.88 * 0.92 * 0.92 * 0.90 * 0.91; // −15% −12% −7% −12% −8% −8% −10% −9%
+const        CART_TARGET_LENGTH              = HEX_SIZE * 0.291 * 0.85 * 0.85 * 0.88 * 0.96 * 0.94 * 0.91 * 0.93; // −15% −15% −12% −4% −6% −9% −7%
+const        MEULE_TARGET_WIDTH             = HEX_SIZE * 0.095; // meule de moulin — petite, décorative
+export const NATURAL_DEER_TARGET_WIDTH       = HEX_SIZE * 0.16 * 0.88 * 0.92 * 0.92 * 0.92 * 0.89 * 0.80;  // cerf sauvage (forêt / prairie / champ) — −12% −8% −8% −8% −11% −20%
+const        ANIMAL_DOG_TARGET_WIDTH         = HEX_SIZE * 0.085 * 0.92 * 0.80; // chien de village −8% −20%
+const        ANIMAL_HORSE_TARGET_WIDTH       = HEX_SIZE * 0.20 * 0.88 * 0.92 * 0.92 * 0.94 * 0.80;  // cheval de village −12% −8% −8% −6% −20%
 export const ROAD_DECOR_Y                    = ((TILE_VISUAL.tileThickness ?? 0.12) * -0.30) + 0.010;
-export const SHORE_BOAT_Y                    = WATER_SURFACE_Y + 0.012;
+export const SHORE_BOAT_Y                    = WATER_SURFACE_Y + 0.022; // barques échouées légèrement au-dessus de la surface
 
 export const NATURAL_DECOR_VARIANTS = {
-  flower:   ['flower-1', 'flower-2', 'flower-3', 'flower-4'],
-  grass:    ['brindille', 'brindille', 'brindille', 'brindille', // ×4 → ~33% du pool herbes
-             'plant-misc2', 'plant-misc3', 'plant-misc4', 'plant-misc5',
-             'plant-grass1', 'plant-grass2', 'plant-sapling1', 'plant-sapling2'],
-  shrub:    ['shrub-fern', 'shrub-monstera1', 'shrub-monstera2', 'shrub-misc1'],
-  chicken:  ['animal-chicken'],
+  flower:    ['flower-1', 'flower-2', 'flower-3', 'flower-4'],
+  brindille: ['brindille'],
+  grass:     ['berry-1', 'berry-1', 'berry-1', 'berry-1', 'berry-1', 'berry-1',
+              'berry-2', 'berry-2', 'berry-2', 'berry-2', 'berry-2', 'berry-2',  // ×6 chacun → 36/51 = 71% du pool
+              'berry-3', 'berry-3', 'berry-3', 'berry-3', 'berry-3', 'berry-3',
+              'berry-4', 'berry-4', 'berry-4', 'berry-4', 'berry-4', 'berry-4',
+              'berry-5', 'berry-5', 'berry-5', 'berry-5', 'berry-5', 'berry-5',
+              'berry-6', 'berry-6', 'berry-6', 'berry-6', 'berry-6', 'berry-6',
+              'plant-misc2', 'plant-misc3', 'plant-misc4', 'plant-misc5',        // ×1 chacun
+              'plant-grass1', 'plant-grass2', 'plant-sapling1', 'plant-sapling2',
+              'plante-1', 'plante-2', 'plante-3', 'plante-4', 'plante-5', 'plante-6', 'plante-7'],
+  shrub:     ['shrub-fern', 'shrub-monstera1', 'shrub-monstera2', 'shrub-misc1', 'plante-haute'],
+  'pile-de-bois': ['pile-de-bois-1', 'pile-de-bois-2'],
   deer:     ['animal-deer'],
   rock:     ['rock-1', 'rock-2', 'rock-3', 'rock-4'],
   reed:     ['reed'],
@@ -113,52 +120,68 @@ export const NATURAL_DECOR_VARIANTS = {
 export const BARREL_VARIANTS = ['barrel-1', 'barrel-2', 'barrel-3', 'barrel-4', 'barrel-5'];
 
 const PROP_MODEL_DEFS = [
-  { key: 'field-flag-2', url: './glb/batiments/moulin-2.glb', target: FIELD_FLAG_2_TARGET_HEIGHT * 1.70, mode: 'height', correctionX: Math.PI / 2 },
-  { key: 'field-flag-3', url: './glb/batiments/moulin-3.glb', target: FIELD_FLAG_3_TARGET_HEIGHT * 1.70, mode: 'height', noSkeletonPose: true },
-  { key: 'hay-bale',     url: './glb/botte-foin.glb',          target: HAY_BALE_TARGET_WIDTH,                   mode: 'length', kind: 'hay-bale' },
-  { key: 'fountain-1',   url: './glb/fontaine-1.glb',         target: FOUNTAIN_1_TARGET_WIDTH,                 mode: 'length' },
-  { key: 'fountain-2',   url: './glb/fontaine-2.glb',         target: FOUNTAIN_2_TARGET_WIDTH,                 mode: 'length' },
-  { key: 'road-bench',   url: './glb/banc.glb',               target: BENCH_TARGET_LENGTH,             mode: 'length' },
-  { key: 'road-signpost-1', url: './glb/poteau-indicateur-1.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
-  { key: 'road-signpost-2', url: './glb/poteau-indicateur-2.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
-  { key: 'road-signpost-3', url: './glb/poteau-indicateur-3.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
-  { key: 'shore-boat-2', url: './glb/barque-2.glb',           target: SHORE_BOAT_TARGET_LENGTH * 0.65, mode: 'length' },
-  { key: 'flower-1',     url: './glb/flower-1.glb',           target: NATURAL_FLOWER_TARGET_WIDTH,     mode: 'length', kind: 'flower' },
-  { key: 'flower-2',     url: './glb/flower-2.glb',           target: NATURAL_FLOWER_TARGET_WIDTH,     mode: 'length', kind: 'flower' },
-  { key: 'flower-3',     url: './glb/flower-3.glb',           target: NATURAL_FLOWER_TARGET_WIDTH,     mode: 'length', kind: 'flower' },
-  { key: 'flower-4',     url: './glb/flower-4.glb',           target: NATURAL_FLOWER_TARGET_WIDTH,     mode: 'length', kind: 'flower' },
+  { key: 'field-flag-2', url: './glb/batiments/medieval/moulin-2.glb', target: FIELD_FLAG_2_TARGET_HEIGHT * 1.70, mode: 'height', noSkeletonPose: true },
+  { key: 'field-flag-3', url: './glb/batiments/medieval/moulin-1.glb', target: FIELD_FLAG_3_TARGET_HEIGHT * 1.70, mode: 'height', noSkeletonPose: true },
+  { key: 'hay-bale',       url: './glb/decor/botte-foin.glb',        target: HAY_BALE_TARGET_WIDTH,          mode: 'length', kind: 'hay-bale' },
+  { key: 'pile-de-bois-1', url: './glb/decor/pile-de-bois-1.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 1.23, mode: 'length', kind: 'pile-de-bois' }, // +23%
+  { key: 'pile-de-bois-2', url: './glb/decor/pile-de-bois-2.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 1.13 * 0.88, mode: 'length', kind: 'pile-de-bois' }, // +13% −12%
+  { key: 'fountain-1',   url: './glb/decor/fontaine-1.glb',  target: FOUNTAIN_1_TARGET_WIDTH, mode: 'length', bypassBboxCheck: true, groundOffsetDelta: -0.017 },
+  { key: 'fountain-2',   url: './glb/decor/fontaine-2.glb',  target: FOUNTAIN_2_TARGET_WIDTH, mode: 'length', groundOffsetDelta: -0.004 },
+  { key: 'road-signpost-1', url: './glb/decor/poteau-indicateur-1.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
+  { key: 'road-signpost-2', url: './glb/decor/poteau-indicateur-2.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
+  { key: 'road-signpost-3', url: './glb/decor/poteau-indicateur-3.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
+  { key: 'shore-boat-1', url: './glb/decor/barque-1.glb',    target: SHORE_BOAT_TARGET_LENGTH * 0.65, mode: 'length', bypassBboxCheck: true },
+  { key: 'shore-boat-2', url: './glb/decor/barque-2.glb',    target: SHORE_BOAT_TARGET_LENGTH * 0.65, mode: 'length' },
+  { key: 'flower-1',     url: './glb/plantes/flower-1.glb',  target: NATURAL_FLOWER_TARGET_WIDTH,     mode: 'length', kind: 'flower' },
+  { key: 'flower-2',     url: './glb/plantes/flower-2.glb',  target: NATURAL_FLOWER_TARGET_WIDTH,     mode: 'length', kind: 'flower' },
+  { key: 'flower-3',     url: './glb/plantes/flower-3.glb',  target: NATURAL_FLOWER_TARGET_WIDTH,     mode: 'length', kind: 'flower' },
+  { key: 'flower-4',     url: './glb/plantes/flower-4.glb',  target: NATURAL_FLOWER_TARGET_WIDTH,     mode: 'length', kind: 'flower' },
   // Pool d'herbes/touffes/jeunes pousses — prairies et champs (plantes.glb package)
   // Fougères et buissons — forêts uniquement (shrub-* → castShadow actif, volume significatif)
-  { key: 'brindille',       url: './glb/brindille.glb',                          target: NATURAL_GRASS_TARGET_WIDTH * 0.70, mode: 'length', kind: 'grass' }, // −30%
-  { key: 'shrub-fern',      url: './glb/plantes.glb', asset: 'Plant_Fern',      target: NATURAL_SHRUB_TARGET_WIDTH * 1.60, mode: 'length', kind: 'shrub' }, // +60%
-  { key: 'shrub-monstera1', url: './glb/plantes.glb', asset: 'Plant_Monstera1', target: NATURAL_SHRUB_TARGET_WIDTH,        mode: 'length', kind: 'shrub' },
-  { key: 'shrub-monstera2', url: './glb/plantes.glb', asset: 'Plant_Monstera2', target: NATURAL_SHRUB_TARGET_WIDTH,        mode: 'length', kind: 'shrub' },
-  { key: 'shrub-misc1',     url: './glb/plantes.glb', asset: 'Plant_Misc1',     target: NATURAL_SHRUB_TARGET_WIDTH * 1.45, mode: 'length', kind: 'shrub' }, // grande plante
-  { key: 'plant-misc2',   url: './glb/plantes.glb', asset: 'Plant_Misc2',   target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
-  { key: 'plant-misc3',   url: './glb/plantes.glb', asset: 'Plant_Misc3',   target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
-  { key: 'plant-misc4',   url: './glb/plantes.glb', asset: 'Plant_Misc4',   target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
-  { key: 'plant-misc5',   url: './glb/plantes.glb', asset: 'Plant_Misc5',   target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
-  { key: 'plant-grass1',  url: './glb/plantes.glb', asset: 'Plant_Grass1',  target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
-  { key: 'plant-grass2',  url: './glb/plantes.glb', asset: 'Plant_Grass2',  target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
-  { key: 'plant-sapling1',url: './glb/plantes.glb', asset: 'Plant_Sapling1',target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
-  { key: 'plant-sapling2',url: './glb/plantes.glb', asset: 'Plant_Sapling2',target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
-  { key: 'rock-1',       url: './glb/rock-1.glb',             target: NATURAL_ROCK_TARGET_LENGTH,      mode: 'length', kind: 'rock' },
-  { key: 'rock-2',       url: './glb/rock-2.glb',             target: NATURAL_ROCK_TARGET_LENGTH,      mode: 'length', kind: 'rock' },
-  { key: 'rock-3',       url: './glb/rock-3.glb',             target: NATURAL_ROCK_TARGET_LENGTH,      mode: 'length', kind: 'rock' },
-  { key: 'rock-4',       url: './glb/rock-4.glb',             target: NATURAL_ROCK_TARGET_LENGTH,      mode: 'length', kind: 'rock' },
-  { key: 'reed',         url: './glb/roseau.glb',             target: NATURAL_REED_TARGET_HEIGHT,      mode: 'height', kind: 'reed' },
-  { key: 'mushroom-1',   url: './glb/mushroom-1.glb',         target: NATURAL_MUSHROOM_TARGET_WIDTH,        mode: 'length', kind: 'mushroom' },
-  { key: 'mushroom-2',   url: './glb/mushroom-2.glb',         target: NATURAL_MUSHROOM_TARGET_WIDTH * 1.40 * 1.15, mode: 'length', kind: 'mushroom' }, // +40% +15%
-  { key: 'barrel-1',     url: './glb/tonneau-1.glb',          target: BARREL_TARGET_WIDTH * 0.87, mode: 'length' },
-  { key: 'barrel-2',     url: './glb/tonneau-2.glb',          target: BARREL_TARGET_WIDTH * 0.87, mode: 'length' },
-  { key: 'barrel-3',     url: './glb/tonneau-3.glb',          target: BARREL_TARGET_WIDTH * 1.18, mode: 'length' },
-  { key: 'barrel-4',     url: './glb/tonneau-4.glb',          target: BARREL_TARGET_WIDTH * 0.87, mode: 'length' },
-  { key: 'barrel-5',     url: './glb/tonneau-5.glb',          target: BARREL_TARGET_WIDTH * 2.25 * 0.87, mode: 'length' },
-  { key: 'cart',         url: './glb/charrette.glb',          target: CART_TARGET_LENGTH,              mode: 'length' },
+  { key: 'brindille',       url: './glb/plantes/fougere.glb',                           target: NATURAL_BRINDILLE_TARGET_WIDTH,            mode: 'length', kind: 'brindille' }, // +35% count — kind séparé pour densité indépendante
+  { key: 'shrub-fern',      url: './glb/plantes/plantes.glb', asset: 'Plant_Fern',      target: NATURAL_SHRUB_TARGET_WIDTH * 1.60 * 0.63 * 0.83, mode: 'length', kind: 'shrub' }, // +60% −37% −17%
+  { key: 'shrub-monstera1', url: './glb/plantes/plantes.glb', asset: 'Plant_Monstera1', target: NATURAL_SHRUB_TARGET_WIDTH * 0.63 * 0.83 * 0.90 * 0.89, mode: 'length', kind: 'shrub' }, // −11%
+  { key: 'shrub-monstera2', url: './glb/plantes/plantes.glb', asset: 'Plant_Monstera2', target: NATURAL_SHRUB_TARGET_WIDTH * 0.63 * 0.83 * 0.90 * 0.89, mode: 'length', kind: 'shrub' }, // −11%
+  { key: 'shrub-misc1',     url: './glb/plantes/plantes.glb', asset: 'Plant_Misc1',     target: NATURAL_SHRUB_TARGET_WIDTH * 1.45 * 0.63, mode: 'length', kind: 'shrub' }, // grande plante — −37%
+  { key: 'plant-misc2',   url: './glb/plantes/plantes.glb', asset: 'Plant_Misc2',   target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
+  { key: 'plant-misc3',   url: './glb/plantes/plantes.glb', asset: 'Plant_Misc3',   target: NATURAL_GRASS_TARGET_WIDTH * 0.30 * 1.12, mode: 'length', kind: 'grass' }, // −70% +12%
+  { key: 'plant-misc4',   url: './glb/plantes/plantes.glb', asset: 'Plant_Misc4',   target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
+  { key: 'plant-misc5',   url: './glb/plantes/plantes.glb', asset: 'Plant_Misc5',   target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
+  { key: 'plant-grass1',  url: './glb/plantes/plantes.glb', asset: 'Plant_Grass1',  target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
+  { key: 'plant-grass2',  url: './glb/plantes/plantes.glb', asset: 'Plant_Grass2',  target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
+  { key: 'plant-sapling1',url: './glb/plantes/plantes.glb', asset: 'Plant_Sapling1',target: NATURAL_GRASS_TARGET_WIDTH * 0.45 * 1.12, mode: 'length', kind: 'grass' }, // −55% +12%
+  { key: 'plant-sapling2',url: './glb/plantes/plantes.glb', asset: 'Plant_Sapling2',target: NATURAL_GRASS_TARGET_WIDTH * 0.45 * 1.12, mode: 'length', kind: 'grass' }, // −55% +12%
+  { key: 'berry-1', url: './glb/plantes/berry/berry-1.glb', target: NATURAL_GRASS_TARGET_WIDTH * 1.15 * 1.17, mode: 'length', kind: 'grass' }, // +17%
+  { key: 'berry-2', url: './glb/plantes/berry/berry-2.glb', target: NATURAL_GRASS_TARGET_WIDTH * 1.15 * 1.17, mode: 'length', kind: 'grass' }, // +17%
+  { key: 'berry-3', url: './glb/plantes/berry/berry-3.glb', target: NATURAL_GRASS_TARGET_WIDTH * 1.15 * 1.17, mode: 'length', kind: 'grass' }, // +17%
+  { key: 'berry-4', url: './glb/plantes/berry/berry-4.glb', target: NATURAL_GRASS_TARGET_WIDTH * 1.15 * 1.17, mode: 'length', kind: 'grass' }, // +17%
+  { key: 'berry-5', url: './glb/plantes/berry/berry-5.glb', target: NATURAL_GRASS_TARGET_WIDTH * 1.15 * 1.17, mode: 'length', kind: 'grass' }, // +17%
+  { key: 'berry-6', url: './glb/plantes/berry/berry-6.glb', target: NATURAL_GRASS_TARGET_WIDTH * 1.15 * 1.17, mode: 'length', kind: 'grass' }, // +17%
+  { key: 'plante-1', url: './glb/plantes/plante-1.glb', target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
+  { key: 'plante-2', url: './glb/plantes/plante-2.glb', target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
+  { key: 'plante-3', url: './glb/plantes/plante-3.glb', target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
+  { key: 'plante-4', url: './glb/plantes/plante-4.glb', target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
+  { key: 'plante-5', url: './glb/plantes/plante-5.glb', target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
+  { key: 'plante-6', url: './glb/plantes/plante-6.glb', target: NATURAL_GRASS_TARGET_WIDTH, mode: 'length', kind: 'grass' },
+  { key: 'plante-7',    url: './glb/plantes/plante-7.glb',    target: NATURAL_GRASS_TARGET_WIDTH,          mode: 'length', kind: 'grass' },
+  { key: 'plante-haute', url: './glb/plantes/plante-haute.glb', target: NATURAL_SHRUB_TARGET_WIDTH * 1.30 * 0.33 * 0.87, mode: 'length', kind: 'shrub', bypassBboxCheck: true },
+  { key: 'rock-1',       url: './glb/decor/rock-1.glb',     target: NATURAL_ROCK_TARGET_LENGTH,      mode: 'length', kind: 'rock' },
+  { key: 'rock-2',       url: './glb/decor/rock-2.glb',     target: NATURAL_ROCK_TARGET_LENGTH,      mode: 'length', kind: 'rock' },
+  { key: 'rock-3',       url: './glb/decor/rock-3.glb',     target: NATURAL_ROCK_TARGET_LENGTH,      mode: 'length', kind: 'rock' },
+  { key: 'rock-4',       url: './glb/decor/rock-4.glb',     target: NATURAL_ROCK_TARGET_LENGTH,      mode: 'length', kind: 'rock' },
+  { key: 'reed',         url: './glb/plantes/roseau.glb',   target: NATURAL_REED_TARGET_HEIGHT,      mode: 'height', kind: 'reed' },
+  { key: 'mushroom-1',   url: './glb/plantes/mushroom-1.glb', target: NATURAL_MUSHROOM_TARGET_WIDTH,        mode: 'length', kind: 'mushroom' },
+  { key: 'mushroom-2',   url: './glb/plantes/mushroom-2.glb', target: NATURAL_MUSHROOM_TARGET_WIDTH * 1.40 * 1.15, mode: 'length', kind: 'mushroom', groundOffsetDelta: 0.008 }, // chapeau visuel au-dessus du bbox.min.y — remonte post-snap
+  { key: 'barrel-1',     url: './glb/decor/tonneau-1.glb',  target: BARREL_TARGET_WIDTH * 0.87, mode: 'length' },
+  { key: 'barrel-2',     url: './glb/decor/tonneau-2.glb',  target: BARREL_TARGET_WIDTH * 0.87, mode: 'length' },
+  { key: 'barrel-3',     url: './glb/decor/tonneau-3.glb',  target: BARREL_TARGET_WIDTH * 1.18, mode: 'length' },
+  { key: 'barrel-4',     url: './glb/decor/tonneau-4.glb',  target: BARREL_TARGET_WIDTH * 0.87, mode: 'length' },
+  { key: 'barrel-5',     url: './glb/decor/tonneau-5.glb',  target: BARREL_TARGET_WIDTH * 2.25 * 0.87 * 0.80, mode: 'length' }, // −20%
+  { key: 'cart-2',       url: './glb/decor/charrette-2.glb',      target: CART_TARGET_LENGTH, mode: 'length' },
+  { key: 'cart-3',       url: './glb/decor/charrette-pleine.glb', target: CART_TARGET_LENGTH * 1.10, mode: 'length', bypassBboxCheck: true, groundOffsetDelta: -0.020 }, // +10%
+  { key: 'meule',        url: './glb/decor/meule.glb',            target: MEULE_TARGET_WIDTH * 0.78 * 0.87 * 0.93, mode: 'length', bypassBboxCheck: true, groundOffsetDelta: 0.008 }, // −13% −7%
   // Animaux de village — GLB individuels
-  { key: 'animal-chicken', url: './glb/animaux/poule.glb',  target: ANIMAL_CHICKEN_TARGET_WIDTH, mode: 'length' },
   { key: 'animal-dog',     url: './glb/animaux/chien.glb',  target: ANIMAL_DOG_TARGET_WIDTH,     mode: 'length' },
-  { key: 'animal-cat',     url: './glb/animaux/chat.glb',   target: ANIMAL_CAT_TARGET_WIDTH,     mode: 'length' },
   { key: 'animal-horse',   url: './glb/animaux/cheval.glb', target: ANIMAL_HORSE_TARGET_WIDTH,   mode: 'length' },
   // Animaux sauvages (forêt / prairie / champ) — InstancedMesh via naturalPropsOverlay
   { key: 'animal-deer',    url: './glb/animaux/cerf.glb',   target: NATURAL_DEER_TARGET_WIDTH,   mode: 'length' }
@@ -731,7 +754,7 @@ function ensurePropModels(overlay) {
   };
 
   for (const [url, defs] of urlGroups) {
-    new GLTFLoader().load(
+    createGLTFLoader().load(
       url,
       gltf => {
         for (const def of defs) {
@@ -774,19 +797,43 @@ function preparePropPrototype(model, def) {
         if (!m) continue;
         m.visible = true;
         if (m.color) {
-          // Teinture ambrée chaude — factor fort (40 %) pour les matériaux sans texture
-          // quasi-blancs (ex. poule/chien/chat exportés sans couleur depuis Blender) afin
-          // qu'ils ne s'affichent pas en blanc pur. Factor faible (8 %) pour les matériaux
-          // déjà colorés ou texturés → cohérence visuelle globale préservée.
-          const isNearWhite = !m.map && m.color.r > 0.85 && m.color.g > 0.85 && m.color.b > 0.85;
-          m.color.lerp(new THREE.Color(0xC8A060), isNearWhite ? 0.40 : 0.08);
+          // Compensation surexposition : toneMappingExposure=2.0 + sunIntensity=2.1 + hémisphère=0.62
+          // → radiance linéaire ~×2.6 avant ACES.
+          //
+          // Cas 1 — bypassBboxCheck + sans texture (fontaine-1) :
+          //   Couleurs brutes correctes mais sans AO baked → surexposition uniforme.
+          //   ×0.45 compense l'absence d'AO tout en restant fidèle à la teinte GLB.
+          //
+          // Cas 2 — base quasi-blanche (r,g,b > 0.85) + texturée (animaux Blender default=1,1,1) :
+          //   ×0.28 : assez sombre pour éviter le blanc ACES, assez clair pour rester lisible.
+          //
+          // Cas 3 — matériau normal (couleur correcte) : aucune altération, fidèle au GLB.
+          if (!m.map && def.bypassBboxCheck) {
+            m.color.multiplyScalar(0.45);
+          } else if (m.color.r > 0.85 && m.color.g > 0.85 && m.color.b > 0.85) {
+            if (m.map) {
+              m.color.multiplyScalar(0.28);
+            } else {
+              m.color.setHex(0x322415);
+            }
+          }
+          // Cas normal : couleur GLB conservée telle quelle
         }
       }
     }
   });
-  // Correction d'orientation pour les GLBs exportés avec un axe différent (ex. Z-up → Y-up manqué).
-  // S'applique avant Box3 pour que la bounding box soit mesurée dans la bonne orientation.
-  if (def.correctionX) source.rotation.x += def.correctionX;
+  // Correction d'orientation pour les GLBs exportés avec un axe différent.
+  // resetRotation : remet la rotation du clone à (0,0,0) avant d'appliquer les corrections.
+  //   → indispensable quand le GLB a une rotation GLTF initiale qui fausse les += .
+  // correctionX/Z : delta ajouté APRÈS reset (ou à la rotation existante si pas de reset).
+  // absoluteX/Z  : valeur absolue directement appliquée (après reset si combiné).
+  console.log(`[prop] "${def.key}" rotation initiale — x:${source.rotation.x.toFixed(4)} y:${source.rotation.y.toFixed(4)} z:${source.rotation.z.toFixed(4)}`);
+  if (def.resetRotation) source.rotation.set(0, 0, 0);
+  if (def.correctionX)   source.rotation.x += def.correctionX;
+  if (def.correctionZ)   source.rotation.z += def.correctionZ;
+  if (def.absoluteX != null) source.rotation.x = def.absoluteX;
+  if (def.absoluteZ != null) source.rotation.z = def.absoluteZ;
+  console.log(`[prop] "${def.key}" rotation finale  — x:${source.rotation.x.toFixed(4)} y:${source.rotation.y.toFixed(4)} z:${source.rotation.z.toFixed(4)}`);
   source.updateMatrixWorld(true);
 
   const box    = new THREE.Box3().setFromObject(source);
@@ -795,9 +842,34 @@ function preparePropPrototype(model, def) {
   box.getSize(size);
   box.getCenter(center);
 
+  // ── Garde-fou GLB corrompu ─────────────────────────────────────────────────
+  // Un GLB avec des vertices à des positions aberrantes (scale non appliqué dans Blender,
+  // pivot déplacé, etc.) produit une bounding box de milliers d'unités.
+  // Ces méga-triangles passent dans le GPU (frustumCulled=false) et créent les artefacts
+  // "auras" dans le ciel — indépendamment de la courbure monde.
+  // Fix permanent : Apply All Transforms dans Blender avant export GLTF.
+  const MAX_BBOX_UNITS = 20; // les plus gros props (tours, moulins) font < 10 u
+  if (def.bypassBboxCheck) {
+    console.warn(
+      `[prop] ⚠️ "${def.key}" — bbox forcée (bypassBboxCheck) : ${size.x.toFixed(1)}×${size.y.toFixed(1)}×${size.z.toFixed(1)} u. ` +
+      `scale wrapper = ${(def.target / (Math.max(size.x, size.z) || 1)).toExponential(3)}.`
+    );
+  } else if (size.x > MAX_BBOX_UNITS || size.y > MAX_BBOX_UNITS || size.z > MAX_BBOX_UNITS) {
+    console.error(
+      `[prop] ⛔ "${def.key}" — bounding box ANORMALE : ${size.x.toFixed(1)}×${size.y.toFixed(1)}×${size.z.toFixed(1)} u.\n` +
+      `  Ce GLB a des vertices à des positions extrêmes (probablement un Apply Transforms manquant dans Blender).\n` +
+      `  → Le modèle est masqué pour éviter les artefacts visuels. Re-exporter depuis Blender avec Apply All Transforms.`
+    );
+    wrapper.visible = false;
+    wrapper.userData.glbCorrupted = true;
+    return wrapper; // groupe vide/invisible — pas de crash, pas de GPU pollution
+  }
+
   source.position.set(-center.x, -box.min.y, -center.z);
   const dimension = def.mode === 'height' ? (size.y || 1) : (Math.max(size.x, size.z) || 1);
   wrapper.scale.setScalar(def.target / dimension);
+  // Correction Y post-snap par modèle (ex. mushroom-2 a de la géo sous le chapeau visible)
+  if (def.groundOffsetDelta) wrapper.userData.groundOffsetDelta = def.groundOffsetDelta;
   wrapper.add(source);
 
   wrapper.traverse(object => {
@@ -813,6 +885,30 @@ function preparePropPrototype(model, def) {
       mats.forEach(m => { if (m) m.userData.glbPrototype = true; });
     }
   });
+
+  // ── Diagnostic matériaux blancs ────────────────────────────────────────────
+  // Affiché uniquement pour les props à risque (bypassBboxCheck ou animaux).
+  // À supprimer une fois le bug blanc résolu.
+  const DEBUG_KEYS = new Set(['fountain-1', 'animal-dog']);
+  if (DEBUG_KEYS.has(def.key)) {
+    let mi = 0;
+    wrapper.traverse(o => {
+      if (!o.isMesh) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      mats.forEach((m, j) => {
+        if (!m) { console.warn(`[mat-debug] "${def.key}" mesh${mi} slot${j}: NULL MATERIAL`); return; }
+        console.log(
+          `[mat-debug] "${def.key}" mesh${mi} slot${j}: ` +
+          `type=${m.type} ` +
+          `color=(${m.color?.r?.toFixed(3)},${m.color?.g?.toFixed(3)},${m.color?.b?.toFixed(3)}) ` +
+          `map=${!!m.map} transparent=${m.transparent} opacity=${m.opacity?.toFixed(2)} ` +
+          `metalness=${m.metalness?.toFixed(2)} roughness=${m.roughness?.toFixed(2)} ` +
+          `glbProto=${m.userData?.glbPrototype}`
+        );
+      });
+      mi++;
+    });
+  }
 
   return wrapper;
 }
@@ -949,7 +1045,7 @@ function ensureBirdModel(overlay) {
   birdGlbLibrary.loading   = true;
   birdGlbLibrary.requested = true;
 
-  new GLTFLoader().load(
+  createGLTFLoader().load(
     FIELD_BIRD_FLOCK_MODEL_URL,
     gltf => {
       birdGlbLibrary.prototype   = prepareBirdPrototype(gltf.scene);

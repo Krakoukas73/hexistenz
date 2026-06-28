@@ -48,8 +48,11 @@
   content: '';
 }
 
-.missionList .mission-icon {
+.missionList .mission-icon,
+.missionList .mission-type-icon {
   flex: 0 0 auto;
+  font-size: 1.65em;
+  line-height: 1;
 }
 
 .missionList .mission-text {

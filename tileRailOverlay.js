@@ -9,7 +9,7 @@ import {
 } from './config.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getTerrainSurfaceY, getTerrainNormalAt } from './terrainHeight.js';
-import { hashUnitFull as hashUnit, hashNumber } from './stable/hashUtils.js';
+import { hashUnitFull as hashUnit, hashNumber } from './hashUtils.js';
 
 const materialCache = new Map();
 const geometryCache = new Map();
@@ -74,7 +74,7 @@ export function createRailCenterOverlay(edges, sectorDefs, createOuterVertices) 
     addTrackRoute(group, route);
   }
 
-  addBiomeScatterStones(group, edges, sectorDefs, createOuterVertices);
+  // addBiomeScatterStones supprimé — générait des cailloux artificiels le long des rails (artefact)
 
   return group;
 }

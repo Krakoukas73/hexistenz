@@ -160,7 +160,7 @@
 
 .rule-line,
 .legend-grid div,
-.control-map div {
+.control-map > div {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -226,7 +226,7 @@
   gap: 8px;
 }
 
-.control-map div {
+.control-map > div {
   padding: 8px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
@@ -312,7 +312,7 @@ kbd {
 .score-strip div,
 .rule-line,
 .legend-grid div,
-.control-map div {
+.control-map > div {
   padding: 6px;
 }
 
@@ -336,3 +336,30 @@ kbd {
   font-size: 10px;
 }
 .bonus-cell { background: radial-gradient(circle at 50% 50%, #fff3b0 0 22%, #ffd15d 23% 48%, #8d5f16 49% 100%); }
+
+/* ── Disposition croisée ZQSD / flèches ───────────────────────────────────── */
+.kbd-cross-pair {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.kbd-cross {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 2px;
+}
+
+/* Fantôme invisible pour réserver la place dans la croix (colonnes 1 et 3, ligne 1) */
+.kbd-ph {
+  visibility: hidden;
+}
+
+/* Séparateur dans control-map (reset padding/bg hérités de > div) */
+.control-map > .control-sep {
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  border-top: 1px solid rgba(120, 180, 255, 0.20);
+  margin: 2px 0;
+}

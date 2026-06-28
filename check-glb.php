@@ -296,6 +296,7 @@ if (is_dir($rootDir)) {
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+	import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
     const PER_PAGE = 12;
 
@@ -309,7 +310,9 @@ if (is_dir($rootDir)) {
     const prevButtons = [document.getElementById('prevBtn'), document.getElementById('prevBtn2')];
     const nextButtons = [document.getElementById('nextBtn'), document.getElementById('nextBtn2')];
 
-    const loader = new GLTFLoader();
+	const loader = new GLTFLoader();
+	loader.setMeshoptDecoder(MeshoptDecoder);
+	
     let page = 1;
     let filtered = [...allAssets];
     let activeViewers = [];
@@ -353,6 +356,7 @@ if (is_dir($rootDir)) {
     function applyFilter() {
       const q = searchInput.value.trim().toLowerCase();
       filtered = allAssets.filter(asset => {
+        if (asset.path.toLowerCase().includes('source')) return false;
         return !q || asset.path.toLowerCase().includes(q) || asset.name.toLowerCase().includes(q);
       });
       page = 1;
@@ -658,6 +662,8 @@ if (is_dir($rootDir)) {
                + ` <span style="color:var(--muted)">·</span> <span style="${texC}" title="${gpuTitle}">${stats.textures} tex</span>`;
       if (stats.gpuBytes > 0)
         html += ` <span style="color:var(--muted)">·</span> <span style="color:${gpuC}" title="${gpuTitle}">~${gpuMb.toFixed(0)} MB GPU</span>`;
+      if (gpuStr)
+        html += ` <span style="color:var(--muted)" title="Dimensions des textures">· ${gpuStr}</span>`;
       if (stats.materials > 1)
         html += ` <span style="color:var(--muted)">·</span> <span style="${matC}">${stats.materials} mat</span>`;
       if (animCount)
@@ -719,7 +725,7 @@ if (is_dir($rootDir)) {
 
     window.addEventListener('resize', () => renderPage());
 
-    renderPage();
+    applyFilter(); // applique le filtre "masquer sources" dès le chargement
 
     // ===== RAPPORT COMPLET — chargement en arrière-plan =====
     const logStatus   = document.getElementById('log-status');
@@ -746,7 +752,11 @@ if (is_dir($rootDir)) {
       async function loadOne(i) {
         const asset = allAssets[i];
         return new Promise(resolve => {
-          new GLTFLoader().load(asset.path, gltf => {
+          
+		const statsLoader = new GLTFLoader();
+		statsLoader.setMeshoptDecoder(MeshoptDecoder);
+
+		statsLoader.load(asset.path, gltf => {			  
             const triangles  = countTriangles(gltf.scene);
             const stats      = countStats(gltf.scene);
             const animCount  = Array.isArray(gltf.animations) ? gltf.animations.length : 0;
@@ -810,10 +820,12 @@ if (is_dir($rootDir)) {
         const texDims = formatTexSizes(stats.texSizes);
 
         const isUnused = asset.path.includes('/unused');
+        const isSource = asset.path.toLowerCase().includes('(source)') || asset.name.toLowerCase().includes('(source)');
+        const isDimmed = isUnused || isSource;
         const tr = document.createElement('tr');
-        tr.style.cssText = `border-bottom:1px solid rgba(58,70,82,0.5);${isUnused ? ' opacity:0.42; filter:grayscale(0.5);' : ''}`;
+        tr.style.cssText = `border-bottom:1px solid rgba(58,70,82,0.5);${isDimmed ? ' opacity:0.42; filter:grayscale(0.5);' : ''}`;
         tr.innerHTML = `
-          <td style="padding:5px 10px; color:${isUnused ? 'var(--muted)' : 'var(--text)'};">${error ? '⚠ ' : ''}${assetDisplayPath(asset)}</td>
+          <td style="padding:5px 10px; color:${isDimmed ? 'var(--muted)' : 'var(--text)'};">${error ? '⚠ ' : ''}${assetDisplayPath(asset)}</td>
           <td style="padding:5px 8px; text-align:right; color:var(--muted);">${formatBytes(asset.size || 0)}</td>
           <td style="padding:5px 8px; text-align:right; color:var(--muted);">${formatNumber(triangles)}</td>
           <td style="padding:5px 8px; text-align:right; color:${dcC};">${stats.meshes}</td>

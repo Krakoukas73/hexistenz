@@ -1,24 +1,24 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import { createGLTFLoader } from './glbLoader.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, BOAT_TARGET_LENGTH, SECTOR_DEFS, LOD_BOAT_CULL_DISTANCE } from './config.js';
-import { axialToWorld, makeHexKey } from './stable/hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
+import { axialToWorld, makeHexKey } from './hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
-import { hashUnit100k as hashUnit } from './stable/hashUtils.js';
-import { createOuterVertices } from './stable/hexGeometry.js';
-import { makeNodeKey, getTileCenterType, clearGroup, smoothstep } from './stable/tileUtils.js';
+import { hashUnit100k as hashUnit } from './hashUtils.js';
+import { createOuterVertices } from './hexGeometry.js';
+import { makeNodeKey, getTileCenterType, clearGroup, smoothstep } from './tileUtils.js';
 
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 
 const CENTER_RADIUS = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
-const WATER_SURFACE_Y = TILE_VISUAL.waterY ?? 0;
+const WATER_SURFACE_Y = TILE_VISUAL.waterThickness ?? 0.06; // fond eau à y=0, surface à +waterThickness
 const MIN_ZONE_SECTORS = 2;
 const BOATS_PER_WATER_COMPONENT = 1;
 const BOAT_SPEED = 0.13;
 const BOAT_HEADING_OFFSET = 0;
-const BOAT_MODEL_URL = './glb/bateau.glb';
-const BOAT_Y_OFFSET = -0.018;
+const BOAT_MODEL_URL = './glb/decor/bateau.glb';
+const BOAT_Y_OFFSET = 0.008; // légèrement au-dessus de la surface (bateau flottant)
 let boatPrototype = null;
 let boatLoading = false;
 let boatRequested = false;
@@ -193,7 +193,7 @@ function ensureBoatModel(group) {
   boatLoading = true;
   boatRequested = true;
 
-  new GLTFLoader().load(
+  createGLTFLoader().load(
     BOAT_MODEL_URL,
     gltf => {
       boatPrototype = prepareBoatPrototype(gltf.scene);

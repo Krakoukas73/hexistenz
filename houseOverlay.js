@@ -1,32 +1,34 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, LOD_HOUSE_CULL_DISTANCE, LOD_WATCHTOWER_CULL_DISTANCE } from './config.js';
-import { HITBOX_R } from './variables.js';
-import { registerPropHitbox } from './stable/propHitboxRegistry.js';
-import { hashUnit100k as hashUnit } from './stable/hashUtils.js';
-import { createOuterVertices } from './stable/hexGeometry.js';
-import { makeHexKey } from './stable/hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
+
+import { hashUnit100k as hashUnit } from './hashUtils.js';
+import { createOuterVertices } from './hexGeometry.js';
+import { makeHexKey } from './hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { getTerrainSurfaceY } from './terrainHeight.js';
-import { makeNodeKey as makeSectorKey, getTileEdgeType, getTileCenterType, clearGroup, smoothstep } from './stable/tileUtils.js';
+import { getCurvatureTiltQuaternion } from './worldCurvature.js';
+import { makeNodeKey as makeSectorKey, getTileEdgeType, getTileCenterType, clearGroup, smoothstep } from './tileUtils.js';
 import {
   ensureHouseGlbModels,
   isHouseGlbReady,
   spreadVillageHouseLocalPoint,
   createVillageHouseObject,
-  createVillageChurchObject,
   createVillageWatchtowerObject
 } from './houseVillageObjects.js';
 
+// Pré-alloué pour le tilt de courbure monde (bouliste) — évite les allocations par maison
+const _hCurvQuat = new THREE.Quaternion();
+
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-// Les maisons/églises ont leur origine au pied du modèle. Depuis que le
+// Les maisons ont leur origine au pied du modèle. Depuis que le
 // biome maison est 30% moins épais en gardant le dessous collé à la grille,
 // son dessus réel est abaissé : on pose donc les bâtiments sur cette surface,
 // pas sur l'ancien niveau flottant sectorY + 0.018.
 const HOUSE_GROUND_Y = (TILE_VISUAL.tileThickness ?? 0.12) * -0.30;
 const HOUSE_BASE_Y = HOUSE_GROUND_Y + 0.002;
-const HOUSE_SCALE = HEX_SIZE * 0.1332 * 0.90 * 0.94; // −10% −10% −6%
+const HOUSE_SCALE = HEX_SIZE * 0.1332 * 0.90 * 0.94 * 1.05; // −10% −10% −6% +5%
 const HOUSE_CHIMNEY_TOP_Y = HOUSE_BASE_Y + HOUSE_SCALE * 1.62;
 const HOUSE_SMOKE_Y = HOUSE_CHIMNEY_TOP_Y + HOUSE_SCALE * 0.08;
 const PUFFS_PER_COLUMN = 18;
@@ -36,9 +38,6 @@ const smokeMaterialCache = [];
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 
 // Seuils de déclenchement des bâtiments spéciaux par zone
-const CHURCH_MIN_HOUSES = 7;
-const CHURCH_HOUSES_PER_EXTRA = 14;
-const CHURCH_MAX_PER_ZONE = 5;
 const WATCHTOWER_MIN_HOUSES = 4;
 const WATCHTOWER_HOUSES_PER_EXTRA = 8;
 const WATCHTOWER_MAX_PER_ZONE = 6;
@@ -65,15 +64,14 @@ export function rebuildHouseOverlay(group, placedTiles) {
 
   const tileHouseGroups = group.userData.tileHouseGroups;
   const activeKeys = new Set();
-  const churchSectors = collectVillageChurchSectors(placedTiles);
-  const watchtowerSectors = collectVillageWatchtowerSectors(placedTiles, churchSectors);
-  const blockedRewardSectors = new Set([...churchSectors, ...watchtowerSectors]);
+  const watchtowerSectors = collectVillageWatchtowerSectors(placedTiles);
+  const blockedRewardSectors = new Set([...watchtowerSectors]);
 
   for (const placedTile of placedTiles.values()) {
     const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
     activeKeys.add(tileKey);
 
-    const signature = getTileHouseOverlaySignature(placedTile, churchSectors, watchtowerSectors);
+    const signature = getTileHouseOverlaySignature(placedTile, watchtowerSectors);
     const cached = tileHouseGroups.get(tileKey);
     if (cached && cached.userData?.houseOverlaySignature === signature) continue;
 
@@ -85,7 +83,7 @@ export function rebuildHouseOverlay(group, placedTiles) {
     const tileGroup = new THREE.Group();
     tileGroup.name = `house-tile-${tileKey}`;
     tileGroup.userData.houseOverlaySignature = signature;
-    buildHouseTileGroup(tileGroup, placedTile, placedTiles, churchSectors, watchtowerSectors);
+    buildHouseTileGroup(tileGroup, placedTile, placedTiles, watchtowerSectors);
     tileHouseGroups.set(tileKey, tileGroup);
     group.add(tileGroup);
   }
@@ -159,7 +157,7 @@ function ensureHouseGlbModelsAndRebuild(group) {
 
 // ─── Construction par tuile ───────────────────────────────────────────────────
 
-function buildHouseTileGroup(group, placedTile, placedTiles, churchSectors, watchtowerSectors) {
+function buildHouseTileGroup(group, placedTile, placedTiles, watchtowerSectors) {
   group.userData.columns = [];
 
   const edges = placedTile.tile?.edges;
@@ -183,7 +181,6 @@ function buildHouseTileGroup(group, placedTile, placedTiles, churchSectors, watc
       sector,
       houseCount,
       tileKey,
-      churchSectors.has(makeSectorKey(tileKey, sector.key)),
       watchtowerSectors.has(makeSectorKey(tileKey, sector.key)),
       placedTile,
       placedTiles
@@ -192,7 +189,7 @@ function buildHouseTileGroup(group, placedTile, placedTiles, churchSectors, watc
 
 }
 
-function getTileHouseOverlaySignature(placedTile, churchSectors, watchtowerSectors) {
+function getTileHouseOverlaySignature(placedTile, watchtowerSectors) {
   const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
   const edges = placedTile.tile?.edges ?? {};
 
@@ -203,7 +200,6 @@ function getTileHouseOverlaySignature(placedTile, churchSectors, watchtowerSecto
       sector.key,
       getEdgeType(edge),
       Math.max(1, Math.min(4, Math.round(getEdgeValue(edge)))) || 0,
-      churchSectors.has(sectorKey) ? 'church' : '',
       watchtowerSectors.has(sectorKey) ? 'watchtower' : ''
     ].join(':');
   }).join('|');
@@ -211,7 +207,7 @@ function getTileHouseOverlaySignature(placedTile, churchSectors, watchtowerSecto
 
 // ─── Placement des bâtiments par secteur ─────────────────────────────────────
 
-function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, hasChurch = false, hasWatchtower = false, placedTile = null, placedTiles = null) {
+function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, hasWatchtower = false, placedTile = null, placedTiles = null) {
   const vertices = createOuterVertices();
   const a = vertices[sector.a];
   const b = vertices[sector.b];
@@ -223,49 +219,42 @@ function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, h
     const tower = createVillageWatchtowerObject(`${tileKey}:${sector.key}:village-watchtower`, sector);
     const towerSurfaceY = getTerrainSurfaceY(towerLocal, EDGE_TYPES.house, Math.floor(hashUnit(`${tileKey}:${sector.key}:watchtower`) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
     tower.position.set(tileX + towerLocal.x, towerSurfaceY + 0.010, tileZ + towerLocal.z);
+    getCurvatureTiltQuaternion(tileX + towerLocal.x, tileZ + towerLocal.z, _hCurvQuat);
+    tower.quaternion.premultiply(_hCurvQuat);
     group.add(tower);
-    registerPropHitbox(tileX + towerLocal.x, tileZ + towerLocal.z, HITBOX_R.watchtower);
-  }
-
-  // Église : position anchor[0], bâtiment additionnel (hors quota maisons).
-  // Auparavant elle remplaçait le slot i=0, faisant que label ≠ maisons au sol.
-  // Désormais toutes les columnCount maisons sont placées en plus de l'église.
-  if (hasChurch) {
-    const anchor0 = anchors[0] ?? { centerWeight: 0.43, aWeight: 0.285, bWeight: 0.285 };
-    const churchLocal = trianglePoint(a, b, anchor0.centerWeight, anchor0.aWeight, anchor0.bWeight);
-    const church = createVillageChurchObject(`${tileKey}:${sector.key}:village-church`, sector);
-    const churchSurfaceY = getTerrainSurfaceY(churchLocal, EDGE_TYPES.house, Math.floor(hashUnit(`${tileKey}:${sector.key}:church`) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
-    church.position.set(tileX + churchLocal.x, churchSurfaceY + 0.004, tileZ + churchLocal.z);
-    group.add(church);
-    registerPropHitbox(tileX + churchLocal.x, tileZ + churchLocal.z, HITBOX_R.church);
+    // (pas d'enregistrement hitbox : la tour n'a pas besoin de bloquer d'autres objets ici)
   }
 
   // Maisons : exactement columnCount maisons — le label de zone reflétera ce compte précis.
-  // Aucun slot ne saute : la safe zone ne s'applique plus (tour et église sont additionnelles).
   for (let i = 0; i < columnCount; i += 1) {
     const anchor = anchors[i] ?? anchors[anchors.length - 1];
     const seed = `${tileKey}:${sector.key}:house:${i}`;
     const local = spreadVillageHouseLocalPoint(
       trianglePoint(a, b, anchor.centerWeight, anchor.aWeight, anchor.bWeight)
     );
+    const worldX = tileX + local.x;
+    const worldZ = tileZ + local.z;
     const house = createVillageHouseObject(seed, sector, i);
     const houseSurfaceY = getTerrainSurfaceY(local, EDGE_TYPES.house, Math.floor(hashUnit(seed) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
-    house.position.set(tileX + local.x, houseSurfaceY + 0.004, tileZ + local.z);
+    house.position.set(worldX, houseSurfaceY + 0.004, worldZ);
+    getCurvatureTiltQuaternion(worldX, worldZ, _hCurvQuat);
+    house.quaternion.premultiply(_hCurvQuat);
     group.add(house);
-    registerPropHitbox(tileX + local.x, tileZ + local.z, HITBOX_R.house);
+
+    // Enregistre la position de la cheminée pour le pass de fumée volumétrique.
+    // Y réel = base house + hauteur chimney dans le modèle (HOUSE_SCALE * 1.70).
+    // hasSmoke : seulement ~30 % des maisons fument (hash déterministe sur la graine).
+    // tileGroup : référence au groupe de la tuile → LOD exactement identique aux maisons.
+    // puffs:[] → updateHouseOverlay ne fait rien (sprites désactivés).
+    const chimneyWorldY = houseSurfaceY + 0.004 + HOUSE_SCALE * 1.70;
+    // maison-petite-3 n'a pas de cheminée visible → jamais de fumée
+    const hasSmoke = !house.name.includes('maison-medievale-petite-3') && hashUnit(`${seed}:smoke`) < 0.33;
+    group.userData.columns.push({ x: worldX, y: chimneyWorldY, z: worldZ, puffs: [], hasSmoke, tileGroup: group });
   }
 }
 
-function getSectorSpecialBuildingSafeLocals(a, b, anchors, hasChurch, hasWatchtower) {
+function getSectorSpecialBuildingSafeLocals(a, b, anchors, hasWatchtower) {
   const safeLocals = [];
-
-  if (hasChurch) {
-    const anchor = anchors[0] ?? { centerWeight: 0.43, aWeight: 0.285, bWeight: 0.285 };
-    safeLocals.push({
-      ...trianglePoint(a, b, anchor.centerWeight, anchor.aWeight, anchor.bWeight),
-      radius: SPECIAL_BUILDING_HOUSE_SAFE_RADIUS * 1.18
-    });
-  }
 
   if (hasWatchtower) {
     safeLocals.push({
@@ -287,50 +276,8 @@ function isLocalInsideSpecialBuildingSafeZone(local, safeLocals) {
 
 // ─── BFS zone system — récompenses bâtiments spéciaux ────────────────────────
 
-export function collectVillageChurchSectors(placedTiles) {
+export function collectVillageWatchtowerSectors(placedTiles) {
   const selected = new Set();
-  const visited = new Set();
-
-  for (const placedTile of placedTiles.values()) {
-    const edges = placedTile.tile?.edges;
-    if (!edges) continue;
-
-    for (const edge of EDGE_ORDER) {
-      if (getTileEdgeType(placedTile, edge) !== EDGE_TYPES.house) continue;
-      const nodeKey = makeSectorKey(placedTile.key, edge);
-      if (visited.has(nodeKey)) continue;
-
-      const zone = collectHouseZone(placedTile, edge, placedTiles, visited);
-      if (zone.total < CHURCH_MIN_HOUSES) continue;
-
-      const churchCount = Math.min(
-        CHURCH_MAX_PER_ZONE,
-        Math.max(1, 1 + Math.floor((zone.total - CHURCH_MIN_HOUSES) / CHURCH_HOUSES_PER_EXTRA))
-      );
-
-      const candidates = zone.sectors
-        .filter(sectorRef => Math.round(getEdgeValue(sectorRef.tile.tile.edges[sectorRef.edge])) >= 2)
-        .sort((a, b) => rankChurchCandidate(a, zone) - rankChurchCandidate(b, zone));
-
-      const fallback = [...zone.sectors].sort((a, b) => rankChurchCandidate(a, zone) - rankChurchCandidate(b, zone));
-      const ordered = candidates.length > 0 ? candidates : fallback;
-      const usedTiles = new Set();
-
-      for (const candidate of ordered) {
-        if (selected.size >= 256) break;
-        if (usedTiles.has(candidate.tile.key)) continue;
-        selected.add(makeSectorKey(candidate.tile.key, candidate.edge));
-        usedTiles.add(candidate.tile.key);
-        if (usedTiles.size >= churchCount) break;
-      }
-    }
-  }
-
-  return selected;
-}
-
-export function collectVillageWatchtowerSectors(placedTiles, churchSectors = new Set()) {
-  const selected = new Set(churchSectors);
   const visited = new Set();
 
   for (const placedTile of placedTiles.values()) {
@@ -345,16 +292,10 @@ export function collectVillageWatchtowerSectors(placedTiles, churchSectors = new
       const zone = collectHouseZone(placedTile, edge, placedTiles, visited);
       if (zone.total < WATCHTOWER_MIN_HOUSES) continue;
 
-      const churchCountInZone = zone.sectors.reduce(
-        (total, sectorRef) => total + (churchSectors.has(makeSectorKey(sectorRef.tile.key, sectorRef.edge)) ? 1 : 0),
-        0
-      );
-
       const towerCount = Math.min(
         WATCHTOWER_MAX_PER_ZONE,
         Math.max(
           1,
-          churchCountInZone,
           1 + Math.floor((zone.total - WATCHTOWER_MIN_HOUSES) / WATCHTOWER_HOUSES_PER_EXTRA)
         )
       );
@@ -457,13 +398,6 @@ function getHouseNeighbors(placedTile, edge, placedTiles) {
 
 // ─── Fonctions de classement des candidats ────────────────────────────────────
 
-function rankChurchCandidate(sectorRef, zone) {
-  const value = getEdgeValue(sectorRef.tile.tile.edges[sectorRef.edge]);
-  const centerBonus = getTileCenterType(sectorRef.tile) === EDGE_TYPES.house ? 80 : 0;
-  const seed = hashUnit(`${zone.total}:${zone.sectors.length}:${sectorRef.tile.key}:${sectorRef.edge}:church-rank`);
-  return -(value * 100 + centerBonus + seed);
-}
-
 function rankWatchtowerCandidate(sectorRef, zone, selectedSectors = new Set()) {
   const sectorKey = makeSectorKey(sectorRef.tile.key, sectorRef.edge);
   const value = Math.round(getEdgeValue(sectorRef.tile.tile.edges[sectorRef.edge]));
@@ -517,6 +451,18 @@ function trianglePoint(a, b, centerWeight, aWeight, bWeight) {
     x: (a.x * aWeight + b.x * bWeight) / total,
     z: (a.z * aWeight + b.z * bWeight) / total
   };
+}
+
+// ─── Positions cheminées pour le pass fumée volumétrique ─────────────────────
+
+/**
+ * Retourne les positions monde (THREE.Vector3) de toutes les cheminées actives.
+ * À passer à updateSmokeVolumePass() chaque frame.
+ */
+export function getHouseChimneyPositions(group) {
+  return (group.userData.columns ?? [])
+    .filter(col => col.hasSmoke && col.tileGroup?.visible !== false)
+    .map(col => new THREE.Vector3(col.x, col.y ?? HOUSE_SMOKE_Y, col.z));
 }
 
 // ─── Matériau fumée (conservé, non utilisé) ───────────────────────────────────

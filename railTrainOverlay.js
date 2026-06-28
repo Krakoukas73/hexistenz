@@ -1,10 +1,10 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import { createGLTFLoader } from './glbLoader.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, LOD_TRAIN_CULL_DISTANCE } from './config.js';
-import { hashUnit10k as hashUnit } from './stable/hashUtils.js';
-import { createOuterVertices } from './stable/hexGeometry.js';
-import { axialToWorld, makeHexKey } from './stable/hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
+import { hashUnit10k as hashUnit } from './hashUtils.js';
+import { createOuterVertices } from './hexGeometry.js';
+import { axialToWorld, makeHexKey } from './hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getTrainRailY } from './terrainHeight.js';
 
@@ -14,7 +14,7 @@ const TRAIN_CURVE_SLOW_DISTANCE = HEX_SIZE * 0.30;
 const TRAIN_ROTATION_SMOOTHING = 0.085;
 const TRAIN_TERMINUS_SLOW_DISTANCE = HEX_SIZE * 0.72;
 const TRAIN_VISUAL_SCALE = 0.75;
-const TRAIN_SIZE_SCALE = 0.672 * 0.88 * 1.06 * 1.13;                  // −40% +12% −12% +6% +13% taille trains/wagons
+const TRAIN_SIZE_SCALE = 0.672 * 0.88 * 1.06 * 1.13 * 0.92;           // −40% +12% −12% +6% +13% −8% taille trains/wagons
 const TRAIN_SCALE = HEX_SIZE * 0.153 * TRAIN_VISUAL_SCALE * TRAIN_SIZE_SCALE;
 const TRAIN_UNIT_SPACING = HEX_SIZE * 0.30 * TRAIN_VISUAL_SCALE * TRAIN_SIZE_SCALE;
 // Interprétation de wagonCount dans createTrainObject :
@@ -28,12 +28,11 @@ const TRACK_MIN_CURVE_RADIUS = HEX_SIZE * 0.34;
 const MOTION_SAMPLE_SPACING = HEX_SIZE * 0.045;
 const MOTION_SMOOTH_PASSES = 3;
 const STATION_Y = (TILE_VISUAL.railY ?? 0.052) - 0.060;
-const STATION_TARGET_LENGTH = HEX_SIZE * 0.43 * 0.80; // −20%
+const STATION_TARGET_LENGTH = HEX_SIZE * 0.43 * 0.80 * 0.96 * 0.93 * 0.90 * 0.94; // −20% −4% −7% −10% −6%
 const STATION_TRACK_CLEARANCE = HEX_SIZE * 0.32;
 const STATION_TERMINUS_BACKSET = HEX_SIZE * 0.08;
 const STATION_MODEL_DEFS = [
-  { key: 'maison-fantasy-2-station', url: './glb/batiments/fantasy/maison-2.glb', weight: 3 },
-  { key: 'maison-fantasy-3-station', url: './glb/batiments/fantasy/maison-3.glb', weight: 2 }
+  { key: 'gare-eglise-station', url: './glb/batiments/medieval/gare-eglise.glb', weight: 1 }
 ];
 
 const materialCache = new Map();
@@ -41,18 +40,42 @@ const stationGlbLibrary = new Map();
 let stationModelsLoading = false;
 let stationModelsRequested = false;
 
-// ── wooden_train.glb — loco + wagon1 (ravitaillement) + wagon2 (voyageur) ──
-const WOODEN_TRAIN_URL = './glb/trains/wooden_train.glb';
+// ── train.glb — loco + wagon1 (ravitaillement) + wagon2 (voyageur) ──
+const WOODEN_TRAIN_URL = './glb/trains/train.glb';
 let woodenTrainLib     = null;   // { loco, wagon1, wagon2 } — prototypes normalisés
 let woodenTrainReady   = false;
 let woodenTrainLoading = false;
 
-// ── train_track.glb — portion de rail droite à répliquer sur le chemin ──
-const TRAIN_TRACK_URL = './glb/trains/train_track.glb';
+// ── rails.glb — portion de rail droite à répliquer sur le chemin ──
+const TRAIN_TRACK_URL = './glb/trains/rails.glb';
 let trackGlbProto     = null;   // THREE.Group prototype clonable, orienté +Z
 let trackGlbLength    = 0;      // longueur en world-units d'un segment de rail
 let trackGlbReady     = false;
 let trackGlbLoading   = false;
+
+// ─── Position cheminée locomotive pour le pass fumée volumétrique ─────────────
+
+/**
+ * Retourne les positions monde (THREE.Vector3) des cheminées de chaque
+ * locomotive active. À passer à updateSmokeVolumePass() chaque frame.
+ * Appelé APRÈS updateRailTrainOverlay() pour que les positions soient à jour.
+ */
+export function getTrainLocoPositions(group) {
+  const positions = [];
+  for (const train of (group.userData.trains ?? [])) {
+    if (!train.object.visible) continue;
+    const units = train.object.userData.units ?? [];
+    if (units.length === 0 || !units[0].object) continue;
+    const loco = units[0].object;
+    // Sommet de la cheminée = position loco + offset vertical (~1.16× TRAIN_SCALE)
+    positions.push(new THREE.Vector3(
+      loco.position.x,
+      loco.position.y + TRAIN_SCALE * 1.16,
+      loco.position.z
+    ));
+  }
+  return positions;
+}
 
 export function createRailTrainOverlay() {
   const group = new THREE.Group();
@@ -628,7 +651,7 @@ function ensureStationGlbModels(group) {
   };
 
   for (const def of STATION_MODEL_DEFS) {
-    new GLTFLoader().load(
+    createGLTFLoader().load(
       def.url,
       gltf => {
         stationGlbLibrary.set(def.key, prepareStationGlbPrototype(gltf.scene, def));
@@ -753,36 +776,7 @@ function createTrainObject(wagonCount = 0) {
     }
   }
 
-  // ── Fumée procédurale sur la locomotive ──
-  const smokePuffs = [];
-  const smokeMaterial = new THREE.MeshBasicMaterial({
-    color: 0xEEF4F7,
-    transparent: true,
-    opacity: 0.62,
-    depthWrite: false,
-    depthTest: true,
-    side: THREE.DoubleSide
-  });
-
-  const SMOKE_COUNT = 20;
-  for (let i = 0; i < SMOKE_COUNT; i += 1) {
-    const smoke = new THREE.Mesh(
-      new THREE.CircleGeometry(TRAIN_SCALE * (0.13 + (i % 5) * 0.035), 12),
-      smokeMaterial.clone()
-    );
-    smoke.name = 'chimney-slow-animated-smoke';
-    smoke.rotation.x = -Math.PI / 2;
-    smoke.renderOrder = 60 + i;
-    loco.add(smoke);
-    smokePuffs.push({
-      mesh: smoke,
-      phase: i / SMOKE_COUNT,
-      drift: (i % 2 === 0 ? 1 : -1) * (0.035 + (i % 5) * 0.014),
-      wobble: 0.48 + (i % 5) * 0.13
-    });
-  }
-
-  loco.userData.smokePuffs = smokePuffs;
+  // Fumée sprite supprimée — remplacée par le pass volumétrique (smokeVolumePass.js).
   group.userData.units   = units;
   group.userData.couplers = couplers;
   group.userData.loco    = loco;
@@ -824,30 +818,6 @@ function updateArticulatedTrain(trainObject, motionTrack, progress, timeSeconds)
     coupler.object.visible = direction.length() > 0.001;
   }
 
-  updateTrainSmoke(trainObject.userData.loco, timeSeconds);
-}
-
-function updateTrainSmoke(trainObject, timeSeconds) {
-  const smokePuffs = trainObject.userData.smokePuffs ?? [];
-
-  for (let i = 0; i < smokePuffs.length; i += 1) {
-    const puff = smokePuffs[i];
-    const t = (timeSeconds * 0.34 + puff.phase) % 1;
-    const rise = smoothstep(0, 1, t);
-    const spread = 0.85 + rise * 5.8;
-    const sideWobble = Math.sin(timeSeconds * (0.72 + puff.wobble * 0.45) + i * 1.83) * TRAIN_SCALE * 0.16;
-
-    puff.mesh.position.set(
-      TRAIN_SCALE * (0.80 - rise * 1.15),
-      TRAIN_SCALE * (1.16 + rise * 10.5),
-      TRAIN_SCALE * (puff.drift + Math.sin(t * Math.PI * 2 + i) * 0.34) + sideWobble
-    );
-
-    const scale = spread * (0.96 + Math.sin(timeSeconds * 1.65 + i) * 0.07);
-    puff.mesh.scale.set(scale, scale, scale);
-    puff.mesh.material.opacity = Math.max(0, (1 - rise) * 0.88);
-    puff.mesh.visible = puff.mesh.material.opacity > 0.025;
-  }
 }
 
 
@@ -1062,14 +1032,14 @@ function measurePath(points) {
 
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Chargement GLB — wooden_train.glb
+// Chargement GLB — train.glb
 // ═══════════════════════════════════════════════════════════════════════════
 
 function ensureWoodenTrainGlb(group) {
   if (woodenTrainLoading || woodenTrainReady) return;
   woodenTrainLoading = true;
 
-  new GLTFLoader().load(WOODEN_TRAIN_URL, gltf => {
+  createGLTFLoader().load(WOODEN_TRAIN_URL, gltf => {
     woodenTrainLib    = extractTrainParts(gltf.scene);
     woodenTrainReady  = true;
     woodenTrainLoading = false;
@@ -1163,14 +1133,14 @@ function normalizeTrainUnit(source, unitName) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Chargement GLB — train_track.glb
+// Chargement GLB — rails.glb
 // ═══════════════════════════════════════════════════════════════════════════
 
 function ensureTrackGlb(group) {
   if (trackGlbLoading || trackGlbReady) return;
   trackGlbLoading = true;
 
-  new GLTFLoader().load(TRAIN_TRACK_URL, gltf => {
+  createGLTFLoader().load(TRAIN_TRACK_URL, gltf => {
     const scene = gltf.scene;
     scene.updateMatrixWorld(true);
 

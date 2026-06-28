@@ -1,9 +1,9 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_TYPES, EDGE_ORDER, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
-import { axialToWorld, makeHexKey } from './stable/hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from './stable/placementRules.js';
-import { createOuterVertices } from './stable/hexGeometry.js';
-import { makeNodeKey, getTileCenterType } from './stable/tileUtils.js';
+import { axialToWorld, makeHexKey } from './hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
+import { createOuterVertices } from './hexGeometry.js';
+import { makeNodeKey, getTileCenterType } from './tileUtils.js';
 
 // ─── Constantes plage ─────────────────────────────────────────────────────────
 // REWRITE v2 : plage lowpoly monobloc — 2 rangs, 0 turbulence, 1 matériau.
@@ -12,8 +12,8 @@ import { makeNodeKey, getTileCenterType } from './stable/tileUtils.js';
 
 const BEACH = {
   width:            HEX_SIZE * 0.130,  // largeur totale côté eau
-  landLipY:         -0.065,            // Y côté terre : sous la surface du terrain pour être invisible sous blé/forêt
-  waterLipY:        (TILE_VISUAL.waterY ?? -0.075) + 0.004, // Y côté eau
+  landLipY:         0.065,             // Y côté terre : sous la surface grass (0.082) → caché sous terrain
+  waterLipY:        (TILE_VISUAL.waterThickness ?? 0.06) - 0.002, // Y côté eau : juste sous la surface eau
   landOffset:       -HEX_SIZE * 0.085, // retrait profond côté terre : la plage mord sous la texture terrain (couvre les trous)
   jointOverlap:     HEX_SIZE * 0.030,  // chevauchement aux extrémités libres
   vertexWeldEpsilon: 0.026

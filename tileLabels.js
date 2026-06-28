@@ -1,8 +1,8 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_TYPES, TILE_VISUAL } from './config.js';
-import { TEXT_LAYER } from './stable/threeSetup.js';
+import { TEXT_LAYER } from './threeSetup.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
-import { HEX_FONT_FAMILY, sharedLabelCache, hexFontReady } from './stable/hexLabelFont.js';
+import { HEX_FONT_FAMILY, sharedLabelCache, hexFontReady } from './hexLabelFont.js';
 
 export function createValueLabel(edge, vertexA, vertexB) {
   const type = getEdgeType(edge);
@@ -80,9 +80,11 @@ function getTextSpriteMaterial(text) {
   draw();
 
   const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace; // évite le double gamma (NoColorSpace par défaut → clairs)
   texture.generateMipmaps = false;
   texture.minFilter = THREE.LinearFilter;
   const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+  material.toneMapped = false; // bypasse ACESFilmic : couleurs canvas fidèles
   sharedLabelCache.set(text, material);
 
   // Redessiner après chargement de HexgonBold (corrige la race condition au 1er frame)

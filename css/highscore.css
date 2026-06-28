@@ -3,9 +3,7 @@
 }
 
 .highscore-panel {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(120, 180, 255, 0.24);
+  display: none;
 }
 
 .highscore-title {
@@ -117,10 +115,16 @@
   color: rgba(225, 242, 255, 0.72);
 }
 
+.game-action-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
 .abandon-button,
 .new-game-button {
-  width: 100%;
-  margin-top: 10px;
+  flex: 1;
+  margin-top: 0;
   padding: 8px 9px;
   border: 1px solid rgba(255, 120, 120, 0.46);
   border-radius: 8px;

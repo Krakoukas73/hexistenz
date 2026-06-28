@@ -14,14 +14,14 @@
  */
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import { createGLTFLoader } from './glbLoader.js';
 import { clone as cloneSkeleton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js';
 import { HEX_SIZE, TILE_VISUAL } from './config.js';
-import { axialToWorld } from './stable/hex.js';
+import { axialToWorld } from './hex.js';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-const CHEST_GLB_URL    = './glb/coffre.glb';
+const CHEST_GLB_URL    = './glb/decor/coffre.glb';
 // Taille cible du coffre : ~20% de HEX_SIZE, puis ×1.6 (+60%)
 const CHEST_TARGET_WIDTH = HEX_SIZE * 0.20 * 1.6 * 1.5 * 1.35 * 0.70; // +50% +35% −30%
 
@@ -109,7 +109,7 @@ function ensureChestModel(group) {
   chestLoading   = true;
   chestRequested = true;
 
-  new GLTFLoader().load(
+  createGLTFLoader().load(
     CHEST_GLB_URL,
     gltf => {
       chestPrototype = prepareChestPrototype(gltf.scene);

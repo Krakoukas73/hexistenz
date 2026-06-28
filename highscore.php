@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
-$SCORE_FILE = __DIR__ . '/highscores.json';
+$SCORE_FILE = __DIR__ . '/json/highscores.json';
 $MAX_SCORES = 50;
 $PUBLIC_LIMIT = 10;
 
