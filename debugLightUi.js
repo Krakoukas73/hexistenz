@@ -1025,7 +1025,7 @@ export function createDebugLightUI({ visualEnvironment, postprocess }) {
   // ─── Mini HUD clavier (bottom-right, toujours visible) ─────────────────────
   const kbdHint = document.createElement('div');
   kbdHint.id = 'kbdHintHud';
-  kbdHint.innerHTML = 'H ou ESC&nbsp;→ aide &nbsp;·&nbsp; ESPACE&nbsp;→ immersif &nbsp;·&nbsp; MAJ+ESPACE&nbsp;→ super-immersif';
+  kbdHint.innerHTML = 'H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif';
   document.body.appendChild(kbdHint);
 
   applyAll();
@@ -1963,6 +1963,7 @@ function installDebugLightCss() {
     body.huds-force-hidden #debugLightPanel { display: none !important; }
     body.huds-force-hidden #tileUI         { display: none !important; }
     body.huds-force-hidden #scorePanel     { display: none !important; }
+    body.huds-force-hidden #arcadeScore    { display: none !important; }
 
     /* LUT ouvert → masquer les HUDs droits (tuile courante / suivante / restantes / missions) */
     body.lut-panel-open #tileUI { display: none !important; }

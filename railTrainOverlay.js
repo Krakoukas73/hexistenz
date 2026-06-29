@@ -7,6 +7,7 @@ import { axialToWorld, makeHexKey } from './hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getTrainRailY } from './terrainHeight.js';
+import { getWorldCurvatureDrop } from './worldCurvature.js';
 
 const TRAIN_Y = (TILE_VISUAL.railY ?? -0.043) - 0.050; // centre train = sous la surface du rail
 const TRAIN_SPEED = 0.18;
@@ -68,9 +69,10 @@ export function getTrainLocoPositions(group) {
     if (units.length === 0 || !units[0].object) continue;
     const loco = units[0].object;
     // Sommet de la cheminée = position loco + offset vertical (~1.16× TRAIN_SCALE)
+    // + courbure monde pour aligner avec la surface visuelle courbée (GPU)
     positions.push(new THREE.Vector3(
       loco.position.x,
-      loco.position.y + TRAIN_SCALE * 1.16,
+      loco.position.y + TRAIN_SCALE * 1.16 + getWorldCurvatureDrop(loco.position.x, loco.position.z),
       loco.position.z
     ));
   }

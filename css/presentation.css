@@ -33,6 +33,19 @@ body {
 }
 
 /* ─── BACKGROUND ────────────────────────────────────────────── */
+#particles-js {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+#particles-js canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 .bg-layer {
   position: fixed;
   inset: 0;
@@ -159,6 +172,13 @@ nav {
   max-width: 580px;
   line-height: 1.75;
 }
+.section-sub--lead {
+  font-size: 18px;
+  color: var(--text);
+  opacity: 0.7;
+  margin-bottom: 6px;
+  font-style: italic;
+}
 
 /* ─── BUTTONS ────────────────────────────────────────────────── */
 .btn-primary {
@@ -197,17 +217,28 @@ nav {
 
 /* ─── HERO ───────────────────────────────────────────────────── */
 #hero {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  padding-top: 80px;
-  padding-bottom: 60px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-banner {
+  width: 100%;
+  height: 62vh;
+  background: url('../images/bouliste-transparent.png') center top / cover no-repeat;
+  -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+  pointer-events: none;
+}
+
+.hero-content {
+  padding-top: 56px;
+  padding-bottom: 80px;
 }
 .hero-inner {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  align-items: center;
+  grid-template-columns: 1fr;
+  gap: 0;
+  align-items: start;
 }
 .hero-badge {
   display: inline-block;
@@ -232,6 +263,7 @@ nav {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  filter: drop-shadow(0 2px 14px rgba(0,0,0,0.95)) drop-shadow(0 0 30px rgba(0,0,0,0.7));
 }
 .hero-subtitle {
   font-size: 13px;
@@ -239,6 +271,83 @@ nav {
   letter-spacing: 0.04em;
   white-space: nowrap;
   margin-bottom: 26px;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.9);
+}
+.hero-inspi-label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(120,180,255,0.55);
+  margin-bottom: 10px;
+  border-left: 2px solid rgba(120,180,255,0.35);
+  padding-left: 10px;
+}
+.hero-inspi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.hero-inspi-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hero-inspi-buy {
+  display: block;
+  font-size: 10px;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  text-decoration: none;
+  text-align: center;
+  opacity: 0.65;
+  transition: opacity 0.2s, color 0.2s;
+}
+.hero-inspi-buy:hover {
+  opacity: 1;
+  color: var(--blue);
+}
+.hero-inspi-card {
+  position: relative;
+  border: 1px solid rgba(120,180,255,0.18);
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(14,24,44,0.70);
+  transition: border-color 0.25s, transform 0.25s;
+}
+.hero-inspi-card:hover {
+  border-color: rgba(120,180,255,0.50);
+  transform: translateY(-3px);
+}
+.hero-inspi-img {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  display: block;
+  opacity: 0.78;
+  transition: opacity 0.25s;
+}
+.hero-inspi-card:hover .hero-inspi-img { opacity: 1; }
+.hero-inspi-caption {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 20px 12px 10px;
+  background: linear-gradient(to top, rgba(4,10,22,0.92) 0%, transparent 100%);
+}
+.hero-inspi-name {
+  font-family: var(--font-title);
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: rgba(220,200,140,0.95);
+  line-height: 1.2;
+}
+.hero-inspi-sub {
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  color: var(--text-dim);
+  opacity: 0.75;
+  margin-top: 2px;
 }
 .hero-inspi {
   font-size: 11px;
@@ -248,6 +357,7 @@ nav {
   border-left: 2px solid rgba(120,180,255,0.35);
   padding-left: 12px;
   line-height: 1.6;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
 }
 .hero-inspi em { color: rgba(220,200,140,0.85); font-style: normal; }
 .hero-tagline {
@@ -256,6 +366,7 @@ nav {
   line-height: 1.8;
   max-width: 420px;
   margin-bottom: 36px;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.8);
 }
 .hero-buttons { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 48px; }
 .stats-bar {
@@ -264,6 +375,8 @@ nav {
   border-radius: 12px;
   overflow: hidden;
   background: var(--bg-card);
+  width: 100%;
+  box-sizing: border-box;
 }
 .stat-item {
   flex: 1;
@@ -287,29 +400,7 @@ nav {
   margin-top: 4px;
 }
 
-/* ─── HERO VISUAL ────────────────────────────────────────────── */
-.hero-visual {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 480px;
-}
-.hex-cluster { position: relative; width: 380px; height: 380px; }
-.hex-tile { position: absolute; transition: transform 0.4s ease; }
-.hex-tile:hover { transform: translateY(-8px) scale(1.05) !important; z-index: 10; }
-.hex-tile svg { filter: drop-shadow(0 6px 20px rgba(0,0,0,0.6)); }
-
-@keyframes floatA { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-14px) rotate(2deg)} }
-@keyframes floatB { 0%,100%{transform:translateY(-8px) rotate(-1deg)} 50%{transform:translateY(6px) rotate(1.5deg)} }
-@keyframes floatC { 0%,100%{transform:translateY(4px) rotate(1deg)} 50%{transform:translateY(-8px) rotate(-2deg)} }
-.float-a { animation: floatA 7s ease-in-out infinite; }
-.float-b { animation: floatB 9s ease-in-out infinite 1.5s; }
-.float-c { animation: floatC 8s ease-in-out infinite 3s; }
-.float-d { animation: floatA 10s ease-in-out infinite 0.8s; }
-.float-e { animation: floatB 6.5s ease-in-out infinite 2.2s; }
-.float-f { animation: floatC 11s ease-in-out infinite 1s; }
-.float-g { animation: floatA 8.5s ease-in-out infinite 3.5s; }
+/* ─── HERO VISUAL (supprimé) ─────────────────────────────────── */
 
 /* ─── BIOMES ─────────────────────────────────────────────────── */
 .biomes-grid {
@@ -370,6 +461,25 @@ nav {
 .biome-card.rail   .biome-tag { background: rgba(112,104,128,0.35);color: #c0b8d8; }
 
 /* ─── GAMEPLAY STEPS ─────────────────────────────────────────── */
+.gameplay-ui-preview {
+  margin-top: 36px;
+  text-align: center;
+}
+.gameplay-ui-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(120,180,255,0.15);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.gameplay-ui-caption {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  opacity: 0.55;
+  margin-top: 10px;
+}
 .steps-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -498,7 +608,8 @@ nav {
 /* ─── GALLERY ────────────────────────────────────────────────── */
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: 320px;
   gap: 14px;
   margin-top: 44px;
 }
@@ -507,9 +618,7 @@ nav {
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border);
-  aspect-ratio: 4/3;
 }
-.gallery-card:nth-child(1) { grid-column: span 2; aspect-ratio: auto; min-height: 240px; }
 .gallery-scene { position: absolute; inset: 0; transition: transform 0.6s ease; }
 .gallery-card:hover .gallery-scene { transform: scale(1.06); }
 .gallery-card:hover { border-color: rgba(120,180,255,0.55); }
@@ -681,6 +790,12 @@ nav {
 }
 .hs-meta-item { display: flex; align-items: center; gap: 4px; }
 .hs-meta-item .icon { font-size: 13px; }
+.hs-date { color: rgba(120,180,255,0.40); }
+.hs-meta-biomes { margin-top: 5px; gap: 10px; opacity: 0.75; }
+.hs-biome-chip { font-size: 10px; gap: 3px; }
+.hs-biome-total { color: var(--text-dim); }
+.hs-biome-sep  { color: rgba(120,180,255,0.35); }
+.hs-biome-max  { color: rgba(120,180,255,0.60); }
 .hs-score-col { text-align: right; }
 .hs-score {
   font-family: var(--font-title);
@@ -690,11 +805,21 @@ nav {
   line-height: 1;
 }
 .hs-card.gold-1 .hs-score { color: var(--gold); }
-.hs-grid-pct { font-size: 11px; color: var(--text-dim); margin-top: 3px; text-align: right; }
 .hs-empty { text-align: center; padding: 56px; color: var(--text-dim); font-size: 14px; border: 1px solid var(--border); border-radius: 12px; margin-top: 40px; }
 
 /* ─── FOOTER ─────────────────────────────────────────────────── */
-footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 36px 0; }
+footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 36px 0 0; }
+.footer-screenshot {
+  width: 100%;
+  line-height: 0;
+}
+.footer-screenshot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 0;
+}
 .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .footer-logo  { font-family: var(--font-title); font-size: 22px; letter-spacing: 0.08em; color: var(--blue); }
 .footer-copy  { font-size: 11px; color: var(--text-dim); }
@@ -725,8 +850,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
 /* ─── RESPONSIVE ─────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .hero-inner, .multi-inner { grid-template-columns: 1fr; }
-  .hero-visual { display: none; }
-  .biomes-grid, .missions-grid { grid-template-columns: repeat(2, 1fr); }
+  .biomes-grid, .missions-grid, .hero-inspi-grid { grid-template-columns: repeat(2, 1fr); }
   .steps-grid  { grid-template-columns: repeat(2, 1fr); }
   .gallery-grid { grid-template-columns: 1fr; }
   .gallery-card:nth-child(1) { grid-column: span 1; }
@@ -736,8 +860,24 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   nav { padding: 12px 18px; }
   .nav-links { display: none; }
   .hs-card { grid-template-columns: 40px 1fr auto; }
+
+  .hero-banner { height: 50vh; }
+  .hero-subtitle { white-space: normal; }
 }
 @media (max-width: 600px) {
-  .biomes-grid, .missions-grid, .steps-grid { grid-template-columns: 1fr; }
+  .biomes-grid, .missions-grid, .steps-grid, .hero-inspi-grid { grid-template-columns: 1fr; }
   .hs-meta { gap: 8px; }
+
+  /* Stats-bar en grille 2×2 sur petits écrans */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .stat-item {
+    min-width: unset;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-item:nth-child(odd)  { border-right: 1px solid var(--border); }
+  .stat-item:nth-last-child(-n+2) { border-bottom: none; }
 }

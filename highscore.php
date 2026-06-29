@@ -52,16 +52,14 @@ try {
             exit;
         }
 
-        $gridPercent = normalize_grid_percent($payload['gridPercent'] ?? 0);
         $stats = sanitize_stats($payload['stats'] ?? null);
 
         $scores = read_scores($SCORE_FILE);
         $scores[] = [
-            'name' => $name,
+            'name'  => $name,
             'score' => (int)$score,
-            'gridPercent' => $gridPercent,
             'stats' => $stats,
-            'date' => gmdate('c')
+            'date'  => gmdate('c')
         ];
 
         $scores = sort_scores($scores);
@@ -197,11 +195,10 @@ function read_scores($file)
             && is_numeric($entry['score'])
         ) {
             $clean[] = [
-                'name' => (string)$entry['name'],
+                'name'  => (string)$entry['name'],
                 'score' => (int)$entry['score'],
-                'gridPercent' => normalize_grid_percent($entry['gridPercent'] ?? 0),
                 'stats' => sanitize_stats($entry['stats'] ?? null),
-                'date' => isset($entry['date']) ? (string)$entry['date'] : ''
+                'date'  => isset($entry['date']) ? (string)$entry['date'] : ''
             ];
         }
     }
@@ -240,11 +237,10 @@ function public_scores($scores, $limit)
 
     foreach ($scores as $entry) {
         $public[] = [
-            'name' => (string)$entry['name'],
+            'name'  => (string)$entry['name'],
             'score' => (int)$entry['score'],
-            'gridPercent' => normalize_grid_percent($entry['gridPercent'] ?? 0),
             'stats' => sanitize_stats($entry['stats'] ?? null),
-            'date' => isset($entry['date']) ? (string)$entry['date'] : ''
+            'date'  => isset($entry['date']) ? (string)$entry['date'] : ''
         ];
     }
 

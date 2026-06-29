@@ -129,9 +129,11 @@ export function updateSunShadowOrbit(scene, timeSeconds, focusPoint = null, came
       focus.y + orbit.height * orbit.visualScale,
       focus.z + z * orbit.visualScale
     );
-    // Rotation du globe sur lui-même
-    const glbModel = sunVisual.getObjectByName('visible-sky-sun-glb');
-    if (glbModel) glbModel.rotation.y = timeSeconds * 0.25;
+    // Rotation des astres sur eux-mêmes
+    const glbSun  = sunVisual.getObjectByName('visible-sky-sun-glb');
+    const glbMoon = sunVisual.getObjectByName('visible-sky-moon-glb');
+    if (glbSun)  glbSun.rotation.y  = timeSeconds * 0.25;
+    if (glbMoon) glbMoon.rotation.y = timeSeconds * 0.55;
   }
   keepSunShadowCameraStable(sun, cameraY);
   sun.updateMatrixWorld();
@@ -207,7 +209,8 @@ function createVisibleSunObject() {
         const size = new THREE.Vector3();
         box.getSize(size);
         const maxDim = Math.max(size.x, size.y, size.z) || 1;
-        model.scale.setScalar(1.7 / maxDim);
+        const isMoon = glbName === 'visible-sky-moon-glb';
+        model.scale.setScalar((1.7 / maxDim) * (isMoon ? 1.15 : 1.0));
 
         box.setFromObject(model);
         const center = new THREE.Vector3();
@@ -226,15 +229,39 @@ function createVisibleSunObject() {
             child.receiveShadow = false;
             child.userData.disableCastShadow = true;
             child.userData.disableReceiveShadow = true;
-          }
-          if (!child.material) return;
-          const mats = Array.isArray(child.material) ? child.material : [child.material];
-          for (const m of mats) {
-            if (!m) continue;
-            m.fog = false;
-            m.depthWrite = false;
-            m.depthTest = false;
-            m.needsUpdate = true;
+
+            if (glbName === 'visible-sky-sun-glb') {
+              // Le GLB soleil a doubleSided:true + depthTest:false → les faces back
+              // écrasent les faces front dans un ordre fixe indépendant de la caméra
+              // (effet "boule de sapin cassée"). Un soleil n'est pas un récepteur de
+              // lumière : on remplace le MeshStandardMaterial PBR par un MeshBasicMaterial
+              // qui ignore les normales et n'a pas de problème de back-face overdraw.
+              const oldMat = Array.isArray(child.material) ? child.material[0] : child.material;
+              const emissiveMap = oldMat?.emissiveMap ?? oldMat?.map ?? null;
+              const basicMat = new THREE.MeshBasicMaterial({
+                map:        emissiveMap,
+                color:      0xffffff,
+                fog:        false,
+                depthWrite: false,
+                depthTest:  false,
+                side:       THREE.FrontSide, // mesh fermé, FrontSide suffit
+                transparent: false,
+              });
+              // Libérer l'ancien matériau
+              if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+              else child.material?.dispose();
+              child.material = basicMat;
+            } else {
+              // Lune et autres astres : on garde le matériau GLB, on ajuste juste le rendu
+              const mats = Array.isArray(child.material) ? child.material : [child.material];
+              for (const m of mats) {
+                if (!m) continue;
+                m.fog = false;
+                m.depthWrite = false;
+                m.depthTest = false;
+                m.needsUpdate = true;
+              }
+            }
           }
         });
 

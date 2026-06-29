@@ -7,7 +7,7 @@ import { makeHexKey } from './hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { getTerrainSurfaceY } from './terrainHeight.js';
-import { getCurvatureTiltQuaternion } from './worldCurvature.js';
+import { getCurvatureTiltQuaternion, getWorldCurvatureDrop } from './worldCurvature.js';
 import { makeNodeKey as makeSectorKey, getTileEdgeType, getTileCenterType, clearGroup, smoothstep } from './tileUtils.js';
 import {
   ensureHouseGlbModels,
@@ -462,7 +462,10 @@ function trianglePoint(a, b, centerWeight, aWeight, bWeight) {
 export function getHouseChimneyPositions(group) {
   return (group.userData.columns ?? [])
     .filter(col => col.hasSmoke && col.tileGroup?.visible !== false)
-    .map(col => new THREE.Vector3(col.x, col.y ?? HOUSE_SMOKE_Y, col.z));
+    .map(col => {
+      const flatY = col.y ?? HOUSE_SMOKE_Y;
+      return new THREE.Vector3(col.x, flatY + getWorldCurvatureDrop(col.x, col.z), col.z);
+    });
 }
 
 // ─── Matériau fumée (conservé, non utilisé) ───────────────────────────────────

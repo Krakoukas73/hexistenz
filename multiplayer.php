@@ -11,12 +11,12 @@ $gamesDir = $rootDir . DIRECTORY_SEPARATOR . 'json' . DIRECTORY_SEPARATOR . 'gam
 try {
     if (!is_dir($gamesDir)) {
         if (!mkdir($gamesDir, 0775, true) && !is_dir($gamesDir)) {
-            respond(false, 'Impossible de créer le dossier /games.', 500, array('gamesDir' => $gamesDir));
+            respond(false, 'Impossible de créer le dossier /json/games.', 500, array('gamesDir' => $gamesDir));
         }
     }
 
     if (!is_writable($gamesDir)) {
-        respond(false, 'Le dossier /games existe mais il n’est pas inscriptible par PHP.', 500, array('gamesDir' => $gamesDir));
+        respond(false, 'Le dossier /json/games existe mais il n’est pas inscriptible par PHP.', 500, array('gamesDir' => $gamesDir));
     }
 
     $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
@@ -52,7 +52,7 @@ try {
         // Lecture seule, mais on verrouille quand même pour ne jamais lire un fichier en cours d’écriture.
         with_room_lock($gamesDir, $code, function () use ($gamesDir, $code) {
             $path = existing_room_path($gamesDir, $code);
-            if (!$path) respond(false, "Partie $code introuvable sur le serveur PHP dans /games.", 404, debug_paths($gamesDir, $code));
+            if (!$path) respond(false, "Partie $code introuvable sur le serveur PHP dans /json/games.", 404, debug_paths($gamesDir, $code));
             respond(true, null, 200, array('room' => read_room($path)));
         });
     }
@@ -140,7 +140,7 @@ function create_room($gamesDir, $code, $playerId, $playerName, $state) {
 function join_room($gamesDir, $code, $playerId, $playerName, $playerState) {
     $path = existing_room_path($gamesDir, $code);
     if (!$path) {
-        respond(false, "Partie $code introuvable sur le serveur PHP dans /games. Crée-la d'abord.", 404, debug_paths($gamesDir, $code));
+        respond(false, "Partie $code introuvable sur le serveur PHP dans /json/games. Crée-la d'abord.", 404, debug_paths($gamesDir, $code));
     }
 
     $room = read_room($path);
@@ -191,7 +191,7 @@ function join_room($gamesDir, $code, $playerId, $playerName, $playerState) {
 
 function update_state($gamesDir, $code, $playerId, $state) {
     $path = existing_room_path($gamesDir, $code);
-    if (!$path) respond(false, "Partie $code introuvable sur le serveur PHP dans /games.", 404, debug_paths($gamesDir, $code));
+    if (!$path) respond(false, "Partie $code introuvable sur le serveur PHP dans /json/games.", 404, debug_paths($gamesDir, $code));
 
     $room = read_room($path);
     if (!isset($room['players'][$playerId])) respond(false, 'Joueur absent de cette partie.', 403);
@@ -220,7 +220,7 @@ function update_state($gamesDir, $code, $playerId, $state) {
 
 function update_cursor($gamesDir, $code, $playerId, $cursor) {
     $path = existing_room_path($gamesDir, $code);
-    if (!$path) respond(false, "Partie $code introuvable sur le serveur PHP dans /games.", 404, debug_paths($gamesDir, $code));
+    if (!$path) respond(false, "Partie $code introuvable sur le serveur PHP dans /json/games.", 404, debug_paths($gamesDir, $code));
 
     $room = read_room($path);
     if (!isset($room['players'][$playerId])) respond(false, 'Joueur absent de cette partie.', 403);
@@ -254,8 +254,10 @@ function with_room_lock($gamesDir, $code, $callback) {
     // Un seul verrou global, supprimé même si respond() fait exit.
     // Important : les callbacks répondent directement puis quittent le script.
     $lockPath = $gamesDir . DIRECTORY_SEPARATOR . '.multiplayer.lock';
-    $handle = fopen($lockPath, 'c');
-    if (!$handle) respond(false, 'Impossible de créer le verrou multiplayer dans /games.', 500, array('lockPath' => $lockPath));
+    // Mode 'a' (append) : crée si absent, ne tronque pas, universellement supporté.
+    // 'c' n'est pas disponible sur toutes les configs PHP/serveur → évité.
+    $handle = fopen($lockPath, 'a');
+    if (!$handle) respond(false, 'Impossible de créer le verrou multiplayer dans /json/games.', 500, array('lockPath' => $lockPath));
 
     register_shutdown_function(function () use ($handle, $lockPath) {
         @flock($handle, LOCK_UN);
@@ -303,12 +305,12 @@ function write_room_unlocked($path, $room) {
 
     $tmp = $path . '.' . getmypid() . '.' . str_replace('.', '', uniqid('', true)) . '.tmp';
     if (file_put_contents($tmp, $json . PHP_EOL, LOCK_EX) === false) {
-        respond(false, 'Impossible d’écrire le fichier temporaire de partie dans /games.', 500, array('tmp' => $tmp, 'writableDir' => is_writable(dirname($path))));
+        respond(false, 'Impossible d’écrire le fichier temporaire de partie dans /json/games.', 500, array('tmp' => $tmp, 'writableDir' => is_writable(dirname($path))));
     }
 
     if (!rename($tmp, $path)) {
         @unlink($tmp);
-        respond(false, 'Impossible de finaliser le fichier de partie dans /games.', 500, array('path' => $path));
+        respond(false, 'Impossible de finaliser le fichier de partie dans /json/games.', 500, array('path' => $path));
     }
 }
 

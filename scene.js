@@ -1187,7 +1187,7 @@ export function initScene(options = {}) {
     ui.abandonGame?.setAttribute('disabled', 'disabled');
     setText(ui.placement, label);
     refreshStatsUI();
-    askHighscoreSubmit(highscoreUI, totalScore, getGridPercent(), getFullGameStats());
+    askHighscoreSubmit(highscoreUI, totalScore, getFullGameStats());
   }
 
   function getGridPercent() {

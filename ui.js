@@ -143,7 +143,7 @@ export function setHelpVisible(ui, visible) {
 
 export function updateScoreUI(ui, totalScore, lastScore = 0, placedTileCount = null, totalGridTiles = null) {
   setText(ui.score, String(totalScore));
-  setText(ui.lastScore, lastScore > 0 ? `+${lastScore}` : String(lastScore));
+  setText(ui.lastScore, lastScore > 0 ? `(+${lastScore})` : lastScore < 0 ? `(${lastScore})` : '');
 
   if (placedTileCount !== null) {
     setText(ui.gridPercent, String(placedTileCount));

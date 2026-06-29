@@ -30,7 +30,7 @@
   justify-content: flex-start;
 }
 
-/* Même style que .score-value (#dbgScore, #dbgGridPercent) */
+/* Style BebasNeue gros chiffre — harmonisé avec #arcadeScore */
 #deckRemaining {
   /* Prend tout l'espace vertical restant après le titre, centre le nombre dedans */
   flex: 1;

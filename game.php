@@ -29,26 +29,17 @@
 <body>
   <canvas id="app"></canvas>
 
+  <div id="arcadeScore"><span id="dbgScore">0</span><span class="arcade-suffix">pts <span id="dbgLastScore"></span></span></div>
+
   <aside id="scorePanel">
-    <div class="score-main-row">
-      <div>
-        <div class="score-title">SCORE</div>
-        <div id="dbgScore" class="score-value">0</div>
-      </div>
-      <div>
-        <div class="score-title">TUILES POSÉES</div>
-        <div id="dbgGridPercent" class="score-value">0</div>
-      </div>
-    </div>
-    <div class="last-score-line">Dernier coup <span id="dbgLastScore">0</span></div>
     <div id="multiplayerInfo" hidden class="multiplayer-info">
-      <div class="multiplayer-info-block">
-        <div class="score-title">PARTIE</div>
-        <div id="multiRoomCode" class="multiplayer-info-value">—</div>
-      </div>
       <div class="multiplayer-info-block">
         <div class="score-title">JOUEUR</div>
         <div id="multiPlayerName" class="multiplayer-info-value">—</div>
+      </div>
+      <div class="multiplayer-info-block">
+        <div class="score-title">PARTIE</div>
+        <div id="multiRoomCode" class="multiplayer-info-value">—</div>
       </div>
     </div>
     <div class="game-action-row">

@@ -21,16 +21,25 @@ if (file_exists($hsFile)) {
             foreach ($raw as $entry) {
                 if (is_array($entry) && isset($entry['name']) && isset($entry['score']) && is_numeric($entry['score'])) {
                     $stats = isset($entry['stats']) && is_array($entry['stats']) ? $entry['stats'] : [];
+                    $biomeTypes = ['grass', 'field', 'forest', 'house', 'water', 'rail'];
+                    $totals  = isset($stats['totals'])  && is_array($stats['totals'])  ? $stats['totals']  : [];
+                    $largest = isset($stats['largest']) && is_array($stats['largest']) ? $stats['largest'] : [];
+                    $biomeTotals  = [];
+                    $biomeLargest = [];
+                    foreach ($biomeTypes as $bt) {
+                        $biomeTotals[$bt]  = isset($totals[$bt])  ? (int)$totals[$bt]  : 0;
+                        $biomeLargest[$bt] = isset($largest[$bt]) ? (int)$largest[$bt] : 0;
+                    }
                     $clean[] = [
-                        'name'        => (string)$entry['name'],
-                        'score'       => (int)$entry['score'],
-                        'gridPercent' => isset($entry['gridPercent']) ? round((float)$entry['gridPercent'], 1) : 0,
-                        'date'        => isset($entry['date']) ? (string)$entry['date'] : '',
-                        'tiles'       => isset($stats['tiles'])      ? (int)$stats['tiles']      : 0,
-                        'trains'      => isset($stats['trainLines']) ? (int)$stats['trainLines'] : 0,
-                        'boats'       => isset($stats['boatCount'])  ? (int)$stats['boatCount']  : 0,
-                        'comets'      => isset($stats['cometHits'])  ? (int)$stats['cometHits']  : 0,
-                        'largest'     => isset($stats['largest'])    ? $stats['largest']         : [],
+                        'name'         => (string)$entry['name'],
+                        'score'        => (int)$entry['score'],
+                        'date'         => isset($entry['date']) ? (string)$entry['date'] : '',
+                        'tiles'        => isset($stats['tiles'])      ? (int)$stats['tiles']      : 0,
+                        'trains'       => isset($stats['trainLines']) ? (int)$stats['trainLines'] : 0,
+                        'boats'        => isset($stats['boatCount'])  ? (int)$stats['boatCount']  : 0,
+                        'comets'       => isset($stats['cometHits'])  ? (int)$stats['cometHits']  : 0,
+                        'totals'       => $biomeTotals,
+                        'largest'      => $biomeLargest,
                     ];
                 }
             }
@@ -61,15 +70,12 @@ function fmt_date($iso) {
 </head>
 <body>
 
+<div id="particles-js" aria-hidden="true"></div>
 <div class="bg-layer" aria-hidden="true"></div>
 
 <!-- ─── NAV ────────────────────────────────────────────────────── -->
 <nav>
-  <a class="nav-logo" href="#">HEXISTENZ<?php if ($version): ?><span class="nav-version"><?= htmlspecialchars($version) ?></span><?php endif; ?></a>
-  <div id="lang-toggle">
-    <button onclick="setLang('fr')" id="btn-fr" class="active">FR</button>
-    <button onclick="setLang('en')" id="btn-en">EN</button>
-  </div>
+  <a class="nav-logo" href="#">⬡ HEXISTENZ<?php if ($version): ?><span class="nav-version"><?= htmlspecialchars($version) ?></span><?php endif; ?></a>
   <ul class="nav-links">
     <li><a href="#factions" data-fr>Factions</a>    <a href="#factions" data-en>Factions</a></li>
     <li><a href="#biomes"   data-fr>Biomes</a>      <a href="#biomes"   data-en>Biomes</a></li>
@@ -80,19 +86,25 @@ function fmt_date($iso) {
     <li><a href="#multi"    data-fr>Multijoueur</a> <a href="#multi"    data-en>Multiplayer</a></li>
     <li><a href="#scores"   data-fr>Classement</a>  <a href="#scores"   data-en>Leaderboard</a></li>
   </ul>
+  <div id="lang-toggle">
+    <button onclick="setLang('fr')" id="btn-fr" class="active">FR</button>
+    <button onclick="setLang('en')" id="btn-en">EN</button>
+  </div>
   <a href="game.php" class="nav-cta" data-fr>Jouer</a>
   <a href="game.php" class="nav-cta" data-en>Play Now</a>
 </nav>
 
 <!-- ═══════════ HERO ═══════════ -->
 <section id="hero">
+  <div class="hero-banner" aria-hidden="true"></div>
+  <div class="hero-content">
   <div class="container">
     <div class="hero-inner">
       <div class="hero-text">
-        <h1 class="hero-title">HEXISTENZ</h1>
+        <h1 class="hero-title">⬡ HEXISTENZ</h1>
         <p class="hero-subtitle">
-          <span data-fr>Jeu hexagonal contemplatif fait avec amour ❤️ et beaucoup de tuiles</span>
-          <span data-en>A contemplative hexagonal game made with love ❤️ and a lot of tiles</span>
+          <span data-fr>Jeu hexagonal contemplatif fait avec nostalgie et amour ❤️ Three.js et beaucoup de tuiles</span>
+          <span data-en>A contemplative hexagonal game made with love ❤️ Three.js and a lot of tiles</span>
         </p>
 
         <p class="hero-inspi" data-fr>
@@ -104,13 +116,46 @@ function fmt_date($iso) {
           and the wondrous worlds of <em>Heroes of Might and Magic</em> (3DO).
         </p>
 
+        <div class="hero-inspi-grid">
+          <div class="hero-inspi-col">
+            <div class="hero-inspi-card">
+              <img src="./images/dorfromantik.jpg" alt="Dorfromantik" class="hero-inspi-img" loading="lazy">
+              <div class="hero-inspi-caption">
+                <div class="hero-inspi-name">Dorfromantik</div>
+              </div>
+            </div>
+            <a class="hero-inspi-buy" href="https://store.steampowered.com/app/1455840/Dorfromantik/" target="_blank" rel="noopener">🎮 <span data-fr>Dorfromantik sur Steam</span><span data-en>Dorfromantik on Steam</span></a>
+          </div>
+          <div class="hero-inspi-col">
+            <div class="hero-inspi-card">
+              <img src="./images/settlers.jpg" alt="The Settlers" class="hero-inspi-img" loading="lazy">
+              <div class="hero-inspi-caption">
+                <div class="hero-inspi-name">The Settlers</div>
+              </div>
+            </div>
+            <a class="hero-inspi-buy" href="https://www.ubisoft.com/en-gb/games/the-settlers-history-edition" target="_blank" rel="noopener">🎮 <span data-fr>The Settlers sur Ubisoft</span><span data-en>The Settlers on Ubisoft</span></a>
+          </div>
+          <div class="hero-inspi-col">
+            <div class="hero-inspi-card">
+              <img src="./images/heroes.jpg" alt="Heroes of Might and Magic" class="hero-inspi-img" loading="lazy">
+              <div class="hero-inspi-caption">
+                <div class="hero-inspi-name">Heroes of Might &amp; Magic</div>
+              </div>
+            </div>
+            <a class="hero-inspi-buy" href="https://www.gog.com/en/game/heroes_of_might_and_magic_3_complete_edition" target="_blank" rel="noopener">🎮 <span data-fr>Heroes III sur GOG</span><span data-en>Heroes III on GOG</span></a>
+          </div>
+        </div>
+
         <p class="hero-tagline" data-fr>
-          Posez des tuiles hexagonales. Connectez les biomes. Remplissez des missions.
-          Faites circuler trains et bateaux. Bâtissez un monde vivant, tuile après tuile.
+          Posez des tuiles hexagonales. Développez de vastes forêts de sapins et de bouleaux, des champs de blé
+          ondoyants avec leurs moulins, des villages médiévaux aux toits fumants, des réseaux de voies ferrées
+          et de larges rivières où voguent vos bateaux. Remplissez des missions, interceptez des comètes,
+          entourez vos tuiles. Bâtissez un monde vivant, tuile après tuile.
         </p>
         <p class="hero-tagline" data-en>
-          Place hexagonal tiles. Connect biomes. Complete missions.
-          Send trains and boats across the land. Build a living world, one tile at a time.
+          Place hexagonal tiles. Grow vast forests of firs and birches, swaying wheat fields with their mills,
+          medieval villages with smoking rooftops, sprawling railway networks and wide rivers where your boats sail.
+          Complete missions, intercept comets, surround your tiles. Build a living world, one tile at a time.
         </p>
         <div class="hero-buttons">
           <a href="game.php" class="btn-primary" data-fr>Jouer maintenant</a>
@@ -126,39 +171,9 @@ function fmt_date($iso) {
         </div>
       </div>
 
-      <div class="hero-visual" aria-hidden="true">
-        <div class="hex-cluster">
-          <div class="hex-tile float-a" style="left:138px;top:132px;">
-            <svg width="108" height="124" viewBox="0 0 108 124"><defs><linearGradient id="g-forest" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#3a8040"/><stop offset="100%" stop-color="#0e3015"/></linearGradient></defs>
-            <polygon points="54,4 104,31 104,92 54,119 4,92 4,31" fill="url(#g-forest)" stroke="rgba(100,220,120,0.45)" stroke-width="1.5"/><text x="54" y="72" text-anchor="middle" font-size="40">🌲</text></svg>
-          </div>
-          <div class="hex-tile float-b" style="left:218px;top:44px;">
-            <svg width="90" height="104" viewBox="0 0 90 104"><defs><linearGradient id="g-grass" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#5ab040"/><stop offset="100%" stop-color="#306025"/></linearGradient></defs>
-            <polygon points="45,3 87,26 87,76 45,99 3,76 3,26" fill="url(#g-grass)" stroke="rgba(100,220,80,0.38)" stroke-width="1.5"/><text x="45" y="60" text-anchor="middle" font-size="32">🌿</text></svg>
-          </div>
-          <div class="hex-tile float-c" style="left:56px;top:44px;">
-            <svg width="90" height="104" viewBox="0 0 90 104"><defs><linearGradient id="g-water" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2070a8"/><stop offset="100%" stop-color="#0a2848"/></linearGradient></defs>
-            <polygon points="45,3 87,26 87,76 45,99 3,76 3,26" fill="url(#g-water)" stroke="rgba(80,180,255,0.45)" stroke-width="1.5"/><text x="45" y="60" text-anchor="middle" font-size="32">🌊</text></svg>
-          </div>
-          <div class="hex-tile float-d" style="left:218px;top:208px;">
-            <svg width="90" height="104" viewBox="0 0 90 104"><defs><linearGradient id="g-house" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#b08860"/><stop offset="100%" stop-color="#604535"/></linearGradient></defs>
-            <polygon points="45,3 87,26 87,76 45,99 3,76 3,26" fill="url(#g-house)" stroke="rgba(210,160,100,0.38)" stroke-width="1.5"/><text x="45" y="60" text-anchor="middle" font-size="32">🏠</text></svg>
-          </div>
-          <div class="hex-tile float-e" style="left:56px;top:208px;">
-            <svg width="90" height="104" viewBox="0 0 90 104"><defs><linearGradient id="g-field" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#d4b840"/><stop offset="100%" stop-color="#807025"/></linearGradient></defs>
-            <polygon points="45,3 87,26 87,76 45,99 3,76 3,26" fill="url(#g-field)" stroke="rgba(230,200,60,0.40)" stroke-width="1.5"/><text x="45" y="60" text-anchor="middle" font-size="32">🌾</text></svg>
-          </div>
-          <div class="hex-tile float-f" style="left:140px;top:278px;">
-            <svg width="82" height="94" viewBox="0 0 82 94"><defs><linearGradient id="g-rail" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#706880"/><stop offset="100%" stop-color="#38303e"/></linearGradient></defs>
-            <polygon points="41,3 79,23 79,69 41,89 3,69 3,23" fill="url(#g-rail)" stroke="rgba(180,165,220,0.35)" stroke-width="1.5"/><text x="41" y="55" text-anchor="middle" font-size="28">🚂</text></svg>
-          </div>
-          <div class="hex-tile float-g" style="left:156px;top:6px;">
-            <svg width="68" height="78" viewBox="0 0 68 78"><polygon points="34,2 65,19 65,57 34,74 3,57 3,19" fill="rgba(120,180,255,0.07)" stroke="rgba(120,180,255,0.36)" stroke-width="1.5"/><text x="34" y="46" text-anchor="middle" font-size="24">☄️</text></svg>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
+  </div><!-- /.hero-content -->
 </section>
 
 <!-- ═══════════ FACTIONS ═══════════ -->
@@ -166,8 +181,10 @@ function fmt_date($iso) {
   <div class="container">
     <p class="section-label" data-fr>Deux façons de voir le monde</p>
     <p class="section-label" data-en>Two ways to see the world</p>
-    <h2 class="section-title" data-fr>Platistes contre Boulistes</h2>
-    <h2 class="section-title" data-en>Flat-Worlders vs Globe-Believers</h2>
+    <h2 class="section-title" data-fr>Platistes et boulistes</h2>
+    <h2 class="section-title" data-en>Flat-worlders and globe-believers</h2>
+    <p class="section-sub section-sub--lead" data-fr>Deux factions irréconciliables</p>
+    <p class="section-sub section-sub--lead" data-en>Two irreconcilable factions</p>
     <p class="section-sub" data-fr>
       Hexistenz divise les bâtisseurs en deux factions irréconciliables. Une option visuelle,
       un engagement philosophique. De quel côté êtes-vous&nbsp;?
@@ -202,7 +219,7 @@ function fmt_date($iso) {
 
       <div class="faction-card bouliste">
         <div class="faction-img" style="display:block;padding:0;">
-          <img src="images/bouliste.png" alt="Mode Bouliste" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <img src="images/bouliste-transparent.png" alt="Mode Bouliste" style="width:100%;height:100%;object-fit:cover;display:block;">
         </div>
         <div class="faction-body">
           <span class="faction-tag" data-fr>Mode Bouliste</span>
@@ -328,8 +345,8 @@ function fmt_date($iso) {
     <p class="section-label" data-en>Objectives</p>
     <h2 class="section-title" data-fr>Les missions</h2>
     <h2 class="section-title" data-en>Missions</h2>
-    <p class="section-sub" data-fr>Chaque partie génère des objectifs automatiques liés aux biomes et aux réseaux. Les accomplir rapporte des points substantiels — et relance la dynamique quand la grille se densifie.</p>
-    <p class="section-sub" data-en>Each game generates automatic objectives tied to biomes and networks. Completing them scores substantial points — and reignites momentum as the grid fills up.</p>
+    <p class="section-sub" data-fr>Chaque partie génère des objectifs automatiques liés aux biomes et aux réseaux. Les accomplir rapporte 100 points et surtout 3 nouvelles tuiles dans la pioche — ce qui garantit théoriquement des parties infinies.</p>
+    <p class="section-sub" data-en>Each game generates automatic objectives tied to biomes and networks. Completing one scores 100 points and, more importantly, adds 3 new tiles to the draw pile — theoretically enabling infinite games.</p>
 
     <div class="missions-grid">
       <div class="mission-card">
@@ -400,6 +417,12 @@ function fmt_date($iso) {
     <p class="section-sub" data-fr>Une boucle simple, une profondeur infinie. Chaque tuile posée transforme le monde.</p>
     <p class="section-sub" data-en>A simple loop, infinite depth. Every tile placed transforms the world.</p>
 
+    <div class="gameplay-ui-preview">
+      <img src="./images/tuiles.png" alt="Interface tuiles — tuile courante, suivante et restantes" loading="lazy">
+      <p class="gameplay-ui-caption" data-fr>Tuile courante · Tuile suivante · Tuiles restantes</p>
+      <p class="gameplay-ui-caption" data-en>Current tile · Next tile · Remaining tiles</p>
+    </div>
+
     <div class="steps-grid">
       <div class="step-card">
         <div class="step-icon">🎴</div>
@@ -435,8 +458,9 @@ function fmt_date($iso) {
         <div class="score-pill"><div class="score-pill-pts">+10</div><div class="score-pill-label" data-fr>Arête compatible</div><div class="score-pill-label" data-en>Matching edge</div></div>
         <div class="score-pill"><div class="score-pill-pts">+25</div><div class="score-pill-label" data-fr>Réseau connecté</div><div class="score-pill-label" data-en>Network connected</div></div>
         <div class="score-pill"><div class="score-pill-pts">+50</div><div class="score-pill-label" data-fr>Tuile entourée</div><div class="score-pill-label" data-en>Tile surrounded</div></div>
-        <div class="score-pill"><div class="score-pill-pts" style="color:var(--gold);">★</div><div class="score-pill-label" data-fr>Mission accomplie</div><div class="score-pill-label" data-en>Mission complete</div></div>
-        <div class="score-pill"><div class="score-pill-pts" style="color:var(--gold);">☄</div><div class="score-pill-label" data-fr>Comète interceptée</div><div class="score-pill-label" data-en>Comet intercepted</div></div>
+        <div class="score-pill"><div class="score-pill-pts">+100</div><div class="score-pill-label" data-fr>Mission accomplie</div><div class="score-pill-label" data-en>Mission complete</div></div>
+        <div class="score-pill"><div class="score-pill-pts">+1000</div><div class="score-pill-label" data-fr>Comète interceptée</div><div class="score-pill-label" data-en>Comet intercepted</div></div>
+        <div class="score-pill"><div class="score-pill-pts">+1500</div><div class="score-pill-label" data-fr>Case bonus recouverte</div><div class="score-pill-label" data-en>Bonus cell covered</div></div>
       </div>
     </div>
   </div>
@@ -447,10 +471,10 @@ function fmt_date($iso) {
   <div class="container">
     <p class="section-label" data-fr>Ambiances visuelles</p>
     <p class="section-label" data-en>Visual presets</p>
-    <h2 class="section-title" data-fr>16 atmosphères cinématiques</h2>
-    <h2 class="section-title" data-en>16 cinematic atmospheres</h2>
-    <p class="section-sub" data-fr>Pipeline Three.js r160 : pixelisation, aberration chromatique, grain pellicule, fumée volumétrique, ciel procédural, tilt-shift. Chaque preset transforme le monde entier.</p>
-    <p class="section-sub" data-en>Three.js r160 pipeline: pixelization, chromatic aberration, film grain, volumetric smoke, procedural sky, tilt-shift. Each preset transforms the entire world.</p>
+    <h2 class="section-title" data-fr>16 atmosphères, une infinité de personnalisations</h2>
+    <h2 class="section-title" data-en>16 atmospheres, infinite customizations</h2>
+    <p class="section-sub" data-fr>16 presets visuels prêts à l'emploi — mais chacun est une base : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… Des centaines de combinaisons pour transformer le monde entier à votre goût. Chaque personnalisation s'exporte en un clic et peut être partagée avec d'autres joueurs.</p>
+    <p class="section-sub" data-en>16 ready-to-use visual presets — but each is a starting point: color LUT, cinematic effects (chromatic aberration, film grain, tilt-shift), retro pixelization, EGA and Amiga aesthetics, volumetric smoke, procedural sky… Hundreds of combinations to transform the entire world to your taste. Every customization can be exported in one click and shared with other players.</p>
 
     <div class="gallery-grid">
       <div class="gallery-card" style="grid-column:span 2;">
@@ -471,6 +495,11 @@ function fmt_date($iso) {
       <div class="gallery-card" style="grid-column:span 2;">
         <img src="images/amiga.png" alt="Preset Amiga" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Amiga</span><span data-en>Amiga</span></div></div>
+      </div>
+
+      <div class="gallery-card" style="grid-column:span 2;">
+        <img src="images/apple2.png" alt="Preset Apple II" class="gallery-img">
+        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Apple II</span><span data-en>Apple II</span></div></div>
       </div>
     </div>
   </div>
@@ -534,19 +563,19 @@ function fmt_date($iso) {
       <div>
         <p class="section-label" data-fr>Mode multijoueur</p>
         <p class="section-label" data-en>Multiplayer mode</p>
-        <h2 class="section-title" data-fr>Bâtissez ensemble,<br>scorez séparément</h2>
-        <h2 class="section-title" data-en>Build together,<br>score separately</h2>
-        <p class="section-sub" data-fr>Rejoignez ou créez une salle avec un code à 6 lettres. La grille est partagée en temps réel — chaque joueur pose ses tuiles, voit les placements des autres, et construit son propre score.</p>
-        <p class="section-sub" data-en>Join or create a room with a 6-letter code. The grid is shared in real time — each player places their tiles, sees others' placements, and builds their own score.</p>
+        <h2 class="section-title" data-fr>Bâtissez ensemble</h2>
+        <h2 class="section-title" data-en>Build together</h2>
+        <p class="section-sub" data-fr>Rejoignez ou créez une salle avec un code à 6 lettres. La grille est partagée en temps réel — chaque joueur pose ses tuiles et voit les placements des autres au fur et à mesure.</p>
+        <p class="section-sub" data-en>Join or create a room with a 6-letter code. The grid is shared in real time — each player places their tiles and sees others' moves as they happen.</p>
         <ul class="multi-feature-list">
-          <li data-fr>Parties en attente rejoignables à tout moment</li>
-          <li data-en>Pending rooms joinable at any time</li>
+          <li data-fr>Toutes les parties sont sauvegardées — reprenez ou rejouez à tout moment</li>
+          <li data-en>All games are saved — resume or replay at any time</li>
+          <li data-fr>Salles rejoignables à tout moment, même en cours de partie</li>
+          <li data-en>Rooms joinable at any time, even mid-game</li>
           <li data-fr>Synchronisation temps réel · PHP + JSON</li>
           <li data-en>Real-time sync · PHP + JSON backend</li>
-          <li data-fr>Classements par joueur visibles dans le HUD</li>
-          <li data-en>Per-player rankings visible in the HUD</li>
-          <li data-fr>La carte se construit collaborativement</li>
-          <li data-en>The map grows collaboratively</li>
+          <li data-fr>La carte se construit collaborativement, tuile après tuile</li>
+          <li data-en>The map grows collaboratively, tile by tile</li>
         </ul>
         <div style="margin-top:28px;">
           <a href="game.php" class="btn-primary" data-fr>Créer une partie</a>
@@ -566,19 +595,19 @@ function fmt_date($iso) {
           <div class="player-dot">…</div>
         </div>
         <div class="room-scores">
-          <div style="font-size:9px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:2px;" data-fr>Classement</div>
-          <div style="font-size:9px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:2px;" data-en>Standings</div>
+          <div style="font-size:9px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;" data-fr>Tuiles posées</div>
+          <div style="font-size:9px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;" data-en>Tiles placed</div>
           <div class="room-score-row">
             <span class="room-score-name">Piregwan</span>
-            <span class="room-score-pts" style="color:var(--gold);">4 820</span>
+            <span class="room-score-pts" style="color:var(--gold);">47</span>
           </div>
           <div class="room-score-row">
             <span class="room-score-name" style="color:var(--text-dim);">Wanderer</span>
-            <span class="room-score-pts" style="color:var(--blue);">3 210</span>
+            <span class="room-score-pts" style="color:var(--blue);">31</span>
           </div>
           <div class="room-score-row">
             <span class="room-score-name" style="color:var(--text-dim);">Solène</span>
-            <span class="room-score-pts" style="color:var(--blue);">2 890</span>
+            <span class="room-score-pts" style="color:var(--blue);">28</span>
           </div>
         </div>
       </div>
@@ -605,8 +634,15 @@ function fmt_date($iso) {
       <?php foreach ($highscores as $i => $hs):
         $goldClass = $i === 0 ? 'gold-1' : ($i === 1 ? 'gold-2' : ($i === 2 ? 'gold-3' : ''));
         $dateStr   = fmt_date($hs['date']);
-        $largestForest = isset($hs['largest']['forest']) ? (int)$hs['largest']['forest'] : 0;
-        $largestWater  = isset($hs['largest']['water'])  ? (int)$hs['largest']['water']  : 0;
+        $biomeIcons = ['forest'=>'🌲','water'=>'💧','house'=>'🏘️','field'=>'🌾','grass'=>'🌿','rail'=>'🛤️'];
+        $biomeLabels = [
+          'forest' => ['fr'=>'Forêt',      'en'=>'Forest'],
+          'water'  => ['fr'=>'Eau',         'en'=>'Water'],
+          'house'  => ['fr'=>'Village',     'en'=>'Village'],
+          'field'  => ['fr'=>'Champ de blé','en'=>'Wheat field'],
+          'grass'  => ['fr'=>'Prairie',     'en'=>'Meadow'],
+          'rail'   => ['fr'=>'Voie ferrée', 'en'=>'Rail'],
+        ];
       ?>
       <div class="hs-card <?= $goldClass ?>">
         <div class="hs-rank"><?= $i + 1 ?></div>
@@ -625,22 +661,32 @@ function fmt_date($iso) {
             <?php if ($hs['comets'] > 0): ?>
             <span class="hs-meta-item"><span class="icon">☄️</span><?= $hs['comets'] ?> <span data-fr>comète<?= $hs['comets'] > 1 ? 's' : '' ?></span><span data-en>comet<?= $hs['comets'] > 1 ? 's' : '' ?></span></span>
             <?php endif; ?>
-            <?php if ($largestForest > 0): ?>
-            <span class="hs-meta-item"><span class="icon">🌲</span><span data-fr>forêt max&nbsp;</span><span data-en>max forest&nbsp;</span><?= $largestForest ?></span>
-            <?php endif; ?>
-            <?php if ($largestWater > 0): ?>
-            <span class="hs-meta-item"><span class="icon">🌊</span><span data-fr>lac max&nbsp;</span><span data-en>max lake&nbsp;</span><?= $largestWater ?></span>
-            <?php endif; ?>
             <?php if ($dateStr): ?>
-            <span class="hs-meta-item" style="color:rgba(120,180,255,0.40);"><?= $dateStr ?></span>
+            <span class="hs-meta-item hs-date"><?= $dateStr ?></span>
             <?php endif; ?>
           </div>
+          <?php
+            $biomeChips = '';
+            foreach ($biomeIcons as $bt => $icon) {
+              $tot = $hs['totals'][$bt] ?? 0;
+              $max = $hs['largest'][$bt] ?? 0;
+              if ($tot > 0 || $max > 0) {
+                $lFr = $biomeLabels[$bt]['fr'];
+                $lEn = $biomeLabels[$bt]['en'];
+                $biomeChips .= '<span class="hs-meta-item hs-biome-chip" title="' . $lFr . '">'
+                  . '<span class="icon">' . $icon . '</span>'
+                  . '<span class="hs-biome-total">' . number_format($tot) . '</span>'
+                  . '<span class="hs-biome-sep">/</span>'
+                  . '<span class="hs-biome-max">' . $max . '</span>'
+                  . '</span>';
+              }
+            }
+            if ($biomeChips): ?>
+          <div class="hs-meta hs-meta-biomes"><?= $biomeChips ?></div>
+          <?php endif; ?>
         </div>
         <div class="hs-score-col">
           <div class="hs-score"><?= number_format($hs['score']) ?></div>
-          <?php if ($hs['gridPercent'] > 0): ?>
-          <div class="hs-grid-pct"><?= $hs['gridPercent'] ?>% <span data-fr>de grille</span><span data-en>grid fill</span></div>
-          <?php endif; ?>
         </div>
       </div>
       <?php endforeach; ?>
@@ -658,18 +704,21 @@ function fmt_date($iso) {
 <footer>
   <div class="container">
     <div class="footer-inner">
-      <div class="footer-logo">HEXISTENZ</div>
-      <div class="footer-copy" data-fr>Jeu hexagonal contemplatif fait avec amour ❤️ et beaucoup de tuiles · 2025–2026</div>
-          <div class="footer-copy" data-en>A contemplative hexagonal game made with love ❤️ and a lot of tiles · 2025–2026</div>
+      <div class="footer-logo">⬡ HEXISTENZ</div>
+      <div class="footer-copy" data-fr>Jeu hexagonal contemplatif fait avec nostalgie et amour ❤️ Three.js et beaucoup de tuiles · 2025–2026</div>
+          <div class="footer-copy" data-en>A contemplative hexagonal game made with love ❤️ Three.js and a lot of tiles · 2025–2026</div>
       <div class="footer-links-group">
         <a href="https://krakoukas.com" class="footer-link" target="_blank" rel="noopener">Krakoukas</a>
         <span class="footer-sep">·</span>
         <a href="https://www.wildlabs.fr" class="footer-link" target="_blank" rel="noopener">Wildlabs</a>
         <span class="footer-sep">·</span>
-        <a href="https://github.com/Krakoukas73/hexistenz" class="footer-link" target="_blank" rel="noopener" data-fr>Sources sur GitHub</a>
-        <a href="https://github.com/Krakoukas73/hexistenz" class="footer-link" target="_blank" rel="noopener" data-en>Source on GitHub</a>
+        <a href="https://github.com/Krakoukas73/hexistenz" class="footer-link" target="_blank" rel="noopener" data-fr>Sur GitHub</a>
+        <a href="https://github.com/Krakoukas73/hexistenz" class="footer-link" target="_blank" rel="noopener" data-en>On GitHub</a>
       </div>
     </div>
+  </div>
+  <div class="footer-screenshot">
+    <img src="./images/nuit-transparent.png" alt="" aria-hidden="true">
   </div>
 </footer>
 
@@ -682,6 +731,29 @@ function fmt_date($iso) {
   }
   const saved = localStorage.getItem('hexistenz_pres_lang');
   if (saved === 'en') setLang('en');
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<script>
+particlesJS("particles-js", {
+  particles: {
+    number: { value: 79, density: { enable: true, value_area: 900 } },
+    color: { value: ["#4a9eff", "#a0c8ff", "#ffffff"] },
+    shape: { type: "circle" },
+    opacity: { value: 0.45, random: true, anim: { enable: true, speed: 0.4, opacity_min: 0.05, sync: false } },
+    size: { value: 2.3, random: true, anim: { enable: false } },
+    line_linked: { enable: false },
+    move: {
+      enable: true, speed: 0.77, direction: "none",
+      random: true, straight: false, out_mode: "out", bounce: false
+    }
+  },
+  interactivity: {
+    detect_on: "window",
+    events: { onhover: { enable: false }, onclick: { enable: false }, resize: true }
+  },
+  retina_detect: true
+});
 </script>
 </body>
 </html>

@@ -35,12 +35,10 @@ export function createHighscoreUI(ui) {
   return elements;
 }
 
-export function askHighscoreSubmit(elements, score, gridPercent = 0, stats = null) {
+export function askHighscoreSubmit(elements, score, stats = null) {
   if (!elements || score <= 0) return;
 
-  const normalizedGridPercent = normalizeGridPercent(gridPercent);
   elements.currentScore = score;
-  elements.currentGridPercent = normalizedGridPercent;
   elements.currentStats = sanitizeGameStats(stats);
   elements.submitBox?.classList.remove('hidden');
   setStatus(elements, `Score final : ${score}`);
@@ -49,7 +47,6 @@ export function askHighscoreSubmit(elements, score, gridPercent = 0, stats = nul
 
 async function submitCurrentScore(ui, elements) {
   const score = Number(elements.currentScore ?? 0);
-  const gridPercent = normalizeGridPercent(elements.currentGridPercent ?? 0);
   const stats = sanitizeGameStats(elements.currentStats);
   const name = sanitizeName(elements.nameInput?.value || DEFAULT_NAME);
 
@@ -60,7 +57,7 @@ async function submitCurrentScore(ui, elements) {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, score, gridPercent, stats })
+      body: JSON.stringify({ name, score, stats })
     });
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
