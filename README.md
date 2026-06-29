@@ -1,5 +1,6 @@
 
-<img width="1536" height="1024" alt="Hexistenz hero" src="https://github.com/user-attachments/assets/8561d479-a1cc-4e50-8dfd-75b394e7f7d2" />
+<img width="1708" height="1264" alt="automne" src="https://github.com/user-attachments/assets/4ecd15c3-71cc-4315-acd6-0ca35f902205" />
+
 
 
 <div align="center">
@@ -129,7 +130,14 @@ JavaScript ES Modules (no bundler)  ·  PHP  ·  JSON storage
 
 
 
-<img width="1536" height="1024" alt="21" src="https://github.com/user-attachments/assets/f243058f-9801-44d0-9436-e86f12e14804" />
+<img width="1699" height="1258" alt="bouliste" src="https://github.com/user-attachments/assets/00508169-fbb7-4824-bdf2-08bba168a349" />
+
+<img width="1713" height="1268" alt="amiga" src="https://github.com/user-attachments/assets/59ab76a1-4c9e-4a34-8d0d-26ac4367e532" />
+
+<img width="1717" height="1267" alt="ete-vif" src="https://github.com/user-attachments/assets/aded7d15-75a5-42f0-aa30-160bac9f3583" />
+
+<img width="1709" height="1262" alt="jour" src="https://github.com/user-attachments/assets/356d4a56-cad0-457d-8695-b9f1cbcbca76" />
+
 
 
 ---
