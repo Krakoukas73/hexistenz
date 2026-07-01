@@ -1,6 +1,8 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { createGLTFLoader } from './glbLoader.js';
-import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, BOAT_TARGET_LENGTH, SECTOR_DEFS, LOD_BOAT_CULL_DISTANCE } from './config.js';
+import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, BOAT_TARGET_LENGTH, SECTOR_DEFS, LOD_BOAT_CULL_DISTANCE, WATER_RENDER } from './config.js';
+import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS } from './worldCurvature.js';
+import { FOAM_GLSL } from './shaders/shaderEau.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
@@ -26,6 +28,30 @@ const PORT_INSET = 0.52;
 const FIN_WIDTH = HEX_SIZE * 0.058;
 const FIN_HEIGHT = HEX_SIZE * 0.185;
 const FIN_LENGTH = HEX_SIZE * 0.36;
+
+// ── Sillage en V (deux branches d'écume divergentes) ─────────────────────────
+const WAKE_MAX_POINTS = 26;                 // longueur de la traînée (nb de points)
+const WAKE_MIN_STEP   = HEX_SIZE * 0.05;    // distance mini entre points enregistrés
+const WAKE_Y          = WATER_SURFACE_Y + 0.005; // juste au-dessus de la nappe
+
+// Réglages live (sliders debug) — partagés par tous les sillages.
+const _wake = {
+  armWidth: WATER_RENDER.wakeArmWidth,
+  spread:   WATER_RENDER.wakeSpread,
+  length:   WATER_RENDER.wakeLength,
+  scale:    WATER_RENDER.wakeScale,
+  density:  WATER_RENDER.wakeDensity,
+  opacity:  WATER_RENDER.wakeOpacity
+};
+
+export function getWakeParams() { return { ..._wake }; }
+export function setWakeParams(p = {}) {
+  for (const k in _wake) if (p[k] != null) _wake[k] = Number(p[k]);
+  if (_wakeMaterial) {
+    _wakeMaterial.uniforms.uWakeScale.value = _wake.scale;
+    _wakeMaterial.uniforms.uWakeDensity.value = _wake.density;
+  }
+}
 
 export function createWaterBoatOverlay() {
   const group = new THREE.Group();
@@ -104,6 +130,7 @@ function countZoneBoats(zone, zoneIndex = 0) {
 }
 
 export function updateWaterBoatOverlay(group, timeSeconds = 0) {
+  if (_wakeMaterial) _wakeMaterial.uniforms.uTime.value = timeSeconds;
   const boats = group.userData.boats ?? [];
 
   for (const boat of boats) {
@@ -117,7 +144,168 @@ export function updateWaterBoatOverlay(group, timeSeconds = 0) {
     boat.object.position.copy(sample.position);
     boat.object.position.y = WATER_SURFACE_Y + BOAT_Y_OFFSET + bob;
     boat.object.rotation.y = -Math.atan2(sample.tangent.z, sample.tangent.x) + BOAT_HEADING_OFFSET;
+
+    if (boat.wake) updateBoatWake(boat);
   }
+}
+
+// ── Traînée d'écume (wake) ───────────────────────────────────────────────────
+
+let _wakeMaterial = null;
+function getWakeMaterial() {
+  if (_wakeMaterial) return _wakeMaterial;
+  _wakeMaterial = new THREE.ShaderMaterial({
+    name: 'boat-wake-foam-material',
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    uniforms: {
+      uTime: { value: 0 },
+      uFoamColor: { value: new THREE.Color(WATER_RENDER.foamColor) },
+      uWakeScale: { value: _wake.scale },
+      uWakeDensity: { value: _wake.density },
+      uFoamSharp: { value: WATER_RENDER.foamSharp },
+      uWorldCurvatureEnabled: WORLD_CURVATURE_UNIFORMS.uWorldCurvatureEnabled
+    },
+    vertexShader: /* glsl */`
+      attribute vec4 color;            // .r = transversale [-1,1], .g = along [0,1], .a = opacité
+      varying vec3 vWorld;
+      varying float vFade;
+      varying float vAcross;
+      varying float vAlong;
+      ${WORLD_CURVATURE_SHADER}
+      void main() {
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        wp = dorfromantikApplyWorldCurvature(wp);
+        vWorld = wp.xyz;
+        vAcross = color.r;
+        vAlong = color.g;
+        vFade = color.a;
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: /* glsl */`
+      varying vec3 vWorld;
+      varying float vFade;
+      varying float vAcross;
+      varying float vAlong;
+      uniform float uTime;
+      uniform float uWakeScale;
+      uniform float uWakeDensity;
+      uniform float uFoamSharp;
+      uniform vec3 uFoamColor;
+      ${FOAM_GLSL}
+      void main() {
+        // Froth : dense près du bateau (vAlong→0), se dissipe en gouttes vers la
+        // queue (vAlong→1) via un gradient de densité — pas de fond opaque, donc
+        // pas d'effet "masque". Bords latéraux adoucis (vAcross→±1).
+        float density = mix(uWakeDensity, -0.08, vAlong);
+        float fp = foamPattern(vWorld.xz, uTime * 1.4, uWakeScale, 1.0, density, uFoamSharp);
+        float edge = smoothstep(1.0, 0.25, abs(vAcross));
+        float a = vFade * fp * edge;
+        if (a < 0.01) discard;
+        gl_FragColor = vec4(uFoamColor, a);
+      }
+    `
+  });
+  // Singleton partagé : ne pas le laisser disposer par clearGroup au rebuild.
+  _wakeMaterial.userData.glbPrototype = true;
+  return _wakeMaterial;
+}
+
+function createBoatWake() {
+  const N = WAKE_MAX_POINTS;
+  const maxVerts = N * 2;            // ruban unique : N points × 2 sommets
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxVerts * 3), 3).setUsage(THREE.DynamicDrawUsage));
+  geometry.setAttribute('color',    new THREE.BufferAttribute(new Float32Array(maxVerts * 4), 4).setUsage(THREE.DynamicDrawUsage));
+
+  const indices = [];
+  for (let i = 0; i < N - 1; i++) {
+    const a = i * 2, b = i * 2 + 1, c = (i + 1) * 2, d = (i + 1) * 2 + 1;
+    indices.push(a, b, c, b, d, c);
+  }
+  geometry.setIndex(indices);
+  geometry.setDrawRange(0, 0);
+
+  const mesh = new THREE.Mesh(geometry, getWakeMaterial());
+  mesh.name = 'boat-wake';
+  mesh.renderOrder = 4;       // au-dessus de la nappe (renderOrder 3)
+  mesh.frustumCulled = false;
+  return mesh;
+}
+
+function updateBoatWake(boat) {
+  const pts = boat.wakePoints;
+  const hx = boat.object.position.x;
+  const hz = boat.object.position.z;
+
+  // Amorçage : 2 points superposés au bateau.
+  if (pts.length < 2) {
+    pts.length = 0;
+    pts.push(new THREE.Vector3(hx, WAKE_Y, hz));
+    pts.push(new THREE.Vector3(hx, WAKE_Y, hz));
+  }
+
+  // La TÊTE (dernier point) est collée au bateau chaque frame → apex fluide,
+  // pas de saut quand un nouveau point est commité.
+  const head = pts[pts.length - 1];
+  head.set(hx, WAKE_Y, hz);
+
+  // Commit d'un nouveau segment quand la tête s'éloigne assez du dernier point figé.
+  const prev = pts[pts.length - 2];
+  if ((hx - prev.x) ** 2 + (hz - prev.z) ** 2 > WAKE_MIN_STEP * WAKE_MIN_STEP) {
+    pts.push(new THREE.Vector3(hx, WAKE_Y, hz));
+    if (pts.length > WAKE_MAX_POINTS) pts.shift();
+  }
+  _buildWake(boat.wake, pts);
+}
+
+/**
+ * Sillage « froth » : un ruban unique qui S'ÉLARGIT derrière le bateau
+ * (silhouette en V). La mousse le remplit, dense près du bateau et se dissipant
+ * en gouttes vers l'arrière (gradient de densité dans le shader), bords doux.
+ * .r = position transversale [-1,1], .g = avancée [0=bateau,1=queue], .a = opacité.
+ */
+function _buildWake(mesh, pts) {
+  const n = pts.length;
+  const geometry = mesh.geometry;
+  if (n < 3) { geometry.setDrawRange(0, 0); return; }
+
+  const N = WAKE_MAX_POINTS;
+  const posAttr = geometry.attributes.position;
+  const colAttr = geometry.attributes.color;
+
+  // Distance ABSOLUE derrière le bateau → pas de rescale à l'ajout/retrait (anti-pop).
+  const dBehind = new Array(n).fill(0);
+  for (let i = n - 2; i >= 0; i--) dBehind[i] = dBehind[i + 1] + pts[i].distanceTo(pts[i + 1]);
+
+  const len = Math.max(_wake.length, 0.001);
+  for (let k = 0; k < N; k++) {
+    const i = Math.min(k, n - 1);             // au-delà de n : replie sur le dernier (dégénéré)
+    const p = pts[i];
+    // Tangente lissée (±2 voisins) → moins de jitter de direction.
+    const a = pts[Math.max(0, i - 2)];
+    const b = pts[Math.min(n - 1, i + 2)];
+    let tx = b.x - a.x, tz = b.z - a.z;
+    const tl = Math.hypot(tx, tz) || 1; tx /= tl; tz /= tl;
+    const perpX = -tz, perpZ = tx;
+
+    const d = dBehind[i];
+    const along = Math.min(1, d / len);
+    const half = _wake.armWidth + _wake.spread * d;   // s'élargit derrière → V
+    const fade = (k < n) ? _wake.opacity : 0.0;
+
+    const li = k * 2, ri = k * 2 + 1;
+    posAttr.setXYZ(li, p.x + perpX * half, WAKE_Y, p.z + perpZ * half);
+    posAttr.setXYZ(ri, p.x - perpX * half, WAKE_Y, p.z - perpZ * half);
+    colAttr.setXYZW(li, 1.0, along, 1, fade);   // .r=+1 bord, .g=along, .a=opacité
+    colAttr.setXYZW(ri, -1.0, along, 1, fade);
+  }
+
+  posAttr.needsUpdate = true;
+  colAttr.needsUpdate = true;
+  geometry.setDrawRange(0, (N - 1) * 6);
 }
 
 /**
@@ -164,12 +352,19 @@ function addZoneBoats(group, zone, zoneIndex) {
       object.position.copy(points[0]);
       group.add(object);
 
+      // Traînée d'écume : ruban dynamique en coords monde, ajouté à l'overlay
+      // (pas au bateau, qui tourne/translate).
+      const wake = createBoatWake();
+      group.add(wake);
+
       group.userData.boats.push({
         object,
         motionTrack,
         distance,
         offset: hashUnit(`${seedKey}:offset`),
-        trackCenter
+        trackCenter,
+        wake,
+        wakePoints: []
       });
     }
   }
