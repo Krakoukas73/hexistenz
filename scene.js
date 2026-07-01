@@ -25,6 +25,7 @@ import { createHouseOverlay, rebuildHouseOverlay, updateHouseOverlay, updateHous
 import { createSmokeVolumePass, updateSmokeVolumePass, MAX_SMOKE_SOURCES } from './smokeVolumePass.js';
 import { addSingleTileToDecorOverlay, createDecorOverlay, rebuildDecorOverlay, updateDecorOverlay, updateNaturalPropsLOD, updateFieldDecorLOD, computeLodHeightFactor } from './decorOverlay.js';
 import { addBonusCellChest, createBonusCellChestOverlay, rebuildBonusCellChestOverlay, removeBonusCellChest, updateBonusCellChestOverlay, updateBonusCellChestLOD } from './bonusCellChestOverlay.js';
+import { createSheepOverlay, rebuildSheepOverlay, updateSheepOverlay, updateSheepLOD } from './sheepOverlay.js';
 import { createAmbientSoundDesign, startEndingMusic, startIngameMusic, toggleMute } from './soundDesign.js';
 import { createVisualEnvironment } from './visualEnvironment.js';
 import { createCometSky, updateCometSky, tryCometHit, removeCometFromSky, spawnCometExplosion } from './cometSky.js';
@@ -35,70 +36,13 @@ import { createDebugLightUI, tickFps } from './debugLightUi.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, setAstreMode, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './threeSetup.js';
 import { applyShadowCulling, rebuildShadowCasters } from './shadowCulling.js';
-import { addTileToTerrainMerge, createTerrainMergeGroup, hideTerrainMeshes, rebuildTerrainMerge, updateTileShoreDepth } from './terrainMerge.js';
+import { addTileToTerrainMerge, createTerrainMergeGroup, hideTerrainMeshes, rebuildTerrainMerge } from './terrainMerge.js';
+import { createWaterSurfaceOverlay, rebuildWaterSurfaceOverlay } from './waterSurfaceOverlay.js';
+import { createWaterDebugPanel } from './waterDebugUi.js';
 // createPostprocessHud supprimé : PIX HUD fusionné dans debugLightUi (panel CUSTOMISATION)
 import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
 import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, setMissionTurn } from './missions.js';
 import { pollRoom, updateCursor, updateRoomState } from './multiplayerClient.js';
-
-// ─── Bathymétrie eau : comptage des voisins eau pour aShoreDepth ─────────────
-// Directions axiales flat-top (q+dq, r+dr) pour les 6 voisins hexagonaux.
-const _WATER_NBOR_DIRS = [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
-const _WATER_EDGE_KEYS = ['n','ne','se','s','sw','nw'];
-
-// Anneau 2 : 12 hexagones à distance exacte 2 (max(|q|,|r|,|q+r|)=2).
-const _WATER_NBOR_DIRS_2 = [
-  [2,0],[2,-1],[2,-2],[1,-2],[1,1],[0,-2],
-  [0,2],[-1,-1],[-1,2],[-2,0],[-2,1],[-2,2]
-];
-
-/** Retourne true si la tuile est à dominante eau (≥ 2 secteurs eau). */
-function _isWaterTile(tile) {
-  if (!tile) return false;
-  const e = tile.edges ?? tile;
-  let n = 0;
-  for (const k of _WATER_EDGE_KEYS) {
-    if (getEdgeType(e?.[k]) === EDGE_TYPES.water) n++;
-  }
-  return n >= 2;
-}
-
-/**
- * Retourne true si la tuile possède AU MOINS UN secteur eau.
- * Utilisé pour la bathymétrie : même les secteurs eau isolés (1 edge)
- * contribuent à la profondeur de leurs voisins.
- */
-function _hasAnyWaterSector(tile) {
-  if (!tile) return false;
-  const e = tile.edges ?? tile;
-  for (const k of _WATER_EDGE_KEYS) {
-    if (getEdgeType(e?.[k]) === EDGE_TYPES.water) return true;
-  }
-  return false;
-}
-
-/**
- * Bathymétrie sur 2 anneaux de voisins.
- * Anneau 1 (×0.60) + anneau 2 (×0.20) → max = 6×0.60 + 12×0.20 = 6.0
- * Résultat 0–6 → aShoreDepth = result/6 (0=rive, 1=mer ouverte).
- * Gradient bien plus précis qu'avec 1 seul anneau :
- *   rivière (centre 3 voisins ring1) ≈ 1.8 → depth 0.30
- *   lac     (6 ring1, 8 ring2)       ≈ 5.2 → depth 0.87
- *   mer     (6 ring1, 12 ring2)      ≈ 6.0 → depth 1.00
- */
-function _countWaterNeighbors(q, r, tiles) {
-  let ring1 = 0;
-  for (const [dq, dr] of _WATER_NBOR_DIRS) {
-    const nb = tiles.get(makeHexKey(q + dq, r + dr));
-    if (nb && _hasAnyWaterSector(nb.tile)) ring1++;
-  }
-  let ring2 = 0;
-  for (const [dq, dr] of _WATER_NBOR_DIRS_2) {
-    const nb = tiles.get(makeHexKey(q + dq, r + dr));
-    if (nb && _hasAnyWaterSector(nb.tile)) ring2++;
-  }
-  return ring1 * 0.60 + ring2 * 0.20;
-}
 
 export function initScene(options = {}) {
   const canvas = document.getElementById('app');
@@ -163,6 +107,7 @@ export function initScene(options = {}) {
   const remoteGhosts = new THREE.Group();
   remoteGhosts.name = 'multiplayer-remote-ghosts';
   const waterZoneOverlay = createWaterZoneOverlay();
+  const waterSurfaceOverlay = createWaterSurfaceOverlay();
   const hoverZoneOverlay = createHoverZoneOverlay();
   const railTrainOverlay = createRailTrainOverlay();
   const waterBoatOverlay = createWaterBoatOverlay();
@@ -172,6 +117,7 @@ export function initScene(options = {}) {
   const houseOverlay = createHouseOverlay();
   const fieldWaterEffectsOverlay = createDecorOverlay();
   const bonusCellChestOverlay = createBonusCellChestOverlay();
+  const sheepOverlay = createSheepOverlay();
   const cometSky  = createCometSky();
   const cloudSky  = createCloudSky(scene);
   // isSoleil : override localStorage > tirage aléatoire si aucune préférence stockée
@@ -222,7 +168,7 @@ export function initScene(options = {}) {
 
   ghostTile.visible = false;
 
-  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, bonusCellChestOverlay, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, grassBladeOverlay, houseOverlay, fieldWaterEffectsOverlay, cometSky, remoteGhosts, ghostTile, terrainMergeGroup);
+  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, bonusCellChestOverlay, waterZoneOverlay, waterSurfaceOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, grassBladeOverlay, houseOverlay, fieldWaterEffectsOverlay, sheepOverlay, cometSky, remoteGhosts, ghostTile, terrainMergeGroup);
 
   // ── Toggle Jour/Nuit depuis le panel LUT ────────────────────────────────────
   document.addEventListener('hexistenz:dayNightChange', (e) => {
@@ -257,10 +203,7 @@ export function initScene(options = {}) {
   applySceneCurvatureFlags(bonusCellChestOverlay);
   for (const placedTile of placedTiles.values()) {
     const position = axialToWorld(placedTile.q, placedTile.r);
-    const waterNeighborCount = _hasAnyWaterSector(placedTile.tile)
-      ? _countWaterNeighbors(placedTile.q, placedTile.r, placedTiles)
-      : 0;
-    const mesh = createTileMesh(placedTile.tile, { worldX: position.x, worldZ: position.z, waterNeighborCount });
+    const mesh = createTileMesh(placedTile.tile, { worldX: position.x, worldZ: position.z });
     mesh.position.set(position.x, 0.003, position.z);
     hideTerrainMeshes(mesh);   // Les terrain meshes sont gérés par terrainMergeGroup
     placedTile.mesh = mesh;
@@ -269,6 +212,8 @@ export function initScene(options = {}) {
   // Fusion initiale de tous les terrains chargés depuis la sauvegarde
   rebuildTerrainMerge(terrainMergeGroup, placedTiles);
   applySceneCurvatureFlags(terrainMergeGroup);
+  rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
+  applySceneCurvatureFlags(waterSurfaceOverlay);
 
   // Une save déjà remplie arrive avec ses tuiles, mais les overlays décoratifs
   // (maisons, bateaux, trains, effets d'eau/champs/forêt) sont des groupes dérivés.
@@ -462,11 +407,14 @@ export function initScene(options = {}) {
     // Les labels ont leur Y figé par updateWorldCurvedSprites (one-shot).
     // Un rebuild corrige les positions pour le nouveau mode bouliste/platiste.
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+    rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
+    applySceneCurvatureFlags(waterSurfaceOverlay);
   });
 
   // ── Globals de diagnostic exposés en console navigateur ────────────────────
   window.setWorldCurvatureEnabled = setWorldCurvatureEnabled;
   window.getWorldCurvatureEnabled = getWorldCurvatureEnabled;
+  createWaterDebugPanel(); // panneau sliders eau/sillage + bouton Copier (bouton 💧 EAU bas-droite)
 
   /**
    * window.scanSceneAura([maxNormalExtent=3])
@@ -588,6 +536,7 @@ export function initScene(options = {}) {
     updateRailTrainOverlay(railTrainOverlay, timeSeconds);
     updateWaterBoatOverlay(waterBoatOverlay, timeSeconds);
     updateHouseOverlay(houseOverlay, timeSeconds);
+    updateSheepOverlay(sheepOverlay, timeSeconds);
 
     // Fumée volumétrique : mise à jour différée après le LOD (voir bloc % 9 ci-dessous)
     if (_PT_ENABLE) _ptAnim = performance.now();
@@ -643,6 +592,7 @@ export function initScene(options = {}) {
       updateRailTrainLOD(railTrainOverlay, camera, lodFactor);
       updateHouseLOD(houseOverlay, camera, lodFactor);
       updateBonusCellChestLOD(bonusCellChestOverlay, camera, lodFactor);
+      updateSheepLOD(sheepOverlay, camera, lodFactor);
       updateZoneLabelLOD(waterZoneOverlay, camera);
       updateBeachLOD(waterZoneOverlay, camera);
       // Rail track LOD — inline: scan placed tiles for rail track child meshes
@@ -743,6 +693,8 @@ export function initScene(options = {}) {
 
   function rebuildInitialDerivedOverlays() {
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+    rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
+    applySceneCurvatureFlags(waterSurfaceOverlay);
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
     rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
@@ -752,12 +704,13 @@ export function initScene(options = {}) {
     rebuildGrassBladeOverlay(grassBladeOverlay, placedTiles);
     rebuildHouseOverlay(houseOverlay, placedTiles);
     rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles);
+    rebuildSheepOverlay(sheepOverlay, placedTiles);
   }
 
   function refreshDeckUI() {
     const displayDeck = deck.slice();
     if (displayDeck[0]) displayDeck[0] = rotateTile(displayDeck[0], rotationIndex);
-    updateDeckUI(ui, displayDeck);
+    updateDeckUI(ui, displayDeck, placedTiles.size);
   }
 
   function isTextInputTarget(target) {
@@ -894,10 +847,7 @@ export function initScene(options = {}) {
     }
 
     const scoreResult = calculatePlacementScore(hex, placedTiles, tile, specialCells);
-    const waterNeighborCount = _hasAnyWaterSector(tile)
-      ? _countWaterNeighbors(hex.q, hex.r, placedTiles)
-      : 0;
-    const mesh = createTileMesh(tile, { worldX: position.x, worldZ: position.z, waterNeighborCount });
+    const mesh = createTileMesh(tile, { worldX: position.x, worldZ: position.z });
 
     mesh.position.set(position.x, 0.003, position.z);
     hideTerrainMeshes(mesh);   // Terrain géré par terrainMergeGroup
@@ -931,28 +881,18 @@ export function initScene(options = {}) {
     totalScore += placedTile.score;
 
     placedTiles.set(key, placedTile);
-    if (_hasAnyWaterSector(tile)) {
-      // La profondeur aShoreDepth de chaque voisin eau a été calculée au moment de
-      // sa pose, sans connaître les tuiles ajoutées depuis. On recalcule la valeur
-      // pour tous les voisins (anneaux 1 et 2) qui sont maintenant dans placedTiles,
-      // puis on reconstruit le terrain fusionné pour que les nouvelles valeurs s'affichent.
-      for (const [dq, dr] of [..._WATER_NBOR_DIRS, ..._WATER_NBOR_DIRS_2]) {
-        const nbKey = makeHexKey(hex.q + dq, hex.r + dr);
-        const nb = placedTiles.get(nbKey);
-        if (nb && nb !== placedTile && _hasAnyWaterSector(nb.tile) && nb.mesh) {
-          updateTileShoreDepth(nb.mesh, _countWaterNeighbors(nb.q, nb.r, placedTiles) / 6.0);
-        }
-      }
-      rebuildTerrainMerge(terrainMergeGroup, placedTiles);
-    } else {
-      // Merge incrémental O(1) — ajoute uniquement la nouvelle tuile aux meshes fusionnés.
-      addTileToTerrainMerge(terrainMergeGroup, mesh);
-    }
+    // Merge incrémental O(1) — ajoute uniquement la nouvelle tuile aux meshes fusionnés.
+    // L'eau n'est plus fusionnée ici (rendue par waterSurfaceOverlay.js, contour
+    // organique recalculé juste après) : plus besoin d'un rebuild complet du
+    // terrain quand la tuile posée contient de l'eau.
+    addTileToTerrainMerge(terrainMergeGroup, mesh);
     applySceneCurvatureFlags(terrainMergeGroup);
     placementHistory.push(placedTile);
     expandGridAroundPlacedTile(hex);
     // ── Rebuilds IMMÉDIATS : synchrones, légers, nécessaires pour le feedback visuel ──
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles, hex);
+    rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
+    applySceneCurvatureFlags(waterSurfaceOverlay);
     refreshGridAvailability();
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     resetPropHitboxRegistry(); // doit précéder les rebuilds props (forest/house/decor)
@@ -975,6 +915,7 @@ export function initScene(options = {}) {
     if (_needsWater)  overlayRebuildQueue.set('boat',   { rebuild: () => rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles),   lod: () => updateWaterBoatLOD(waterBoatOverlay, camera) });
     if (_needsField)  overlayRebuildQueue.set('wheat',  { rebuild: () => rebuildFieldWheatOverlay(fieldWheatOverlay, placedTiles), lod: () => updateFieldWheatLOD(fieldWheatOverlay, camera) });
     if (_needsGrass)  overlayRebuildQueue.set('grass',  { rebuild: () => rebuildGrassBladeOverlay(grassBladeOverlay, placedTiles),  lod: () => updateGrassBladeLOD(grassBladeOverlay, camera) });
+    if (_tEdgeTypes.has(EDGE_TYPES.grass)) overlayRebuildQueue.set('sheep', { rebuild: () => rebuildSheepOverlay(sheepOverlay, placedTiles), lod: () => updateSheepLOD(sheepOverlay, camera) });
     if (_needsForest) overlayRebuildQueue.set('forest', { rebuild: () => rebuildForestOverlay(forestOverlay, placedTiles, placedTile), lod: () => updateForestLOD(forestOverlay, camera) });
     if (_needsHouse)  overlayRebuildQueue.set('house',  { rebuild: () => rebuildHouseOverlay(houseOverlay, placedTiles),           lod: () => updateHouseLOD(houseOverlay, camera) });
     // Décor incrémental : toujours exécuté (O(1), 28ms, gère tous les biomes).
@@ -1025,7 +966,7 @@ export function initScene(options = {}) {
   }
 
   function maybeAddMissionForCurrentTile() {
-    return maybeGenerateMissionForTile(missionManager, deck[0]);
+    return maybeGenerateMissionForTile(missionManager, deck[0], getMissionProgressByType(placedTiles));
   }
 
   function addBonusTiles(count) {
@@ -1122,6 +1063,8 @@ export function initScene(options = {}) {
     }
     // ── Rebuilds IMMÉDIATS (undo : rebuild complet, pas de ciblage) ──────────────
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+    rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
+    applySceneCurvatureFlags(waterSurfaceOverlay);
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     resetPropHitboxRegistry();
     updateHoveredSpecialCellVisibility(hoveredHex);
@@ -1134,6 +1077,7 @@ export function initScene(options = {}) {
     overlayRebuildQueue.set('forest', { rebuild: () => rebuildForestOverlay(forestOverlay, placedTiles),           lod: () => updateForestLOD(forestOverlay, camera) });
     overlayRebuildQueue.set('house',  { rebuild: () => rebuildHouseOverlay(houseOverlay, placedTiles),             lod: () => updateHouseLOD(houseOverlay, camera) });
     overlayRebuildQueue.set('decor',  { rebuild: () => rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles), lod: () => { updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera); updateFieldDecorLOD(fieldWaterEffectsOverlay, camera); } });
+    overlayRebuildQueue.set('sheep',  { rebuild: () => rebuildSheepOverlay(sheepOverlay, placedTiles),             lod: () => updateSheepLOD(sheepOverlay, camera) });
     totalScore = Math.max(0, totalScore - (last.score ?? 0));
 
     if (last.generatedMission) removeMissionById(missionManager, last.generatedMission.id);
@@ -1288,43 +1232,18 @@ export function initScene(options = {}) {
 
       if (_goneKeys.length === 0) {
         // ── Chemin rapide : seulement des ajouts (cas habituel en multi) ──────
-        let _hasNewWater = false;
         for (const key of _newKeys) {
           const placedTile = remotePlacedTiles.get(key);
           const position = axialToWorld(placedTile.q, placedTile.r);
-          const waterNeighborCount = _isWaterTile(placedTile.tile)
-            ? _countWaterNeighbors(placedTile.q, placedTile.r, remotePlacedTiles)
-            : 0;
-          const mesh = createTileMesh(placedTile.tile, { worldX: position.x, worldZ: position.z, waterNeighborCount });
+          const mesh = createTileMesh(placedTile.tile, { worldX: position.x, worldZ: position.z });
           mesh.position.set(position.x, 0.003, position.z);
           hideTerrainMeshes(mesh);
           placedTile.mesh = mesh;
           placedTiles.set(key, placedTile);
           scene.add(mesh);
-          if (_hasAnyWaterSector(placedTile.tile)) {
-            _hasNewWater = true;
-          } else {
-            addTileToTerrainMerge(terrainMergeGroup, mesh);
-          }
+          addTileToTerrainMerge(terrainMergeGroup, mesh);
           applySceneCurvatureFlags(mesh);
           ensureGridCellsAroundHex(gridOverlay, placedTile, 3);
-        }
-        if (_hasNewWater) {
-          // Des tuiles eau ont été ajoutées : mettre à jour les aShoreDepth des
-          // voisins existants avant le rebuild complet, exactement comme en solo.
-          for (const key of _newKeys) {
-            const placedTile = placedTiles.get(key);
-            if (!placedTile || !_hasAnyWaterSector(placedTile.tile)) continue;
-            for (const [dq, dr] of [..._WATER_NBOR_DIRS, ..._WATER_NBOR_DIRS_2]) {
-              const nbKey = makeHexKey(placedTile.q + dq, placedTile.r + dr);
-              const nb = placedTiles.get(nbKey);
-              if (nb && nb !== placedTile && _hasAnyWaterSector(nb.tile) && nb.mesh) {
-                updateTileShoreDepth(nb.mesh, _countWaterNeighbors(nb.q, nb.r, placedTiles) / 6.0);
-              }
-            }
-          }
-          rebuildTerrainMerge(terrainMergeGroup, placedTiles);
-          applySceneCurvatureFlags(terrainMergeGroup);
         }
       } else {
         // ── Chemin complet : tuiles retirées (undo, réinitialisation) ────────
@@ -1334,10 +1253,7 @@ export function initScene(options = {}) {
         placedTiles.clear();
         for (const [key, placedTile] of remotePlacedTiles.entries()) {
           const position = axialToWorld(placedTile.q, placedTile.r);
-          const waterNeighborCount = _isWaterTile(placedTile.tile)
-            ? _countWaterNeighbors(placedTile.q, placedTile.r, remotePlacedTiles)
-            : 0;
-          const mesh = createTileMesh(placedTile.tile, { worldX: position.x, worldZ: position.z, waterNeighborCount });
+          const mesh = createTileMesh(placedTile.tile, { worldX: position.x, worldZ: position.z });
           mesh.position.set(position.x, 0.003, position.z);
           hideTerrainMeshes(mesh);
           placedTile.mesh = mesh;
@@ -1403,6 +1319,8 @@ export function initScene(options = {}) {
       const _newTile = _singleTileSync ? placedTiles.get(_addedKeys[0]) : null;
 
       rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+      rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
+      applySceneCurvatureFlags(waterSurfaceOverlay);
       rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
       resetPropHitboxRegistry();
       // ⚠️ Tous les overlays via queue → LOD immédiat, évite le flash (visible=true hors RAF)
@@ -1415,6 +1333,7 @@ export function initScene(options = {}) {
         overlayRebuildQueue.set('grass',  { rebuild: () => rebuildGrassBladeOverlay(grassBladeOverlay, placedTiles),   lod: () => updateGrassBladeLOD(grassBladeOverlay, camera) });
         overlayRebuildQueue.set('house',  { rebuild: () => rebuildHouseOverlay(houseOverlay, placedTiles),             lod: () => updateHouseLOD(houseOverlay, camera) });
         overlayRebuildQueue.set('rail',   { rebuild: () => rebuildRailTrainOverlay(railTrainOverlay, placedTiles),     lod: () => updateRailTrainLOD(railTrainOverlay, camera) });
+        overlayRebuildQueue.set('sheep',  { rebuild: () => rebuildSheepOverlay(sheepOverlay, placedTiles),             lod: () => updateSheepLOD(sheepOverlay, camera) });
         // Forest + Décor : incrémental si 1 seule tuile ajoutée, complet si multi-tuiles
         if (_singleTileSync && _newTile) {
           overlayRebuildQueue.set('forest', { rebuild: () => rebuildForestOverlay(forestOverlay, placedTiles, _newTile), lod: () => updateForestLOD(forestOverlay, camera) });

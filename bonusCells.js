@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { HEX_SIZE, TILE_VISUAL } from './config.js';
+import { HEX_SIZE } from './config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { getAllGridHexes } from './gridRegions.js';
 
@@ -81,7 +81,10 @@ export function updateBonusCellsMeshAnimation(group, timeSeconds = 0) {
 
 
 function getGridPlaneY() {
-  return (TILE_VISUAL.waterY ?? -0.075) - (TILE_VISUAL.waterThickness ?? 0.08) - 0.010;
+  // Niveau 0 monde = base/fond de toutes les tuiles (cf. tileMesh.js::getBiomeSurfaceY).
+  // L'ancienne formule (waterY - waterThickness - 0.010 ≈ -0.145) faisait flotter
+  // les cellules bonus très en dessous du sol au lieu de les poser au niveau des tuiles.
+  return 0.003;
 }
 
 function createBonusCellMesh(cell = null) {

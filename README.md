@@ -67,7 +67,7 @@ The core mechanic: **connections**. Extending a zone of the same type earns poin
 | 🌾 `field` | Champ de blé agité par un vent procédural | Wind-swept wheat field with procedural shader |
 | 🌲 `forest` | Forêt de bouleaux : arbres GLB 3D, hauteur et densité variables, brume basse | 3D birch forest: GLB trees, variable height and density, low mist |
 | 🏘️ `house` | Village vivant : maisons, tours, moulins, église, chemins de pierre | Living village: houses, towers, windmills, church, stone paths |
-| 🌊 `water` | Rivière et côtes : profondeur procédurale, plages, vagues, bateaux animés | River & coast: procedural depth shading, beaches, waves, animated boats |
+| 🌊 `water` | Rivière et côtes : rivage organique, vagues et écume animées, plages, bateaux à sillage | River & coast: organic shoreline, animated waves and foam, beaches, boats with wake |
 | 🚂 `rail` | Voie ferrée avec trains 3D animés, wagons, fumée volumétrique | Railway with animated 3D trains, wagons, volumetric smoke |
 
 > 🇫🇷 Les biomes `water` et `rail` sont des **réseaux** : la continuité est imposée par les règles de placement. Briser un fleuve ou une voie ferrée est interdit — vous devrez trouver comment raccorder.  
@@ -77,7 +77,7 @@ The core mechanic: **connections**. Extending a zone of the same type earns poin
 
 ## 🎯 Missions
 
-🇫🇷 Des **missions dynamiques** apparaissent au fil de la partie, tirées aléatoirement parmi huit types :
+🇫🇷 Des **missions dynamiques** apparaissent au fil de la partie, tirées aléatoirement parmi neuf types :
 
 | Mission | 🇫🇷 | 🇬🇧 |
 |---|---|---|
@@ -89,6 +89,7 @@ The core mechanic: **connections**. Extending a zone of the same type earns poin
 | 💧 Voie d'eau | Relier une étendue d'eau de taille N | Connect a waterway of size N |
 | 🌿 Prairie | Étendre les prairies jusqu'au seuil | Extend meadows to the threshold |
 | 🌾 Champs de blé | Cultiver une zone de champs suffisante | Cultivate a large enough field zone |
+| ⚙️ Moulins | Faire tourner N moulins à vent dans les champs | Spin N windmills in the wheat fields |
 
 🇫🇷 Réussir une mission fait apparaître entre 1 et 5 **cellules bonus** sur la grille, signalées visuellement. Les recouvrir avec une tuile déclenche un **multiplicateur de score**.
 
@@ -145,7 +146,7 @@ Des **presets d'ambiance** (chargés depuis `ambiances.json`) permettent de basc
 - **Modes rétro / Retro modes** — pixelisation CGA (4 couleurs), EGA (16 couleurs), Amiga OCS (32 couleurs), Noir & Blanc, Phosphore vert
 - **Vent procédural / Procedural wind** — shader dédié animant herbes, lames de prairie et épis de blé de façon cohérente sur l'ensemble de la carte
 - **Fumée volumétrique / Volumetric smoke** — pass shader sur les cheminées de trains et les toits de village
-- **Dégradé eau / Water depth** — carte de profondeur procédurale, zones de plage, bateaux animés, reflets de côte
+- **Eau vivante / Living water** — nappe continue au rivage organique, vagues et écume animées façon aquarelle, bateaux avec sillage, plages procédurales
 - **Courbure mondiale / World curvature** — mode bouliste qui arrondit l'horizon comme un globe
 - **Ciel étoilé + comètes / Starfield + comets** — shader d'univers lointain, comètes traversant le ciel en temps réel
 - **Relief procédural / Procedural terrain** — hauteur de surface par biome via somme de sinus + bruit FNV-1a

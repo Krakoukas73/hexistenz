@@ -101,6 +101,10 @@ function trianglePoint(a, b, centerWeight, aWeight, bWeight) {
   };
 }
 
+export function countFieldMills(placedTiles) {
+  return collectFieldZones(placedTiles).filter(z => z.total >= FIELD_FLAG_MIN_TOTAL).length;
+}
+
 // ─── Zones de champs (BFS) ────────────────────────────────────────────────────
 
 export function collectFieldZones(placedTiles) {

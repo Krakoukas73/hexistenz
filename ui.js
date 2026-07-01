@@ -11,13 +11,14 @@ export function createUI() {
     activeTile: document.getElementById('activeTile'),
     nextTile: document.getElementById('nextTile'),
     deckRemaining: document.getElementById('deckRemaining'),
+    tilesPlaced: document.getElementById('tilesPlaced'),
     missionList: document.getElementById('missionList'),
     rotation: document.getElementById('dbgRotation'),
     score: document.getElementById('dbgScore'),
     gridPercent: document.getElementById('dbgGridPercent'),
     lastScore: document.getElementById('dbgLastScore'),
     stats: {
-      tiles: document.getElementById('statTiles'),
+      mills: document.getElementById('statMills'),
       grass: document.getElementById('statGrass'),
       field: document.getElementById('statField'),
       forest: document.getElementById('statForest'),
@@ -52,7 +53,7 @@ export function createUI() {
 
   // ── Tooltips élégants sur les nombres du panneau STATISTIQUES DE LA PARTIE ──
   const _statHelpMap = {
-    statTiles:        'game.tiles',
+    statMills:        'game.mills',
     statTrains:       'game.trains',
     statBoats:        'game.boats',
     statComets:       'game.comets',
@@ -92,6 +93,7 @@ export function createUI() {
   attachHelpTooltip(ui.activeTile?.parentElement,   LUT_HELP['game.activeTile']);
   attachHelpTooltip(ui.nextTile?.parentElement,     LUT_HELP['game.nextTile']);
   attachHelpTooltip(ui.deckRemaining?.parentElement, LUT_HELP['game.deckRemaining']);
+  attachHelpTooltip(ui.tilesPlaced?.parentElement,  LUT_HELP['game.tiles']);
 
   // Délégation tooltip sur la liste de missions (reconstruite à chaque tour)
   if (ui.missionList) {
@@ -110,10 +112,11 @@ function setStatHTML(element, html) {
   if (element) element.innerHTML = html;
 }
 
-export function updateDeckUI(ui, deck) {
+export function updateDeckUI(ui, deck, placedCount = 0) {
   if (ui.activeTile) ui.activeTile.innerHTML = renderMiniTile(deck[0]);
   if (ui.nextTile) ui.nextTile.innerHTML = renderMiniTile(deck[1]);
   setText(ui.deckRemaining, String(deck.length));
+  setText(ui.tilesPlaced, String(placedCount));
 }
 
 export function updateKeyboardUI(ui, keys, rotationKeyActive = false, gridOnlyMode = false) {
@@ -154,7 +157,7 @@ export function updateScoreUI(ui, totalScore, lastScore = 0, placedTileCount = n
 export function updateStatsUI(ui, stats) {
   if (!ui?.stats || !stats) return;
 
-  setText(ui.stats.tiles, String(stats.tiles ?? 0));
+  setText(ui.stats.mills, String(stats.millCount ?? 0));
   setStatHTML(ui.stats.grass, formatStatValue(stats.totals?.grass));
   setStatHTML(ui.stats.field, formatStatValue(stats.totals?.field));
   setStatHTML(ui.stats.forest, formatStatValue(stats.totals?.forest));
@@ -186,11 +189,30 @@ export function updateMissionUI(ui, missions, formatter, progressByType = new Ma
   }
 
   ui.missionList.innerHTML = missions.map(mission => {
-    const className = mission.completed ? ' class="mission-completed"' : '';
-    const icon = mission.completed ? '✅' : '🎯';
+    const completed = mission.completed;
+    const baseline  = mission.baseline ?? 0;
+    const current   = progressByType.get(mission.type) ?? 0;
+    const gained    = Math.max(0, Math.min(current - baseline, mission.target - baseline));
+    const total     = Math.max(1, mission.target - baseline);
+    const ratio     = gained / total;
+    const pct       = Math.round(ratio * 100);
+
+    let fillClass = 'mission-bar-fill';
+    if (ratio >= 0.9)       fillClass += ' bar-close';
+    else if (ratio >= 0.75) fillClass += ' bar-near';
+    else if (ratio >= 0.5)  fillClass += ' bar-mid';
 
     const typeIcon = MISSION_TYPE_ICON[mission.type] ?? '';
-    return `<li${className} data-mission-tip="${mission.type}"><span class="mission-icon">${icon}</span><span class="mission-type-icon">${typeIcon}</span><span class="mission-text">${escapeHtml(formatter(mission, progressByType))}</span></li>`;
+    const typeClass = `mission-type-${mission.type}`;
+    const liClasses = ['mission-item', typeClass, completed ? 'mission-completed' : ''].filter(Boolean).join(' ');
+    const realisedTag = '';
+
+    return `<li class="${liClasses}" data-mission-tip="${mission.type}">` +
+      `<div class="mission-bar"><div class="${fillClass}" style="width:${pct}%"></div></div>` +
+      `<span class="mission-numbers"><span class="mission-cur">${current}</span><span class="mission-sep">/</span><span class="mission-goal">${mission.target}</span></span>` +
+      `<span class="mission-type-icon">${typeIcon}</span>` +
+      realisedTag +
+      `</li>`;
   }).join('');
 }
 

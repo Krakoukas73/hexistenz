@@ -6,6 +6,7 @@ import { createOuterVertices } from './hexGeometry.js';
 import { makeNodeKey, getTileEdgeType, clearGroup } from './tileUtils.js';
 import { collectZone, getFullTextureNeighbors } from './zoneUtils.js';
 import { createWaterBeachMesh } from './waterBeachGeometry.js';
+import { buildShoreDisplacementMap } from './waterSurfaceOverlay.js';
 import { createHoverZoneBoundary, getZoneColor, toWorldVector } from './waterZoneBoundary.js';
 import { HEX_FONT_FAMILY, sharedLabelCache, hexFontReady } from './hexLabelFont.js';
 import { LOD_ZONE_LABEL_CULL_DISTANCE, LOD_ZONE_LABEL_NEAR_FADE_START, LOD_ZONE_LABEL_NEAR_FADE_END } from './variables.js';
@@ -75,6 +76,11 @@ export function updateHoverZoneOverlayAnimation(overlay, zoneOverlay = null, ela
 }
 
 export function rebuildWaterZoneOverlay(overlay, placedTiles, affectedHex = null) {
+  // Table de déplacement organique du rivage (shoreNoise) — partagée avec
+  // waterSurfaceOverlay.js pour que les plages épousent exactement le même
+  // contour d'eau (même clé de position monde ⇒ même déplacement).
+  const shoreMap = buildShoreDisplacementMap(placedTiles);
+
   if (affectedHex === null) {
     // ── Rebuild complet (chargement initial, undo, multiplayer sync) ────────────
     clearGroup(overlay);
@@ -88,7 +94,7 @@ export function rebuildWaterZoneOverlay(overlay, placedTiles, affectedHex = null
         const zone = collectTextureZone(placedTile, edge, type, placedTiles, visited);
         if (zone.sectors.length < 2) continue;
         hideZoneDetailLabels(zone);
-        _addZoneObjects(overlay, zone, placedTiles);
+        _addZoneObjects(overlay, zone, placedTiles, shoreMap);
       }
     }
     rescaleZoneLabels(overlay);
@@ -132,7 +138,7 @@ export function rebuildWaterZoneOverlay(overlay, placedTiles, affectedHex = null
       const zone = collectTextureZone(placedTile, edge, type, placedTiles, visited);
       if (zone.sectors.length < 2) continue;
       hideZoneDetailLabels(zone);
-      _addZoneObjects(overlay, zone, placedTiles);
+      _addZoneObjects(overlay, zone, placedTiles, shoreMap);
     }
   }
 
@@ -141,11 +147,11 @@ export function rebuildWaterZoneOverlay(overlay, placedTiles, affectedHex = null
 
 /** Crée et ajoute les objets Three.js pour une zone (beach mesh + label sprite), en les taguant
  *  avec les clés de tracking nécessaires au rebuild ciblé. */
-function _addZoneObjects(overlay, zone, placedTiles) {
+function _addZoneObjects(overlay, zone, placedTiles, shoreMap) {
   const involvedTileKeys    = [...new Set(zone.sectors.map(s => s.tile.key))];
   const involvedSectorKeys  = zone.sectors.map(s => makeNodeKey(s.tile.key, s.edge));
   if (zone.type === EDGE_TYPES.water) {
-    const beach = createWaterBeachMesh(zone, placedTiles);
+    const beach = createWaterBeachMesh(zone, placedTiles, shoreMap);
     beach.userData.involvedTileKeys   = involvedTileKeys;
     beach.userData.involvedSectorKeys = involvedSectorKeys;
     // Centroïde monde pour LOD distance

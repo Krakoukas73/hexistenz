@@ -83,9 +83,19 @@ function pickIntro() {
   return INTRO_POOL[Math.floor(Math.random() * INTRO_POOL.length)];
 }
 
+const INGAME_POOL = {
+  urls:    ['./sounds/music-ingame-1.ogg', './sounds/music-ingame-2.ogg'],
+  weights: [0.50, 0.50],
+};
+
+function pickIngameTrack() {
+  const { urls, weights } = INGAME_POOL;
+  return urls[weightedRandom(weights)];
+}
+
 const MUSIC_TRACKS = {
   intro:   pickIntro(),
-  ingame:  './sounds/music-ingame.ogg',
+  ingame:  pickIngameTrack(),
   ending:  './sounds/music-ending.ogg',
   chiMai:  './sounds/chi-mai.ogg',
 };
@@ -129,16 +139,34 @@ function setMusicTrack(key) {
   requestMusicFadeFrame();
 }
 
+function advanceIngamePool() {
+  const audio = musicState.tracks.get('ingame');
+  if (!audio) return;
+  audio.src = pickIngameTrack();
+  audio.load();
+  if (musicState.targetKey === 'ingame' && musicState.unlocked) {
+    audio.play().catch(() => {});
+  }
+  requestMusicFadeFrame();
+}
+
 function ensureMusicTracks() {
   if (musicState.tracks.size) return;
 
   for (const [key, url] of Object.entries(MUSIC_TRACKS)) {
     const audio = new Audio(url);
-    audio.loop = true;
     audio.preload = 'auto';
     audio.volume = 0;
     audio.dataset.currentVolume = '0';
     audio.dataset.targetVolume = '0';
+
+    if (key === 'ingame') {
+      audio.loop = false;
+      audio.addEventListener('ended', advanceIngamePool);
+    } else {
+      audio.loop = true;
+    }
+
     musicState.tracks.set(key, audio);
   }
 }

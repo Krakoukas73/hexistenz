@@ -23,17 +23,31 @@
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { mergeGeometries } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/BufferGeometryUtils.js';
+import { isRealisticWaterMaterial } from './realisticWater.js';
 
 /** Noms des meshes terrain dans les tile groups — même convention que le HUD. */
 const TERRAIN_MESH_PREFIXES = ['hex-sector-', 'hex-center-'];
 
 /**
- * Retourne true si le mesh est un mesh terrain (à masquer + fusionner).
+ * Retourne true si le mesh est un mesh terrain (à masquer).
+ * Inclut l'eau : les prismes eau d'origine doivent rester masqués.
  * @param {THREE.Mesh} mesh
  */
 function isTerrainMesh(mesh) {
   if (!mesh.isMesh || !mesh.name) return false;
   return TERRAIN_MESH_PREFIXES.some(p => mesh.name.startsWith(p));
+}
+
+/**
+ * Retourne true si le mesh terrain doit être FUSIONNÉ (rendu par le merge).
+ * L'eau est exclue du merge : elle est rendue par waterSurfaceOverlay.js
+ * (nappe continue transparente + riverbed), pas ici.
+ * @param {THREE.Mesh} mesh
+ */
+function isMergeableTerrainMesh(mesh) {
+  if (!isTerrainMesh(mesh)) return false;
+  const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+  return !mats.some(isRealisticWaterMaterial);
 }
 
 /**
@@ -78,7 +92,7 @@ export function addTileToTerrainMerge(mergeGroup, tileMeshGroup) {
   tileMeshGroup.updateMatrixWorld(true);
 
   tileMeshGroup.traverse(child => {
-    if (!isTerrainMesh(child)) return;
+    if (!isMergeableTerrainMesh(child)) return;
 
     const mats = Array.isArray(child.material) ? child.material : [child.material];
     if (mats.length < 2) return;
@@ -123,7 +137,7 @@ export function rebuildTerrainMerge(mergeGroup, placedTiles) {
     tileGroup.updateMatrixWorld(true);
 
     tileGroup.traverse(child => {
-      if (!isTerrainMesh(child)) return;
+      if (!isMergeableTerrainMesh(child)) return;
 
       const mats = Array.isArray(child.material) ? child.material : [child.material];
       if (mats.length < 2) return;
@@ -194,24 +208,6 @@ function _appendToMergeGroup(mergeGroup, newGeo, mat) {
   }
 
   if (merged) mergeGroup.add(_makeMergedMesh(merged, mat));
-}
-
-/**
- * Met à jour l'attribut aShoreDepth sur tous les meshes terrain d'un tile group.
- * Permet de corriger la profondeur bathymétrique après ajout d'un voisin eau.
- * À appeler avant rebuildTerrainMerge pour que la géométrie source soit à jour.
- *
- * @param {THREE.Group} tileMeshGroup — groupe tuile (retourné par createTileMesh)
- * @param {number}      shoreDepth   — nouvelle valeur [0,1] (0=rive, 1=mer ouverte)
- */
-export function updateTileShoreDepth(tileMeshGroup, shoreDepth) {
-  tileMeshGroup.traverse(child => {
-    if (!isTerrainMesh(child)) return;
-    const attr = child.geometry.attributes.aShoreDepth;
-    if (!attr) return;
-    attr.array.fill(shoreDepth);
-    attr.needsUpdate = true;
-  });
 }
 
 /**

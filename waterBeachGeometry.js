@@ -4,6 +4,7 @@ import { axialToWorld, makeHexKey } from './hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { createOuterVertices } from './hexGeometry.js';
 import { makeNodeKey, getTileCenterType } from './tileUtils.js';
+import { displaceShorePoint } from './waterSurfaceOverlay.js';
 
 // ─── Constantes plage ─────────────────────────────────────────────────────────
 // REWRITE v2 : plage lowpoly monobloc — 2 rangs, 0 turbulence, 1 matériau.
@@ -33,7 +34,7 @@ let beachMaterial = null;
 
 // ─── API publique ─────────────────────────────────────────────────────────────
 
-export function createWaterBeachMesh(zone, placedTiles) {
+export function createWaterBeachMesh(zone, placedTiles, shoreMap = null) {
   const group = new THREE.Group();
   group.name = 'water-zone-sand-beach';
   const beachPolylines = [];
@@ -49,12 +50,12 @@ export function createWaterBeachMesh(zone, placedTiles) {
   const zoneWaterCenter = getZoneWaterCenter(zone);
 
   for (const sectorRef of zone.sectors) {
-    addSectorBeachPolylines(beachPolylines, sectorRef, sectorKeys, centerKeys, placedTiles);
+    addSectorBeachPolylines(beachPolylines, sectorRef, sectorKeys, centerKeys, placedTiles, shoreMap);
   }
 
   for (const tileKey of centerKeys) {
     const placedTile = placedTiles.get(tileKey);
-    if (placedTile) addCenterBeachPolylines(beachPolylines, placedTile, sectorKeys);
+    if (placedTile) addCenterBeachPolylines(beachPolylines, placedTile, sectorKeys, shoreMap);
   }
 
   // Une plage continue ne se fabrique pas avec des rustines rondes de bunker.
@@ -85,7 +86,7 @@ export function createWaterBeachMesh(zone, placedTiles) {
 
 // ─── Construction des polylines de plage ─────────────────────────────────────
 
-function addSectorBeachPolylines(beachPolylines, sectorRef, sectorKeys, centerKeys, placedTiles) {
+function addSectorBeachPolylines(beachPolylines, sectorRef, sectorKeys, centerKeys, placedTiles, shoreMap) {
   const { tile: placedTile, edge } = sectorRef;
   const sector = SECTOR_BY_KEY[edge];
   const outerVertices = createOuterVertices(HEX_SIZE * TILE_VISUAL.radiusScale);
@@ -108,7 +109,7 @@ function addSectorBeachPolylines(beachPolylines, sectorRef, sectorKeys, centerKe
     addBeachPolylineFromLocalPolyline(
       beachPolylines, world,
       createStraightBeachEdge(outerVertices[sector.a], outerVertices[sector.b], 1),
-      waterCenter
+      waterCenter, shoreMap
     );
   }
 
@@ -117,7 +118,7 @@ function addSectorBeachPolylines(beachPolylines, sectorRef, sectorKeys, centerKe
     addBeachPolylineFromLocalPolyline(
       beachPolylines, world,
       createStraightBeachEdge(innerVertices[sector.a], outerVertices[sector.a], 1),
-      waterCenter
+      waterCenter, shoreMap
     );
   }
 
@@ -125,7 +126,7 @@ function addSectorBeachPolylines(beachPolylines, sectorRef, sectorKeys, centerKe
     addBeachPolylineFromLocalPolyline(
       beachPolylines, world,
       createStraightBeachEdge(outerVertices[sector.b], innerVertices[sector.b], 1),
-      waterCenter
+      waterCenter, shoreMap
     );
   }
 
@@ -134,12 +135,12 @@ function addSectorBeachPolylines(beachPolylines, sectorRef, sectorKeys, centerKe
     addBeachPolylineFromLocalPolyline(
       beachPolylines, world,
       createStraightBeachEdge(innerVertices[sector.b], innerVertices[sector.a], 1),
-      waterCenter
+      waterCenter, shoreMap
     );
   }
 }
 
-function addCenterBeachPolylines(beachPolylines, placedTile, sectorKeys) {
+function addCenterBeachPolylines(beachPolylines, placedTile, sectorKeys, shoreMap) {
   const world = axialToWorld(placedTile.q, placedTile.r);
   const innerVertices = createOuterVertices(CENTER_RADIUS);
   const waterCenter = { x: 0, z: 0 };
@@ -151,18 +152,28 @@ function addCenterBeachPolylines(beachPolylines, placedTile, sectorKeys) {
       beachPolylines,
       world,
       createStraightBeachEdge(innerVertices[sector.a], innerVertices[sector.b], 1),
-      waterCenter
+      waterCenter, shoreMap
     );
   }
 }
 
-function addBeachPolylineFromLocalPolyline(beachPolylines, world, localPolyline, localWaterCenter) {
+/**
+ * Convertit une polyline locale (coords tuile) en polyline monde, puis applique
+ * le MÊME déplacement organique (shoreNoise) que la nappe d'eau : le sommet
+ * (x,z) est la clé partagée avec waterSurfaceOverlay.js, donc la plage épouse
+ * exactement le rivage organique au lieu de rester sur le bord droit de l'hexagone.
+ * shoreMap = null (pas d'eau posée / rebuild d'une zone non-eau) → pas de déplacement.
+ */
+function addBeachPolylineFromLocalPolyline(beachPolylines, world, localPolyline, localWaterCenter, shoreMap) {
   if (!localPolyline || localPolyline.length < 2) return;
 
-  const worldPolyline = localPolyline.map(point => ({
-    x: world.x + point.x,
-    z: world.z + point.z
-  }));
+  const worldPolyline = localPolyline.map(point => {
+    const wx = world.x + point.x;
+    const wz = world.z + point.z;
+    if (!shoreMap) return { x: wx, z: wz };
+    const [dx, dz] = displaceShorePoint(shoreMap, wx, wz);
+    return { x: dx, z: dz };
+  });
 
   // Le chevauchement est appliqué après soudure, uniquement aux vrais bouts
   // libres. Sinon chaque angle fabrique deux lèvres qui se croisent, le fameux

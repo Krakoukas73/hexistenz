@@ -109,7 +109,7 @@ export const NATURAL_DECOR_VARIANTS = {
               'plant-grass1', 'plant-grass2', 'plant-sapling1', 'plant-sapling2',
               'plante-1', 'plante-2', 'plante-3', 'plante-4', 'plante-5', 'plante-6', 'plante-7'],
   shrub:     ['shrub-fern', 'shrub-monstera1', 'shrub-monstera2', 'shrub-misc1', 'plante-haute'],
-  'pile-de-bois': ['pile-de-bois-1', 'pile-de-bois-2'],
+  'pile-de-bois': ['pile-de-bois-1', 'pile-de-bois-2', 'pile-de-bois-3', 'pile-de-bois-4'],
   deer:     ['animal-deer'],
   rock:     ['rock-1', 'rock-2', 'rock-3', 'rock-4'],
   reed:     ['reed'],
@@ -123,10 +123,13 @@ const PROP_MODEL_DEFS = [
   { key: 'field-flag-2', url: './glb/batiments/medieval/moulin-2.glb', target: FIELD_FLAG_2_TARGET_HEIGHT * 1.70, mode: 'height', noSkeletonPose: true },
   { key: 'field-flag-3', url: './glb/batiments/medieval/moulin-1.glb', target: FIELD_FLAG_3_TARGET_HEIGHT * 1.70, mode: 'height', noSkeletonPose: true },
   { key: 'hay-bale',       url: './glb/decor/botte-foin.glb',        target: HAY_BALE_TARGET_WIDTH,          mode: 'length', kind: 'hay-bale' },
-  { key: 'pile-de-bois-1', url: './glb/decor/pile-de-bois-1.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 1.23, mode: 'length', kind: 'pile-de-bois' }, // +23%
+  { key: 'pile-de-bois-1', url: './glb/decor/pile-de-bois-1.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 1.23 * 0.90, mode: 'length', kind: 'pile-de-bois' }, // +23% −10%
   { key: 'pile-de-bois-2', url: './glb/decor/pile-de-bois-2.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 1.13 * 0.88, mode: 'length', kind: 'pile-de-bois' }, // +13% −12%
+  { key: 'pile-de-bois-3', url: './glb/decor/pile-de-bois-3.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 0.83,        mode: 'length', kind: 'pile-de-bois' }, // −17%
+  { key: 'pile-de-bois-4', url: './glb/decor/pile-de-bois-4.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 0.83,        mode: 'length', kind: 'pile-de-bois' }, // −17%
   { key: 'fountain-1',   url: './glb/decor/fontaine-1.glb',  target: FOUNTAIN_1_TARGET_WIDTH, mode: 'length', bypassBboxCheck: true, groundOffsetDelta: -0.017 },
   { key: 'fountain-2',   url: './glb/decor/fontaine-2.glb',  target: FOUNTAIN_2_TARGET_WIDTH, mode: 'length', groundOffsetDelta: -0.004 },
+  { key: 'fountain-3',   url: './glb/decor/fontaine-3.glb',  target: FOUNTAIN_1_TARGET_WIDTH, mode: 'length', bypassBboxCheck: true, groundOffsetDelta: 0 }, // corrigé : −0.017 (copié de fountain-1) l'enfonçait sous le sol — retiré
   { key: 'road-signpost-1', url: './glb/decor/poteau-indicateur-1.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
   { key: 'road-signpost-2', url: './glb/decor/poteau-indicateur-2.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
   { key: 'road-signpost-3', url: './glb/decor/poteau-indicateur-3.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
@@ -328,11 +331,12 @@ function _rebuildRoadsideDecorLOD(overlay) {
     } else if (subGroup.name === 'village-roadside-glb-props') {
       for (const child of subGroup.children) {
         const n = child.name ?? '';
-        if (n.includes('bench') || n.includes('signpost') || n.includes('barrel') || n.includes('cart') || n.includes('fountain') || n.includes('animal')) {
+        if (n.includes('bench') || n.includes('signpost') || n.includes('barrel') || n.includes('cart') || n.includes('fountain') || n.includes('animal') || n.includes('meule')) {
           const distSq = n.includes('signpost') ? _signDistSq
                        : n.includes('animal')   ? _animalDistSq
                        : (n.includes('barrel') || n.includes('cart')) ? _villageDistSq
                        : n.includes('fountain') ? _fountainDistSq
+                       : n.includes('meule')    ? _millDistSq
                        : _decorDistSq;
           overlay.userData.roadsideDecorObjects.push({ object: child, center: child.position.clone(), lodDistSq: distSq });
         }
@@ -761,7 +765,7 @@ function ensurePropModels(overlay) {
           // GLB simple : pas de champ asset → gltf.scene entier (comportement identique à avant)
           // Package GLB : champ asset → extraire l'objet nommé avec transforms baked
           const source = def.asset ? extractFromPackage(gltf.scene, def.asset) : gltf.scene;
-          propGlbLibrary.set(def.key, preparePropPrototype(source, def));
+        propGlbLibrary.set(def.key, preparePropPrototype(source, def));
           propAnimationsLibrary.set(def.key, gltf.animations ?? []);
         }
         finishOne();

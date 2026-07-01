@@ -2,7 +2,7 @@
 
 ## 1. Nature du projet
 
-**Version courante : `v0.9.1.2 beta`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
+**Version courante : `v0.9.1.2.3`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
 
 Jeu web contemplatif de pose de tuiles hexagonales, inspiré de Dorfromantik / The Settlers / HoMM. Le joueur pioche une tuile, la tourne, la pose sur une grille hexagonale. Chaque tuile a 6 secteurs triangulaires (biomes ou réseaux). Objectif : connecter les biomes, compléter des missions, maximiser le score.
 
@@ -66,8 +66,8 @@ Score (`scoring.js`) : +2 pose, +10 arête compatible, +25 réseau compatible, +
 - `getTerrainSurfaceY(point, type, salt)` → Y monde
 - `getTerrainNormalAt(point, type, salt, options)` → normale surface
 - `placeObjectOnTerrain(object, point, type, salt)` → position + orientation
-- Relief procédural : somme sinus + bruit FNV-1a, désactivable par biome
-- Hauteurs surface par biome : grass≈0.082, house≈0.085, forest≈0.088, field≈0.094
+- Relief procédural : somme sinus + bruit FNV-1a — **`TERRAIN_RELIEF.enabled: false`** (tuiles plates depuis la refonte épaisseur uniforme, cf. `variables.js`). `getTerrainLocalTopY` retourne alors 0 pur.
+- Hauteurs surface par biome : grass≈0.082, house≈0.085, forest≈0.088, field≈0.094 — **fonction en PALIERS sans transition** (relief désactivé) : un mauvais `type` passé à `placeObjectOnTerrain` cause un écart net (jusqu'à 12mm), pas un léger flou. cf. piège "type biome deviné vs centre" en §26.
 
 ---
 
@@ -88,7 +88,8 @@ Cycle : `createXxxOverlay()` → `rebuildXxxOverlay(group, placedTiles)` → `up
 | Fichier | Contenu |
 |---|---|
 | `waterZoneOverlay.js` | BFS zones eau, hover, labels valeur |
-| `waterBeachGeometry.js` | Plages procédurales |
+| `waterSurfaceOverlay.js` | Nappe d'eau continue par zone, rivage organique (cf. §19) |
+| `waterBeachGeometry.js` | Plages procédurales, alignées sur le rivage organique |
 | `waterZoneBoundary.js` | Halos/contours de zone |
 | `waterBoatOverlay.js` | Bateaux GLB animés, graphe nav |
 | `forestOverlay.js` | Arbres GLB (InstancedMesh) |
@@ -100,6 +101,7 @@ Cycle : `createXxxOverlay()` → `rebuildXxxOverlay(group, placedTiles)` → `up
 | `villageDecorOverlay.js` | Panneaux, charrettes, chiens, chevaux, tonneaux |
 | `fieldWheatOverlay.js` | Brins de blé procéduraux, effets champ |
 | `fieldZonesOverlay.js` | Moulins, bâtiments spéciaux champ, safe zones |
+| `sheepOverlay.js` | Moutons animés (SkinnedMesh) sur les zones prairies |
 | `bonusCellChestOverlay.js` | Coffre animé sur chaque cellule bonus |
 | `tileRoadOverlay.js` | **Routes désactivées** — stubs no-op |
 
@@ -132,6 +134,13 @@ TREE_SIZE_MULTIPLIER = 1.65 * 0.88 * 0.94 * 0.93 * 0.94 * 0.96 * 1.08 * 0.92 * 0
 TREE_GROUND_OFFSET   = -0.005
 ```
 
+**Vent des arbres** (`globalWind.js` + `TREE_WIND` dans `variables.js`) — shader GPU (`onBeforeCompile`, injection vertex shader), fonctionnel :
+```
+TREE_WIND.strength = 0.034  (était 0.062 → −30% puis −20% cumulés)
+speed 1.38, frequency 0.78, turbulence 0.30, heightStart 0.020, heightEnd 0.380
+```
+Piège corrigé : `buildTreeInstancedMeshes()` clone les matériaux du prototype (`material.clone()`) pour chaque InstancedMesh de chunk — mais `Material.prototype.copy()` (Three.js) ne recopie PAS `onBeforeCompile`/`customProgramCacheKey` (pas des champs gérés par cette méthode). Le shader de vent injecté sur le prototype était donc perdu sur le matériau réellement affiché → arbres figés malgré `applyGlobalWindToObject()`. Fix : `applyGlobalWindToMaterial()` ré-appliqué explicitement après chaque `.clone()`. cf. piège en §26.
+
 **Moulins** (`fieldZonesOverlay.js` via `decorOverlay.js`) — pool 50/50 :
 ```
 field-flag-2 → moulin-2.glb
@@ -144,16 +153,25 @@ cart-2 (charrette-2.glb), cart-3 (charrette-pleine.glb)  — charrette-1 retiré
 cart-3: bypassBboxCheck: true, groundOffsetDelta: -0.020
 ```
 
-**Fontaines** — pool 50/50 fontaine-1 / fontaine-2 :
+**Fontaines** — pool 1/3 fontaine-1 / fontaine-2 / fontaine-3 (village + prairie) :
 ```
 fontaine-1: bypassBboxCheck: true, groundOffsetDelta: -0.017
 fontaine-2: groundOffsetDelta: -0.004
+fontaine-3: bypassBboxCheck: true, groundOffsetDelta: 0   (delta -0.017 copié de fontaine-1
+                                                             enfonçait le modèle sous le sol — retiré, non recalibré depuis)
 ```
 
 **Meule** — 80% de chance dans villages avec au moins 1 secteur house. Sans hitbox.
 ```
 meule.glb: bypassBboxCheck: true, groundOffsetDelta: +0.008
 ```
+
+**Coffre bonus** (`bonusCellChestOverlay.js`) — 1 modèle, cloné sur chaque cellule bonus :
+```
+gold.glb (ex-coffre.glb, renommé)
+CHEST_TARGET_WIDTH = HEX_SIZE * 0.20 * 1.6 * 1.5 * 1.35 * 0.70 * 0.85 * 1.20  // +50% +35% −30% −15% +20%
+```
+Le code interne (fonctions, commentaires, `wrapper.name`) garde la terminologie "coffre/chest" par choix — seul l'asset a changé.
 
 **Panneaux de signalisation** (`villageDecorOverlay.js`) — 3 variantes :
 ```
@@ -174,10 +192,25 @@ barrel-1, barrel-2, barrel-3, barrel-4, barrel-5
 BARREL_TARGET_WIDTH (défini dans decorOverlay.js)
 ```
 
-**Animaux de village** (`villageDecorOverlay.js`) — GLBs individuels animés :
+**Animaux de village** (`villageDecorOverlay.js`) — GLBs individuels, **statiques** (pas de clips, pas d'AnimationMixer — confirmé, à ne pas re-supposer animés) :
 ```
 chien.glb  : ANIMAL_DOG_TARGET_WIDTH   (mode: length)
 cheval.glb : ANIMAL_HORSE_TARGET_WIDTH (mode: length)
+```
+Placement via `placeAnimal()` (helper local à `villageDecorOverlay.js`) : `placeObjectOnTerrain` + `snapPropBottomToSurface`. Pour un point proche du centre de tuile (`centerPos` — cheval, chien slot 0), le `type` de biome utilisé DOIT venir de `getTileCenterType(placedTile)`, pas d'un type d'arête deviné via `getEdgeFromLocalPoint` (angle quasi arbitraire sur un point quasi à l'origine) : cf. piège en §26 (bug chevaux flottants/enfoncés, corrigé).
+
+**Moutons de prairie** (`sheepOverlay.js`) — SkinnedMesh (GLB animé, 3 types) :
+```
+sheep-2.glb : 3 armatures — marcheur (Armature_14), brouteur (Armature.001_29), immobile (Armature.002_44)
+TILES_PER_SHEEP = 0.292  (1 mouton par N tuiles connexes)
+SHEEP_TARGET_LEN = 0.054 (longueur cible en unités monde)
+SHEEP_WALK_SPEED = 0.097 (marcheur, unités/s)
+Marcheur : 1 par zone, se déplace dans un rayon HEX_SIZE * 1.6 (évite de traverser d'autres biomes)
+Brouteur : fixe, AnimationMixer, clip filtré (track Baze_19.position exclue — dissociation corps/pattes)
+Immobile : aucune animation
+Statiques groupés (instinct grégaire) dans STATIC_CLUSTER_R = HEX_SIZE * 0.28, hitbox via propHitboxRegistry
+Zone BFS via getFullTextureNeighbors (connecte secteurs adjacents sans exiger center=grass)
+LOD : frustum + LOD_ANIMAL_CULL_DISTANCE (9.6), updateSheepLOD dans le bloc % 9 de animate()
 ```
 
 **Animaux sauvages** (`naturalPropsOverlay.js`) — InstancedMesh :
@@ -190,9 +223,10 @@ cerf.glb : NATURAL_DEER_TARGET_WIDTH — forêt / prairie / champ
 mushroom-1.glb, mushroom-2.glb (mushroom-2: groundOffsetDelta: +0.008)
 ```
 
-**Piles de bois** (`naturalPropsOverlay.js`) — 2 variantes, forêts uniquement :
+**Piles de bois** (`naturalPropsOverlay.js`, defs dans `decorOverlay.js`) — 4 variantes, forêts uniquement :
 ```
-pile-de-bois-1.glb (+23%), pile-de-bois-2.glb (+13% −12%)
+pile-de-bois-1.glb (+23% −10%), pile-de-bois-2.glb (+13% −12%)
+pile-de-bois-3.glb (−17%), pile-de-bois-4.glb (−17%)   — nouveau, non calibré individuellement au-delà du −17%
 ```
 
 ### Système de placement props (`decorOverlay.js` + `naturalPropsOverlay.js`)
@@ -405,6 +439,7 @@ Seuils dans `variables.js` :
 | Props village | `LOD_VILLAGE_PROP_CULL_DISTANCE` | 8.6 |
 | Barques échouées | `LOD_SHORE_BOAT_CULL_DISTANCE` | 9.2 |
 | Animaux (cerfs, chiens, chevaux) | `LOD_ANIMAL_CULL_DISTANCE` | 9.6 |
+| Moutons (prairie) | `LOD_ANIMAL_CULL_DISTANCE` | 9.6 |
 | Trains | `LOD_TRAIN_CULL_DISTANCE` | 9.9 |
 | Fontaines | `LOD_FOUNTAIN_CULL_DISTANCE` | 9.8 |
 | Corbeaux | `LOD_CROW_CULL_DISTANCE` | — |
@@ -453,29 +488,34 @@ Meshes sans ombres (oiseaux…) : `disableCastShadow=true, shadowFlagsApplied=tr
 
 ---
 
-## 19. Shader eau (`realisticWater.js` + `shaders/shaderEau.js`)
+## 19. Système eau (`waterSurfaceOverlay.js` + `shoreField.js` + `realisticWater.js` + `shaders/shaderEau.js`)
 
-`ShaderMaterial` unique mis en cache → 1 Mesh fusionné dans `terrainMerge`.
+**Refonte complète (juillet 2026, intégration Cyril)** — remplace l'ancien système (prisme d'eau par tuile, `aShoreDepth` posé CPU dans `tileMesh.js`, Voronoï bords précis + FBM advecté par courant). L'eau n'est plus fusionnée dans `terrainMerge` : `isMergeableTerrainMesh()` l'exclut explicitement, elle est entièrement rendue par `waterSurfaceOverlay.js`.
 
-**Attribute bathymétrique `aShoreDepth`** : posé CPU dans `tileMesh.js`. Anneau 1 (×0.60) + Anneau 2 (×0.20) → [0,1]. Propagation au placement : `updateTileShoreDepth()` sur voisins + `rebuildTerrainMerge()`.
+**`waterSurfaceOverlay.js`** — nappe continue PAR ZONE (pas par tuile) : trois géométries fusionnées construites depuis les secteurs eau posés :
+1. **SURFACE** — nappe plate transparente à `WATER_RENDER.surfaceY`, `ShaderMaterial` de `realisticWater.js`.
+2. **RIVERBED** — même empreinte à `WATER_RENDER.riverbedY` (profondeur 0.10), opaque, vu par transparence.
+3. **SKIRT** — quads verticaux sur le contour eau↔non-eau, ferme le volume.
 
-**Vertex shader** : 4 composantes de vague (swellA, swellB, chopA, chopB), amplitudes réduites ~15-20%. Atténuation rive : `shoreWaveFactor = mix(0.18, 1.0, smoothstep(0, 0.65, aShoreDepth))` — clapotis résiduel minimum 0.18. Abaissement moyen : `-0.012` (évite de recouvrir les plages).
+**Rivage organique** (`shoreField.js`) : `shoreNoise(x, z)` (sinus superposés, continu en coordonnées monde) déplace les sommets du CONTOUR le long de leur normale sortante — tout sommet partagé entre tuiles reçoit le même décalage ⇒ pas de déchirure, la zone dessine une seule courbe organique. `shoreSteepness(x, z)` (basse fréquence) module la longueur du dégradé de profondeur et la portée d'écume (abrupt vs plage douce). `buildShoreDisplacementMap(placedTiles)` (exporté) reconstruit la table de déplacement ; `displaceShorePoint(map, x, z)` l'applique. Ces deux exports sont réutilisés tels quels par `waterBeachGeometry.js` (via `waterZoneOverlay.js`, qui calcule la table une fois par rebuild et la transmet à `createWaterBeachMesh(zone, placedTiles, shoreMap)`) : les plages épousent donc exactement le même rivage ondulé que la nappe, sommet pour sommet (même clé `"x,z"` arrondie).
 
-**Fragment pipeline** (10 étapes) :
-1. **Normales vague** — dérivées finies hL/hR/hU/hD (eps=0.12), même formule que vertex.
-2. **Voronoï grande échelle (5u)** — `voronoiBorder()` deux passes (iquilezles) → `voroDir` (direction courant) + `borderD1`.
-   - Passe 1 : 3×3, cellule la plus proche.
-   - Passe 2 : 5×5 centré, distance exacte au bord (`dot(½(minVec+r), normalize(r−minVec))`).
-3. **FBM advecté par courant** — double sample P_Malin ("Where the River Goes") : deux samples décalés de 0.5 en temps, crossfade → élimine l'artefact de glissement. Cycle ~24s (`tCycle = uTime * 0.042`). `fbmFlowDXY` : 4 octaves, alternance `flow *= -0.75` → méandres.
-4. **Normale finale** : `normalize(waveNorm * 0.48 + flowNorm * 0.52)`.
-5. **Fresnel** — `(1 − NdotV) × 0.55`.
-6. **Voronoï couleur (2.8u)** — `voronoiBorder()` bords précis → modulation `(smoothstep(0, 0.40, borderD2) − 0.5) × 0.65` (±0.28 effective).
-7. **Bathymétrie** — `depth = vShoreDepth^0.6`, `t = 1 − depth` → finalT clamped [0.02, 0.96].
-8. **Couleur de base** — `mix(uDeepColor, uShallowColor, finalT)`.
-9. **Ombrage** — diffuse + specular (pow 14, ×0.14) + Fresnel teinté ×0.50.
-10. **Gamma** — `pow(base, 0.88)`.
+**Attributs shader** : `aShoreDist` (distance monde continue au contour, via champ de distance point-segment sur les segments de jupe) et `aSteep` (profil de rive baked par sommet) — remplacent `aShoreDepth`.
 
-`voronoi()` supprimé — remplacé partout par `voronoiBorder()` (bords précis vs gradient radial flou).
+**Vertex shader** : vague simple `(sin(x·1.8+t·1.05) + sin(z·2.3−t·1.30))·0.5`, amortie près du bord (`waveDamp = smoothstep(0, 0.35, aShoreDist)`).
+
+**Fragment pipeline** — écume voronoï animée façon Danil (portée de `FOAM_GLSL`, partagé avec le sillage des bateaux) :
+1. Profondeur : `depthT = smoothstep(0, deepDist, aShoreDist)` avec `deepDist` variable selon `aSteep`.
+2. Normales de vague (dérivées finies, eps=0.16).
+3. Faux reflets ciel (Fresnel `pow(1−NdotV,3)×0.32`) + glints spéculaires soleil.
+4. Écume : produit de deux voronoï lissés IQ (`foamTex`) → seuil qui monte de la surface (`uFoamAmbient`, subtil) vers la rive (`uFoamDensity`, dense), portée `uFoamWidth` modulée par `aSteep`.
+5. Alpha : `uOpacity × mix(0.66,1.0,depthT)`, plancher relevé par l'écume.
+6. Gamma `pow(base, 0.9)`.
+
+**Réglages live** (`waterDebugUi.js`, bouton flottant 💧 EAU) : sliders écume (portée, finesse, densité rive/surface, netteté, vitesse, étendue dégradé, opacité) + sillage bateau (largeur, divergence, longueur, finesse, densité, opacité), bouton « 📋 Copier » → JSON `{ water, wake }`. Setters/getters : `getWaterFoamParams/setWaterFoamParams` (`realisticWater.js`), `getWakeParams/setWakeParams` (`waterBoatOverlay.js`).
+
+**Sillage bateau** (`waterBoatOverlay.js`) : ruban en V dynamique (`WAKE_MAX_POINTS = 26`), dense près du bateau et se dissipant vers l'arrière (gradient de densité dans `foamPattern`), `ShaderMaterial` singleton partagé par tous les sillages.
+
+**Nettoyage CPU (`tileMesh.js`)** : les secteurs/centre eau ne construisent plus AUCUNE géométrie terrain (plus de ragged edges, triangulation, attribut bathymétrique) — c'était un mesh masqué par `hideTerrainMeshes()` et exclu du merge, donc invisible et inutile. Seul le label de valeur (`isValueLabel`) reste créé pour les secteurs eau. Conséquence : `scene.js` n'a plus besoin de calculer de compteur de voisins eau à la pose — `addTileToTerrainMerge()` (merge incrémental O(1)) s'applique désormais uniformément, même pour les tuiles contenant de l'eau (avant : rebuild complet du terrain à chaque pose d'eau, pour rafraîchir l'ex-`aShoreDepth` des voisins).
 
 ---
 
@@ -503,7 +543,7 @@ preloader.js                   Préchargement GLB + OGG avant le menu
 tileGenerator.js               Génération tuiles
 tileMesh.js / tileTextures.js  Géométrie et textures tuiles
 terrainHeight.js               Surface Y, relief, normale
-terrainMerge.js                Fusion meshes terrain par biome (~14 DCs)
+terrainMerge.js                Fusion meshes terrain par biome (~14 DCs) — eau exclue (cf. §19)
 hex.js / hexGeometry.js        Coordonnées axiales, géométrie hex
 tileUtils.js / zoneUtils.js    Utilitaires tuiles et BFS zones
 placementRules.js / scoring.js / gameRules.js
@@ -515,12 +555,15 @@ random.js                      Générateur pseudo-aléatoire
 tileRailOverlay.js             Rails procéduraux
 tileRoadOverlay.js             Routes — stubs no-op (GLBs supprimés)
 railTrainOverlay.js            Trains GLB, wagons, gares
-waterZoneOverlay.js            BFS zones eau, labels sprites
-waterBeachGeometry.js          Plages procédurales
-waterZoneBoundary.js           Halos/contours de zone
-waterBoatOverlay.js            Bateaux GLB animés
-realisticWater.js              ShaderMaterial eau réaliste
-shaders/shaderEau.js           GLSL eau
+waterZoneOverlay.js            BFS zones eau, labels sprites, calcule et transmet le shoreMap organique
+waterSurfaceOverlay.js         Nappe d'eau continue par zone (surface+riverbed+jupe), rivage organique
+shoreField.js                  shoreNoise/shoreSteepness — bruit de rivage organique, buildShoreDisplacementMap
+waterBeachGeometry.js          Plages procédurales, épouse le rivage organique via shoreMap partagé
+waterZoneBoundary.js           Halos/contours de zone (générique tous biomes, bords droits)
+waterBoatOverlay.js            Bateaux GLB animés + sillage en V (écume)
+realisticWater.js              ShaderMaterial eau « cute cartoon » + écume Danil, réglages live
+shaders/shaderEau.js           GLSL eau (aShoreDist/aSteep) + FOAM_GLSL partagé (eau + sillage)
+waterDebugUi.js                Panneau sliders live eau/sillage (bouton 💧 EAU)
 fieldWheatOverlay.js           Brins de blé procéduraux, BFS local
 fieldZonesOverlay.js           Moulins, bâtiments spéciaux, safe zones
 grassBladeOverlay.js           Brins d'herbe Bezier animés
@@ -589,9 +632,24 @@ ui.js / help.js / grid.js / gridRegions.js
 | **HUD score — cartes résumé** | Emojis 🚂⛵☄️ après le nombre (`stats-num-group`, taille 30×30px, fond `rgba(0,0,0,0.22)` arrondi). Label "Comètes interceptées" → "Comètes". Fond `.stats-boats` et `.stats-tiles` harmonisés avec `.stats-trains` (dégradé gris neutre). Règle `.stats-summary-card span` restreinte à `:not(.stats-emoji)` |
 | **HUD score — tooltips** | Textes d'aide au survol sur les 3 boîtes tuiles (game.activeTile / game.nextTile / game.deckRemaining) dans `help.js` + `ui.js` |
 | **Missions — tooltips** | `MISSION_HELP` exporté de `missions.js` (une explication par type). Délégation via `data-mission-tip` + `delegateHelpTooltip` dans `ui.js` |
+| **Mission Moulins** | Nouveau type `MILL_MISSION_TYPE = 'mill'` dans `missions.js`. `matchTypes: [EDGE_TYPES.field]`. Paliers : `[2, 3, 4, 5, 7, 9]` (incrément 1–2). Progrès via `countFieldMills(placedTiles)` exporté de `fieldZonesOverlay.js`. Icône ⚙️, style CSS identique à `mission-type-field` (doré). Documenté dans `help.js`, `game.php` (aide), `index.php` (présentation). |
+| **HUD score — Moulins** | Carte résumé "Moulins ⚙️" (`statMills`, `stats-field`) remplace "Tuiles posées". Comptage via `millCount: countFieldMills(placedTiles)` dans `getGameStats`. |
+| **HUD tuiles — Tuiles posées** | `#tilesPlaced` ajouté dans `#tileUI` (2e ligne `tileCountRow`). Mis à jour par `updateDeckUI(ui, deck, placedCount)`. Tooltip `game.tiles`. |
 | **Aide tooltip "Rejoindre"** | Phrase "partie doit être en attente…" supprimée de `help.js` (`menu.join`) |
 | **#tileUI fond transparent** | Suppression de `overflow-y: auto / overflow-x: hidden` sur `#tileUI` — c'était le scroll container Chrome qui peignait un fond gris |
 | **Page de présentation** | `index.php` (ex-`presentation.php`) — landing page bilingue FR/EN, standalone, CSS dans `css/presentation.css`. `game.php` = ex-`index.php`. `HEXISTENZ_VERSION` lue par regex PHP depuis `variables.js`. |
+| **Moutons animés** | `sheepOverlay.js` — SkinnedMesh + SkeletonUtils.clone(). 3 types (marcheur/brouteur/immobile) dans `sheep-2.glb`. BFS zones prairie via `getFullTextureNeighbors`. 1 marcheur par zone, statiques groupés (instinct grégaire). Track `Baze_19.position` filtrée du clip brouteur. LOD frustum + `LOD_ANIMAL_CULL_DISTANCE`. |
+| **LOD meules village** | `_rebuildRoadsideDecorLOD` dans `decorOverlay.js` — `'village-meule-glb'` désormais inclus dans le LOD avec `LOD_MILL_CULL_DISTANCE = 12.6`. |
+| **Vent des arbres réparé** | `forestOverlay.js::buildTreeInstancedMeshes` ré-applique `applyGlobalWindToMaterial()` après `material.clone()` — le clone perdait `onBeforeCompile`/`customProgramCacheKey` (non copiés par `Material.prototype.copy`), figeant les arbres malgré `applyGlobalWindToObject()` sur le prototype. `TREE_WIND.strength` réduit 0.062 → 0.034 (−45% cumulé, retour utilisateur "on dirait des brindilles"). |
+| **Alignement vertical overlays sol** | `bonusCells.js`, `bonusCellChestOverlay.js`, `grid.js` (cellules disponibles), `specialCells.js` : Y unifié à `0.003` (niveau de fond réel des tuiles, cf. `tileMesh.js::getBiomeSurfaceY`). Remplace une vieille formule `waterY − waterThickness − 0.01` (≈ −0.145, reliquat pré-refonte "fond ancré à y=0") qui plaçait cellules bonus/disponibles ~15cm sous le sol ; `specialCells.js` était à l'inverse fixé à 0.02 (trop haut). |
+| **Chevaux : flottement/enfoncement corrigé** | `villageDecorOverlay.js::placeAnimal` — pour un point proche du centre de tuile (`centerPos`), le type de biome utilisé pour le snap au sol venait d'une arête devinée par angle (`getEdgeFromLocalPoint`, quasi arbitraire sur un point quasi à l'origine) au lieu de `getTileCenterType(placedTile)`. Comme `TERRAIN_RELIEF.enabled=false`, la hauteur par biome est un palier net (jusqu'à 12mm d'écart house/field) sans transition → écart visible et arbitraire par tuile. Cheval + chien slot 0 concernés. |
+| **Coffre → gold.glb** | `bonusCellChestOverlay.js::CHEST_GLB_URL` renommé `coffre.glb` → `gold.glb`. Taille : `+50% +35% −30% −15% +20%` cumulés sur `CHEST_TARGET_WIDTH`. Terminologie interne (fonctions/commentaires) volontairement conservée en "coffre". |
+| **Piles de bois +2 variantes** | `pile-de-bois-3.glb`, `pile-de-bois-4.glb` ajoutées au pool (`−17%` chacune). `pile-de-bois-1` réduit de 10% supplémentaires. |
+| **Fontaine-3 ajoutée** | Pool fontaines 50/50 → 1/3 chacune (`fontaine-1/2/3`). `groundOffsetDelta` de `fontaine-3` copié par erreur de `fontaine-1` (−0.017, l'enfonçait sous le sol) — remis à 0, non recalibré depuis. |
+| **Refonte système eau (intégration Cyril, 2026-07-01)** | Remplacement complet du shader eau + de la géométrie : nappe continue par zone (`waterSurfaceOverlay.js`) au rivage organique (`shoreField.js` : `shoreNoise`/`shoreSteepness`) au lieu du prisme par tuile. Écume voronoï animée façon Danil, réglages live (`waterDebugUi.js`, bouton 💧 EAU). Sillage en V sur les bateaux (`waterBoatOverlay.js`). Eau exclue du merge terrain (`terrainMerge.js::isMergeableTerrainMesh`). Détails complets en §19. |
+| **Plages alignées sur le rivage organique** | `waterBeachGeometry.js` consomme désormais la même table de déplacement (`buildShoreDisplacementMap`/`displaceShorePoint`, exportées de `waterSurfaceOverlay.js`) que la nappe d'eau, calculée une fois par rebuild dans `waterZoneOverlay.js` et transmise à `createWaterBeachMesh(zone, placedTiles, shoreMap)`. Les plages épousent donc exactement le même contour ondulé, sommet pour sommet. `waterZoneBoundary.js` (halos de survol, générique à tous les biomes) volontairement non touché — hors périmètre du rivage. |
+| **Merge : 3 régressions bloquées à l'intégration** | La branche de Cyril partait d'une base vieille de 3 jours. Repérées et écartées lors du merge : suppression de `sheepOverlay` dans `scene.js`, retour de `TREE_WIND.strength` à 0.062 (annulait le fix "brindilles"), perte du 2ᵉ argument `getMissionProgressByType(placedTiles)` de `maybeGenerateMissionForTile`, et perte du 3ᵉ argument `placedTiles.size` de `updateDeckUI` (compteur "tuiles posées" du HUD). Aucune des quatre n'a été reportée. |
+| **Nettoyage CPU post-merge** | `tileMesh.js` ne construit plus aucune géométrie terrain pour les secteurs/centre eau (c'était un mesh masqué, jamais rendu depuis l'exclusion du merge). `scene.js` : suppression du calcul de voisinage bathymétrique (`_countWaterNeighbors` et consorts) devenu mort ; `addTileToTerrainMerge` (incrémental O(1)) s'applique désormais aussi aux tuiles eau, au lieu d'un rebuild complet du terrain à chaque pose. `terrainMerge.js::updateTileShoreDepth` supprimé (plus d'appelant). |
 
 ---
 
@@ -705,16 +763,17 @@ Catégories dominantes en DC :
 
 **bypassBboxCheck** — les GLBs Blender sans "Apply All Transforms" ont une bbox ANORMALE. Ajouter ce flag ; la normalisation scale reste correcte via `target / large_dimension`.
 
-**groundOf
 **groundOffsetDelta** — valeur négative = descendre. Appliquée **après** snap, pas avant.
 
 **colorGradingPass** — toujours passer par `composer.render()`. `renderer.render()` direct bypasse l'étalonnage.
 
-**Depth map eau** — arête→voisin : `EDGE_ORDER[i]` face à `_HEX_DIRS[(6-i)%6]` (pas `(i+1)%6`).
-
 **Shadow culling** — ne pas définir `castShadowOriginal` sur les meshes à ombres volontairement désactivées : `applySceneShadowFlags` ne restaure que si `typeof castShadowOriginal === 'boolean'`.
 
 **Chi-mai** — `FIELD_MAX_DIST = HEX_SIZE * 0.72` (< apothème 0.866). La caméra doit être physiquement sur la tuile field pour déclencher.
+
+**`Material.clone()` ne copie pas `onBeforeCompile`/`customProgramCacheKey`** — ce sont des méthodes du prototype `Material`, pas des champs copiés par `Material.prototype.copy()`. Tout pattern "prototype avec shader injecté via `onBeforeCompile` → clone par instance" (InstancedMesh, GLB partagés) perd le shader custom sur le clone. Il faut ré-appliquer la fonction d'injection (`applyGlobalWindToMaterial()` etc.) explicitement après chaque `.clone()`. Bug vécu : arbres figés malgré `applyGlobalWindToObject()` sur le prototype (§9, §21).
+
+**Type de biome pour placement props proches du centre de tuile** — `TERRAIN_RELIEF.enabled=false` (§6) rend la hauteur de sol par biome une fonction en PALIERS nets (pas de transition). Pour un point proche du centre (rayon ≤ `TILE_VISUAL.centerRadiusScale`, ex. `centerPos()` dans `villageDecorOverlay.js`), utiliser `getTileCenterType(placedTile)` — jamais un type d'arête deviné via `getEdgeFromLocalPoint()` sur un point quasi à l'origine (angle quasi arbitraire, retombe sur une arête au hasard parmi les 6, potentiellement différente du vrai centre). Bug vécu : chevaux flottants/enfoncés (§21).
 
 ---
 
@@ -740,15 +799,15 @@ Regroupe tous les points d'entrée pour un upgrade visuel futur. Chaque système
 
 ---
 
-### B. Shader eau (`realisticWater.js` + `shaders/shaderEau.js`)
+### B. Système eau (`waterSurfaceOverlay.js` + `shoreField.js` + `realisticWater.js` + `shaders/shaderEau.js`)
 
-ShaderMaterial unique, 1 mesh fusionné `terrainMerge`, 10 étapes fragment.
+Nappe continue PAR ZONE (surface + riverbed + jupe), rivage organique (`shoreNoise`/`shoreSteepness`), écume voronoï animée façon Danil déjà en place (cf. §19). Plus de mesh fusionné dans `terrainMerge` — l'eau en est explicitement exclue.
 
 **Upgrades** :
 - Réflexions dynamiques via `CubeCamera` ou `WebGLRenderTarget`
-- Caustiques : texture animée projetée sur le fond (bathymétrie `aShoreDepth` déjà disponible)
-- Mousse de rive : shader foam sur `aShoreDepth ≈ 0`
-- Spray GPU sur les arêtes de rive (`aShoreDepth < 0.1`)
+- Caustiques : texture animée projetée sur le riverbed (le champ `aShoreDist` déjà disponible peut moduler l'intensité près du bord)
+- Spray GPU / particules d'éclaboussure sur les arêtes de rive (`aShoreDist ≈ 0`), en complément de l'écume déjà présente
+- Interaction vague↔bateau au-delà du sillage actuel (déformation locale de `aShoreDist`/normales au passage)
 
 ---
 
@@ -807,7 +866,7 @@ Tous les seuils dans `variables.js`. Test toutes les **9 frames** dans `animate(
 
 **Blé** (`fieldWheatOverlay.js`) : vertex shader de vent `sin(uTime + position.x)`, connecter `globalWind.js`.
 
-**Forêt** (`forestOverlay.js`) : vertex shader de balancement troncs/feuillages (même principe vent blé).
+**Forêt** (`forestOverlay.js`) : ✅ fait — vent GPU via `globalWind.js`/`TREE_WIND` (§9). Upgrade restant : variation de fréquence/amplitude par variante d'arbre (actuellement un seul `TREE_WIND` partagé).
 
 ---
 
@@ -829,53 +888,6 @@ Vertex shader GPU, mode "bouliste".
 - HDRI dynamique selon jour/nuit (`EXRLoader`, `DataTexture`)
 - Light probes spatiales par tuile pour capter la couleur locale (prairie verte vs eau bleue)
 - AO baked sur maisons/tours dans un vertex color channel secondaire
-
----
-
-## 28. Philosophie
-
-1. Ne pas casser la grille.
-2. Ne pas casser le gameplay validé.
-3. Modifications minimales et chirurgicales.
-4. Pas d'usine à gaz.
-remplacer les InstancedMesh lointains par des sprites pré-rendus (`Sprite` ou atlas billboard) au-delà d'un seuil de distance
-- **Shadow LOD** : `rebuildShadowCasters` toutes les 180 frames — passer à une liste d'exclusion par distance (`applyShadowCulling` déjà partiel)
-- **Frustum culling InstancedMesh** : actuellement absent — ajouter un `InstancedMesh.frustumCulled = true` explicite ou un filtre BVH pour les forêts denses
-- **Wheat chunk LOD** : `LOD_WHEAT_CULL_DISTANCE = 5.6` — envisager un fade progressif (alpha) plutôt qu'un cull abrupt
-
----
-
-### G. Shaders terrain et végétation
-
-**Brins d'herbe** (`grassBladeOverlay.js`) : Bezier animés, `LOD_GRASS_CULL_DISTANCE = 6.4`.
-- Upgrade : passer à un **geometry shader** ou **compute shader** pour déplacer la génération vers le GPU. Actuellement CPU pur.
-
-**Blé** (`fieldWheatOverlay.js`) : WHEAT_BLADE_COUNT = 2129, BFS local, chunks.
-- Upgrade : ajouter un **vertex shader de vent** sur les brins (sin(uTime + position.x) × amplitude), connecté à `globalWind.js`
-
-**Forêt** (`forestOverlay.js`) : InstancedMesh, 11 modèles.
-- Upgrade : **vertex shader de balancement** sur les troncs/feuillages (même principe que le vent blé), masqué par le `TREE_SIZE_MULTIPLIER` déjà en place
-
----
-
-### H. Courbure du monde (`worldCurvature.js`)
-
-Vertex shader GPU — mode "bouliste" courbe les tuiles vers l'horizon.
-
-**Points d'upgrade** :
-- **Atmosphere haze** : ajouter un fog exponentiel coloré en fonction de la courbure (`gl_Position.z`) pour renforcer l'effet de profondeur
-- **Horizon glow** : ajouter une bande lumineuse à l'horizon calquée sur `uSkyHorizon` du ciel
-
----
-
-### I. IBL et éclairage global
-
-**État actuel** : `PMREMGenerator + RoomEnvironment`, `environmentIntensity = 0.25`.
-
-**Points d'upgrade** :
-- **HDRI dynamique** : remplacer `RoomEnvironment` par un HDRI qui change selon jour/nuit (WebGL2 `DataTexture` ou `EXRLoader`)
-- **Light probes par tuile** : `LightProbe` spatiales pour capter la couleur locale (prairie verte vs eau bleue) et l'appliquer aux GLBs environnants
-- **Ambient occlusion baked** : pré-calculer AO sur les maisons/tours et stocker dans un vertex color channel secondaire
 
 ---
 

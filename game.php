@@ -61,7 +61,7 @@
     <div id="statsPanel" class="stats-panel">
 	  <div class="stats-title">STATISTIQUES DE LA PARTIE</div>
       <div class="stats-summary-row">
-        <div class="stats-summary-card stats-tiles"><span>Tuiles posées</span><strong id="statTiles">0</strong></div>
+        <div class="stats-summary-card stats-field"><span>Moulins</span><div class="stats-num-group"><strong id="statMills">0</strong><span class="stats-emoji">⚙️</span></div></div>
         <div class="stats-summary-card stats-trains"><span>Trains</span><div class="stats-num-group"><strong id="statTrains">0</strong><span class="stats-emoji">🚂</span></div></div><div class="stats-summary-card stats-boats"><span>Bateaux</span><div class="stats-num-group"><strong id="statBoats">0</strong><span class="stats-emoji">⛵</span></div></div><div class="stats-summary-card stats-comets"><span>Comètes</span><div class="stats-num-group"><strong id="statComets">0</strong><span class="stats-emoji">☄️</span></div></div>
       </div>
       <div class="stats-card-grid">
@@ -105,15 +105,20 @@
         <div class="title">TUILE COURANTE</div>
         <div id="activeTile"></div>
       </div>
-
       <div class="tileBox">
         <div class="title">TUILE SUIVANTE</div>
         <div id="nextTile"></div>
       </div>
+    </div>
 
+    <div class="tileCountRow">
       <div class="deckRemainingBox">
-        <div class="title">TUILES RESTANTES</div>
+        <div class="title">RESTANTES</div>
         <div id="deckRemaining">50</div>
+      </div>
+      <div class="deckRemainingBox">
+        <div class="title">POSÉES</div>
+        <div id="tilesPlaced">0</div>
       </div>
     </div>
 
@@ -197,8 +202,8 @@
 
         <article class="help-card help-card-wide">
           <h2>🚩 Missions</h2>
-          <p>À chaque nouvelle tuile courante, 20% de chance d’ajouter une mission. Elle peut demander forêt, village, voie ferrée, voie d’eau, prairie, champ de blé ou trains visibles.</p>
-          <p>Récompense : +100 points et +3 tuiles. Les objectifs progressent par type, une mission terminée reste visible 5 tours. Les valeurs réelles comptent : prairie/eau/rail = 1 ; champ de blé = 1-2 ; maison = 1-4 ; forêt = 1-6 arbres.</p>
+          <p>À chaque nouvelle tuile courante, 20% de chance d’ajouter une mission. Elle peut demander forêt, village, voie ferrée, voie d’eau, prairie, champ de blé, trains visibles, bateaux ou moulins.</p>
+          <p>Récompense : +100 points et +3 tuiles. Les objectifs progressent par type, une mission terminée reste visible 5 tours. Les valeurs réelles comptent : prairie/eau/rail = 1 ; champ de blé = 1-2 ; maison = 1-4 ; forêt = 1-6 arbres. Les moulins ⚙️ comptent le nombre de grandes zones de champ actives.</p>
         </article>
 
         <article class="help-card help-card-controls">

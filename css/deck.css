@@ -1,22 +1,26 @@
 #tileUI {
   top: 20px;
   right: 20px;
+  width: 353px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   align-items: stretch;
   max-height: calc(100vh - 40px);
 }
 
-.tilePreviewRow {
+.tilePreviewRow,
+.tileCountRow {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .tileBox,
 .deckRemainingBox {
-  min-width: 120px;
-  padding: 10px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px;
+  text-align: center;
   background: rgba(0, 0, 0, 0.68);
   border: 1px solid rgba(120, 180, 255, 0.38);
   border-radius: 12px;
@@ -31,13 +35,12 @@
 }
 
 /* Style BebasNeue gros chiffre — harmonisé avec #arcadeScore */
-#deckRemaining {
-  /* Prend tout l'espace vertical restant après le titre, centre le nombre dedans */
+#deckRemaining,
+#tilesPlaced {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Typographie */
   font-size: 42px;
   line-height: 1;
   font-weight: 900;
@@ -59,8 +62,8 @@
 
 .mini-hex-tile {
   position: relative;
-  width: 88px;
-  height: 76px;
+  width: 96px;
+  height: 83px;
   margin: 4px auto 0;
   overflow: hidden;
   clip-path: polygon(100% 50%, 75% 6.7%, 25% 6.7%, 0 50%, 25% 93.3%, 75% 93.3%);

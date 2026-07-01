@@ -5,11 +5,13 @@ import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { makeNodeKey, getTileEdgeType, getTileCenterType } from './tileUtils.js';
 import { collectZone, getFullTextureNeighbors } from './zoneUtils.js';
 import { countWaterBoats } from './waterBoatOverlay.js';
+import { countFieldMills } from './fieldZonesOverlay.js';
 
 export { MISSION_REWARD, MISSION_TILE_REWARD, MISSION_CHANCE, COMPLETED_MISSION_VISIBLE_TURNS };
 
 const TRAIN_MISSION_TYPE = 'train';
-const BOAT_MISSION_TYPE = 'boat';
+const BOAT_MISSION_TYPE  = 'boat';
+const MILL_MISSION_TYPE  = 'mill';
 
 // Paliers calibrés sur l'effort réel de zone :
 // - prairie, eau et rail valent toujours 1 unité par triangle ;
@@ -66,6 +68,13 @@ const MISSION_TYPES = [
     label: 'Champs de blé',
     unit: 'champs de blé',
     targets: [12, 24, 38, 56, 78, 105]
+  },
+  {
+    type: MILL_MISSION_TYPE,
+    matchTypes: [EDGE_TYPES.field],
+    label: 'Moulins',
+    unit: '',
+    targets: [2, 3, 4, 5, 7, 9]
   }
 ];
 
@@ -79,7 +88,7 @@ export function createMissionManager() {
   };
 }
 
-export function maybeGenerateMissionForTile(manager, tile) {
+export function maybeGenerateMissionForTile(manager, tile, progressByType = new Map()) {
   if (!tile?.id || manager.generatedTileIds.has(tile.id)) return null;
 
   manager.generatedTileIds.add(tile.id);
@@ -94,7 +103,8 @@ export function maybeGenerateMissionForTile(manager, tile) {
     type: missionDefinition.type,
     label: missionDefinition.label,
     unit: missionDefinition.unit,
-    target: getNextMissionTarget(manager, missionDefinition)
+    target: getNextMissionTarget(manager, missionDefinition),
+    baseline: progressByType.get(missionDefinition.type) ?? 0   // snapshot au moment de la création
   };
 
   manager.active.push(mission);
@@ -150,7 +160,8 @@ export function getCompletedMissions(manager, placedTiles) {
 export function getMissionProgressByType(placedTiles) {
   const progress = getBestZoneTotalsByType(placedTiles);
   progress.set(TRAIN_MISSION_TYPE, countRailTrainLines(placedTiles));
-  progress.set(BOAT_MISSION_TYPE, countWaterBoats(placedTiles));
+  progress.set(BOAT_MISSION_TYPE,  countWaterBoats(placedTiles));
+  progress.set(MILL_MISSION_TYPE,  countFieldMills(placedTiles));
   return progress;
 }
 
@@ -171,7 +182,8 @@ export function getGameStats(placedTiles) {
     totals,
     largest: Object.fromEntries(Object.values(EDGE_TYPES).map(type => [type, largestByType.get(type) ?? 0])),
     trainLines: countRailTrainLines(placedTiles),
-    boatCount: countWaterBoats(placedTiles)
+    boatCount: countWaterBoats(placedTiles),
+    millCount: countFieldMills(placedTiles)
   };
 }
 
@@ -213,6 +225,7 @@ export const MISSION_TYPE_ICON = {
   [EDGE_TYPES.field]:  '🌾',
   train:               '🚂',
   boat:                '⛵',
+  mill:                '⚙️',
 };
 
 const MISSION_TYPE_LABEL = Object.fromEntries(MISSION_TYPES.map(m => [m.type, m.label]));
@@ -242,6 +255,9 @@ Plus la ligne est longue, plus le score est élevé.`,
   boat:  `Crée des étendues d'eau entourées de terres ⛵.
 Un bateau apparaît automatiquement sur chaque lac fermé par des tuiles terrestres.
 Chaque nouveau bateau fait progresser cette mission.`,
+  mill:  `Construis de grandes zones de champs de blé ⚙️.
+Un moulin apparaît automatiquement au centre de chaque zone de champ suffisamment grande.
+Chaque nouveau moulin fait progresser cette mission.`,
 };
 
 export function formatMissionLabel(mission, progressByType = new Map()) {

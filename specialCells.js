@@ -55,7 +55,10 @@ export function createSpecialCellsMesh(specialCells) {
   for (const cell of specialCells.values()) {
     const position = axialToWorld(cell.q, cell.r);
     const mesh = createSpecialCellMesh(cell);
-    mesh.position.set(position.x, 0.02, position.z);
+    // Niveau 0 monde = base/fond de toutes les tuiles (cf. tileMesh.js::getBiomeSurfaceY,
+    // bonusCells.js::getGridPlaneY). L'ancien 0.02 faisait flotter le vortex nettement
+    // au-dessus de ce niveau de base, "trop haut" par rapport aux tuiles de texture voisines.
+    mesh.position.set(position.x, 0.003, position.z);
     group.add(mesh);
   }
 

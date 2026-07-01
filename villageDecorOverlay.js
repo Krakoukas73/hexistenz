@@ -18,7 +18,8 @@ import {
   EDGE_ORDER,
   EDGE_TYPES,
   HEX_SIZE,
-  SECTOR_DEFS
+  SECTOR_DEFS,
+  TILE_VISUAL
 } from './config.js';
 import { hashUnit10k as hashUnit, hashNumber } from './hashUtils.js';
 import { axialToWorld, makeHexKey } from './hex.js';
@@ -326,7 +327,8 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
         // Pas de tryResolve : la fontaine est intentionnellement au cœur du village,
         // entre les bâtiments — tryResolve échouerait systématiquement sur leurs hitbox.
         if (!isInsideSpecialBuildingSafeZone(fPos, specialBuildingSafeZones)) {
-          const fountainKey = hashUnit(`${seedF}:variant`) < 0.5 ? 'fountain-1' : 'fountain-2';
+          const _fVariant   = hashUnit(`${seedF}:variant`);
+          const fountainKey = _fVariant < 1 / 3 ? 'fountain-1' : (_fVariant < 2 / 3 ? 'fountain-2' : 'fountain-3');
           const fountain    = createPropModel(fountainKey, seedF);
           if (fountain) {
             fountain.name     = 'village-fountain-glb';
@@ -374,7 +376,8 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
               return t === EDGE_TYPES.rail || t === EDGE_TYPES.water;
             });
             if (!tileHasRailOrWaterP && !isInsideSpecialBuildingSafeZone(fPos, specialBuildingSafeZones)) {
-              const fountainKey = hashUnit(`${seedFP}:variant`) < 0.5 ? 'fountain-1' : 'fountain-2';
+              const _fpVariant  = hashUnit(`${seedFP}:variant`);
+              const fountainKey = _fpVariant < 1 / 3 ? 'fountain-1' : (_fpVariant < 2 / 3 ? 'fountain-2' : 'fountain-3');
               const fountain    = createPropModel(fountainKey, seedFP);
               if (fountain) {
                 fountain.name       = 'village-fountain-glb';
@@ -422,6 +425,14 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
               getTileEdgeType(placedTile, _mlEdge), hashNumber(seedMl) % 97,
               { groundOffset: 0.004, alignToSlope: false, yaw: hashUnit(`${seedMl}:rot`) * Math.PI * 2, edgeLockStart: 0.98, edgeLockEnd: 1.0 });
             if (_mlTopY !== null) snapPropBottomToSurface(meule, _mlTopY - 0.004, 0.003);
+            // Pas d'ombre : objet décoratif, la meule est trop petite pour des ombres cohérentes
+            meule.traverse(o => {
+              if (!o.isMesh) return;
+              o.castShadow                  = false;
+              o.receiveShadow               = false;
+              o.userData.disableCastShadow  = true;
+              o.userData.shadowFlagsApplied = true;
+            });
             group.add(meule);
             // pas de hitbox : meule = objet décoratif sans collision
           }
@@ -468,8 +479,21 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
           });
         }
         const local = getTileLocalPoint(pos, placedTile);
-        const edge  = getEdgeFromLocalPoint(local) ?? houseEdges[0];
-        const type  = getTileEdgeType(placedTile, edge);
+        // Un point proche du centre de tuile (chevaux, chien #0 via centerPos) tombe
+        // dans la zone interpolée par le CENTRE (cf. getTerrainMeshLocalTopY dans
+        // terrainHeight.js, seuil = TILE_VISUAL.centerRadiusScale). Y utiliser un type
+        // d'ARÊTE deviné depuis un angle presque arbitraire (point quasi à l'origine)
+        // pioche au hasard parmi les 6 arêtes de la tuile — alors que la hauteur de sol
+        // par biome est une fonction en PALIERS (grass 0.082 / house 0.085 / forest 0.088
+        // / field 0.094, écarts jusqu'à 12mm, relief désactivé). Si ce type deviné ne
+        // correspond pas au vrai type du centre (tuiles à arêtes mixtes — très fréquent),
+        // le sol calculé ne correspond pas à celui réellement rendu → l'animal flotte ou
+        // s'enfonce selon le sens de l'écart. Fix : utiliser getTileCenterType() dans la
+        // zone centrale, comme le fait réellement le maillage affiché.
+        const localRadius  = Math.hypot(local.x, local.z) / HEX_SIZE;
+        const isCenterZone = localRadius <= (TILE_VISUAL.centerRadiusScale ?? 0.33);
+        const edge  = isCenterZone ? null : (getEdgeFromLocalPoint(local) ?? houseEdges[0]);
+        const type  = isCenterZone ? getTileCenterType(placedTile) : getTileEdgeType(placedTile, edge);
         const topY  = placeObjectOnTerrain(model, local, type, hashNumber(seed) % 97,
           { groundOffset: groundOff, alignToSlope: false,
             yaw: hashUnit(`${seed}:yaw`) * Math.PI * 2,

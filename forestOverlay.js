@@ -4,7 +4,7 @@ import { EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
 import { hashUnitFull as hashToUnit, hashNumber } from './hashUtils.js';
 import { createOuterVertices } from './hexGeometry.js';
 import { axialToWorld } from './hex.js';
-import { applyGlobalWindToObject } from './globalWind.js';
+import { applyGlobalWindToObject, applyGlobalWindToMaterial } from './globalWind.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { placeObjectOnTerrain } from './terrainHeight.js';
 import { collectSpecialBuildingSafeZones } from './fieldZonesOverlay.js';
@@ -320,6 +320,16 @@ function buildTreeInstancedMeshes(group, accumulator) {
         const mat = Array.isArray(child.material)
           ? child.material.map(m => m.clone())
           : child.material.clone();
+
+        // Material.clone() ne recopie PAS onBeforeCompile / customProgramCacheKey
+        // (ce ne sont pas des champs gérés par Material.prototype.copy) : le shader
+        // de vent injecté sur le prototype était donc perdu sur chaque InstancedMesh
+        // construit ici, ce qui figeait les arbres malgré applyGlobalWindToObject().
+        // On le réapplique explicitement sur le matériau cloné.
+        for (const m of Array.isArray(mat) ? mat : [mat]) {
+          if (m.userData) delete m.userData.globalWindSignature;
+          applyGlobalWindToMaterial(m, TREE_WIND);
+        }
 
         const mesh = new THREE.InstancedMesh(geo, mat, matrices.length);
         mesh.castShadow = true;

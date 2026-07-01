@@ -57,6 +57,7 @@ const ASSETS_GLB = [
   // Décor village / route
   './glb/decor/fontaine-1.glb',
   './glb/decor/fontaine-2.glb',
+  './glb/decor/fontaine-3.glb',
   './glb/decor/poteau-indicateur-1.glb',
   './glb/decor/poteau-indicateur-2.glb',
   './glb/decor/poteau-indicateur-3.glb',
@@ -69,11 +70,13 @@ const ASSETS_GLB = [
   './glb/decor/charrette-pleine.glb',
   './glb/decor/meule.glb',
   './glb/decor/botte-foin.glb',
-  './glb/decor/coffre.glb',
+  './glb/decor/gold.glb',
   './glb/decor/barque-1.glb',
   './glb/decor/barque-2.glb',
   './glb/decor/pile-de-bois-1.glb',
   './glb/decor/pile-de-bois-2.glb',
+  './glb/decor/pile-de-bois-3.glb',
+  './glb/decor/pile-de-bois-4.glb',
   './glb/decor/bateau.glb',
 
   // Animaux
@@ -115,7 +118,8 @@ const ASSETS_OGG = [
   './sounds/music-intro-4.ogg',
   './sounds/music-intro-5.ogg',
   './sounds/music-intro-6.ogg',
-  './sounds/music-ingame.ogg',
+  './sounds/music-ingame-1.ogg',
+  './sounds/music-ingame-2.ogg',
   './sounds/music-ending.ogg',
   './sounds/chi-mai.ogg',
 

@@ -54,12 +54,11 @@ export function createTileMesh(tileOrEdges, options = {}) {
   const opacity = options.opacity ?? 1;
   const worldX  = options.worldX ?? 0;
   const worldZ  = options.worldZ ?? 0;
-  // Nombre de tuiles voisines qui sont de l'eau (0–6) → profondeur bathymétrique.
-  const waterNeighborCount = options.waterNeighborCount ?? 0;
   const group = new THREE.Group();
 
-  group.add(...createSectorMeshes(edges, opacity, worldX, worldZ, waterNeighborCount));
-  group.add(createCenterMesh(center, opacity, worldX, worldZ, waterNeighborCount));
+  group.add(...createSectorMeshes(edges, opacity, worldX, worldZ));
+  const centerMesh = createCenterMesh(center, opacity, worldX, worldZ);
+  if (centerMesh) group.add(centerMesh);
 
   const roadCenterOverlay = createRoadCenterOverlay(edges, SECTOR_DEFS, createOuterVertices);
   if (roadCenterOverlay) group.add(roadCenterOverlay);
@@ -98,43 +97,49 @@ export function renderMiniTile(tile) {
   `;
 }
 
-function createSectorMeshes(edges, opacity, worldX = 0, worldZ = 0, waterNeighborCount = 0) {
+function createSectorMeshes(edges, opacity, worldX = 0, worldZ = 0) {
   const vertices = createOuterVertices(HEX_SIZE * TILE_VISUAL.radiusScale);
 
   return SECTOR_DEFS.map((sector, sectorIndex) => {
     const edge = edges[sector.key];
     const type = getEdgeType(edge);
-    const previousSector = SECTOR_DEFS[(sectorIndex + SECTOR_DEFS.length - 1) % SECTOR_DEFS.length];
-    const nextSector = SECTOR_DEFS[(sectorIndex + 1) % SECTOR_DEFS.length];
-    const previousType = getEdgeType(edges[previousSector.key]);
-    const nextType = getEdgeType(edges[nextSector.key]);
-
-    // Quand deux secteurs voisins ont la même matière, on supprime le
-    // grignotage sur leur frontière commune : plus de micro-trous moches
-    // entre deux triangles censés former une seule surface continue.
-    const geometry = createSectorGeometry(
-      vertices[sector.a],
-      vertices[sector.b],
-      type,
-      sector.a,
-      sector.b,
-      previousType !== type,
-      nextType !== type,
-      worldX,
-      worldZ,
-      waterNeighborCount
-    );
-    const materials = [getBiomeMaterial(type, opacity), getBiomeSideMaterial(type, opacity)];
-    const mesh = new THREE.Mesh(geometry, materials);
-    mesh.name = `hex-sector-${type}`;  // pour le HUD perf
-    mesh.receiveShadow = true;
-    mesh.castShadow = false;
-    mesh.userData.disableCastShadow = true;
-    mesh.position.y = getBiomeSurfaceY(type);
-
     const group = new THREE.Group();
     group.userData.edgeKey = sector.key;
-    group.add(mesh);
+
+    // Eau : rendue par waterSurfaceOverlay.js (nappe continue par zone, contour
+    // organique). Ce mesh terrain par-secteur serait de toute façon masqué par
+    // hideTerrainMeshes() et exclu du merge (isMergeableTerrainMesh) : on évite
+    // de le construire (géométrie + triangulation) pour rien. Seul le label de
+    // valeur reste nécessaire ici (affiché indépendamment du mesh terrain).
+    if (type !== 'water') {
+      const previousSector = SECTOR_DEFS[(sectorIndex + SECTOR_DEFS.length - 1) % SECTOR_DEFS.length];
+      const nextSector = SECTOR_DEFS[(sectorIndex + 1) % SECTOR_DEFS.length];
+      const previousType = getEdgeType(edges[previousSector.key]);
+      const nextType = getEdgeType(edges[nextSector.key]);
+
+      // Quand deux secteurs voisins ont la même matière, on supprime le
+      // grignotage sur leur frontière commune : plus de micro-trous moches
+      // entre deux triangles censés former une seule surface continue.
+      const geometry = createSectorGeometry(
+        vertices[sector.a],
+        vertices[sector.b],
+        type,
+        sector.a,
+        sector.b,
+        previousType !== type,
+        nextType !== type,
+        worldX,
+        worldZ
+      );
+      const materials = [getBiomeMaterial(type, opacity), getBiomeSideMaterial(type, opacity)];
+      const mesh = new THREE.Mesh(geometry, materials);
+      mesh.name = `hex-sector-${type}`;  // pour le HUD perf
+      mesh.receiveShadow = true;
+      mesh.castShadow = false;
+      mesh.userData.disableCastShadow = true;
+      mesh.position.y = getBiomeSurfaceY(type);
+      group.add(mesh);
+    }
 
     const label = createValueLabel(edge, vertices[sector.a], vertices[sector.b]);
     if (label) {
@@ -148,8 +153,8 @@ function createSectorMeshes(edges, opacity, worldX = 0, worldZ = 0, waterNeighbo
   });
 }
 
-function createSectorGeometry(a, b, type, aIndex, bIndex, raggedLeft = true, raggedRight = true, worldX = 0, worldZ = 0, waterNeighborCount = 0) {
-  return createThickSectorGeometry(a, b, getSectorDepth(type), type, aIndex, bIndex, raggedLeft, raggedRight, worldX, worldZ, waterNeighborCount);
+function createSectorGeometry(a, b, type, aIndex, bIndex, raggedLeft = true, raggedRight = true, worldX = 0, worldZ = 0) {
+  return createThickSectorGeometry(a, b, getSectorDepth(type), type, aIndex, bIndex, raggedLeft, raggedRight, worldX, worldZ);
 }
 
 function getSectorDepth(type) {
@@ -192,7 +197,7 @@ function _sideBottomShift(localX, localZ, worldX, worldZ, depth) {
   return { dx: depth * k * wx / R, dz: depth * k * wz / R };
 }
 
-function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bIndex = 1, raggedLeft = true, raggedRight = true, worldX = 0, worldZ = 0, waterNeighborCount = 0) {
+function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bIndex = 1, raggedLeft = true, raggedRight = true, worldX = 0, worldZ = 0) {
   const geometry = new THREE.BufferGeometry();
   const innerRadius = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
   const innerA = pointAtRadius(a, innerRadius);
@@ -301,15 +306,6 @@ function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bInd
   geometry.addGroup(0, topIndexCount, 0);
   geometry.addGroup(topIndexCount, bottomIndexCount + sideIndexCount, 1);
   geometry.computeVertexNormals();
-
-  // Attribute bathymétrique pour le water ShaderMaterial (aShoreDepth).
-  // 0 = rive isolée, 1 = eau ouverte (waterNeighborCount / 6).
-  // Les secteurs non-eau n'ont pas cet attribute : le shader recevra 0 (fallback rive).
-  if (type === 'water') {
-    const nVerts = vertexData.length / 3;
-    geometry.setAttribute('aShoreDepth',
-      new THREE.BufferAttribute(new Float32Array(nVerts).fill(waterNeighborCount / 6.0), 1));
-  }
 
   return geometry;
 }
@@ -495,7 +491,12 @@ function uvForPoint(point) {
   ];
 }
 
-function createCenterMesh(centerType, opacity, worldX = 0, worldZ = 0, waterNeighborCount = 0) {
+function createCenterMesh(centerType, opacity, worldX = 0, worldZ = 0) {
+  // Eau : rendue par waterSurfaceOverlay.js — pas de mesh terrain ici (voir
+  // note équivalente dans createSectorMeshes). Aucun label de centre n'existe
+  // dans ce fichier, donc rien d'autre à préserver pour ce cas.
+  if (centerType === 'water') return null;
+
   const depth = getSectorDepth(centerType);
   const radius = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
   const vertices = createOuterVertices(radius);
@@ -504,7 +505,7 @@ function createCenterMesh(centerType, opacity, worldX = 0, worldZ = 0, waterNeig
   // CylinderGeometry peut avoir une orientation/triangulation différente selon
   // Three.js ; ici on ferme explicitement la zone centrale contre les 6 côtés
   // internes pour supprimer les micro-trous visuels.
-  const geometry = createPrismGeometry(vertices, depth, centerType, worldX, worldZ, waterNeighborCount);
+  const geometry = createPrismGeometry(vertices, depth, centerType, worldX, worldZ);
   const mesh = new THREE.Mesh(geometry, [
     getBiomeMaterial(centerType, opacity),
     getBiomeSideMaterial(centerType, opacity)
@@ -518,7 +519,7 @@ function createCenterMesh(centerType, opacity, worldX = 0, worldZ = 0, waterNeig
   return mesh;
 }
 
-function createPrismGeometry(topPoints, depth, type = 'grass', worldX = 0, worldZ = 0, waterNeighborCount = 0) {
+function createPrismGeometry(topPoints, depth, type = 'grass', worldX = 0, worldZ = 0) {
   const geometry = new THREE.BufferGeometry();
   const vertexData = [];
   const uvData = [];
@@ -572,13 +573,6 @@ function createPrismGeometry(topPoints, depth, type = 'grass', worldX = 0, world
   geometry.addGroup(0, topIndexCount, 0);
   geometry.addGroup(topIndexCount, indices.length - topIndexCount, 1);
   geometry.computeVertexNormals();
-
-  // Attribute bathymétrique pour le centre eau (même convention que les secteurs).
-  if (type === 'water') {
-    const nVerts = vertexData.length / 3;
-    geometry.setAttribute('aShoreDepth',
-      new THREE.BufferAttribute(new Float32Array(nVerts).fill(waterNeighborCount / 6.0), 1));
-  }
 
   return geometry;
 }

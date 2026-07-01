@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GRID_RADIUS, HEX_SIZE, TILE_VISUAL } from './config.js';
+import { GRID_RADIUS, HEX_SIZE } from './config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 
 const GRID_EXPANSION_RADIUS = 3;
@@ -201,7 +201,11 @@ function _addCell(group, q, r) {
   if (!group.userData.cells)    group.userData.cells    = new Map();
 
   const { x, z } = axialToWorld(q, r);
-  const wireY     = (TILE_VISUAL.waterY ?? -0.075) - (TILE_VISUAL.waterThickness ?? 0.08) - 0.012;
+  // Niveau 0 monde = base/fond de toutes les tuiles (cf. tileMesh.js::getBiomeSurfaceY).
+  // L'ancienne formule (waterY - waterThickness - 0.012 ≈ -0.147) plaçait le
+  // surlignage des cellules disponibles très en dessous du sol au lieu d'être au
+  // niveau des tuiles. cf. bonusCells.js::getGridPlaneY pour le même bug/fix.
+  const wireY     = 0.003;
   const fillY     = wireY - 0.002;
 
   group.userData.gridKeys.add(key);

@@ -403,6 +403,10 @@ Chaque combinaison de matériau + defines = un shader. Trop de variantes = stutt
     `Nombre total de tuiles posées sur le plateau depuis le début de la partie.
 Chaque tuile peut appartenir à un ou plusieurs biomes selon sa composition.`,
 
+  'game.mills':
+    `Nombre de moulins présents sur la grille.
+Un moulin apparaît automatiquement au centre de chaque grande zone de champ de blé.`,
+
   'game.trains':
     `Lignes de train formées : une ligne = deux gares connectées par des rails continus.
 Plus la ligne est longue, plus les points de score sont élevés.`,

@@ -183,8 +183,8 @@ function fmt_date($iso) {
     <p class="section-label" data-en>Two ways to see the world</p>
     <h2 class="section-title" data-fr>Platistes et boulistes</h2>
     <h2 class="section-title" data-en>Flat-worlders and globe-believers</h2>
-    <p class="section-sub section-sub--lead" data-fr>Deux factions irréconciliables</p>
-    <p class="section-sub section-sub--lead" data-en>Two irreconcilable factions</p>
+    <h2 class="section-title" data-fr>Deux factions irréconciliables</h2>
+    <h2 class="section-title" data-en>Two irreconcilable factions</h2>
     <p class="section-sub" data-fr>
       Hexistenz divise les bâtisseurs en deux factions irréconciliables. Une option visuelle,
       un engagement philosophique. De quel côté êtes-vous&nbsp;?
@@ -264,8 +264,8 @@ function fmt_date($iso) {
           </div>
         </div>
         <div class="biome-body">
-          <div class="biome-desc" data-fr>Étendues herbeuses parsemées de fleurs sauvages, rochers, cerfs et buissons. Terrain neutre entre les grands réseaux.</div>
-          <div class="biome-desc" data-en>Grassy expanses dotted with wildflowers, rocks, deer and shrubs. Neutral ground between major networks.</div>
+          <div class="biome-desc" data-fr>Étendues herbeuses où chaque brin frémit sous le vent, parsemées de fleurs sauvages, rochers, cerfs et buissons. Terrain neutre entre les grands réseaux.</div>
+          <div class="biome-desc" data-en>Grassy expanses where every blade trembles in the wind, dotted with wildflowers, rocks, deer and shrubs. Neutral ground between major networks.</div>
           <span class="biome-tag" data-fr>Biome neutre</span><span class="biome-tag" data-en>Neutral biome</span>
         </div>
       </div>
@@ -290,8 +290,8 @@ function fmt_date($iso) {
           </div>
         </div>
         <div class="biome-body">
-          <div class="biome-desc" data-fr>Sapins, bouleaux, peupliers en InstancedMesh. Champignons, piles de bois, cerfs — jusqu'à 22 millions de triangles.</div>
-          <div class="biome-desc" data-en>Firs, birches, poplars as InstancedMesh. Mushrooms, woodpiles, deer — up to 22 million triangles on screen.</div>
+          <div class="biome-desc" data-fr>Sapins, bouleaux, peupliers en InstancedMesh, dont les frondaisons ondulent au vent jusque dans le sous-bois. Champignons, piles de bois, cerfs — jusqu'à 22 millions de triangles.</div>
+          <div class="biome-desc" data-en>Firs, birches, poplars as InstancedMesh, their canopies swaying in the wind down to the undergrowth. Mushrooms, woodpiles, deer — up to 22 million triangles on screen.</div>
           <span class="biome-tag" data-fr>Forêt dense</span><span class="biome-tag" data-en>Dense woodland</span>
         </div>
       </div>
@@ -316,8 +316,8 @@ function fmt_date($iso) {
           </div>
         </div>
         <div class="biome-body">
-          <div class="biome-desc" data-fr>Shader réaliste : vagues advectées, Voronoï, bathymétrie. Bateaux animés en 3D, plages procédurales et halos de zone.</div>
-          <div class="biome-desc" data-en>Realistic shader: advected waves, Voronoï, bathymetry. Animated 3D boats, procedural beaches and zone halos.</div>
+          <div class="biome-desc" data-fr>Nappe continue au rivage organique, vagues et écume animées façon aquarelle. Bateaux animés à sillage, plages procédurales et halos de zone.</div>
+          <div class="biome-desc" data-en>Continuous water sheet with an organic shoreline, animated waves and watercolor-style foam. Animated boats with wake, procedural beaches and zone halos.</div>
           <span class="biome-tag" data-fr>Réseau fluvial ⛵</span><span class="biome-tag" data-en>Water network ⛵</span>
         </div>
       </div>
@@ -329,8 +329,8 @@ function fmt_date($iso) {
           </div>
         </div>
         <div class="biome-body">
-          <div class="biome-desc" data-fr>Rails procéduraux, traverses et ballast. Trains 3D avec wagons, gares terminus et fumée des locomotives.</div>
-          <div class="biome-desc" data-en>Procedural tracks, sleepers, ballast. 3D trains with wagons, terminus stations and locomotive smoke.</div>
+          <div class="biome-desc" data-fr>Rails procéduraux, traverses et ballast. Trains avec wagons, gares terminus et fumée des locomotives.</div>
+          <div class="biome-desc" data-en>Procedural tracks, sleepers, ballast. Trains with wagons, terminus stations and locomotive smoke.</div>
           <span class="biome-tag" data-fr>Réseau ferroviaire 🚂</span><span class="biome-tag" data-en>Rail network 🚂</span>
         </div>
       </div>
@@ -359,21 +359,39 @@ function fmt_date($iso) {
         </div>
       </div>
       <div class="mission-card">
+        <div class="mission-icon">🛤️</div>
+        <div>
+          <div class="mission-name" data-fr>Voie ferrée</div>
+          <div class="mission-name" data-en>Rail line</div>
+          <div class="mission-desc" data-fr>Poser un nombre imposé de secteurs rail. Chaque triangle de voie ferrée posé fait progresser cette mission.</div>
+          <div class="mission-desc" data-en>Lay a required number of rail sectors. Each placed rail triangle counts toward this mission.</div>
+        </div>
+      </div>
+      <div class="mission-card">
         <div class="mission-icon">🚂</div>
         <div>
-          <div class="mission-name" data-fr>Réseau ferroviaire</div>
-          <div class="mission-name" data-en>Rail network</div>
-          <div class="mission-desc" data-fr>Constituer une ligne de chemin de fer continue d'une longueur imposée, reliant plusieurs tuiles sans interruption.</div>
-          <div class="mission-desc" data-en>Build a continuous rail line of a required length, connecting multiple tiles without interruption.</div>
+          <div class="mission-name" data-fr>Trains</div>
+          <div class="mission-name" data-en>Trains</div>
+          <div class="mission-desc" data-fr>Constituer un nombre de lignes de train actives — chaque ligne relie deux gares via des rails continus sans interruption.</div>
+          <div class="mission-desc" data-en>Build a required number of active train lines — each line connects two stations via continuous, unbroken rails.</div>
+        </div>
+      </div>
+      <div class="mission-card">
+        <div class="mission-icon">💧</div>
+        <div>
+          <div class="mission-name" data-fr>Voie d'eau</div>
+          <div class="mission-name" data-en>Waterway</div>
+          <div class="mission-desc" data-fr>Former une étendue d'eau d'une surface minimale. Chaque triangle d'eau posé fait progresser cette mission.</div>
+          <div class="mission-desc" data-en>Form a water zone of a minimum area. Each placed water triangle counts toward this mission.</div>
         </div>
       </div>
       <div class="mission-card">
         <div class="mission-icon">⛵</div>
         <div>
-          <div class="mission-name" data-fr>Réseau fluvial</div>
-          <div class="mission-name" data-en>Water network</div>
-          <div class="mission-desc" data-fr>Former un lac ou une rivière de taille suffisante pour y faire naviguer les bateaux — la zone doit rester connexe.</div>
-          <div class="mission-desc" data-en>Form a lake or river large enough for boats to sail — the zone must remain fully connected.</div>
+          <div class="mission-name" data-fr>Bateaux</div>
+          <div class="mission-name" data-en>Boats</div>
+          <div class="mission-desc" data-fr>Faire apparaître un nombre de bateaux sur la grille. Un bateau naît automatiquement sur chaque lac fermé par des tuiles terrestres.</div>
+          <div class="mission-desc" data-en>Spawn a required number of boats on the grid. A boat appears automatically on each lake enclosed by land tiles.</div>
         </div>
       </div>
       <div class="mission-card">
@@ -401,6 +419,15 @@ function fmt_date($iso) {
           <div class="mission-name" data-en>Cultivated lands</div>
           <div class="mission-desc" data-fr>Étendre les champs en zones continues. Les moulins n'apparaissent que lorsque la zone est assez vaste pour les accueillir.</div>
           <div class="mission-desc" data-en>Expand fields into continuous zones. Mills only appear when the zone is large enough to host them.</div>
+        </div>
+      </div>
+      <div class="mission-card">
+        <div class="mission-icon">⚙️</div>
+        <div>
+          <div class="mission-name" data-fr>Moulins à vent</div>
+          <div class="mission-name" data-en>Windmills</div>
+          <div class="mission-desc" data-fr>Construire de grandes zones de champs de blé pour y faire apparaître des moulins. Un moulin naît automatiquement au centre de chaque vaste zone de champ.</div>
+          <div class="mission-desc" data-en>Build large wheat field zones to spawn windmills. A mill appears automatically at the centre of each large enough field zone.</div>
         </div>
       </div>
     </div>
@@ -471,8 +498,10 @@ function fmt_date($iso) {
   <div class="container">
     <p class="section-label" data-fr>Ambiances visuelles</p>
     <p class="section-label" data-en>Visual presets</p>
-    <h2 class="section-title" data-fr>16 atmosphères, une infinité de personnalisations</h2>
-    <h2 class="section-title" data-en>16 atmospheres, infinite customizations</h2>
+    <h2 class="section-title" data-fr>16 atmosphères</h2>
+    <h2 class="section-title" data-fr>Une infinité de personnalisations</h2>
+    <h2 class="section-title" data-en>16 atmospheres</h2>
+    <h2 class="section-title" data-en>Infinite customizations</h2>
     <p class="section-sub" data-fr>16 presets visuels prêts à l'emploi — mais chacun est une base : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… Des centaines de combinaisons pour transformer le monde entier à votre goût. Chaque personnalisation s'exporte en un clic et peut être partagée avec d'autres joueurs.</p>
     <p class="section-sub" data-en>16 ready-to-use visual presets — but each is a starting point: color LUT, cinematic effects (chromatic aberration, film grain, tilt-shift), retro pixelization, EGA and Amiga aesthetics, volumetric smoke, procedural sky… Hundreds of combinations to transform the entire world to your taste. Every customization can be exported in one click and shared with other players.</p>
 
@@ -495,6 +524,11 @@ function fmt_date($iso) {
       <div class="gallery-card" style="grid-column:span 2;">
         <img src="images/amiga.png" alt="Preset Amiga" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Amiga</span><span data-en>Amiga</span></div></div>
+      </div>
+
+      <div class="gallery-card" style="grid-column:span 2;">
+        <img src="images/cga.png" alt="Preset CGA" class="gallery-img">
+        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>CGA 320×200 4 couleurs</span><span data-en>CGA 320×200 4 colors</span></div></div>
       </div>
 
       <div class="gallery-card" style="grid-column:span 2;">
@@ -523,8 +557,8 @@ function fmt_date($iso) {
         <div class="daynight-name" data-fr>Mode Jour</div>
         <div class="daynight-name" data-en>Day Mode</div>
         <ul class="daynight-list">
-          <li data-fr>🌤 Soleil 3D orbitant sur sa propre couche de rendu</li>
-          <li data-en>🌤 3D sun orbiting on its own render layer</li>
+          <li data-fr>🌤 Soleil orbitant sur sa propre couche de rendu</li>
+          <li data-en>🌤 Sun orbiting on its own render layer</li>
           <li data-fr>⛅ Ciel volumétrique procédural avec nuages FBM animés</li>
           <li data-en>⛅ Procedural volumetric sky with animated FBM clouds</li>
           <li data-fr>🔵 Gradient zenith/horizon aux teintes bleues chaudes</li>
@@ -541,8 +575,8 @@ function fmt_date($iso) {
         <div class="daynight-name" data-fr>Mode Nuit</div>
         <div class="daynight-name" data-en>Night Mode</div>
         <ul class="daynight-list">
-          <li data-fr>🌙 Lune 3D, gradient zenith/horizon nocturne profond</li>
-          <li data-en>🌙 3D moon, deep nocturnal zenith/horizon gradient</li>
+          <li data-fr>🌙 Lune, gradient zenith/horizon nocturne profond</li>
+          <li data-en>🌙 Moon, deep nocturnal zenith/horizon gradient</li>
           <li data-fr>✨ Étoiles scintillantes sur une sphère dédiée</li>
           <li data-en>✨ Twinkling stars on a dedicated sphere</li>
           <li data-fr>☄️ Comètes qui filent — cliquez pour les faire exploser</li>
@@ -561,9 +595,9 @@ function fmt_date($iso) {
   <div class="container">
     <div class="multi-inner">
       <div>
-        <p class="section-label" data-fr>Mode multijoueur</p>
-        <p class="section-label" data-en>Multiplayer mode</p>
+        <h2 class="section-title" data-fr>Multiplayer</h2>
         <h2 class="section-title" data-fr>Bâtissez ensemble</h2>
+        <h2 class="section-title" data-en>Multiplayer</h2>
         <h2 class="section-title" data-en>Build together</h2>
         <p class="section-sub" data-fr>Rejoignez ou créez une salle avec un code à 6 lettres. La grille est partagée en temps réel — chaque joueur pose ses tuiles et voit les placements des autres au fur et à mesure.</p>
         <p class="section-sub" data-en>Join or create a room with a 6-letter code. The grid is shared in real time — each player places their tiles and sees others' moves as they happen.</p>
@@ -602,11 +636,11 @@ function fmt_date($iso) {
             <span class="room-score-pts" style="color:var(--gold);">47</span>
           </div>
           <div class="room-score-row">
-            <span class="room-score-name" style="color:var(--text-dim);">Wanderer</span>
+            <span class="room-score-name" style="color:var(--text-dim);">Emil</span>
             <span class="room-score-pts" style="color:var(--blue);">31</span>
           </div>
           <div class="room-score-row">
-            <span class="room-score-name" style="color:var(--text-dim);">Solène</span>
+            <span class="room-score-name" style="color:var(--text-dim);">Josef</span>
             <span class="room-score-pts" style="color:var(--blue);">28</span>
           </div>
         </div>
@@ -737,14 +771,14 @@ function fmt_date($iso) {
 <script>
 particlesJS("particles-js", {
   particles: {
-    number: { value: 79, density: { enable: true, value_area: 900 } },
+    number: { value: 105, density: { enable: true, value_area: 900 } },
     color: { value: ["#4a9eff", "#a0c8ff", "#ffffff"] },
     shape: { type: "circle" },
     opacity: { value: 0.45, random: true, anim: { enable: true, speed: 0.4, opacity_min: 0.05, sync: false } },
     size: { value: 2.3, random: true, anim: { enable: false } },
     line_linked: { enable: false },
     move: {
-      enable: true, speed: 0.77, direction: "none",
+      enable: true, speed: 1.44, direction: "none",
       random: true, straight: false, out_mode: "out", bounce: false
     }
   },

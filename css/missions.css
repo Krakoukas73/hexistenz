@@ -1,73 +1,214 @@
+/* =========================================================
+   HUD Missions — style calqué sur #scorePanel (étalon bleuté)
+   ========================================================= */
+
 .missionsBox {
   padding: 10px;
-  background: linear-gradient(180deg, rgba(18, 27, 39, 0.86), rgba(4, 7, 11, 0.82));
-  border: 1px solid rgba(242, 209, 107, 0.42);
+  background: rgba(0, 0, 0, 0.68);
+  border: 1px solid rgba(120, 180, 255, 0.38);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  color: rgba(240, 250, 255, 0.96);
+  font-family: monospace;
 }
 
+/* Titre — identique à .score-title */
 .missionsBox .title {
   margin-bottom: 8px;
-  color: rgba(255, 232, 155, 0.92);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: rgba(180, 215, 255, 0.82);
 }
 
 .missionList {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.missionList li {
+/* Ligne de mission — position:relative + overflow:hidden pour le liseré ::before */
+.missionList li.mission-item {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 7px 8px;
+  gap: 6px;
+  padding: 5px 8px 5px 13px;   /* padding-left laisse de la place au liseré */
   border-radius: 9px;
-  background: rgba(242, 209, 107, 0.10);
-  color: rgba(255, 250, 230, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(240, 250, 255, 0.96);
   font: 700 12px/1.2 monospace;
+  overflow: hidden;
 }
 
-.missionList li::after {
-  content: '+100 / +3 tuiles';
-  color: #f2d16b;
-  font-size: 11px;
+/* Liseré gauche épais — même technique que .stats-card::before */
+.missionList li.mission-item::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  opacity: 0.95;
 }
 
 .missionList .mission-empty {
-  justify-content: flex-start;
-  color: rgba(232, 244, 255, 0.48);
+  color: rgba(180, 215, 255, 0.42);
   font-weight: 500;
+  padding: 5px 8px;
 }
 
-.missionList .mission-empty::after {
-  content: '';
-}
+/* ---- Couleurs par type — valeurs pixel-perfect identiques aux .stats-card ---- */
 
-.missionList .mission-icon,
+.missionList .mission-item.mission-type-grass  {
+  background: linear-gradient(135deg, rgba(131,184,79,0.22), rgba(138,107,62,0.12));
+  border-color: rgba(131,184,79,0.38);
+}
+.missionList .mission-item.mission-type-grass::before  { background: linear-gradient(180deg, #83b84f, #8a6b3e); }
+
+.missionList .mission-item.mission-type-field  {
+  background: linear-gradient(135deg, rgba(229,198,90,0.25), rgba(136,98,32,0.11));
+  border-color: rgba(229,198,90,0.38);
+}
+.missionList .mission-item.mission-type-field::before  { background: #e5c65a; }
+
+.missionList .mission-item.mission-type-forest {
+  background: linear-gradient(135deg, rgba(63,147,64,0.23), rgba(31,90,43,0.13));
+  border-color: rgba(63,147,64,0.38);
+}
+.missionList .mission-item.mission-type-forest::before { background: linear-gradient(180deg, #3f9340, #1f5a2b); }
+
+.missionList .mission-item.mission-type-house  {
+  background: linear-gradient(135deg, rgba(196,154,104,0.22), rgba(111,52,40,0.15));
+  border-color: rgba(196,154,104,0.38);
+}
+.missionList .mission-item.mission-type-house::before  { background: linear-gradient(180deg, #c49a68, #6f3428); }
+
+.missionList .mission-item.mission-type-water  {
+  background: linear-gradient(135deg, rgba(95,168,211,0.25), rgba(35,88,130,0.13));
+  border-color: rgba(95,168,211,0.38);
+}
+.missionList .mission-item.mission-type-water::before  { background: #5fa8d3; }
+
+.missionList .mission-item.mission-type-rail   {
+  background: linear-gradient(135deg, rgba(221,221,221,0.20), rgba(70,74,80,0.16));
+  border-color: rgba(200,200,200,0.30);
+}
+.missionList .mission-item.mission-type-rail::before   { background: repeating-linear-gradient(180deg, #eeeeee 0 4px, #777777 4px 8px); }
+
+.missionList .mission-item.mission-type-train  {
+  background: linear-gradient(135deg, rgba(221,221,221,0.20), rgba(70,74,80,0.16));
+  border-color: rgba(200,200,200,0.30);
+}
+.missionList .mission-item.mission-type-train::before  { background: repeating-linear-gradient(180deg, #eeeeee 0 4px, #777777 4px 8px); }
+
+.missionList .mission-item.mission-type-mill   {
+  background: linear-gradient(135deg, rgba(229,198,90,0.25), rgba(136,98,32,0.11));
+  border-color: rgba(229,198,90,0.38);
+}
+.missionList .mission-item.mission-type-mill::before   { background: #e5c65a; }
+
+.missionList .mission-item.mission-type-boat   {
+  background: linear-gradient(135deg, rgba(74,184,212,0.22), rgba(30,100,150,0.13));
+  border-color: rgba(74,184,212,0.38);
+}
+.missionList .mission-item.mission-type-boat::before   { background: linear-gradient(180deg, #4ab8d4, #1e6496); }
+
+/* ---- Badge emoji (à droite) ---- */
 .missionList .mission-type-icon {
-  flex: 0 0 auto;
-  font-size: 1.65em;
+  margin-left: 10px;
+  flex: 0 0 35px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 22px;
   line-height: 1;
 }
 
-.missionList .mission-text {
-  flex: 1 1 auto;
+/* ---- Chiffres (au centre, largeur fixe) ---- */
+.missionList .mission-numbers {
+  flex: 0 0 95px;
+  width: 95px;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  white-space: nowrap;
+  font-family: 'BebasNeue', system-ui, sans-serif;
 }
 
+.missionList .mission-cur {
+  font-size: 25px;
+  font-weight: 400;
+  color: #ffffff;
+  text-shadow: 0 0 16px rgba(90, 170, 255, 0.42);
+  line-height: 1;
+}
+
+.missionList .mission-sep {
+  font-size: 22px;
+  font-weight: 400;
+  color: #ffffff;
+  margin: 0 1px;
+  line-height: 1;
+}
+
+.missionList .mission-goal {
+  font-family: 'BebasNeue', system-ui, sans-serif;
+  font-size: 42px;
+  font-weight: 400;
+  color: #ffffff;
+  text-shadow: 0 0 16px rgba(90, 170, 255, 0.42);
+  line-height: 1;
+}
+
+/* ---- Barre de progression (à gauche, largeur limitée) ---- */
+.missionList .mission-bar {
+  flex: 0 1 50%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.50);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-left: 4px;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.75);
+}
+
+.missionList .mission-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: rgba(70, 155, 230, 0.80);
+  transition: width 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
+  min-width: 2px;
+}
+
+.missionList .mission-bar-fill.bar-mid {
+  background: rgba(70, 190, 175, 0.90);
+}
+
+.missionList .mission-bar-fill.bar-near {
+  background: rgba(90, 210, 140, 0.95);
+}
+
+.missionList .mission-bar-fill.bar-close {
+  background: rgba(255, 215, 0, 1);
+  box-shadow: 0 0 7px rgba(255, 210, 60, 0.70);
+}
+
+/* ---- Mission réalisée ---- */
 .missionList li.mission-completed {
-  opacity: 0.46;
-  background: rgba(170, 180, 190, 0.12);
-  border: 1px solid rgba(210, 220, 230, 0.12);
-  color: rgba(232, 236, 240, 0.72);
-  text-decoration: line-through;
+  opacity: 0.70;
+  filter: saturate(0%);
 }
 
-.missionList li.mission-completed::after {
-  content: 'RÉALISÉ';
-  color: rgba(232, 236, 240, 0.68);
+.missionList .mission-realised {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-family: monospace;
+  letter-spacing: 0.12em;
+  color: rgba(180, 215, 255, 0.55);
+  margin-left: 4px;
 }

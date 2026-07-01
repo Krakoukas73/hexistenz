@@ -1,7 +1,7 @@
 /**
  * bonusCellChestOverlay.js — Coffre animé posé sur chaque cellule bonus.
  *
- * Le coffre (coffre.glb) est chargé une seule fois et cloné pour chaque
+ * Le coffre (gold.glb) est chargé une seule fois et cloné pour chaque
  * cellule bonus active. Il est placé au centre de la cellule, snappé à la
  * surface de la grille (Y = grid plane), à +60% de la taille cible.
  *
@@ -16,14 +16,14 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { createGLTFLoader } from './glbLoader.js';
 import { clone as cloneSkeleton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js';
-import { HEX_SIZE, TILE_VISUAL } from './config.js';
+import { HEX_SIZE } from './config.js';
 import { axialToWorld } from './hex.js';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-const CHEST_GLB_URL    = './glb/decor/coffre.glb';
+const CHEST_GLB_URL    = './glb/decor/gold.glb';
 // Taille cible du coffre : ~20% de HEX_SIZE, puis ×1.6 (+60%)
-const CHEST_TARGET_WIDTH = HEX_SIZE * 0.20 * 1.6 * 1.5 * 1.35 * 0.70; // +50% +35% −30%
+const CHEST_TARGET_WIDTH = HEX_SIZE * 0.20 * 1.6 * 1.5 * 1.35 * 0.70 * 0.85 * 1.20; // +50% +35% −30% −15% +20%
 
 // Le coffre flotte légèrement au-dessus de la grille (star / halo)
 const CHEST_Y_OFFSET = 0.018;
@@ -177,8 +177,10 @@ function prepareChestPrototype(model) {
 // ─── Helpers privés ───────────────────────────────────────────────────────────
 
 function getGridPlaneY() {
-  // Même Y que les bonus cells (légèrement au-dessus de la grille)
-  return (TILE_VISUAL.waterY ?? -0.075) - (TILE_VISUAL.waterThickness ?? 0.08) - 0.010;
+  // Même Y que les bonus cells : niveau 0 monde = base/fond de toutes les tuiles
+  // (cf. tileMesh.js::getBiomeSurfaceY). cf. bonusCells.js::getGridPlaneY pour le détail
+  // du bug corrigé (l'ancienne formule plaçait les coffres ~0.15 unité sous le sol).
+  return 0.003;
 }
 
 function _addChestForCell(group, cell) {
