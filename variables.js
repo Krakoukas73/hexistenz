@@ -108,6 +108,41 @@ export const TILE_VISUAL = {
   outlineOpacity: 0.75
 };
 
+// ----------------------------------------------------------------------------
+// RENDU EAU — nappe continue par zone (waterSurfaceOverlay.js)
+// ----------------------------------------------------------------------------
+// L'eau n'est plus un prisme par tuile : une nappe transparente unique par zone
+// flotte au-dessus d'un riverbed opaque, jupe seulement sur le contour.
+export const WATER_RENDER = {
+  surfaceY:   0.06,    // = TILE_VISUAL.waterThickness — surface, alignée bateaux/plages/décor
+  riverbedY: -0.04,    // fond opaque visible par transparence (profondeur 0.10)
+  opacity:    0.80,    // alpha de base de la nappe (augmente vers les bas-fonds)
+
+  // Palette inspirée du shader Danil (wldcW2) : blue (eau) → white (écume).
+  deepColor:    0x018ec6,  // bleu eau (Danil "blue")
+  shallowColor: 0x35c4ef,  // cyan clair en bas-fonds
+  riverbedColor: 0x35586b, // fond bleu-vert sableux (vu par transparence — P3)
+  foamColor:    0xd1eef5,  // écume (Danil "white")
+  skyColor:     0xbfe6ff,  // teinte ciel des faux reflets (Fresnel)
+
+  // Écume voronoï animée (portée de Danil) + dégradé de profondeur :
+  foamWidth:    0.42,  // PORTÉE de la bande d'écume près de la rive (m)
+  foamScale:    3.00,  // échelle de la texture d'écume (↑ = formes + fines)
+  foamDensity:  0.52,  // seuil écume RIVE (texture Danil ~0.25–0.56, ↑ = plus d'écume)
+  foamAmbient:  0.38,  // seuil écume SURFACE (partout, subtil), 0 = aucune
+  foamSharp:    0.012, // netteté du bord (façon Danil ~0.005–0.015)
+  foamSpeed:    1.00,  // vitesse d'animation de l'écume (×temps), 0 = figée
+  deepDistance: 0.75,  // distance rive→large du dégradé (resserré — moins étendu)
+
+  // Sillage du bateau (traînée en V) :
+  wakeArmWidth:  0.060, // demi-largeur de chaque branche du V (m) — bord adouci dans le shader
+  wakeSpread:    0.40,  // divergence du V (latéral ajouté par unité de recul)
+  wakeLength:    1.15,  // longueur sur laquelle le sillage s'estompe (m) — anti-pop
+  wakeScale:     4.5,   // échelle du motif d'écume du sillage
+  wakeDensity:   0.50,  // couverture d'écume du sillage (seuil texture Danil)
+  wakeOpacity:   0.90,  // opacité max (près du bateau)
+};
+
 // Épaisseur relative de chaque biome (ratio × tileThickness = épaisseur réelle).
 // Utilisé par tileRailOverlay pour positionner les rails à la bonne hauteur de surface.
 // Sync avec getSectorDepth() dans tileMesh.js.

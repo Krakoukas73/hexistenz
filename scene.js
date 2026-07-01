@@ -36,6 +36,8 @@ import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, setAstreMode, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './threeSetup.js';
 import { applyShadowCulling, rebuildShadowCasters } from './shadowCulling.js';
 import { addTileToTerrainMerge, createTerrainMergeGroup, hideTerrainMeshes, rebuildTerrainMerge, updateTileShoreDepth } from './terrainMerge.js';
+import { createWaterSurfaceOverlay, rebuildWaterSurfaceOverlay } from './waterSurfaceOverlay.js';
+import { createWaterDebugPanel } from './waterDebugUi.js';
 // createPostprocessHud supprimé : PIX HUD fusionné dans debugLightUi (panel CUSTOMISATION)
 import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
 import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, setMissionTurn } from './missions.js';
@@ -163,6 +165,7 @@ export function initScene(options = {}) {
   const remoteGhosts = new THREE.Group();
   remoteGhosts.name = 'multiplayer-remote-ghosts';
   const waterZoneOverlay = createWaterZoneOverlay();
+  const waterSurfaceOverlay = createWaterSurfaceOverlay();
   const hoverZoneOverlay = createHoverZoneOverlay();
   const railTrainOverlay = createRailTrainOverlay();
   const waterBoatOverlay = createWaterBoatOverlay();
@@ -222,7 +225,7 @@ export function initScene(options = {}) {
 
   ghostTile.visible = false;
 
-  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, bonusCellChestOverlay, waterZoneOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, grassBladeOverlay, houseOverlay, fieldWaterEffectsOverlay, cometSky, remoteGhosts, ghostTile, terrainMergeGroup);
+  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, bonusCellChestOverlay, waterZoneOverlay, waterSurfaceOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, grassBladeOverlay, houseOverlay, fieldWaterEffectsOverlay, cometSky, remoteGhosts, ghostTile, terrainMergeGroup);
 
   // ── Toggle Jour/Nuit depuis le panel LUT ────────────────────────────────────
   document.addEventListener('hexistenz:dayNightChange', (e) => {
@@ -269,6 +272,8 @@ export function initScene(options = {}) {
   // Fusion initiale de tous les terrains chargés depuis la sauvegarde
   rebuildTerrainMerge(terrainMergeGroup, placedTiles);
   applySceneCurvatureFlags(terrainMergeGroup);
+  rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
+  applySceneCurvatureFlags(waterSurfaceOverlay);
 
   // Une save déjà remplie arrive avec ses tuiles, mais les overlays décoratifs
   // (maisons, bateaux, trains, effets d'eau/champs/forêt) sont des groupes dérivés.
@@ -462,11 +467,14 @@ export function initScene(options = {}) {
     // Les labels ont leur Y figé par updateWorldCurvedSprites (one-shot).
     // Un rebuild corrige les positions pour le nouveau mode bouliste/platiste.
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+    rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
+    applySceneCurvatureFlags(waterSurfaceOverlay);
   });
 
   // ── Globals de diagnostic exposés en console navigateur ────────────────────
   window.setWorldCurvatureEnabled = setWorldCurvatureEnabled;
   window.getWorldCurvatureEnabled = getWorldCurvatureEnabled;
+  createWaterDebugPanel(); // panneau sliders eau/sillage + bouton Copier (bouton 💧 EAU bas-droite)
 
   /**
    * window.scanSceneAura([maxNormalExtent=3])
@@ -743,6 +751,8 @@ export function initScene(options = {}) {
 
   function rebuildInitialDerivedOverlays() {
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+    rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
+    applySceneCurvatureFlags(waterSurfaceOverlay);
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     rebuildRailTrainOverlay(railTrainOverlay, placedTiles);
     rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles);
@@ -953,6 +963,8 @@ export function initScene(options = {}) {
     expandGridAroundPlacedTile(hex);
     // ── Rebuilds IMMÉDIATS : synchrones, légers, nécessaires pour le feedback visuel ──
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles, hex);
+    rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
+    applySceneCurvatureFlags(waterSurfaceOverlay);
     refreshGridAvailability();
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     resetPropHitboxRegistry(); // doit précéder les rebuilds props (forest/house/decor)
@@ -1122,6 +1134,8 @@ export function initScene(options = {}) {
     }
     // ── Rebuilds IMMÉDIATS (undo : rebuild complet, pas de ciblage) ──────────────
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+    rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
+    applySceneCurvatureFlags(waterSurfaceOverlay);
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     resetPropHitboxRegistry();
     updateHoveredSpecialCellVisibility(hoveredHex);
@@ -1403,6 +1417,8 @@ export function initScene(options = {}) {
       const _newTile = _singleTileSync ? placedTiles.get(_addedKeys[0]) : null;
 
       rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
+      rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
+      applySceneCurvatureFlags(waterSurfaceOverlay);
       rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
       resetPropHitboxRegistry();
       // ⚠️ Tous les overlays via queue → LOD immédiat, évite le flash (visible=true hors RAF)
