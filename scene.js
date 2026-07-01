@@ -36,7 +36,11 @@ import { createDebugLightUI, tickFps } from './debugLightUi.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, setAstreMode, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './threeSetup.js';
 import { applyShadowCulling, rebuildShadowCasters } from './shadowCulling.js';
+<<<<<<< HEAD
 import { addTileToTerrainMerge, createTerrainMergeGroup, hideTerrainMeshes, rebuildTerrainMerge } from './terrainMerge.js';
+=======
+import { addTileToTerrainMerge, createTerrainMergeGroup, hideTerrainMeshes, rebuildTerrainMerge, updateTileShoreDepth } from './terrainMerge.js';
+>>>>>>> 4149cedbfad207ea16b99f216dfa4e5f9f8f2a3d
 import { createWaterSurfaceOverlay, rebuildWaterSurfaceOverlay } from './waterSurfaceOverlay.js';
 import { createWaterDebugPanel } from './waterDebugUi.js';
 // createPostprocessHud supprimé : PIX HUD fusionné dans debugLightUi (panel CUSTOMISATION)
@@ -168,7 +172,11 @@ export function initScene(options = {}) {
 
   ghostTile.visible = false;
 
+<<<<<<< HEAD
   scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, bonusCellChestOverlay, waterZoneOverlay, waterSurfaceOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, grassBladeOverlay, houseOverlay, fieldWaterEffectsOverlay, sheepOverlay, cometSky, remoteGhosts, ghostTile, terrainMergeGroup);
+=======
+  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, bonusCellChestOverlay, waterZoneOverlay, waterSurfaceOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, grassBladeOverlay, houseOverlay, fieldWaterEffectsOverlay, cometSky, remoteGhosts, ghostTile, terrainMergeGroup);
+>>>>>>> 4149cedbfad207ea16b99f216dfa4e5f9f8f2a3d
 
   // ── Toggle Jour/Nuit depuis le panel LUT ────────────────────────────────────
   document.addEventListener('hexistenz:dayNightChange', (e) => {

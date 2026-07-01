@@ -191,6 +191,7 @@ export function rebuildWaterSurfaceOverlay(group, placedTiles) {
   }
 }
 
+<<<<<<< HEAD
 /**
  * Reconstruit la table de déplacement organique du rivage (mêmes calculs que
  * la PASSE A de rebuildWaterSurfaceOverlay), exposée pour que d'autres overlays
@@ -229,6 +230,8 @@ export function displaceShorePoint(shoreMap, x, z) {
   return e ? [x + e.dx, z + e.dz] : [x, z];
 }
 
+=======
+>>>>>>> 4149cedbfad207ea16b99f216dfa4e5f9f8f2a3d
 // ── Forme d'une tuile : wedges + tris centre + arêtes de contour ────────────
 
 function _collectTileShape(pt, placedTiles) {
