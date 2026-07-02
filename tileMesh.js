@@ -4,6 +4,7 @@ import { WORLD_CURVATURE } from './worldCurvature.js';
 import { createOuterVertices } from './hexGeometry.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getBiomeMaterial, getBiomeSideMaterial } from './tileTextures.js';
+import { getFlatWaterMaterial } from './realisticWater.js';
 import { createRailCenterOverlay } from './tileRailOverlay.js';
 import { createRoadCenterOverlay } from './tileRoadOverlay.js';
 import { createValueLabel, getMiniValueLabel } from './tileLabels.js';
@@ -54,10 +55,14 @@ export function createTileMesh(tileOrEdges, options = {}) {
   const opacity = options.opacity ?? 1;
   const worldX  = options.worldX ?? 0;
   const worldZ  = options.worldZ ?? 0;
+  // Tuiles fantômes (hover local + curseurs multijoueur distants) uniquement :
+  // ces meshes ne sont jamais fusionnés dans placedTiles/waterSurfaceOverlay, donc
+  // sans ce flag leurs secteurs eau resteraient invisibles (cf. skip normal ci-dessous).
+  const previewWater = options.previewWater ?? false;
   const group = new THREE.Group();
 
-  group.add(...createSectorMeshes(edges, opacity, worldX, worldZ));
-  const centerMesh = createCenterMesh(center, opacity, worldX, worldZ);
+  group.add(...createSectorMeshes(edges, opacity, worldX, worldZ, previewWater));
+  const centerMesh = createCenterMesh(center, opacity, worldX, worldZ, previewWater);
   if (centerMesh) group.add(centerMesh);
 
   const roadCenterOverlay = createRoadCenterOverlay(edges, SECTOR_DEFS, createOuterVertices);
@@ -97,7 +102,7 @@ export function renderMiniTile(tile) {
   `;
 }
 
-function createSectorMeshes(edges, opacity, worldX = 0, worldZ = 0) {
+function createSectorMeshes(edges, opacity, worldX = 0, worldZ = 0, previewWater = false) {
   const vertices = createOuterVertices(HEX_SIZE * TILE_VISUAL.radiusScale);
 
   return SECTOR_DEFS.map((sector, sectorIndex) => {
@@ -111,7 +116,11 @@ function createSectorMeshes(edges, opacity, worldX = 0, worldZ = 0) {
     // hideTerrainMeshes() et exclu du merge (isMergeableTerrainMesh) : on évite
     // de le construire (géométrie + triangulation) pour rien. Seul le label de
     // valeur reste nécessaire ici (affiché indépendamment du mesh terrain).
-    if (type !== 'water') {
+    // Exception : previewWater (tuiles fantômes) — ces meshes ne passent jamais
+    // par waterSurfaceOverlay, donc on construit un secteur eau simplifié (matériau
+    // plat, pas le shader complet qui exige des attributs aShoreDist/aSteep absents
+    // ici) plutôt que de laisser un trou transparent sous la souris.
+    if (type !== 'water' || previewWater) {
       const previousSector = SECTOR_DEFS[(sectorIndex + SECTOR_DEFS.length - 1) % SECTOR_DEFS.length];
       const nextSector = SECTOR_DEFS[(sectorIndex + 1) % SECTOR_DEFS.length];
       const previousType = getEdgeType(edges[previousSector.key]);
@@ -131,7 +140,9 @@ function createSectorMeshes(edges, opacity, worldX = 0, worldZ = 0) {
         worldX,
         worldZ
       );
-      const materials = [getBiomeMaterial(type, opacity), getBiomeSideMaterial(type, opacity)];
+      const materials = type === 'water'
+        ? [getFlatWaterMaterial(opacity), getBiomeSideMaterial('water', opacity)]
+        : [getBiomeMaterial(type, opacity), getBiomeSideMaterial(type, opacity)];
       const mesh = new THREE.Mesh(geometry, materials);
       mesh.name = `hex-sector-${type}`;  // pour le HUD perf
       mesh.receiveShadow = true;
@@ -491,11 +502,12 @@ function uvForPoint(point) {
   ];
 }
 
-function createCenterMesh(centerType, opacity, worldX = 0, worldZ = 0) {
+function createCenterMesh(centerType, opacity, worldX = 0, worldZ = 0, previewWater = false) {
   // Eau : rendue par waterSurfaceOverlay.js — pas de mesh terrain ici (voir
   // note équivalente dans createSectorMeshes). Aucun label de centre n'existe
   // dans ce fichier, donc rien d'autre à préserver pour ce cas.
-  if (centerType === 'water') return null;
+  // Exception previewWater : cf. createSectorMeshes.
+  if (centerType === 'water' && !previewWater) return null;
 
   const depth = getSectorDepth(centerType);
   const radius = HEX_SIZE * TILE_VISUAL.centerRadiusScale;
@@ -506,10 +518,10 @@ function createCenterMesh(centerType, opacity, worldX = 0, worldZ = 0) {
   // Three.js ; ici on ferme explicitement la zone centrale contre les 6 côtés
   // internes pour supprimer les micro-trous visuels.
   const geometry = createPrismGeometry(vertices, depth, centerType, worldX, worldZ);
-  const mesh = new THREE.Mesh(geometry, [
-    getBiomeMaterial(centerType, opacity),
-    getBiomeSideMaterial(centerType, opacity)
-  ]);
+  const mesh = new THREE.Mesh(geometry, centerType === 'water'
+    ? [getFlatWaterMaterial(opacity), getBiomeSideMaterial('water', opacity)]
+    : [getBiomeMaterial(centerType, opacity), getBiomeSideMaterial(centerType, opacity)]
+  );
 
   mesh.name = `hex-center-${centerType}`;  // pour le HUD perf
   mesh.receiveShadow = true;

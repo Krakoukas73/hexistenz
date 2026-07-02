@@ -201,6 +201,24 @@ function computeChunkSphere(centers) {
 
 // ─── API publique ─────────────────────────────────────────────────────────────
 
+/** Lit les paramètres vent courants de la prairie (HUD CUSTOMISATION — section VENT). */
+export function getGrassWindParams() {
+  const m = _grassMaterial;
+  return {
+    strength: m ? m.uniforms.uWindStrength.value : GRASS_WIND_STRENGTH,
+    speed:    m ? m.uniforms.uWindSpeed.value    : GRASS_WIND_SPEED,
+    sway:     m ? m.uniforms.uWindSway.value     : GRASS_WIND_SWAY,
+  };
+}
+
+/** Applique en direct (simples uniforms, pas de recompilation shader). */
+export function setGrassWindParams(partial = {}) {
+  const m = getGrassMaterial();
+  if (partial.strength != null) m.uniforms.uWindStrength.value = partial.strength;
+  if (partial.speed    != null) m.uniforms.uWindSpeed.value    = partial.speed;
+  if (partial.sway     != null) m.uniforms.uWindSway.value     = partial.sway;
+}
+
 export function createGrassBladeOverlay() {
   const group = new THREE.Group();
   group.name  = 'grass-blade-overlay';

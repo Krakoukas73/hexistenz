@@ -44,6 +44,8 @@ export const cloudFragmentShader = /* glsl */`
   uniform vec3  uSunColor;
   uniform float uCoverage;   // 0 = ciel clair, 1 = couvert
   uniform float uEnabled;    // 0.0 = bypass
+  uniform float uCloudScale; // échelle du motif FBM (↑ = nuages plus petits/fins)
+  uniform float uCloudSpeed; // vitesse de dérive (× temps)
 
   varying vec3 vWorldPos;
 
@@ -96,7 +98,7 @@ export const cloudFragmentShader = /* glsl */`
   // ── Densité nuageuse en un point ─────────────────────────────────────────
   // Reproduction fidèle de la fonction density() du Shadertoy source.
   float density(vec3 pos) {
-    vec3 p = pos * 0.026202 + vec3(0.0, 0.0, -uTime * 0.09450); // taille −10 % (fréq ×1.111) | vitesse −10 % (−10% supplémentaire taille)
+    vec3 p = pos * uCloudScale + vec3(0.0, 0.0, -uTime * uCloudSpeed); // échelle/vitesse pilotées par le HUD NUAGES
     float dens = fbm(p, FBM_FREQ);
     float cov  = 1.0 - uCoverage;
     dens *= smoothstep(cov, cov + 0.05, dens);

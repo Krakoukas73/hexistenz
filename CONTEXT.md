@@ -2,7 +2,7 @@
 
 ## 1. Nature du projet
 
-**Version courante : `v0.9.1.2.3`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
+**Version courante : `v0.9.1.10`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
 
 Jeu web contemplatif de pose de tuiles hexagonales, inspiré de Dorfromantik / The Settlers / HoMM. Le joueur pioche une tuile, la tourne, la pose sur une grille hexagonale. Chaque tuile a 6 secteurs triangulaires (biomes ou réseaux). Objectif : connecter les biomes, compléter des missions, maximiser le score.
 
@@ -311,11 +311,13 @@ Pipeline Three.js r160 : `RenderPixelatedPass → SmokeVolumePass → ShaderPass
 
 **pixelPass** : jamais désactivé (enabled=false casserait le readBuffer). Quand pixelisation "off" : neutralisé (`pixelSize=1`, `forces=0`). `uPixelSize` synchronisé dans `colorGradingPass` pour alignement Bayer.
 
-### Pass cinématique (`cinematicPass.js`)
+### Pass cinématique (`cinematicPass.js` + `shaders/shaderCinematique.js`)
 
-8 effets dans le fragment shader : distorsion barillet → tilt-shift → aberration chromatique → gaussienne 9-taps → halation → vignette → grain film → scan lines.
+Fragment shader, dans l'ordre d'exécution : **courbure écran (CRT)** (déforme l'UV en amont, anisotropie légère horizontale/verticale) → distorsion barillet (bâtie sur l'UV déjà courbée) → tilt-shift → aberration chromatique → gaussienne 9-taps → halation → **God Rays** → **bloom** (seuil + 8-tap radial) → vignette → grain film → scan lines, puis en toute fin **masque/assombrissement de bords CRT** (mix distance Chebyshev/radiale, indépendant des coins uniquement).
 
-Uniforms clés : `uTilt`, `uFocusCenter`, `uFocusBand`, `uVignette`, `uGrain`, `uChromatic`, `uHalation`, `uBarrel`, `uScanLines` (0–6 px / cycle 8 px), `uTime`, `uResolution` (injecté dans threeSetup.js — absent de CINEMATIC_SHADER.uniforms).
+Uniforms clés : `uTilt`, `uFocusCenter`, `uFocusBand`, `uVignette`, `uGrain`, `uChromatic`, `uHalation`, `uBarrel`, `uScanLines` (0–6 px / cycle 8 px), `uGodRaysLength/Diffusion/Threshold`, `uBloomIntensity/Threshold/Radius/Softness`, `uCrtCurvature/Mask/CornerDark`, `uTime`, `uResolution` (injecté dans threeSetup.js — absent de CINEMATIC_SHADER.uniforms).
+
+**Convention d'ajout d'effet** (God Rays, Bloom, Courbure écran) : un slider maître à `0` bypass tout le bloc GLSL (`if (uMaster > 0.001) { ... }`) — zéro coût GPU, zéro effet visuel — pendant que ses sous-paramètres peuvent avoir des défauts non-nuls sans risque puisqu'ils sont inertes tant que le maître est à 0. Bloom et Courbure écran ont chacun leur propre case à cocher `xxxEnabled` dans le HUD (§13), au même titre que God Rays/Tilt-shift.
 
 **API** : `postprocess.getCinemaSettings()`, `applyCinemaSettings(partial)`, `toggleCinema()`. **Touche T**. Persistance localStorage `hexistenz_cinema_v1`. Config intégrée dans chaque preset d'`ambiances.json`.
 
@@ -396,15 +398,48 @@ updateSmokeVolumePass(smokeVolumePass, _smokeSrcs, camera, _smokeLocos.length,
 
 ---
 
-## 13. LUT / Presets (`debugLightUi.js` + `json/ambiances.json`)
+## 13. Panel CUSTOMISATION / EDA (`debugLightUi.js` + `json/ambiances.json`)
 
-Bouton **L** → panel LUT. Bouton **C** → CUSTOMISATION. **📋 Copier** : exporte `{ lut, pix, cinema }`.
+Touche **E** → ouvre/ferme le panel EDA (Éditeur de Direction Artistique). Touche **F** → HUD perf avancé (FPS détaillé), indépendant de l'EDA.
 
-Presets `json/ambiances.json` (16) : Défaut, Brume côtière, Minuit, Automne, Été vif, Hiver, Vieux sépia, Forêt nordique, Test colorimétrie, Désert doré, Noir&Blanc (scanLines=4), Apple II (scanLines=4) / CGA (scanLines=4) / EGA (scanLines=3) (pixelSize=3), Amiga (pixelSize=2, scanLines=2), Psyché-LSD.
+**Layout (refonte juillet 2026)** : le panel n'affiche plus 3 colonnes simultanées mais **3 onglets** sous le header, chaque onglet organisé en 2 colonnes. Header (`AMBIANCES` + presets) et footer (undo/redo, 📋 Copier, comparer) restent communs, plein-largeur, au-dessus/en-dessous des onglets. Forme du monde et Jour/Nuit, auparavant des boutons de footer, sont désormais des cases à cocher dans l'onglet Environnement (rubriques 5 et 6, cf. tableau ci-dessous). Largeur du panel : `LUT_WIDTH_FACTOR = 2` × largeur `#tileUI` (réduite de 3 à 2 depuis le passage en onglets — 2 colonnes au lieu de 3 à afficher). Hauteur **fixe** `calc(100vh - 28px)`. Onglet actif persisté dans `localStorage['hexistenz_eda_tab']`, bascule sans coût de layout (`display:none` sur les panels inactifs).
 
-Chargé via `fetch('./json/ambiances.json')` dans `debugLightUi.js`.
+Numérotation à plat par onglet (repart de 1, ordre de lecture colonne A puis colonne B — plus de rubrique "parente" séparée de ses sous-rubriques, sauf VENT qui garde un niveau de sous-numérotation) :
+
+| Onglet | Colonne A | Colonne B |
+|---|---|---|
+| **LUT** | 1. Brouillard · 2. Astre lumineux | 3. Étalonnage · 4. Palette biomes |
+| **Cinématique** | 1. CINÉMATIQUE (vignette/grain/aberration/halation/barillet/scanlines) · 2. God Rays · 3. Tilt-shift · 4. Bloom | 5. Pixélisation · 6. Courbure écran (CRT) |
+| **Environnement** | 1. Écume · 2. Sillage bateau · 3. Nuages | 4. Vent (4.1 Blés, 4.2 Herbes, 4.3 Arbres) · 5. Forme du monde · 6. Jour/Nuit |
+
+Rubriques avec interrupteur on/off dans leur en-tête (grise les contrôles sans réinitialiser les valeurs) : Étalonnage, Palette biomes, CINÉMATIQUE, God Rays, Tilt-shift, **Bloom**, Pixélisation, **Courbure écran**, **VENT** (coupe l'ondulation blé + prairie + arbres simultanément — cf. plus bas). Bloom et Courbure écran, ajoutés en juillet 2026, suivent exactement le même mécanisme de case à cocher que God Rays/Tilt-shift : la valeur du slider reste mémorisée, seul l'uniform effectif est forcé à 0 quand décoché.
+
+**Tout paramètre de ce panel (LUT, cinéma, eau, vent, nuages…) est réglable en direct pendant la partie** : chaque slider commit immédiatement sur le pipeline GPU (aucune recompilation shader hors cas explicitement documentés, ex. reconstruction forêt pour le vent des arbres), avec undo/redo et export JSON via 📋 Copier.
+
+**Auto-masquage réciproque** : quand l'EDA est ouvert (`body.lut-panel-open`), `#scorePanel` et le mini-HUD clavier (`#kbdHintHud`, "H ou ESC → aide") sont masqués ; ils réapparaissent à la fermeture. `#scorePanel` partage ce mécanisme avec le HUD FPS avancé (`_syncFpsFullscreen()` — masqué si EDA ouvert OU HUD FPS développé).
+
+**Emojis de rubrique/sous-rubrique** : agrandis ×1.35 via un span dédié `.rubrique-emoji` (`font-size: 1.35em`, relatif au parent — reste correct aussi bien à 12px (rubriques) qu'à 11px (sous-rubriques)).
+
+Presets `json/ambiances.json` (16) : Défaut, Brume côtière, Minuit, Automne, Été vif, Hiver, Vieux sépia, Forêt nordique, Test colorimétrie, Désert doré, Noir&Blanc (scanLines=4), Apple II (scanLines=4) / CGA (scanLines=4) / EGA (scanLines=3) (pixelSize=3), Amiga (pixelSize=2, scanLines=2), Psyché-LSD. Chargé via `fetch('./json/ambiances.json')`.
+
+**📋 Copier** : exporte `{ lut, pix, cinema, water, wind, cloud, dayNight }` en JSON (`pix` inclut `worldShapeMode`). Undo/redo couvrent les 6 catégories LUT/pix/cinema/water/wind/cloud (`_snapshotAll`/`_restoreSnapshot`) — Forme du monde et Jour/Nuit en restent délibérément exclus (réglages "monde", pas "regard"), mais sont bien inclus dans l'export 📋 Copier.
 
 **Quantification palette rétro** (`visualEnvironment.js`) : uniforms `uPaletteColors[40]` + `uPaletteSize` + `uPaletteDither`. Comparaison en espace sRGB (raw hex — ne pas passer par `new THREE.Color()`).
+
+### Onglet Environnement — rubrique 4. VENT
+
+Regroupe 3 sources de vent indépendantes, avec un interrupteur on/off global qui les coupe toutes les trois sans écraser les valeurs mémorisées (`_applyWindLive` applique `strength`/`sway` effectifs à 0 seulement en live) :
+
+- **Blé/prairie** (`fieldWheatOverlay.js` / `grassBladeOverlay.js`) : uniforms simples (`uWindStrength`, `uWindSpeed`, + `uWindSway` pour la prairie) — modifiables en live, aucune recompilation shader. Getters/setters exportés : `getWheatWindParams/setWheatWindParams`, `getGrassWindParams/setGrassWindParams`.
+- **Arbres** (`forestOverlay.js`) : le vent est cuit dans la SOURCE du shader (`onBeforeCompile`, `TREE_WIND`), pas de simples uniforms. `setTreeWindParams(group, partial)` ne patche jamais les matériaux déjà posés en place (piège vécu, cf. §26) : il met à jour `TREE_WIND` puis déclenche un **rebuild forêt complet debounced** (180 ms, `rebuildForestOverlay`) — seule voie sûre pour réappliquer le vent sans empiler des injections GLSL dupliquées.
+
+### Onglet Environnement — rubrique 3. NUAGES
+
+`cloudSky.js` expose désormais `uCloudScale` / `uCloudSpeed` en uniforms (remplacent les constantes GLSL figées `0.026202` / `0.09450` de `shaders/shaderCiel.js`), en plus de `uCoverage` déjà existant. Getters/setters : `getCloudSkyParams/setCloudSkyParams`. Réglable en live, aucune recompilation (l'upgrade "exposer uCoverage dans le panneau" listée en §27.C est donc faite, avec scale/vitesse en bonus). Rubrique déplacée en colonne A (avec Écume/Sillage bateau) depuis juillet 2026.
+
+### Onglet Environnement — rubriques 5. Forme du monde / 6. Jour-Nuit
+
+Anciennement des boutons à bascule dans le footer du panel EDA, ces deux réglages sont désormais des cases à cocher (`.pix-switch`) en colonne B de l'onglet Environnement, comme les autres rubriques. Chaque rubrique n'a qu'une case : cochée = premier état (Bouliste / Jour), décochée = second état (Platiste / Nuit), avec un `<output>` texte affichant le mode actuel. Les deux réglages restent hors undo/redo ("réglage monde, pas regard"), mais sont inclus dans l'export 📋 Copier (`pix.worldShapeMode` et `dayNight`).
 
 ---
 
@@ -612,7 +647,7 @@ ui.js / help.js / grid.js / gridRegions.js
 | Arbres | TREE_GROUND_OFFSET = -0.005 |
 | Densités | Fleurs +13%, plantes +20%, rochers +16% |
 | **Ciel volumétrique** | `cloudSky.js` + `shaders/shaderCiel.js` — value noise FBM (hashIQ), Beer-Lambert, sphère atmosphérique |
-| **Mode jour/nuit** | HUD dropdown `#dayNightMode`, event `hexistenz:dayNightChange`, localStorage `hexistenz_daynightmode` |
+| **Mode jour/nuit** | Case à cocher `#dayNightToggle` (EDA, onglet Environnement, rubrique 6), event `hexistenz:dayNightChange`, localStorage `hexistenz_daynightmode` |
 | **Comètes bloquées de jour** | `cometSky.visible = !isSoleil`; `updateCometSky` conditionnel dans animate |
 | **Fumée volumétrique** | `smokeVolumePass.js` + `shaders/shaderFumee.js` — ray-march slab-borné, Gaussian évasé, turbulence 4 octaves, depth test via `beautyRenderTarget.depthTexture`. Maisons petite-1/2 (33%), petite-3 exclue. Locos ×1.14 / maisons ×0.86. LOD calqué exactement sur les overlays. Buffer 48 sources, locos en priorité. |
 | **Rebuild forest incrémental** | `HEX_CHUNK_SIZE=3`, param `changedTile`, `userData.chunkKey` sur chaque IM |
@@ -650,6 +685,12 @@ ui.js / help.js / grid.js / gridRegions.js
 | **Plages alignées sur le rivage organique** | `waterBeachGeometry.js` consomme désormais la même table de déplacement (`buildShoreDisplacementMap`/`displaceShorePoint`, exportées de `waterSurfaceOverlay.js`) que la nappe d'eau, calculée une fois par rebuild dans `waterZoneOverlay.js` et transmise à `createWaterBeachMesh(zone, placedTiles, shoreMap)`. Les plages épousent donc exactement le même contour ondulé, sommet pour sommet. `waterZoneBoundary.js` (halos de survol, générique à tous les biomes) volontairement non touché — hors périmètre du rivage. |
 | **Merge : 3 régressions bloquées à l'intégration** | La branche de Cyril partait d'une base vieille de 3 jours. Repérées et écartées lors du merge : suppression de `sheepOverlay` dans `scene.js`, retour de `TREE_WIND.strength` à 0.062 (annulait le fix "brindilles"), perte du 2ᵉ argument `getMissionProgressByType(placedTiles)` de `maybeGenerateMissionForTile`, et perte du 3ᵉ argument `placedTiles.size` de `updateDeckUI` (compteur "tuiles posées" du HUD). Aucune des quatre n'a été reportée. |
 | **Nettoyage CPU post-merge** | `tileMesh.js` ne construit plus aucune géométrie terrain pour les secteurs/centre eau (c'était un mesh masqué, jamais rendu depuis l'exclusion du merge). `scene.js` : suppression du calcul de voisinage bathymétrique (`_countWaterNeighbors` et consorts) devenu mort ; `addTileToTerrainMerge` (incrémental O(1)) s'applique désormais aussi aux tuiles eau, au lieu d'un rebuild complet du terrain à chaque pose. `terrainMerge.js::updateTileShoreDepth` supprimé (plus d'appelant). |
+| **Panel EDA — rubriques VENT (6) + NUAGES (4)** | `debugLightUi.js` passe de 4 à 6 rubriques (LUT, PIXELISATION, CINÉMA, NUAGES, EAU, VENT) réparties sur **3 colonnes** (`LUT_WIDTH_FACTOR: 2→3`, hauteur fixe `calc(100vh-28px)` pour occuper tout l'écran). VENT regroupe blé/prairie/arbres avec interrupteur on/off global. NUAGES gagne `uCloudScale`/`uCloudSpeed` en uniforms (`cloudSky.js`, `shaders/shaderCiel.js`) en plus de `uCoverage`. `📋 Copier` exporte désormais `{ lut, pix, cinema, water, wind, cloud }`. `#scorePanel` et `#kbdHintHud` se masquent automatiquement à l'ouverture de l'EDA. Détails complets en §13. |
+| **Bug vent arbres corrigé** | Patcher en direct les matériaux d'arbres déjà posés (`applyGlobalWindToMaterial` ré-appelé sur un matériau déjà câblé) empilait les injections `onBeforeCompile` → erreurs GLSL "redefinition" → arbres invisibles. Fix : `setTreeWindParams` ne patche plus jamais en place, il mute `TREE_WIND` et déclenche un rebuild forêt complet debounced. Nouveau piège documenté en §26. |
+| **Shader Bloom** (2026-07-02) | Nouvel effet dans `shaders/shaderCinematique.js` : seuil (`smoothstep`) + 8-tap radial + sample centre, inséré après God Rays et avant vignette. Slider maître `uBloomIntensity` (0 = bypass total, coût GPU nul), sous-paramètres `uBloomThreshold/Radius/Softness`. Case à cocher `bloomEnabled` propre, rubrique "4. Bloom" de l'onglet Cinématique (§13). |
+| **Shader Courbure écran (CRT)** (2026-07-02) | Nouvel effet dans `shaders/shaderCinematique.js` : déformation d'UV radiale calculée en amont du barillet (`uCrtCurvature`, anisotropie horizontale/verticale — courbure verticale plus faible, comme les vrais tubes cathodiques), + masque optionnel et assombrissement progressif des bords (mix distance Chebyshev/radiale, pas seulement les coins) appliqués après la vignette (`uCrtMask`, `uCrtCornerDark`). Slider maître à 0 = bypass total. Case à cocher `crtEnabled` propre, rubrique "6. Courbure écran" de l'onglet Cinématique (§13). |
+| **Panel EDA — refonte en 3 onglets** (2026-07-02) | `debugLightUi.js` : les 3 colonnes simultanées (devenues trop chargées visuellement) sont remplacées par 3 onglets (LUT / Cinématique / Environnement) sous le header, chacun organisé en 2 colonnes. Numérotation aplatie et repartant de 1 dans chaque onglet. `LUT_WIDTH_FACTOR` 3→2. Onglet actif persisté (`localStorage['hexistenz_eda_tab']`). Séparateurs `.debug-light-pix-sep` systématiques entre rubriques. Détails complets en §13. |
+| **Panel EDA — Forme du monde / Jour-Nuit en cases à cocher** (2026-07-02) | `hud_eda.js` : les boutons à bascule "🌍 Bouliste/📐 Platiste" et "☀️ Jour/🌙 Nuit" quittent le footer du panel EDA et deviennent 2 rubriques à part entière ("5. Forme du monde", "6. Jour/Nuit") en colonne B de l'onglet Environnement, sous forme de case à cocher unique (`.pix-switch`) + `<output>` texte du mode actuel. `3. NUAGES` passe en colonne A (avec Écume/Sillage bateau). `scene.js` notifie désormais le panel via l'event `hexistenz:dayNightChange` (au lieu de manipuler le DOM des anciens boutons) pour synchroniser la case à cocher au mode résolu à l'init (tirage aléatoire jour/nuit). `📋 Copier` inclut désormais `dayNight` en plus de `{ lut, pix, cinema, water, wind, cloud }` (`worldShapeMode` était déjà dans `pix`). CSS `.world-shape-row`/`.world-shape-btn` supprimé. |
 
 ---
 
@@ -671,14 +712,14 @@ Sphère `BackSide` r=500 centrée sur la caméra, `renderOrder=-200000` (avant �
 
 **Désaturation sous-horizon** — `desat = clamp(-rd.y * 10, 0, 1)` → `mix(sky, vec3(lum * 0.85), desat)`.
 
-**Uniforms** : `uTime, uSunDir, uSkyZenith, uSkyHorizon, uSunColor, uCoverage (0.41), uEnabled`.
+**Uniforms** : `uTime, uSunDir, uSkyZenith, uSkyHorizon, uSunColor, uCoverage (0.41), uEnabled, uCloudScale (0.026202), uCloudSpeed (0.09450)`.
 
-**État courant** (freq/vitesse après ajustements cumulés) :
+`uCloudScale`/`uCloudSpeed` (rubrique 4 NUAGES du panel EDA, cf. §13) remplacent depuis juillet 2026 les anciennes constantes GLSL figées de `density()` — réglables en live, aucune recompilation :
 ```glsl
-vec3 p = pos * 0.026202 + vec3(0.0, 0.0, -uTime * 0.09450);
+vec3 p = pos * uCloudScale + vec3(0.0, 0.0, -uTime * uCloudSpeed);
 ```
-Historique vitesse : 0.2 → 0.164 (−18%) → 0.128 (−22%) → 0.105 (−18%) → 0.09450 (−10%).
-Historique fréquence (taille) : 0.0212242 → 0.023582 (−10%) → 0.026202 (−10%).
+Historique vitesse (avant l'exposition en uniform) : 0.2 → 0.164 (−18%) → 0.128 (−22%) → 0.105 (−18%) → 0.09450 (−10%).
+Historique fréquence/taille (avant l'exposition en uniform) : 0.0212242 → 0.023582 (−10%) → 0.026202 (−10%).
 
 **`cloudSky.visible` est toujours `true`** — c'est `uEnabled` qui active/désactive le rendu nuages. En mode nuit le gradient de ciel uni reste visible (couleurs nocturnes).
 
@@ -688,7 +729,7 @@ Historique fréquence (taille) : 0.0212242 → 0.023582 (−10%) → 0.026202 (�
 
 `isSoleil` (booléen mutable dans scene.js) — persistent via `localStorage('hexistenz_daynightmode')`.
 
-HUD dropdown `#dayNightMode` dans `debugLightUi.js` — sous "forme du monde". Dispatche `hexistenz:dayNightChange` (CustomEvent), lu par scene.js.
+Case à cocher `#dayNightToggle` dans `hud_eda.js` — onglet Environnement, rubrique 6 "Jour / Nuit" (déplacée du footer en juillet 2026). Dispatche `hexistenz:dayNightChange` (CustomEvent), lu par scene.js et par le panel lui-même (pour resynchroniser la case si l'événement vient d'ailleurs, ex. init aléatoire jour/nuit dans `scene.js`).
 
 **Star occluder** (`hexistenz-grid-star-occluder`) : rendu à `renderOrder=-500` pour masquer les étoiles sous le plateau. Mis à `visible=false` à l'init pour que les cellules vides montrent le ciel.
 
@@ -775,6 +816,8 @@ Catégories dominantes en DC :
 
 **Type de biome pour placement props proches du centre de tuile** — `TERRAIN_RELIEF.enabled=false` (§6) rend la hauteur de sol par biome une fonction en PALIERS nets (pas de transition). Pour un point proche du centre (rayon ≤ `TILE_VISUAL.centerRadiusScale`, ex. `centerPos()` dans `villageDecorOverlay.js`), utiliser `getTileCenterType(placedTile)` — jamais un type d'arête deviné via `getEdgeFromLocalPoint()` sur un point quasi à l'origine (angle quasi arbitraire, retombe sur une arête au hasard parmi les 6, potentiellement différente du vrai centre). Bug vécu : chevaux flottants/enfoncés (§21).
 
+**`onBeforeCompile` chaîne les injections — ne JAMAIS ré-appliquer sur un matériau déjà posé** — `applyGlobalWindToMaterial()` (`globalWind.js`) capture `previousOnBeforeCompile = material.onBeforeCompile` et l'appelle en premier avant d'injecter son propre code GLSL. Rappeler cette fonction sur un matériau qui l'a DÉJÀ (même après avoir supprimé `userData.globalWindSignature` pour forcer le "changement") empile une copie supplémentaire des uniforms/fonctions à chaque appel — d'autant plus piégeux que la courbure monde (`applyWorldCurvatureToMaterial`, `threeSetup.js`) se chaîne elle aussi PAR-DESSUS le vent une fois la tuile posée en scène, donc même réinitialiser juste `onBeforeCompile`/`customProgramCacheKey` avant de ré-appliquer casse la courbure. Erreur GLSL vécue : `'uGlobalWindTime' : redefinition`, `'globalWindHash' : function already has a body` → échec de compilation → arbres invisibles. Fix (`forestOverlay.js::setTreeWindParams`, panel EDA rubrique 6 VENT, cf. §13) : ne jamais patcher les matériaux existants — muter `TREE_WIND` (objet partagé, non gelé) puis déclencher un `rebuildForestOverlay()` complet (debounced 180 ms) qui clone toujours un matériau FRAIS depuis le prototype et y applique le vent une seule fois proprement.
+
 ---
 
 ## 27. Systèmes graphiques — référence upgrade
@@ -794,7 +837,7 @@ Regroupe tous les points d'entrée pour un upgrade visuel futur. Chaque système
 - Remplacer `BasicShadowMap` par `PCFSoftShadowMap` (`threeSetup.js`)
 - Augmenter la résolution shadow map (actuellement 1024×1024)
 - Ajouter une passe SSAO entre `RenderPixelatedPass` et `SmokeVolumePass`
-- Ajouter un bloom sélectif (eau, feu, comètes) après `colorGradingPass`
+- ~~Ajouter un bloom sélectif (eau, feu, comètes) après `colorGradingPass`~~ un bloom plein écran (seuil de luminance) est fait dans `cinematicPass` (§12, §13) ; un bloom sélectif par masque (eau/feu/comètes uniquement) reste à faire
 - `WebGL2` + `logarithmicDepthBuffer: true` pour réduire le z-fighting lointain
 
 ---
@@ -820,7 +863,7 @@ Sphère BackSide r=500, ray-march value noise FBM 4 octaves, Beer-Lambert.
 - Scattering Rayleigh/Mie physique (teinte orange/rouge au coucher de soleil)
 - God rays : radial blur depuis `uSunDir` projeté
 - Éclairs nocturnes : flash aléatoire basse fréquence (mode nuit)
-- `uCoverage = 0.41` : exposer dans le panneau LUT pour contrôle temps réel
+- ~~`uCoverage = 0.41` : exposer dans le panneau LUT pour contrôle temps réel~~ fait (rubrique 4 NUAGES, + `uCloudScale`/`uCloudSpeed` en bonus, cf. §13)
 
 ---
 
@@ -836,15 +879,16 @@ ShaderPass, ray-march slab `Y[-0.05, 1.3]`, 48 pas, Gaussian évasé, 4 octaves 
 
 ---
 
-### E. Effets cinématiques (`cinematicPass.js`)
+### E. Effets cinématiques (`cinematicPass.js` + `shaders/shaderCinematique.js`)
 
-8 effets fragment : barillet → tilt-shift → aberration chromatique → gaussienne 9-taps → halation → vignette → grain film → scan lines.
+Fragment shader : courbure écran CRT → barillet → tilt-shift → aberration chromatique → gaussienne 9-taps → halation → God Rays → bloom → vignette → grain film → scan lines. Bloom et courbure écran CRT ajoutés le 2026-07-02, cf. §12/§13.
 
 **Upgrades** :
 - Depth of field vrai basé sur le depth buffer (tDepth) — remplacer tilt-shift horizontal
 - Motion blur : accumulation frame précédente × matrice MVP précédente
 - Aberration chromatique : 5-sample anamorphique (actuellement 3-sample radial)
 - LUT 3D : remplacer la correction couleur par une `DataTexture3D` (Three.js r160 supporté)
+- Bloom : passer d'un seuil plein écran à un masque sélectif (eau, feu, comètes), cf. §27.A
 
 ---
 

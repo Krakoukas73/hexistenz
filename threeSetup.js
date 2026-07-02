@@ -13,7 +13,6 @@ import { ensureStarUniverse, updateStarUniverse } from './starUniverse.js';
 
 export const WORLD_LAYER = 0;
 export const TEXT_LAYER  = 1;
-export const SUN_LAYER   = 2; // passe dédiée à l'astre, rendue APRÈS les labels
 
 // Initialisation Three.js isolée pour garder scene.js centré sur la logique de jeu.
 export function createRenderer(canvas) {
@@ -107,7 +106,13 @@ export function updateSunShadowOrbit(scene, timeSeconds, focusPoint = null, came
   }
 
   const orbit = sun.userData.orbit ?? { radius: 10.5, height: 8.4, speed: 0.42, visualScale: 1.18 };
-  const angle = timeSeconds * orbit.speed;
+  // Garde-fou : si orbit.speed n'est pas un nombre fini (config pas encore appliquée, valeur
+  // corrompue en localStorage…), on retombe sur la vitesse par défaut plutôt que de propager
+  // un NaN dans position/rotation — un NaN une fois écrit dans une matrice de transformation
+  // ne se corrige jamais tout seul (NaN * x = NaN pour toujours) et fait disparaître l'objet
+  // (le frustum culling rejette les bounding spheres NaN).
+  const safeOrbitSpeed = Number.isFinite(orbit.speed) ? orbit.speed : 0.06;
+  const angle = timeSeconds * safeOrbitSpeed;
   const x = Math.cos(angle) * orbit.radius;
   const z = Math.sin(angle) * orbit.radius;
   const focus = getSunShadowFocusPoint(focusPoint);
@@ -129,11 +134,17 @@ export function updateSunShadowOrbit(scene, timeSeconds, focusPoint = null, came
       focus.y + orbit.height * orbit.visualScale,
       focus.z + z * orbit.visualScale
     );
-    // Rotation des astres sur eux-mêmes
+    // Rotation des astres sur eux-mêmes — proportionnelle à la vitesse d'orbite réglée
+    // dans l'EDA (sunOrbitSpeed) : à vitesse orbite = 0, la rotation propre s'arrête aussi.
+    // Avant : rotation.y = timeSeconds * cste, indépendante de orbit.speed → la lune (dont
+    // les cratères rendent la rotation bien visible) continuait de tourner sur elle-même
+    // même à vitesse 0 (bug peu visible sur le soleil, uni, mais flagrant sur la lune).
+    // 0.06 = vitesse d'orbite par défaut (cf. createThreeScene) → facteur 1 à la valeur nominale.
+    const spinFactor = safeOrbitSpeed / 0.06;
     const glbSun  = sunVisual.getObjectByName('visible-sky-sun-glb');
     const glbMoon = sunVisual.getObjectByName('visible-sky-moon-glb');
-    if (glbSun)  glbSun.rotation.y  = timeSeconds * 0.25;
-    if (glbMoon) glbMoon.rotation.y = timeSeconds * 0.55;
+    if (glbSun)  glbSun.rotation.y  = timeSeconds * 0.25 * spinFactor;
+    if (glbMoon) glbMoon.rotation.y = timeSeconds * 0.55 * spinFactor;
   }
   keepSunShadowCameraStable(sun, cameraY);
   sun.updateMatrixWorld();
@@ -169,10 +180,15 @@ function keepSunShadowCameraStable(sun, cameraY = 25) {
 function createVisibleSunObject() {
   const group = new THREE.Group();
   group.name = 'visible-sky-sun';
-  // Stratégie layers : enable(TEXT_LAYER) sans retirer layer 0.
-  // → l'astre est rendu dans la passe monde (layer 0) ET dans la passe TEXT_LAYER (renderOrder 999).
-  // → dans la passe TEXT_LAYER, renderOrder 999 > 0 (labels) → l'astre s'affiche DEVANT les labels.
-  group.layers.set(SUN_LAYER); // passe dédiée, rendue après labels
+  // Rendu dans la passe monde normale (WORLD_LAYER) avec depth test/write activés :
+  // l'astre orbite à une distance modérée du point focal caméra (cf. updateSunShadowOrbit,
+  // rayon ~10-12u — pas "à l'infini") et DOIT donc pouvoir passer derrière un arbre ou une
+  // tour quand il se trouve géométriquement derrière, comme n'importe quel autre objet 3D.
+  // NOTE : ceci laisse l'astre occasionnellement recouvert par un label hexagonal quand
+  // la caméra est haute (les labels sont rendus dans une passe ultérieure, indépendante
+  // du depth buffer réel du monde) — problème connu, pas encore résolu, à reprendre
+  // séparément (tentative précédente ayant causé une régression : astre invisible).
+  group.layers.set(WORLD_LAYER);
 
   // ── Placeholder soleil (visible en mode jour, masqué jusqu'à setAstreMode) ──
   const placeholder = new THREE.Mesh(
@@ -182,15 +198,14 @@ function createVisibleSunObject() {
       transparent: true,
       opacity: 0.95,
       fog: false,
-      depthWrite: false,
-      depthTest: false
+      depthWrite: false, // transparent → ne bloque pas ce qu'il y a derrière
+      depthTest: true    // mais reste occulté par la géométrie opaque devant lui
     })
   );
   placeholder.name = 'visible-sky-sun-placeholder';
+  placeholder.layers.set(WORLD_LAYER);
   placeholder.userData.disableCastShadow = true;
   placeholder.userData.disableReceiveShadow = true;
-  placeholder.renderOrder = 1;
-  placeholder.layers.set(SUN_LAYER);
   placeholder.visible = false; // setAstreMode() décidera
   group.add(placeholder);
 
@@ -218,12 +233,10 @@ function createVisibleSunObject() {
         model.position.sub(center);
 
         model.name = glbName;
-        model.renderOrder = 999;
         model.visible = false; // setAstreMode() activera le bon
 
         model.traverse(child => {
-          child.layers.set(SUN_LAYER);
-          child.renderOrder = 1;
+          child.layers.set(WORLD_LAYER);
           if (child.isMesh) {
             child.castShadow = false;
             child.receiveShadow = false;
@@ -231,19 +244,20 @@ function createVisibleSunObject() {
             child.userData.disableReceiveShadow = true;
 
             if (glbName === 'visible-sky-sun-glb') {
-              // Le GLB soleil a doubleSided:true + depthTest:false → les faces back
-              // écrasent les faces front dans un ordre fixe indépendant de la caméra
-              // (effet "boule de sapin cassée"). Un soleil n'est pas un récepteur de
-              // lumière : on remplace le MeshStandardMaterial PBR par un MeshBasicMaterial
-              // qui ignore les normales et n'a pas de problème de back-face overdraw.
+              // Le GLB soleil a doubleSided:true → les faces back peuvent s'afficher dans
+              // un ordre incohérent avec les faces front (effet "boule de sapin cassée").
+              // Un soleil n'est pas un récepteur de lumière : on remplace le
+              // MeshStandardMaterial PBR par un MeshBasicMaterial + FrontSide (mesh fermé,
+              // FrontSide suffit à éliminer l'overdraw) — depth test/write normaux (opaque),
+              // pour une occlusion correcte par le reste de la scène (arbres, tours…).
               const oldMat = Array.isArray(child.material) ? child.material[0] : child.material;
               const emissiveMap = oldMat?.emissiveMap ?? oldMat?.map ?? null;
               const basicMat = new THREE.MeshBasicMaterial({
                 map:        emissiveMap,
                 color:      0xffffff,
                 fog:        false,
-                depthWrite: false,
-                depthTest:  false,
+                depthWrite: true,
+                depthTest:  true,
                 side:       THREE.FrontSide, // mesh fermé, FrontSide suffit
                 transparent: false,
               });
@@ -252,13 +266,20 @@ function createVisibleSunObject() {
               else child.material?.dispose();
               child.material = basicMat;
             } else {
-              // Lune et autres astres : on garde le matériau GLB, on ajuste juste le rendu
+              // Lune et autres astres : on garde le matériau GLB, on ajuste juste le rendu.
+              // Corps céleste solide → forcé opaque comme le soleil : si le GLB exportait
+              // transparent:true (fréquent même sans vraie zone alpha), depthWrite passait à
+              // false et la lune se faisait trier par distance comme un objet transparent
+              // (painter's algorithm) au lieu d'un vrai z-test — elle pouvait apparaître
+              // "sous" les surfaces d'eau (elles aussi transparentes) alors que géométriquement
+              // plus proche de la caméra.
               const mats = Array.isArray(child.material) ? child.material : [child.material];
               for (const m of mats) {
                 if (!m) continue;
                 m.fog = false;
-                m.depthWrite = false;
-                m.depthTest = false;
+                m.transparent = false;
+                m.depthTest  = true;
+                m.depthWrite = true;
                 m.needsUpdate = true;
               }
             }
@@ -375,18 +396,31 @@ export function createPixelPostprocess(renderer, scene, camera) {
   // uResolution nécessite un THREE.Vector2 pour le .set() dans render() ;
   // on l'injecte ici car cinematicPass.js ne dépend pas de THREE.
   cinemaPass.uniforms.uResolution = { value: new THREE.Vector2(window.innerWidth, window.innerHeight) };
+  // uSunScreenPos : injecté ici (pas dans shaderCinematique.js) pour ne pas dépendre de
+  // THREE dans ce fichier-là — même logique que uResolution ci-dessus.
+  cinemaPass.uniforms.uSunScreenPos = { value: new THREE.Vector2(0.5, 0.5) };
   const _cinemaSettings = {
     enabled: false,
     tilt: 0.60, focusCenter: 0.50, focusBand: 0.35,
     vignette: 0.55, grain: 0.30, chromatic: 0.45,
     halation: 0.0, barrel: 0.0, scanLines: 0.0,
+    godRays: 0.0, godRaysLength: 0.40, godRaysDiffusion: 0.85, godRaysThreshold: 0.70,
+    godRaysLayers: 0.0,
+    godRaysEnabled: true, tiltShiftEnabled: true,
+    bloomIntensity: 0.0, bloomThreshold: 0.75, bloomRadius: 2.0, bloomSoftness: 0.4,
+    crtCurvature: 0.0, crtMask: 0.5, crtCornerDark: 0.2,
+    bloomEnabled: true, crtEnabled: true,
   };
   let _cinemaListener   = null;
   const _cinemaStartTime = performance.now();
 
+  // Cases à cocher individuelles (2.1 God Rays / 2.2 Tilt-shift / 2.3 Bloom / 4. Courbure
+  // écran, EDA) : ne modifient pas les valeurs stockées des sliders, seulement l'effet
+  // appliqué en live — même principe que le on/off global VENT (débranché → amplitude
+  // effective nulle, réglages préservés).
   function _applyCinemaUniforms(s) {
     cinemaPass.uniforms.uEnabled.value     = s.enabled   ? 1.0 : 0.0;
-    cinemaPass.uniforms.uTilt.value        = s.tilt;
+    cinemaPass.uniforms.uTilt.value        = s.tiltShiftEnabled ? s.tilt : 0.0;
     cinemaPass.uniforms.uFocusCenter.value = s.focusCenter;
     cinemaPass.uniforms.uFocusBand.value   = s.focusBand;
     cinemaPass.uniforms.uVignette.value    = s.vignette;
@@ -395,8 +429,65 @@ export function createPixelPostprocess(renderer, scene, camera) {
     cinemaPass.uniforms.uHalation.value    = s.halation;
     cinemaPass.uniforms.uBarrel.value      = s.barrel;
     cinemaPass.uniforms.uScanLines.value   = s.scanLines;
+    cinemaPass.uniforms.uGodRays.value          = s.godRays;
+    cinemaPass.uniforms.uGodRaysLength.value    = s.godRaysLength;
+    cinemaPass.uniforms.uGodRaysDiffusion.value = s.godRaysDiffusion;
+    cinemaPass.uniforms.uGodRaysThreshold.value = s.godRaysThreshold;
+    cinemaPass.uniforms.uGodRaysLayers.value    = s.godRaysLayers;
+    cinemaPass.uniforms.uBloomIntensity.value   = s.bloomEnabled ? s.bloomIntensity : 0.0;
+    cinemaPass.uniforms.uBloomThreshold.value   = s.bloomThreshold;
+    cinemaPass.uniforms.uBloomRadius.value      = s.bloomRadius;
+    cinemaPass.uniforms.uBloomSoftness.value    = s.bloomSoftness;
+    cinemaPass.uniforms.uCrtCurvature.value     = s.crtEnabled ? s.crtCurvature : 0.0;
+    cinemaPass.uniforms.uCrtMask.value          = s.crtMask;
+    cinemaPass.uniforms.uCrtCornerDark.value    = s.crtCornerDark;
   }
   _applyCinemaUniforms(_cinemaSettings);
+
+  // ── God Rays : position écran du soleil + fade quand hors-champ/derrière la caméra ──
+  // Mis à jour chaque frame (comme uTime/uResolution), indépendamment de _applyCinemaUniforms
+  // qui ne s'exécute qu'au commit des réglages EDA. Coût : 1 lookup scène (mis en cache) +
+  // quelques opérations vectorielles — négligeable, et totalement court-circuité (return
+  // anticipé) dès que l'intensité réglée par l'utilisateur est à 0.
+  const _godRayWorldPos    = new THREE.Vector3();
+  const _godRayToSunDir    = new THREE.Vector3();
+  const _godRayCamForward  = new THREE.Vector3();
+  let _godRaySunRef = null;
+
+  function _updateGodRaysUniform() {
+    const baseIntensity = _cinemaSettings.godRaysEnabled ? _cinemaSettings.godRays : 0.0;
+    if (!(baseIntensity > 0.0001)) {
+      cinemaPass.uniforms.uGodRays.value = 0.0;
+      return;
+    }
+    if (!_godRaySunRef || !_godRaySunRef.parent) {
+      _godRaySunRef = scene.getObjectByName('visible-sky-sun');
+    }
+    if (!_godRaySunRef) {
+      cinemaPass.uniforms.uGodRays.value = 0.0;
+      return;
+    }
+
+    _godRaySunRef.getWorldPosition(_godRayWorldPos);
+    _godRayToSunDir.copy(_godRayWorldPos).sub(camera.position).normalize();
+    camera.getWorldDirection(_godRayCamForward);
+    const facing = _godRayCamForward.dot(_godRayToSunDir); // 1 = pile face caméra, <0 = derrière
+
+    // Fade doux : 0 quand le soleil est derrière/sur le côté de la caméra, 1 quand face à elle.
+    const fade = THREE.MathUtils.smoothstep(facing, -0.05, 0.20);
+    if (!(fade > 0.0001)) {
+      cinemaPass.uniforms.uGodRays.value = 0.0;
+      return;
+    }
+
+    // Position écran (NDC → uv 0..1)
+    _godRayWorldPos.project(camera);
+    cinemaPass.uniforms.uSunScreenPos.value.set(
+      (_godRayWorldPos.x + 1.0) * 0.5,
+      (_godRayWorldPos.y + 1.0) * 0.5
+    );
+    cinemaPass.uniforms.uGodRays.value = baseIntensity * fade;
+  }
 
   composer.addPass(pixelPass);
   composer.addPass(colorGradingPass);
@@ -426,18 +517,6 @@ export function createPixelPostprocess(renderer, scene, camera) {
     renderer.shadowMap.autoUpdate = false;
     renderer.render(scene, camera);
     renderer.shadowMap.autoUpdate = prevAutoUpdate;
-  }
-
-  function renderSunLayer() {
-    // L'astre est rendu EN DERNIER, après les labels, sur SUN_LAYER dédié.
-    // Garanti au-dessus de tout, indépendant du contenu du GLB.
-    camera.layers.set(SUN_LAYER);
-    scene.background = null;
-    scene.fog = null;
-    renderer.autoClear = false;
-    renderer.clearDepth();
-    renderer.shadowMap.autoUpdate = false;
-    renderer.render(scene, camera);
   }
 
   let _settingsListener = null;
@@ -474,12 +553,28 @@ export function createPixelPostprocess(renderer, scene, camera) {
       if ('tilt'        in partial) c.tilt        = Math.max(0, Math.min(1, Number(partial.tilt)));
       if ('focusCenter' in partial) c.focusCenter = Math.max(0, Math.min(1, Number(partial.focusCenter)));
       if ('focusBand'   in partial) c.focusBand   = Math.max(0, Math.min(1, Number(partial.focusBand)));
-      if ('vignette'    in partial) c.vignette    = Math.max(0, Math.min(1, Number(partial.vignette)));
+      if ('vignette'    in partial) c.vignette    = Math.max(0, Math.min(2, Number(partial.vignette)));
       if ('grain'       in partial) c.grain       = Math.max(0, Math.min(1, Number(partial.grain)));
       if ('chromatic'   in partial) c.chromatic   = Math.max(0, Math.min(1, Number(partial.chromatic)));
       if ('halation'    in partial) c.halation    = Math.max(0, Math.min(1, Number(partial.halation)));
       if ('barrel'      in partial) c.barrel      = Math.max(0, Math.min(1, Number(partial.barrel)));
       if ('scanLines'   in partial) c.scanLines   = Math.max(0, Math.min(6, Number(partial.scanLines)));
+      if ('godRays'          in partial) c.godRays          = Math.max(0, Math.min(1, Number(partial.godRays)));
+      if ('godRaysLength'    in partial) c.godRaysLength    = Math.max(0, Math.min(1, Number(partial.godRaysLength)));
+      if ('godRaysDiffusion' in partial) c.godRaysDiffusion = Math.max(0, Math.min(1, Number(partial.godRaysDiffusion)));
+      if ('godRaysThreshold' in partial) c.godRaysThreshold = Math.max(0, Math.min(1, Number(partial.godRaysThreshold)));
+      if ('godRaysLayers'    in partial) c.godRaysLayers    = Math.max(0, Math.min(1, Number(partial.godRaysLayers)));
+      if ('godRaysEnabled'   in partial) c.godRaysEnabled   = Boolean(partial.godRaysEnabled);
+      if ('tiltShiftEnabled' in partial) c.tiltShiftEnabled = Boolean(partial.tiltShiftEnabled);
+      if ('bloomIntensity' in partial) c.bloomIntensity = Math.max(0, Math.min(2, Number(partial.bloomIntensity)));
+      if ('bloomThreshold' in partial) c.bloomThreshold = Math.max(0, Math.min(1, Number(partial.bloomThreshold)));
+      if ('bloomRadius'    in partial) c.bloomRadius    = Math.max(0, Math.min(8, Number(partial.bloomRadius)));
+      if ('bloomSoftness'  in partial) c.bloomSoftness  = Math.max(0, Math.min(1, Number(partial.bloomSoftness)));
+      if ('crtCurvature'  in partial) c.crtCurvature  = Math.max(0, Math.min(1, Number(partial.crtCurvature)));
+      if ('crtMask'       in partial) c.crtMask       = Math.max(0, Math.min(1, Number(partial.crtMask)));
+      if ('bloomEnabled'  in partial) c.bloomEnabled  = Boolean(partial.bloomEnabled);
+      if ('crtEnabled'    in partial) c.crtEnabled    = Boolean(partial.crtEnabled);
+      if ('crtCornerDark' in partial) c.crtCornerDark = Math.max(0, Math.min(1, Number(partial.crtCornerDark)));
       _applyCinemaUniforms(c);
       _cinemaListener?.({ ...c });
     },
@@ -501,10 +596,10 @@ export function createPixelPostprocess(renderer, scene, camera) {
       cinemaPass.uniforms.uTime.value          = (performance.now() - _cinemaStartTime) / 1000.0;
       cinemaPass.uniforms.uResolution.value.x  = renderer.domElement.width;
       cinemaPass.uniforms.uResolution.value.y  = renderer.domElement.height;
+      _updateGodRaysUniform();
 
       renderWorldLayer();
       renderTextLayer();
-      renderSunLayer();
 
       scene.background = previousBackground;
       scene.fog = previousFog;

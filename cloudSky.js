@@ -65,6 +65,8 @@ export function createCloudSky(scene) {
       uSunColor:   { value: new THREE.Color().copy(DEFAULT_SUN_COLOR) },
       uCoverage:   { value: 0.41 },  // −18 % densité/nombre
       uEnabled:    { value: 1.0 },
+      uCloudScale: { value: 0.026202 }, // échelle du motif FBM (↑ = nuages plus petits/fins)
+      uCloudSpeed: { value: 0.09450 },  // vitesse de dérive des nuages (× temps)
     },
   });
 
@@ -120,6 +122,38 @@ export function updateCloudSky(cloudSky, {
   if (coverage  !== null) u.uCoverage.value  = Math.max(0, Math.min(1, coverage));
   if (enabled   !== null) u.uEnabled.value   = enabled ? 1.0 : 0.0;
 }
+
+/**
+ * Lit les paramètres nuages courants (pour le HUD CUSTOMISATION — section NUAGES).
+ */
+export function getCloudSkyParams(cloudSky) {
+  const u = cloudSky?.material?.uniforms;
+  return {
+    coverage: u?.uCoverage?.value    ?? 0.41,
+    scale:    u?.uCloudScale?.value  ?? 0.026202,
+    speed:    u?.uCloudSpeed?.value  ?? 0.09450,
+  };
+}
+
+/**
+ * Applique en direct un sous-ensemble { coverage, scale, speed } — pas de recompilation
+ * nécessaire, ce sont de simples uniforms lus chaque frame par le fragment shader.
+ */
+export function setCloudSkyParams(cloudSky, { coverage, scale, speed } = {}) {
+  const u = cloudSky?.material?.uniforms;
+  if (!u) return;
+  if (coverage != null) u.uCoverage.value   = Math.max(0, Math.min(1, coverage));
+  if (scale    != null) u.uCloudScale.value = scale;
+  if (speed    != null) u.uCloudSpeed.value = speed;
+}
+
+// ── Activation utilisateur (case à cocher EDA, rubrique 4. NUAGES) ──────────
+// Combinée avec `isSoleil` par scene.js (animate) à chaque frame : nuages visibles
+// seulement si (mode jour) ET (activé par l'utilisateur). uEnabled=0 → 0 coût GPU
+// nuages (juste le gradient de ciel, cf. commentaire au-dessus de updateCloudSky).
+let _cloudUserEnabled = true;
+export function setCloudUserEnabled(value) { _cloudUserEnabled = Boolean(value); }
+export function getCloudUserEnabled() { return _cloudUserEnabled; }
 
 /**
  * Supprime et libère la sphère de ciel.

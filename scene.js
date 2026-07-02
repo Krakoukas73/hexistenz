@@ -29,21 +29,17 @@ import { createSheepOverlay, rebuildSheepOverlay, updateSheepOverlay, updateShee
 import { createAmbientSoundDesign, startEndingMusic, startIngameMusic, toggleMute } from './soundDesign.js';
 import { createVisualEnvironment } from './visualEnvironment.js';
 import { createCometSky, updateCometSky, tryCometHit, removeCometFromSky, spawnCometExplosion } from './cometSky.js';
-import { createCloudSky, updateCloudSky } from './cloudSky.js';
+import { createCloudSky, updateCloudSky, getCloudUserEnabled } from './cloudSky.js';
 import { updateGlobalWind } from './globalWind.js';
 import { resetPropHitboxRegistry } from './propHitboxRegistry.js';
 import { createDebugLightUI, tickFps } from './debugLightUi.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, setAstreMode, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './threeSetup.js';
 import { applyShadowCulling, rebuildShadowCasters } from './shadowCulling.js';
-<<<<<<< HEAD
 import { addTileToTerrainMerge, createTerrainMergeGroup, hideTerrainMeshes, rebuildTerrainMerge } from './terrainMerge.js';
-=======
-import { addTileToTerrainMerge, createTerrainMergeGroup, hideTerrainMeshes, rebuildTerrainMerge, updateTileShoreDepth } from './terrainMerge.js';
->>>>>>> 4149cedbfad207ea16b99f216dfa4e5f9f8f2a3d
-import { createWaterSurfaceOverlay, rebuildWaterSurfaceOverlay } from './waterSurfaceOverlay.js';
-import { createWaterDebugPanel } from './waterDebugUi.js';
+import { createWaterSurfaceOverlay, rebuildWaterSurfaceOverlay, updateWaterSurfaceLOD } from './waterSurfaceOverlay.js';
 // createPostprocessHud supprimé : PIX HUD fusionné dans debugLightUi (panel CUSTOMISATION)
+// createWaterDebugPanel supprimé : HUD EAU (Cyril) fusionné dans debugLightUi (panel CUSTOMISATION, avant PIXELISATION)
 import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
 import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, setMissionTurn } from './missions.js';
 import { pollRoom, updateCursor, updateRoomState } from './multiplayerClient.js';
@@ -67,7 +63,6 @@ export function initScene(options = {}) {
   // Appliquer le mode monde AVANT createDebugLightUI : le HUD lit getWorldShapeMode()
   // à l'init et le stockage PIX pouvait écraser le choix bouliste/platiste du joueur.
   if (options.worldShapeMode) setWorldCurvatureEnabled(options.worldShapeMode !== 'platiste');
-  createDebugLightUI({ visualEnvironment, postprocess });
   const controls = new CameraControls(camera, canvas);
   const ui = createUI();
   const highscoreUI = createHighscoreUI(ui);
@@ -124,6 +119,11 @@ export function initScene(options = {}) {
   const sheepOverlay = createSheepOverlay();
   const cometSky  = createCometSky();
   const cloudSky  = createCloudSky(scene);
+
+  // Créé ici (et non plus juste après createCamera) : le panel VENT/NUAGES a besoin
+  // des références forestOverlay (arbres GPU-wind) et cloudSky (nuages horizon jour).
+  createDebugLightUI({ visualEnvironment, postprocess, forestOverlay, cloudSky });
+
   // isSoleil : override localStorage > tirage aléatoire si aucune préférence stockée
   const _storedDayNight = localStorage.getItem('hexistenz_daynightmode');
   let isSoleil = (_storedDayNight === 'soleil') ? true
@@ -142,11 +142,14 @@ export function initScene(options = {}) {
     const _starsEarly = scene.getObjectByName('hexistenz-distant-star-universe');
     if (_starsEarly) _starsEarly.visible = true;
   }
-  // Sync dropdown LUT + localStorage au mode résolu (random → valeur concrète)
+  // Sync case à cocher Jour/Nuit du panel EDA (onglet Environnement, rubrique 6) + localStorage
+  // au mode résolu (random → valeur concrète). Le listener dans hud_eda.js est déjà câblé à ce
+  // stade (createDebugLightUI ci-dessus) ; celui de scene.js (plus bas) ne l'est pas encore →
+  // pas de double application du rendu jour/nuit (déjà fait directement ci-dessus).
   {
-    const _dnSel = document.querySelector('#dayNightMode');
-    if (_dnSel) _dnSel.value = isSoleil ? 'soleil' : 'lune';
-    localStorage.setItem('hexistenz_daynightmode', isSoleil ? 'soleil' : 'lune');
+    const _dnMode = isSoleil ? 'soleil' : 'lune';
+    localStorage.setItem('hexistenz_daynightmode', _dnMode);
+    document.dispatchEvent(new CustomEvent('hexistenz:dayNightChange', { detail: { mode: _dnMode } }));
   }
   // Comètes visibles uniquement la nuit
   cometSky.visible = !isSoleil;
@@ -172,11 +175,7 @@ export function initScene(options = {}) {
 
   ghostTile.visible = false;
 
-<<<<<<< HEAD
   scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, bonusCellChestOverlay, waterZoneOverlay, waterSurfaceOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, grassBladeOverlay, houseOverlay, fieldWaterEffectsOverlay, sheepOverlay, cometSky, remoteGhosts, ghostTile, terrainMergeGroup);
-=======
-  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, bonusCellChestOverlay, waterZoneOverlay, waterSurfaceOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, grassBladeOverlay, houseOverlay, fieldWaterEffectsOverlay, cometSky, remoteGhosts, ghostTile, terrainMergeGroup);
->>>>>>> 4149cedbfad207ea16b99f216dfa4e5f9f8f2a3d
 
   // ── Toggle Jour/Nuit depuis le panel LUT ────────────────────────────────────
   document.addEventListener('hexistenz:dayNightChange', (e) => {
@@ -422,7 +421,7 @@ export function initScene(options = {}) {
   // ── Globals de diagnostic exposés en console navigateur ────────────────────
   window.setWorldCurvatureEnabled = setWorldCurvatureEnabled;
   window.getWorldCurvatureEnabled = getWorldCurvatureEnabled;
-  createWaterDebugPanel(); // panneau sliders eau/sillage + bouton Copier (bouton 💧 EAU bas-droite)
+  // Panneau sliders eau/sillage : intégré dans le HUD LUT (rubrique EAU, avant PIXELISATION).
 
   /**
    * window.scanSceneAura([maxNormalExtent=3])
@@ -565,7 +564,7 @@ export function initScene(options = {}) {
       const _sunDir = _sun && _tgt
         ? _sun.position.clone().sub(_tgt.position).normalize()
         : null;
-      updateCloudSky(cloudSky, { camera, timeSeconds, sunDir: _sunDir, enabled: isSoleil });
+      updateCloudSky(cloudSky, { camera, timeSeconds, sunDir: _sunDir, enabled: isSoleil && getCloudUserEnabled() });
     }
     ambientSoundDesign.update(timeSeconds);
     if (_PT_ENABLE) _ptSound = performance.now();
@@ -597,11 +596,12 @@ export function initScene(options = {}) {
       updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera, lodFactor);
       updateFieldDecorLOD(fieldWaterEffectsOverlay, camera, lodFactor);
       updateWaterBoatLOD(waterBoatOverlay, camera, lodFactor);
+      updateWaterSurfaceLOD(waterSurfaceOverlay, camera);
       updateRailTrainLOD(railTrainOverlay, camera, lodFactor);
       updateHouseLOD(houseOverlay, camera, lodFactor);
       updateBonusCellChestLOD(bonusCellChestOverlay, camera, lodFactor);
       updateSheepLOD(sheepOverlay, camera, lodFactor);
-      updateZoneLabelLOD(waterZoneOverlay, camera);
+      updateZoneLabelLOD(waterZoneOverlay, camera, scene);
       updateBeachLOD(waterZoneOverlay, camera);
       // Rail track LOD — inline: scan placed tiles for rail track child meshes
       const railTrackDistSq = (LOD_RAIL_TRACK_CULL_DISTANCE * lodFactor) ** 2;
@@ -1010,7 +1010,7 @@ export function initScene(options = {}) {
     const status = validation ?? getPlacementValidation(hoveredHex, placedTiles, tile, specialCells);
 
     ghostTile.clear();
-    ghostTile.add(createTileMesh(tile, { opacity: 1, worldX: position.x, worldZ: position.z }));
+    ghostTile.add(createTileMesh(tile, { opacity: 1, worldX: position.x, worldZ: position.z, previewWater: true }));
     ghostTile.add(createPlacementFeedbackOverlay(status));
     ghostTile.position.set(position.x, 0.003, position.z);
 
@@ -1168,7 +1168,7 @@ export function initScene(options = {}) {
       if (cursorPlayerId === playerId || !cursor?.visible || !cursor?.tile) continue;
       if (!Number.isFinite(Number(cursor.q)) || !Number.isFinite(Number(cursor.r))) continue;
       const position = axialToWorld(Number(cursor.q), Number(cursor.r));
-      const mesh = createTileMesh(stripRuntimeTile(cursor.tile), { opacity: cursor.valid ? 0.42 : 0.22, worldX: position.x, worldZ: position.z });
+      const mesh = createTileMesh(stripRuntimeTile(cursor.tile), { opacity: cursor.valid ? 0.42 : 0.22, worldX: position.x, worldZ: position.z, previewWater: true });
       mesh.position.set(position.x, 0.012, position.z);
       mesh.userData.remotePlayerName = cursor.playerName ?? cursorPlayerId;
       remoteGhosts.add(mesh);

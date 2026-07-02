@@ -517,8 +517,8 @@ function fmt_date($iso) {
       </div>
 
       <div class="gallery-card">
-        <img src="images/foret-nordique.png" alt="Preset Forêt nordique" class="gallery-img">
-        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Forêt nordique</span><span data-en>Nordic Forest</span></div></div>
+        <img src="images/foret-nordique.png" alt="Preset Nordique" class="gallery-img">
+        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Nordique</span><span data-en>Nordic</span></div></div>
       </div>
 
       <div class="gallery-card" style="grid-column:span 2;">
@@ -526,9 +526,14 @@ function fmt_date($iso) {
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Amiga</span><span data-en>Amiga</span></div></div>
       </div>
 
-      <div class="gallery-card" style="grid-column:span 2;">
+      <div class="gallery-card">
         <img src="images/cga.png" alt="Preset CGA" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>CGA 320×200 4 couleurs</span><span data-en>CGA 320×200 4 colors</span></div></div>
+      </div>
+
+      <div class="gallery-card">
+        <img src="images/ega.png" alt="Preset EGA" class="gallery-img">
+        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>EGA 16 couleurs</span><span data-en>EGA 16 colors</span></div></div>
       </div>
 
       <div class="gallery-card" style="grid-column:span 2;">

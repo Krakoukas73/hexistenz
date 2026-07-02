@@ -125,3 +125,37 @@ function shortestHueDelta(from, to) {
 export function isRealisticWaterMaterial(material) {
   return Boolean(material?.userData?.isRealisticWater);
 }
+
+// ── Matériau eau « plat » (LOD lointain + previews) ──────────────────────────
+// Simple surface bleue fixe, sans shader (pas de vagues/écume/reflets) : utilisée
+// 1) par waterSurfaceOverlay.js pour les tuiles d'eau au-delà de LOD_WATER_SHADER_DISTANCE
+//    (économie GPU sur les grandes grilles — cf. updateWaterSurfaceLOD)
+// 2) par tileMesh.js pour les tuiles fantômes (hover local + curseurs multijoueur
+//    distants) — un aperçu n'a pas besoin du shader complet, juste d'un bleu lisible
+//    (les attributs aShoreDist/aSteep du shader ne sont de toute façon pas disponibles
+//    sur ces géométries).
+const flatWaterMaterials = new Map();
+
+export function getFlatWaterMaterial(opacity = WATER_RENDER.opacity) {
+  const key = Math.round(THREE.MathUtils.clamp(opacity, 0, 1) * 100);
+  if (flatWaterMaterials.has(key)) return flatWaterMaterials.get(key);
+
+  const color = new THREE.Color(SHALLOW_HEX).lerp(new THREE.Color(DEEP_HEX), 0.55);
+  // MeshBasicMaterial (non éclairé) et non Lambert : la nappe fusionnée
+  // (waterSurfaceOverlay.js) n'a pas d'attribut 'normal' (seuls position/
+  // aShoreDist/aSteep sont fournis, le shader complet n'en a pas besoin). Avec
+  // un matériau Lambert, l'absence de normales produit un vecteur nul → NaN
+  // après normalisation dans le vertex shader → les triangles sont clippés et
+  // disparaissent purement et simplement (constaté : l'eau lointaine devenait
+  // invisible au lieu de passer en bleu uni). Basic n'a besoin d'aucune normale.
+  const material = new THREE.MeshBasicMaterial({
+    color,
+    transparent: opacity < 1,
+    opacity,
+    side: THREE.DoubleSide,
+    depthWrite: opacity >= 1
+  });
+  material.name = 'water-lod-flat-material';
+  flatWaterMaterials.set(key, material);
+  return material;
+}

@@ -7,24 +7,13 @@
     "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 0 }
   },
   {
-    "name": "🌫️ Brume côtière",
+    "name": "🌫️ Brume",
     "bg": "linear-gradient(135deg,#90c8d8,#2860a0)",
     "delta": {
       "renderer": { "toneMappingExposure": 1.28 },
       "environment": { "fogDensity": 0.014, "fogColor": "#b8ccd8", "skyColor": "#0a1620" },
       "lights": { "sunIntensity": 1.6, "sunColor": "#d4e4f0", "hemisphereSkyColor": "#b8d4e4", "hemisphereGroundColor": "#7890a0", "hemisphereIntensity": 0.65, "fillIntensity": 0.32 },
       "grading": { "contrast": 0.96, "saturation": 0.78, "vibrance": 0.06, "red": 0.96, "green": 1.01, "blue": 1.08, "gamma": 1.02 }
-    },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 0 }
-  },
-  {
-    "name": "🌑 Minuit",
-    "bg": "linear-gradient(135deg,#2840a0,#080c24)",
-    "delta": {
-      "renderer": { "toneMappingExposure": 0.82 },
-      "environment": { "fogDensity": 0.010, "skyColor": "#010208", "fogColor": "#010208" },
-      "lights": { "sunColor": "#3858b8", "sunIntensity": 0.8, "hemisphereSkyColor": "#1828a0", "hemisphereGroundColor": "#101828", "hemisphereIntensity": 0.32, "fillColor": "#101848", "fillIntensity": 0.18 },
-      "grading": { "brightness": -0.05, "contrast": 1.18, "saturation": 0.20, "vibrance": 0.00, "blue": 1.16, "red": 0.84, "green": 0.90, "gamma": 0.93 }
     },
     "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 0 }
   },
@@ -105,7 +94,7 @@
     }
   },
   {
-    "name": "📜 Vieux sépia",
+    "name": "📜 Sépia",
     "bg": "linear-gradient(135deg,#c09040,#6a4010)",
     "delta": {
       "renderer": { "toneMappingExposure": 1.50 },
@@ -116,7 +105,7 @@
     "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 0 }
   },
   {
-    "name": "🌲 Forêt nordique",
+    "name": "🌲 Nordique",
     "bg": "linear-gradient(135deg,#4890a8,#0a2838)",
     "delta": {
       "renderer": { "toneMappingExposure": 1.72 },
@@ -128,35 +117,7 @@
     "cinema": { "enabled": true, "halation": 0, "barrel": 0, "chromatic": 1, "scanLines": 0 }
   },
   {
-    "name": "🧪 test colorimétrie",
-    "bg": "linear-gradient(135deg,#72b862,#1e5c30)",
-    "delta": {
-      "renderer": { "toneMappingExposure": 1.88 },
-      "environment": { "fogDensity": 0.006, "fogColor": "#0c1810" },
-      "lights": {
-        "sunColor": "#daeac0", "sunIntensity": 2.60,
-        "hemisphereSkyColor": "#9cbaa8", "hemisphereGroundColor": "#4a6c42",
-        "hemisphereIntensity": 0.78,
-        "fillColor": "#6aa072", "fillIntensity": 0.35
-      },
-      "grading": {
-        "brightness": 0.03, "saturation": 0.94, "vibrance": 0.24,
-        "contrast": 1.05, "green": 1.05, "blue": 1.02, "red": 0.96,
-        "gamma": 1.015, "whiteLevel": 0.968
-      },
-      "palette": {
-        "strength": 0.18,
-        "warmShift": -0.005,
-        "targets": {
-          "forest": "#2e5028", "grass": "#548c48", "field": "#c8b048",
-          "house": "#886848", "rail": "#9ca498", "water": "#285868"
-        }
-      }
-    },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "chromatic": 0.5, "scanLines": 0 }
-  },
-  {
-    "name": "🏜️ Désert doré",
+    "name": "🏜️ Désert",
     "bg": "linear-gradient(135deg,#f0b840,#a86010)",
     "delta": {
       "renderer": { "toneMappingExposure": 1.72 },
@@ -168,7 +129,7 @@
     "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 0 }
   },
   {
-    "name": "⚫ Noir & Blanc",
+    "name": "⚫ Mono",
     "bg": "linear-gradient(135deg,#999999,#111111)",
     "pixelization": { "pixelSize": 3, "enabled": true, "normalEdgeStrength": 0, "depthEdgeStrength": 0 },
     "delta": {

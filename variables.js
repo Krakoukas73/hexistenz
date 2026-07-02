@@ -13,7 +13,7 @@
 // ----------------------------------------------------------------------------
 // VERSION
 // ----------------------------------------------------------------------------
-export const HEXISTENZ_VERSION = 'v0.9.1.2.3';
+export const HEXISTENZ_VERSION = 'v0.9.1.10';
 
 // ----------------------------------------------------------------------------
 // GRILLE / DECK
@@ -423,6 +423,12 @@ export const LOD_ANIMAL_CULL_DISTANCE = 9.6;          // −8 % (était 10.4)
 
 // Distance caméra au-delà de laquelle les fontaines de village sont masquées.
 export const LOD_FOUNTAIN_CULL_DISTANCE = 9.8;        // −8 % (était 10.7)
+
+// Distance caméra (XZ, centre de tuile) au-delà de laquelle la nappe d'eau bascule
+// du shader complet (vagues, écume voronoï, reflets Fresnel) vers une simple
+// surface bleue fixe. Sur une grande grille, le shader eau est le plus coûteux du
+// jeu (foamTex = 2 voronoï 3×3 par fragment) — inutile de le payer partout à la fois.
+export const LOD_WATER_SHADER_DISTANCE = 16.0;
 
 // ----------------------------------------------------------------------------
 // HITBOX — Registre spatial des objets GLB volumineux (stable/propHitboxRegistry.js)

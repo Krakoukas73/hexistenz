@@ -61,6 +61,44 @@ function computeInstancesBoundingSphere(matrices, heightPadding = 1.0) {
   return new THREE.Sphere(center, radius + heightPadding);
 }
 
+/** Lit les paramètres vent courants des arbres (HUD CUSTOMISATION — section VENT). */
+export function getTreeWindParams() {
+  return { ...TREE_WIND };
+}
+
+// Debounce du rebuild forêt déclenché par un changement de vent (slider dragué en continu).
+let _treeWindRebuildTimer = null;
+const TREE_WIND_REBUILD_DEBOUNCE_MS = 180;
+
+/**
+ * Applique de nouveaux paramètres de vent aux arbres.
+ *
+ * Le vent des arbres est cuit dans la SOURCE du shader (onBeforeCompile injecte des
+ * constantes GLSL, pas de simples uniforms comme pour l'eau/blé/prairie). Patcher les
+ * matériaux déjà posés EN PLACE est piégeux : applyGlobalWindToMaterial chaîne
+ * onBeforeCompile (`previousOnBeforeCompile?.(shader)`) — et la courbure monde
+ * (applyWorldCurvatureToMaterial, threeSetup.js) se chaîne PAR-DESSUS le vent une fois
+ * la scène posée. Ré-appliquer le vent sur le même matériau empile donc une copie
+ * supplémentaire des uniforms/fonctions GLSL à chaque appel → "redefinition" côté GLSL
+ * et échec de compilation (arbres qui disparaissent).
+ *
+ * TREE_WIND est mutable : on le met à jour en place (les futures reconstructions du
+ * feuillage — nouvelle tuile posée — en héritent), puis on déclenche un rebuild complet
+ * de la forêt : buildTreeInstancedMeshes clone toujours un matériau FRAIS depuis le
+ * prototype (sans onBeforeCompile hérité) et y applique TREE_WIND proprement, une
+ * seule fois. Le rebuild est debounced pour rester fluide pendant un drag de slider.
+ */
+export function setTreeWindParams(group, partial = {}) {
+  Object.assign(TREE_WIND, partial);
+  if (!group) return;
+
+  clearTimeout(_treeWindRebuildTimer);
+  _treeWindRebuildTimer = setTimeout(() => {
+    const placedTiles = group.userData?.lastPlacedTiles;
+    if (placedTiles) rebuildForestOverlay(group, placedTiles);
+  }, TREE_WIND_REBUILD_DEBOUNCE_MS);
+}
+
 export function createForestOverlay() {
   const group = new THREE.Group();
   group.name = 'forest-tree-glb-overlay';

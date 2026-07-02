@@ -13,6 +13,53 @@ import { LOD_ZONE_LABEL_CULL_DISTANCE, LOD_ZONE_LABEL_NEAR_FADE_START, LOD_ZONE_
 import { getWorldCurvatureDrop } from './worldCurvature.js';
 
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
+
+// ── Anti-chevauchement labels ↔ astre (soleil/lune) ─────────────────────────
+// L'astre est rendu sur WORLD_LAYER, testé en profondeur contre le monde (tours,
+// arbres, eau) — mais les labels (TEXT_LAYER) sont peints dans une passe séparée
+// SANS test de profondeur (pour rester lisibles au-dessus de tout, y compris les
+// tours), donc un label peut visuellement "recouvrir" l'astre quand leurs positions
+// écran coïncident (caméra haute notamment). Plutôt que de retoucher le pipeline de
+// rendu (tentative précédente = régression), on masque/atténue ici, en CPU, les
+// quelques labels dont la position écran tombe près de celle de l'astre — contournement
+// ciblé, sans risque pour le reste du rendu, coût négligeable (une projection par label,
+// déjà dans une boucle exécutée chaque frame par ailleurs).
+const ASTRE_LABEL_AVOID_RADIUS = 0.16; // rayon d'exclusion en unités NDC (écran = -1..1)
+const _astreWorldPos   = new THREE.Vector3();
+const _astreScreenPos  = new THREE.Vector2();
+const _astreToBody      = new THREE.Vector3();
+const _astreCamForward  = new THREE.Vector3();
+const _labelScreenPos  = new THREE.Vector3();
+let _astreScreenValid = false;
+
+function _updateAstreScreenPosition(scene, camera) {
+  _astreScreenValid = false;
+  const astre = scene?.getObjectByName?.('visible-sky-sun');
+  if (!astre) return;
+  astre.getWorldPosition(_astreWorldPos);
+  _astreToBody.copy(_astreWorldPos).sub(camera.position);
+  if (_astreToBody.lengthSq() < 1e-6) return;
+  _astreToBody.normalize();
+  camera.getWorldDirection(_astreCamForward);
+  if (_astreCamForward.dot(_astreToBody) <= 0.05) return; // astre derrière/sur le côté → pas de risque de recouvrement
+  _astreWorldPos.project(camera); // NDC en place (x, y, z)
+  _astreScreenPos.set(_astreWorldPos.x, _astreWorldPos.y);
+  _astreScreenValid = true;
+}
+
+// Retourne 1 si le point est loin de l'astre à l'écran, 0 s'il est en plein dessus,
+// avec un fondu doux (smoothstep) entre les deux — évite un pop brutal au bord de la zone.
+function _astreAvoidFade(worldPosition, camera) {
+  if (!_astreScreenValid) return 1;
+  _labelScreenPos.copy(worldPosition).project(camera);
+  const dx = _labelScreenPos.x - _astreScreenPos.x;
+  const dy = _labelScreenPos.y - _astreScreenPos.y;
+  const distSq = dx * dx + dy * dy;
+  const r = ASTRE_LABEL_AVOID_RADIUS;
+  if (distSq >= r * r) return 1;
+  const t = Math.max(0, Math.min(1, Math.sqrt(distSq) / r));
+  return t * t * (3 - 2 * t); // smoothstep
+}
 const LABEL_Y = 0.576; // −20 % (était 0.72)
 const HOVER_LABEL_SCALE = 1.85;
 const HOVER_LABEL_Y_OFFSET = 0.285;
@@ -522,8 +569,9 @@ export function updateBeachLOD(overlay, camera) {
   });
 }
 
-export function updateZoneLabelLOD(overlay, camera) {
+export function updateZoneLabelLOD(overlay, camera, scene = null) {
   if (!overlay) return;
+  _updateAstreScreenPosition(scene, camera);
 
   // Mode super-immersif : masquer tous les labels (même logique que HUDs)
   if (document.body.classList.contains('huds-force-hidden')) {
@@ -605,8 +653,8 @@ export function updateZoneLabelLOD(overlay, camera) {
     if (distXZ >= cullDist) { object.visible = false; return; }
     object.visible = true;
 
-    // ── Opacité : fondu sinusoïdal quand la caméra descend vers le sol ──
-    const opacity = _fadedOpacity;
+    // ── Opacité : fondu altitude × fondu anti-chevauchement astre (soleil/lune) ──
+    const opacity = _fadedOpacity * _astreAvoidFade(object.position, camera);
     if (object.material) object.material.opacity = opacity;
     if (opacity <= 0) { object.visible = false; return; }
 

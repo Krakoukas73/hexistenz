@@ -196,6 +196,22 @@ function computeChunkSphere(centers) {
 
 // ─── API publique ─────────────────────────────────────────────────────────────
 
+/** Lit les paramètres vent courants du blé (HUD CUSTOMISATION — section VENT). */
+export function getWheatWindParams() {
+  const m = _wheatMaterial;
+  return {
+    strength: m ? m.uniforms.uWindStrength.value : WHEAT_WIND_STRENGTH,
+    speed:    m ? m.uniforms.uWindSpeed.value    : WHEAT_WIND_SPEED,
+  };
+}
+
+/** Applique en direct (simples uniforms, pas de recompilation shader). */
+export function setWheatWindParams(partial = {}) {
+  const m = getWheatMaterial();
+  if (partial.strength != null) m.uniforms.uWindStrength.value = partial.strength;
+  if (partial.speed    != null) m.uniforms.uWindSpeed.value    = partial.speed;
+}
+
 export function createFieldWheatOverlay() {
   const group = new THREE.Group();
   group.name  = 'field-wheat-overlay';

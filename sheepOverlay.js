@@ -89,11 +89,27 @@ function _loadSheepGlb(onReady) {
       return;
     }
 
+    // ── Filtrage par armature : le clip unique (54 canaux) couvre les bones des
+    // 3 moutons (marcheur/brouteur/immobile) confondus. Joué tel quel sur un
+    // sous-arbre cloné qui ne contient QU'UNE des 3 armatures, les canaux visant
+    // les bones des 2 autres moutons ne trouvent pas leur cible → spam console
+    // "THREE.PropertyBinding: No target node found for track" (bénin mais bruyant).
+    // On ne garde donc, pour chaque proto, que les canaux dont le bone existe
+    // réellement dans son propre sous-arbre.
+    const _boneNames = (root) => { const s = new Set(); root.traverse(o => s.add(o.name)); return s; };
+    const _filterClipForArmature = (armatureRoot, label) => {
+      const names  = _boneNames(armatureRoot);
+      const tracks = clip.tracks.filter(t => names.has(t.name.replace(/\.[^.]+$/, '')));
+      return new THREE.AnimationClip(label, clip.duration, tracks);
+    };
+
+    const walkerClipFiltered = _filterClipForArmature(walker, 'walker-anim');
+
     // ── Clip brouteur : filtre la translation de Baze_19 ──────────────────────
     // Baze_19 est le bone racine du corps du brouteur. Ses frères sont les pattes
     // (FL1_21, BL1_23, etc.) — si Baze_19 se translate, le corps se dissocie des pattes.
     // On garde rotation et scale, on supprime uniquement le canal position.
-    const grazerTracks = clip.tracks.filter(t => t.name !== 'Baze_19.position');
+    const grazerTracks = _filterClipForArmature(grazer, 'grazer-anim').tracks.filter(t => t.name !== 'Baze_19.position');
     const grazerClip   = new THREE.AnimationClip('grazer-anim', clip.duration, grazerTracks);
     console.log('[sheepOverlay] Tracks brouteur conservées :', grazerTracks.map(t => t.name));
 
@@ -103,7 +119,7 @@ function _loadSheepGlb(onReady) {
     const scale  = SHEEP_TARGET_LEN / rawLen;
     console.log('[sheepOverlay] Scale calculée :', scale.toFixed(4), '(rawLen =', rawLen.toFixed(3) + ')');
 
-    _protos     = { walker, grazer, static: stat, walkerClip: clip, grazerClip, scale };
+    _protos     = { walker, grazer, static: stat, walkerClip: walkerClipFiltered, grazerClip, scale };
     _glbReady   = true;
     _glbLoading = false;
     for (const cb of _pendingCbs) cb(_protos);

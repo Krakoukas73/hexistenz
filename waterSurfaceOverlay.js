@@ -22,12 +22,12 @@
  */
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, EDGE_ORDER, WATER_RENDER } from './config.js';
+import { HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, EDGE_ORDER, WATER_RENDER, LOD_WATER_SHADER_DISTANCE } from './config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { createOuterVertices } from './hexGeometry.js';
 import { getTileEdgeType, getTileCenterType } from './tileUtils.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
-import { getRealisticWaterMaterial } from './realisticWater.js';
+import { getRealisticWaterMaterial, getFlatWaterMaterial } from './realisticWater.js';
 import { shoreNoise, shoreSteepness } from './shoreField.js';
 
 const WATER = 'water';
@@ -87,6 +87,8 @@ export function rebuildWaterSurfaceOverlay(group, placedTiles) {
     child.geometry?.dispose?.();
     group.remove(child);
   }
+  group.userData.surfMesh = null;
+  group.userData.waterLodRanges = null;
 
   // ── PASSE A : formes de tuiles + table de déplacement du contour ──────────
   const shapes = [];
@@ -95,6 +97,8 @@ export function rebuildWaterSurfaceOverlay(group, placedTiles) {
   for (const pt of placedTiles.values()) {
     if (!_tileHasWater(pt)) continue;
     const shape = _collectTileShape(pt, placedTiles);
+    const world = axialToWorld(pt.q, pt.r);
+    shape.center = { x: world.x, z: world.z };
     shapes.push(shape);
     for (const b of shape.boundaries) {
       _accumPerim(perim, b.a.x, b.a.z, b.nx, b.nz);
@@ -119,11 +123,18 @@ export function rebuildWaterSurfaceOverlay(group, placedTiles) {
   const bedPos = [];
   const skirtPos = [];
   const shoreSegs = [];
+  // Plage de sommets [start, count) par tuile dans surfPos, + centre monde de la
+  // tuile → permet à updateWaterSurfaceLOD() de réassigner des groupes de matériau
+  // (shader/plat) par tuile sans reconstruire les buffers de position.
+  const lodRanges = [];
 
   for (const shape of shapes) {
+    const vStart = surfPos.length / 3;
     for (const w of shape.wedges) _emitQuad(surfPos, bedPos, disp, w[0], w[1], w[2], w[3]);
     for (const t of shape.centerTris) _emitTri(surfPos, bedPos, disp, t[0], t[1], t[2]);
     for (const b of shape.boundaries) _emitSkirt(skirtPos, shoreSegs, disp, b.a, b.b);
+    const vCount = surfPos.length / 3 - vStart;
+    if (vCount > 0) lodRanges.push({ start: vStart, count: vCount, cx: shape.center.x, cz: shape.center.z });
   }
 
   // ── Champ de distance à la rive + profil (par sommet de surface) ──────────
@@ -146,11 +157,15 @@ export function rebuildWaterSurfaceOverlay(group, placedTiles) {
   }
 
   // ── Surface (transparente, shader cute) ──────────────────────────────────
+  // Deux matériaux : [0] shader complet (vagues/écume/reflets), [1] plat LOD
+  // (simple surface bleue fixe). updateWaterSurfaceLOD() répartit les tuiles
+  // entre les deux via geometry.groups, sans reconstruire les buffers.
   const surfGeo = new THREE.BufferGeometry();
   surfGeo.setAttribute('position', new THREE.Float32BufferAttribute(surfPos, 3));
   surfGeo.setAttribute('aShoreDist', new THREE.BufferAttribute(distArr, 1));
   surfGeo.setAttribute('aSteep', new THREE.BufferAttribute(steepArr, 1));
-  const surfMesh = new THREE.Mesh(surfGeo, getSurfaceMaterial());
+  surfGeo.addGroup(0, nVerts, 0);
+  const surfMesh = new THREE.Mesh(surfGeo, [getSurfaceMaterial(), getFlatWaterMaterial(WATER_RENDER.opacity)]);
   surfMesh.name = 'hex-sector-water';
   surfMesh.renderOrder = 3;
   surfMesh.castShadow = false;
@@ -159,6 +174,8 @@ export function rebuildWaterSurfaceOverlay(group, placedTiles) {
   surfMesh.userData.disableCastShadow = true;
   surfMesh.userData.shadowFlagsApplied = true;
   group.add(surfMesh);
+  group.userData.surfMesh = surfMesh;
+  group.userData.waterLodRanges = lodRanges;
 
   // ── Riverbed (fond opaque) ────────────────────────────────────────────────
   if (bedPos.length > 0) {
@@ -191,7 +208,54 @@ export function rebuildWaterSurfaceOverlay(group, placedTiles) {
   }
 }
 
-<<<<<<< HEAD
+/**
+ * LOD eau : au-delà de LOD_WATER_SHADER_DISTANCE (distance caméra→centre de tuile,
+ * XZ), bascule les triangles de la nappe du matériau shader (coûteux : voronoï
+ * d'écume ×2 par fragment, reflets, vagues) vers le matériau plat (simple bleu
+ * fixe). Ne touche PAS aux buffers de position/attributs — seuls les groupes de
+ * matériau de la géométrie sont réassignés (`geometry.groups`), donc coût CPU
+ * minime (une boucle sur les tuiles d'eau, pas de re-upload GPU des sommets).
+ *
+ * Les tuiles d'eau adjacentes dans `lodRanges` (donc contiguës en mémoire) et
+ * partageant le même bucket sont fusionnées en un seul groupe pour limiter le
+ * nombre de draw calls.
+ *
+ * Appeler à cadence réduite (ex. 1 frame sur 9, comme les autres LOD) — inutile
+ * de recalculer à 60 fps pour un effet qui ne change qu'au déplacement caméra.
+ *
+ * @param {THREE.Group} group   — waterSurfaceOverlay (retourné par createWaterSurfaceOverlay)
+ * @param {THREE.Camera} camera
+ */
+export function updateWaterSurfaceLOD(group, camera) {
+  const ranges = group?.userData?.waterLodRanges;
+  const surfMesh = group?.userData?.surfMesh;
+  if (!ranges || !surfMesh || ranges.length === 0) return;
+
+  const maxDistSq = LOD_WATER_SHADER_DISTANCE * LOD_WATER_SHADER_DISTANCE;
+  const camX = camera.position.x;
+  const camZ = camera.position.z;
+  const geo = surfMesh.geometry;
+
+  geo.clearGroups();
+  let groupStart = 0;
+  let groupMat = -1;
+  let groupEnd = 0;
+
+  for (const r of ranges) {
+    const dx = r.cx - camX;
+    const dz = r.cz - camZ;
+    const matIndex = (dx * dx + dz * dz) > maxDistSq ? 1 : 0;
+
+    if (matIndex !== groupMat) {
+      if (groupMat !== -1) geo.addGroup(groupStart, r.start - groupStart, groupMat);
+      groupStart = r.start;
+      groupMat = matIndex;
+    }
+    groupEnd = r.start + r.count;
+  }
+  if (groupMat !== -1) geo.addGroup(groupStart, groupEnd - groupStart, groupMat);
+}
+
 /**
  * Reconstruit la table de déplacement organique du rivage (mêmes calculs que
  * la PASSE A de rebuildWaterSurfaceOverlay), exposée pour que d'autres overlays
@@ -230,8 +294,6 @@ export function displaceShorePoint(shoreMap, x, z) {
   return e ? [x + e.dx, z + e.dz] : [x, z];
 }
 
-=======
->>>>>>> 4149cedbfad207ea16b99f216dfa4e5f9f8f2a3d
 // ── Forme d'une tuile : wedges + tris centre + arêtes de contour ────────────
 
 function _collectTileShape(pt, placedTiles) {

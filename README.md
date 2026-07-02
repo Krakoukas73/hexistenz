@@ -111,25 +111,25 @@ The core mechanic: **connections**. Extending a zone of the same type earns poin
 
 ---
 
-## 🎨 LUT & Ambiances
+## 🎨 Éditeur de direction artistique (EDA) / Art-direction editor
 
-🇫🇷 Un panneau d'**étalonnage en direct** (touche `L`) expose l'intégralité du pipeline de rendu, organisé en sections :
+🇫🇷 Un panneau de réglages **en direct, pendant la partie** (touche `E`) expose l'intégralité du pipeline de rendu, organisé en **3 onglets** :
 
-- **Rendu** — exposition, gamma, saturation, contraste, vibrance
-- **Brouillard** — densité, couleur, distance
-- **Lumières** — lumière ambiante, directionnelle, orbite solaire
-- **Étalonnage** — pipeline final post-rendu Three.js
-- **Palette biomes** — harmonisation chromatique par type de terrain
+- **LUT** — brouillard, astre lumineux, étalonnage (exposition/gamma/saturation/contraste/vibrance), palette biomes
+- **Cinématique** — vignette, grain, aberration chromatique, halation, barillet, scan lines, God Rays, **Bloom**, **Courbure écran (CRT)**, pixélisation
+- **Environnement** — écume, sillage bateau, nuages, vent (blés/herbes/arbres)
+
+Chaque slider s'applique **instantanément**, sans rechargement ni recompilation : vous pouvez sculpter l'ambiance visuelle en jouant. Historique undo/redo et export JSON des réglages (📋 Copier) inclus.
 
 Des **presets d'ambiance** (chargés depuis `ambiances.json`) permettent de basculer en un clic entre des atmosphères radicalement différentes : automne chaud, été vif, aube laiteuse, nuit lunaire, crépuscule... Chaque preset embarque ses réglages LUT, son mode de pixelisation et sa configuration cinématique.
 
-🇬🇧 A **live color-grading panel** (press `L`) exposes the full rendering pipeline, organized into sections:
+🇬🇧 A **live, in-game settings panel** (press `E`) exposes the full rendering pipeline, organized into **3 tabs**:
 
-- **Render** — exposure, gamma, saturation, contrast, vibrance
-- **Fog** — density, color, distance
-- **Lights** — ambient, directional, solar orbit
-- **Grading** — final post-render Three.js pipeline
-- **Biome palette** — chromatic harmonization per terrain type
+- **LUT** — fog, sun/moon, color grading (exposure/gamma/saturation/contrast/vibrance), biome palette
+- **Cinematic** — vignette, grain, chromatic aberration, halation, barrel distortion, scan lines, God Rays, **Bloom**, **CRT screen curvature**, pixelization
+- **Environment** — foam, boat wake, clouds, wind (wheat/grass/trees)
+
+Every slider applies **instantly**, no reload or shader recompile needed — you can sculpt the mood while playing. Undo/redo history and JSON export (📋 Copy) included.
 
 **Ambiance presets** (loaded from `ambiances.json`) let you switch in one click between radically different atmospheres: warm autumn, vivid summer, milky dawn, lunar night, dusk… Each preset bundles its own LUT settings, pixelization mode, and cinematic configuration.
 
@@ -142,8 +142,10 @@ Des **presets d'ambiance** (chargés depuis `ambiances.json`) permettent de basc
 🇬🇧 Hexistenz aims for polished visuals with a full Three.js post-processing pipeline and dedicated per-biome shaders:
 
 - **Étalonnage couleur / Color grading** — exposition, contraste, saturation, gamma, vibrance réglables en direct
-- **Effets cinématiques / Cinematic effects** `T` — vignette, grain argentique, scan lines style CRT
-- **Modes rétro / Retro modes** — pixelisation CGA (4 couleurs), EGA (16 couleurs), Amiga OCS (32 couleurs), Noir & Blanc, Phosphore vert
+- **Effets cinématiques / Cinematic effects** `T` — vignette, grain argentique, aberration chromatique, halation, God Rays
+- **Bloom** — halo lumineux sur les hautes lumières, seuil et rayon réglables en direct
+- **Courbure écran CRT / CRT screen curvature** — déformation d'écran façon tube cathodique, anisotropie horizontale/verticale et assombrissement progressif des bords, réglable en direct
+- **Modes rétro / Retro modes** — pixelisation CGA (4 couleurs), EGA (16 couleurs), Amiga OCS (32 couleurs), Noir & Blanc, Phosphore vert, scan lines
 - **Vent procédural / Procedural wind** — shader dédié animant herbes, lames de prairie et épis de blé de façon cohérente sur l'ensemble de la carte
 - **Fumée volumétrique / Volumetric smoke** — pass shader sur les cheminées de trains et les toits de village
 - **Eau vivante / Living water** — nappe continue au rivage organique, vagues et écume animées façon aquarelle, bateaux avec sillage, plages procédurales
@@ -180,7 +182,7 @@ Des **presets d'ambiance** (chargés depuis `ambiances.json`) permettent de basc
 | `M` | Muet / Son | Mute / Unmute |
 | `I` | Mode immersif (masque HUD) | Immersive mode (hide HUD) |
 | `Shift+Espace` | Super-immersif (masque tout) | Super-immersive (hide everything) |
-| `L` | Panneau LUT & ambiances | LUT & ambiance panel |
+| `E` | Éditeur de direction artistique (LUT / cinématique / environnement) | Art-direction editor (LUT / cinematic / environment) |
 | `T` | Effets cinématiques on/off | Cinematic effects on/off |
 
 ---

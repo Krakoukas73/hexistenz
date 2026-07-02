@@ -321,6 +321,10 @@ Complémentaire au contour normal : ensemble ils donnent un look cartoon ou BD.`
 "Bouliste" : la terre est une sphère, l'horizon est courbé — effet mini-planète.
 "Platiste" : pas de courbure, vue plate traditionnelle — look isométrique classique.`,
 
+  'env.dayNight':
+    `Bascule entre le jour et la nuit.
+Change l'astre visible (soleil/lune), le ciel, les couleurs ambiantes et fait apparaître les comètes de nuit.`,
+
   // ── Cinéma ─────────────────────────────────────────────────────────────────
   'cin.tilt':
     `Intensité de l'effet tilt-shift : flou progressif en haut et en bas du cadre.
@@ -339,7 +343,8 @@ Déplacer vers le bas met la netteté sur les éléments au sol.`,
   'cin.vignette':
     `Assombrissement des bords et coins du cadre.
 Simule la chute de lumière aux extrémités d'un objectif grand-angle.
-Renforce l'impression de profondeur et guide le regard vers le centre.`,
+Renforce l'impression de profondeur et guide le regard vers le centre.
+Va jusqu'à 2 : au-delà de 1, les bords virent au noir quasi total.`,
 
   'cin.grain':
     `Quantité de bruit filmique ajouté par-dessus le rendu.
@@ -365,6 +370,148 @@ Simule les objectifs fisheye ou grand-angle. Renforce l'aspect "caméra de surve
     `Lignes horizontales sombres entrelacées, imitant un moniteur CRT ou une vieille télé.
 0 = aucune scanline. 6 = lignes très marquées, look rétro-TV.
 Puissant combiné avec une palette CGA/EGA pour l'esthétique vintage.`,
+
+  'cin.godRays':
+    `Intensité des rayons crépusculaires (god rays) émanant de la position écran du soleil.
+Effet screen-space léger, sans passe de rendu supplémentaire — particulièrement visible
+près de l'horizon ou lorsque le soleil est partiellement masqué par un arbre ou une tour.
+0 = désactivé (zéro coût GPU).`,
+
+  'cin.godRaysLength':
+    `Portée des rayons, en fraction de l'écran, entre le pixel affiché et le soleil.
+Faible = rayons courts et localisés autour du soleil. Élevé = rayons qui traversent
+une grande partie du cadre.`,
+
+  'cin.godRaysDiffusion':
+    `Atténuation des rayons le long de leur parcours vers le soleil.
+Faible = rayons courts et nets. Élevé = rayons longs et doux qui s'étendent
+loin de la source lumineuse.`,
+
+  'cin.godRaysThreshold':
+    `Seuil de luminosité au-delà duquel un pixel est considéré comme une source lumineuse
+(ciel, soleil) et contribue aux rayons. Bas = plus de zones contribuent (rayons plus
+présents). Haut = seules les zones les plus lumineuses (le soleil lui-même) en génèrent.`,
+
+  'cin.godRaysLayers':
+    `Casse le dégradé lisse des rayons en tranches de densité superposées — effet de
+nappes/voiles translucides empilés (mille-feuille) plutôt qu'un halo continu.
+0 = dégradé lisse classique. 1 = feuilletage marqué, rayons visiblement stratifiés.`,
+
+  'cin.bloomIntensity':
+    `Intensité du bloom : halo lumineux léger autour des hautes lumières (soleil, lune,
+étoiles, fenêtres éclairées, éléments du HUD). N'affecte que les pixels au-dessus du
+seuil réglé ci-dessous — ne floute jamais toute l'image.
+0 = désactivé (zéro coût GPU).`,
+
+  'cin.bloomThreshold':
+    `Seuil de luminosité au-delà duquel un pixel contribue au bloom.
+Bas = plus de zones (même moyennement lumineuses) génèrent du halo.
+Haut = seules les sources les plus intenses (soleil, lampes) en génèrent.`,
+
+  'cin.bloomRadius':
+    `Rayon du flou appliqué autour des pixels sources du bloom, en pixels écran.
+Faible = halo serré et net. Élevé = halo plus large et diffus.`,
+
+  'cin.bloomSoftness':
+    `Douceur de la transition au seuil du bloom.
+Faible = coupure nette entre "contribue" et "ne contribue pas".
+Élevé = transition progressive, halo plus doux en bordure des sources.`,
+
+  'cin.crtCurvature':
+    `Courbure de l'écran façon tube cathodique (CRT) : déforme l'image comme si elle
+était affichée sur une surface incurvée. Paramètre indépendant de la distorsion
+barillet (objectif) ci-dessus. 0 = aucune déformation (zéro coût GPU).`,
+
+  'cin.crtMask':
+    `Masque les zones qui sortent du cadre une fois la courbure écran appliquée
+(bords noirs) plutôt que de les étirer. 0 = bords étirés (pas de masque),
+1 = bords hors-écran totalement masqués en noir. Sans effet si la courbure est à 0.`,
+
+  'cin.crtCornerDark':
+    `Assombrissement additionnel des coins de l'écran, typique d'un tube cathodique.
+0 = aucun assombrissement. Sans effet si la courbure écran est à 0.`,
+
+  // ── Eau — écume (rive + surface) ────────────────────────────────────────────
+  'water.foamWidth':
+    `Portée de la bande d'écume près de la rive (en mètres).
+0 = aucune écume de bord. Valeurs élevées = large frange blanche tout le long des côtes.`,
+
+  'water.foamScale':
+    `Échelle de la texture d'écume. Plus la valeur est élevée, plus les motifs d'écume sont fins et denses.
+Faible = grosses taches, élevé = grain fin façon mousse.`,
+
+  'water.foamDensity':
+    `Seuil de déclenchement de l'écume de rive. Plus la valeur est élevée, plus l'écume recouvre de surface près du bord.`,
+
+  'water.foamAmbient':
+    `Seuil d'écume ambiante, visible sur toute la surface de l'eau (pas seulement au bord).
+0 = surface parfaitement lisse au large. Valeurs élevées = moutons/clapot diffus partout.`,
+
+  'water.foamSharp':
+    `Netteté du bord de l'écume. Faible = transition douce et diffuse. Élevé = contour net et découpé.`,
+
+  'water.foamSpeed':
+    `Vitesse d'animation de l'écume (défilement du motif dans le temps). 0 = écume figée, immobile.`,
+
+  'water.deepDistance':
+    `Distance rive → large sur laquelle s'étend le dégradé de couleur peu profond/profond.
+Faible = transition resserrée près du bord. Élevé = dégradé étalé sur une grande zone.`,
+
+  'water.opacity':
+    `Opacité de base de la nappe d'eau. Faible = eau translucide qui laisse voir le fond. Élevé = eau opaque.`,
+
+  // ── Eau — sillage bateau (V) ─────────────────────────────────────────────────
+  'wake.armWidth':
+    `Demi-largeur de chaque branche du sillage en V derrière le bateau.`,
+
+  'wake.spread':
+    `Divergence du V : à quelle vitesse les deux branches s'écartent l'une de l'autre en s'éloignant du bateau.`,
+
+  'wake.length':
+    `Longueur sur laquelle le sillage s'estompe derrière le bateau avant de disparaître.`,
+
+  'wake.scale':
+    `Échelle du motif d'écume du sillage. Plus la valeur est élevée, plus le grain est fin.`,
+
+  'wake.density':
+    `Couverture d'écume du sillage. Faible = sillage discret, élevé = traînée d'écume dense.`,
+
+  'wake.opacity':
+    `Opacité maximale du sillage, la plus forte juste derrière le bateau puis atténuée par la longueur.`,
+
+  // ── VENT — blé, prairie, arbres ───────────────────────────────────────────────
+  'wind.wheat.strength':
+    `Amplitude du balancement des épis de blé. 0 = immobile.`,
+  'wind.wheat.speed':
+    `Vitesse d'oscillation du blé sous le vent.`,
+
+  'wind.grass.strength':
+    `Amplitude du balancement des brins de prairie.`,
+  'wind.grass.speed':
+    `Vitesse d'oscillation de la prairie sous le vent.`,
+  'wind.grass.sway':
+    `Balancement sinusoïdal additionnel de chaque brin, indépendant du bruit de vent.`,
+
+  'wind.tree.strength':
+    `Amplitude du balancement des cimes des arbres. Modifier ce réglage recompile les shaders des arbres déjà plantés (léger coup de gel possible).`,
+  'wind.tree.speed':
+    `Vitesse d'oscillation des arbres sous le vent.`,
+  'wind.tree.frequency':
+    `Fréquence spatiale de l'onde de vent principale le long du tronc/feuillage.`,
+  'wind.tree.turbulence':
+    `Intensité des rafales et détails secondaires ajoutés à l'onde de vent principale.`,
+  'wind.tree.gustStrength':
+    `Poids des rafales (variation plus lente et large) dans le mouvement global.`,
+  'wind.tree.detailStrength':
+    `Poids du détail fin (ondulation rapide) dans le mouvement global.`,
+
+  // ── NUAGES — horizon, mode jour ───────────────────────────────────────────────
+  'cloud.coverage':
+    `Couverture nuageuse à l'horizon. 0 = ciel dégagé, 1 = ciel couvert.`,
+  'cloud.scale':
+    `Échelle du motif de nuages. Valeur élevée = nuages plus petits et fins ; valeur faible = larges masses.`,
+  'cloud.speed':
+    `Vitesse de dérive des nuages à l'horizon.`,
 
   // ── STATISTIQUES DE LA PARTIE (HUD performances) ──────────────────────────
   'stats.drawCalls':
