@@ -114,3 +114,18 @@ export function getEnvironmentSnapshot(director, timeSeconds) {
     remaining: Math.max(0, state.expiresAt - timeSeconds)
   }));
 }
+
+/**
+ * Enveloppe de fondu 0..1 pour un évènement actif (fondu entrée + plateau + fondu
+ * sortie), à consommer par les modules d'effet (brume, lucioles, etc.) pour éviter
+ * les transitions brutales. Retourne 0 si l'évènement n'est pas actif.
+ */
+export function getEnvironmentEventFade(director, eventId, timeSeconds, { fadeIn = 6, fadeOut = 6 } = {}) {
+  const state = director.active.get(eventId);
+  if (!state) return 0;
+  const elapsed = timeSeconds - state.startedAt;
+  const remaining = state.expiresAt - timeSeconds;
+  const inRamp  = fadeIn  > 0 ? Math.min(1, elapsed / fadeIn) : 1;
+  const outRamp = fadeOut > 0 ? Math.min(1, remaining / fadeOut) : 1;
+  return Math.max(0, Math.min(inRamp, outRamp));
+}

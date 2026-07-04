@@ -35,6 +35,7 @@ import { resetPropHitboxRegistry } from './propHitboxRegistry.js';
 import { createDebugLightUI, tickFps } from './debugLightUi.js';
 import { createEnvironmentDirector, updateEnvironmentDirector } from './environmentDirector.js';
 import { createEnvironmentDebugPanel } from './environmentDebugUi.js';
+import { updateMorningMist } from './morningMistOverlay.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, setAstreMode, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './threeSetup.js';
 import { applyShadowCulling, rebuildShadowCasters } from './shadowCulling.js';
@@ -543,6 +544,7 @@ export function initScene(options = {}) {
     updateAnimatedBiomeTextures(timeSeconds);
     updateGlobalWind(timeSeconds);
     updateEnvironmentDirector(environmentDirector, timeSeconds);
+    updateMorningMist(scene, visualEnvironment, environmentDirector, timeSeconds);
     updateRealisticWater(timeSeconds);
     updateSpecialCellsMeshAnimation(specialCellsMesh, timeSeconds);
     updateBonusCellsMeshAnimation(bonusCellsMesh, timeSeconds);
