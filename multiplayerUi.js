@@ -17,7 +17,9 @@ const MENU_BACKGROUND_FADE_MS = 1100;
 export function showStartupScreen() {
   startMenuMusic();
   const urlRoomCode = new URLSearchParams(window.location.search).get('multi');
-  renderShell(urlRoomCode ? 'multi' : 'home', normalizeCode(urlRoomCode ?? ''));
+  // Menu solo/multi retiré au démarrage : on saute directement à l'écran suivant
+  // (choix platiste/bouliste), comme si "MULTI" avait été cliqué.
+  renderShell('multi', normalizeCode(urlRoomCode ?? ''));
 }
 
 function renderShell(screen = 'home', initialCode = '') {
@@ -515,7 +517,9 @@ function renderMulti(overlay, initialCode = '') {
   attachHelpTooltip(overlay.querySelector('[data-action="create"]'), LUT_HELP['menu.create']);
   attachHelpTooltip(overlay.querySelector('[data-action="join"]'), LUT_HELP['menu.join']);
   attachHelpTooltip(overlay.querySelector('[data-action="back"]'), LUT_HELP['menu.back']);
-  overlay.querySelector('[data-action="back"]').addEventListener('click', () => renderHome(overlay));
+  // Menu solo/multi retiré : "Retour" revient à l'écran précédent (platiste/bouliste)
+  // plutôt qu'au home désormais sauté au démarrage.
+  overlay.querySelector('[data-action="back"]').addEventListener('click', () => renderWorldShapeChoice(overlay, () => renderMulti(overlay)));
   overlay.querySelector('[data-action="create"]').addEventListener('click', () => handleCreate(overlay));
   overlay.querySelector('[data-action="join"]').addEventListener('click', () => handleJoin(overlay));
 

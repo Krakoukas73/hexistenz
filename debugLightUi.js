@@ -430,6 +430,13 @@ function installDebugLightCss() {
       vertical-align: -0.12em;
     }
 
+    /* Dans les 3 onglets EDA (LUT / Cinématique / Environnement) uniquement : encore +12%
+       par rapport à la valeur précédente (1.82 × 1.12 ≈ 2.04em au total, soit ×1.35 ×1.12
+       par rapport à la base). Le header AMBIANCES, hors onglets, reste à 1.35em. */
+    .debug-light-tab-panel .rubrique-emoji {
+      font-size: 2.04em;
+    }
+
     /* Toggle switch (same style as postprocessHud) */
     .pix-switch {
       flex: 0 0 auto;

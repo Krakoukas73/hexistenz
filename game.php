@@ -1,3 +1,6 @@
+<?php
+	// RIEN
+?>
 <!doctype html>
 <html lang="fr">
 <head>

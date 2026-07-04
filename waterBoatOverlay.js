@@ -196,13 +196,29 @@ function getWakeMaterial() {
       uniform vec3 uFoamColor;
       ${FOAM_GLSL}
       void main() {
-        // Froth : dense près du bateau (vAlong→0), se dissipe en gouttes vers la
-        // queue (vAlong→1) via un gradient de densité — pas de fond opaque, donc
-        // pas d'effet "masque". Bords latéraux adoucis (vAcross→±1).
-        float density = mix(uWakeDensity, -0.08, vAlong);
-        float fp = foamPattern(vWorld.xz, uTime * 1.4, uWakeScale, 1.0, density, uFoamSharp);
-        float edge = smoothstep(1.0, 0.25, abs(vAcross));
-        float a = vFade * fp * edge;
+        // Sillage vu du ciel (réf photo) : deux BRAS d'écume vifs sur les bords
+        // (V de Kelvin) + eau blanche CHURNÉE au centre + remous d'hélice éclatant
+        // au ras de la coque, le tout se dissipant vers l'arrière. Overlay blanc.
+        float alongFade = 1.0 - vAlong;                    // 1 au bateau → 0 en queue
+        float ax = abs(vAcross);
+
+        // Turbulence centrale (1 seul voronoï — coût négligeable sur ce fin ruban).
+        float density = mix(uWakeDensity, 0.0, vAlong);
+        float churn = foamPattern(vWorld.xz, uTime * 1.6, uWakeScale, 1.0, density, uFoamSharp);
+        float center = churn * smoothstep(1.0, 0.2, ax);   // plein au centre, s'éteint vers les bords
+
+        // Deux bras d'écume vifs (bords du V), texturés par le churn.
+        float arms = smoothstep(0.55, 0.85, ax) * (1.0 - smoothstep(0.9, 1.0, ax));
+        arms *= 0.6 + 0.4 * churn;
+
+        // Remous d'hélice : éclat blanc juste derrière la coque.
+        float prop = smoothstep(0.82, 1.0, alongFade) * smoothstep(0.7, 0.0, ax);
+
+        float foam = clamp(max(max(center, arms), prop), 0.0, 1.0);
+        // Fondu de queue qui atteint VRAIMENT 0 (plus d'arrêt net) : plein jusqu'à
+        // ~45% de la longueur, puis extinction douce vers l'arrière.
+        float tail = 1.0 - smoothstep(0.45, 1.0, vAlong);
+        float a = vFade * foam * tail;
         if (a < 0.01) discard;
         gl_FragColor = vec4(uFoamColor, a);
       }
@@ -320,7 +336,9 @@ export function updateWaterBoatLOD(group, camera, lodFactor = 1.0) {
   // → dist2D ≈ 0 → bateau toujours visible. En vue verticale, la hauteur Y de la caméra
   // est grande → distance 3D correcte → cull effectif.
   for (const boat of boats) {
-    boat.object.visible = camera.position.distanceToSquared(boat.trackCenter) < distSq;
+    const visible = camera.position.distanceToSquared(boat.trackCenter) < distSq;
+    boat.object.visible = visible;
+    if (boat.wake) boat.wake.visible = visible;
   }
 }
 

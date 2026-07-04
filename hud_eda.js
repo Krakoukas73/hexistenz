@@ -665,10 +665,12 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   let lastPresetState        = null;   // snapshot config après dernier clic preset
   let lastPresetPixelization = null;  // pixelisation associée au dernier preset
   let lastPresetCinema       = null;  // cinéma associé au dernier preset
+  let lastPresetWind         = null;  // vent associé au dernier preset
   let _comparing             = false;
   let _stateBeforeCompare    = null;  // snapshot state au moment du clic "Comparer" → restauré par "⟳ Retour"
   let _pixelBeforeCompare    = null;  // pixelisation en cours avant entrée en mode comparer
   let _cinBeforeCompare      = null;  // cinéma en cours avant entrée en mode comparer
+  let _windBeforeCompare     = null;  // vent en cours avant entrée en mode comparer
 
   // ─── Rendu des contrôles LUT par section ────────────────────────────────────
   // Les sections avec `togglePath` (Étalonnage, Palette biomes) portent un switch
@@ -765,11 +767,18 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
       // Cinéma : config intégrée dans ambiances.json (scanLines > 0 pour presets rétro CRT)
       const cin = preset.cinema ?? { enabled: true };
       _commitCin(cin);
+      // Vent : config intégrée dans ambiances.json (ex. Psyché-LSD). Absent → WIND_DEFAULTS
+      // (objet complet, tous les sous-champs présents) plutôt qu'un merge partiel sur
+      // _windCurrent, pour éviter que le vent d'un preset ne "fuite" sur le suivant —
+      // même piège que celui rencontré avec crtEnabled sur les ambiances CRT.
+      const wind = preset.wind ?? WIND_DEFAULTS;
+      _commitWind(wind);
       applyAll();
       // Snapshot pour "Comparer"
       lastPresetState        = JSON.parse(JSON.stringify(state));
       lastPresetPixelization = pix;
       lastPresetCinema       = cin;
+      lastPresetWind         = wind;
       lastPresetEl.textContent = preset.name;
       compareBtn.disabled   = false;
       _comparing            = false;
@@ -834,7 +843,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     pixDepthEl.value         = String(_pixCurrent.depthEdgeStrength);
     pixDepthValEl.textContent  = _pixCurrent.depthEdgeStrength.toFixed(2);
     worldShapeToggleEl.checked        = _pixCurrent.worldShapeMode === 'bouliste';
-    worldShapeModeLabelEl.textContent = _pixCurrent.worldShapeMode === 'bouliste' ? '🌍 Bouliste' : '📐 Platiste';
+    worldShapeModeLabelEl.innerHTML = _emojiHeadHtml(_pixCurrent.worldShapeMode === 'bouliste' ? '🌍 Bouliste' : '📐 Platiste');
     root.querySelector('.debug-light-pix-section').classList.toggle('pix-section--disabled', !_pixCurrent.enabled);
   }
 
@@ -872,7 +881,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   let _dayNightCurrent = localStorage.getItem('hexistenz_daynightmode') === 'lune' ? 'lune' : 'soleil';
   function _renderDayNightControls() {
     dayNightToggleEl.checked        = _dayNightCurrent === 'soleil';
-    dayNightModeLabelEl.textContent = _dayNightCurrent === 'soleil' ? '☀️ Jour' : '🌙 Nuit';
+    dayNightModeLabelEl.innerHTML = _emojiHeadHtml(_dayNightCurrent === 'soleil' ? '☀️ Jour' : '🌙 Nuit');
   }
   _renderDayNightControls();
   dayNightToggleEl.addEventListener('change', () => {
@@ -1314,11 +1323,13 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
       _stateBeforeCompare = JSON.parse(JSON.stringify(state));
       _pixelBeforeCompare = { ..._pixCurrent }; // snapshot courant des settings PIX
       _cinBeforeCompare   = { ..._cinCurrent }; // snapshot courant des settings CINÉMA
+      _windBeforeCompare  = { ..._windCurrent }; // snapshot courant des settings VENT
       // Afficher la dernière ambiance preset
       visualEnvironment.apply(lastPresetState);
       applyColorGradingUniforms(postprocess?.colorGradingPass, lastPresetState);
       if (lastPresetPixelization) _commitPix(lastPresetPixelization);
       if (lastPresetCinema)       _commitCin(lastPresetCinema);
+      if (lastPresetWind)         _commitWind(lastPresetWind);
     } else {
       // Restaurer exactement ce qui était affiché AVANT de cliquer "Comparer"
       if (_stateBeforeCompare) {
@@ -1330,6 +1341,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
       applyColorGradingUniforms(postprocess?.colorGradingPass, state);
       if (_pixelBeforeCompare) { _commitPix(_pixelBeforeCompare); _pixelBeforeCompare = null; }
       if (_cinBeforeCompare)   { _commitCin(_cinBeforeCompare);   _cinBeforeCompare   = null; }
+      if (_windBeforeCompare)  { _commitWind(_windBeforeCompare); _windBeforeCompare  = null; }
     }
   });
 

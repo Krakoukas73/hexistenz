@@ -135,11 +135,11 @@ export const WATER_RENDER = {
   deepDistance: 0.75,  // distance rive→large du dégradé (resserré — moins étendu)
 
   // Sillage du bateau (traînée en V) :
-  wakeArmWidth:  0.060, // demi-largeur de chaque branche du V (m) — bord adouci dans le shader
-  wakeSpread:    0.40,  // divergence du V (latéral ajouté par unité de recul)
-  wakeLength:    1.15,  // longueur sur laquelle le sillage s'estompe (m) — anti-pop
-  wakeScale:     4.5,   // échelle du motif d'écume du sillage
-  wakeDensity:   0.50,  // couverture d'écume du sillage (seuil texture Danil)
+  wakeArmWidth:  0.080, // demi-largeur du ruban au niveau du bateau (m) — lisible par défaut
+  wakeSpread:    0.28,  // divergence du V (réglable au slider)
+  wakeLength:    1.20,  // longueur de fondu (queue à 0 — plus d'arrêt net)
+  wakeScale:     5.5,   // échelle du motif d'écume du sillage (fin)
+  wakeDensity:   0.55,  // couverture d'écume du sillage (turbulence pleine au bateau)
   wakeOpacity:   0.90,  // opacité max (près du bateau)
 };
 

@@ -33,6 +33,14 @@ const HOUSE_CHIMNEY_TOP_Y = HOUSE_BASE_Y + HOUSE_SCALE * 1.62;
 const HOUSE_SMOKE_Y = HOUSE_CHIMNEY_TOP_Y + HOUSE_SCALE * 0.08;
 const PUFFS_PER_COLUMN = 18;
 
+// Atténuation du tilt de courbure monde (bouliste) pour les bâtiments : l'angle
+// géométrique réel de la pente (jusqu'à 45° près de l'équateur de la calotte,
+// cf. worldCurvature.js) est fidèle à la sphère, mais des volumes rectilignes
+// à arêtes droites (murs, toits) le rendent visuellement beaucoup plus choquant
+// que sur des props organiques (arbres, rochers). On ne penche donc les maisons
+// et tours qu'à moitié de l'inclinaison réelle — ajuster si besoin.
+const HOUSE_TILT_STRENGTH = 0.5;
+
 const smokeMaterialCache = [];
 
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
@@ -219,7 +227,7 @@ function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, h
     const tower = createVillageWatchtowerObject(`${tileKey}:${sector.key}:village-watchtower`, sector);
     const towerSurfaceY = getTerrainSurfaceY(towerLocal, EDGE_TYPES.house, Math.floor(hashUnit(`${tileKey}:${sector.key}:watchtower`) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
     tower.position.set(tileX + towerLocal.x, towerSurfaceY + 0.010, tileZ + towerLocal.z);
-    getCurvatureTiltQuaternion(tileX + towerLocal.x, tileZ + towerLocal.z, _hCurvQuat);
+    getCurvatureTiltQuaternion(tileX + towerLocal.x, tileZ + towerLocal.z, _hCurvQuat, HOUSE_TILT_STRENGTH);
     tower.quaternion.premultiply(_hCurvQuat);
     group.add(tower);
     // (pas d'enregistrement hitbox : la tour n'a pas besoin de bloquer d'autres objets ici)
@@ -237,7 +245,7 @@ function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, h
     const house = createVillageHouseObject(seed, sector, i);
     const houseSurfaceY = getTerrainSurfaceY(local, EDGE_TYPES.house, Math.floor(hashUnit(seed) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
     house.position.set(worldX, houseSurfaceY + 0.004, worldZ);
-    getCurvatureTiltQuaternion(worldX, worldZ, _hCurvQuat);
+    getCurvatureTiltQuaternion(worldX, worldZ, _hCurvQuat, HOUSE_TILT_STRENGTH);
     house.quaternion.premultiply(_hCurvQuat);
     group.add(house);
 

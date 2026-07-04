@@ -187,9 +187,15 @@ function getSectorDepth(type) {
  * Calcule le décalage XZ à appliquer au BAS des faces latérales en mode bouliste,
  * pour qu'elles paraissent perpendiculaires à la surface courbée après le drop GPU.
  *
- * Formule exacte : après le drop GPU ΔY = -(wx·Δx + wz·Δz)/R, pour que la direction
- * visuelle de la tranche soit la normale de surface (wx/R, 1, wz/R), le décalage
- * bottom XZ doit être k·depth·(wx, wz)/R avec k = R²/(R²+r²).
+ * Le sommet haut de la face reste à (wx, wz) ; le shader GPU évalue drop() à la
+ * position monde exacte de chaque vertex. Sans décalage, bas et haut partagent le
+ * même XZ → même drop → la face reste verticale. On décale donc le bas de (dx,dz)
+ * pour que le vecteur haut→bas s'aligne (au 1er ordre) sur la normale de surface
+ * (nx, 1, nz) avec (nx,nz) = (-∂drop/∂x, -∂drop/∂z). Résolution (même dérivation
+ * que getCurvatureTiltQuaternion) : dx = depth·nx/(1+nx²+nz²), dz = depth·nz/(1+nx²+nz²).
+ *
+ * Pour drop = -R(1-cos(dist/R)) : nx = sin(dist/R)·wx/dist, nz = sin(dist/R)·wz/dist,
+ * nx²+nz² = sin²(dist/R).
  *
  * @param {number} localX  X local du vertex (relatif au centre de la tuile)
  * @param {number} localZ  Z local du vertex
@@ -203,9 +209,14 @@ function _sideBottomShift(localX, localZ, worldX, worldZ, depth) {
   const R  = WORLD_CURVATURE.radius;
   const wx = worldX + localX;
   const wz = worldZ + localZ;
-  const R2 = R * R;
-  const k  = R2 / (R2 + wx * wx + wz * wz); // pré-compensation GPU
-  return { dx: depth * k * wx / R, dz: depth * k * wz / R };
+  const dist = Math.hypot(wx, wz);
+  if (dist < 1e-9) return { dx: 0, dz: 0 };
+  const distClamped = Math.min(dist, R * Math.PI);
+  const s = Math.sin(distClamped / R);
+  const nx = s * wx / dist;
+  const nz = s * wz / dist;
+  const denom = 1 + s * s; // = 1 + nx² + nz²
+  return { dx: depth * nx / denom, dz: depth * nz / denom };
 }
 
 function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bIndex = 1, raggedLeft = true, raggedRight = true, worldX = 0, worldZ = 0) {

@@ -31,7 +31,7 @@ const WAKE_SLIDERS = [
   { key: 'spread',   label: 'Sillage — divergence V',    min: 0,    max: 1.2,  step: 0.02 },
   { key: 'length',   label: 'Sillage — longueur',        min: 0.4,  max: 1.3,  step: 0.05 },
   { key: 'scale',    label: 'Sillage — finesse',         min: 2,    max: 16,   step: 0.2  },
-  { key: 'density',  label: 'Sillage — densité',         min: 0,    max: 0.5,  step: 0.005 },
+  { key: 'density',  label: 'Sillage — densité',         min: 0,    max: 0.7,  step: 0.005 },
   { key: 'opacity',  label: 'Sillage — opacité',         min: 0.2,  max: 1.0,  step: 0.02 }
 ];
 

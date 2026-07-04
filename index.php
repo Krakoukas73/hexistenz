@@ -83,6 +83,7 @@ function fmt_date($iso) {
     <li><a href="#gameplay" data-fr>Gameplay</a>    <a href="#gameplay" data-en>Gameplay</a></li>
     <li><a href="#gallery"  data-fr>Galerie</a>     <a href="#gallery"  data-en>Gallery</a></li>
     <li><a href="#daynnight" data-fr>Jour/Nuit</a>  <a href="#daynnight" data-en>Day/Night</a></li>
+    <li><a href="#eda"      data-fr>Personnalisation</a> <a href="#eda" data-en>Customization</a></li>
     <li><a href="#multi"    data-fr>Multijoueur</a> <a href="#multi"    data-en>Multiplayer</a></li>
     <li><a href="#scores"   data-fr>Classement</a>  <a href="#scores"   data-en>Leaderboard</a></li>
   </ul>
@@ -486,7 +487,7 @@ function fmt_date($iso) {
         <div class="score-pill"><div class="score-pill-pts">+25</div><div class="score-pill-label" data-fr>Réseau connecté</div><div class="score-pill-label" data-en>Network connected</div></div>
         <div class="score-pill"><div class="score-pill-pts">+50</div><div class="score-pill-label" data-fr>Tuile entourée</div><div class="score-pill-label" data-en>Tile surrounded</div></div>
         <div class="score-pill"><div class="score-pill-pts">+100</div><div class="score-pill-label" data-fr>Mission accomplie</div><div class="score-pill-label" data-en>Mission complete</div></div>
-        <div class="score-pill"><div class="score-pill-pts">+1000</div><div class="score-pill-label" data-fr>Comète interceptée</div><div class="score-pill-label" data-en>Comet intercepted</div></div>
+        <div class="score-pill"><div class="score-pill-pts">+75</div><div class="score-pill-label" data-fr>Comète interceptée</div><div class="score-pill-label" data-en>Comet intercepted</div></div>
         <div class="score-pill"><div class="score-pill-pts">+1500</div><div class="score-pill-label" data-fr>Case bonus recouverte</div><div class="score-pill-label" data-en>Bonus cell covered</div></div>
       </div>
     </div>
@@ -526,17 +527,17 @@ function fmt_date($iso) {
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Amiga</span><span data-en>Amiga</span></div></div>
       </div>
 
-      <div class="gallery-card">
-        <img src="images/cga.png" alt="Preset CGA" class="gallery-img">
-        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>CGA 320×200 4 couleurs</span><span data-en>CGA 320×200 4 colors</span></div></div>
-      </div>
-
-      <div class="gallery-card">
+      <div class="gallery-card gallery-card--contain" style="grid-column:span 2;">
         <img src="images/ega.png" alt="Preset EGA" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>EGA 16 couleurs</span><span data-en>EGA 16 colors</span></div></div>
       </div>
 
-      <div class="gallery-card" style="grid-column:span 2;">
+      <div class="gallery-card gallery-card--contain" style="grid-column:span 2;">
+        <img src="images/cga.png" alt="Preset CGA" class="gallery-img">
+        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>CGA 320×200 4 couleurs</span><span data-en>CGA 320×200 4 colors</span></div></div>
+      </div>
+
+      <div class="gallery-card gallery-card--contain" style="grid-column:span 2;">
         <img src="images/apple2.png" alt="Preset Apple II" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Apple II</span><span data-en>Apple II</span></div></div>
       </div>
@@ -589,6 +590,56 @@ function fmt_date($iso) {
           <li data-fr>🌑 Atmosphère sombre, fumée des villages plus visible</li>
           <li data-en>🌑 Dark atmosphere, village smoke more visible</li>
         </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ PERSONNALISATION EXTRÊME (EDA) ═══════════ -->
+<section id="eda">
+  <div class="container">
+    <p class="section-label" data-fr>Éditeur de direction artistique</p>
+    <p class="section-label" data-en>Art direction editor</p>
+    <h2 class="section-title" data-fr>Personnalisation extrême</h2>
+    <h2 class="section-title" data-en>Extreme customization</h2>
+    <p class="section-sub" data-fr>Au-delà des 16 presets, l'EDA ouvre des dizaines de metrics ajustables en temps réel, réparties en 3 onglets — LUT, Cinématique, Environnement. Chaque curseur répond instantanément, sans rechargement, et l'ensemble se copie/exporte en JSON pour être rejoué ou partagé.</p>
+    <p class="section-sub" data-en>Beyond the 16 presets, the EDA exposes dozens of metrics adjustable in real time, spread across 3 tabs — LUT, Cinematic, Environment. Every slider responds instantly, no reload, and the whole configuration copies/exports as JSON to be replayed or shared.</p>
+
+    <div class="eda-showcase-grid">
+      <div class="eda-showcase-card">
+        <img src="images/eda-1.png" alt="EDA — onglet LUT" class="eda-showcase-img">
+        <div class="eda-showcase-body">
+          <div class="eda-showcase-tab" data-fr>Onglet 1</div>
+          <div class="eda-showcase-tab" data-en>Tab 1</div>
+          <div class="eda-showcase-label" data-fr>LUT</div>
+          <div class="eda-showcase-label" data-en>LUT</div>
+          <p class="eda-showcase-desc" data-fr>Brouillard, astre lumineux, étalonnage colorimétrique complet (courbes RVB, gamma, niveaux) et palette par biome.</p>
+          <p class="eda-showcase-desc" data-en>Fog, light source, full color grading (RGB curves, gamma, levels) and per-biome palette.</p>
+        </div>
+      </div>
+
+      <div class="eda-showcase-card">
+        <img src="images/eda-2.png" alt="EDA — onglet Cinématique" class="eda-showcase-img">
+        <div class="eda-showcase-body">
+          <div class="eda-showcase-tab" data-fr>Onglet 2</div>
+          <div class="eda-showcase-tab" data-en>Tab 2</div>
+          <div class="eda-showcase-label" data-fr>Cinématique</div>
+          <div class="eda-showcase-label" data-en>Cinematic</div>
+          <p class="eda-showcase-desc" data-fr>God rays, tilt-shift, bloom, pixelisation rétro et courbure d'écran — pour filmer le monde plutôt que le regarder.</p>
+          <p class="eda-showcase-desc" data-en>God rays, tilt-shift, bloom, retro pixelization and screen curvature — to film the world rather than just look at it.</p>
+        </div>
+      </div>
+
+      <div class="eda-showcase-card">
+        <img src="images/eda-3.png" alt="EDA — onglet Environnement" class="eda-showcase-img">
+        <div class="eda-showcase-body">
+          <div class="eda-showcase-tab" data-fr>Onglet 3</div>
+          <div class="eda-showcase-tab" data-en>Tab 3</div>
+          <div class="eda-showcase-label" data-fr>Environnement</div>
+          <div class="eda-showcase-label" data-en>Environment</div>
+          <p class="eda-showcase-desc" data-fr>Nuages, vent (blés, herbes, arbres), forme du monde (bouliste/platiste) et bascule Jour/Nuit.</p>
+          <p class="eda-showcase-desc" data-en>Clouds, wind (wheat, grass, trees), world shape (globe/flat) and Day/Night switch.</p>
         </div>
       </div>
     </div>
