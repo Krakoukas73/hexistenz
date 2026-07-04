@@ -13,7 +13,7 @@
 // ----------------------------------------------------------------------------
 // VERSION
 // ----------------------------------------------------------------------------
-export const HEXISTENZ_VERSION = 'v0.9.1.10';
+export const HEXISTENZ_VERSION = 'v0.9.1.17';
 
 // ----------------------------------------------------------------------------
 // GRILLE / DECK
@@ -308,6 +308,21 @@ export const FIELD_BIRD_FLOCK_MODEL_URL = './glb/animaux/birds.glb';
 export const FIELD_BIRD_FLOCK_TARGET_WIDTH = 0.0312;
 export const FIELD_BIRD_FLOCK_ANIMATION_SPEED = 1.0;
 
+// Mouettes GLB animées au-dessus des grandes surfaces d'eau.
+// Contrairement à birds.glb (qui contient déjà 5 oiseaux dans un seul modèle),
+// mouette.glb ne contient qu'UNE seule mouette animée : le code clone donc
+// individuellement 3 à 6 instances par groupe pour simuler un vol groupé
+// (même logique d'orbite que les corbeaux, effectKind 'bird-flock-orbit' réutilisé).
+export const WATER_SEAGULL_MODEL_URL = './glb/animaux/mouette.glb';
+export const WATER_SEAGULL_TARGET_WIDTH = 0.0312 * 1.70 * 1.20 * 1.25; // +70% puis +20% puis +25% (toujours trop petites au rendu)
+export const WATER_SEAGULL_ANIMATION_SPEED = 1.0;
+export const WATER_SEAGULL_MIN_SECTORS = 4; // "dimensions respectables" = zone d'eau connectée d'au moins 4 secteurs
+export const WATER_SEAGULL_MIN_COUNT = 5;    // +25% puis +20% (était 3)
+export const WATER_SEAGULL_MAX_COUNT = 10;   // +25% puis +20% (était 6)
+// Facteur de vitesse d'orbite — −60% (les mouettes traversaient le ciel comme un avion de chasse)
+// puis +12% (encore un peu trop lentes).
+export const WATER_SEAGULL_SPEED_FACTOR = 0.40 * 1.12;
+
 // ----------------------------------------------------------------------------
 // TRAINS / GARES
 // ----------------------------------------------------------------------------
@@ -407,6 +422,9 @@ export const LOD_ROAD_DECOR_CULL_DISTANCE = 8.3;      // −8 % (était 9.0)
 // Distance caméra au-delà de laquelle les corbeaux animés sont masqués.
 export const LOD_CROW_CULL_DISTANCE = 9.7;            // −8 % (était 10.5)
 
+// Distance caméra au-delà de laquelle les mouettes des surfaces d'eau sont masquées.
+export const LOD_SEAGULL_CULL_DISTANCE = 9.7;         // même distance que les corbeaux (silhouette similaire)
+
 // Distance caméra au-delà de laquelle les moulins (moulin-1/2) sont masqués.
 export const LOD_MILL_CULL_DISTANCE = 12.6;           // −8 % (était 13.7)
 
@@ -423,6 +441,11 @@ export const LOD_ANIMAL_CULL_DISTANCE = 9.6;          // −8 % (était 10.4)
 
 // Distance caméra au-delà de laquelle les fontaines de village sont masquées.
 export const LOD_FOUNTAIN_CULL_DISTANCE = 9.8;        // −8 % (était 10.7)
+
+// Distance caméra au-delà de laquelle les personnages (villageois + rôdeurs de forêt) sont masqués.
+// Catégorie dédiée — silhouettes humaines, un peu plus lisibles de loin qu'un tonneau mais
+// moins qu'une maison : valeur intermédiaire entre LOD_ANIMAL et LOD_VILLAGE_PROP.
+export const LOD_CHARACTER_CULL_DISTANCE = 9.4;
 
 // Distance caméra (XZ, centre de tuile) au-delà de laquelle la nappe d'eau bascule
 // du shader complet (vagues, écume voronoï, reflets Fresnel) vers une simple
@@ -473,7 +496,7 @@ export const TREE_WIND = {
 // Géométrie GPU-only (InstancedBufferGeometry + ShaderMaterial).
 // Un seul ShaderMaterial partagé pour toute la grille, uTime = globalWind.
 // Modifier librement ces valeurs pour ajuster le rendu.
-export const WHEAT_BLADE_COUNT    = 2321;   // +9% (était 2129)
+export const WHEAT_BLADE_COUNT    = 1950;   // −16% (2026-07-04, était 2321) — +9% (était 2129)
 export const WHEAT_BLADE_WIDTH    = 0.00187; // demi-largeur du brin (HEX_SIZE=1) — −65% −25% +60% −10% −63% −22%
 export const WHEAT_BLADE_SEGMENTS = 4;      // segments verticaux (qualité du bend)
 export const WHEAT_INNER_RATIO    = 0.20;   // bord intérieur du trapèze (0=centre, 1=bord)
@@ -481,7 +504,7 @@ export const WHEAT_HEIGHT_MIN     = 0.505;  // hauteur min (scale local brin) �
 export const WHEAT_HEIGHT_MAX     = 0.977;  // hauteur max (scale local brin) — +20% (était 0.814)
 export const WHEAT_WIDTH_MIN      = 0.204;  // largeur min (scale local brin) — −22 % (était 0.261)
 export const WHEAT_WIDTH_MAX      = 0.441;  // largeur max (scale local brin) — −22 % (était 0.566)
-export const WHEAT_GLOBAL_HEIGHT  = 0.0630; // scale global Y — +20% (était 0.0525)
+export const WHEAT_GLOBAL_HEIGHT  = 0.0536; // scale global Y — −15% (était 0.0630)
 export const WHEAT_WIND_STRENGTH  = 0.0255; // amplitude balancement (0=immobile, 0.32=fort) — −15%
 export const WHEAT_WIND_SPEED     = 1.65;   // vitesse animation (multiplicateur temps)
 export const WHEAT_BOTTOM_COLOR   = 0x8f7a20; // couleur base de tige
@@ -491,7 +514,7 @@ export const LOD_WHEAT_CULL_DISTANCE = 5.6;  // −15 % (était 6.6)
 
 // ── Prairie (Bezier Grass) — inspiré du shader ShaderToy lslGR8 ──────────────
 // Spine Bezier cubique + vent value-noise (Dave Hoskins), 2 strips croisés.
-export const GRASS_BLADE_COUNT    = 1280;   // brins par secteur prairie — +17 % (était 1094)
+export const GRASS_BLADE_COUNT    = 1101;   // brins par secteur prairie/forêt — −14% (2026-07-04, était 1280) — +17 % (était 1094)
 export const GRASS_BLADE_WIDTH    = 0.001766;// demi-largeur brin (HEX_SIZE=1) — −16 % (était 0.002102)
 export const GRASS_BLADE_SEGMENTS = 3;       // segments vertx (ShaderToy BLADE_SEGMENTS default)
 export const GRASS_INNER_RATIO    = 0.15;    // bord intérieur trapèze (plus proche du centre que blé)
@@ -499,7 +522,7 @@ export const GRASS_HEIGHT_MIN     = 0.319;   // scale hauteur min — −25 % (�
 export const GRASS_HEIGHT_MAX     = 0.574;   // scale hauteur max — −25 % (était 0.765)
 export const GRASS_WIDTH_MIN      = 0.365;   // scale largeur min — −35 % (était 0.561)
 export const GRASS_WIDTH_MAX      = 0.763;   // scale largeur max — −35 % (était 1.173)
-export const GRASS_GLOBAL_HEIGHT  = 0.02716; // scale global Y — −16 % (était 0.03233)
+export const GRASS_GLOBAL_HEIGHT  = 0.02309; // scale global Y — −15% (était 0.02716)
 export const GRASS_TILT_MIN       = 0.25;   // BLADE_TILT min (penchement avant)
 export const GRASS_TILT_MAX       = 0.42;   // BLADE_TILT max
 export const GRASS_BEND_MIN       = 0.12;   // BLADE_BEND min (courbure)

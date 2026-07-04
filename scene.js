@@ -181,7 +181,7 @@ export function initScene(options = {}) {
   document.addEventListener('hexistenz:dayNightChange', (e) => {
     isSoleil = (e.detail.mode === 'soleil');
     cometSky.visible = !isSoleil;
-    setAstreMode(scene, isSoleil);  // soleil.glb visible le jour, lune.glb la nuit
+    setAstreMode(scene, isSoleil);  // soleil.glb visible le jour, lune_melies.glb la nuit
     if (isSoleil) {
       updateCloudSky(cloudSky, {
         enabled: true,

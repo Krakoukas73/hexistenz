@@ -69,6 +69,32 @@ export const CATEGORY_ICONS = {
   'Filets eau':       '🌊',
   'Brume eau':        '💨',
   'Effets eau':       '💧',
+  // Personnages — villageois
+  'Femme 1':          '👩',
+  'Femme 2':          '👩',
+  'Femme 3':          '👩',
+  'Femme 4':          '👩',
+  'Femme 5':          '👩',
+  'Homme 1':          '🧑',
+  'Homme 2':          '🧑',
+  'Homme 3':          '🧑',
+  'Fermier':          '🧑‍🌾',
+  'Forgeron':         '⚒️',
+  'Marchand':         '💰',
+  'Tavernier':        '🍺',
+  'Garde':            '💂',
+  'Soldat':           '⚔️',
+  'Chevalier':        '🛡️',
+  'Villageois':       '🧑',
+  // Personnages — rôdeurs de forêt
+  'Archer':           '🏹',
+  'Guerrier 1':       '🗡️',
+  'Guerrier 2':       '🗡️',
+  'Guerrier 3':       '🗡️',
+  'Magicien':         '🧙',
+  'Moine':            '🙏',
+  'Sorcière':         '🧙‍♀️',
+  'Rôdeurs forêt':    '🏹',
   // Divers
   'Coffres bonus':    '🎁',
   'Étoiles & comètes':'✨',
@@ -117,12 +143,20 @@ export const ITEM_GROUP = {
   'Terrain Prairie': 'Terrain', 'Terrain Forêt': 'Terrain', 'Terrain Village': 'Terrain',
   'Terrain Rail': 'Terrain', 'Terrain Mer': 'Terrain', 'Terrain Champ': 'Terrain',
   'Terrain Vide': 'Terrain', 'Terrain Autre': 'Terrain', 'Terrain (fusionné)': 'Terrain',
+  // Personnages
+  'Femme 1': 'Personnages', 'Femme 2': 'Personnages', 'Femme 3': 'Personnages',
+  'Femme 4': 'Personnages', 'Femme 5': 'Personnages',
+  'Homme 1': 'Personnages', 'Homme 2': 'Personnages', 'Homme 3': 'Personnages',
+  'Fermier': 'Personnages', 'Forgeron': 'Personnages', 'Marchand': 'Personnages', 'Tavernier': 'Personnages',
+  'Garde': 'Personnages', 'Soldat': 'Personnages', 'Chevalier': 'Personnages', 'Villageois': 'Personnages',
+  'Archer': 'Personnages', 'Guerrier 1': 'Personnages', 'Guerrier 2': 'Personnages', 'Guerrier 3': 'Personnages',
+  'Magicien': 'Personnages', 'Moine': 'Personnages', 'Sorcière': 'Personnages', 'Rôdeurs forêt': 'Personnages',
   // Divers
   'Coffres bonus': 'Divers', 'Étoiles & comètes': 'Divers', 'Grille': 'Divers',
 };
 
-export const GROUP_ORDER = ['Forêt', 'Bâtiments', 'Nature', 'Animaux', 'Village', 'Transport', 'Eau', 'Terrain', 'Divers'];
-export const GROUP_ICONS = { 'Forêt': '🌲', 'Bâtiments': '🏠', 'Nature': '🌿', 'Animaux': '🐾', 'Village': '🏘️', 'Transport': '🚂', 'Eau': '🌊', 'Terrain': '🗺️', 'Divers': '✦' };
+export const GROUP_ORDER = ['Forêt', 'Bâtiments', 'Nature', 'Animaux', 'Village', 'Personnages', 'Transport', 'Eau', 'Terrain', 'Divers'];
+export const GROUP_ICONS = { 'Forêt': '🌲', 'Bâtiments': '🏠', 'Nature': '🌿', 'Animaux': '🐾', 'Village': '🏘️', 'Personnages': '🧑', 'Transport': '🚂', 'Eau': '🌊', 'Terrain': '🗺️', 'Divers': '✦' };
 
 // ─── Espèces d'arbres connues ─────────────────────────────────────────────────
 const _TREE_SPECIES_MAP = {
@@ -133,6 +167,46 @@ const _TREE_SPECIES_MAP = {
   'gros-arbre-': 'Gros arbre',   // préfixe → gros-arbre-1…3
 };
 const _TREE_SPECIES_KEYS = Object.keys(_TREE_SPECIES_MAP);
+
+// ─── Personnages — labels par variante (clé PROP_MODEL_DEFS sans le préfixe "character-") ────
+// characterOverlay.js nomme chaque clone "village-character-glb-<variante>" ou
+// "forest-character-glb-<variante>" — permet une ventilation complète (cf. HUD FPS, 2026-07-04).
+const _CHARACTER_LABELS = {
+  'femme-1':    'Femme 1',
+  'femme-2':    'Femme 2',
+  'femme-3':    'Femme 3',
+  'femme-4':    'Femme 4',
+  'femme-5':    'Femme 5',
+  'homme-1':    'Homme 1',
+  'homme-2':    'Homme 2',
+  'homme-3':    'Homme 3',
+  'fermier':    'Fermier',
+  'forgeron':   'Forgeron',
+  'marchand':   'Marchand',
+  'tavernier':  'Tavernier',
+  'garde':      'Garde',
+  'soldat':     'Soldat',
+  'chevalier':  'Chevalier',
+  'archer':     'Archer',
+  'guerrier-1': 'Guerrier 1',
+  'guerrier-2': 'Guerrier 2',
+  'guerrier-3': 'Guerrier 3',
+  'magicien':   'Magicien',
+  'monk':       'Moine',
+  'sorciere':   'Sorcière',
+};
+
+function _classifyCharacter(name) {
+  if (!name) return null;
+  if (name.startsWith('village-character-glb-')) {
+    return _CHARACTER_LABELS[name.slice('village-character-glb-'.length)] ?? 'Villageois';
+  }
+  if (name.startsWith('forest-character-glb-')) {
+    return _CHARACTER_LABELS[name.slice('forest-character-glb-'.length)] ?? 'Rôdeurs forêt';
+  }
+  if (name.startsWith('field-farmer-character-glb-')) return 'Fermier';
+  return null;
+}
 
 // ─── GLB individuels — premier match gagne ────────────────────────────────────
 const _GLB_LABELS = [
@@ -150,6 +224,7 @@ const _GLB_LABELS = [
   ['decorative-stone',                        'Voies ferrées'],
   ['water-shore-inert-boat-glb-shore-boat-1', 'Barque 1'],
   ['water-shore-inert-boat-glb-shore-boat-2', 'Barque 2'],
+  ['water-shore-inert-boat-glb-shore-boat-3', 'Barque 3'],
   ['animated-water-boat-glb',                 'Bateaux'],
   ['water-shore-inert-boat-glb',              'Barques'],
   ['village-stone-road-glb-network',          'Routes'],
@@ -281,7 +356,7 @@ function _traverseNode(obj, counts) {
     return;
   }
 
-  const glbLabel = _classifyGlb(obj.name);
+  const glbLabel = _classifyCharacter(obj.name) ?? _classifyGlb(obj.name);
   if (glbLabel) {
     const e   = _acc(counts, glbLabel);
     const st  = _glbStats(obj);

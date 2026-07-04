@@ -441,8 +441,12 @@ function prepareBoatPrototype(model) {
 
   wrapper.traverse(object => {
     if (!object.isMesh) return;
-    object.castShadow = true;
+    // 2026-07-04 perf : bateau animé (tangage sur trajet), ombre peu visible en mouvement
+    // sur l'eau — retirée pour réduire les shadow casters. N'affecte pas l'animation.
+    object.castShadow = false;
     object.receiveShadow = true;
+    object.userData.disableCastShadow  = true; // empêche applySceneShadowFlags() de la réactiver
+    object.userData.shadowFlagsApplied = true;
     if (object.material) object.material = cloneBoatMaterial(object.material);
   });
 
@@ -585,7 +589,7 @@ function createSurfaceRipple(seedKey) {
   return ring;
 }
 
-function collectWaterZone(startTile, startEdge, placedTiles, visited) {
+export function collectWaterZone(startTile, startEdge, placedTiles, visited) {
   const stack = [{ tile: startTile, edge: startEdge }];
   const sectors = [];
 
@@ -606,7 +610,7 @@ function collectWaterZone(startTile, startEdge, placedTiles, visited) {
   return { sectors };
 }
 
-function buildWaterGraph(zone) {
+export function buildWaterGraph(zone) {
   const graph = { nodes: new Map(), adjacency: new Map() };
   const zoneNodeIds = new Set(zone.sectors.map(sector => makeNodeKey(sector.tile.key, sector.edge)));
 
@@ -681,7 +685,7 @@ function midpoint(a, b) {
   return { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
 }
 
-function isWaterEdge(placedTile, edge) {
+export function isWaterEdge(placedTile, edge) {
   return getEdgeType(placedTile?.tile?.edges?.[edge]) === EDGE_TYPES.water;
 }
 
@@ -701,7 +705,7 @@ function addEdge(graph, a, b) {
   graph.adjacency.get(b)?.add(a);
 }
 
-function findComponents(graph) {
+export function findComponents(graph) {
   const visited = new Set();
   const components = [];
 

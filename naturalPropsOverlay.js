@@ -30,23 +30,17 @@ import {
   snapPropBottomToSurface,
   isSingleTerrainFootprint,
   isSafePropGroundType,
-  getEdgeFromLocalPoint
+  getEdgeFromLocalPoint,
+  GROUND_CLEARANCE
 } from './propPlacement.js';
 // Import circulaire résolu via live bindings ES modules — uniquement dans des corps de fonctions.
 import {
   propGlbLibrary,
   _propInstanceDummy,
-  _snapNormal,
   getPropChunkKey,
   computePropBoundingSphere,
   createPropModel,
   NATURAL_DECOR_VARIANTS,
-  NATURAL_FLOWER_TARGET_WIDTH,
-  NATURAL_GRASS_TARGET_WIDTH,
-  NATURAL_BRINDILLE_TARGET_WIDTH,
-  NATURAL_SHRUB_TARGET_WIDTH,
-  NATURAL_MUSHROOM_TARGET_WIDTH,
-  NATURAL_DEER_TARGET_WIDTH,
   HAY_BALE_TARGET_WIDTH,
   PILE_DE_BOIS_TARGET_LENGTH
 } from './decorOverlay.js';
@@ -131,8 +125,8 @@ function collectNaturalPropInstances(accumulator, placedTile, edge, type, kind, 
 
     const yaw         = hashUnit(`${seed}:yaw:${i}`) * Math.PI * 2;
     // groundOffset = 0 pour les types avec snap : le résultat final est surfaceY + clearance.
-    // Roseaux : 2 mm au-dessus (pas de snap pour les roseaux → groundOffset direct).
-    const groundOffset = kind === 'reed' ? 0.002 : 0.000;
+    // Roseaux : pas de snap → groundOffset direct = GROUND_CLEARANCE (formule unique, cf. plus bas).
+    const groundOffset = kind === 'reed' ? GROUND_CLEARANCE : 0.000;
 
     _propInstanceDummy.rotation.set(0, 0, 0);
     _propInstanceDummy.position.set(tilePos.x + local.x, 0, tilePos.z + local.z);
@@ -159,20 +153,13 @@ function collectNaturalPropInstances(accumulator, placedTile, edge, type, kind, 
       jitter *= 1.22 + hashUnit(`${seed}:shore-rock-scale:${i}`) * 0.36;
     }
 
-    // Snap analogue à snapPropBottomToSurface — compense le pivot imparfait des petits GLB.
+    // Formule unique (2026-07-04) : biomes strictement plats → pas de pente à compenser
+    // (l'ancien terme slopeSin × rayon était déjà mathématiquement nul en pratique, juste de
+    // la complexité inutile qui a fini par introduire des bugs). Un seul clearance fixe,
+    // identique pour tous les kinds et tous les biomes — cf. GROUND_CLEARANCE (propPlacement.js).
     if (kind === 'flower' || kind === 'brindille' || kind === 'grass' || kind === 'shrub' || kind === 'mushroom' || kind === 'deer') {
-      _snapNormal.set(0, 1, 0).applyQuaternion(_propInstanceDummy.quaternion);
-      const slopeSin   = Math.sqrt(Math.max(0, 1 - _snapNormal.y * _snapNormal.y));
-      const clearance  = getNaturalPropGroundClearance(kind);
-      const halfTarget = kind === 'flower'    ? NATURAL_FLOWER_TARGET_WIDTH
-                       : kind === 'brindille' ? NATURAL_BRINDILLE_TARGET_WIDTH
-                       : kind === 'grass'     ? NATURAL_GRASS_TARGET_WIDTH
-                       : kind === 'shrub'     ? NATURAL_SHRUB_TARGET_WIDTH
-                       : kind === 'deer'      ? NATURAL_DEER_TARGET_WIDTH
-                       : NATURAL_MUSHROOM_TARGET_WIDTH;
-      const baseRadius = halfTarget * 0.5 * jitter;
-      const snapLift   = (clearance - groundOffset) + slopeSin * baseRadius;
-      if (snapLift > 0.0005) _propInstanceDummy.position.y += snapLift;
+      const snapLift = GROUND_CLEARANCE - groundOffset;
+      if (snapLift > 0.00001) _propInstanceDummy.position.y += snapLift;
     }
 
     // Pile de bois : même compensation que hay-bale (objet plat posé au sol, non aligné à la pente).
@@ -251,7 +238,7 @@ function collectNaturalPropInstancesCenter(accumulator, placedTile, type) {
       if (!variantKey || !propGlbLibrary.has(variantKey)) continue;
 
       const yaw          = hashUnit(`${seed}:yaw:${i}`) * Math.PI * 2;
-      const groundOffset = 0.000; // snap amène à surfaceY + clearance (= surfaceY + 0.004)
+      const groundOffset = 0.000; // snap amène à surfaceY + GROUND_CLEARANCE (formule unique)
 
       _propInstanceDummy.rotation.set(0, 0, 0);
       _propInstanceDummy.position.set(tilePos.x + local.x, 0, tilePos.z + local.z);
@@ -269,18 +256,11 @@ function collectNaturalPropInstancesCenter(accumulator, placedTile, type) {
         _propInstanceDummy.rotation.z += (hashUnit(`${seed}:mushleanz:${i}`) - 0.5) * 0.035;
       }
 
-      // Snap sol — même logique que collectNaturalPropInstances
+      // Snap sol — formule unique (cf. commentaire collectNaturalPropInstances) : biome plat,
+      // pas de pente, un seul clearance fixe (GROUND_CLEARANCE).
       if (kind === 'flower' || kind === 'brindille' || kind === 'grass' || kind === 'shrub' || kind === 'mushroom') {
-        _snapNormal.set(0, 1, 0).applyQuaternion(_propInstanceDummy.quaternion);
-        const slopeSin   = Math.sqrt(Math.max(0, 1 - _snapNormal.y * _snapNormal.y));
-        const clearance  = getNaturalPropGroundClearance(kind);
-        const halfTarget = kind === 'flower'    ? NATURAL_FLOWER_TARGET_WIDTH
-                         : kind === 'brindille' ? NATURAL_BRINDILLE_TARGET_WIDTH
-                         : kind === 'grass'     ? NATURAL_GRASS_TARGET_WIDTH
-                         : kind === 'shrub'     ? NATURAL_SHRUB_TARGET_WIDTH
-                                                : NATURAL_MUSHROOM_TARGET_WIDTH;
-        const snapLift = (clearance - groundOffset) + slopeSin * (halfTarget * 0.5);
-        if (snapLift > 0.0005) _propInstanceDummy.position.y += snapLift;
+        const snapLift = GROUND_CLEARANCE - groundOffset;
+        if (snapLift > 0.00001) _propInstanceDummy.position.y += snapLift;
       }
 
       // Correction Y par modèle (même logique que le chemin secteur)
@@ -464,14 +444,14 @@ function getNaturalPropCount(kind, type, seed, placedTile = null, edge = null, p
   const nearWater = placedTile && edge && placedTiles && isNearWaterDecorArea(placedTile, edge, placedTiles);
   if (kind === 'flower') {
     return type === EDGE_TYPES.grass
-      ? 150 + Math.floor(hashUnit(`${seed}:count`) * 137) // +15% (moy 190→218)
-      :  40 + Math.floor(hashUnit(`${seed}:count`) *  40); // +15% (moy 52→60)
+      ? 83 + Math.floor(hashUnit(`${seed}:count`) * 76) // −15% (2026-07-04) −35% (2026-07-04 perf, était +15% moy 190→218, désormais moy ~142)
+      : 22 + Math.floor(hashUnit(`${seed}:count`) * 22); // −15% (2026-07-04) −35% (2026-07-04 perf, était +15% moy 52→60, désormais moy ~39)
   }
   // Brindilles — kind séparé pour densité indépendante
   if (kind === 'brindille') return 42 + Math.floor(hashUnit(`${seed}:count`) * 31); // +28% (moy 45→57.5)
   // Prairie et forêt : plantes.glb uniquement — différencier ici sur type quand besoin.
-  if (kind === 'grass') return 385 + Math.floor(hashUnit(`${seed}:count`) * 156); // +17% (moy 396→463)
-  if (kind === 'shrub') return 19 + Math.floor(hashUnit(`${seed}:count`) * 22);   // +16% (moy 25.5→30)
+  if (kind === 'grass') return 213 + Math.floor(hashUnit(`${seed}:count`) * 86); // −15% (2026-07-04, "autres plantes") −35% (2026-07-04 perf : pool "grass" dominé à 70% par les baies, gros poste triangles GPU) — était +17% (moy 396→463), désormais moy ~300
+  if (kind === 'shrub') return 16 + Math.floor(hashUnit(`${seed}:count`) * 19);   // −15% (2026-07-04, "autres plantes") +16% (moy 25.5→30)
   if (kind === 'deer')    return 1; // toujours 1 seul cerf par cluster
   if (kind === 'rock') {
     return (nearWater || type === EDGE_TYPES.grass)
@@ -483,7 +463,7 @@ function getNaturalPropCount(kind, type, seed, placedTile = null, edge = null, p
       ? 10 + Math.floor(hashUnit(`${seed}:count`) * 8)  // +10% (moy 12.5→14)
       :  4 + Math.floor(hashUnit(`${seed}:count`) * 6); // +10% (moy 6.5→7)
   }
-  if (kind === 'mushroom') return 29 + Math.floor(hashUnit(`${seed}:count`) * 48); // +14% (moy 46.5→53)
+  if (kind === 'mushroom') return 16 + Math.floor(hashUnit(`${seed}:count`) * 26); // −15% (2026-07-04) −35% (2026-07-04 perf, était +14% moy 46.5→53, désormais moy ~34.5)
   if (kind === 'hay-bale')     return 1; // 1 botte par cluster
   if (kind === 'pile-de-bois') return 1 + Math.floor(hashUnit(`${seed}:count`) * 2); // moy 1.5 par cluster
   return 1;
@@ -504,11 +484,9 @@ function getNaturalPropFootprint(kind) {
 }
 
 function getNaturalPropGroundClearance(kind) {
-  // Clearance = offset final au-dessus de la surface (résultat snap = surfaceY + clearance).
-  // Rochers : 0 mm, ras du sol. Brindilles : 10 mm (fougère.glb a une base plus épaisse).
-  if (kind === 'rock')      return 0.000;
-  if (kind === 'brindille') return 0.010;
-  return 0.004;
+  // Formule unique (2026-07-04) : un seul clearance fixe pour tout le monde (GROUND_CLEARANCE,
+  // propPlacement.js). Rochers : 0, ras du sol (inchangé, volontaire).
+  return kind === 'rock' ? 0.000 : GROUND_CLEARANCE;
 }
 
 function getNaturalPropScaleJitter(kind, seed, index) {

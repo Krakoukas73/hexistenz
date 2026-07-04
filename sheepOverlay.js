@@ -27,7 +27,7 @@ import { makeNodeKey, getTileEdgeType } from './tileUtils.js';
 import { collectZone, getFullTextureNeighbors } from './zoneUtils.js';
 import { createGLTFLoader } from './glbLoader.js';
 import { hashUnit10k as hashUnit } from './hashUtils.js';
-import { getSectorWorldCenter } from './propPlacement.js';
+import { getSectorWorldCenter, GROUND_CLEARANCE } from './propPlacement.js';
 import { registerPropHitbox, tryResolve } from './propHitboxRegistry.js';
 
 // ─── Paramètres (calibrables) ──────────────────────────────────────────────────
@@ -40,6 +40,13 @@ const STATIC_CLUSTER_R   = HEX_SIZE * 0.28; // rayon du troupeau de statiques pa
 const SHEEP_ARRIVE_DIST = 0.07;  // seuil d'arrivée à destination (marcheur)
 // Surface prairie (tileThickness * 0.683 ≈ 0.082 pour tileThickness=0.12)
 const SHEEP_SURFACE_Y   = (TILE_VISUAL.tileThickness ?? 0.12) * 0.683;
+// Corrigé le 2026-07-04 (bug "moutons enterrés") : contrairement aux props classiques
+// (decorOverlay.js::preparePropPrototype), les 3 armatures du GLB mouton n'étaient JAMAIS
+// recentrées — leur pivot d'origine (tel qu'exporté, pas garanti au niveau des pattes) était
+// utilisé tel quel avec SHEEP_SURFACE_Y comme Y absolu. Si ce pivot est légèrement au-dessus
+// des pieds, le mouton s'enfonce dans le sol d'autant. Fix : mesurer une fois box.min.y par
+// armature (walker/grazer/static peuvent différer légèrement) et compenser à la pose.
+const SHEEP_GROUND_CLEARANCE = GROUND_CLEARANCE; // formule unique (2026-07-04) : même petit jeu fixe que tous les autres props
 
 // ─── Singleton GLB ─────────────────────────────────────────────────────────────
 let _glbReady   = false;
@@ -119,7 +126,16 @@ function _loadSheepGlb(onReady) {
     const scale  = SHEEP_TARGET_LEN / rawLen;
     console.log('[sheepOverlay] Scale calculée :', scale.toFixed(4), '(rawLen =', rawLen.toFixed(3) + ')');
 
-    _protos     = { walker, grazer, static: stat, walkerClip: walkerClipFiltered, grazerClip, scale };
+    // Pied réel de chaque armature (box.min.y, en unités NON scalées) — corrige le pivot
+    // GLB tel qu'exporté au lieu de supposer qu'il est déjà au niveau des pattes.
+    // cf. commentaire SHEEP_GROUND_CLEARANCE plus haut (bug "moutons enterrés").
+    const footY = {
+      walker: box.min.y, // déjà mesuré ci-dessus
+      grazer: new THREE.Box3().setFromObject(grazer).min.y,
+      static: new THREE.Box3().setFromObject(stat).min.y
+    };
+
+    _protos     = { walker, grazer, static: stat, walkerClip: walkerClipFiltered, grazerClip, scale, footY };
     _glbReady   = true;
     _glbLoading = false;
     for (const cb of _pendingCbs) cb(_protos);
@@ -224,7 +240,14 @@ function _populateZone(group, zone, protos, prevWalkersByZone, nextWalkersByZone
 
   const zKey = _zoneKey(center);
   const { walker: protoWalker, grazer: protoGrazer, static: protoStatic,
-          walkerClip, grazerClip, scale } = protos;
+          walkerClip, grazerClip, scale, footY } = protos;
+
+  // Y sol réel par armature = surface prairie − (pied local × échelle) + petit jeu.
+  // footY[*] est négatif ou nul dans l'immense majorité des cas (pieds sous le pivot) →
+  // le terme -footY*scale relève le mouton d'autant. Cf. SHEEP_GROUND_CLEARANCE plus haut.
+  const groundYWalker = SHEEP_SURFACE_Y - footY.walker * scale + SHEEP_GROUND_CLEARANCE;
+  const groundYGrazer = SHEEP_SURFACE_Y - footY.grazer * scale + SHEEP_GROUND_CLEARANCE;
+  const groundYStatic = SHEEP_SURFACE_Y - footY.static * scale + SHEEP_GROUND_CLEARANCE;
 
   // Centre du cluster pour les immobiles (grégaires)
   const ci       = Math.floor(hashUnit(zKey + 'sc') * sectors.length);
@@ -244,7 +267,7 @@ function _populateZone(group, zone, protos, prevWalkersByZone, nextWalkersByZone
       const prevState = prevStates[walkerIdx];
       const startPos  = prevState?.pos
         ? prevState.pos.clone()
-        : new THREE.Vector3(center.x, SHEEP_SURFACE_Y, center.z);
+        : new THREE.Vector3(center.x, groundYWalker, center.z);
       walkerObj.position.copy(startPos);
       group.add(walkerObj);
       nextStates.push({
@@ -262,7 +285,7 @@ function _populateZone(group, zone, protos, prevWalkersByZone, nextWalkersByZone
       const si  = Math.floor(hashUnit(zKey + `gi${i}`) * sectors.length);
       const pt  = _randomPointInSector(sectors[si], zKey + `gp${i}`);
       const { object, mixer } = _cloneSheep(protoGrazer, scale, grazerClip);
-      object.position.set(pt.x, SHEEP_SURFACE_Y, pt.z);
+      object.position.set(pt.x, groundYGrazer, pt.z);
       object.rotation.y             = hashUnit(zKey + `gr${i}`) * Math.PI * 2;
       object.userData.mixer          = mixer;
       object.userData.mixerLastTime  = null;
@@ -279,7 +302,7 @@ function _populateZone(group, zone, protos, prevWalkersByZone, nextWalkersByZone
       if (resolved) { cx = resolved.x; cz = resolved.z; }
       registerPropHitbox(cx, cz, SHEEP_HITBOX_R);
       const { object } = _cloneSheep(protoStatic, scale, null);
-      object.position.set(cx, SHEEP_SURFACE_Y, cz);
+      object.position.set(cx, groundYStatic, cz);
       object.rotation.y = hashUnit(zKey + `st${staticIdx}`) * Math.PI * 2;
       group.add(object);
       staticIdx++;

@@ -66,13 +66,16 @@ const ASSETS_GLB = [
   './glb/decor/tonneau-3.glb',
   './glb/decor/tonneau-4.glb',
   './glb/decor/tonneau-5.glb',
+  './glb/decor/charrette-1.glb',
   './glb/decor/charrette-2.glb',
   './glb/decor/charrette-pleine.glb',
+  './glb/decor/charrette-3.glb',
   './glb/decor/meule.glb',
   './glb/decor/botte-foin.glb',
   './glb/decor/gold.glb',
   './glb/decor/barque-1.glb',
   './glb/decor/barque-2.glb',
+  './glb/decor/barque-3.glb',
   './glb/decor/pile-de-bois-1.glb',
   './glb/decor/pile-de-bois-2.glb',
   './glb/decor/pile-de-bois-3.glb',
@@ -105,7 +108,7 @@ const ASSETS_GLB = [
 
   // Astres
   './glb/astres/soleil.glb',
-  './glb/astres/lune.glb',
+  './glb/astres/lune_melies.glb',
 ];
 
 // ─── Liste exhaustive des OGG ─────────────────────────────────────────────────

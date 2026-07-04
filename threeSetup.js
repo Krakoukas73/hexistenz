@@ -299,7 +299,7 @@ function createVisibleSunObject() {
   };
 
   _loadAstre('./glb/astres/soleil.glb', 'visible-sky-sun-glb');
-  _loadAstre('./glb/astres/lune.glb',   'visible-sky-moon-glb');
+  _loadAstre('./glb/astres/lune_melies.glb', 'visible-sky-moon-glb');
 
   return group;
 }

@@ -147,11 +147,14 @@ field-flag-2 → moulin-2.glb
 field-flag-3 → moulin-1.glb   (clé interne "field-flag-3", GLB = moulin-1)
 ```
 
-**Charrettes** (`villageDecorOverlay.js`) — pool 50/50 :
+**Charrettes** (`villageDecorOverlay.js`) — pool **25/25/25/25** (2026-07-04, ex-50/50, charrette-1 et charrette-3 réintégrées) :
 ```
-cart-2 (charrette-2.glb), cart-3 (charrette-pleine.glb)  — charrette-1 retirée
-cart-3: bypassBboxCheck: true, groundOffsetDelta: -0.020
+cart-1 (charrette-1.glb)
+cart-2 (charrette-2.glb)
+cart-3 (charrette-pleine.glb) : bypassBboxCheck: true, groundOffsetDelta: -0.020   — attention, clé "cart-3" ≠ fichier charrette-3.glb
+cart-4 (charrette-3.glb)                                                          — clé "cart-4" pour éviter la collision avec cart-3
 ```
+Deux sites de tirage indépendants dans `villageDecorOverlay.js` (charrette en bord de route / charrette en intérieur de tuile), même logique 25/25/25/25 dans les deux.
 
 **Fontaines** — pool 1/3 fontaine-1 / fontaine-2 / fontaine-3 (village + prairie) :
 ```
@@ -179,11 +182,12 @@ poteau-indicateur-1/2/3  (30–36% chance par arête village/forêt)
 SIGNPOST_TARGET_HEIGHT    (mode: height)
 ```
 
-**Barques côtières** (`villageDecorOverlay.js`) — pool 50/50 :
+**Barques côtières** (`villageDecorOverlay.js`) — pool **35/35/30** (2026-07-04, ex-70/30 avant ajout de barque-3) :
 ```
-shore-boat-1 (barque-1.glb): bypassBboxCheck: true
-shore-boat-2 (barque-2.glb)
-SHORE_BOAT_TARGET_LENGTH * 0.65
+shore-boat-1 (barque-1.glb) 35% : vide, échouée — bypassBboxCheck: true, inwardPush = HEX_SIZE * 0.10 (bord de l'eau)
+shore-boat-3 (barque-3.glb) 35% : vide, échouée — bypassBboxCheck: true, même comportement que barque-1, taille +14% (2026-07-04)
+shore-boat-2 (barque-2.glb) 30% : pêcheur, flottante, inwardPush = HEX_SIZE * 0.50 (en eau, mi-distance)
+SHORE_BOAT_TARGET_LENGTH * 0.65 pour barque-1/2, * 0.65 * 1.14 pour barque-3
 ```
 
 **Tonneaux** (`villageDecorOverlay.js`) — pool 5 variantes :
@@ -229,47 +233,51 @@ pile-de-bois-1.glb (+23% −10%), pile-de-bois-2.glb (+13% −12%)
 pile-de-bois-3.glb (−17%), pile-de-bois-4.glb (−17%)   — nouveau, non calibré individuellement au-delà du −17%
 ```
 
-### Système de placement props (`decorOverlay.js` + `naturalPropsOverlay.js`)
+### Système de placement props (`decorOverlay.js` + `naturalPropsOverlay.js` + `propPlacement.js`)
 
-`preparePropPrototype(def)` — normalise le GLB : ancre `box.min.y` à Y=0 dans l'espace wrapper, scale = `target / dimension`.
+`preparePropPrototype(def)` — normalise le GLB : ancre `box.min.y` à Y=0 dans l'espace wrapper, scale = `target / dimension`. Recentrage fait une seule fois au chargement du prototype, scale-invariant (tout `wrapper.scale.setScalar(s)` ultérieur préserve le bas à zéro).
 
 `bypassBboxCheck: true` — contourne la garde "bbox ANORMALE" pour les GLBs exportés sans "Apply All Transforms" dans Blender. La normalisation fonctionne quand même via `wrapper.scale = target / large_dimension`.
 
-`groundOffsetDelta` — correction Y post-snap stockée dans `wrapper.userData.groundOffsetDelta`. Appliquée dans `collectNaturalPropInstances` **après** le bloc snap. Valeur négative = descendre.
+`groundOffsetDelta` — correction Y post-snap stockée dans `wrapper.userData.groundOffsetDelta`. Appliquée **après** le snap. Valeur négative = descendre.
 
-**Snap block** (`collectNaturalPropInstances`) :
+**Formule de clearance — unique et définitive (2026-07-04, cf. §26)** — les 6 biomes sont strictement plats (§6) : 6 hauteurs de sol fixes (`getBiomeSurfaceOffsetY(type)`, terrainHeight.js), jamais une fonction de position. Toute clearance proportionnelle à la taille du prop ou plafonnée sur bounding-box mesurée a été retirée après plusieurs régressions en chaîne (flottement/enfoncement NPC, herbe, moutons, chiens) — l'utilisateur a exigé l'arrêt total de ce type d'approximation. Une seule constante, partout :
 ```js
-snapLift = (clearance - groundOffset) + slopeSin * baseRadius
-position.y += snapLift  // si > 0.0005
+GROUND_CLEARANCE = 0.003   // propPlacement.js, exportée
+position.y = surfaceY + GROUND_CLEARANCE   // pour TOUT prop, TOUT biome
 ```
-Sur terrain plat : `position.y = surfaceY + clearance` (résultat garanti).
+`snapPropBottomToSurface(object, surfaceY, clearance = GROUND_CLEARANCE)` — mesure le Box3 réel de l'objet et cale son bas à `surfaceY + clearance` (plus de cap par ratio de hauteur). Utilisée par `characterOverlay.js` (NPC), `villageDecorOverlay.js` (panneaux, charrettes, tonneaux, fontaines, meule, chiens, chevaux), `naturalPropsOverlay.js` (flower/brindille/grass/shrub/mushroom/deer via `getNaturalPropGroundClearance(kind) → kind === 'rock' ? 0.000 : GROUND_CLEARANCE`).
 
-**Clearances** (`getNaturalPropGroundClearance`) :
-```js
-rock      → 0.000
-brindille → 0.010
-default   → 0.004
-```
+**Moutons (`sheepOverlay.js`)** — cas à part : les 3 armatures du GLB (marcheur/brouteur/immobile) ne passent pas par `preparePropPrototype`, donc pas de recentrage automatique → `footY` (box.min.y) mesuré par armature au chargement, compensé à la pose : `groundY = SHEEP_SURFACE_Y − footY × scale + GROUND_CLEARANCE`.
+
+**Brins d'herbe shader (`grassBladeOverlay.js`)** — système Cubic Bezier animé, couvre `EDGE_TYPES.grass` ET `forest` (distinct des clumps GLB de `naturalPropsOverlay.js`). Avait un lift fixe disproportionné (`+0.005`, ~50% de la hauteur réelle d'un brin) — cause probable principale du flottement en prairie. Remplacé par `GROUND_CLEARANCE`.
 
 **Positions Y fixes** :
 ```js
-wheat blades : surfaceY + 0.004   (fieldWheatOverlay.js)
-grass blades : surfaceY + 0.005   (grassBladeOverlay.js)
+wheat blades : surfaceY + GROUND_CLEARANCE   (fieldWheatOverlay.js)
+grass blades : surfaceY + GROUND_CLEARANCE   (grassBladeOverlay.js, arête + centre)
 ```
 
-### Densités naturelles clés
+### Densités et dimensions clés (mises à jour 2026-07-04)
 
 ```js
-flower (prairie) : moy 86.5  (+13%)
-flower (autres)  : moy 23.5  (+13%)
-grass (plantes)  : moy 216   (+20%)   // pool : berry-1..6 (71%) + plant-misc + plante-1..7
-brindille        : moy 14.5
-shrub            : moy 30
-rock (prairie)   : moy 6.5   (+16%)
-rock (forêt)     : moy 4.5
-wheat blades     : WHEAT_BLADE_COUNT = 2129
-mushroom         : dans forêts et prairies
-deer             : dans forêts, prairies, champs
+flower (prairie / bords) : 83 + rand*76   → moy 121   (−15%, était 98+89)
+flower (autres)           : 22 + rand*22   → moy 33    (−15%, était 26+26)
+grass (plante-N clumps)   : 213 + rand*86  → moy 256   (−15%, était 250+101)  // "autres plantes"
+shrub                     : 16 + rand*19   → moy 25.5  (−15%, était 19+22)   // "autres plantes"
+mushroom                  : 16 + rand*26   → moy 29    (−15%, était 19+31)
+brindille                 : moy 14.5   (inchangé)
+rock (prairie)            : moy 6.5   (densité inchangée — dimension −10%, voir ci-dessous)
+rock (forêt)              : moy 4.5   (densité inchangée)
+wheat blades              : WHEAT_BLADE_COUNT = 1950   (−16%, était 2321)
+grass blades (shader)     : GRASS_BLADE_COUNT = 1101   (−14%, était 1280)
+deer                      : dans forêts, prairies, champs
+```
+
+**Dimensions (2026-07-04)** :
+```js
+NATURAL_ROCK_TARGET_LENGTH   : chaîne de multiplicateurs × 0.90   (−10%)
+character-garde (garde.glb)  : CHARACTER_TARGET_HEIGHT × 1.11     (+11%)
 ```
 
 ---
@@ -367,7 +375,7 @@ uniform float     uHasDepth;   // 1.0 si tDepth valide, 0.0 sinon
 ### Shader FRAG — pipeline
 
 1. **Reconstruction rayon** via `uProjInv` + `uCamWorld` (pas de viewMatrix séparée — construit à partir des inverses caméra).
-2. **Intersection slab Y** `[SMOKE_Y_BASE=-0.05, SMOKE_Y_TOP=1.3]` → `tMin`, `tMax`.
+2. **Intersection slab Y** `[uSmokeYBase, uSmokeYTop]` → `tMin`, `tMax`. Uniforms **dynamiques** (2026-07-04, ex-constantes GLSL fixes `-0.05/1.3`) : recalculés chaque frame dans `updateSmokeVolumePass()` (`smokeVolumePass.js`) à partir du min/max Y RÉEL des sources de la frame (`uSmokeYBase = minY − 0.35`, `uSmokeYTop = maxY + 1.1`). Fix bug bouliste : les positions sources incluent déjà `getWorldCurvatureDrop(x,z)` (potentiellement plusieurs unités négatives loin du centre) — avec un slab absolu fixe calibré terrain plat, la source réelle tombait hors bornes → fumée invisible ou écrasée sur une tranche résiduelle loin du centre de la grille. Piège général : un `ShaderPass` post-processing est hors scène-graph, `applySceneCurvatureFlags` (threeSetup.js) ne le couvre jamais — cf. §26.
 3. **March linéaire 48 pas** entre `tMin` et `tMax`.
    - **Depth test** par pas : projette `pos` en clip-space (`uProjMat × uViewMat`), compare `ndc.z*0.5+0.5` avec `texture2D(tDepth, uv).r`. `continue` si derrière la scène (`stepZ > sceneZ + 0.001`).
    - **Densité** : somme de `densityFromSource(pos, src, scale)` sur toutes les sources.
@@ -412,7 +420,7 @@ Numérotation à plat par onglet (repart de 1, ordre de lecture colonne A puis c
 | **Cinématique** | 1. CINÉMATIQUE (vignette/grain/aberration/halation/barillet/scanlines) · 2. God Rays · 3. Tilt-shift · 4. Bloom | 5. Pixélisation · 6. Courbure écran (CRT) |
 | **Environnement** | 1. Écume · 2. Sillage bateau · 3. Nuages | 4. Vent (4.1 Blés, 4.2 Herbes, 4.3 Arbres) · 5. Forme du monde · 6. Jour/Nuit |
 
-Rubriques avec interrupteur on/off dans leur en-tête (grise les contrôles sans réinitialiser les valeurs) : Étalonnage, Palette biomes, CINÉMATIQUE, God Rays, Tilt-shift, **Bloom**, Pixélisation, **Courbure écran**, **VENT** (coupe l'ondulation blé + prairie + arbres simultanément — cf. plus bas). Bloom et Courbure écran, ajoutés en juillet 2026, suivent exactement le même mécanisme de case à cocher que God Rays/Tilt-shift : la valeur du slider reste mémorisée, seul l'uniform effectif est forcé à 0 quand décoché.
+Rubriques avec interrupteur on/off dans leur en-tête (grise les contrôles sans réinitialiser les valeurs) : Étalonnage, Palette biomes, CINÉMATIQUE, God Rays, Tilt-shift, **Bloom**, Pixélisation, **Courbure écran**, **Écume** (🫧), **Sillage bateau** (🚤), **VENT** (coupe l'ondulation blé + prairie + arbres simultanément — cf. plus bas). Bloom et Courbure écran, ajoutés en juillet 2026, suivent exactement le même mécanisme de case à cocher que God Rays/Tilt-shift : la valeur du slider reste mémorisée, seul l'uniform effectif est forcé à 0 quand décoché. Écume/Sillage bateau (`hud_eda.js`, rubriques 1/2 de l'onglet Environnement) suivent depuis le 2026-07-03 le même mécanisme : décoché → `foamWidth/foamDensity/foamAmbient` (écume) ou `density/opacity` (sillage) forcés à 0 en live via `setWaterFoamParams`/`setWakeParams`, valeurs mémorisées intactes.
 
 **Tout paramètre de ce panel (LUT, cinéma, eau, vent, nuages…) est réglable en direct pendant la partie** : chaque slider commit immédiatement sur le pipeline GPU (aucune recompilation shader hors cas explicitement documentés, ex. reconstruction forêt pour le vent des arbres), avec undo/redo et export JSON via 📋 Copier.
 
@@ -420,7 +428,7 @@ Rubriques avec interrupteur on/off dans leur en-tête (grise les contrôles sans
 
 **Emojis de rubrique/sous-rubrique** : agrandis ×1.35 via un span dédié `.rubrique-emoji` (`font-size: 1.35em`, relatif au parent — reste correct aussi bien à 12px (rubriques) qu'à 11px (sous-rubriques)).
 
-Presets `json/ambiances.json` (16) : Défaut, Brume côtière, Minuit, Automne, Été vif, Hiver, Vieux sépia, Forêt nordique, Test colorimétrie, Désert doré, Noir&Blanc (scanLines=4), Apple II (scanLines=4) / CGA (scanLines=4) / EGA (scanLines=3) (pixelSize=3), Amiga (pixelSize=2, scanLines=2), Psyché-LSD. Chargé via `fetch('./json/ambiances.json')`.
+Presets `json/ambiances.json` (**14**, vérifié 2026-07-04) : Défaut, Brume, Automne, Été vif, Hiver, Sépia, Nordique, Désert, Pong (pixelSize=15, scanLines=4, worldShapeMode forcé "platiste"), Apple II (scanLines=4, pixelSize=3), CGA (scanLines=4, pixelSize=3), EGA (scanLines=3, pixelSize=3), Amiga (pixelSize=2, scanLines=2), Psyché-LSD. Chargé via `fetch('./json/ambiances.json')`.
 
 **📋 Copier** : exporte `{ lut, pix, cinema, water, wind, cloud, dayNight }` en JSON (`pix` inclut `worldShapeMode`). Undo/redo couvrent les 6 catégories LUT/pix/cinema/water/wind/cloud (`_snapshotAll`/`_restoreSnapshot`) — Forme du monde et Jour/Nuit en restent délibérément exclus (réglages "monde", pas "regard"), mais sont bien inclus dans l'export 📋 Copier.
 
@@ -548,9 +556,30 @@ Meshes sans ombres (oiseaux…) : `disableCastShadow=true, shadowFlagsApplied=tr
 
 **Réglages live** (`waterDebugUi.js`, bouton flottant 💧 EAU) : sliders écume (portée, finesse, densité rive/surface, netteté, vitesse, étendue dégradé, opacité) + sillage bateau (largeur, divergence, longueur, finesse, densité, opacité), bouton « 📋 Copier » → JSON `{ water, wake }`. Setters/getters : `getWaterFoamParams/setWaterFoamParams` (`realisticWater.js`), `getWakeParams/setWakeParams` (`waterBoatOverlay.js`).
 
-**Sillage bateau** (`waterBoatOverlay.js`) : ruban en V dynamique (`WAKE_MAX_POINTS = 26`), dense près du bateau et se dissipant vers l'arrière (gradient de densité dans `foamPattern`), `ShaderMaterial` singleton partagé par tous les sillages.
+**Sillage bateau** (`waterBoatOverlay.js`) : ruban en V dynamique (`WAKE_MAX_POINTS = 26`), dense près du bateau et se dissipant vers l'arrière (gradient de densité dans `foamPattern`), `ShaderMaterial` singleton partagé par tous les sillages. Points enregistrés à distance ABSOLUE derrière le bateau (`dBehind`, anti-pop à l'ajout/retrait d'un point) ; tête du ruban recollée au bateau chaque frame (apex fluide, pas de saut au commit d'un nouveau segment). Fondu de queue qui atteint vraiment 0 (`smoothstep(0.45, 1.0, vAlong)`, plus d'arrêt net). **LOD bateau (fix 2026-07-03)** : `updateWaterBoatLOD` calcule désormais la distance caméra↔bateau en 3D complet (X+Y+Z) au lieu de XZ seul — corrige un bug où la vue verticale (top-down, caméra XZ ≈ bateau XZ, dist2D≈0) rendait les bateaux toujours visibles quelle que soit l'altitude caméra.
+
+**LOD nappe d'eau** (`waterSurfaceOverlay.js::updateWaterSurfaceLOD` + `realisticWater.js::getFlatWaterMaterial`, 2026-07-02) : au-delà de `LOD_WATER_SHADER_DISTANCE = 16` (distance caméra→centre de tuile, XZ), les triangles de la nappe basculent du matériau shader complet (voronoï d'écume ×2, reflets, vagues — coûteux) vers un matériau plat (`MeshBasicMaterial` bleu uni, sans normale requise). Bascule via `geometry.groups` (2 matériaux sur le même `BufferGeometry`, `lodRanges` calculées une fois par rebuild, tuiles contiguës fusionnées en groupes) — aucun re-upload GPU des sommets. Même matériau plat réutilisé pour les tuiles fantômes (`tileMesh.js` : hover local + curseurs multijoueur distants), qui n'ont de toute façon pas les attributs `aShoreDist`/`aSteep`. **Piège vécu** : un `MeshLambertMaterial` essayé en premier — sans attribut `normal` sur la nappe fusionnée (seuls position/aShoreDist/aSteep fournis), le vecteur normal nul produit un NaN après normalisation dans le vertex shader → triangles clippés → l'eau lointaine devenait invisible au lieu de bleu uni. `MeshBasicMaterial` (non éclairé) n'a besoin d'aucune normale — fix retenu. cf. piège en §26.
 
 **Nettoyage CPU (`tileMesh.js`)** : les secteurs/centre eau ne construisent plus AUCUNE géométrie terrain (plus de ragged edges, triangulation, attribut bathymétrique) — c'était un mesh masqué par `hideTerrainMeshes()` et exclu du merge, donc invisible et inutile. Seul le label de valeur (`isValueLabel`) reste créé pour les secteurs eau. Conséquence : `scene.js` n'a plus besoin de calculer de compteur de voisins eau à la pose — `addTileToTerrainMerge()` (merge incrémental O(1)) s'applique désormais uniformément, même pour les tuiles contenant de l'eau (avant : rebuild complet du terrain à chaque pose d'eau, pour rafraîchir l'ex-`aShoreDepth` des voisins).
+
+---
+
+## 19b. Courbure du monde — bouliste/platiste (`worldCurvature.js`)
+
+Mode "bouliste" : le monde entier est simulé comme une calotte sphérique via un drop GPU (uniform `uWorldCurvatureEnabled` + fonction GLSL `dorfromantikApplyWorldCurvature`, injectée dans les vertex shaders concernés) et une fonction CPU miroir `getWorldCurvatureDrop(x, z)` (picking souris, placement d'objets). Bascule `setWorldShapeMode('bouliste'|'platiste')`.
+
+**Fix rotondité — formule de drop (2026-07-03)** : l'ancienne formule (vraie corde de sphère, `-(R − √(R²−dist²))`) a une dérivée qui explose à l'approche de `dist = R`, et devient un NaN au-delà (racine négative). Un garde-fou `maxDrop` (plafond dur, réduit de 240 à 60 après un incident réel — positions Y≈−240 générant des coordonnées clip-space pathologiques en caméra rasante, artefacts GPU gris/orange/rouge à l'horizon) limitait la casse sans traiter la cause. Remplacée par une calotte paramétrée par la DISTANCE D'ARC : `drop = -R·(1 − cos(dist/R))`. Domaine illimité (cos défini partout, jamais de NaN), développement de Taylor en 0 identique à l'ancienne parabole (même intensité perçue près du centre), pente bornée (`|sin(dist/R)| ≤ 1`, plus d'explosion de dérivée), plateau naturel lisse à `dist = R·π` (profondeur max = `2R`, sans clamp arbitraire sur la valeur). `maxDrop = 60` reste comme filet de sécurité dormant (le max naturel `2·radius = 44` reste en dessous).
+
+**Inclinaison des objets posés — `getCurvatureTiltQuaternion(worldX, worldZ, target, strength=1)`** : nouveau, calcule le quaternion qui incline un objet perpendiculairement à la surface courbée en son point, dérivé au 1er ordre de la même formule de drop (axe non normalisé `(nx, 1+nx²+nz², nz)`, avec `nx,nz` les dérivées partielles de drop). Paramètre `strength` (slerp vers l'identité) pour atténuer le tilt sur les objets à arêtes droites — l'inclinaison géométrique réelle peut atteindre 45° près de "l'équateur" de la calotte (`R·π/2`, une pente RÉELLE, pas un bug), beaucoup plus choquante à l'œil sur un bâtiment que sur un arbre à angle égal.
+- `forestOverlay.js`, `naturalPropsOverlay.js` : `strength = 1` (tilt géométrique complet — objets organiques).
+- `houseOverlay.js` (maisons + tours de guet) : `HOUSE_TILT_STRENGTH = 0.5` (tilt atténué de moitié).
+- Charrettes/animaux/panneaux/tonneaux/barques (`villageDecorOverlay.js`), rails/trains : **pas de tilt appliqué** — gap connu, non traité à ce jour.
+
+**Fix arêtes latérales des tuiles — `tileMesh.js::_sideBottomShift(localX, localZ, worldX, worldZ, depth)`** : les faces latérales (jupe) d'une tuile restaient verticales même en mode bouliste — le sommet haut et le sommet bas d'une face partagent le même XZ, donc reçoivent le même drop GPU, donc la face ne s'incline jamais avec la courbure environnante → décalage/interstice visible entre tuiles voisines sur une surface censée être continue. Fix : décale le BAS de chaque face de `(dx, dz)` (même dérivation au 1er ordre que `getCurvatureTiltQuaternion` : `dx = depth·nx/(1+nx²+nz²)`, `dz` idem) pour que le vecteur haut→bas s'aligne sur la normale de surface. C'est ce fix qui corrige le défaut de continuité ("rotondité") entre tuiles en mode bouliste.
+
+**`markNoWorldCurvature(object)`** : exclut récursivement un objet (+ ses enfants) du shader de courbure GPU via `userData.disableWorldCurvature = true` — réservé à ce qui n'appartient pas géométriquement au "monde" courbé : ciel/nuages (`cloudSky.js`), étoiles (`starUniverse.js`), comètes (`cometSky.js`), soleil visuel (`threeSetup.js`), segments de halo déjà baked en Y (`waterZoneBoundary.js`, Y calculé une fois via `getWorldCurvatureDrop` puis figé — pas de double application).
+
+**`applySceneCurvatureFlags(scene)` (`threeSetup.js`)** : parcourt récursivement un sous-arbre et injecte `dorfromantikApplyWorldCurvature` dans `onBeforeCompile` de chaque matériau éligible (une fois — `material.userData.worldCurvatureApplied`), sauf les `ShaderMaterial` (déjà câblés manuellement via `WORLD_CURVATURE_SHADER` dans leur propre GLSL — eau, sillage bateau, blé, herbe) et les objets `markNoWorldCurvature`. Appelé après chaque rebuild d'overlay / pose de tuile pour couvrir les nouveaux meshes (nombreux points d'appel dans `scene.js`).
 
 ---
 
@@ -615,7 +644,7 @@ cinematicPass.js               CINEMATIC_SHADER (tilt-shift, grain, aberration�
 visualEnvironment.js           LUT, lumières, environnement IBL, config défaut
 debugLightUi.js                Panneau CUSTOMISATION + HUD perf + sceneProfiler
 sceneProfiler.js               Comptage DC/triangles/objets par catégorie (HUD)
-worldCurvature.js              Courbure monde GPU + picking souris
+worldCurvature.js              Courbure monde GPU (calotte, drop en cos) + picking souris + tilt props (§19b)
 shadowCulling.js               Culling ombres par distance
 soundDesign.js                 Audio spatial, layers, chi-mai, corbeaux, ambiances
 globalWind.js / starUniverse.js / cometSky.js
@@ -630,67 +659,13 @@ ui.js / help.js / grid.js / gridRegions.js
 
 ---
 
-## 21. Travaux récents (juin–juillet 2026)
+## 21. Historique — épisodes non couverts ailleurs
 
-| Changement | Détail |
-|---|---|
-| Déplacement `stable/` → racine | 28 fichiers, imports `'../'` → `'./'` |
-| Shader eau rebâti | FBM advecté + double sample P_Malin + Voronoï bords précis (voronoiBorder deux passes) |
-| Routes supprimées | `tileRoadOverlay.js` → stubs, GLBs retirés |
-| Système prop placement | `bypassBboxCheck`, `groundOffsetDelta`, snap clearance par kind, `propHitboxRegistry`, `propPlacement.js` |
-| Pools charrettes | cart-2 / cart-3 (50/50), charrette-1 retirée |
-| Tours de guet | Pool tour-1/2/3/4/6, tour-5 retirée |
-| Meule en village | 80% de chance, sans hitbox |
-| LOD props végétation | PLANT −15%, WHEAT −15%, GRASS −15% |
-| Blé : position | surfaceY + 0.004 (validé) |
-| Brins d'herbe | surfaceY + 0.005 |
-| Arbres | TREE_GROUND_OFFSET = -0.005 |
-| Densités | Fleurs +13%, plantes +20%, rochers +16% |
-| **Ciel volumétrique** | `cloudSky.js` + `shaders/shaderCiel.js` — value noise FBM (hashIQ), Beer-Lambert, sphère atmosphérique |
-| **Mode jour/nuit** | Case à cocher `#dayNightToggle` (EDA, onglet Environnement, rubrique 6), event `hexistenz:dayNightChange`, localStorage `hexistenz_daynightmode` |
-| **Comètes bloquées de jour** | `cometSky.visible = !isSoleil`; `updateCometSky` conditionnel dans animate |
-| **Fumée volumétrique** | `smokeVolumePass.js` + `shaders/shaderFumee.js` — ray-march slab-borné, Gaussian évasé, turbulence 4 octaves, depth test via `beautyRenderTarget.depthTexture`. Maisons petite-1/2 (33%), petite-3 exclue. Locos ×1.14 / maisons ×0.86. LOD calqué exactement sur les overlays. Buffer 48 sources, locos en priorité. |
-| **Rebuild forest incrémental** | `HEX_CHUNK_SIZE=3`, param `changedTile`, `userData.chunkKey` sur chaque IM |
-| **Freeze multiplayer résolu** | `applyRemoteGameState` skip overlays si 0 tuiles changées (sync no-op) |
-| **Animaux sauvages** | Cerfs (InstancedMesh, `cerf.glb`) — forêt / prairie / champ |
-| **Animaux de village** | Chiens (`chien.glb`) + Chevaux (`cheval.glb`) — GLBs individuels animés |
-| **Panneaux signalisation** | poteau-indicateur-1/2/3 — 30–36% chance par arête |
-| **Piles de bois** | pile-de-bois-1/2 — forêts uniquement |
-| **Berry pool** | berry-1..6 — dominent le pool grass (71% des instances) |
-| **Nouveaux presets** | Hiver (désaturation froide, vignette forte) + Psyché-LSD (saturation ×2.2, brouillard linéaire) |
-| **Chi-mai proximité** | `FIELD_MAX_DIST` : `HEX_SIZE * 1.2` → `HEX_SIZE * 0.72` (caméra doit être sur la tuile field) |
-| **Shadow map adaptive** | Extent `clamp(8, 18, cameraY * 0.58)` — −40% DC shadow vs ±24u fixe |
-| **IBL RoomEnvironment** | `scene.environmentIntensity = 0.25` — lumière indirecte cohérente sur tous GLBs |
-| **SUN_LAYER dédié** | Astre rendu en 3e passe (après labels), indépendant du contenu GLB |
-| **Fontaines** | groundOffsetDelta corrigé : fontaine-1 → −0.017, fontaine-2 → −0.004 |
-| **Arborescence JSON** | `json/` à la racine : `ambiances.json`, `highscores.json`, `games/room_*.json`. Chemins mis à jour dans `multiplayer.php`, `highscore.php`, `debugLightUi.js`, `generate.php`, `multiplayerUi.js` |
-| **HUD score — cartes résumé** | Emojis 🚂⛵☄️ après le nombre (`stats-num-group`, taille 30×30px, fond `rgba(0,0,0,0.22)` arrondi). Label "Comètes interceptées" → "Comètes". Fond `.stats-boats` et `.stats-tiles` harmonisés avec `.stats-trains` (dégradé gris neutre). Règle `.stats-summary-card span` restreinte à `:not(.stats-emoji)` |
-| **HUD score — tooltips** | Textes d'aide au survol sur les 3 boîtes tuiles (game.activeTile / game.nextTile / game.deckRemaining) dans `help.js` + `ui.js` |
-| **Missions — tooltips** | `MISSION_HELP` exporté de `missions.js` (une explication par type). Délégation via `data-mission-tip` + `delegateHelpTooltip` dans `ui.js` |
-| **Mission Moulins** | Nouveau type `MILL_MISSION_TYPE = 'mill'` dans `missions.js`. `matchTypes: [EDGE_TYPES.field]`. Paliers : `[2, 3, 4, 5, 7, 9]` (incrément 1–2). Progrès via `countFieldMills(placedTiles)` exporté de `fieldZonesOverlay.js`. Icône ⚙️, style CSS identique à `mission-type-field` (doré). Documenté dans `help.js`, `game.php` (aide), `index.php` (présentation). |
-| **HUD score — Moulins** | Carte résumé "Moulins ⚙️" (`statMills`, `stats-field`) remplace "Tuiles posées". Comptage via `millCount: countFieldMills(placedTiles)` dans `getGameStats`. |
-| **HUD tuiles — Tuiles posées** | `#tilesPlaced` ajouté dans `#tileUI` (2e ligne `tileCountRow`). Mis à jour par `updateDeckUI(ui, deck, placedCount)`. Tooltip `game.tiles`. |
-| **Aide tooltip "Rejoindre"** | Phrase "partie doit être en attente…" supprimée de `help.js` (`menu.join`) |
-| **#tileUI fond transparent** | Suppression de `overflow-y: auto / overflow-x: hidden` sur `#tileUI` — c'était le scroll container Chrome qui peignait un fond gris |
-| **Page de présentation** | `index.php` (ex-`presentation.php`) — landing page bilingue FR/EN, standalone, CSS dans `css/presentation.css`. `game.php` = ex-`index.php`. `HEXISTENZ_VERSION` lue par regex PHP depuis `variables.js`. |
-| **Moutons animés** | `sheepOverlay.js` — SkinnedMesh + SkeletonUtils.clone(). 3 types (marcheur/brouteur/immobile) dans `sheep-2.glb`. BFS zones prairie via `getFullTextureNeighbors`. 1 marcheur par zone, statiques groupés (instinct grégaire). Track `Baze_19.position` filtrée du clip brouteur. LOD frustum + `LOD_ANIMAL_CULL_DISTANCE`. |
-| **LOD meules village** | `_rebuildRoadsideDecorLOD` dans `decorOverlay.js` — `'village-meule-glb'` désormais inclus dans le LOD avec `LOD_MILL_CULL_DISTANCE = 12.6`. |
-| **Vent des arbres réparé** | `forestOverlay.js::buildTreeInstancedMeshes` ré-applique `applyGlobalWindToMaterial()` après `material.clone()` — le clone perdait `onBeforeCompile`/`customProgramCacheKey` (non copiés par `Material.prototype.copy`), figeant les arbres malgré `applyGlobalWindToObject()` sur le prototype. `TREE_WIND.strength` réduit 0.062 → 0.034 (−45% cumulé, retour utilisateur "on dirait des brindilles"). |
-| **Alignement vertical overlays sol** | `bonusCells.js`, `bonusCellChestOverlay.js`, `grid.js` (cellules disponibles), `specialCells.js` : Y unifié à `0.003` (niveau de fond réel des tuiles, cf. `tileMesh.js::getBiomeSurfaceY`). Remplace une vieille formule `waterY − waterThickness − 0.01` (≈ −0.145, reliquat pré-refonte "fond ancré à y=0") qui plaçait cellules bonus/disponibles ~15cm sous le sol ; `specialCells.js` était à l'inverse fixé à 0.02 (trop haut). |
-| **Chevaux : flottement/enfoncement corrigé** | `villageDecorOverlay.js::placeAnimal` — pour un point proche du centre de tuile (`centerPos`), le type de biome utilisé pour le snap au sol venait d'une arête devinée par angle (`getEdgeFromLocalPoint`, quasi arbitraire sur un point quasi à l'origine) au lieu de `getTileCenterType(placedTile)`. Comme `TERRAIN_RELIEF.enabled=false`, la hauteur par biome est un palier net (jusqu'à 12mm d'écart house/field) sans transition → écart visible et arbitraire par tuile. Cheval + chien slot 0 concernés. |
-| **Coffre → gold.glb** | `bonusCellChestOverlay.js::CHEST_GLB_URL` renommé `coffre.glb` → `gold.glb`. Taille : `+50% +35% −30% −15% +20%` cumulés sur `CHEST_TARGET_WIDTH`. Terminologie interne (fonctions/commentaires) volontairement conservée en "coffre". |
-| **Piles de bois +2 variantes** | `pile-de-bois-3.glb`, `pile-de-bois-4.glb` ajoutées au pool (`−17%` chacune). `pile-de-bois-1` réduit de 10% supplémentaires. |
-| **Fontaine-3 ajoutée** | Pool fontaines 50/50 → 1/3 chacune (`fontaine-1/2/3`). `groundOffsetDelta` de `fontaine-3` copié par erreur de `fontaine-1` (−0.017, l'enfonçait sous le sol) — remis à 0, non recalibré depuis. |
-| **Refonte système eau (intégration Cyril, 2026-07-01)** | Remplacement complet du shader eau + de la géométrie : nappe continue par zone (`waterSurfaceOverlay.js`) au rivage organique (`shoreField.js` : `shoreNoise`/`shoreSteepness`) au lieu du prisme par tuile. Écume voronoï animée façon Danil, réglages live (`waterDebugUi.js`, bouton 💧 EAU). Sillage en V sur les bateaux (`waterBoatOverlay.js`). Eau exclue du merge terrain (`terrainMerge.js::isMergeableTerrainMesh`). Détails complets en §19. |
-| **Plages alignées sur le rivage organique** | `waterBeachGeometry.js` consomme désormais la même table de déplacement (`buildShoreDisplacementMap`/`displaceShorePoint`, exportées de `waterSurfaceOverlay.js`) que la nappe d'eau, calculée une fois par rebuild dans `waterZoneOverlay.js` et transmise à `createWaterBeachMesh(zone, placedTiles, shoreMap)`. Les plages épousent donc exactement le même contour ondulé, sommet pour sommet. `waterZoneBoundary.js` (halos de survol, générique à tous les biomes) volontairement non touché — hors périmètre du rivage. |
-| **Merge : 3 régressions bloquées à l'intégration** | La branche de Cyril partait d'une base vieille de 3 jours. Repérées et écartées lors du merge : suppression de `sheepOverlay` dans `scene.js`, retour de `TREE_WIND.strength` à 0.062 (annulait le fix "brindilles"), perte du 2ᵉ argument `getMissionProgressByType(placedTiles)` de `maybeGenerateMissionForTile`, et perte du 3ᵉ argument `placedTiles.size` de `updateDeckUI` (compteur "tuiles posées" du HUD). Aucune des quatre n'a été reportée. |
-| **Nettoyage CPU post-merge** | `tileMesh.js` ne construit plus aucune géométrie terrain pour les secteurs/centre eau (c'était un mesh masqué, jamais rendu depuis l'exclusion du merge). `scene.js` : suppression du calcul de voisinage bathymétrique (`_countWaterNeighbors` et consorts) devenu mort ; `addTileToTerrainMerge` (incrémental O(1)) s'applique désormais aussi aux tuiles eau, au lieu d'un rebuild complet du terrain à chaque pose. `terrainMerge.js::updateTileShoreDepth` supprimé (plus d'appelant). |
-| **Panel EDA — rubriques VENT (6) + NUAGES (4)** | `debugLightUi.js` passe de 4 à 6 rubriques (LUT, PIXELISATION, CINÉMA, NUAGES, EAU, VENT) réparties sur **3 colonnes** (`LUT_WIDTH_FACTOR: 2→3`, hauteur fixe `calc(100vh-28px)` pour occuper tout l'écran). VENT regroupe blé/prairie/arbres avec interrupteur on/off global. NUAGES gagne `uCloudScale`/`uCloudSpeed` en uniforms (`cloudSky.js`, `shaders/shaderCiel.js`) en plus de `uCoverage`. `📋 Copier` exporte désormais `{ lut, pix, cinema, water, wind, cloud }`. `#scorePanel` et `#kbdHintHud` se masquent automatiquement à l'ouverture de l'EDA. Détails complets en §13. |
-| **Bug vent arbres corrigé** | Patcher en direct les matériaux d'arbres déjà posés (`applyGlobalWindToMaterial` ré-appelé sur un matériau déjà câblé) empilait les injections `onBeforeCompile` → erreurs GLSL "redefinition" → arbres invisibles. Fix : `setTreeWindParams` ne patche plus jamais en place, il mute `TREE_WIND` et déclenche un rebuild forêt complet debounced. Nouveau piège documenté en §26. |
-| **Shader Bloom** (2026-07-02) | Nouvel effet dans `shaders/shaderCinematique.js` : seuil (`smoothstep`) + 8-tap radial + sample centre, inséré après God Rays et avant vignette. Slider maître `uBloomIntensity` (0 = bypass total, coût GPU nul), sous-paramètres `uBloomThreshold/Radius/Softness`. Case à cocher `bloomEnabled` propre, rubrique "4. Bloom" de l'onglet Cinématique (§13). |
-| **Shader Courbure écran (CRT)** (2026-07-02) | Nouvel effet dans `shaders/shaderCinematique.js` : déformation d'UV radiale calculée en amont du barillet (`uCrtCurvature`, anisotropie horizontale/verticale — courbure verticale plus faible, comme les vrais tubes cathodiques), + masque optionnel et assombrissement progressif des bords (mix distance Chebyshev/radiale, pas seulement les coins) appliqués après la vignette (`uCrtMask`, `uCrtCornerDark`). Slider maître à 0 = bypass total. Case à cocher `crtEnabled` propre, rubrique "6. Courbure écran" de l'onglet Cinématique (§13). |
-| **Panel EDA — refonte en 3 onglets** (2026-07-02) | `debugLightUi.js` : les 3 colonnes simultanées (devenues trop chargées visuellement) sont remplacées par 3 onglets (LUT / Cinématique / Environnement) sous le header, chacun organisé en 2 colonnes. Numérotation aplatie et repartant de 1 dans chaque onglet. `LUT_WIDTH_FACTOR` 3→2. Onglet actif persisté (`localStorage['hexistenz_eda_tab']`). Séparateurs `.debug-light-pix-sep` systématiques entre rubriques. Détails complets en §13. |
-| **Panel EDA — Forme du monde / Jour-Nuit en cases à cocher** (2026-07-02) | `hud_eda.js` : les boutons à bascule "🌍 Bouliste/📐 Platiste" et "☀️ Jour/🌙 Nuit" quittent le footer du panel EDA et deviennent 2 rubriques à part entière ("5. Forme du monde", "6. Jour/Nuit") en colonne B de l'onglet Environnement, sous forme de case à cocher unique (`.pix-switch`) + `<output>` texte du mode actuel. `3. NUAGES` passe en colonne A (avec Écume/Sillage bateau). `scene.js` notifie désormais le panel via l'event `hexistenz:dayNightChange` (au lieu de manipuler le DOM des anciens boutons) pour synchroniser la case à cocher au mode résolu à l'init (tirage aléatoire jour/nuit). `📋 Copier` inclut désormais `dayNight` en plus de `{ lut, pix, cinema, water, wind, cloud }` (`worldShapeMode` était déjà dans `pix`). CSS `.world-shape-row`/`.world-shape-btn` supprimé. |
+La quasi-totalité des évolutions passées (eau, courbure monde, panel EDA, fumée, ciel, LOD, pools de props, HUD…) est documentée à l'**état courant** dans ses sections dédiées (§6 à §20) — inutile de dupliquer un journal des changements en plus. Seuls les deux épisodes suivants ne sont capturés nulle part ailleurs :
+
+**⚠️ Merge VFX Cyril intégralement annulé** (2026-07-03) : un merge annoncé (god rays, feu/tornade/éclair/embers, cycle jour/nuit progressif, brume, audio VFX — 14 fichiers dont `vfxEngine.js`, `dayNightCycle.js`, `effectScheduler.js`, `mistManager.js`, `particlePool.js`, `effects/*`, `shaders/shaderGodRays.js`, `shaders/shaderParticles.js`) a été entièrement défait sur décision utilisateur ("aucune n'a été validée"). Aucun de ces fichiers n'existe dans les sources, `HEXISTENZ_VERSION` est resté à `v0.9.1.10`. **Ne pas supposer ce système présent** dans une future session — vérifier par `grep`/`find` avant de s'y référer.
+
+**Merge du système eau (intégration Cyril, 2026-07-01)** — la branche fusionnée partait d'une base vieille de 3 jours ; 3 régressions ont été repérées et écartées à l'intégration : suppression de `sheepOverlay` dans `scene.js`, retour de `TREE_WIND.strength` à 0.062 (annulait le fix "brindilles", §9), perte d'arguments dans `maybeGenerateMissionForTile`/`updateDeckUI`. Leçon : re-fusionner une branche ancienne exige de rediffer chaque fichier touché, pas seulement de merger — cf. piège en §26.
 
 ---
 
@@ -748,7 +723,7 @@ Côtés contrôlés par `isSoleil` :
 - Étoiles (`hexistenz-distant-star-universe`) : invisible si jour
 - `updateCometSky(...)` : conditionnel dans animate (`if (!isSoleil)`)
 
-**Astres GLB** (`threeSetup.js`) : `soleil.glb` + `lune.glb` chargés à l'init. Visibilité contrôlée par `setAstreMode(scene, isSoleil)`. `SUN_LAYER=2` — rendu après labels, devant tout.
+**Astres GLB** (`threeSetup.js`) : `soleil.glb` + `lune_melies.glb` (ex-`lune.glb`, 2026-07-04) chargés à l'init. Visibilité contrôlée par `setAstreMode(scene, isSoleil)`. `SUN_LAYER=2` — rendu après labels, devant tout. Le flag `isMoon` (scale ×1.15) est déterminé par le nom logique `'visible-sky-moon-glb'`, pas par l'URL — insensible au renommage du fichier.
 
 ---
 
@@ -812,11 +787,23 @@ Catégories dominantes en DC :
 
 **Chi-mai** — `FIELD_MAX_DIST = HEX_SIZE * 0.72` (< apothème 0.866). La caméra doit être physiquement sur la tuile field pour déclencher.
 
-**`Material.clone()` ne copie pas `onBeforeCompile`/`customProgramCacheKey`** — ce sont des méthodes du prototype `Material`, pas des champs copiés par `Material.prototype.copy()`. Tout pattern "prototype avec shader injecté via `onBeforeCompile` → clone par instance" (InstancedMesh, GLB partagés) perd le shader custom sur le clone. Il faut ré-appliquer la fonction d'injection (`applyGlobalWindToMaterial()` etc.) explicitement après chaque `.clone()`. Bug vécu : arbres figés malgré `applyGlobalWindToObject()` sur le prototype (§9, §21).
+**`Material.clone()` ne copie pas `onBeforeCompile`/`customProgramCacheKey`** — ce sont des méthodes du prototype `Material`, pas des champs copiés par `Material.prototype.copy()`. Tout pattern "prototype avec shader injecté via `onBeforeCompile` → clone par instance" (InstancedMesh, GLB partagés) perd le shader custom sur le clone. Il faut ré-appliquer la fonction d'injection (`applyGlobalWindToMaterial()` etc.) explicitement après chaque `.clone()`. Bug vécu : arbres figés malgré `applyGlobalWindToObject()` sur le prototype (§9).
 
-**Type de biome pour placement props proches du centre de tuile** — `TERRAIN_RELIEF.enabled=false` (§6) rend la hauteur de sol par biome une fonction en PALIERS nets (pas de transition). Pour un point proche du centre (rayon ≤ `TILE_VISUAL.centerRadiusScale`, ex. `centerPos()` dans `villageDecorOverlay.js`), utiliser `getTileCenterType(placedTile)` — jamais un type d'arête deviné via `getEdgeFromLocalPoint()` sur un point quasi à l'origine (angle quasi arbitraire, retombe sur une arête au hasard parmi les 6, potentiellement différente du vrai centre). Bug vécu : chevaux flottants/enfoncés (§21).
+**Type de biome pour placement props proches du centre de tuile** — `TERRAIN_RELIEF.enabled=false` (§6) rend la hauteur de sol par biome une fonction en PALIERS nets (pas de transition). Pour un point proche du centre (rayon ≤ `TILE_VISUAL.centerRadiusScale`, ex. `centerPos()` dans `villageDecorOverlay.js`), utiliser `getTileCenterType(placedTile)` — jamais un type d'arête deviné via `getEdgeFromLocalPoint()` sur un point quasi à l'origine (angle quasi arbitraire, retombe sur une arête au hasard parmi les 6, potentiellement différente du vrai centre). Bug vécu : chevaux flottants/enfoncés (§9).
 
 **`onBeforeCompile` chaîne les injections — ne JAMAIS ré-appliquer sur un matériau déjà posé** — `applyGlobalWindToMaterial()` (`globalWind.js`) capture `previousOnBeforeCompile = material.onBeforeCompile` et l'appelle en premier avant d'injecter son propre code GLSL. Rappeler cette fonction sur un matériau qui l'a DÉJÀ (même après avoir supprimé `userData.globalWindSignature` pour forcer le "changement") empile une copie supplémentaire des uniforms/fonctions à chaque appel — d'autant plus piégeux que la courbure monde (`applyWorldCurvatureToMaterial`, `threeSetup.js`) se chaîne elle aussi PAR-DESSUS le vent une fois la tuile posée en scène, donc même réinitialiser juste `onBeforeCompile`/`customProgramCacheKey` avant de ré-appliquer casse la courbure. Erreur GLSL vécue : `'uGlobalWindTime' : redefinition`, `'globalWindHash' : function already has a body` → échec de compilation → arbres invisibles. Fix (`forestOverlay.js::setTreeWindParams`, panel EDA rubrique 6 VENT, cf. §13) : ne jamais patcher les matériaux existants — muter `TREE_WIND` (objet partagé, non gelé) puis déclencher un `rebuildForestOverlay()` complet (debounced 180 ms) qui clone toujours un matériau FRAIS depuis le prototype et y applique le vent une seule fois proprement.
+
+**Formule de courbure du monde — corde vs distance d'arc** — une calotte sphérique paramétrée par la CORDE euclidienne (`-(R−√(R²−dist²))`) a une dérivée qui explose près de `dist=R` et devient un NaN au-delà (racine négative) : nécessite un clamp arbitraire (`maxDrop`) qui masque le symptôme (artefacts GPU à l'horizon en caméra rasante) sans traiter la cause. Paramétrer par la DISTANCE D'ARC (`drop = -R·(1−cos(dist/R))`) élimine le NaN par construction (cos défini partout) et borne nativement la pente (`|sin| ≤ 1`). cf. §19b.
+
+**`MeshLambertMaterial` sur une géométrie sans attribut `normal`** — la nappe d'eau fusionnée (`waterSurfaceOverlay.js`) ne fournit que `position`/`aShoreDist`/`aSteep`, pas de `normal`. Un matériau éclairé (Lambert/Standard) calcule un vecteur normal nul → NaN après normalisation dans le vertex shader → triangles clippés, invisibles. Utiliser un matériau non éclairé (`MeshBasicMaterial`) pour tout mesh généré sans normales calculées. Bug vécu : eau lointaine invisible au lieu de bleu uni (fix LOD nappe, cf. §19).
+
+**Ne jamais exclure la plage (`waterBeachGeometry.js`) de la courbure GPU (`markNoWorldCurvature`)** — contrairement au ciel/étoiles/comètes qui sont hors-monde, la plage doit suivre le terrain et l'eau. La marquer no-curvature la laisserait plate si l'utilisateur bascule en mode bouliste après génération : elle flotterait au-dessus de la mer courbée au lieu d'en épouser la surface.
+
+**Post-processing hors scène-graph — la courbure du monde n'est jamais automatique** — `applySceneCurvatureFlags`/`applyWorldCurvatureToMaterial` (threeSetup.js, §19b) ne patchent que les matériaux de meshes/lines/points DANS la scène Three.js. Un `ShaderPass` de post-processing (ex. `smokeVolumePass.js`) est hors scène-graph et n'en bénéficie JAMAIS — toute logique world-space (positions, bornes de recherche d'un ray-march…) doit répliquer la courbure manuellement, y compris des bornes qui ressemblent à de simples constantes de calibration. Bug vécu : la fumée (`shaderFumee.js`) bornait son ray-march à un slab Y absolu fixe (`-0.05`/`1.3`, calibré terrain plat) — loin du centre en mode bouliste, `getWorldCurvatureDrop` fait sortir la source réelle de ce slab → fumée invisible ou écrasée sur une tranche résiduelle. Fix : slab recalculé chaque frame depuis le min/max Y réel des sources (déjà courbées), passé en uniforms (cf. §12b).
+
+**Ne jamais réintroduire de clearance sol proportionnelle/plafonnée** — après plusieurs itérations infructueuses (clearance proportionnelle à la taille du prop, puis plafonnée sur bounding-box mesurée) ayant chacune déplacé sans régler le bug récurrent "NPC/herbe/moutons/chiens flottent ou enterrés", l'utilisateur a exigé une formule unique et fixe. Les biomes sont strictement plats (6 hauteurs possibles, §6) : tout prop se pose à `hauteur_du_biome + GROUND_CLEARANCE` (constante unique, `propPlacement.js`, cf. §9). Si le bug resurgit, chercher d'abord une mauvaise détection de type de biome (edge vs centre de tuile) ou un `groundOffsetDelta` par-modèle mal calibré — pas la clearance.
+
+**Merger une branche ancienne réintroduit des régressions déjà corrigées** — une branche partie d'une base vieille de plusieurs jours peut ramener des reverts silencieux (valeurs par défaut, arguments de fonction supprimés) sur des fixes déjà validés depuis. Rediffer explicitement chaque fichier touché plutôt que de faire confiance au merge automatique. cf. §21.
 
 ---
 
@@ -826,12 +813,7 @@ Regroupe tous les points d'entrée pour un upgrade visuel futur. Chaque système
 
 ### A. Pipeline de rendu post-processing
 
-**Ordre des passes** : `RenderPixelatedPass → SmokeVolumePass → colorGradingPass → cinematicPass → OutputPass`
-
-**3 passes renderer par frame** :
-1. `WORLD_LAYER=0` → composer (postprocess complet)
-2. `TEXT_LAYER=1` → renderer direct, clearDepth seul (labels nets, non pixelisés)
-3. `SUN_LAYER=2` → renderer direct, en dernier (astres devant tout)
+État courant (ordre des passes, 3 passes renderer/frame) : cf. §12.
 
 **Upgrades pipeline** :
 - Remplacer `BasicShadowMap` par `PCFSoftShadowMap` (`threeSetup.js`)
@@ -869,7 +851,7 @@ Sphère BackSide r=500, ray-march value noise FBM 4 octaves, Beer-Lambert.
 
 ### D. Fumée volumétrique (`smokeVolumePass.js` + `shaders/shaderFumee.js`)
 
-ShaderPass, ray-march slab `Y[-0.05, 1.3]`, 48 pas, Gaussian évasé, 4 octaves turbulence, depth test.
+ShaderPass, ray-march slab Y dynamique (`uSmokeYBase`/`uSmokeYTop`, recalculé par frame depuis le min/max réel des sources — fix courbure 2026-07-04, cf. §12b/§26), 48 pas, Gaussian évasé, 4 octaves turbulence, depth test.
 
 **Upgrades** :
 - Couleur par source : locos (gris charbon) vs maisons (blanc/beige)
@@ -916,11 +898,12 @@ Tous les seuils dans `variables.js`. Test toutes les **9 frames** dans `animate(
 
 ### H. Courbure du monde (`worldCurvature.js`)
 
-Vertex shader GPU, mode "bouliste".
+Vertex shader GPU, mode "bouliste". Formule de drop en distance d'arc (`-R(1-cos(dist/R))`, fix 2026-07-03, cf. §19b) + tilt des objets posés (`getCurvatureTiltQuaternion`) + alignement des faces latérales de tuile (`tileMesh.js::_sideBottomShift`) — plus de décalage/artefact NaN.
 
 **Upgrades** :
 - Fog exponentiel coloré en fonction de la courbure (`gl_Position.z`) pour profondeur
 - Bande horizon glow calquée sur `uSkyHorizon` du ciel
+- Tilt de courbure (`getCurvatureTiltQuaternion`) à étendre aux props village (charrettes, animaux, panneaux, tonneaux, barques) et rails/trains, actuellement non couverts (cf. §19b)
 
 ---
 

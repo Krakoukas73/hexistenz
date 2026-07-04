@@ -15,11 +15,26 @@ const _SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(s => [s.key, s]));
 
 // ─── Snap surface ─────────────────────────────────────────────────────────────
 
+// ── RÈGLE UNIQUE (2026-07-04) ────────────────────────────────────────────────
+// Les biomes sont STRICTEMENT PLATS (TERRAIN_RELIEF.enabled = false, cf. variables.js —
+// vérifié identique dans tileMesh.js qui rend la géométrie réelle) : il existe donc
+// exactement 6 hauteurs de sol (une par type de biome, cf. getBiomeSurfaceOffsetY dans
+// terrainHeight.js), chacune une CONSTANTE, pas une fonction de position. Tout objet posé
+// au sol doit reposer exactement sur cette hauteur + GROUND_CLEARANCE, un unique petit jeu
+// FIXE (pas proportionnel à la taille du prop, pas plafonné, pas calculé à partir d'une
+// pente puisque la pente est toujours nulle) — ni plus, ni moins. Toute variation
+// (clearance différent par prop, par kind, plafonné sur une bbox mesurée, etc.) a
+// historiquement fini par introduire un décalage visible dans un sens ou dans l'autre à
+// chaque nouveau réglage. Une seule constante, partagée par tous les appelants.
+export const GROUND_CLEARANCE = 0.003;
+
 /**
  * Ajuste l'objet en Y pour que sa base repose exactement sur surfaceY + clearance.
- * À appeler après placeObjectOnTerrain pour corriger le dépassement de bounding-box.
+ * À appeler après placeObjectOnTerrain pour corriger le dépassement de bounding-box
+ * (recentrage du modèle imparfait, marge d'arrondi, etc.) — PAS pour compenser une pente
+ * (toujours nulle, biomes plats).
  */
-export function snapPropBottomToSurface(object, surfaceY, clearance = 0.004) {
+export function snapPropBottomToSurface(object, surfaceY, clearance = GROUND_CLEARANCE) {
   if (!object || !Number.isFinite(surfaceY)) return;
   object.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(object);
