@@ -1,0 +1,10 @@
+.DS_Store
+.claude/
+# Assets lourds (GLB, images, sons, fonds, polices) — sourcés depuis
+# le dossier "Hexistenz Assets" (symlinks), pas commités dans git.
+# Pas de slash final : ce sont des symlinks, pas des vrais dossiers.
+/glb
+/images
+/sounds
+/backgrounds
+/fonts
