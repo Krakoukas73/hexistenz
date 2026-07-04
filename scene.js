@@ -33,6 +33,8 @@ import { createCloudSky, updateCloudSky, getCloudUserEnabled } from './cloudSky.
 import { updateGlobalWind } from './globalWind.js';
 import { resetPropHitboxRegistry } from './propHitboxRegistry.js';
 import { createDebugLightUI, tickFps } from './debugLightUi.js';
+import { createEnvironmentDirector, updateEnvironmentDirector } from './environmentDirector.js';
+import { createEnvironmentDebugPanel } from './environmentDebugUi.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, setAstreMode, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './threeSetup.js';
 import { applyShadowCulling, rebuildShadowCasters } from './shadowCulling.js';
@@ -123,6 +125,12 @@ export function initScene(options = {}) {
   // Créé ici (et non plus juste après createCamera) : le panel VENT/NUAGES a besoin
   // des références forestOverlay (arbres GPU-wind) et cloudSky (nuages horizon jour).
   createDebugLightUI({ visualEnvironment, postprocess, forestOverlay, cloudSky });
+
+  // Phase 0 roadmap VFX : squelette du directeur d'environnement (pas d'effet
+  // visuel encore, cf. environmentDirector.js). Panneau debug séparé du HUD
+  // principal — sera fusionné dans createDebugLightUI plus tard si validé.
+  const environmentDirector = createEnvironmentDirector();
+  createEnvironmentDebugPanel(environmentDirector);
 
   // isSoleil : override localStorage > tirage aléatoire si aucune préférence stockée
   const _storedDayNight = localStorage.getItem('hexistenz_daynightmode');
@@ -534,6 +542,7 @@ export function initScene(options = {}) {
     const timeSeconds = performance.now() * 0.001;
     updateAnimatedBiomeTextures(timeSeconds);
     updateGlobalWind(timeSeconds);
+    updateEnvironmentDirector(environmentDirector, timeSeconds);
     updateRealisticWater(timeSeconds);
     updateSpecialCellsMeshAnimation(specialCellsMesh, timeSeconds);
     updateBonusCellsMeshAnimation(bonusCellsMesh, timeSeconds);
