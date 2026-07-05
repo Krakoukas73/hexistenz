@@ -18,7 +18,12 @@ export const TEXT_LAYER  = 1;
 
 // Initialisation Three.js isolée pour garder scene.js centré sur la logique de jeu.
 export function createRenderer(canvas) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  // antialias: false — tout le rendu passe par l'EffectComposer dont les render
+  // targets sont en samples:0 (aucun MSAA). Le MSAA du framebuffer par défaut ne
+  // s'appliquerait qu'au quad plein écran final de l'OutputPass (bords hors-écran)
+  // → aucun effet visuel, seulement un coût mémoire + resolve à chaque présentation.
+  // Vérifié : composer.renderTarget1/2.samples === 0. Rendu strictement identique.
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
