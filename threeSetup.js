@@ -16,6 +16,25 @@ import { clamp01 } from './tileUtils.js';
 export const WORLD_LAYER = 0;
 export const TEXT_LAYER  = 1;
 
+// Groupes de scène LOURDS et SANS sprite texte (TEXT_LAYER), masqués le temps de
+// la passe texte (renderTextLayer) pour éviter que renderer.render() ne parcoure
+// leurs sous-arbres profonds (squelettes, milliers de props) inutilement. Ne PAS
+// y mettre waterZoneOverlay (contient les labels de zone) ni quoi que ce soit
+// portant un sprite TEXT_LAYER. Sûr : un groupe oublié = juste moins d'optim, le
+// texte s'affiche toujours. Noms = ceux posés par create*Overlay() / .name.
+const TEXT_PASS_SKIP_NAMES = new Set([
+  'grass-blade-overlay',
+  'sheep-overlay',
+  'forest-tree-glb-overlay',
+  'field-wheat-overlay',
+  'field-water-edge-effects-overlay',
+  'house-overlay',
+  'water-boat-overlay',
+  'rail-train-overlay',
+  'multiplayer-remote-ghosts',
+  'terrain-merged-render',
+]);
+
 // Initialisation Three.js isolée pour garder scene.js centré sur la logique de jeu.
 export function createRenderer(canvas) {
   // antialias: false — tout le rendu passe par l'EffectComposer dont les render
@@ -520,7 +539,25 @@ export function createPixelPostprocess(renderer, scene, camera) {
     // plutôt que de forcer true, ce qui court-circuiterait le throttle.
     const prevAutoUpdate = renderer.shadowMap.autoUpdate;
     renderer.shadowMap.autoUpdate = false;
+
+    // OPTIM CPU : renderer.render() parcourt tout le graphe (projectObject) même
+    // pour ne dessiner que les quelques labels texte. Les gros groupes ci-dessous
+    // n'ont AUCUN sprite TEXT_LAYER (les labels de tuiles sont désactivés — cf.
+    // tileLabels.shouldShowValue ; seuls les labels de zone de waterZoneOverlay
+    // existent). On masque ces sous-arbres profonds (squelettes moutons/persos,
+    // milliers de props) le temps de la passe texte → Three saute leur récursion.
+    // Mesuré : passe texte ~6.8 ms → ~0.5 ms (CPU submission). Restauré juste après.
+    const _hidden = [];
+    for (const child of scene.children) {
+      if (child.visible && TEXT_PASS_SKIP_NAMES.has(child.name)) {
+        child.visible = false;
+        _hidden.push(child);
+      }
+    }
+
     renderer.render(scene, camera);
+
+    for (const child of _hidden) child.visible = true;
     renderer.shadowMap.autoUpdate = prevAutoUpdate;
   }
 
