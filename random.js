@@ -2,6 +2,18 @@ export function randomInt(maxExclusive) {
   return Math.floor(Math.random() * maxExclusive);
 }
 
+export function randomIntBetween(min, max) {
+  return min + Math.floor(Math.random() * (max - min + 1));
+}
+
+export function shuffleInPlace(items) {
+  for (let i = items.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  return items;
+}
+
 export function pickRandom(items) {
   if (!items.length) return null;
   return items[randomInt(items.length)];

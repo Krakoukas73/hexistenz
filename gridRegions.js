@@ -1,16 +1,6 @@
 import { GRID_RADIUS } from './config.js';
 import { makeHexKey } from './hex.js';
 
-export const GRID_EXPANSION_THRESHOLD = 0.30;
-export const GRID_SIDE_DIRECTIONS = [
-  { q: 1, r: 0, edge: 'east' },
-  { q: 0, r: 1, edge: 'south-east' },
-  { q: -1, r: 1, edge: 'south-west' },
-  { q: -1, r: 0, edge: 'west' },
-  { q: 0, r: -1, edge: 'north-west' },
-  { q: 1, r: -1, edge: 'north-east' }
-];
-
 export function createInitialGridRegions() {
   return [createGridRegion(0, 0)];
 }
@@ -42,15 +32,6 @@ export function hydrateGridRegions(regions) {
   return [...deduped.values()];
 }
 
-export function serializeGridRegions(regions) {
-  return hydrateGridRegions(regions).map(region => ({
-    q: region.q,
-    r: region.r,
-    key: region.key,
-    expanded: Boolean(region.expanded)
-  }));
-}
-
 export function getAllGridHexes(regions = createInitialGridRegions()) {
   const hexes = new Map();
   for (const region of hydrateGridRegions(regions)) {
@@ -70,41 +51,11 @@ export function getTotalGridTiles(regions = createInitialGridRegions()) {
   return getAllGridHexes(regions).length;
 }
 
-export function isHexInsideGridRegions(hex, regions = createInitialGridRegions()) {
-  if (!hex) return false;
-  return hydrateGridRegions(regions).some(region => isHexInsideRegion(hex, region));
-}
-
 export function isHexInsideRegion(hex, region) {
   if (!hex || !region) return false;
   const dq = Number(hex.q) - Number(region.q);
   const dr = Number(hex.r) - Number(region.r);
   return isLocalHexInRadius(dq, dr);
-}
-
-export function maybeCreateGridExpansion(regions, placedTiles, threshold = GRID_EXPANSION_THRESHOLD) {
-  const currentRegions = hydrateGridRegions(regions);
-  const regionKeys = new Set(currentRegions.map(region => region.key));
-
-  for (const region of currentRegions) {
-    if (region.expanded) continue;
-    const occupancy = getRegionOccupancy(region, placedTiles);
-    if (occupancy < threshold) continue;
-
-    const direction = pickFreeExpansionDirection(region, regionKeys);
-    if (!direction) {
-      region.expanded = true;
-      return null;
-    }
-
-    const step = (GRID_RADIUS * 2) + 1;
-    const next = createGridRegion(region.q + direction.q * step, region.r + direction.r * step);
-    region.expanded = true;
-    currentRegions.push(next);
-    return next;
-  }
-
-  return null;
 }
 
 export function getRegionOccupancy(region, placedTiles) {
@@ -121,15 +72,6 @@ export function getRegionOccupancy(region, placedTiles) {
 
 export function getRegionTileCount() {
   return 1 + 3 * GRID_RADIUS * (GRID_RADIUS + 1);
-}
-
-function pickFreeExpansionDirection(region, regionKeys) {
-  const step = (GRID_RADIUS * 2) + 1;
-  for (const direction of GRID_SIDE_DIRECTIONS) {
-    const key = makeHexKey(region.q + direction.q * step, region.r + direction.r * step);
-    if (!regionKeys.has(key)) return direction;
-  }
-  return null;
 }
 
 function isLocalHexInRadius(q, r) {

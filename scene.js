@@ -675,9 +675,15 @@ export function initScene(options = {}) {
     if (_PT_ENABLE) _ptRest = performance.now();
     renderer.info.reset();   // reset unique avant toutes les passes (autoReset=false)
     postprocess.render();
+    // gpuMs : temps GPU réel (EXT_disjoint_timer_query_webgl2), asynchrone — begin/end posés
+    // chaque frame dans postprocess.render() (threeSetup.js), résultat lu ici quand dispo
+    // (peut dater de 1-3 frames, cf. gpuTimer.js). Remplace renderMs (soumission CPU
+    // seule — cf. HUD FPS, 2026-07-04 : ce chrono ne reflétait pas le vrai temps GPU).
+    const _gpuMs = postprocess.getGpuMs?.() ?? null;
+    const _gpuTimerSupported = postprocess.gpuTimerSupported ?? false;
     if (_PT_ENABLE) {
       const _ptEnd = performance.now();
-      tickFps(renderer, scene, { jsMs: _ptRest - _pt0, renderMs: _ptEnd - _ptRest });
+      tickFps(renderer, scene, { jsMs: _ptRest - _pt0, renderMs: _ptEnd - _ptRest, gpuMs: _gpuMs, gpuTimerSupported: _gpuTimerSupported });
       console.log(
         `[PERF-TIMING 120f] flash=${(_ptFlash-_pt0).toFixed(1)}ms` +
         ` | ctrl=${(_ptCtrl-_ptFlash).toFixed(1)}ms` +
@@ -686,10 +692,11 @@ export function initScene(options = {}) {
         ` | sound=${(_ptSound-_ptDecor).toFixed(1)}ms` +
         ` | rest+LOD=${(_ptRest-_ptSound).toFixed(1)}ms` +
         ` | render=${(_ptEnd-_ptRest).toFixed(1)}ms` +
-        ` | TOTAL-JS=${(_ptEnd-_pt0).toFixed(1)}ms`
+        ` | TOTAL-JS=${(_ptEnd-_pt0).toFixed(1)}ms` +
+        ` | GPU réel=${_gpuMs != null ? _gpuMs.toFixed(1) + 'ms' : 'n/a'}`
       );
     } else {
-      tickFps(renderer, scene); // lu APRÈS render → stats complètes de toutes les passes
+      tickFps(renderer, scene, { gpuMs: _gpuMs, gpuTimerSupported: _gpuTimerSupported }); // lu APRÈS render → stats complètes de toutes les passes
     }
   }
 

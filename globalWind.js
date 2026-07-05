@@ -121,11 +121,6 @@ float globalWindWave(vec2 p, float timeValue) {
   return material;
 }
 
-export function setGlobalWindDirection(x, z) {
-  const length = Math.hypot(x, z) || 1;
-  GLOBAL_WIND_UNIFORMS.uGlobalWindDirection.value.set(x / length, z / length);
-}
-
 /** Expose les objets uniform partagés pour les shaders externes (ex: fieldWheatOverlay). */
 export function getGlobalWindUniforms() { return GLOBAL_WIND_UNIFORMS; }
 

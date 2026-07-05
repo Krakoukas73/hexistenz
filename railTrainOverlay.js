@@ -8,6 +8,7 @@ import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getTrainRailY } from './terrainHeight.js';
 import { getWorldCurvatureDrop } from './worldCurvature.js';
+import { smoothstep } from './tileUtils.js';
 
 const TRAIN_Y = (TILE_VISUAL.railY ?? -0.043) - 0.050; // centre train = sous la surface du rail
 const TRAIN_SPEED = 0.18;
@@ -1017,10 +1018,6 @@ function easeInOutSine(t) {
   return -(Math.cos(Math.PI * t) - 1) / 2;
 }
 
-function smoothstep(edge0, edge1, value) {
-  const t = Math.max(0, Math.min(1, (value - edge0) / Math.max(edge1 - edge0, 0.0001)));
-  return t * t * (3 - 2 * t);
-}
 
 function lerp(a, b, t) {
   return a + (b - a) * t;

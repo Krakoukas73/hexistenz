@@ -10,6 +10,7 @@ import {
 } from './config.js';
 import { createOuterVertices } from './hexGeometry.js';
 import { hashRaggedInnerEdge, hashRaggedEdge, hash01 } from './raggedEdge.js';
+import { smoothstep } from './tileUtils.js';
 
 export const RAIL_SURFACE_Y = TILE_VISUAL.railSurfaceY ?? TILE_VISUAL.waterY ?? -0.075;
 export const RAIL_OVERLAY_LIFT = HEX_SIZE * 0.026;
@@ -318,7 +319,3 @@ function hashTerrainPoint(point, type, salt) {
   return hash >>> 0;
 }
 
-function smoothstep(edge0, edge1, value) {
-  const t = THREE.MathUtils.clamp((value - edge0) / Math.max(edge1 - edge0, 0.0001), 0, 1);
-  return t * t * (3 - 2 * t);
-}

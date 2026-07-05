@@ -264,6 +264,7 @@ function _populateZone(group, zone, protos, prevWalkersByZone, nextWalkersByZone
     if (r < 0.30) {
       // ── Marcheur ────────────────────────────────────────────────────────────
       const { object: walkerObj, mixer: walkerMixer } = _cloneSheep(protoWalker, scale, walkerClip);
+      walkerObj.name = 'animal-sheep-glb-walker'; // classification HUD FPS (sceneProfiler.js → "Moutons")
       const prevState = prevStates[walkerIdx];
       const startPos  = prevState?.pos
         ? prevState.pos.clone()
@@ -285,6 +286,7 @@ function _populateZone(group, zone, protos, prevWalkersByZone, nextWalkersByZone
       const si  = Math.floor(hashUnit(zKey + `gi${i}`) * sectors.length);
       const pt  = _randomPointInSector(sectors[si], zKey + `gp${i}`);
       const { object, mixer } = _cloneSheep(protoGrazer, scale, grazerClip);
+      object.name = 'animal-sheep-glb-grazer'; // classification HUD FPS (sceneProfiler.js → "Moutons")
       object.position.set(pt.x, groundYGrazer, pt.z);
       object.rotation.y             = hashUnit(zKey + `gr${i}`) * Math.PI * 2;
       object.userData.mixer          = mixer;
@@ -302,6 +304,7 @@ function _populateZone(group, zone, protos, prevWalkersByZone, nextWalkersByZone
       if (resolved) { cx = resolved.x; cz = resolved.z; }
       registerPropHitbox(cx, cz, SHEEP_HITBOX_R);
       const { object } = _cloneSheep(protoStatic, scale, null);
+      object.name = 'animal-sheep-glb-static'; // classification HUD FPS (sceneProfiler.js → "Moutons")
       object.position.set(cx, groundYStatic, cz);
       object.rotation.y = hashUnit(zKey + `st${staticIdx}`) * Math.PI * 2;
       group.add(object);

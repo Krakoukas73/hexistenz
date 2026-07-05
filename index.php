@@ -659,9 +659,11 @@ function fmt_date($iso) {
       <div class="daynight-card day">
         <img src="images/jour.jpg" alt="Mode Jour" class="daynight-img">
         <div class="daynight-body">
-        <div class="daynight-icon">☀️</div>
-        <div class="daynight-name" data-fr>Mode Jour</div>
-        <div class="daynight-name" data-en>Day Mode</div>
+        <div class="daynight-head">
+          <div class="daynight-icon">☀️</div>
+          <div class="daynight-name" data-fr>Mode Jour</div>
+          <div class="daynight-name" data-en>Day Mode</div>
+        </div>
         <ul class="daynight-list">
           <li data-fr>🌤 Soleil orbitant sur sa propre couche de rendu</li>
           <li data-en>🌤 Sun orbiting on its own render layer</li>
@@ -677,9 +679,11 @@ function fmt_date($iso) {
       <div class="daynight-card night">
         <img src="images/nuit.jpg" alt="Mode Nuit" class="daynight-img">
         <div class="daynight-body">
-        <div class="daynight-icon">🌙</div>
-        <div class="daynight-name" data-fr>Mode Nuit</div>
-        <div class="daynight-name" data-en>Night Mode</div>
+        <div class="daynight-head">
+          <div class="daynight-icon">🌙</div>
+          <div class="daynight-name" data-fr>Mode Nuit</div>
+          <div class="daynight-name" data-en>Night Mode</div>
+        </div>
         <ul class="daynight-list">
           <li data-fr>🌙 Lune, gradient zenith/horizon nocturne profond</li>
           <li data-en>🌙 Moon, deep nocturnal zenith/horizon gradient</li>
@@ -695,9 +699,11 @@ function fmt_date($iso) {
       <div class="daynight-card" style="grid-column:span 2;">
         <img src="images/godrays.jpg" alt="God Rays" class="daynight-img">
         <div class="daynight-body">
-        <div class="daynight-icon">🔆</div>
-        <div class="daynight-name" data-fr>God Rays</div>
-        <div class="daynight-name" data-en>God Rays</div>
+        <div class="daynight-head">
+          <div class="daynight-icon">🔆</div>
+          <div class="daynight-name" data-fr>God Rays</div>
+          <div class="daynight-name" data-en>God Rays</div>
+        </div>
         <ul class="daynight-list">
           <li data-fr>☀️ Rayons de lumière volumétriques émergeant du soleil ou de la lune</li>
           <li data-en>☀️ Volumetric light shafts emerging from the sun or the moon</li>
@@ -726,8 +732,6 @@ function fmt_date($iso) {
       <div class="eda-showcase-card">
         <img src="images/eda-1.png" alt="EDA — onglet LUT" class="eda-showcase-img">
         <div class="eda-showcase-body">
-          <div class="eda-showcase-tab" data-fr>Onglet 1</div>
-          <div class="eda-showcase-tab" data-en>Tab 1</div>
           <div class="eda-showcase-label" data-fr>LUT</div>
           <div class="eda-showcase-label" data-en>LUT</div>
           <p class="eda-showcase-desc" data-fr>Brouillard, astre lumineux, étalonnage colorimétrique complet (courbes RVB, gamma, niveaux) et palette par biome.</p>
@@ -738,8 +742,6 @@ function fmt_date($iso) {
       <div class="eda-showcase-card">
         <img src="images/eda-2.png" alt="EDA — onglet Cinématique" class="eda-showcase-img">
         <div class="eda-showcase-body">
-          <div class="eda-showcase-tab" data-fr>Onglet 2</div>
-          <div class="eda-showcase-tab" data-en>Tab 2</div>
           <div class="eda-showcase-label" data-fr>Cinématique</div>
           <div class="eda-showcase-label" data-en>Cinematic</div>
           <p class="eda-showcase-desc" data-fr>God rays, tilt-shift, bloom, pixelisation rétro et courbure d'écran — pour filmer le monde plutôt que le regarder.</p>
@@ -750,8 +752,6 @@ function fmt_date($iso) {
       <div class="eda-showcase-card">
         <img src="images/eda-3.png" alt="EDA — onglet Environnement" class="eda-showcase-img">
         <div class="eda-showcase-body">
-          <div class="eda-showcase-tab" data-fr>Onglet 3</div>
-          <div class="eda-showcase-tab" data-en>Tab 3</div>
           <div class="eda-showcase-label" data-fr>Environnement</div>
           <div class="eda-showcase-label" data-en>Environment</div>
           <p class="eda-showcase-desc" data-fr>Nuages, vent (blés, herbes, arbres), forme du monde (bouliste/platiste) et bascule Jour/Nuit.</p>

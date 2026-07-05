@@ -34,3 +34,7 @@ export function smoothstep(edge0, edge1, value) {
   const t = Math.max(0, Math.min(1, (value - edge0) / Math.max(edge1 - edge0, 0.0001)));
   return t * t * (3 - 2 * t);
 }
+
+export function clamp01(value) {
+  return Math.min(1, Math.max(0, Number(value) || 0));
+}

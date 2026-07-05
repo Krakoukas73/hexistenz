@@ -10,6 +10,7 @@ import {
 import { getEdgeType } from './tileGenerator.js';
 import { getTerrainSurfaceY, getTerrainNormalAt } from './terrainHeight.js';
 import { hashUnitFull as hashUnit, hashNumber } from './hashUtils.js';
+import { smoothstep } from './tileUtils.js';
 
 const materialCache = new Map();
 const geometryCache = new Map();
@@ -54,12 +55,6 @@ const RAIL_ZONE_BORDER = {
 };
 
 // Toute la voie est maintenant générée par createRailCenterOverlay().
-// On garde l'export pour compatibilité avec tileMesh.js, mais on évite les anciens
-// morceaux séparés par secteur : c'était la source des cassures visibles.
-export function createRailOverlay() {
-  return null;
-}
-
 export function createRailCenterOverlay(edges, sectorDefs, createOuterVertices) {
   const railPorts = getRailPorts(edges, sectorDefs, createOuterVertices);
   if (railPorts.length === 0) return null;
@@ -934,10 +929,6 @@ function positiveModulo(value, divisor) {
   return ((value % divisor) + divisor) % divisor;
 }
 
-function smoothstep(edge0, edge1, x) {
-  const t = THREE.MathUtils.clamp((x - edge0) / Math.max(edge1 - edge0, 0.0001), 0, 1);
-  return t * t * (3 - 2 * t);
-}
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));

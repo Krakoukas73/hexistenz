@@ -240,35 +240,56 @@ export function spreadVillageHouseLocalPoint(local) {
   };
 }
 
-// ─── Créateurs d'objets de village ────────────────────────────────────────────
+// ─── Instancing (InstancedMesh) — perf (2026-07-04) ───────────────────────────
+// Les maisons pesaient ~21% des triangles scène pour 378 draw calls / 145 objets (jamais
+// batchées : 1 clone(true) + hiérarchie de sous-meshes par maison). Remplacé par un
+// InstancedMesh par (variant × sous-mesh × chunk) dans houseOverlay.js, sur le même
+// principe que naturalPropsOverlay.js. Ces deux fonctions exposent, sans construire
+// aucun Object3D par instance, ce dont houseOverlay.js a besoin pour peupler ses matrices :
+//   - pickHouseInstanceParams : mêmes formules de hash que createVillageHouseObject
+//     (conservées à l'identique pour ne pas changer l'aspect des maisons déjà posées)
+//   - getHouseBakedSubmeshes : géométrie de chaque sous-mesh du prototype, "cuite" une
+//     seule fois en espace local (position/scale du wrapper normalizeHouseGlbModel
+//     appliqués aux vertices) — mise en cache, jamais reconstruite entre deux rebuilds.
 
-export function createVillageHouseObject(seedKey, sector, index) {
-  const group = new THREE.Group();
+const _houseBakedSubsCache = new Map(); // defKey → [{ geometry, material, castShadowOriginal }]
+
+/** Mêmes seeds/formules que createVillageHouseObject — ne pas modifier isolément. */
+export function pickHouseInstanceParams(seedKey, index) {
   const def = pickHouseGlbDefinition(seedKey, index);
-  group.name = `village-house-glb-${def.key}`;   // ex: village-house-glb-maison-1 (HUD per-type)
+  const rotationY = hashUnit(`${seedKey}:house-rotation:${index ?? 0}`) * Math.PI * 2;
+  const scale = (0.94 + hashUnit(`${seedKey}:house-scale`) * 0.18) * HOUSE_GLB_SIZE_MULTIPLIER;
+  return { key: def.key, rotationY, scale };
+}
 
-  const sectorAngle = (SECTOR_DEFS.findIndex(item => item.key === sector.key) * Math.PI / 3) + Math.PI / 6;
-  // Rotation libre 360° par index → maisons du même type jamais parallèles sur un même triangle
-  const jitter = hashUnit(`${seedKey}:house-rotation:${index ?? 0}`) * Math.PI * 2;
-  group.rotation.y = jitter;
-  group.scale.setScalar((0.94 + hashUnit(`${seedKey}:house-scale`) * 0.18) * HOUSE_GLB_SIZE_MULTIPLIER);
+/**
+ * Sous-meshes du prototype `defKey`, géométrie cuite en espace local (transform du
+ * wrapper normalizeHouseGlbModel appliqué aux vertices une seule fois). Résultat mis en
+ * cache — appeler librement à chaque rebuild, aucun recalcul après le premier appel.
+ * Retourne null si le GLB n'est pas encore chargé.
+ */
+export function getHouseBakedSubmeshes(defKey) {
+  if (_houseBakedSubsCache.has(defKey)) return _houseBakedSubsCache.get(defKey);
 
-  const prototype = houseGlbLibrary.get(def.key);
+  const prototype = houseGlbLibrary.get(defKey);
+  if (!prototype) return null;
 
-  if (!prototype) return group;
-
-  const house = prototype.clone(true);
-  house.name = `${def.key}-village-house-instance`;
-  house.traverse(object => {
+  prototype.updateMatrixWorld(true);
+  const subs = [];
+  prototype.traverse(object => {
     if (!object.isMesh) return;
-    // castShadow hérité du prototype (1 seul mesh par bâtiment via _applySingleShadowCaster)
-    object.receiveShadow = true;
-    object.userData.castShadowOriginal = object.castShadow; // hérité : true pour le caster, false pour les autres
-    object.userData.shadowFlagsApplied = true;
+    object.updateWorldMatrix(true, false);
+    const geometry = object.geometry.clone();
+    geometry.applyMatrix4(object.matrixWorld);
+    subs.push({
+      geometry,
+      material: object.material,
+      castShadowOriginal: !!object.castShadow // posé par _applySingleShadowCaster (1 seul sous-mesh par prototype)
+    });
   });
 
-  group.add(house);
-  return group;
+  _houseBakedSubsCache.set(defKey, subs);
+  return subs;
 }
 
 function pickWatchtowerGlbDefinition(seedKey) {

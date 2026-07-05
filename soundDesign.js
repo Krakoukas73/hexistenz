@@ -296,10 +296,6 @@ export function toggleMute(ambientSoundDesign) {
   return _globalMuted;
 }
 
-export function isGlobalMuted() {
-  return _globalMuted;
-}
-
 export function createAmbientSoundDesign({ camera, canvas, placedTiles, fieldWaterEffectsOverlay, railTrainOverlay, waterBoatOverlay, houseOverlay }) {
   return new AmbientSoundDesign({ camera, canvas, placedTiles, fieldWaterEffectsOverlay, railTrainOverlay, waterBoatOverlay, houseOverlay });
 }

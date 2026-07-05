@@ -9,10 +9,6 @@
  * avec l'appel dans tileMesh.js (createRoadCenterOverlay) qui retourne null.
  */
 
-export function createRoadOverlay() {
-  return null;
-}
-
 export function createRoadCenterOverlay(_edges, _sectorDefs, _createOuterVertices) {
   return null;
 }

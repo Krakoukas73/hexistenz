@@ -19,6 +19,8 @@ export const CATEGORY_ICONS = {
   'Sapin':            '🌲',
   'Arbre mort':       '🪵',
   'Buisson':          '🫧',
+  'Gros arbre':       '🌳',
+  'Arbres':           '🌲', // fallback espèce inconnue (_classifyInstanced) — évite un nouvel orphelin "Autres"
   // Bâtiments — types individuels
   'Maison-1':         '🏠',
   'Maison-2':         '🏠',
@@ -27,9 +29,12 @@ export const CATEGORY_ICONS = {
   'Maisons':          '🏠',
   'Églises':          '⛪',
   'Tours de guet':    '🗼',
-  // Animaux champ
+  // Animaux
   'Cerfs':            '🦌',
   'Animaux (champ)':  '🐾',
+  'Moutons':          '🐑',
+  'Corbeaux':         '🐦',
+  'Mouettes':         '🕊️',
   // Nature
   'Fleurs':           '🌸',
   'Champignons':      '🍄',
@@ -37,17 +42,18 @@ export const CATEGORY_ICONS = {
   'Bottes foin':      '🌾',
   'Roseaux':          '🌿',
   'Plantes':          '🌱',
+  'Plantes à baies':  '🫐',
   'Brindilles':       '🪵',
   'Arbustes':         '🫧',
   'Blé':              '🌾',
   'Brins de blé':     '🌾',
+  "Brins d'herbe":    '🍀',
   // Village
   'Chiens':           '🐕',
   'Chevaux':          '🐴',
   'Charrettes':       '🪵',
   'Tonneaux':         '🪣',
   'Moulins':          '🌀',
-  'Corbeaux':         '🐦',
   'Bancs':            '🪑',
   'Panneaux':         '🪧',
   'Fontaines':        '⛲',
@@ -58,12 +64,12 @@ export const CATEGORY_ICONS = {
   'Voies ferrées':    '🛤️',
   'Rails métal':      '🔩',
   'Routes':           '🧱',
-  'Micro-props':      '✦',
   'Traverses':        '🪵',
   // Eau — types individuels
   'Bateaux':          '⛵',
   'Barque 1':         '🚣',
   'Barque 2':         '🚣',
+  'Barque 3':         '🚣',
   'Barques':          '🚣',
   "Gouttes d'eau":    '💧',
   'Filets eau':       '🌊',
@@ -99,6 +105,7 @@ export const CATEGORY_ICONS = {
   'Coffres bonus':    '🎁',
   'Étoiles & comètes':'✨',
   'Grille':           '🔲',
+  'Autres props inconnues': '❔',
   // Terrain par biome
   'Terrain Prairie':  '🟩',
   'Terrain Forêt':    '🌳',
@@ -119,24 +126,30 @@ export const ITEM_GROUP = {
   // Forêt
   'Bouleau': 'Forêt', 'Chêne': 'Forêt', 'Pin': 'Forêt', 'Peuplier': 'Forêt',
   'Épicéa': 'Forêt', 'Feuillu': 'Forêt', 'Sapin': 'Forêt',
-  'Arbre mort': 'Forêt', 'Buisson': 'Forêt',
+  'Arbre mort': 'Forêt', 'Buisson': 'Forêt', 'Gros arbre': 'Forêt', 'Arbres': 'Forêt',
   // Bâtiments
   'Maison-1': 'Bâtiments', 'Maison-2': 'Bâtiments', 'Maison-3': 'Bâtiments', 'Maison-4': 'Bâtiments',
-  'Maisons': 'Bâtiments', 'Églises': 'Bâtiments', 'Tours de guet': 'Bâtiments',
+  'Maisons': 'Bâtiments', 'Églises': 'Bâtiments', 'Tours de guet': 'Bâtiments', 'Gares': 'Bâtiments',
   // Nature
   'Fleurs': 'Nature', 'Champignons': 'Nature', 'Rochers': 'Nature', 'Bottes foin': 'Nature',
-  'Roseaux': 'Nature', 'Plantes': 'Nature', 'Brindilles': 'Nature', 'Arbustes': 'Nature', 'Blé': 'Nature', 'Brins de blé': 'Nature',
-  // Animaux champ
+  'Roseaux': 'Nature', 'Plantes': 'Nature', 'Plantes à baies': 'Nature',
+  'Brindilles': 'Nature', 'Arbustes': 'Nature', 'Blé': 'Nature', 'Brins de blé': 'Nature',
+  "Brins d'herbe": 'Nature',
+  // Animaux — toute faune, champêtre ou volante (2026-07-04 : Moutons/Corbeaux/Mouettes
+  // étaient éparpillés dans Village/Transport ou pas classés du tout, cf. bug "Terrain Autre")
   'Cerfs': 'Animaux', 'Animaux (champ)': 'Animaux',
+  'Moutons': 'Animaux', 'Corbeaux': 'Animaux', 'Mouettes': 'Animaux',
   // Village
   'Chiens': 'Village', 'Chevaux': 'Village',
-  'Charrettes': 'Village', 'Tonneaux': 'Village', 'Moulins': 'Village', 'Corbeaux': 'Village',
+  'Charrettes': 'Village', 'Tonneaux': 'Village', 'Moulins': 'Village',
   'Bancs': 'Village', 'Panneaux': 'Village', 'Fontaines': 'Village', 'Props ambiants': 'Village',
   // Transport
-  'Trains': 'Transport', 'Gares': 'Transport', 'Voies ferrées': 'Transport',
-  'Rails métal': 'Transport', 'Routes': 'Transport', 'Traverses': 'Transport', 'Micro-props': 'Transport',
+  'Trains': 'Transport', 'Voies ferrées': 'Transport',
+  'Rails métal': 'Transport', 'Routes': 'Transport', 'Traverses': 'Transport',
+  // "Autres props inconnues" n'a volontairement aucun groupe → tombe dans le panier "Autres"
+  // (catégorie fourre-tout réelle, ne devrait pas être rattachée à un groupe thématique précis)
   // Eau
-  'Bateaux': 'Eau', 'Barque 1': 'Eau', 'Barque 2': 'Eau', 'Barques': 'Eau',
+  'Bateaux': 'Eau', 'Barque 1': 'Eau', 'Barque 2': 'Eau', 'Barque 3': 'Eau', 'Barques': 'Eau',
   "Gouttes d'eau": 'Eau', 'Filets eau': 'Eau', 'Brume eau': 'Eau', 'Effets eau': 'Eau',
   'Plages': 'Eau', 'Mers': 'Eau',
   // Terrain
@@ -210,9 +223,7 @@ function _classifyCharacter(name) {
 
 // ─── GLB individuels — premier match gagne ────────────────────────────────────
 const _GLB_LABELS = [
-  ['village-house-glb-maison-medievale-moyenne', 'Maison moyenne'],
-  ['village-house-glb-maison-medievale-petite',  'Maison petite'],
-  ['village-house-glb',                          'Maisons'],
+  ['village-house-glb',                          'Maisons'], // regroupe toutes les variantes (petite/moyenne — 2026-07-04)
   ['village-watchtower-glb-zone-reward',      'Tours de guet'],
   ['village-animal-dog-glb',                  'Chiens'],
   ['village-animal-horse-glb',                'Chevaux'],
@@ -234,6 +245,8 @@ const _GLB_LABELS = [
   ['village-barrel-glb',                      'Tonneaux'],
   ['field-zone-mill-glb',                     'Moulins'],
   ['field-birds-glb-animated-flock',          'Corbeaux'],
+  ['water-seagull-glb-instance',              'Mouettes'],
+  ['animal-sheep-glb',                        'Moutons'],
   ['bench',                                   'Bancs'],
   ['signpost',                                'Panneaux'],
   ['fountain',                                'Fontaines'],
@@ -258,13 +271,15 @@ function _classifyInstanced(obj) {
   if (n.startsWith('instanced-prop-hay'))            return 'Bottes foin';
   if (n.startsWith('instanced-prop-reed'))           return 'Roseaux';
   if (n.startsWith('instanced-prop-plant'))          return 'Plantes';
+  if (n.startsWith('instanced-prop-berry-'))         return 'Plantes à baies';
   if (n.startsWith('instanced-prop-brindille'))      return 'Brindilles';
   if (n.startsWith('instanced-prop-shrub'))          return 'Arbustes';
+  if (n.startsWith('instanced-house-'))              return 'Maisons'; // 2026-07-05 : maisons instancées (houseOverlay.js)
   if (n.startsWith('hex-grid-fill'))                 return 'Grille';
   if (n.includes('wheat') || n.includes('blade'))    return 'Blé';
   if (n.includes('wood-sleeper'))                    return 'Traverses';
   const cat = obj.userData?.lodCategory;
-  if (cat === 'micro')  return 'Micro-props';
+  if (cat === 'micro')  return 'Autres props inconnues';
   if (cat === 'plant')  return 'Plantes';
   if (cat === 'rock')   return 'Rochers';
   if (cat === 'animal') return 'Animaux (champ)';
@@ -281,9 +296,14 @@ function _classifyGlb(name) {
 
 function _geomTris(geometry) {
   if (!geometry) return 0;
-  if (geometry.index) return geometry.index.count / 3;
-  const pos = geometry.attributes?.position;
-  return pos ? Math.floor(pos.count / 3) : 0;
+  const base = geometry.index ? geometry.index.count / 3 : Math.floor((geometry.attributes?.position?.count ?? 0) / 3);
+  // InstancedBufferGeometry (herbe, blé — cf. grassBladeOverlay.js/fieldWheatOverlay.js) :
+  // un seul Mesh dessine geometry.instanceCount répétitions de cette géométrie de base en
+  // 1 draw call. Sans ce facteur, le HUD ne comptait QUE la géométrie de base (une poignée
+  // de triangles) au lieu des dizaines de milliers réellement rendus par secteur — la
+  // quasi-totalité du coût de l'herbe/blé restait invisible (2026-07-04).
+  const instances = geometry.isInstancedBufferGeometry ? (geometry.instanceCount ?? 1) : 1;
+  return base * instances;
 }
 
 function _glbStats(obj) {
@@ -321,6 +341,7 @@ function _classifyMesh(name) {
     return 'Terrain Autre';
   }
   if (name.includes('wheat'))                                    return 'Brins de blé';
+  if (name.startsWith('grass-'))                                 return "Brins d'herbe";
   if (name.includes('sand-beach') || name.includes('shore'))    return 'Plages';
   if (name.includes('water-drop'))                              return "Gouttes d'eau";
   if (name.includes('water-streak') || name.includes('water-falling') ||

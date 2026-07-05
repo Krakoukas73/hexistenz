@@ -2,7 +2,7 @@
 
 ## 1. Nature du projet
 
-**Version courante : `v0.9.1.10`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
+**Version courante : `v0.9.1.21`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
 
 Jeu web contemplatif de pose de tuiles hexagonales, inspiré de Dorfromantik / The Settlers / HoMM. Le joueur pioche une tuile, la tourne, la pose sur une grille hexagonale. Chaque tuile a 6 secteurs triangulaires (biomes ou réseaux). Objectif : connecter les biomes, compléter des missions, maximiser le score.
 
@@ -113,13 +113,14 @@ Chargés via `GLTFLoader`. Pattern : prototype singleton, clone à chaque rebuil
 
 ### Pools actifs
 
-**Maisons** (`houseVillageObjects.js`) — 3 variantes médiévales, poids égaux :
+**Maisons** (`houseVillageObjects.js` + `houseOverlay.js`) — 3 variantes médiévales, poids égaux :
 ```
 maison-petite-1  (33% de fumée)
 maison-petite-2  (33% de fumée)
 maison-petite-3  (jamais de fumée — pas de cheminée visible)
 HOUSE_SCALE = HEX_SIZE * 0.1332 * 0.93 * 0.90 * 0.93 * 0.96 * 1.05 * 1.05
 ```
+**Rendu instancié (2026-07-05)** — les maisons ne sont plus un `Group` cloné par instance (`createVillageHouseObject`, supprimé le 2026-07-05 lors de l'audit code mort — plus référencé que dans des commentaires historiques) mais un `THREE.InstancedMesh` par (variant GLB × sous-mesh × chunk hexagonal), même principe que `naturalPropsOverlay.js`. `houseVillageObjects.js::getHouseBakedSubmeshes(defKey)` cuit et met en cache la géométrie locale de chaque sous-mesh du prototype ; `pickHouseInstanceParams(seedKey, index)` reproduit exactement les formules de hash de l'ancien créateur (aspect visuel inchangé). `houseOverlay.js::rebuildHouseOverlay` accumule les matrices par (defKey, chunk) puis `buildHouseInstancedMeshes` construit les InstancedMesh — reconstruction complète à chaque appel (pas de diff par tuile, comme `naturalPropsOverlay.js`). Gain mesuré : draw calls 378→62, shadow casters 135→22 pour un nombre d'objets comparable. **Tours de guet** restent des objets `Group` individuels non instanciés (peu nombreuses, modèle multi-parties issu d'un pack GLB — jugé non rentable). cf. pièges en §26.
 
 **Tours de guet** (`houseVillageObjects.js`) — 5 GLBs individuels, pool actif :
 ```
@@ -468,31 +469,34 @@ Zones `total=1` ou `sectors.length < 2` : pas de contour ni label au hover.
 
 ## 15. LOD
 
-Seuils dans `variables.js` :
+Seuils dans `variables.js` (tous réduits de −10% le 2026-07-04, "les items sont masqués plus tôt" — valeurs ci-dessous déjà à jour) :
 
 | Cible | Constante | Valeur |
 |---|---|---|
-| Fleurs, champignons | `LOD_MICRO_CULL_DISTANCE` | 6.6 |
-| Plantes (végétation, shrubs) | `LOD_PLANT_CULL_DISTANCE` | 4.8 |
-| Brins d'herbe (GPU) | `LOD_GRASS_CULL_DISTANCE` | 6.4 |
-| Blé (chunks) | `LOD_WHEAT_CULL_DISTANCE` | 5.6 |
-| Rochers | `LOD_ROCK_CULL_DISTANCE` | 7.2 |
-| Décor bord de route | `LOD_ROAD_DECOR_CULL_DISTANCE` | — |
-| Poteaux indicateurs | `LOD_SIGN_CULL_DISTANCE` | 7.9 |
-| Props village | `LOD_VILLAGE_PROP_CULL_DISTANCE` | 8.6 |
-| Barques échouées | `LOD_SHORE_BOAT_CULL_DISTANCE` | 9.2 |
-| Animaux (cerfs, chiens, chevaux) | `LOD_ANIMAL_CULL_DISTANCE` | 9.6 |
-| Moutons (prairie) | `LOD_ANIMAL_CULL_DISTANCE` | 9.6 |
-| Trains | `LOD_TRAIN_CULL_DISTANCE` | 9.9 |
-| Fontaines | `LOD_FOUNTAIN_CULL_DISTANCE` | 9.8 |
-| Corbeaux | `LOD_CROW_CULL_DISTANCE` | — |
-| Bateaux animés | `LOD_BOAT_CULL_DISTANCE` | 10.3 |
-| Arbres | `LOD_TREE_CULL_DISTANCE` | 12.2 |
-| Moulins | `LOD_MILL_CULL_DISTANCE` | 12.6 |
-| Bâtiments | `LOD_HOUSE_CULL_DISTANCE` | 12.7 |
-| Watchtowers | `LOD_WATCHTOWER_CULL_DISTANCE` | 13.2 |
-| Rails | `LOD_RAIL_TRACK_CULL_DISTANCE` | 14.4 |
-| Labels zones | `LOD_ZONE_LABEL_CULL_DISTANCE` | 28.2 |
+| Fleurs, champignons | `LOD_MICRO_CULL_DISTANCE` | 5.9 |
+| Plantes (végétation, shrubs) | `LOD_PLANT_CULL_DISTANCE` | 4.3 |
+| Brins d'herbe (GPU) | `LOD_GRASS_CULL_DISTANCE` | 5.8 |
+| Blé (chunks) | `LOD_WHEAT_CULL_DISTANCE` | 5.0 |
+| Rochers | `LOD_ROCK_CULL_DISTANCE` | 6.5 |
+| Routes pavées | `LOD_PAVED_ROAD_CULL_DISTANCE` | 8.2 |
+| Décor bord de route | `LOD_ROAD_DECOR_CULL_DISTANCE` | 7.5 |
+| Poteaux indicateurs | `LOD_SIGN_CULL_DISTANCE` | 7.1 |
+| Props village | `LOD_VILLAGE_PROP_CULL_DISTANCE` | 7.7 |
+| Barques échouées | `LOD_SHORE_BOAT_CULL_DISTANCE` | 8.3 |
+| Animaux (cerfs, chiens, chevaux, moutons) | `LOD_ANIMAL_CULL_DISTANCE` | 8.6 |
+| Personnages (NPC) | `LOD_CHARACTER_CULL_DISTANCE` | 8.5 |
+| Corbeaux | `LOD_CROW_CULL_DISTANCE` | 8.7 |
+| Mouettes | `LOD_SEAGULL_CULL_DISTANCE` | 8.7 |
+| Fontaines | `LOD_FOUNTAIN_CULL_DISTANCE` | 8.8 |
+| Trains | `LOD_TRAIN_CULL_DISTANCE` | 8.9 |
+| Bateaux animés | `LOD_BOAT_CULL_DISTANCE` | 9.3 |
+| Arbres | `LOD_TREE_CULL_DISTANCE` | 11.0 |
+| Moulins | `LOD_MILL_CULL_DISTANCE` | 11.3 |
+| Bâtiments (maisons) | `LOD_HOUSE_CULL_DISTANCE` | 11.4 |
+| Watchtowers | `LOD_WATCHTOWER_CULL_DISTANCE` | 11.9 |
+| Rails | `LOD_RAIL_TRACK_CULL_DISTANCE` | 13.0 |
+| Nappe d'eau (bascule shader→plat) | `LOD_WATER_SHADER_DISTANCE` | 14.4 |
+| Labels zones | `LOD_ZONE_LABEL_CULL_DISTANCE` | 25.4 |
 
 Test dans `animate()` toutes les 9 frames. Après rebuild via `overlayRebuildQueue`, `lod()` appelé immédiatement.
 
@@ -508,7 +512,11 @@ Test dans `animate()` toutes les 9 frames. Après rebuild via `overlayRebuildQue
 
 ## 17. InstancedMesh
 
-`forestOverlay.js`, `naturalPropsOverlay.js`, `tileRailOverlay.js` utilisent `THREE.InstancedMesh`. Pattern : collect matrices → build mesh.
+`forestOverlay.js`, `naturalPropsOverlay.js`, `tileRailOverlay.js`, `houseOverlay.js` (maisons, 2026-07-05) utilisent `THREE.InstancedMesh`. Pattern : collect matrices → build mesh.
+
+**Piège HUD** — `sceneProfiler.js::_traverseNode` traite tout `obj.isInstancedMesh` en premier et retourne immédiatement après `_classifyInstanced(obj)` : si le nom ne matche aucun préfixe connu (`instanced-prop-*`, `instanced-tree-*`, `instanced-house-*`…), le mesh est classé `null` et disparaît TOTALEMENT du HUD (pas même dans "Autres props inconnues"). `_GLB_LABELS`/`_classifyGlb` n'est jamais atteint pour un InstancedMesh. Tout nouveau préfixe de nommage doit être ajouté explicitement à `_classifyInstanced`.
+
+**Piège ombres** — `applySceneShadowFlags()` (`threeSetup.js`) traite tout mesh sans `userData.shadowFlagsApplied` comme "jamais vu" et force `castShadow=true` sur tout matériau opaque, écrasant l'optimisation "1 seul caster par variant" (`_applySingleShadowCaster`). Tout nouvel `InstancedMesh` doit poser explicitement `mesh.userData.castShadowOriginal` et `mesh.userData.shadowFlagsApplied = true` à sa création. cf. §26.
 
 **Bottes de foin** : restent verticales (`alignToSlope: false`) mais reçoivent une compensation de pente `slopeSin × radius`.
 
@@ -554,7 +562,7 @@ Meshes sans ombres (oiseaux…) : `disableCastShadow=true, shadowFlagsApplied=tr
 5. Alpha : `uOpacity × mix(0.66,1.0,depthT)`, plancher relevé par l'écume.
 6. Gamma `pow(base, 0.9)`.
 
-**Réglages live** (`waterDebugUi.js`, bouton flottant 💧 EAU) : sliders écume (portée, finesse, densité rive/surface, netteté, vitesse, étendue dégradé, opacité) + sillage bateau (largeur, divergence, longueur, finesse, densité, opacité), bouton « 📋 Copier » → JSON `{ water, wake }`. Setters/getters : `getWaterFoamParams/setWaterFoamParams` (`realisticWater.js`), `getWakeParams/setWakeParams` (`waterBoatOverlay.js`).
+**Réglages live** : intégrés dans le panel CUSTOMISATION/EDA (onglet Environnement, rubriques 1 "🫧 Écume" et 2 "🚤 Sillage bateau", cf. §13) — sliders écume (portée, finesse, densité rive/surface, netteté, vitesse, étendue dégradé, opacité) + sillage bateau (largeur, divergence, longueur, finesse, densité, opacité). Setters/getters : `getWaterFoamParams/setWaterFoamParams` (`realisticWater.js`), `getWakeParams/setWakeParams` (`waterBoatOverlay.js`). `waterDebugUi.js` (ancien panneau flottant autonome 💧 EAU, fusionné dans l'EDA) supprimé le 2026-07-04 — code mort, `createWaterDebugPanel()` n'était plus appelé nulle part.
 
 **Sillage bateau** (`waterBoatOverlay.js`) : ruban en V dynamique (`WAKE_MAX_POINTS = 26`), dense près du bateau et se dissipant vers l'arrière (gradient de densité dans `foamPattern`), `ShaderMaterial` singleton partagé par tous les sillages. Points enregistrés à distance ABSOLUE derrière le bateau (`dBehind`, anti-pop à l'ajout/retrait d'un point) ; tête du ruban recollée au bateau chaque frame (apex fluide, pas de saut au commit d'un nouveau segment). Fondu de queue qui atteint vraiment 0 (`smoothstep(0.45, 1.0, vAlong)`, plus d'arrêt net). **LOD bateau (fix 2026-07-03)** : `updateWaterBoatLOD` calcule désormais la distance caméra↔bateau en 3D complet (X+Y+Z) au lieu de XZ seul — corrige un bug où la vue verticale (top-down, caméra XZ ≈ bateau XZ, dist2D≈0) rendait les bateaux toujours visibles quelle que soit l'altitude caméra.
 
@@ -627,7 +635,6 @@ waterZoneBoundary.js           Halos/contours de zone (générique tous biomes, 
 waterBoatOverlay.js            Bateaux GLB animés + sillage en V (écume)
 realisticWater.js              ShaderMaterial eau « cute cartoon » + écume Danil, réglages live
 shaders/shaderEau.js           GLSL eau (aShoreDist/aSteep) + FOAM_GLSL partagé (eau + sillage)
-waterDebugUi.js                Panneau sliders live eau/sillage (bouton 💧 EAU)
 fieldWheatOverlay.js           Brins de blé procéduraux, BFS local
 fieldZonesOverlay.js           Moulins, bâtiments spéciaux, safe zones
 grassBladeOverlay.js           Brins d'herbe Bezier animés
@@ -742,22 +749,30 @@ Map JS → coalescing automatique, ordre d'insertion préservé. 1 overlay trait
 
 ---
 
-## 25. Profil de performance (HUD — référence juin 2026)
+## 25. Profil de performance (HUD — référence 2026-07-05)
 
-Mesure représentative (59 FPS, GPU-bound à 82%) :
+**GPU timing réel** — le HUD affiche désormais un vrai temps GPU asynchrone (`EXT_disjoint_timer_query_webgl2`, `gpuTimer.js`) au lieu d'un chrono CPU autour de `render()` (qui ne mesurait que la soumission, pas l'exécution — cf. piège §26). "GPU : X% (réel Yms / 16.7ms)" est donc fiable pour identifier le vrai goulot d'étranglement.
+
+Mesure représentative (55 FPS, GPU-bound à 100%, réel 19.4ms) :
 
 ```
-Draw calls : 2569   (HUD trackés : 1740 | Ombres/passes : ≈829, ☂395 casters)
-Triangles  : 22 453 095   (trackés : 11 524 527)
-Textures   : 334
-Shaders    : 71
+Draw calls : 2427   (HUD trackés : 1777 | Ombres/passes : ≈650, ☂403 casters)
+Triangles  : 6 547 532   (trackés : 6 410 342)
+Textures   : 1153
+Shaders    : 103
 ```
 
-Catégories dominantes en DC :
-- Maison petite : 390 dc (151 obj) — mesh très fragmenté
+Catégories dominantes en triangles (fragment/overdraw, pas draw calls, est le vrai coût GPU ici — végétation alpha-testée) :
+- Plantes à baies : 26.7% (1 750 314▲, 4 866 obj)
+- Brins d'herbe : 12.2% (799 932▲)
+- Brins de blé : 7.8% (511 200▲)
+- Fleurs : 8.2% (538 944▲)
+- Maisons : 14.6% (957 618▲) — 94 obj, **62 dc, ☂22** (post-instancing, cf. §9/§17 ; était 378 dc/☂135 avant le passage en InstancedMesh)
+
+Catégories dominantes en DC (hors végétation, déjà bien batchée) :
 - Corbeaux : 100 dc (10 obj) — 1 DC par volatile
-- Micro-props : 23 dc (14 325 obj) — très bien batché (InstancedMesh)
-- Fleurs : 12 dc (4 426 obj), Plantes : 38 dc (4 128 obj)
+- Watchtowers : 34 dc (19 obj) — non instanciées (§9)
+- Maisons : 62 dc (94 obj) — post-instancing (ex-390 dc/151 obj avant refonte)
 
 ---
 
@@ -804,6 +819,12 @@ Catégories dominantes en DC :
 **Ne jamais réintroduire de clearance sol proportionnelle/plafonnée** — après plusieurs itérations infructueuses (clearance proportionnelle à la taille du prop, puis plafonnée sur bounding-box mesurée) ayant chacune déplacé sans régler le bug récurrent "NPC/herbe/moutons/chiens flottent ou enterrés", l'utilisateur a exigé une formule unique et fixe. Les biomes sont strictement plats (6 hauteurs possibles, §6) : tout prop se pose à `hauteur_du_biome + GROUND_CLEARANCE` (constante unique, `propPlacement.js`, cf. §9). Si le bug resurgit, chercher d'abord une mauvaise détection de type de biome (edge vs centre de tuile) ou un `groundOffsetDelta` par-modèle mal calibré — pas la clearance.
 
 **Merger une branche ancienne réintroduit des régressions déjà corrigées** — une branche partie d'une base vieille de plusieurs jours peut ramener des reverts silencieux (valeurs par défaut, arguments de fonction supprimés) sur des fixes déjà validés depuis. Rediffer explicitement chaque fichier touché plutôt que de faire confiance au merge automatique. cf. §21.
+
+**Nouvel `InstancedMesh` disparu du HUD** — `sceneProfiler.js` ne reconnaît que des préfixes de nom explicitement listés dans `_classifyInstanced` ; un nom non reconnu retombe sur `null` et le mesh est purement et simplement absent du HUD FPS (aucune catégorie, pas même "Autres"). Bug vécu : maisons instanciées (§9/§17) invisibles dans la section Bâtiments jusqu'à l'ajout du préfixe `instanced-house-`.
+
+**Nouvel `InstancedMesh` qui réactive toutes les ombres** — sans `userData.castShadowOriginal` + `shadowFlagsApplied=true` posés explicitement à la création, `applySceneShadowFlags()` (§18) traite le mesh comme neuf et force `castShadow=true`, annulant l'optimisation "1 seul caster par variant". cf. §17.
+
+**Timer GPU CPU-side trompeur** — `performance.now()` autour de `renderer.render()`/`composer.render()` mesure la soumission CPU, pas l'exécution GPU réelle (WebGL est asynchrone) : un rendu GPU-bound peut afficher un temps CPU bas et stable même à 100% de charge GPU réelle, masquant complètement le goulot d'étranglement. Fix (2026-07-05) : requête GPU asynchrone via `EXT_disjoint_timer_query_webgl2` (`gpuTimer.js`), pollée chaque frame (`postprocess.getGpuMs()`), fusionnée (`Object.assign`, pas remplacement) dans `_lastPerfTiming` du HUD FPS puisque le GPU réel se met à jour bien plus souvent que le timing CPU échantillonné (1 frame sur 120). cf. §25.
 
 ---
 

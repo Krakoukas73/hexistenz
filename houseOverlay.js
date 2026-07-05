@@ -8,17 +8,22 @@ import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { getTerrainSurfaceY } from './terrainHeight.js';
 import { getCurvatureTiltQuaternion, getWorldCurvatureDrop } from './worldCurvature.js';
-import { makeNodeKey as makeSectorKey, getTileEdgeType, getTileCenterType, clearGroup, smoothstep } from './tileUtils.js';
+import { makeNodeKey as makeSectorKey, getTileEdgeType, getTileCenterType, smoothstep } from './tileUtils.js';
 import {
   ensureHouseGlbModels,
   isHouseGlbReady,
   spreadVillageHouseLocalPoint,
-  createVillageHouseObject,
+  pickHouseInstanceParams,
+  getHouseBakedSubmeshes,
   createVillageWatchtowerObject
 } from './houseVillageObjects.js';
+import { getPropChunkKey, computePropBoundingSphere } from './decorOverlay.js';
 
-// Pré-alloué pour le tilt de courbure monde (bouliste) — évite les allocations par maison
-const _hCurvQuat = new THREE.Quaternion();
+// Pré-alloués — évitent les allocations par maison (2026-07-04 : instancing, cf. plus bas)
+const _hCurvQuat     = new THREE.Quaternion();
+const _hInstanceDummy = new THREE.Object3D();
+const _houseLodFrustum = new THREE.Frustum();
+const _houseLodMatrix  = new THREE.Matrix4();
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -41,15 +46,12 @@ const PUFFS_PER_COLUMN = 18;
 // et tours qu'à moitié de l'inclinaison réelle — ajuster si besoin.
 const HOUSE_TILT_STRENGTH = 0.5;
 
-const smokeMaterialCache = [];
-
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
 
 // Seuils de déclenchement des bâtiments spéciaux par zone
 const WATCHTOWER_MIN_HOUSES = 4;
 const WATCHTOWER_HOUSES_PER_EXTRA = 8;
 const WATCHTOWER_MAX_PER_ZONE = 6;
-const SPECIAL_BUILDING_HOUSE_SAFE_RADIUS = HEX_SIZE * 0.198; // −10 %
 
 // ─── API publique — cycle de vie overlay ──────────────────────────────────────
 
@@ -57,53 +59,71 @@ export function createHouseOverlay() {
   const group = new THREE.Group();
   group.name = 'house-overlay';
   group.userData.columns = [];
+  group.userData.watchtowerLodItems = [];
   ensureHouseGlbModelsAndRebuild(group);
   return group;
 }
 
+/**
+ * Reconstruction complète (2026-07-04, perf) : les maisons pesaient ~21% des triangles
+ * de la scène pour 378 draw calls / 145 objets — jamais batchées (1 clone(true) + sa
+ * hiérarchie de sous-meshes par maison). Remplacé par un InstancedMesh par
+ * (variant × sous-mesh × chunk), même principe que naturalPropsOverlay.js.
+ *
+ * L'ancien système gardait un THREE.Group par tuile (tileHouseGroups) avec un cache de
+ * signature pour ne reconstruire que les tuiles modifiées — nécessaire quand chaque
+ * maison est un Object3D coûteux à recréer. Avec l'instancing, reconstruire la totalité
+ * des matrices à chaque appel est trivial (arithmétique pure, pas de clone de hiérarchie
+ * GLB) : on simplifie donc en un recalcul complet à chaque rebuild. rebuildHouseOverlay
+ * n'est de toute façon appelé que sur événement de placement (file overlayRebuildQueue,
+ * cf. scene.js), jamais à chaque frame — même coût d'appel que createNaturalGroundProps.
+ */
 export function rebuildHouseOverlay(group, placedTiles) {
   group.userData.lastPlacedTiles = placedTiles;
-  if (!group.userData.tileHouseGroups) group.userData.tileHouseGroups = new Map();
 
   if (!isHouseGlbReady()) {
     ensureHouseGlbModelsAndRebuild(group);
     return;
   }
 
-  const tileHouseGroups = group.userData.tileHouseGroups;
-  const activeKeys = new Set();
+  _clearHouseOverlayChildren(group);
+  group.userData.columns = [];
+  group.userData.watchtowerLodItems = [];
+  group.userData.houseChunkMeshes = new Map();
+
   const watchtowerSectors = collectVillageWatchtowerSectors(placedTiles);
-  const blockedRewardSectors = new Set([...watchtowerSectors]);
+  const accumulator = new Map(); // defKey → Map(chunkKey → Matrix4[])
 
   for (const placedTile of placedTiles.values()) {
+    const edges = placedTile.tile?.edges;
+    if (!edges) continue;
+
+    const tileX = placedTile.mesh?.position?.x ?? 0;
+    const tileZ = placedTile.mesh?.position?.z ?? 0;
     const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
-    activeKeys.add(tileKey);
+    const chunkKey = getPropChunkKey(placedTile.q, placedTile.r);
 
-    const signature = getTileHouseOverlaySignature(placedTile, watchtowerSectors);
-    const cached = tileHouseGroups.get(tileKey);
-    if (cached && cached.userData?.houseOverlaySignature === signature) continue;
+    for (const sector of SECTOR_DEFS) {
+      const edge = edges[sector.key];
+      if (getEdgeType(edge) !== EDGE_TYPES.house) continue;
 
-    if (cached) {
-      group.remove(cached);
-      clearGroup(cached);
+      const houseCount = Math.max(1, Math.min(4, Math.round(getEdgeValue(edge))));
+
+      addSectorBuildings(
+        group,
+        accumulator,
+        tileX,
+        tileZ,
+        sector,
+        houseCount,
+        tileKey,
+        chunkKey,
+        watchtowerSectors.has(makeSectorKey(tileKey, sector.key))
+      );
     }
-
-    const tileGroup = new THREE.Group();
-    tileGroup.name = `house-tile-${tileKey}`;
-    tileGroup.userData.houseOverlaySignature = signature;
-    buildHouseTileGroup(tileGroup, placedTile, placedTiles, watchtowerSectors);
-    tileHouseGroups.set(tileKey, tileGroup);
-    group.add(tileGroup);
   }
 
-  for (const [tileKey, tileGroup] of tileHouseGroups.entries()) {
-    if (activeKeys.has(tileKey)) continue;
-    group.remove(tileGroup);
-    clearGroup(tileGroup);
-    tileHouseGroups.delete(tileKey);
-  }
-
-  group.userData.columns = Array.from(tileHouseGroups.values()).flatMap(tileGroup => tileGroup.userData.columns ?? []);
+  buildHouseInstancedMeshes(group, accumulator);
 }
 
 export function updateHouseOverlay(group, timeSeconds = 0) {
@@ -131,26 +151,30 @@ export function updateHouseOverlay(group, timeSeconds = 0) {
   }
 }
 
+/**
+ * LOD (2026-07-04) : les maisons sont désormais des InstancedMesh groupés par chunk —
+ * même mécanisme que updateNaturalPropsLOD (decorOverlay.js) : distance + frustum sur la
+ * bounding sphere du chunk. Les tours de garde restent des objets individuels (peu
+ * nombreuses, modèle multi-parties) — LOD plus sévère, par distance seule comme avant.
+ */
 export function updateHouseLOD(group, camera, lodFactor = 1.0) {
   const houseEff         = LOD_HOUSE_CULL_DISTANCE     * lodFactor;
   const watchtowerEff    = LOD_WATCHTOWER_CULL_DISTANCE * lodFactor;
   const houseDistSq      = houseEff      * houseEff;
   const watchtowerDistSq = watchtowerEff * watchtowerEff;
-  const tileHouseGroups = group.userData.tileHouseGroups;
-  if (!tileHouseGroups) return;
-  for (const tileGroup of tileHouseGroups.values()) {
-    const center = tileGroup.userData.worldCenter;
-    if (!center) continue;
-    const distSq = camera.position.distanceToSquared(center);
-    const tileVisible = distSq < houseDistSq;
-    tileGroup.visible = tileVisible;
-    // Watchtowers : LOD plus sévère — masquées avant les maisons (−22 % vs −20 %)
-    if (tileVisible) {
-      const withinWatchtower = distSq < watchtowerDistSq;
-      for (const child of tileGroup.children) {
-        if (child.name === 'village-watchtower-glb-zone-reward') child.visible = withinWatchtower;
-      }
-    }
+
+  _houseLodMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  _houseLodFrustum.setFromProjectionMatrix(_houseLodMatrix);
+
+  for (const child of group.children) {
+    if (!child.isInstancedMesh || !child.userData.worldBoundingSphere) continue;
+    const sphere = child.userData.worldBoundingSphere;
+    const distSq = camera.position.distanceToSquared(sphere.center);
+    child.visible = distSq < houseDistSq && _houseLodFrustum.intersectsSphere(sphere);
+  }
+
+  for (const item of (group.userData.watchtowerLodItems ?? [])) {
+    item.object.visible = camera.position.distanceToSquared(item.center) < watchtowerDistSq;
   }
 }
 
@@ -163,73 +187,81 @@ function ensureHouseGlbModelsAndRebuild(group) {
   });
 }
 
-// ─── Construction par tuile ───────────────────────────────────────────────────
+// ─── Nettoyage overlay ────────────────────────────────────────────────────────
 
-function buildHouseTileGroup(group, placedTile, placedTiles, watchtowerSectors) {
-  group.userData.columns = [];
-
-  const edges = placedTile.tile?.edges;
-  if (!edges) return;
-
-  const tileX = placedTile.mesh?.position?.x ?? 0;
-  const tileZ = placedTile.mesh?.position?.z ?? 0;
-  group.userData.worldCenter = new THREE.Vector3(tileX, 0, tileZ);
-  const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
-
-  for (const sector of SECTOR_DEFS) {
-    const edge = edges[sector.key];
-    if (getEdgeType(edge) !== EDGE_TYPES.house) continue;
-
-    const houseCount = Math.max(1, Math.min(4, Math.round(getEdgeValue(edge))));
-
-    addSectorBuildings(
-      group,
-      tileX,
-      tileZ,
-      sector,
-      houseCount,
-      tileKey,
-      watchtowerSectors.has(makeSectorKey(tileKey, sector.key)),
-      placedTile,
-      placedTiles
-    );
+/**
+ * Retire tous les enfants sans disposer geometry/material : les InstancedMesh partagent
+ * une géométrie "cuite" mise en cache (getHouseBakedSubmeshes) et un matériau partagé
+ * avec le prototype GLB — les deux sont réutilisés tels quels au prochain rebuild.
+ * (clearGroup de tileUtils.js disposerait ces ressources partagées à chaque appel —
+ * sans danger en soi pour three.js, qui réuploaderait au GPU au prochain rendu, mais
+ * inutilement coûteux vu la fréquence de placement de tuiles.)
+ */
+function _clearHouseOverlayChildren(group) {
+  while (group.children.length > 0) {
+    group.children.pop();
   }
-
 }
 
-function getTileHouseOverlaySignature(placedTile, watchtowerSectors) {
-  const tileKey = placedTile.key ?? makeHexKey(placedTile.q, placedTile.r);
-  const edges = placedTile.tile?.edges ?? {};
+// ─── Construction des InstancedMesh ──────────────────────────────────────────
 
-  return SECTOR_DEFS.map(sector => {
-    const edge = edges[sector.key];
-    const sectorKey = makeSectorKey(tileKey, sector.key);
-    return [
-      sector.key,
-      getEdgeType(edge),
-      Math.max(1, Math.min(4, Math.round(getEdgeValue(edge)))) || 0,
-      watchtowerSectors.has(sectorKey) ? 'watchtower' : ''
-    ].join(':');
-  }).join('|');
+function buildHouseInstancedMeshes(group, accumulator) {
+  for (const [defKey, byChunk] of accumulator) {
+    const bakedSubs = getHouseBakedSubmeshes(defKey);
+    if (!bakedSubs) continue;
+
+    for (const [chunkKey, matrices] of byChunk) {
+      if (matrices.length === 0) continue;
+      const sphere = computePropBoundingSphere(matrices, 1.2); // marge généreuse : maisons hautes, pas des props au sol
+
+      const chunkMeshes = [];
+      for (const sub of bakedSubs) {
+        const mesh = new THREE.InstancedMesh(sub.geometry, sub.material, matrices.length);
+        mesh.castShadow    = sub.castShadowOriginal; // 1 seul sous-mesh par variant caste (hérité du prototype)
+        mesh.receiveShadow = true;
+        mesh.frustumCulled = false; // géométrie cuite à l'origine — culling manuel via updateHouseLOD
+        mesh.name          = `instanced-house-${defKey}-${chunkKey}`;
+        mesh.userData.worldBoundingSphere = sphere;
+        // Indispensable : sans ces deux flags, applySceneShadowFlags() (threeSetup.js) traite
+        // ce mesh comme "jamais vu" et force castShadow=true dessus (branche générique, tout
+        // matériau opaque cast par défaut) — ce qui réactiverait l'ombre sur TOUS les sous-meshes
+        // (fenêtres, cheminées…) au lieu du seul caster désigné par _applySingleShadowCaster.
+        mesh.userData.castShadowOriginal = sub.castShadowOriginal;
+        mesh.userData.shadowFlagsApplied = true;
+
+        for (let i = 0; i < matrices.length; i++) mesh.setMatrixAt(i, matrices[i]);
+        mesh.instanceMatrix.needsUpdate = true;
+
+        group.add(mesh);
+        chunkMeshes.push(mesh);
+      }
+
+      group.userData.houseChunkMeshes.set(`${defKey}:${chunkKey}`, chunkMeshes);
+    }
+  }
 }
 
 // ─── Placement des bâtiments par secteur ─────────────────────────────────────
 
-function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, hasWatchtower = false, placedTile = null, placedTiles = null) {
+function addSectorBuildings(group, accumulator, tileX, tileZ, sector, columnCount, tileKey, chunkKey, hasWatchtower = false) {
   const vertices = createOuterVertices();
   const a = vertices[sector.a];
   const b = vertices[sector.b];
   const anchors = getColumnAnchors(columnCount);
 
-  // Tour : position fixe dans le triangle, bâtiment additionnel (hors quota maisons)
+  // Tour : position fixe dans le triangle, bâtiment additionnel (hors quota maisons).
+  // Reste un objet individuel (peu nombreuses, modèle multi-parties issu d'un pack GLB).
   if (hasWatchtower) {
     const towerLocal = trianglePoint(a, b, 0.18, 0.41, 0.41);
     const tower = createVillageWatchtowerObject(`${tileKey}:${sector.key}:village-watchtower`, sector);
     const towerSurfaceY = getTerrainSurfaceY(towerLocal, EDGE_TYPES.house, Math.floor(hashUnit(`${tileKey}:${sector.key}:watchtower`) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
-    tower.position.set(tileX + towerLocal.x, towerSurfaceY + 0.010, tileZ + towerLocal.z);
-    getCurvatureTiltQuaternion(tileX + towerLocal.x, tileZ + towerLocal.z, _hCurvQuat, HOUSE_TILT_STRENGTH);
+    const towerX = tileX + towerLocal.x;
+    const towerZ = tileZ + towerLocal.z;
+    tower.position.set(towerX, towerSurfaceY + 0.010, towerZ);
+    getCurvatureTiltQuaternion(towerX, towerZ, _hCurvQuat, HOUSE_TILT_STRENGTH);
     tower.quaternion.premultiply(_hCurvQuat);
     group.add(tower);
+    group.userData.watchtowerLodItems.push({ object: tower, center: new THREE.Vector3(towerX, towerSurfaceY, towerZ) });
     // (pas d'enregistrement hitbox : la tour n'a pas besoin de bloquer d'autres objets ici)
   }
 
@@ -242,45 +274,40 @@ function addSectorBuildings(group, tileX, tileZ, sector, columnCount, tileKey, h
     );
     const worldX = tileX + local.x;
     const worldZ = tileZ + local.z;
-    const house = createVillageHouseObject(seed, sector, i);
     const houseSurfaceY = getTerrainSurfaceY(local, EDGE_TYPES.house, Math.floor(hashUnit(seed) * 97), { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
-    house.position.set(worldX, houseSurfaceY + 0.004, worldZ);
+    const baseY = houseSurfaceY + 0.004;
+
+    // Mêmes formules de hash que l'ancien createVillageHouseObject (aspect inchangé).
+    const params = pickHouseInstanceParams(seed, i);
+
     getCurvatureTiltQuaternion(worldX, worldZ, _hCurvQuat, HOUSE_TILT_STRENGTH);
-    house.quaternion.premultiply(_hCurvQuat);
-    group.add(house);
+    _hInstanceDummy.position.set(worldX, baseY, worldZ);
+    _hInstanceDummy.rotation.set(0, 0, 0);
+    _hInstanceDummy.rotation.y = params.rotationY;
+    _hInstanceDummy.quaternion.premultiply(_hCurvQuat); // même ordre que l'ancien house.quaternion.premultiply(_hCurvQuat)
+    _hInstanceDummy.scale.setScalar(params.scale);
+    _hInstanceDummy.updateMatrix();
+
+    if (!accumulator.has(params.key)) accumulator.set(params.key, new Map());
+    const byChunk = accumulator.get(params.key);
+    if (!byChunk.has(chunkKey)) byChunk.set(chunkKey, []);
+    byChunk.get(chunkKey).push(_hInstanceDummy.matrix.clone());
 
     // Enregistre la position de la cheminée pour le pass de fumée volumétrique.
     // Y réel = base house + hauteur chimney dans le modèle (HOUSE_SCALE * 1.70).
     // hasSmoke : seulement ~30 % des maisons fument (hash déterministe sur la graine).
-    // tileGroup : référence au groupe de la tuile → LOD exactement identique aux maisons.
-    // puffs:[] → updateHouseOverlay ne fait rien (sprites désactivés).
-    const chimneyWorldY = houseSurfaceY + 0.004 + HOUSE_SCALE * 1.70;
+    // chunkMeshKey : clé vers group.userData.houseChunkMeshes → visibilité LOD réelle
+    // (remplace l'ancienne référence tileGroup, les maisons n'ont plus de Group propre).
+    const chimneyWorldY = baseY + HOUSE_SCALE * 1.70;
     // maison-petite-3 n'a pas de cheminée visible → jamais de fumée
-    const hasSmoke = !house.name.includes('maison-medievale-petite-3') && hashUnit(`${seed}:smoke`) < 0.33;
-    group.userData.columns.push({ x: worldX, y: chimneyWorldY, z: worldZ, puffs: [], hasSmoke, tileGroup: group });
-  }
-}
-
-function getSectorSpecialBuildingSafeLocals(a, b, anchors, hasWatchtower) {
-  const safeLocals = [];
-
-  if (hasWatchtower) {
-    safeLocals.push({
-      ...trianglePoint(a, b, 0.18, 0.41, 0.41),
-      radius: SPECIAL_BUILDING_HOUSE_SAFE_RADIUS
+    const hasSmoke = !params.key.includes('maison-medievale-petite-3') && hashUnit(`${seed}:smoke`) < 0.33;
+    group.userData.columns.push({
+      x: worldX, y: chimneyWorldY, z: worldZ, puffs: [], hasSmoke,
+      chunkMeshKey: `${params.key}:${chunkKey}`
     });
   }
-
-  return safeLocals;
 }
 
-function isLocalInsideSpecialBuildingSafeZone(local, safeLocals) {
-  for (const zone of safeLocals) {
-    const distance = Math.hypot(local.x - zone.x, local.z - zone.z);
-    if (distance < zone.radius) return true;
-  }
-  return false;
-}
 
 // ─── BFS zone system — récompenses bâtiments spéciaux ────────────────────────
 
@@ -466,30 +493,21 @@ function trianglePoint(a, b, centerWeight, aWeight, bWeight) {
 /**
  * Retourne les positions monde (THREE.Vector3) de toutes les cheminées actives.
  * À passer à updateSmokeVolumePass() chaque frame.
+ * Visibilité (2026-07-04) : lue depuis le premier InstancedMesh du chunk concerné
+ * (houseChunkMeshes) — remplace l'ancienne référence tileGroup?.visible, les maisons
+ * n'ayant plus de Group individuel depuis le passage à l'instancing.
  */
 export function getHouseChimneyPositions(group) {
+  const chunkMeshes = group.userData.houseChunkMeshes;
   return (group.userData.columns ?? [])
-    .filter(col => col.hasSmoke && col.tileGroup?.visible !== false)
+    .filter(col => {
+      if (!col.hasSmoke) return false;
+      const meshes = chunkMeshes?.get(col.chunkMeshKey);
+      return meshes ? meshes[0]?.visible !== false : true;
+    })
     .map(col => {
       const flatY = col.y ?? HOUSE_SMOKE_Y;
       return new THREE.Vector3(col.x, flatY + getWorldCurvatureDrop(col.x, col.z), col.z);
     });
 }
 
-// ─── Matériau fumée (conservé, non utilisé) ───────────────────────────────────
-
-function getSmokeMaterial(index) {
-  if (smokeMaterialCache[index]) return smokeMaterialCache[index];
-
-  const material = new THREE.MeshBasicMaterial({
-    color: 0xF4F7F8,
-    transparent: true,
-    opacity: 0.64,
-    depthWrite: false,
-    depthTest: false,
-    side: THREE.DoubleSide
-  });
-
-  smokeMaterialCache[index] = material;
-  return material;
-}

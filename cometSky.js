@@ -1,5 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { markNoWorldCurvature } from './worldCurvature.js';
+import { smoothstep } from './tileUtils.js';
 
 const COMET_GROUP_NAME = 'hexistenz-debug-comet-sky';
 const COMET_SPAWN_MIN_DELAY = 2;
@@ -408,10 +409,6 @@ function randomUnit(group) {
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
 
-function smoothstep(edge0, edge1, x) {
-  const t = THREE.MathUtils.clamp((x - edge0) / Math.max(0.00001, edge1 - edge0), 0, 1);
-  return t * t * (3 - 2 * t);
-}
 
 function easeInOutSine(t) {
   return -(Math.cos(Math.PI * THREE.MathUtils.clamp(t, 0, 1)) - 1) / 2;

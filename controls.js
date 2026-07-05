@@ -3,7 +3,10 @@ import { worldToAxial } from './hex.js';
 import { getWorldCurvatureDrop, intersectWorldCurvature } from './worldCurvature.js';
 
 const DEFAULT_CAMERA = {
-  radius: 15,
+  radius: 5.25, // −30% (2026-07-04, était 7.5) — −50% (était 15) — caméra initiale/reset
+                // (touche R) encore plus basse, près du terrain. phi inchangé → même angle
+                // de vue, juste plus proche de la cible (hauteur = radius·cos(phi)). Vue
+                // stable et reproductible, utile pour comparer le HUD FPS entre deux sessions.
   theta: Math.PI / 4,
   phi: Math.PI / 3
 };

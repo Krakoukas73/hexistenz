@@ -763,12 +763,17 @@ nav {
 .daynight-card.day:hover  { border-color: rgba(255,220,100,0.55); }
 .daynight-card.night { border-color: rgba(120,160,255,0.28); }
 .daynight-card.night:hover { border-color: rgba(120,180,255,0.55); }
-.daynight-icon { font-size: 36px; margin-bottom: 14px; }
+.daynight-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.daynight-icon { font-size: 36px; line-height: 1; }
 .daynight-name {
   font-family: var(--font-title);
   font-size: 28px;
   letter-spacing: 0.06em;
-  margin-bottom: 18px;
 }
 .daynight-card.day  .daynight-name { color: #f0d060; }
 .daynight-card.night .daynight-name { color: #90b8ff; }
@@ -816,7 +821,7 @@ nav {
   color: var(--gold);
   margin-bottom: 8px;
 }
-.eda-showcase-label { font-family: var(--font-title); font-size: 18px; letter-spacing: 0.05em; margin-bottom: 8px; }
+.eda-showcase-label { font-family: var(--font-title); font-size: 29px; letter-spacing: 0.05em; margin-bottom: 8px; }
 .eda-showcase-desc { font-size: 11px; color: var(--text-dim); line-height: 1.55; }
 
 /* ─── MULTIPLAYER ────────────────────────────────────────────── */

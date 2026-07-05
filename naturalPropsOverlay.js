@@ -327,7 +327,11 @@ function buildNaturalPropInstancedMeshes(group, accumulator) {
         const mesh = new THREE.InstancedMesh(geo, mat, matrices.length);
         // castShadow désactivé sur fleurs, plantes, rochers, petits animaux et champignons.
         // receiveShadow conservé sur rochers/plantes pour ne pas les aplatir visuellement.
-        const noReceiveShadow = variantKey.startsWith('flower') || variantKey.startsWith('plant-') || variantKey.startsWith('plante-');
+        // 'berry-' oublié ici (2026-07-04, bug HUD FPS) : lodCategory='micro' pour les baies
+        // (pas 'plant', cf. buildNaturalPropInstancedMeshes) et le nom ne matche aucun des
+        // préfixes ci-dessous → castShadow=true par défaut, sans jamais être visible en jeu
+        // (silhouette trop fine/alpha-testée pour la shadow map) — coût GPU pur pour rien.
+        const noReceiveShadow = variantKey.startsWith('flower') || variantKey.startsWith('plant-') || variantKey.startsWith('plante-') || variantKey.startsWith('berry-');
         const noCastShadow    = noReceiveShadow ||
           lodCategory === 'rock' || lodCategory === 'plant' || lodCategory === 'animal' ||
           variantKey === 'mushroom' || variantKey.startsWith('mushroom') ||
@@ -450,7 +454,7 @@ function getNaturalPropCount(kind, type, seed, placedTile = null, edge = null, p
   // Brindilles — kind séparé pour densité indépendante
   if (kind === 'brindille') return 42 + Math.floor(hashUnit(`${seed}:count`) * 31); // +28% (moy 45→57.5)
   // Prairie et forêt : plantes.glb uniquement — différencier ici sur type quand besoin.
-  if (kind === 'grass') return 213 + Math.floor(hashUnit(`${seed}:count`) * 86); // −15% (2026-07-04, "autres plantes") −35% (2026-07-04 perf : pool "grass" dominé à 70% par les baies, gros poste triangles GPU) — était +17% (moy 396→463), désormais moy ~300
+  if (kind === 'grass') return 132 + Math.floor(hashUnit(`${seed}:count`) * 54); // −12% (2026-07-04, perf triangles "plantes à baies" — était 150+61, moy ~180→~159) −12% (était 170+69, moy ~205→~180) −20% (était 213+86, moy ~256→~205) −15% (2026-07-04, "autres plantes") −35% (2026-07-04 perf : pool "grass" dominé à 70% par les baies, gros poste triangles GPU) — était +17% (moy 396→463), désormais moy ~300
   if (kind === 'shrub') return 16 + Math.floor(hashUnit(`${seed}:count`) * 19);   // −15% (2026-07-04, "autres plantes") +16% (moy 25.5→30)
   if (kind === 'deer')    return 1; // toujours 1 seul cerf par cluster
   if (kind === 'rock') {

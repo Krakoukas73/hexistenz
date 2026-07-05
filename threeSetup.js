@@ -10,6 +10,8 @@ import { COLOR_GRADING_SHADER } from './visualEnvironment.js';
 import { CINEMATIC_SHADER } from './cinematicPass.js';
 import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS, getWorldCurvatureDrop, markNoWorldCurvature } from './worldCurvature.js';
 import { ensureStarUniverse, updateStarUniverse } from './starUniverse.js';
+import { createGpuTimer } from './gpuTimer.js';
+import { clamp01 } from './tileUtils.js';
 
 export const WORLD_LAYER = 0;
 export const TEXT_LAYER  = 1;
@@ -44,8 +46,8 @@ export function createThreeScene() {
 
   const sun = new THREE.DirectionalLight(0xffd08a, 3.35);
   sun.name = 'main-sun-shadow-light';
-  sun.userData.orbit = { radius: 10.5, height: 8.4, speed: 0.06, visualScale: 1.18 };
-  sun.position.set(-7.5, 8.4, 5.5);
+  sun.userData.orbit = { radius: 10.5, height: 3.40, speed: 0.06, visualScale: 1.18 };
+  sun.position.set(-7.5, 3.40, 5.5);
   sun.castShadow = true;
   sun.shadow.mapSize.set(1024, 1024);   // 2048→1024 : −75% GPU shadow work (pixel size 3 = shadow detail indiscernable)
   sun.shadow.bias = -0.00012;
@@ -105,7 +107,7 @@ export function updateSunShadowOrbit(scene, timeSeconds, focusPoint = null, came
     sun.shadow.camera.far = Math.max(sun.shadow.camera.far ?? 48, 160);
   }
 
-  const orbit = sun.userData.orbit ?? { radius: 10.5, height: 8.4, speed: 0.42, visualScale: 1.18 };
+  const orbit = sun.userData.orbit ?? { radius: 10.5, height: 3.40, speed: 0.42, visualScale: 1.18 };
   // Garde-fou : si orbit.speed n'est pas un nombre fini (config pas encore appliquée, valeur
   // corrompue en localStorage…), on retombe sur la vitesse par défaut plutôt que de propager
   // un NaN dans position/rotation — un NaN une fois écrit dans une matrice de transformation
@@ -324,12 +326,6 @@ export function setAstreMode(scene, isSoleil) {
   _applyAstreVisibility(group, isSoleil);
 }
 
-/** @deprecated — utiliser setAstreMode() à la place. Conservé pour compatibilité. */
-export function getAstreType(scene) {
-  const isSoleil = scene.getObjectByName('visible-sky-sun')?.userData?.isSoleil;
-  return isSoleil === false ? 'lune' : 'soleil';
-}
-
 export function createCamera() {
   return new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.02, 1000);
 }
@@ -338,6 +334,10 @@ export function createPixelPostprocess(renderer, scene, camera) {
   const composer = new EffectComposer(renderer);
   composer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
   composer.setSize(window.innerWidth, window.innerHeight);
+
+  // Mesure GPU réelle (2026-07-04) — cf. gpuTimer.js : le chrono JS autour de render()
+  // ne mesurait que la soumission CPU, pas l'exécution GPU réelle.
+  const gpuTimer = createGpuTimer(renderer);
 
   const settings = {
     enabled: true,
@@ -598,13 +598,21 @@ export function createPixelPostprocess(renderer, scene, camera) {
       cinemaPass.uniforms.uResolution.value.y  = renderer.domElement.height;
       _updateGodRaysUniform();
 
+      // Englobe TOUT le rendu GPU de la frame (monde + texte) — résultat lu via getGpuMs()
+      // quelques frames plus tard (requête async, cf. gpuTimer.js).
+      gpuTimer.begin();
       renderWorldLayer();
       renderTextLayer();
+      gpuTimer.end();
 
       scene.background = previousBackground;
       scene.fog = previousFog;
       renderer.autoClear = previousAutoClear;
       camera.layers.mask = previousMask;
+    },
+    gpuTimerSupported: gpuTimer.supported,
+    getGpuMs() {
+      return gpuTimer.poll();
     }
   };
 }
@@ -626,10 +634,6 @@ function applyPixelPassSettings(pixelPass, settings) {
 
 function clampPixelSize(value) {
   return Math.min(50, Math.max(1, Math.round(Number(value) || 4)));
-}
-
-function clamp01(value) {
-  return Math.min(1, Math.max(0, Number(value) || 0));
 }
 
 export function applySceneShadowFlags(scene) {

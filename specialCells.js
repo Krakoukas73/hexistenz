@@ -2,6 +2,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 import { HEX_SIZE } from './config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { getAllGridHexes } from './gridRegions.js';
+import { randomIntBetween as getRandomInt, shuffleInPlace } from './random.js';
 
 export const SPECIAL_CELL_MIN = 1;
 export const SPECIAL_CELL_MAX = 5;
@@ -127,11 +128,6 @@ export function updateSpecialCellsMeshAnimation(group, timeSeconds = 0) {
       child.material.opacity = Math.max(0.06, flicker * (1 - progress * 0.28));
     }
   });
-}
-
-export function isSpecialCellAt(hex, specialCells) {
-  if (!hex || !specialCells) return false;
-  return specialCells.has(makeHexKey(hex.q, hex.r));
 }
 
 function createSpecialCellMesh(cell = null) {
@@ -357,13 +353,3 @@ function weightedPick(items) {
   return items[getRandomInt(0, items.length - 1)];
 }
 
-function getRandomInt(min, max) {
-  return min + Math.floor(Math.random() * (max - min + 1));
-}
-
-function shuffleInPlace(items) {
-  for (let i = items.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [items[i], items[j]] = [items[j], items[i]];
-  }
-}

@@ -664,8 +664,10 @@ Comprend la logique de jeu, les mises à jour d'overlays, les animations et les 
 
   'fps.gpu':
     `Pourcentage du budget frame consommé par le rendu GPU.
-Estimé via le delta de requestAnimationFrame — pas un timer GPU exact (WebGL query non disponible).
-> 80 % : le GPU est saturé — réduire les draw calls, la résolution de rendu ou les ombres.`,
+Mesuré via une requête de timing GPU réelle (EXT_disjoint_timer_query_webgl2), asynchrone —
+la valeur affichée peut dater de 1 à quelques frames. Si l'extension est indisponible sur ce
+driver/navigateur, repli sur un chrono CPU de soumission (préfixé "≈", moins fiable).
+> 80 % : le GPU est saturé — réduire les triangles/fragments (végétation, post-processing), les draw calls ou les ombres.`,
 
   // ── Menus pré-partie ──────────────────────────────────────────────────────
   'menu.solo':
