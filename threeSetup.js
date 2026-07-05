@@ -5,7 +5,7 @@ import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examp
 import { RenderPixelatedPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/RenderPixelatedPass.js';
 import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js';
-import { GRID_RADIUS, HEX_SIZE } from './config.js';
+import { GRID_RADIUS, HEX_SIZE, MAX_PIXEL_RATIO } from './config.js';
 import { COLOR_GRADING_SHADER } from './visualEnvironment.js';
 import { CINEMATIC_SHADER } from './cinematicPass.js';
 import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS, getWorldCurvatureDrop, markNoWorldCurvature } from './worldCurvature.js';
@@ -19,7 +19,7 @@ export const TEXT_LAYER  = 1;
 // Initialisation Three.js isolée pour garder scene.js centré sur la logique de jeu.
 export function createRenderer(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -332,7 +332,7 @@ export function createCamera() {
 
 export function createPixelPostprocess(renderer, scene, camera) {
   const composer = new EffectComposer(renderer);
-  composer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
+  composer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
   composer.setSize(window.innerWidth, window.innerHeight);
 
   // Mesure GPU réelle (2026-07-04) — cf. gpuTimer.js : le chrono JS autour de render()
@@ -747,6 +747,6 @@ export function resizeRenderer(renderer, camera, postprocess = null) {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  postprocess?.composer?.setPixelRatio?.(Math.min(window.devicePixelRatio, 1.25));
+  postprocess?.composer?.setPixelRatio?.(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
   postprocess?.composer?.setSize?.(window.innerWidth, window.innerHeight);
 }

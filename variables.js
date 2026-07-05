@@ -235,6 +235,19 @@ export const MAX_POLAR_ANGLE = Math.PI / 2 - 0.02;
 export const CLICK_DRAG_CANCEL_DISTANCE = 6;
 
 // ----------------------------------------------------------------------------
+// RENDU — PLAFOND DE RÉSOLUTION (pixelRatio)
+// ----------------------------------------------------------------------------
+// Le rendu (monde + 4 passes plein écran de post-processing) est majoritairement
+// fill-bound : son coût GPU est proportionnel au nombre de pixels dessinés.
+// Mesuré (timer GPU réel, M1) : 1920×1080 = 20.1 ms vs même scène en 0.7× linéaire
+// = 13.9 ms, soit −31 %. Sur un écran Retina/4K (devicePixelRatio 2), plafonner le
+// pixelRatio réduit donc directement le coût de toute la pipeline.
+// Compromis visuel : le jeu ayant déjà une esthétique pixelisée, 1.0 est peu
+// perceptible pour un gain net. Remonter à 1.25 (ancien réglage) ou plus pour
+// privilégier la netteté au détriment du framerate.
+export const MAX_PIXEL_RATIO = 1.0;
+
+// ----------------------------------------------------------------------------
 // MAISONS / ÉGLISES / FUMÉE / CIMETIÈRES
 // ----------------------------------------------------------------------------
 export const PUFFS_PER_COLUMN = 11; // −39 % (était 18)
