@@ -1,6 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { DECK_SIZE, GRID_RADIUS, COMET_HIT_SCORE, LOD_RAIL_TRACK_CULL_DISTANCE, LOD_PAVED_ROAD_CULL_DISTANCE } from './config.js';
-import { EDGE_TYPES } from './variables.js';
+import { EDGE_TYPES, VOLUMETRIC_SMOKE_ENABLED } from './variables.js';
 import { WORLD_CURVATURE, setWorldCurvatureEnabled, getWorldCurvatureEnabled } from './worldCurvature.js';
 import { CameraControls } from './controls.js';
 import { createGrid, ensureGridCellsAroundHex, getGridCellCount, getGridKeys, updateGridAvailability } from './grid.js';
@@ -56,8 +56,11 @@ export function initScene(options = {}) {
   const postprocess = createPixelPostprocess(renderer, scene, camera);
 
   // ── Pass fumée volumétrique : inséré AVANT colorGradingPass ──────────────────
-  const smokeVolumePass = createSmokeVolumePass();
-  {
+  // DÉSACTIVÉE par défaut (VOLUMETRIC_SMOKE_ENABLED) : ~94 % du coût GPU en 4K
+  // (raymarch plein écran, cf. variables.js). Non insérée dans le composer et non
+  // mise à jour tant que le flag est false → zéro coût.
+  const smokeVolumePass = VOLUMETRIC_SMOKE_ENABLED ? createSmokeVolumePass() : null;
+  if (smokeVolumePass) {
     const idx = postprocess.composer.passes.indexOf(postprocess.colorGradingPass);
     postprocess.composer.passes.splice(idx, 0, smokeVolumePass);
   }
@@ -617,7 +620,8 @@ export function initScene(options = {}) {
 
     // Fumée volumétrique : exécuté APRÈS updateHouseLOD + updateRailTrainLOD (même frame)
     // → tileGroup.visible et train.object.visible sont à jour → pas de lag entre fumée et modèle.
-    {
+    // Skip total si la passe est désactivée (VOLUMETRIC_SMOKE_ENABLED, cf. variables.js).
+    if (smokeVolumePass) {
       const _smokeLocos = getTrainLocoPositions(railTrainOverlay);
       const _smokeSrcs  = [
         ..._smokeLocos,                        // locos en priorité — jamais évincées par le cap

@@ -248,6 +248,18 @@ export const CLICK_DRAG_CANCEL_DISTANCE = 6;
 export const MAX_PIXEL_RATIO = 1.0;
 
 // ----------------------------------------------------------------------------
+// RENDU — FUMÉE VOLUMÉTRIQUE (smokeVolumePass)
+// ----------------------------------------------------------------------------
+// DÉSACTIVÉE par défaut : mesuré au timer GPU réel (M1), cette passe plein écran
+// coûtait ~94 % du budget GPU (chaîne composer complète 180 ms → 10 ms sans elle,
+// soit ×18). Son shader ray-marche 48 étapes × jusqu'à 48 sources de fumée PAR
+// PIXEL, plein écran, chaque frame → coût fill-bound explosif en 4K. La scène
+// elle-même (6,8 M triangles, ombres) ne rend qu'en ~3-5 ms.
+// Repasser à true réactive la fumée cheminée/loco volumétrique (à optimiser
+// avant : réduire STEPS dans shaders/shaderFumee.js + rendre à résolution réduite).
+export const VOLUMETRIC_SMOKE_ENABLED = false;
+
+// ----------------------------------------------------------------------------
 // MAISONS / ÉGLISES / FUMÉE / CIMETIÈRES
 // ----------------------------------------------------------------------------
 export const PUFFS_PER_COLUMN = 11; // −39 % (était 18)
