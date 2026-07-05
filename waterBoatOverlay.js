@@ -328,15 +328,26 @@ function _buildWake(mesh, pts) {
  * Met à jour la visibilité des bateaux selon la distance caméra.
  * À appeler tous les 3 frames depuis scene.js (même cadence que forestLOD).
  */
+// Frustum réutilisable + rayon de culling généreux (jamais de cull à tort : couvre
+// la coque + sillage + drop de courbure — cf. updateRailTrainLOD).
+const _boatLodFrustum = new THREE.Frustum();
+const _boatLodMatrix  = new THREE.Matrix4();
+const _boatLodSphere  = new THREE.Sphere();
+const _BOAT_CULL_RADIUS = 2.0;
+
 export function updateWaterBoatLOD(group, camera, lodFactor = 1.0) {
   const boats = group.userData.boats ?? [];
   const eff = LOD_BOAT_CULL_DISTANCE * lodFactor;
   const distSq = eff * eff;
+  _boatLodMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  _boatLodFrustum.setFromProjectionMatrix(_boatLodMatrix);
   // Distance 3D complète (X + Y + Z) : corrige le bug vue top-down où camera XZ ≈ bateau XZ
   // → dist2D ≈ 0 → bateau toujours visible. En vue verticale, la hauteur Y de la caméra
-  // est grande → distance 3D correcte → cull effectif.
+  // est grande → distance 3D correcte → cull effectif. + frustum (hors-champ latéral/arrière).
   for (const boat of boats) {
-    const visible = camera.position.distanceToSquared(boat.trackCenter) < distSq;
+    _boatLodSphere.set(boat.trackCenter, _BOAT_CULL_RADIUS);
+    const visible = camera.position.distanceToSquared(boat.trackCenter) < distSq
+      && _boatLodFrustum.intersectsSphere(_boatLodSphere);
     boat.object.visible = visible;
     if (boat.wake) boat.wake.visible = visible;
   }
