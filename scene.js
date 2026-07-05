@@ -507,35 +507,17 @@ export function initScene(options = {}) {
     console.log(`[toggleMeshByName] "${namePart}" → visible=${visible} sur ${count} object(s)`);
   };
 
-  // FLASH-DIAG : déclaré AVANT animate() pour éviter la temporal dead zone
-  let _flashPrevVisCount = -1;
-
   animate();
 
   function animate() {
     requestAnimationFrame(animate);
 
-    // ── PERF-TIMING : log toutes les 120 frames ─────────────────────────────
+    // ── PERF-TIMING : alimente le HUD CPU/GPU + log toutes les 120 frames ────
+    // (le bloc FLASH-DIAG — un scene.traverse() complet 1×/120f à 20-40 ms — a
+    //  été retiré : diagnostic pur qui provoquait un micro-freeze toutes les 2 s.)
     const _PT_ENABLE = (shadowRefreshFrame % 120 === 1);
-    let _pt0, _ptFlash, _ptCtrl, _ptAnim, _ptDecor, _ptSound, _ptRest;
+    let _pt0, _ptCtrl, _ptAnim, _ptDecor, _ptSound, _ptRest;
     if (_PT_ENABLE) _pt0 = performance.now();
-
-    // ── FLASH-DIAG frame-start ──────────────────────────────────────────────
-    // Compare le nombre de Mesh visibles au début de CETTE frame avec la fin
-    // de la PRÉCÉDENTE. Un pic ici = la visibilité a changé ENTRE deux frames
-    // (hors de tout code JS contrôlé → Three.js interne ou autre).
-    // NOTE: scene.traverse() ici coûte ~20-40ms/frame → exécuté 1×/120f seulement.
-    if (shadowRefreshFrame % 120 === 0) {
-      let _visNow = 0;
-      scene.traverse(o => { if (o.isMesh && o.visible) _visNow++; });
-      const _delta = _visNow - _flashPrevVisCount;
-      if (_flashPrevVisCount >= 0 && Math.abs(_delta) > 20) {
-        console.warn(`[FLASH-DIAG frame-start] SPIKE: ${_flashPrevVisCount} → ${_visNow} (${_delta > 0 ? '+' : ''}${_delta}) | frame=${shadowRefreshFrame} queueSize=${overlayRebuildQueue.size}`);
-      }
-      _flashPrevVisCount = _visNow;
-    }
-    if (_PT_ENABLE) _ptFlash = performance.now();
-    // ───────────────────────────────────────────────────────────────────────
 
     controls.update();
     if (_PT_ENABLE) _ptCtrl = performance.now();
@@ -685,8 +667,7 @@ export function initScene(options = {}) {
       const _ptEnd = performance.now();
       tickFps(renderer, scene, { jsMs: _ptRest - _pt0, renderMs: _ptEnd - _ptRest, gpuMs: _gpuMs, gpuTimerSupported: _gpuTimerSupported });
       console.log(
-        `[PERF-TIMING 120f] flash=${(_ptFlash-_pt0).toFixed(1)}ms` +
-        ` | ctrl=${(_ptCtrl-_ptFlash).toFixed(1)}ms` +
+        `[PERF-TIMING 120f] ctrl=${(_ptCtrl-_pt0).toFixed(1)}ms` +
         ` | anim=${(_ptAnim-_ptCtrl).toFixed(1)}ms` +
         ` | decor=${(_ptDecor-_ptAnim).toFixed(1)}ms` +
         ` | sound=${(_ptSound-_ptDecor).toFixed(1)}ms` +
