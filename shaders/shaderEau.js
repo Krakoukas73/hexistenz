@@ -134,21 +134,10 @@ export const waterFragmentShader = /* glsl */`
     float depthT = smoothstep(0.0, deepDist, vShoreDist);
     vec3 base = mix(uShallowColor, uDeepColor, depthT);
 
-    // ── Normales de vague (pour reflets/glints) ─────────────────────────────
-    float eps = 0.16;
-    float hL = (sin((p.x-eps)*1.8 + uTime*1.05) + sin(p.y*2.3 - uTime*1.30));
-    float hR = (sin((p.x+eps)*1.8 + uTime*1.05) + sin(p.y*2.3 - uTime*1.30));
-    float hD = (sin(p.x*1.8 + uTime*1.05) + sin((p.y-eps)*2.3 - uTime*1.30));
-    float hU = (sin(p.x*1.8 + uTime*1.05) + sin((p.y+eps)*2.3 - uTime*1.30));
-    vec3 n = normalize(vec3((hL - hR) * 0.07, 1.0, (hD - hU) * 0.07));
-    vec3 vDir = normalize(cameraPosition - vWorldPosition);
-
-    // ── Glints soleil (spéculaire ponctuel) ─────────────────────────────────
-    // Faux reflets ciel (Fresnel) retirés : eau plus plate/cute, sans halo de
-    // ciel aux angles rasants. uSkyColor n'est donc plus utilisé par le shader.
-    vec3 lightDir = normalize(vec3(0.5, 1.0, 0.35));
-    vec3 halfDir  = normalize(vDir + lightDir);
-    base += pow(max(dot(n, halfDir), 0.0), 60.0) * 0.45;
+    // Reflets ciel (Fresnel) ET glints soleil retirés : eau plate façon cute
+    // cartoon = dégradé de profondeur + écume uniquement. Les normales de vague
+    // (8 sin/pixel) qui n'alimentaient que ces effets sont supprimées aussi.
+    // uSkyColor n'est donc plus utilisé par le shader (uniforme dormant).
 
     // ── Écume Danil : texture unique, seuil qui monte de la surface vers la rive ─
     float tex = foamTex(p, uFoamScale, uTime * uFoamSpeed);
