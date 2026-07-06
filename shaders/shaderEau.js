@@ -143,9 +143,9 @@ export const waterFragmentShader = /* glsl */`
     vec3 n = normalize(vec3((hL - hR) * 0.07, 1.0, (hD - hU) * 0.07));
     vec3 vDir = normalize(cameraPosition - vWorldPosition);
 
-    // ── Faux reflets ciel (Fresnel léger) + glints soleil ───────────────────
-    float fres = pow(1.0 - max(dot(n, vDir), 0.0), 3.0);
-    base = mix(base, uSkyColor, fres * 0.32);
+    // ── Glints soleil (spéculaire ponctuel) ─────────────────────────────────
+    // Faux reflets ciel (Fresnel) retirés : eau plus plate/cute, sans halo de
+    // ciel aux angles rasants. uSkyColor n'est donc plus utilisé par le shader.
     vec3 lightDir = normalize(vec3(0.5, 1.0, 0.35));
     vec3 halfDir  = normalize(vDir + lightDir);
     base += pow(max(dot(n, halfDir), 0.0), 60.0) * 0.45;
