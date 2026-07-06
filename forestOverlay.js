@@ -16,7 +16,7 @@ import {
   MIN_TREE_DISTANCE,
   MAX_TREE_PLACEMENT_ATTEMPTS,
   TREE_WIND,
-  HEX_CHUNK_SIZE,
+  FOREST_CHUNK_SIZE,
   LOD_TREE_CULL_DISTANCE,
   HITBOX_R
 } from './variables.js';
@@ -41,7 +41,7 @@ const _lodPos = new THREE.Vector3();
 
 // Retourne la clé de chunk pour des coordonnées axiales (q, r)
 function getChunkKey(q, r) {
-  return `${Math.floor(q / HEX_CHUNK_SIZE)}:${Math.floor(r / HEX_CHUNK_SIZE)}`;
+  return `${Math.floor(q / FOREST_CHUNK_SIZE)}:${Math.floor(r / FOREST_CHUNK_SIZE)}`;
 }
 
 // Calcule une bounding sphere réelle en world-space à partir des matrices d'instances.

@@ -360,6 +360,14 @@ export const TEXT_LAYER = 1;
 // 3 donne ~9 tuiles par chunk ; pour GRID_RADIUS=6 → ~16 chunks actifs.
 export const HEX_CHUNK_SIZE = 3;
 
+// Chunk dédié à la FORÊT (arbres GLB), plus grand que HEX_CHUNK_SIZE. Les arbres
+// sont ÉPARS (mesuré : ~849 arbres / 20 variants → avec chunk=3, 400 InstancedMesh
+// à ~2 instances chacun, dont 181 IMs à 1 seule instance = overhead CPU pur pour
+// zéro bénéfice de culling). Des chunks plus grands regroupent bien plus d'instances
+// par IM (moins de draws + moins d'overhead par frame) en gardant un culling
+// régional. N'affecte PAS herbe/blé (structures non-InstancedMesh, chunk propre).
+export const FOREST_CHUNK_SIZE = 6;
+
 // Distance caméra–centre-chunk (world units) au-delà de laquelle les micro-objets
 // (fleurs, roseaux, champignons) sont masqués, même s'ils sont dans le frustum.
 // +23 % (était 13.0) : compense le rayon de chunk qui causait un culling prématuré.
