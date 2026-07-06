@@ -36,6 +36,7 @@ import { createDebugLightUI, tickFps } from './debugLightUi.js';
 import { createEnvironmentDirector, updateEnvironmentDirector } from './environmentDirector.js';
 import { createEnvironmentDebugPanel } from './environmentDebugUi.js';
 import { updateMorningMist } from './morningMistOverlay.js';
+import { createQualityUi } from './qualityUi.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, setAstreMode, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './threeSetup.js';
 import { applyShadowCulling, rebuildShadowCasters } from './shadowCulling.js';
@@ -135,6 +136,9 @@ export function initScene(options = {}) {
   // principal — sera fusionné dans createDebugLightUI plus tard si validé.
   const environmentDirector = createEnvironmentDirector();
   createEnvironmentDebugPanel(environmentDirector);
+
+  // Réglage de densité de contenu (qualité/FPS) — bouton flottant "⚙ QUALITÉ".
+  createQualityUi();
 
   // isSoleil : override localStorage > tirage aléatoire si aucune préférence stockée
   const _storedDayNight = localStorage.getItem('hexistenz_daynightmode');
@@ -428,6 +432,14 @@ export function initScene(options = {}) {
     rebuildWaterZoneOverlay(waterZoneOverlay, placedTiles);
     rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
     applySceneCurvatureFlags(waterSurfaceOverlay);
+  });
+
+  // Réglage de densité de contenu (qualité/FPS) : reconstruit tout le contenu
+  // scalé (props naturels, personnages, herbe, moutons) avec la nouvelle densité.
+  window.addEventListener('dorfromantik:content-density-changed', () => {
+    rebuildInitialDerivedOverlays();
+    applySceneCurvatureFlags(scene);
+    applySceneShadowFlags(scene);
   });
 
   // ── Globals de diagnostic exposés en console navigateur ────────────────────

@@ -27,6 +27,7 @@ import { makeNodeKey, getTileEdgeType } from './tileUtils.js';
 import { collectZone, getFullTextureNeighbors } from './zoneUtils.js';
 import { createGLTFLoader } from './glbLoader.js';
 import { hashUnit10k as hashUnit } from './hashUtils.js';
+import { scaledCountMin } from './contentDensity.js';
 import { getSectorWorldCenter, GROUND_CLEARANCE } from './propPlacement.js';
 import { registerPropHitbox, tryResolve } from './propHitboxRegistry.js';
 
@@ -236,7 +237,8 @@ function _cloneSheep(proto, scale, clip) {
 //   r ≥ 0.80 → immobile  (20 %)
 function _populateZone(group, zone, protos, prevWalkersByZone, nextWalkersByZone) {
   const { sectors, uniqueTiles, center } = zone;
-  const sheepCount = Math.max(1, Math.floor(uniqueTiles / TILES_PER_SHEEP));
+  // Densité de contenu (qualité/FPS) : moins de moutons à basse densité (min 1 par zone prairie).
+  const sheepCount = scaledCountMin(Math.max(1, Math.floor(uniqueTiles / TILES_PER_SHEEP)), 1);
 
   const zKey = _zoneKey(center);
   const { walker: protoWalker, grazer: protoGrazer, static: protoStatic,

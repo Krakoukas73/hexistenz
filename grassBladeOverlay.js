@@ -29,6 +29,7 @@ import { getGlobalWindUniforms } from './globalWind.js';
 import { WORLD_CURVATURE_UNIFORMS } from './worldCurvature.js';
 import { getTerrainSurfaceY } from './terrainHeight.js';
 import { GROUND_CLEARANCE } from './propPlacement.js';
+import { scaledCountMin } from './contentDensity.js';
 import { grassBladeVertexShader, grassBladeFragmentShader } from './shaders/shaderBrinsHerbe.js';
 import { getSectorContour, getTileCenterType, getCenterContour } from './tileMesh.js';
 import {
@@ -267,7 +268,7 @@ export function rebuildGrassBladeOverlay(group, placedTiles) {
       const contour = getSectorContour(sector, placedTile.tile.edges, edgeType);
       const sampler = buildPolygonSampler(contour);
 
-      const count   = GRASS_BLADE_COUNT;
+      const count   = scaledCountMin(GRASS_BLADE_COUNT, 4); // densité de contenu (qualité/FPS)
       const offsets = new Float32Array(count * 2);
       const yaws    = new Float32Array(count);
       const heights = new Float32Array(count);
@@ -332,7 +333,7 @@ export function rebuildGrassBladeOverlay(group, placedTiles) {
     const _cType = getTileCenterType(placedTile.tile);
     if (_cType === EDGE_TYPES.grass || _cType === EDGE_TYPES.forest) {
       const _cSurfaceY  = getTerrainSurfaceY({ x: 0, z: 0 }, _cType, 0) + GROUND_CLEARANCE; // formule unique
-      const _cCount     = GRASS_BLADE_COUNT;
+      const _cCount     = scaledCountMin(GRASS_BLADE_COUNT, 4); // densité de contenu (qualité/FPS)
       const _cOffsets   = new Float32Array(_cCount * 2);
       const _cYaws      = new Float32Array(_cCount);
       const _cHeights   = new Float32Array(_cCount);

@@ -31,6 +31,14 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { hashUnit10k as hashUnit, hashNumber } from './hashUtils.js';
+import { getContentDensity } from './contentDensity.js';
+
+// Grille de densité déterministe : réduit proportionnellement le nombre de
+// personnages (le poste CPU le plus lourd par item : draw individuel + squelette
+// animé) selon le réglage de densité de contenu. À densité 1.0, tout passe.
+function passesDensityGate(seed) {
+  return hashUnit(`${seed}:density-gate`) < getContentDensity();
+}
 import { axialToWorld } from './hex.js';
 import { getTileEdgeType, getTileCenterType } from './tileUtils.js';
 import { getEdgeValue } from './tileGenerator.js';
@@ -186,6 +194,7 @@ export function createVillageCharacters(placedTiles, specialBuildingSafeZones = 
       const pos = randomPointInSector(tilePos, seed, edge, 0.15, 0.85);
       if (isInsideSpecialBuildingSafeZone(pos, specialBuildingSafeZones)) continue;
 
+      if (!passesDensityGate(seed)) continue;
       const key = VILLAGE_CHARACTER_KEYS[Math.floor(hashUnit(`${seed}:variant`) * VILLAGE_CHARACTER_KEYS.length)];
       const character = placeCharacterOnTerrain(key, seed, pos, placedTile);
       if (!character) continue;
@@ -222,6 +231,7 @@ export function createForestCharacters(placedTiles, specialBuildingSafeZones = [
       for (let s = 0; s < slots; s++) {
         const seed = `${placedTile.key}:forest-character:${edge}:${s}`;
         if (hashUnit(`${seed}:roll`) > FOREST_CHARACTER_SLOT_CHANCE) continue;
+        if (!passesDensityGate(seed)) continue;
 
         // Ancré à cette arête forêt réelle (bug 2026-07-04 : voir randomPointInSector) —
         // dispersion large mais restreinte au coin angulaire du secteur, pas de hitbox à éviter.
@@ -261,6 +271,7 @@ export function createFieldFarmers(placedTiles, specialBuildingSafeZones = []) {
 
     for (let i = 0; i < count; i++) {
       const seed = `${placedTile.key}:field-farmer:${i}`;
+      if (!passesDensityGate(seed)) continue;
       const edge = fieldEdges[Math.floor(hashUnit(`${seed}:edge`) * fieldEdges.length)];
       // Même principe d'ancrage que randomPointInSector (forêt) — reste dans le secteur champ.
       const pos = randomPointInSector(tilePos, seed, edge, 0.32, 0.80);

@@ -24,6 +24,7 @@ import { getTileEdgeType, getTileCenterType } from './tileUtils.js';
 import { placeObjectOnTerrain, getTerrainNormalAt } from './terrainHeight.js';
 import { getCurvatureTiltQuaternion } from './worldCurvature.js';
 import { ROCK_DENSITY, HITBOX_R } from './variables.js';
+import { scaledCount } from './contentDensity.js';
 import { registerPropHitbox } from './propHitboxRegistry.js';
 import { getHexVertex, normalize2 } from './hexGeometry.js';
 import {
@@ -446,28 +447,30 @@ function getNaturalPropChance(kind, type, placedTile, edge, placedTiles) {
 
 function getNaturalPropCount(kind, type, seed, placedTile = null, edge = null, placedTiles = null) {
   const nearWater = placedTile && edge && placedTiles && isNearWaterDecorArea(placedTile, edge, placedTiles);
+  // scaledCount(...) : réduit par le réglage de densité de contenu (qualité/FPS).
+  // Les singletons (cerf, botte) restent à 1 (non scalés).
   if (kind === 'flower') {
-    return type === EDGE_TYPES.grass
+    return scaledCount(type === EDGE_TYPES.grass
       ? 83 + Math.floor(hashUnit(`${seed}:count`) * 76) // −15% (2026-07-04) −35% (2026-07-04 perf, était +15% moy 190→218, désormais moy ~142)
-      : 22 + Math.floor(hashUnit(`${seed}:count`) * 22); // −15% (2026-07-04) −35% (2026-07-04 perf, était +15% moy 52→60, désormais moy ~39)
+      : 22 + Math.floor(hashUnit(`${seed}:count`) * 22)); // −15% (2026-07-04) −35% (2026-07-04 perf, était +15% moy 52→60, désormais moy ~39)
   }
   // Brindilles — kind séparé pour densité indépendante
-  if (kind === 'brindille') return 42 + Math.floor(hashUnit(`${seed}:count`) * 31); // +28% (moy 45→57.5)
+  if (kind === 'brindille') return scaledCount(42 + Math.floor(hashUnit(`${seed}:count`) * 31)); // +28% (moy 45→57.5)
   // Prairie et forêt : plantes.glb uniquement — différencier ici sur type quand besoin.
-  if (kind === 'grass') return 132 + Math.floor(hashUnit(`${seed}:count`) * 54); // −12% (2026-07-04, perf triangles "plantes à baies" — était 150+61, moy ~180→~159) −12% (était 170+69, moy ~205→~180) −20% (était 213+86, moy ~256→~205) −15% (2026-07-04, "autres plantes") −35% (2026-07-04 perf : pool "grass" dominé à 70% par les baies, gros poste triangles GPU) — était +17% (moy 396→463), désormais moy ~300
-  if (kind === 'shrub') return 16 + Math.floor(hashUnit(`${seed}:count`) * 19);   // −15% (2026-07-04, "autres plantes") +16% (moy 25.5→30)
+  if (kind === 'grass') return scaledCount(132 + Math.floor(hashUnit(`${seed}:count`) * 54)); // −12% (2026-07-04, perf triangles "plantes à baies" — était 150+61, moy ~180→~159) −12% (était 170+69, moy ~205→~180) −20% (était 213+86, moy ~256→~205) −15% (2026-07-04, "autres plantes") −35% (2026-07-04 perf : pool "grass" dominé à 70% par les baies, gros poste triangles GPU) — était +17% (moy 396→463), désormais moy ~300
+  if (kind === 'shrub') return scaledCount(16 + Math.floor(hashUnit(`${seed}:count`) * 19));   // −15% (2026-07-04, "autres plantes") +16% (moy 25.5→30)
   if (kind === 'deer')    return 1; // toujours 1 seul cerf par cluster
   if (kind === 'rock') {
-    return (nearWater || type === EDGE_TYPES.grass)
+    return scaledCount((nearWater || type === EDGE_TYPES.grass)
       ? 5 + Math.floor(hashUnit(`${seed}:count`) * 11)  // +15% (moy 9→10.5)
-      : 4 + Math.floor(hashUnit(`${seed}:count`) *  8); // +15% (moy 7→8)
+      : 4 + Math.floor(hashUnit(`${seed}:count`) *  8)); // +15% (moy 7→8)
   }
   if (kind === 'reed') {
-    return nearWater
+    return scaledCount(nearWater
       ? 10 + Math.floor(hashUnit(`${seed}:count`) * 8)  // +10% (moy 12.5→14)
-      :  4 + Math.floor(hashUnit(`${seed}:count`) * 6); // +10% (moy 6.5→7)
+      :  4 + Math.floor(hashUnit(`${seed}:count`) * 6)); // +10% (moy 6.5→7)
   }
-  if (kind === 'mushroom') return 16 + Math.floor(hashUnit(`${seed}:count`) * 26); // −15% (2026-07-04) −35% (2026-07-04 perf, était +14% moy 46.5→53, désormais moy ~34.5)
+  if (kind === 'mushroom') return scaledCount(16 + Math.floor(hashUnit(`${seed}:count`) * 26)); // −15% (2026-07-04) −35% (2026-07-04 perf, était +14% moy 46.5→53, désormais moy ~34.5)
   if (kind === 'hay-bale')     return 1; // 1 botte par cluster
   if (kind === 'pile-de-bois') return 1 + Math.floor(hashUnit(`${seed}:count`) * 2); // moy 1.5 par cluster
   return 1;
