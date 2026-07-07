@@ -12,21 +12,24 @@ export function getTileCenterType(placedTile) {
   return placedTile.tile.center ?? null;
 }
 
+/** Dispose récursivement géométrie/matériaux/squelette d'un objet et de ses descendants
+ *  (sans le retirer de son parent — l'appelant s'en charge). Ne dispose pas les matériaux
+ *  partagés avec un prototype GLB (flag glbPrototype), réutilisés par _reusePrototypeMaterials. */
+export function disposeObject3D(object) {
+  object.traverse?.(o => {
+    o.geometry?.dispose?.();
+    const disposeMat = m => { if (m && !m.userData?.glbPrototype) m.dispose?.(); };
+    if (Array.isArray(o.material)) o.material.forEach(disposeMat);
+    else disposeMat(o.material);
+    // Dispose la DataTexture bone matrix (Three.js r145+) — chaque cloneSkeleton() crée
+    // un Skeleton propre (pas partagé), dispose() est donc toujours sûr ici.
+    if (o.isSkinnedMesh && o.skeleton?.dispose) o.skeleton.dispose();
+  });
+}
+
 export function clearGroup(group) {
   while (group.children.length > 0) {
-    const child = group.children.pop();
-    child.traverse?.(object => {
-      object.geometry?.dispose?.();
-      // Ne pas disposer les matériaux partagés avec un prototype GLB (flag glbPrototype).
-      // Ces matériaux sont réutilisés par _reusePrototypeMaterials ; les disposer ici
-      // détruirait le prototype → objets blancs après rebuild.
-      const disposeMat = m => { if (m && !m.userData?.glbPrototype) m.dispose?.(); };
-      if (Array.isArray(object.material)) object.material.forEach(disposeMat);
-      else disposeMat(object.material);
-      // Dispose la DataTexture bone matrix (Three.js r145+) — chaque cloneSkeleton() crée
-      // un Skeleton propre (pas partagé), dispose() est donc toujours sûr ici.
-      if (object.isSkinnedMesh && object.skeleton?.dispose) object.skeleton.dispose();
-    });
+    disposeObject3D(group.children.pop());
   }
 }
 

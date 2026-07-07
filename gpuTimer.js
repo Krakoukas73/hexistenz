@@ -41,6 +41,13 @@ export function createGpuTimer(renderer) {
   let activeQuery = null;
   let lastMs = null;
 
+  // 2026-07-05 — diagnostic oscillation GPU (cf. threeSetup.js powerPreference) :
+  // GPU_DISJOINT_EXT signale un changement de fréquence GPU (DVFS) ou un reset pilote pendant
+  // la requête — si ça se déclenche souvent, l'oscillation 15-45ms observée sur scène statique
+  // vient du throttling matériel/pilote, pas du code de rendu. Compteur exposé + log throttlé.
+  let disjointCount = 0;
+  let pollCount = 0;
+
   return {
     supported: true,
 
@@ -66,6 +73,13 @@ export function createGpuTimer(renderer) {
       // GPU_DISJOINT_EXT : un évènement disjoint (changement de fréquence GPU, reset
       // pilote…) invalide toute mesure en cours de vol — on vide sans lire ces résultats.
       const disjoint = gl.getParameter(ext.GPU_DISJOINT_EXT);
+      pollCount++;
+      if (disjoint) {
+        disjointCount++;
+        if (disjointCount % 20 === 1) {
+          console.warn(`[GPU-TIMER-DIAG] GPU_DISJOINT_EXT détecté (${disjointCount}/${pollCount} polls) — changement de fréquence GPU ou reset pilote en cours de mesure`);
+        }
+      }
 
       while (pending.length > 0) {
         const q = pending[0];
@@ -78,6 +92,7 @@ export function createGpuTimer(renderer) {
         pending.shift();
       }
       return lastMs;
-    }
+    },
+    getDisjointStats() { return { disjointCount, pollCount }; },
   };
 }

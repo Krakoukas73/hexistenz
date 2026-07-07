@@ -10,7 +10,7 @@ import { COLOR_GRADING_SHADER } from './visualEnvironment.js';
 import { CINEMATIC_SHADER } from './cinematicPass.js';
 import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS, getWorldCurvatureDrop, markNoWorldCurvature } from './worldCurvature.js';
 import { ensureStarUniverse, updateStarUniverse } from './starUniverse.js';
-import { createGpuTimer } from './gpuTimer.js';
+import { createGpuProfiler } from './gpuProfiler.js';
 import { clamp01 } from './tileUtils.js';
 
 export const WORLD_LAYER = 0;
@@ -42,7 +42,10 @@ export function createRenderer(canvas) {
   // s'appliquerait qu'au quad plein écran final de l'OutputPass (bords hors-écran)
   // → aucun effet visuel, seulement un coût mémoire + resolve à chaque présentation.
   // Vérifié : composer.renderTarget1/2.samples === 0. Rendu strictement identique.
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+  // powerPreference 'high-performance' (Piregwan 2026-07-05) : force le GPU discret /
+  // l'état d'alimentation haute perf sur laptops hybrides plutôt que de laisser le
+  // driver/OS choisir un mode économe (cf. diagnostic oscillation GPU, gpuProfiler.js).
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -52,6 +55,19 @@ export function createRenderer(canvas) {
   renderer.shadowMap.type = THREE.BasicShadowMap;
   renderer.shadowMap.autoUpdate = true;
   renderer.info.autoReset = false; // reset manuel dans animate() pour cumuler toutes les passes
+  // 2026-07-05 — CORRECTIF RÉEL du throttle GPU périodique (~0.9s, ~48-52ms/coup) : analyse de
+  // la trace Performance (Trace-20260705T225903) montre 52%+ du temps de CHAQUE stall dans
+  // WebGLProgram.onFirstUse → gl.getProgramInfoLog/getShaderInfoLog/getProgramParameter. Ce bloc
+  // entier (three.module.js ~L20271) n'existe QUE si renderer.debug.checkShaderErrors === true
+  // (valeur par défaut de Three.js) — ce sont des appels de VALIDATION synchrones qui forcent le
+  // driver GPU à attendre la fin du link du shader, à chaque toute première utilisation réelle
+  // d'un matériau (mesure exacte, pas une supposition). renderer.compile() (tenté avant) ne
+  // suffit PAS : il déclenche la compilation mais PAS cet appel de validation, qui reste
+  // paresseux et n'arrive que lors du premier rendu réel — d'où l'absence d'effet du fix
+  // précédent. Désactiver ce flag (recommandation officielle Three.js une fois les shaders du
+  // projet validés) supprime entièrement ce coût, quel que soit le moment où un matériau est
+  // utilisé pour la première fois.
+  renderer.debug.checkShaderErrors = false;
   return renderer;
 }
 
@@ -359,9 +375,11 @@ export function createPixelPostprocess(renderer, scene, camera) {
   composer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
   composer.setSize(window.innerWidth, window.innerHeight);
 
-  // Mesure GPU réelle (2026-07-04) — cf. gpuTimer.js : le chrono JS autour de render()
-  // ne mesurait que la soumission CPU, pas l'exécution GPU réelle.
-  const gpuTimer = createGpuTimer(renderer);
+  // Mesure GPU réelle (2026-07-04, affinée 2026-07-05) — cf. gpuTimer.js : le chrono JS
+  // autour de render() ne mesurait que la soumission CPU, pas l'exécution GPU réelle.
+  // 2026-07-05 : un seul timer global ne dit pas QUELLE passe est responsable quand le
+  // GPU oscille (cf. gpuProfiler.js) — remplacé par N timers séquentiels, un par passe.
+  const gpuProfiler = createGpuProfiler(renderer);
 
   const settings = {
     enabled: true,
@@ -411,12 +429,29 @@ export function createPixelPostprocess(renderer, scene, camera) {
       }
       this.fsQuad.render(renderer);
     };
+    // Chronométrage GPU dédié à cette passe (monde + ciel/nuages + eau + ombres internes) —
+    // appliqué APRÈS le monkey-patch ci-dessus pour englober tout son travail réel.
+    // 2026-07-05 : hypothèse nuages réfutée par le test utilisateur (oscillation identique
+    // nuages désactivés) — shaderCiel.js confirmé avec bypass correct (uEnabled<0.5 → return
+    // avant le ray-march, donc coût nuages bien nul). Nouvelle piste : renderer.shadowMap.autoUpdate
+    // n'est vrai qu'1 frame sur 3 (cf. scene.js ~L670) → la shadow map (terrain entier, 53.9%
+    // des triangles) n'est recalculée que 33% des frames, à l'intérieur de CETTE passe. Split
+    // conditionnel pour isoler ce coût sans ambiguïté (pas de désalignement possible : le
+    // prédicat est évalué en synchrone à l'appel, pas sur l'historique async du timer GPU).
+    gpuProfiler.wrapPassConditional(
+      pixelPass,
+      'beauty — ombre recalculée ce frame',
+      'beauty — ombre réutilisée (cache)',
+      (r) => r.shadowMap.autoUpdate
+    );
   }
 
   const colorGradingPass = new ShaderPass(COLOR_GRADING_SHADER);
+  gpuProfiler.wrapPass(colorGradingPass, 'colorGrading (LUT)');
 
   // ── Effets cinématiques (tilt-shift · vignette · grain · aberration) ──────
   const cinemaPass = new ShaderPass(CINEMATIC_SHADER);
+  gpuProfiler.wrapPass(cinemaPass, 'cinématique (godrays/bloom/CRT)');
   // uResolution nécessite un THREE.Vector2 pour le .set() dans render() ;
   // on l'injecte ici car cinematicPass.js ne dépend pas de THREE.
   cinemaPass.uniforms.uResolution = { value: new THREE.Vector2(window.innerWidth, window.innerHeight) };
@@ -513,10 +548,13 @@ export function createPixelPostprocess(renderer, scene, camera) {
     cinemaPass.uniforms.uGodRays.value = baseIntensity * fade;
   }
 
+  const outputPass = new OutputPass();
+  gpuProfiler.wrapPass(outputPass, 'output (tonemap/sRGB)');
+
   composer.addPass(pixelPass);
   composer.addPass(colorGradingPass);
   composer.addPass(cinemaPass);
-  composer.addPass(new OutputPass());
+  composer.addPass(outputPass);
 
   function renderWorldLayer() {
     camera.layers.set(WORLD_LAYER);
@@ -555,7 +593,7 @@ export function createPixelPostprocess(renderer, scene, camera) {
       }
     }
 
-    renderer.render(scene, camera);
+    gpuProfiler.timeSync('texte (labels hex)', () => renderer.render(scene, camera));
 
     for (const child of _hidden) child.visible = true;
     renderer.shadowMap.autoUpdate = prevAutoUpdate;
@@ -640,21 +678,25 @@ export function createPixelPostprocess(renderer, scene, camera) {
       cinemaPass.uniforms.uResolution.value.y  = renderer.domElement.height;
       _updateGodRaysUniform();
 
-      // Englobe TOUT le rendu GPU de la frame (monde + texte) — résultat lu via getGpuMs()
-      // quelques frames plus tard (requête async, cf. gpuTimer.js).
-      gpuTimer.begin();
+      // Chaque passe (beauty/colorGrading/cinéma/output/texte) est chronométrée
+      // individuellement par gpuProfiler (cf. gpuProfiler.js) — jamais de requête
+      // TIME_ELAPSED imbriquée puisque les passes s'exécutent séquentiellement.
       renderWorldLayer();
       renderTextLayer();
-      gpuTimer.end();
+      gpuProfiler.poll(); // récupère les résultats async disponibles (peut dater de 1-3 frames)
 
       scene.background = previousBackground;
       scene.fog = previousFog;
       renderer.autoClear = previousAutoClear;
       camera.layers.mask = previousMask;
     },
-    gpuTimerSupported: gpuTimer.supported,
+    gpuProfiler,
+    wrapExtraPass(pass, label) {
+      return gpuProfiler.wrapPass(pass, label);
+    },
+    gpuTimerSupported: gpuProfiler.supported,
     getGpuMs() {
-      return gpuTimer.poll();
+      return gpuProfiler.getTotalMs();
     }
   };
 }

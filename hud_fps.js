@@ -306,10 +306,21 @@ export function tickFps(renderer, scene, perfTiming = null) {
   _fpsFrameCount++;
   const now = performance.now();
 
-  // Scan scène toutes les 2 s (coûteux, on ralentit)
-  if (scene && now - _statsLastTime > 2000) {
+  // Scan scène toutes les 2 s (coûteux, on ralentit) — MAIS seulement si le panneau détaillé
+  // est réellement ouvert : _cachedCounts n'est utilisé que par _buildHud() quand
+  // _fpsHudExpanded=true (cf. `if (!_fpsHudExpanded) return header;` plus bas). Repéré
+  // 2026-07-05 : ce scan tournait AVANT inconditionnellement, TOUJOURS, même HUD fermé —
+  // et son coût (scene.traverse() complet, des milliers de nœuds) tombe APRÈS le point de
+  // mesure _ptEnd dans scene.js (tickFps est appelé une fois _ptEnd déjà capturé), donc
+  // invisible dans [PERF-TIMING]/TOTAL-JS tout en bloquant le thread principal avant le
+  // prochain requestAnimationFrame → explique un [SCENE-DIAG] écart rAF élevé (jusqu'à
+  // 48-56ms) sans aucune trace dans le JS mesuré. Log de coût réel gardé pour vérification.
+  if (scene && _fpsHudExpanded && now - _statsLastTime > 2000) {
+    const _scanT0 = performance.now();
     _cachedCounts = scanScene(scene);
     _statsLastTime = now;
+    const _scanMs = performance.now() - _scanT0;
+    if (_scanMs > 5) console.warn(`[SCANSCENE-DIAG] scanScene() coût réel: ${_scanMs.toFixed(1)}ms (bloque le thread principal, invisible dans PERF-TIMING)`);
   }
 
   // Affichage toutes les 500 ms

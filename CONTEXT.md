@@ -2,7 +2,7 @@
 
 ## 1. Nature du projet
 
-**Version courante : `v0.9.1.21`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
+**Version courante : `v0.9.2`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
 
 Jeu web contemplatif de pose de tuiles hexagonales, inspiré de Dorfromantik / The Settlers / HoMM. Le joueur pioche une tuile, la tourne, la pose sur une grille hexagonale. Chaque tuile a 6 secteurs triangulaires (biomes ou réseaux). Objectif : connecter les biomes, compléter des missions, maximiser le score.
 
@@ -674,6 +674,8 @@ La quasi-totalité des évolutions passées (eau, courbure monde, panel EDA, fum
 
 **Merge du système eau (intégration Cyril, 2026-07-01)** — la branche fusionnée partait d'une base vieille de 3 jours ; 3 régressions ont été repérées et écartées à l'intégration : suppression de `sheepOverlay` dans `scene.js`, retour de `TREE_WIND.strength` à 0.062 (annulait le fix "brindilles", §9), perte d'arguments dans `maybeGenerateMissionForTile`/`updateDeckUI`. Leçon : re-fusionner une branche ancienne exige de rediffer chaque fichier touché, pas seulement de merger — cf. piège en §26.
 
+**⚙️ Throttle GPU périodique résolu — curseurs multijoueur fantômes jamais expirés** (2026-07-06, v0.9.2) : investigation de ~2 jours sur un GPU qui throttlait (jusqu'à 100%) même caméra/scène strictement immobiles, en solo comme en multi — sauf qu'il n'existe plus de vrai mode solo dans Hexistenz (toute partie est jouable en multijoueur via `?multi=CODE`). Root cause : `multiplayer.php::update_cursor()` ajoutait un curseur par `playerId` à chaque survol distant mais n'en supprimait **jamais** côté serveur. Une room de test (`room_SMALL.json`) avait accumulé 21 curseurs fantômes, certains vieux de +24 jours, tous `visible=true` pour toujours — chacun faisait recréer un mesh de tuile transparent (`DoubleSide`) via `renderRemoteCursors()` (scene.js) toutes les 900ms (`setInterval(refreshMultiplayerRoom, 900)`), soit le cycle de ~51-54 frames observé depuis le début. Le nombre de fantômes grossissait à chaque nouvelle session de test, expliquant l'aggravation progressive du symptôme au fil des jours. Fix : purge automatique par TTL (20s) côté serveur (`prune_stale_cursors()`, appelée sur `poll` et `cursor`) + filtre défensif identique côté client. Résultat validé : GPU 100% → 2-3% en caméra haute idle. cf. piège en §26.
+
 ---
 
 ## 22. Ciel volumétrique (`cloudSky.js` + `shaders/shaderCiel.js`)
@@ -825,6 +827,8 @@ Catégories dominantes en DC (hors végétation, déjà bien batchée) :
 **Nouvel `InstancedMesh` qui réactive toutes les ombres** — sans `userData.castShadowOriginal` + `shadowFlagsApplied=true` posés explicitement à la création, `applySceneShadowFlags()` (§18) traite le mesh comme neuf et force `castShadow=true`, annulant l'optimisation "1 seul caster par variant". cf. §17.
 
 **Timer GPU CPU-side trompeur** — `performance.now()` autour de `renderer.render()`/`composer.render()` mesure la soumission CPU, pas l'exécution GPU réelle (WebGL est asynchrone) : un rendu GPU-bound peut afficher un temps CPU bas et stable même à 100% de charge GPU réelle, masquant complètement le goulot d'étranglement. Fix (2026-07-05) : requête GPU asynchrone via `EXT_disjoint_timer_query_webgl2` (`gpuTimer.js`), pollée chaque frame (`postprocess.getGpuMs()`), fusionnée (`Object.assign`, pas remplacement) dans `_lastPerfTiming` du HUD FPS puisque le GPU réel se met à jour bien plus souvent que le timing CPU échantillonné (1 frame sur 120). cf. §25.
+
+**Curseurs multijoueur distants jamais expirés côté serveur** — `multiplayer.php::update_cursor()` ajoute un curseur par `playerId` dans `room['cursors']` mais ne retirait jamais les entrées silencieuses. Comme il n'existe pas de mode solo réel (§21), toute room de test accumule un curseur fantôme permanent par session/rechargement, chacun forçant `renderRemoteCursors()` (scene.js) à recréer un mesh de tuile transparent (`DoubleSide`, `previewWater`) toutes les 900ms — un stall périodique qui grossit avec le nombre de sessions passées sur la même room, quasi indétectable si on ne pense pas à vérifier l'ANCIENNETÉ des données, seulement leur présence/absence. Fix : `prune_stale_cursors()` (TTL 20s) sur `poll`/`cursor` côté serveur + filtre identique côté client (§21). Piège général : face à un stall dont la période colle à un `setInterval` connu, vérifier les DONNÉES réelles qu'il traite (âge, volume), pas seulement si le mécanisme est actif.
 
 ---
 
