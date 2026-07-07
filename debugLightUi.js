@@ -83,7 +83,7 @@ function installDebugLightCss() {
       border-radius: 12px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.35);
       padding: 14px 16px;
-      width: 360px;
+      width: 432px; /* +20% (2026-07-04) — place pour le % de triangles par catégorie */
       max-width: calc(100vw - 28px);
       box-sizing: border-box;
       /* Limite la hauteur totale à l'écran disponible, avec scroll interne.
@@ -196,7 +196,9 @@ function installDebugLightCss() {
     /* Lignes catégories (icône + label + stats colonnes) */
     .fps-hud-row-cat {
       display: grid;
-      grid-template-columns: 1fr 3.5ch 11ch 3.2ch 8.5ch;
+      /* obj réduite, ☂ élargie d'autant (2026-07-04) — la colonne ombres tronquait les
+         valeurs à 3 chiffres (ex. ☂210) ; dernière colonne élargie pour le % de triangles */
+      grid-template-columns: 1fr 2ch 11ch 4.7ch 15ch;
       gap: 3px;
       align-items: baseline;
       font-size: 11px;
@@ -247,6 +249,13 @@ function installDebugLightCss() {
       font-variant-numeric: tabular-nums;
       color: rgba(130,195,255,0.90);
       text-align: right;
+    }
+
+    .fps-hud-cat-tri-pct {
+      font-size: 9px;
+      font-weight: 600;
+      color: rgba(130,195,255,0.55);
+      margin-left: 3px;
     }
 
     .fps-hud-cat-shadow {
@@ -1088,6 +1097,14 @@ function installDebugLightCss() {
 
     /* LUT ouvert → masquer les HUDs droits (tuile courante / suivante / restantes / missions) */
     body.lut-panel-open #tileUI { display: none !important; }
+
+    /* HUD FPS déployé (ou EDA ouvert) → masque le score (panneau + gros score arcade en haut à
+       gauche + dernier coup entre parenthèses, ce dernier est un enfant de #arcadeScore donc
+       masqué avec lui), même mécanisme que huds-force-hidden ci-dessus (classe body + !important)
+       plutôt qu'un style inline direct : garantit la priorité sur toute autre règle CSS,
+       cf. piège HUD FPS/score 2026-07-05. */
+    body.fps-hud-deployed #scorePanel  { display: none !important; }
+    body.fps-hud-deployed #arcadeScore { display: none !important; }
 
     /* FPS HUD plein hauteur — le scorePanel est masqué via JS, le fps-counter occupe toute la hauteur */
     .debug-light-panel.fps-hud-fullscreen {

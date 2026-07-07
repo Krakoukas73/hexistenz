@@ -8,6 +8,7 @@ import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getTrainRailY } from './terrainHeight.js';
 import { getWorldCurvatureDrop } from './worldCurvature.js';
+import { smoothstep } from './tileUtils.js';
 
 const TRAIN_Y = (TILE_VISUAL.railY ?? -0.043) - 0.050; // centre train = sous la surface du rail
 const TRAIN_SPEED = 0.18;
@@ -167,14 +168,32 @@ export function updateRailTrainOverlay(group, timeSeconds = 0) {
   }
 }
 
+// Frustum réutilisable (évite une allocation par appel LOD).
+const _railLodFrustum = new THREE.Frustum();
+const _railLodMatrix  = new THREE.Matrix4();
+const _railLodSphere  = new THREE.Sphere();
+// Rayons de culling volontairement GÉNÉREUX : couvrent l'emprise de l'objet + le
+// drop de courbure monde (le centre plat trackCenter/center est au-dessus de la
+// position réellement rendue en bouliste). Conséquence : on ne culle JAMAIS à
+// tort (au pire on n'élimine rien), on n'élimine que ce qui est franchement
+// hors-champ. Trains longs → rayon large ; gares (bâtiments) → moyen.
+const _RAIL_TRAIN_CULL_RADIUS   = 5.0;
+const _RAIL_STATION_CULL_RADIUS = 3.5;
+
 export function updateRailTrainLOD(group, camera, lodFactor = 1.0) {
   const eff = LOD_TRAIN_CULL_DISTANCE * lodFactor;
   const distSq = eff * eff;
+  _railLodMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  _railLodFrustum.setFromProjectionMatrix(_railLodMatrix);
   for (const train of (group.userData.trains ?? [])) {
-    train.object.visible = camera.position.distanceToSquared(train.trackCenter) < distSq;
+    _railLodSphere.set(train.trackCenter, _RAIL_TRAIN_CULL_RADIUS);
+    train.object.visible = camera.position.distanceToSquared(train.trackCenter) < distSq
+      && _railLodFrustum.intersectsSphere(_railLodSphere);
   }
   for (const station of (group.userData.stations ?? [])) {
-    station.object.visible = camera.position.distanceToSquared(station.center) < distSq;
+    _railLodSphere.set(station.center, _RAIL_STATION_CULL_RADIUS);
+    station.object.visible = camera.position.distanceToSquared(station.center) < distSq
+      && _railLodFrustum.intersectsSphere(_railLodSphere);
   }
 }
 
@@ -1017,10 +1036,6 @@ function easeInOutSine(t) {
   return -(Math.cos(Math.PI * t) - 1) / 2;
 }
 
-function smoothstep(edge0, edge1, value) {
-  const t = Math.max(0, Math.min(1, (value - edge0) / Math.max(edge1 - edge0, 0.0001)));
-  return t * t * (3 - 2 * t);
-}
 
 function lerp(a, b, t) {
   return a + (b - a) * t;

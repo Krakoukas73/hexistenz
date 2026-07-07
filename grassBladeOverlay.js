@@ -28,6 +28,8 @@ import { getEdgeType } from './tileGenerator.js';
 import { getGlobalWindUniforms } from './globalWind.js';
 import { WORLD_CURVATURE_UNIFORMS } from './worldCurvature.js';
 import { getTerrainSurfaceY } from './terrainHeight.js';
+import { GROUND_CLEARANCE } from './propPlacement.js';
+import { scaledCountMin } from './contentDensity.js';
 import { grassBladeVertexShader, grassBladeFragmentShader } from './shaders/shaderBrinsHerbe.js';
 import { getSectorContour, getTileCenterType, getCenterContour } from './tileMesh.js';
 import {
@@ -256,14 +258,17 @@ export function rebuildGrassBladeOverlay(group, placedTiles) {
         x: (vA.x + vB.x) * 0.5 * depth,
         z: (vA.z + vB.z) * 0.5 * depth
       };
-      // +0.005 : décalage anti-Z-fight + remontée au-dessus surface visuelle
-      const surfaceY = getTerrainSurfaceY(sectorCenterLocal, edgeType, 0) + 0.005;
+      // Formule unique (2026-07-04) : sol strictement plat par biome + GROUND_CLEARANCE, le
+      // même petit jeu fixe utilisé par tous les props du jeu (cf. propPlacement.js). L'ancien
+      // +0.005 fixe et propre à ce fichier représentait ~50% de la hauteur réelle d'un brin —
+      // décollement massif visible ("brins d'herbe flottent en prairie").
+      const surfaceY = getTerrainSurfaceY(sectorCenterLocal, edgeType, 0) + GROUND_CLEARANCE;
 
       // Contour réel du secteur après turbulence (bords grignotés, identique au rendu)
       const contour = getSectorContour(sector, placedTile.tile.edges, edgeType);
       const sampler = buildPolygonSampler(contour);
 
-      const count   = GRASS_BLADE_COUNT;
+      const count   = scaledCountMin(GRASS_BLADE_COUNT, 4); // densité de contenu (qualité/FPS)
       const offsets = new Float32Array(count * 2);
       const yaws    = new Float32Array(count);
       const heights = new Float32Array(count);
@@ -327,8 +332,8 @@ export function rebuildGrassBladeOverlay(group, placedTiles) {
     // On génère ici le mesh brins correspondant pour couvrir le centre.
     const _cType = getTileCenterType(placedTile.tile);
     if (_cType === EDGE_TYPES.grass || _cType === EDGE_TYPES.forest) {
-      const _cSurfaceY  = getTerrainSurfaceY({ x: 0, z: 0 }, _cType, 0) + 0.001;
-      const _cCount     = GRASS_BLADE_COUNT;
+      const _cSurfaceY  = getTerrainSurfaceY({ x: 0, z: 0 }, _cType, 0) + GROUND_CLEARANCE; // formule unique
+      const _cCount     = scaledCountMin(GRASS_BLADE_COUNT, 4); // densité de contenu (qualité/FPS)
       const _cOffsets   = new Float32Array(_cCount * 2);
       const _cYaws      = new Float32Array(_cCount);
       const _cHeights   = new Float32Array(_cCount);

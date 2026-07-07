@@ -529,3 +529,15 @@ function shortestHueDelta(from, to) {
   if (delta < -0.5) delta += 1;
   return delta;
 }
+
+// 2026-07-06 — DIAG BORNÉ (remplace le watcher par setter qui a fait planter Chrome) : simple
+// lecture passive de .transparent/.side sur les matériaux biome mis en cache, sans setter, sans
+// stack trace. Coût = quelques lectures de propriétés, appelé depuis scene.js à cadence contrôlée.
+export function debugBiomeMaterialSnapshot() {
+  const out = [];
+  for (const [key, material] of materialCache) {
+    if (!material?.isMaterial) continue;
+    out.push(`${material.name || key}:t=${material.transparent ? 1 : 0}:s=${material.side}`);
+  }
+  return out.join(' | ');
+}

@@ -5,6 +5,7 @@ import {
   colorGradingVertexShader, colorGradingFragmentShader,
   domeCielVertexShader,     domeCielFragmentShader
 } from './shaders/shaderEnvironnement.js';
+import { clamp01 } from './tileUtils.js';
 
 export const DEFAULT_VISUAL_ENVIRONMENT_CONFIG = {
   presetName: 'hexistenz-default',
@@ -29,7 +30,7 @@ export const DEFAULT_VISUAL_ENVIRONMENT_CONFIG = {
     sunIntensity: 2.10,
     sunOrbitEnabled: true,
     sunOrbitRadius: 10.5,
-    sunOrbitHeight: 8.4,
+    sunOrbitHeight: 3.40,
     sunOrbitSpeed: 0.06,
     sunVisualScale: 0.78,
     fillColor: '#c4d8f0',               // légèrement plus chaud
@@ -198,7 +199,7 @@ export function applyEnvironment(scene, renderer, dome, config = DEFAULT_VISUAL_
     ...(sun.userData.orbit ?? {}),
     enabled: lights.sunOrbitEnabled !== false,
     radius: Number(lights.sunOrbitRadius ?? 10.5),
-    height: Number(lights.sunOrbitHeight ?? 8.4),
+    height: Number(lights.sunOrbitHeight ?? 3.40),
     speed: Number(lights.sunOrbitSpeed ?? 0.06),
     visualScale: Number(lights.sunVisualScale ?? 1.18)
   };
@@ -379,6 +380,3 @@ function mergeDeep(target, source) {
   return target;
 }
 
-function clamp01(value) {
-  return Math.min(1, Math.max(0, Number(value) || 0));
-}

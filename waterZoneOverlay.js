@@ -3,7 +3,7 @@ import { TEXT_LAYER, registerCurvedSprite } from './threeSetup.js';
 import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { createOuterVertices } from './hexGeometry.js';
-import { makeNodeKey, getTileEdgeType, clearGroup } from './tileUtils.js';
+import { makeNodeKey, getTileEdgeType, clearGroup, disposeObject3D } from './tileUtils.js';
 import { collectZone, getFullTextureNeighbors } from './zoneUtils.js';
 import { createWaterBeachMesh } from './waterBeachGeometry.js';
 import { buildShoreDisplacementMap } from './waterSurfaceOverlay.js';
@@ -89,18 +89,52 @@ export function createHoverZoneOverlay() {
   return group;
 }
 
+// Signature de la dernière zone survolée pour laquelle le contour a été construit.
+// undefined = jamais construit (force le premier rebuild). null = aucune zone (contour vide).
+let _lastHoverSignature = undefined;
+
+// ── Instrumentation temporaire (diagnostic throttle GPU au survol) ──────────────
+// Compte les appels totaux vs les rebuilds réellement exécutés (signature changée),
+// pour vérifier depuis scene.js si le garde anti-thrash fonctionne comme prévu.
+let _hoverRebuildCalls = 0;
+let _hoverRebuildFullCount = 0;
+export function getHoverRebuildStats() {
+  return { calls: _hoverRebuildCalls, full: _hoverRebuildFullCount };
+}
+export function resetHoverRebuildStats() {
+  _hoverRebuildCalls = 0;
+  _hoverRebuildFullCount = 0;
+}
+
 export function rebuildHoverZoneOverlay(overlay, hoverHex, worldPoint, placedTiles, zoneOverlay = null) {
+  _hoverRebuildCalls++;
+  // Calcule la signature de la zone actuellement survolée (ou null si rien à afficher),
+  // SANS toucher au groupe — permet de comparer avant de payer le coût du rebuild.
+  let placedTile = null, hoveredEdge = null, type = null, signature = null;
+  if (hoverHex && worldPoint) {
+    placedTile = placedTiles.get(makeHexKey(hoverHex.q, hoverHex.r));
+    if (placedTile) {
+      hoveredEdge = getHoveredEdge(placedTile, worldPoint);
+      type = getTileEdgeType(placedTile, hoveredEdge);
+      if (isSupportedZoneType(type)) signature = `${placedTile.key}|${hoveredEdge}`;
+    }
+  }
+
+  // Anti-thrash : ce rebuild est appelé à chaque événement natif "mousemove" (via
+  // controls.onHover), qui tire bien plus vite que le framerate (jusqu'à ~1000 Hz selon
+  // la souris) — sans ce garde, le moindre micro-jitter du curseur relançait un rebuild
+  // complet de géométrie (segments de contour + disques de jonction, tous alloués sans
+  // pooling) même en restant exactement sur la même tuile/arête. Coût GPU/CPU répété à
+  // fréquence mousemove pendant tout survol d'une zone → throttle observé. On ne
+  // reconstruit désormais que lorsque la zone survolée change réellement.
+  if (signature === _lastHoverSignature) return;
+  _lastHoverSignature = signature;
+  _hoverRebuildFullCount++;
+
   clearGroup(overlay);
   resetHoverValueLabels(placedTiles);
   resetHoverZoneLabels(zoneOverlay);
-  if (!hoverHex || !worldPoint) return;
-
-  const placedTile = placedTiles.get(makeHexKey(hoverHex.q, hoverHex.r));
-  if (!placedTile) return;
-
-  const hoveredEdge = getHoveredEdge(placedTile, worldPoint);
-  const type = getTileEdgeType(placedTile, hoveredEdge);
-  if (!isSupportedZoneType(type)) return;
+  if (!signature) return;
 
   const zone = collectTextureZone(placedTile, hoveredEdge, type, placedTiles, new Set());
 
@@ -165,7 +199,10 @@ export function rebuildWaterZoneOverlay(overlay, placedTiles, affectedHex = null
       for (const sk of child.userData.involvedSectorKeys ?? []) preVisited.add(sk);
     }
   }
-  for (const obj of toRemove) overlay.remove(obj);
+  for (const obj of toRemove) {
+    overlay.remove(obj);
+    disposeObject3D(obj); // sans ça : géométrie/matériaux jamais libérés → fuite à chaque pose de tuile
+  }
 
   // 2. Ré-afficher les labels valeur des tuiles affectées (hideZoneDetailLabels les masquera si besoin).
   for (const key of affectedKeys) {

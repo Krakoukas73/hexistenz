@@ -223,15 +223,23 @@ export function rebuildWaterSurfaceOverlay(group, placedTiles) {
  * Appeler à cadence réduite (ex. 1 frame sur 9, comme les autres LOD) — inutile
  * de recalculer à 60 fps pour un effet qui ne change qu'au déplacement caméra.
  *
+ * 2026-07-06 — lodFactor (cf. computeLodHeightFactor, decorOverlay.js) : contrairement à
+ * TOUS les autres overlays (herbe/blé/props/maisons/trains…), cette fonction ignorait
+ * jusqu'ici la hauteur caméra — le rayon shader complet restait fixe même au ras de l'eau,
+ * là où le shader (foamTex = 2 voronoï 3×3/fragment, cf. shaderEau.js) coûte le plus et où
+ * la nappe peut couvrir une grande partie de l'écran (vue rasante).
+ *
  * @param {THREE.Group} group   — waterSurfaceOverlay (retourné par createWaterSurfaceOverlay)
  * @param {THREE.Camera} camera
+ * @param {number} lodFactor    — cf. computeLodHeightFactor(camera), 1.0 = pas de réduction
  */
-export function updateWaterSurfaceLOD(group, camera) {
+export function updateWaterSurfaceLOD(group, camera, lodFactor = 1.0) {
   const ranges = group?.userData?.waterLodRanges;
   const surfMesh = group?.userData?.surfMesh;
   if (!ranges || !surfMesh || ranges.length === 0) return;
 
-  const maxDistSq = LOD_WATER_SHADER_DISTANCE * LOD_WATER_SHADER_DISTANCE;
+  const effectiveDist = LOD_WATER_SHADER_DISTANCE * lodFactor;
+  const maxDistSq = effectiveDist * effectiveDist;
   const camX = camera.position.x;
   const camZ = camera.position.z;
   const geo = surfMesh.geometry;

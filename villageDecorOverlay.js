@@ -36,7 +36,8 @@ import {
   isSafePropGroundType,
   getEdgeFromLocalPoint,
   getTileLocalPoint,
-  getSectorWorldCenter
+  getSectorWorldCenter,
+  GROUND_CLEARANCE
 } from './propPlacement.js';
 import { isInsideSpecialBuildingSafeZone } from './fieldZonesOverlay.js';
 // Import circulaire résolu via live bindings ES modules — uniquement dans des corps de fonctions.
@@ -85,13 +86,13 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
       sign.position.copy(pos);
       const signYaw  = getEdgeOutwardAngle(edge) + (hashUnit(`${seed}:yaw`) - 0.5) * 0.65;
       const signTopY = placeObjectOnTerrain(sign, getTileLocalPoint(pos, placedTile), edgeType, hashNumber(seed) % 97, {
-        groundOffset:  0.006,
+        groundOffset:  GROUND_CLEARANCE,
         alignToSlope:  false,
         yaw:           signYaw,
         edgeLockStart: 0.98,
         edgeLockEnd:   1.0
       });
-      if (signTopY !== null) snapPropBottomToSurface(sign, signTopY - 0.006, 0.003);
+      if (signTopY !== null) snapPropBottomToSurface(sign, signTopY - GROUND_CLEARANCE, GROUND_CLEARANCE);
       group.add(sign);
       registerPropHitbox(sign.position.x, sign.position.z, HITBOX_R.signpost);
     }
@@ -116,13 +117,13 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
       sign.position.copy(pos);
       const shoreSignYaw  = getEdgeOutwardAngle(edge) + (hashUnit(`${seed}:yaw`) - 0.5) * 0.80;
       const shoreSignTopY = placeObjectOnTerrain(sign, getTileLocalPoint(pos, placedTile), edgeType, hashNumber(seed) % 97, {
-        groundOffset:  0.006,
+        groundOffset:  GROUND_CLEARANCE,
         alignToSlope:  false,
         yaw:           shoreSignYaw,
         edgeLockStart: 0.98,
         edgeLockEnd:   1.0
       });
-      if (shoreSignTopY !== null) snapPropBottomToSurface(sign, shoreSignTopY - 0.006, 0.003);
+      if (shoreSignTopY !== null) snapPropBottomToSurface(sign, shoreSignTopY - GROUND_CLEARANCE, GROUND_CLEARANCE);
       group.add(sign);
       registerPropHitbox(sign.position.x, sign.position.z, HITBOX_R.signpost);
     }
@@ -154,20 +155,23 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
         basePos.x = _cartR.x; basePos.z = _cartR.z;
 
         const _cr = hashUnit(`${seed}:cart-variant`);
-        const cartVariant = _cr < 0.5 ? 'cart-2' : 'cart-3'; // charrette-1 retirée du pool
+        const cartVariant = _cr < 0.25 ? 'cart-1'
+                          : _cr < 0.50 ? 'cart-2'
+                          : _cr < 0.75 ? 'cart-3'
+                          : 'cart-4'; // pool 25/25/25/25 : charrette-1/2/pleine/3
         const cart = createPropModel(cartVariant, seed);
         if (!cart) continue;
         cart.name = 'village-cart-glb';
         cart.position.copy(basePos);
         const cartYaw  = getEdgeOutwardAngle(edge) + (hashUnit(`${seed}:yaw`) - 0.5) * 1.20;
         const cartTopY = placeObjectOnTerrain(cart, getTileLocalPoint(basePos, placedTile), edgeType, hashNumber(seed) % 97, {
-          groundOffset:  0.005,
+          groundOffset:  GROUND_CLEARANCE,
           alignToSlope:  false,
           yaw:           cartYaw,
           edgeLockStart: 0.98,
           edgeLockEnd:   1.0
         });
-        if (cartTopY !== null) snapPropBottomToSurface(cart, cartTopY - 0.005, 0.003);
+        if (cartTopY !== null) snapPropBottomToSurface(cart, cartTopY - GROUND_CLEARANCE, GROUND_CLEARANCE);
         group.add(cart);
         registerPropHitbox(cart.position.x, cart.position.z, HITBOX_R.cart);
       } else {
@@ -199,13 +203,13 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
           barrel.position.copy(bPos);
           const barrelYaw  = hashUnit(`${bSeed}:yaw`) * Math.PI * 2;
           const barrelTopY = placeObjectOnTerrain(barrel, getTileLocalPoint(bPos, placedTile), edgeType, hashNumber(bSeed) % 97, {
-            groundOffset:  0.005,
+            groundOffset:  GROUND_CLEARANCE,
             alignToSlope:  false,
             yaw:           barrelYaw,
             edgeLockStart: 0.98,
             edgeLockEnd:   1.0
           });
-          if (barrelTopY !== null) snapPropBottomToSurface(barrel, barrelTopY - 0.005, 0.003);
+          if (barrelTopY !== null) snapPropBottomToSurface(barrel, barrelTopY - GROUND_CLEARANCE, GROUND_CLEARANCE);
           group.add(barrel);
           registerPropHitbox(barrel.position.x, barrel.position.z, HITBOX_R.barrel);
         }
@@ -246,17 +250,20 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
         if (!_r) return;
         pos.x = _r.x; pos.z = _r.z;
         const _cri = hashUnit(`${seedInt}:cart-variant`);
-        const _cartKeyInt = _cri < 0.5 ? 'cart-2' : 'cart-3'; // charrette-1 retirée du pool
+        const _cartKeyInt = _cri < 0.25 ? 'cart-1'
+                          : _cri < 0.50 ? 'cart-2'
+                          : _cri < 0.75 ? 'cart-3'
+                          : 'cart-4'; // pool 25/25/25/25 : charrette-1/2/pleine/3
         const cart = createPropModel(_cartKeyInt, seedInt);
         if (!cart) return;
         cart.name = 'village-cart-glb';
         cart.position.copy(pos);
         const cartYaw  = getEdgeOutwardAngle(edge) + (hashUnit(`${seedInt}:yaw`) - 0.5) * 1.20;
         const cartTopY = placeObjectOnTerrain(cart, getTileLocalPoint(pos, placedTile), EDGE_TYPES.house, hashNumber(seedInt) % 97, {
-          groundOffset: 0.005, alignToSlope: false, yaw: cartYaw,
+          groundOffset: GROUND_CLEARANCE, alignToSlope: false, yaw: cartYaw,
           edgeLockStart: 0.98, edgeLockEnd: 1.0
         });
-        if (cartTopY !== null) snapPropBottomToSurface(cart, cartTopY - 0.005, 0.003);
+        if (cartTopY !== null) snapPropBottomToSurface(cart, cartTopY - GROUND_CLEARANCE, GROUND_CLEARANCE);
         group.add(cart);
         registerPropHitbox(cart.position.x, cart.position.z, HITBOX_R.cart);
       } else {
@@ -280,11 +287,11 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
           barrel.name = 'village-barrel-glb';
           barrel.position.copy(bPos);
           const barrelTopY = placeObjectOnTerrain(barrel, getTileLocalPoint(bPos, placedTile), EDGE_TYPES.house, hashNumber(bSeed) % 97, {
-            groundOffset: 0.005, alignToSlope: false,
+            groundOffset: GROUND_CLEARANCE, alignToSlope: false,
             yaw: hashUnit(`${bSeed}:yaw`) * Math.PI * 2,
             edgeLockStart: 0.98, edgeLockEnd: 1.0
           });
-          if (barrelTopY !== null) snapPropBottomToSurface(barrel, barrelTopY - 0.005, 0.003);
+          if (barrelTopY !== null) snapPropBottomToSurface(barrel, barrelTopY - GROUND_CLEARANCE, GROUND_CLEARANCE);
           group.add(barrel);
           registerPropHitbox(barrel.position.x, barrel.position.z, HITBOX_R.barrel);
         }
@@ -338,8 +345,8 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
             const _fEdge    = getEdgeFromLocalPoint(_fLocal) ?? EDGE_ORDER[0];
             const _fTopY    = placeObjectOnTerrain(fountain, _fLocal,
               getTileEdgeType(placedTile, _fEdge), hashNumber(seedF) % 97,
-              { groundOffset: 0.005, alignToSlope: false, edgeLockStart: 0.98, edgeLockEnd: 1.0 });
-            if (_fTopY !== null) snapPropBottomToSurface(fountain, _fTopY - 0.005, 0.004);
+              { groundOffset: GROUND_CLEARANCE, alignToSlope: false, edgeLockStart: 0.98, edgeLockEnd: 1.0 });
+            if (_fTopY !== null) snapPropBottomToSurface(fountain, _fTopY - GROUND_CLEARANCE, GROUND_CLEARANCE);
             const _fGD = fountain.userData.groundOffsetDelta ?? 0;
             if (_fGD !== 0) fountain.position.y += _fGD;
             fountain.rotation.y = hashUnit(`${seedF}:rot`) * Math.PI * 2;
@@ -387,8 +394,8 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
                 const _fpEdge   = getEdgeFromLocalPoint(_fpLocal) ?? EDGE_ORDER[0];
                 const _fpTopY   = placeObjectOnTerrain(fountain, _fpLocal,
                   getTileEdgeType(placedTile, _fpEdge), hashNumber(seedFP) % 97,
-                  { groundOffset: 0.005, alignToSlope: false, edgeLockStart: 0.98, edgeLockEnd: 1.0 });
-                if (_fpTopY !== null) snapPropBottomToSurface(fountain, _fpTopY - 0.005, 0.004);
+                  { groundOffset: GROUND_CLEARANCE, alignToSlope: false, edgeLockStart: 0.98, edgeLockEnd: 1.0 });
+                if (_fpTopY !== null) snapPropBottomToSurface(fountain, _fpTopY - GROUND_CLEARANCE, GROUND_CLEARANCE);
                 const _fpGD = fountain.userData.groundOffsetDelta ?? 0;
                 if (_fpGD !== 0) fountain.position.y += _fpGD;
                 fountain.rotation.y = hashUnit(`${seedFP}:rot`) * Math.PI * 2;
@@ -423,8 +430,8 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
             const _mlEdge  = getEdgeFromLocalPoint(_mlLocal) ?? EDGE_ORDER[0];
             const _mlTopY  = placeObjectOnTerrain(meule, _mlLocal,
               getTileEdgeType(placedTile, _mlEdge), hashNumber(seedMl) % 97,
-              { groundOffset: 0.004, alignToSlope: false, yaw: hashUnit(`${seedMl}:rot`) * Math.PI * 2, edgeLockStart: 0.98, edgeLockEnd: 1.0 });
-            if (_mlTopY !== null) snapPropBottomToSurface(meule, _mlTopY - 0.004, 0.003);
+              { groundOffset: GROUND_CLEARANCE, alignToSlope: false, yaw: hashUnit(`${seedMl}:rot`) * Math.PI * 2, edgeLockStart: 0.98, edgeLockEnd: 1.0 });
+            if (_mlTopY !== null) snapPropBottomToSurface(meule, _mlTopY - GROUND_CLEARANCE, GROUND_CLEARANCE);
             // Pas d'ombre : objet décoratif, la meule est trop petite pour des ombres cohérentes
             meule.traverse(o => {
               if (!o.isMesh) return;
@@ -462,7 +469,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
       );
 
       // Helper commun : place un animal (même pattern que fontaine)
-      const placeAnimal = (key, seed, pos, groundOff, shadowCast, snapClearance = 0.002) => {
+      const placeAnimal = (key, seed, pos, groundOff = GROUND_CLEARANCE, shadowCast, snapClearance = GROUND_CLEARANCE) => {
         if (isInsideSpecialBuildingSafeZone(pos, specialBuildingSafeZones)) return null;
         const model = createPropModel(key, seed);
         if (!model) return null;
@@ -514,7 +521,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
           const pos = d === 0
             ? centerPos(ds, HEX_SIZE * 0.10)
             : animalPos(hSlot(3), ds, HEX_SIZE * 0.07);
-          const dog = placeAnimal('animal-dog', ds, pos, 0.004, false, 0.008);
+          const dog = placeAnimal('animal-dog', ds, pos, GROUND_CLEARANCE, false, GROUND_CLEARANCE);
           if (!dog) continue;
           dog.name = 'village-animal-dog-glb';
           dog.scale.multiplyScalar(0.88 + hashUnit(`${ds}:scale`) * 0.25);
@@ -528,7 +535,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
       const seedHorse = `${placedTile.key}:animals:horse`;
       if (hashUnit(seedHorse) <= 0.35 && getTileCenterType(placedTile) !== EDGE_TYPES.water) {
         const pos   = centerPos(seedHorse, HEX_SIZE * 0.08);
-        const horse = placeAnimal('animal-horse', seedHorse, pos, 0.005, true);
+        const horse = placeAnimal('animal-horse', seedHorse, pos, GROUND_CLEARANCE, true);
         if (horse) {
           horse.name = 'village-animal-horse-glb';
           horse.scale.multiplyScalar(0.88 + hashUnit(`${seedHorse}:scale`) * 0.24);
@@ -576,7 +583,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
                 yaw: hashUnit(`${seed}:yaw`) * Math.PI * 2,
                 edgeLockStart: 0.98, edgeLockEnd: 1.0 });
             if (topY === null) return null;
-            snapPropBottomToSurface(model, topY - groundOff, 0.002);
+            snapPropBottomToSurface(model, topY - groundOff, GROUND_CLEARANCE);
             return model;
           };
 
@@ -628,7 +635,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
               yaw: hashUnit(`${seed}:yaw`) * Math.PI * 2,
               edgeLockStart: 0.98, edgeLockEnd: 1.0 });
           if (topY === null) return null;
-          snapPropBottomToSurface(model, topY - groundOff, 0.002);
+          snapPropBottomToSurface(model, topY - groundOff, GROUND_CLEARANCE);
           return model;
         };
 
@@ -636,7 +643,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
         if (hashUnit(`${placedTile.key}:rail:dog`) <= 0.25) {
           const cs  = `${placedTile.key}:rail:dog:0`;
           const pos = bermePos(pickRailEdge(`${cs}:edge`), cs, HEX_SIZE * 0.05);
-          const dog = placeRailAnimal('animal-dog', cs, pos, 0.004, false);
+          const dog = placeRailAnimal('animal-dog', cs, pos, GROUND_CLEARANCE, false);
           if (dog) {
             dog.name = 'village-animal-dog-glb';
             dog.scale.multiplyScalar(0.88 + hashUnit(`${cs}:scale`) * 0.25);
@@ -789,14 +796,17 @@ export function createShoreBoats(placedTiles, specialBuildingSafeZones = []) {
       const mid    = new THREE.Vector3((a.x + b.x) / 2, SHORE_BOAT_Y, (a.z + b.z) / 2);
       const inward = getShoreBoatBeachDirection(placedTile, edge, placedTiles, mid);
 
-      // 70 % barque-1 (vide, tirée sur la rive), 30 % barque-2 (pêcheur, flottant).
-      const boatVariant = hashUnit(`${seed}:boat-type`) < 0.70 ? 'shore-boat-1' : 'shore-boat-2';
+      // 70 % vides échouées (35% barque-1, 35% barque-3), 30 % barque-2 (pêcheur, flottant).
+      const _boatRoll = hashUnit(`${seed}:boat-type`);
+      const boatVariant = _boatRoll < 0.35 ? 'shore-boat-1'
+                        : _boatRoll < 0.70 ? 'shore-boat-3'
+                        : 'shore-boat-2';
       const boat = createPropModel(boatVariant, seed);
       if (!boat) continue;
       boat.name = `water-shore-inert-boat-glb-${boatVariant}`;  // ex: ...-shore-boat-1 (HUD per-type)
-      // barque-1 (échouée sur la plage) : facteur minimal pour rester au bord de l'eau.
+      // barque-1 / barque-3 (vides, échouées sur la plage) : facteur minimal pour rester au bord de l'eau.
       // barque-2 (pêcheur) : position actuelle validée, en eau à mi-distance.
-      const inwardPush = boatVariant === 'shore-boat-1' ? HEX_SIZE * 0.10 : HEX_SIZE * 0.50;
+      const inwardPush = boatVariant === 'shore-boat-2' ? HEX_SIZE * 0.50 : HEX_SIZE * 0.10;
       boat.position.set(
         tilePos.x + mid.x + inward.x * inwardPush,
         SHORE_BOAT_Y,

@@ -3,7 +3,7 @@
  *
  * Responsabilités :
  *   - Cycle de vie : createDecorOverlay / rebuildDecorOverlay / updateDecorOverlay
- *   - Chargement asynchrone des modèles GLB (propGlbLibrary, ensurePropModels, ensureBirdModel)
+ *   - Chargement asynchrone des modèles GLB (propGlbLibrary, ensurePropModels, ensureBirdModel, ensureSeagullModel)
  *   - Splashes eau (createWaterVoidSplashes)
  *   - LOD mises à jour (updateNaturalPropsLOD, updateFieldDecorLOD)
  *   - Toutes les constantes et l'état singleton partagés avec les sous-fichiers
@@ -15,7 +15,7 @@
  * Exports partagés (sous-fichiers) :
  *   propGlbLibrary, _propInstanceDummy, _snapNormal,
  *   getPropChunkKey, computePropBoundingSphere,
- *   createPropModel, createBirdFlock,
+ *   createPropModel, createBirdFlock, createSeagullFlock,
  *   FIELD_FLAG_MIN_TOTAL, FIELD_SURFACE_Y, SPECIAL_BUILDING_SAFE_RADIUS,
  *   SPECIAL_BUILDING_BOAT_SAFE_RADIUS, ROAD_DECOR_Y, BARREL_TARGET_WIDTH,
  *   SHORE_BOAT_Y, NATURAL_FLOWER_TARGET_WIDTH, NATURAL_MUSHROOM_TARGET_WIDTH,
@@ -36,7 +36,10 @@ import {
   SECTOR_DEFS,
   FIELD_BIRD_FLOCK_MODEL_URL,
   FIELD_BIRD_FLOCK_TARGET_WIDTH,
-  FIELD_BIRD_FLOCK_ANIMATION_SPEED
+  FIELD_BIRD_FLOCK_ANIMATION_SPEED,
+  WATER_SEAGULL_MODEL_URL,
+  WATER_SEAGULL_TARGET_WIDTH,
+  WATER_SEAGULL_ANIMATION_SPEED
 } from './config.js';
 import { hashUnit10k as hashUnit, hashNumber } from './hashUtils.js';
 import { axialToWorld, makeHexKey } from './hex.js';
@@ -53,14 +56,19 @@ import {
   LOD_ANIMAL_CULL_DISTANCE,
   LOD_FOUNTAIN_CULL_DISTANCE,
   LOD_CROW_CULL_DISTANCE,
+  LOD_SEAGULL_CULL_DISTANCE,
   LOD_MILL_CULL_DISTANCE
 } from './variables.js';
 import { getTileEdgeType, clearGroup } from './tileUtils.js';
 import { getHexVertex, normalize2 } from './hexGeometry.js';
 // Sous-fichiers — imports circulaires valides (accès dans des corps de fonctions uniquement)
 import { createFieldFlags, collectSpecialBuildingSafeZones } from './fieldZonesOverlay.js';
+import { createWaterBirdFlocks } from './waterBirdOverlay.js';
 import { createNaturalGroundProps } from './naturalPropsOverlay.js';
 import { createRoadsideVillageProps, createShoreBoats } from './villageDecorOverlay.js';
+// 2026-07-06 : les personnages ont leur propre overlay instancié (characterOverlay.js,
+// createCharacterOverlay/rebuildCharacterOverlay/updateCharacterLOD, piloté par scene.js) —
+// ils ne sont plus créés ni suivis en LOD ici. Cf. mémoire projet gpu-throttle-investigation.
 
 const SECTOR_BY_KEY     = Object.fromEntries(SECTOR_DEFS.map(s => [s.key, s]));
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(d => [d.edge, d]));
@@ -72,39 +80,47 @@ export const FIELD_SURFACE_Y = (TILE_VISUAL.tileThickness ?? 0.12) * 0.783; // s
 export const FIELD_FLAG_MIN_TOTAL            = 5;
 const        FIELD_FLAG_2_TARGET_HEIGHT      = HEX_SIZE * 0.384 * 1.06 * 1.05 * 1.11 * 0.92 * 0.88 * 0.93 * 0.88 * 0.96 * 0.93 * 0.95 * 0.94; // moulin-2: +20% +6% +5% +11% −8% −12% −7% −12% −4% −7% −5% −6%
 const        FIELD_FLAG_3_TARGET_HEIGHT      = HEX_SIZE * 0.384 * 1.06 * 1.05 * 1.11 * 0.92 * 0.88 * 0.93 * 0.88 * 0.96 * 0.93 * 0.95 * 0.94; // moulin-1: même base −6%
-const        FOUNTAIN_1_TARGET_WIDTH         = HEX_SIZE * 0.18 * 0.93 * 0.90 * 0.96 * 0.91 * 0.93; // −7% −10% −4% −9% −7%
-const        FOUNTAIN_2_TARGET_WIDTH         = HEX_SIZE * 0.18 * 0.93 * 0.80 * 0.96 * 0.91 * 0.93; // −7% −20% −4% −9% −7%
+const        FOUNTAIN_1_TARGET_WIDTH         = HEX_SIZE * 0.18 * 0.93 * 0.90 * 0.96 * 0.91 * 0.93 * 0.87 * 0.90; // −10% (2026-07-04) −7% −10% −4% −9% −7% −13%
+const        FOUNTAIN_2_TARGET_WIDTH         = HEX_SIZE * 0.18 * 0.93 * 0.80 * 0.96 * 0.91 * 0.93 * 0.87 * 0.90; // −10% (2026-07-04) −7% −20% −4% −9% −7% −13%
 export const HAY_BALE_TARGET_WIDTH           = HEX_SIZE * 0.14 * 2.2 * 1.3 * 1.15 * 1.15 * 1.06 * 0.92 * 0.92 * 0.93 * 0.87 * 0.90 * 0.90 * 0.94; // +15% +6% −8% −8% −7% −13% −10% −10% −6%
 const        SIGNPOST_TARGET_HEIGHT          = HEX_SIZE * 0.28 * 0.85 * 0.93 * 0.75 * 0.88 * 0.83 * 0.87 * 0.82; // −15% −7% −25% −12% −17% −13% −18%
 const        SHORE_BOAT_TARGET_LENGTH        = HEX_SIZE * 0.175 * 0.88 * 0.92 * 0.80 * 0.90; // −12% −8% −20% −10%
-export const PILE_DE_BOIS_TARGET_LENGTH      = HEX_SIZE * 0.14 * 1.08 * 1.07; // piles de bois en forêt — +8% +7%
+export const PILE_DE_BOIS_TARGET_LENGTH      = HEX_SIZE * 0.14 * 1.08 * 1.07 * 0.88; // piles de bois en forêt — +8% +7% −12% (2026-07-04)
 export const SPECIAL_BUILDING_SAFE_RADIUS    = HEX_SIZE * 0.34;
 export const SPECIAL_BUILDING_BOAT_SAFE_RADIUS = HEX_SIZE * 0.18;
-export const NATURAL_FLOWER_TARGET_WIDTH     = HEX_SIZE * 0.047 * 0.85 * 0.93 * 0.85 * 0.85 * 0.90 * 0.88 * 0.94 * 0.96 * 0.92 * 0.88 * 0.93 * 0.83 * 0.92; // −15% −7% −15% −15% −10% −12% −6% −4% −8% −12% −7% −17% −8%
-export const NATURAL_GRASS_TARGET_WIDTH      = HEX_SIZE * 0.058 * 1.15 * 0.91 * 0.87 * 0.94 * 0.96 * 0.90 * 0.88 * 0.90 * 0.85 * 0.87 * 0.92; // herbes/touffes/jeunes pousses (plantes.glb) — +15% −9% −13% −6% −4% −10% −12% −10% −15% −13% −8%
+export const NATURAL_FLOWER_TARGET_WIDTH     = HEX_SIZE * 0.047 * 0.85 * 0.93 * 0.85 * 0.85 * 0.90 * 0.88 * 0.94 * 0.96 * 0.92 * 0.88 * 0.93 * 0.83 * 0.92 * 0.90; // −15% −7% −15% −15% −10% −12% −6% −4% −8% −12% −7% −17% −8% −10% (2026-07-04)
+export const NATURAL_GRASS_TARGET_WIDTH      = HEX_SIZE * 0.058 * 1.15 * 0.91 * 0.87 * 0.94 * 0.96 * 0.90 * 0.88 * 0.90 * 0.85 * 0.87 * 0.92 * 0.88 * 0.90; // herbes/touffes/jeunes pousses (plantes.glb) — +15% −9% −13% −6% −4% −10% −12% −10% −15% −13% −8% −12% −10% (2026-07-04)
 export const NATURAL_BRINDILLE_TARGET_WIDTH  = NATURAL_GRASS_TARGET_WIDTH * 0.525 * 0.92 * 1.30;     // fougere.glb — +30% (hérite −8% de grass)
 export const NATURAL_SHRUB_TARGET_WIDTH      = HEX_SIZE * 0.095 * 0.91 * 0.87 * 0.94 * 0.96 * 0.90 * 0.92; // fougères et buissons — forêts uniquement (plantes.glb) — −9% −13% −6% −4% −10% −8%
-const        NATURAL_ROCK_TARGET_LENGTH      = HEX_SIZE * 0.106 * 0.85 * 0.93 * 0.88 * 0.85 * 0.96 * 0.88; // −15% −7% −12% −15% −4% −12%
-const        NATURAL_REED_TARGET_HEIGHT      = HEX_SIZE * 0.105 * 0.85 * 0.93 * 0.88 * 0.85 * 0.92 * 0.94 * 0.90 * 0.93 * 0.88 * 0.90 * 0.86 * 0.83 * 0.92; // −15% −7% −12% −15% −8% −6% −10% −7% −12% −10% −14% −17% −8%
-export const NATURAL_MUSHROOM_TARGET_WIDTH   = HEX_SIZE * 0.043 * 0.85 * 0.93 * 0.88 * 0.88 * 0.95 * 0.96 * 0.90 * 0.88 * 0.88 * 0.90 * 0.93 * 0.83 * 0.88 * 0.92 * 1.08; // +8%
-export const BARREL_TARGET_WIDTH             = HEX_SIZE * 0.1031 * 0.85 * 0.88 * 0.93 * 0.88 * 0.92 * 0.92 * 0.90 * 0.91; // −15% −12% −7% −12% −8% −8% −10% −9%
-const        CART_TARGET_LENGTH              = HEX_SIZE * 0.291 * 0.85 * 0.85 * 0.88 * 0.96 * 0.94 * 0.91 * 0.93; // −15% −15% −12% −4% −6% −9% −7%
-const        MEULE_TARGET_WIDTH             = HEX_SIZE * 0.095; // meule de moulin — petite, décorative
+const        NATURAL_ROCK_TARGET_LENGTH      = HEX_SIZE * 0.106 * 0.85 * 0.93 * 0.88 * 0.85 * 0.96 * 0.88 * 0.87 * 0.90; // −10% (2026-07-04) −15% −7% −12% −15% −4% −12% −13% (2026-07-04)
+const        NATURAL_REED_TARGET_HEIGHT      = HEX_SIZE * 0.105 * 0.85 * 0.93 * 0.88 * 0.85 * 0.92 * 0.94 * 0.90 * 0.93 * 0.88 * 0.90 * 0.86 * 0.83 * 0.92 * 0.88 * 0.90; // −15% −7% −12% −15% −8% −6% −10% −7% −12% −10% −14% −17% −8% −12% −10% (2026-07-04)
+export const NATURAL_MUSHROOM_TARGET_WIDTH   = HEX_SIZE * 0.043 * 0.85 * 0.93 * 0.88 * 0.88 * 0.95 * 0.96 * 0.90 * 0.88 * 0.88 * 0.90 * 0.93 * 0.83 * 0.88 * 0.92 * 1.08 * 0.88; // +8% −12%
+export const BARREL_TARGET_WIDTH             = HEX_SIZE * 0.1031 * 0.85 * 0.88 * 0.93 * 0.88 * 0.92 * 0.92 * 0.90 * 0.91 * 0.90; // −15% −12% −7% −12% −8% −8% −10% −9% −10%
+const        CART_TARGET_LENGTH              = HEX_SIZE * 0.291 * 0.85 * 0.85 * 0.88 * 0.96 * 0.94 * 0.91 * 0.93 * 0.90; // −15% −15% −12% −4% −6% −9% −7% −10%
+const        MEULE_TARGET_WIDTH             = HEX_SIZE * 0.095 * 0.90; // meule de moulin — petite, décorative — −10% (2026-07-04)
 export const NATURAL_DEER_TARGET_WIDTH       = HEX_SIZE * 0.16 * 0.88 * 0.92 * 0.92 * 0.92 * 0.89 * 0.80;  // cerf sauvage (forêt / prairie / champ) — −12% −8% −8% −8% −11% −20%
-const        ANIMAL_DOG_TARGET_WIDTH         = HEX_SIZE * 0.085 * 0.92 * 0.80; // chien de village −8% −20%
-const        ANIMAL_HORSE_TARGET_WIDTH       = HEX_SIZE * 0.20 * 0.88 * 0.92 * 0.92 * 0.94 * 0.80;  // cheval de village −12% −8% −8% −6% −20%
+const        ANIMAL_DOG_TARGET_WIDTH         = HEX_SIZE * 0.085 * 0.92 * 0.80 * 0.75; // chien de village −8% −20% −25%
+const        ANIMAL_HORSE_TARGET_WIDTH       = HEX_SIZE * 0.20 * 0.88 * 0.92 * 0.92 * 0.94 * 0.80 * 0.90;  // cheval de village −12% −8% −8% −6% −20% −10%
+// Silhouette humaine debout (villageois + rôdeurs de forêt) — mode 'height' (bbox verticale).
+// Ordre de grandeur calibré entre le chien (0.063 de long) et le cheval (0.112 de long) : à ajuster
+// au premier rendu si les personnages paraissent trop grands/petits à côté des maisons.
+// Exporté (2026-07-04) : characterOverlay.js en a besoin pour calibrer son clearance sol
+// (groundOff/snap) en PROPORTION de cette hauteur plutôt qu'en valeur absolue fixe — cf.
+// bug "NPC flottants" (une clearance absolue calibrée avant les −35%/−13%/−10% ci-dessous
+// représente un décollement du sol de plus en plus visible à mesure que le perso rétrécit).
+export const CHARACTER_TARGET_HEIGHT         = HEX_SIZE * 0.095 * 0.65 * 0.87 * 0.90; // −35% (2026-07-04, trop grands au rendu) −13% (2026-07-04, NPC réduits) −10% (2026-07-04)
 export const ROAD_DECOR_Y                    = ((TILE_VISUAL.tileThickness ?? 0.12) * -0.30) + 0.010;
 export const SHORE_BOAT_Y                    = WATER_SURFACE_Y + 0.022; // barques échouées légèrement au-dessus de la surface
 
 export const NATURAL_DECOR_VARIANTS = {
   flower:    ['flower-1', 'flower-2', 'flower-3', 'flower-4'],
   brindille: ['brindille'],
-  grass:     ['berry-1', 'berry-1', 'berry-1', 'berry-1', 'berry-1', 'berry-1',
-              'berry-2', 'berry-2', 'berry-2', 'berry-2', 'berry-2', 'berry-2',  // ×6 chacun → 36/51 = 71% du pool
-              'berry-3', 'berry-3', 'berry-3', 'berry-3', 'berry-3', 'berry-3',
-              'berry-4', 'berry-4', 'berry-4', 'berry-4', 'berry-4', 'berry-4',
-              'berry-5', 'berry-5', 'berry-5', 'berry-5', 'berry-5', 'berry-5',
-              'berry-6', 'berry-6', 'berry-6', 'berry-6', 'berry-6', 'berry-6',
+  grass:     ['berry-1', 'berry-1', 'berry-1', 'berry-1', 'berry-1',
+              'berry-2', 'berry-2', 'berry-2', 'berry-2', 'berry-2',  // 2026-07-06 : ×6→×5 chacun
+              'berry-3', 'berry-3', 'berry-3', 'berry-3', 'berry-3',  // (perf GPU — "Plantes à baies"
+              'berry-4', 'berry-4', 'berry-4', 'berry-4', 'berry-4',  // = 27.6% des triangles scène,
+              'berry-5', 'berry-5', 'berry-5', 'berry-5', 'berry-5',  // 1er poste), 30/45 = 67% du pool
+              'berry-6', 'berry-6', 'berry-6', 'berry-6', 'berry-6',  // (était 36/51 = 71%)
               'plant-misc2', 'plant-misc3', 'plant-misc4', 'plant-misc5',        // ×1 chacun
               'plant-grass1', 'plant-grass2', 'plant-sapling1', 'plant-sapling2',
               'plante-1', 'plante-2', 'plante-3', 'plante-4', 'plante-5', 'plante-6', 'plante-7'],
@@ -133,8 +149,9 @@ const PROP_MODEL_DEFS = [
   { key: 'road-signpost-1', url: './glb/decor/poteau-indicateur-1.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
   { key: 'road-signpost-2', url: './glb/decor/poteau-indicateur-2.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
   { key: 'road-signpost-3', url: './glb/decor/poteau-indicateur-3.glb', target: SIGNPOST_TARGET_HEIGHT, mode: 'height' },
-  { key: 'shore-boat-1', url: './glb/decor/barque-1.glb',    target: SHORE_BOAT_TARGET_LENGTH * 0.65, mode: 'length', bypassBboxCheck: true },
-  { key: 'shore-boat-2', url: './glb/decor/barque-2.glb',    target: SHORE_BOAT_TARGET_LENGTH * 0.65, mode: 'length' },
+  { key: 'shore-boat-1', url: './glb/decor/barque-1.glb',    target: SHORE_BOAT_TARGET_LENGTH * 0.65, mode: 'length', bypassBboxCheck: true, noShadow: true }, // 2026-07-04 perf : petite barque échouée, ombre peu visible
+  { key: 'shore-boat-2', url: './glb/decor/barque-2.glb',    target: SHORE_BOAT_TARGET_LENGTH * 0.65, mode: 'length', noShadow: true }, // 2026-07-04 perf
+  { key: 'shore-boat-3', url: './glb/decor/barque-3.glb',    target: SHORE_BOAT_TARGET_LENGTH * 0.65 * 1.14, mode: 'length', bypassBboxCheck: true, noShadow: true }, // +14% — 2026-07-04 perf
   { key: 'flower-1',     url: './glb/plantes/flower-1.glb',  target: NATURAL_FLOWER_TARGET_WIDTH,     mode: 'length', kind: 'flower' },
   { key: 'flower-2',     url: './glb/plantes/flower-2.glb',  target: NATURAL_FLOWER_TARGET_WIDTH,     mode: 'length', kind: 'flower' },
   { key: 'flower-3',     url: './glb/plantes/flower-3.glb',  target: NATURAL_FLOWER_TARGET_WIDTH,     mode: 'length', kind: 'flower' },
@@ -174,20 +191,47 @@ const PROP_MODEL_DEFS = [
   { key: 'rock-4',       url: './glb/decor/rock-4.glb',     target: NATURAL_ROCK_TARGET_LENGTH,      mode: 'length', kind: 'rock' },
   { key: 'reed',         url: './glb/plantes/roseau.glb',   target: NATURAL_REED_TARGET_HEIGHT,      mode: 'height', kind: 'reed' },
   { key: 'mushroom-1',   url: './glb/plantes/mushroom-1.glb', target: NATURAL_MUSHROOM_TARGET_WIDTH,        mode: 'length', kind: 'mushroom' },
-  { key: 'mushroom-2',   url: './glb/plantes/mushroom-2.glb', target: NATURAL_MUSHROOM_TARGET_WIDTH * 1.40 * 1.15, mode: 'length', kind: 'mushroom', groundOffsetDelta: 0.008 }, // chapeau visuel au-dessus du bbox.min.y — remonte post-snap
+  { key: 'mushroom-2',   url: './glb/plantes/mushroom-2.glb', target: NATURAL_MUSHROOM_TARGET_WIDTH * 1.40 * 1.15, mode: 'length', kind: 'mushroom', groundOffsetDelta: 0 }, // corrigé (2026-07-04) : +0.008 le faisait flotter au-dessus des surfaces — retiré, réajuster si trop enfoncé
   { key: 'barrel-1',     url: './glb/decor/tonneau-1.glb',  target: BARREL_TARGET_WIDTH * 0.87, mode: 'length' },
   { key: 'barrel-2',     url: './glb/decor/tonneau-2.glb',  target: BARREL_TARGET_WIDTH * 0.87, mode: 'length' },
   { key: 'barrel-3',     url: './glb/decor/tonneau-3.glb',  target: BARREL_TARGET_WIDTH * 1.18, mode: 'length' },
   { key: 'barrel-4',     url: './glb/decor/tonneau-4.glb',  target: BARREL_TARGET_WIDTH * 0.87, mode: 'length' },
   { key: 'barrel-5',     url: './glb/decor/tonneau-5.glb',  target: BARREL_TARGET_WIDTH * 2.25 * 0.87 * 0.80, mode: 'length' }, // −20%
+  { key: 'cart-1',       url: './glb/decor/charrette-1.glb',      target: CART_TARGET_LENGTH, mode: 'length' }, // ré-ajoutée au pool (2026-07-04)
   { key: 'cart-2',       url: './glb/decor/charrette-2.glb',      target: CART_TARGET_LENGTH, mode: 'length' },
   { key: 'cart-3',       url: './glb/decor/charrette-pleine.glb', target: CART_TARGET_LENGTH * 1.10, mode: 'length', bypassBboxCheck: true, groundOffsetDelta: -0.020 }, // +10%
-  { key: 'meule',        url: './glb/decor/meule.glb',            target: MEULE_TARGET_WIDTH * 0.78 * 0.87 * 0.93, mode: 'length', bypassBboxCheck: true, groundOffsetDelta: 0.008 }, // −13% −7%
+  { key: 'cart-4',       url: './glb/decor/charrette-3.glb',      target: CART_TARGET_LENGTH, mode: 'length' }, // clé "cart-4" pour éviter la collision avec la clé "cart-3" (déjà prise par charrette-pleine.glb)
+  { key: 'meule',        url: './glb/decor/meule.glb',            target: MEULE_TARGET_WIDTH * 0.78 * 0.87 * 0.93 * 0.75, mode: 'length', bypassBboxCheck: true, groundOffsetDelta: 0.008 }, // −13% −7% −25%
   // Animaux de village — GLB individuels
   { key: 'animal-dog',     url: './glb/animaux/chien.glb',  target: ANIMAL_DOG_TARGET_WIDTH,     mode: 'length' },
-  { key: 'animal-horse',   url: './glb/animaux/cheval.glb', target: ANIMAL_HORSE_TARGET_WIDTH,   mode: 'length' },
+  { key: 'animal-horse',   url: './glb/animaux/cheval.glb', target: ANIMAL_HORSE_TARGET_WIDTH,   mode: 'length', noShadow: true }, // 2026-07-04 perf : chevaux statiques, ombre peu visible
   // Animaux sauvages (forêt / prairie / champ) — InstancedMesh via naturalPropsOverlay
-  { key: 'animal-deer',    url: './glb/animaux/cerf.glb',   target: NATURAL_DEER_TARGET_WIDTH,   mode: 'length' }
+  { key: 'animal-deer',    url: './glb/animaux/cerf.glb',   target: NATURAL_DEER_TARGET_WIDTH,   mode: 'length' },
+  // Personnages — villageois et rôdeurs de forêt (/glb/characters/). Statiques (aucun
+  // clip d'animation) → instanciés via characterOverlay.js (InstancedMesh par variant ×
+  // chunk, overlay dédié piloté par scene.js), pas via un Group individuel comme avant.
+  { key: 'character-archer',     url: './glb/characters/archer.glb',     target: CHARACTER_TARGET_HEIGHT * 0.86, mode: 'height' }, // −14% (2026-07-04)
+  { key: 'character-chevalier',  url: './glb/characters/chevalier.glb',  target: CHARACTER_TARGET_HEIGHT * 1.30, mode: 'height' }, // +30%
+  { key: 'character-femme-1',    url: './glb/characters/femme-1.glb',    target: CHARACTER_TARGET_HEIGHT, mode: 'height' },
+  { key: 'character-femme-2',    url: './glb/characters/femme-2.glb',    target: CHARACTER_TARGET_HEIGHT * 0.85, mode: 'height' }, // −15%
+  { key: 'character-femme-3',    url: './glb/characters/femme-3.glb',    target: CHARACTER_TARGET_HEIGHT * 0.85, mode: 'height' }, // −15%
+  { key: 'character-femme-4',    url: './glb/characters/femme-4.glb',    target: CHARACTER_TARGET_HEIGHT * 0.85, mode: 'height' }, // −15%
+  { key: 'character-femme-5',    url: './glb/characters/femme-5.glb',    target: CHARACTER_TARGET_HEIGHT * 0.85, mode: 'height' }, // −15%
+  { key: 'character-fermier',    url: './glb/characters/fermier.glb',    target: CHARACTER_TARGET_HEIGHT, mode: 'height' },
+  { key: 'character-forgeron',   url: './glb/characters/forgeron.glb',   target: CHARACTER_TARGET_HEIGHT, mode: 'height' },
+  { key: 'character-garde',      url: './glb/characters/garde.glb',      target: CHARACTER_TARGET_HEIGHT * 1.11, mode: 'height' }, // +11% (2026-07-04)
+  { key: 'character-guerrier-1', url: './glb/characters/guerrier-1.glb', target: CHARACTER_TARGET_HEIGHT * 0.92, mode: 'height' }, // −8%
+  { key: 'character-guerrier-2', url: './glb/characters/guerrier-2.glb', target: CHARACTER_TARGET_HEIGHT * 0.92, mode: 'height' }, // −8%
+  { key: 'character-guerrier-3', url: './glb/characters/guerrier-3.glb', target: CHARACTER_TARGET_HEIGHT * 1.12 * 1.20, mode: 'height' }, // +12% +20% (2026-07-04)
+  { key: 'character-homme-1',    url: './glb/characters/homme-1.glb',    target: CHARACTER_TARGET_HEIGHT, mode: 'height' },
+  { key: 'character-homme-2',    url: './glb/characters/homme-2.glb',    target: CHARACTER_TARGET_HEIGHT, mode: 'height' },
+  { key: 'character-homme-3',    url: './glb/characters/homme-3.glb',    target: CHARACTER_TARGET_HEIGHT, mode: 'height' },
+  { key: 'character-magicien',   url: './glb/characters/magicien.glb',   target: CHARACTER_TARGET_HEIGHT, mode: 'height' },
+  { key: 'character-marchand',   url: './glb/characters/marchand.glb',   target: CHARACTER_TARGET_HEIGHT, mode: 'height' },
+  { key: 'character-monk',       url: './glb/characters/monk.glb',       target: CHARACTER_TARGET_HEIGHT, mode: 'height' },
+  { key: 'character-soldat',     url: './glb/characters/soldat.glb',     target: CHARACTER_TARGET_HEIGHT, mode: 'height' },
+  { key: 'character-sorciere',   url: './glb/characters/sorciere.glb',   target: CHARACTER_TARGET_HEIGHT, mode: 'height' },
+  { key: 'character-tavernier',  url: './glb/characters/tavernier.glb',  target: CHARACTER_TARGET_HEIGHT, mode: 'height' }
 ];
 
 // ─── Matériaux eau (splash effets) ───────────────────────────────────────────
@@ -250,6 +294,7 @@ export function createDecorOverlay() {
   group.name  = 'field-water-edge-effects-overlay';
   ensurePropModels(group);
   ensureBirdModel(group);
+  ensureSeagullModel(group);
   return group;
 }
 
@@ -314,6 +359,7 @@ function _rebuildRoadsideDecorLOD(overlay) {
   const _animalDistSq    = LOD_ANIMAL_CULL_DISTANCE       * LOD_ANIMAL_CULL_DISTANCE;
   const _fountainDistSq  = LOD_FOUNTAIN_CULL_DISTANCE     * LOD_FOUNTAIN_CULL_DISTANCE;
   const _crowDistSq      = LOD_CROW_CULL_DISTANCE         * LOD_CROW_CULL_DISTANCE;
+  const _seagullDistSq   = LOD_SEAGULL_CULL_DISTANCE      * LOD_SEAGULL_CULL_DISTANCE;
   const _millDistSq      = LOD_MILL_CULL_DISTANCE         * LOD_MILL_CULL_DISTANCE;
 
   for (const subGroup of overlay.children) {
@@ -341,6 +387,10 @@ function _rebuildRoadsideDecorLOD(overlay) {
           overlay.userData.roadsideDecorObjects.push({ object: child, center: child.position.clone(), lodDistSq: distSq });
         }
       }
+    } else if (subGroup.name === 'water-zone-seagull-flocks') {
+      for (const child of subGroup.children) {
+        overlay.userData.roadsideDecorObjects.push({ object: child, center: child.position.clone(), lodDistSq: _seagullDistSq });
+      }
     } else if (subGroup.name === 'water-shore-static-boats-glb') {
       for (const child of subGroup.children) {
         // Le nom inclut désormais le variant : water-shore-inert-boat-glb-shore-boat-1/2
@@ -349,6 +399,8 @@ function _rebuildRoadsideDecorLOD(overlay) {
         }
       }
     }
+    // Personnages (village/forêt/fermiers) : gérés par leur propre overlay instancié
+    // (characterOverlay.js) depuis 2026-07-06 — plus de sous-groupe ici à suivre.
   }
 }
 
@@ -370,13 +422,16 @@ export function rebuildDecorOverlay(overlay, placedTiles) {
   clearGroup(overlay);
   ensurePropModels(overlay);
   ensureBirdModel(overlay);
+  ensureSeagullModel(overlay);
 
   const specialBuildingSafeZones = collectSpecialBuildingSafeZones(placedTiles);
   overlay.add(createWaterVoidSplashes(placedTiles));
   overlay.add(createFieldFlags(placedTiles));
+  overlay.add(createWaterBirdFlocks(placedTiles));
   overlay.add(createNaturalGroundProps(placedTiles));
   overlay.add(createRoadsideVillageProps(placedTiles, specialBuildingSafeZones));
   overlay.add(createShoreBoats(placedTiles, specialBuildingSafeZones));
+  // Personnages : cf. characterOverlay.js (overlay dédié, instancié, piloté par scene.js).
 
   _rebuildRoadsideDecorLOD(overlay);
   _refreshDecorAnimRegistry(overlay);
@@ -403,6 +458,7 @@ export function addSingleTileToDecorOverlay(overlay, newPlacedTile, placedTiles)
 
   ensurePropModels(overlay);
   ensureBirdModel(overlay);
+  ensureSeagullModel(overlay);
 
   const singleTileMap = new Map([[newPlacedTile.key, newPlacedTile]]);
   const specialBuildingSafeZones = collectSpecialBuildingSafeZones(placedTiles);
@@ -426,10 +482,18 @@ export function addSingleTileToDecorOverlay(overlay, newPlacedTile, placedTiles)
     while (newBoats.children.length > 0) boatGroup.add(newBoats.children[0]);
   }
 
+  // Personnages : cf. characterOverlay.js (overlay dédié, rebuild complet sur son propre
+  // cycle scene.js — plus de delta ici, ce groupe n'existe plus dans le décor).
+
   // ── Drapeaux champ : rebuild complet (taille de zone, < 10ms) ────────────
   const flagsGroup = overlay.getObjectByName('field-zone-flags-and-crows');
   if (flagsGroup) overlay.remove(flagsGroup);
   overlay.add(createFieldFlags(placedTiles));
+
+  // ── Mouettes des surfaces d'eau : rebuild complet (connectivité de zone, < 10ms) ──
+  const seagullGroup = overlay.getObjectByName('water-zone-seagull-flocks');
+  if (seagullGroup) overlay.remove(seagullGroup);
+  overlay.add(createWaterBirdFlocks(placedTiles));
 
   // ── Liste LOD : reconstruite depuis tous les groupes mis à jour ───────────
   _rebuildRoadsideDecorLOD(overlay);
@@ -567,7 +631,14 @@ export function updateDecorOverlay(overlay, elapsedSeconds, camera = null) {
 // Y >= HIGH_Y → factor 1.0 (plein champ), Y <= LOW_Y → factor MIN_FACTOR (vue rase-mottes).
 const _LOD_HEIGHT_LOW_Y    = 1.5;
 const _LOD_HEIGHT_HIGH_Y   = 7.0;
-const _LOD_HEIGHT_MIN_FACTOR = 0.92; // réduction max 8 % (0.75 encore trop agressif proche du sol)
+// 2026-07-06 — 0.92 (réduction max 8%) s'est révélé quasi sans effet : à angle rasant le
+// coût GPU par brin (overdraw écran) explose alors que le rayon de cull ne bouge presque
+// pas. 0.75 avait déjà été essayé et jugé trop agressif PROCHE DU SOL (pop-in visible de
+// l'herbe/fleurs avant l'horizon, cf. historique de cette constante) — valeur intermédiaire
+// prudente ici (0.80, réduction max 20%) : à valider visuellement en jeu, remonter vers
+// 0.85-0.90 si un pop-in gênant réapparaît, redescendre vers 0.70 si le gain GPU est encore
+// insuffisant et qu'aucun pop-in n'est visible.
+const _LOD_HEIGHT_MIN_FACTOR = 0.80;
 export function computeLodHeightFactor(camera) {
   const y = camera.position.y;
   if (y >= _LOD_HEIGHT_HIGH_Y) return 1.0;
@@ -708,6 +779,7 @@ function createSplashForSector(placedTile, edge) {
 function maybeRebuildWhenReady(overlay) {
   if (propModelsLoading)       return; // props encore en cours
   if (birdGlbLibrary.loading)  return; // oiseau encore en cours
+  if (seagullGlbLibrary.loading) return; // mouette encore en cours
   const lastPlacedTiles = overlay.userData.lastPlacedTiles;
   // Ne pas rebuilder directement hors RAF — sinon tous les objets passent visible=true
   // et le LOD ne s'applique pas avant le prochain %9 (→ flash de 1+ seconde).
@@ -874,6 +946,8 @@ function preparePropPrototype(model, def) {
   wrapper.scale.setScalar(def.target / dimension);
   // Correction Y post-snap par modèle (ex. mushroom-2 a de la géo sous le chapeau visible)
   if (def.groundOffsetDelta) wrapper.userData.groundOffsetDelta = def.groundOffsetDelta;
+  // 2026-07-04 perf : props à faible impact visuel — jamais de shadow caster (cf. createPropModel).
+  wrapper.userData.noShadow = !!def.noShadow;
   wrapper.add(source);
 
   wrapper.traverse(object => {
@@ -984,7 +1058,12 @@ export function createPropModel(key, seedKey = key) {
     child.userData.castShadowOriginal = false;    // sera true sur le plus grand mesh après _applySingleShadowCaster
     child.userData.shadowFlagsApplied = true;     // empêche applySceneShadowFlags() de réinitialiser
   });
-  _applySingleShadowCaster(object); // 1 shadow caster max par prop (le plus grand mesh)
+  // 2026-07-04 perf : certains props (barques échouées, chevaux…) sont marqués noShadow
+  // au niveau du prototype — on saute _applySingleShadowCaster, tous les meshes restent
+  // castShadow=false (déjà posé ci-dessus). Aucun impact sur LOD/courbure/placement.
+  if (!prototype.userData.noShadow) {
+    _applySingleShadowCaster(object); // 1 shadow caster max par prop (le plus grand mesh)
+  }
   object.rotation.y += (hashUnit(`${seedKey}:base-yaw`) - 0.5) * 0.16;
 
   // AnimationMixer pour les GLBs avec animations intégrées (ex. moulin-2 avec pales animées).
@@ -1089,7 +1168,17 @@ function prepareBirdPrototype(model) {
     // Verrouiller : applySceneShadowFlags ne doit pas réactiver les ombres sur les oiseaux
     object.userData.disableCastShadow  = true;
     object.userData.shadowFlagsApplied = true;
-    if (object.material) object.material = clonePropMaterial(object.material);
+    if (object.material) {
+      object.material = clonePropMaterial(object.material);
+      // Ce matériau est PARTAGÉ par tous les clones (cloneSkeleton ne clone pas les
+      // matériaux) : sans ce flag, un clearGroup(overlay) — rebuildDecorOverlay complet —
+      // dispose() ce matériau via un enfant quelconque et casse la texture (map perdu)
+      // pour TOUS les corbeaux existants et futurs, révélant le colorFactor brut du GLB
+      // (rendu plat, souvent teinté) à la place du noir/blanc texturé. Même protection
+      // que _reusePrototypeMaterials / clearGroup (tileUtils.js) pour les props classiques.
+      const mats = Array.isArray(object.material) ? object.material : [object.material];
+      mats.forEach(m => { if (m) m.userData.glbPrototype = true; });
+    }
   });
 
   return wrapper;
@@ -1113,6 +1202,117 @@ export function createBirdFlock(seedKey) {
   object.userData = {
     mixer,
     animationSpeed:    FIELD_BIRD_FLOCK_ANIMATION_SPEED * (0.88 + hashUnit(`${seedKey}:anim`) * 0.24),
+    lastAnimationTime: null
+  };
+
+  return object;
+}
+
+// ─── Modèle mouette (surfaces d'eau) ──────────────────────────────────────────
+// mouette.glb ne contient qu'UNE seule mouette animée (contrairement à birds.glb
+// qui bundle déjà 5 corbeaux) : createSeagullFlock clone donc un individu à la
+// fois ; waterBirdOverlay.js assemble 3 à 6 clones par zone d'eau pour simuler
+// un vol groupé.
+
+const seagullGlbLibrary = {
+  prototype:  null,
+  animations: [],
+  loading:    false,
+  requested:  false
+};
+
+function ensureSeagullModel(overlay) {
+  if (seagullGlbLibrary.loading || seagullGlbLibrary.requested) return;
+  seagullGlbLibrary.loading   = true;
+  seagullGlbLibrary.requested = true;
+
+  createGLTFLoader().load(
+    WATER_SEAGULL_MODEL_URL,
+    gltf => {
+      seagullGlbLibrary.prototype  = prepareSeagullPrototype(gltf.scene);
+      seagullGlbLibrary.animations = gltf.animations ?? [];
+      seagullGlbLibrary.loading    = false;
+      maybeRebuildWhenReady(overlay);
+    },
+    undefined,
+    error => {
+      seagullGlbLibrary.loading = false;
+      console.warn(`Modèle mouette GLB indisponible : ${WATER_SEAGULL_MODEL_URL}`, error);
+      maybeRebuildWhenReady(overlay);
+    }
+  );
+}
+
+function prepareSeagullPrototype(model) {
+  const wrapper = new THREE.Group();
+  wrapper.name  = 'normalized-water-seagull-glb';
+
+  const source = cloneSkeleton(model);
+  const box    = new THREE.Box3().setFromObject(source);
+  const size   = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  source.position.set(-center.x, -center.y, -center.z);
+
+  // mouette.glb est orientée à l'inverse de birds.glb (bec vers +Z au lieu de -Z) :
+  // sans correctif, les mouettes volaient "en marche arrière" (queue devant), la
+  // formule d'orientation d'orbite (effectKind 'bird-flock-orbit', partagée avec
+  // les corbeaux) supposant un bec vers -Z. On isole le flip 180° dans un
+  // sous-groupe appliqué APRÈS le recentrage bbox (sinon le recentrage devient faux :
+  // une rotation directe sur "source" décalerait le centre au lieu de le préserver).
+  const flipGroup = new THREE.Group();
+  flipGroup.name = 'water-seagull-180-flip';
+  flipGroup.rotation.y = Math.PI;
+  flipGroup.add(source);
+
+  const dimension = Math.max(size.x, size.z) || 1;
+  wrapper.scale.setScalar(WATER_SEAGULL_TARGET_WIDTH / dimension);
+  wrapper.add(flipGroup);
+
+  wrapper.traverse(object => {
+    if (!object.isMesh) return;
+    object.castShadow    = false;
+    object.receiveShadow = false;
+    object.userData.disableCastShadow  = true;
+    object.userData.shadowFlagsApplied = true;
+    if (object.material) {
+      object.material = clonePropMaterial(object.material);
+      // Ce matériau est PARTAGÉ par tous les clones (cloneSkeleton ne clone pas les
+      // matériaux) : sans ce flag, un clearGroup(overlay) — rebuildDecorOverlay complet,
+      // déclenché par ex. après un undo ou une sync multijoueur une fois des mouettes déjà
+      // en scène — dispose() ce matériau via un enfant quelconque et casse la texture (map
+      // perdu) pour TOUTES les mouettes existantes et futures : le noir/blanc texturé laisse
+      // place au colorFactor brut du GLB (souvent bleu clair ici) rendu à plat. Même
+      // protection que _reusePrototypeMaterials / clearGroup (tileUtils.js) pour les props
+      // classiques — c'est très probablement la cause de la pointe d'aile devenue bleue.
+      const mats = Array.isArray(object.material) ? object.material : [object.material];
+      mats.forEach(m => { if (m) m.userData.glbPrototype = true; });
+    }
+  });
+
+  return wrapper;
+}
+
+export function createSeagullFlock(seedKey) {
+  if (!seagullGlbLibrary.prototype) return null;
+
+  const object  = cloneSkeleton(seagullGlbLibrary.prototype);
+  object.name   = 'water-seagull-glb-instance';
+  object.rotation.y += (hashUnit(`${seedKey}:base-yaw`) - 0.5) * 0.35;
+  object.scale.multiplyScalar(0.92 + hashUnit(`${seedKey}:scale`) * 0.22);
+
+  const mixer = seagullGlbLibrary.animations.length > 0 ? new THREE.AnimationMixer(object) : null;
+  if (mixer) {
+    for (const clip of seagullGlbLibrary.animations) {
+      mixer.clipAction(clip).play();
+    }
+  }
+
+  object.userData = {
+    mixer,
+    animationSpeed:    WATER_SEAGULL_ANIMATION_SPEED * (0.88 + hashUnit(`${seedKey}:anim`) * 0.24),
     lastAnimationTime: null
   };
 

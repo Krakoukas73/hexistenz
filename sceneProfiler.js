@@ -19,6 +19,8 @@ export const CATEGORY_ICONS = {
   'Sapin':            '🌲',
   'Arbre mort':       '🪵',
   'Buisson':          '🫧',
+  'Gros arbre':       '🌳',
+  'Arbres':           '🌲', // fallback espèce inconnue (_classifyInstanced) — évite un nouvel orphelin "Autres"
   // Bâtiments — types individuels
   'Maison-1':         '🏠',
   'Maison-2':         '🏠',
@@ -27,9 +29,12 @@ export const CATEGORY_ICONS = {
   'Maisons':          '🏠',
   'Églises':          '⛪',
   'Tours de guet':    '🗼',
-  // Animaux champ
+  // Animaux
   'Cerfs':            '🦌',
   'Animaux (champ)':  '🐾',
+  'Moutons':          '🐑',
+  'Corbeaux':         '🐦',
+  'Mouettes':         '🕊️',
   // Nature
   'Fleurs':           '🌸',
   'Champignons':      '🍄',
@@ -37,17 +42,18 @@ export const CATEGORY_ICONS = {
   'Bottes foin':      '🌾',
   'Roseaux':          '🌿',
   'Plantes':          '🌱',
+  'Plantes à baies':  '🫐',
   'Brindilles':       '🪵',
   'Arbustes':         '🫧',
   'Blé':              '🌾',
   'Brins de blé':     '🌾',
+  "Brins d'herbe":    '🍀',
   // Village
   'Chiens':           '🐕',
   'Chevaux':          '🐴',
   'Charrettes':       '🪵',
   'Tonneaux':         '🪣',
   'Moulins':          '🌀',
-  'Corbeaux':         '🐦',
   'Bancs':            '🪑',
   'Panneaux':         '🪧',
   'Fontaines':        '⛲',
@@ -58,21 +64,48 @@ export const CATEGORY_ICONS = {
   'Voies ferrées':    '🛤️',
   'Rails métal':      '🔩',
   'Routes':           '🧱',
-  'Micro-props':      '✦',
   'Traverses':        '🪵',
   // Eau — types individuels
   'Bateaux':          '⛵',
   'Barque 1':         '🚣',
   'Barque 2':         '🚣',
+  'Barque 3':         '🚣',
   'Barques':          '🚣',
   "Gouttes d'eau":    '💧',
   'Filets eau':       '🌊',
   'Brume eau':        '💨',
   'Effets eau':       '💧',
+  // Personnages — villageois
+  'Femme 1':          '👩',
+  'Femme 2':          '👩',
+  'Femme 3':          '👩',
+  'Femme 4':          '👩',
+  'Femme 5':          '👩',
+  'Homme 1':          '🧑',
+  'Homme 2':          '🧑',
+  'Homme 3':          '🧑',
+  'Fermier':          '🧑‍🌾',
+  'Forgeron':         '⚒️',
+  'Marchand':         '💰',
+  'Tavernier':        '🍺',
+  'Garde':            '💂',
+  'Soldat':           '⚔️',
+  'Chevalier':        '🛡️',
+  'Villageois':       '🧑',
+  // Personnages — rôdeurs de forêt
+  'Archer':           '🏹',
+  'Guerrier 1':       '🗡️',
+  'Guerrier 2':       '🗡️',
+  'Guerrier 3':       '🗡️',
+  'Magicien':         '🧙',
+  'Moine':            '🙏',
+  'Sorcière':         '🧙‍♀️',
+  'Rôdeurs forêt':    '🏹',
   // Divers
   'Coffres bonus':    '🎁',
   'Étoiles & comètes':'✨',
   'Grille':           '🔲',
+  'Autres props inconnues': '❔',
   // Terrain par biome
   'Terrain Prairie':  '🟩',
   'Terrain Forêt':    '🌳',
@@ -93,36 +126,50 @@ export const ITEM_GROUP = {
   // Forêt
   'Bouleau': 'Forêt', 'Chêne': 'Forêt', 'Pin': 'Forêt', 'Peuplier': 'Forêt',
   'Épicéa': 'Forêt', 'Feuillu': 'Forêt', 'Sapin': 'Forêt',
-  'Arbre mort': 'Forêt', 'Buisson': 'Forêt',
+  'Arbre mort': 'Forêt', 'Buisson': 'Forêt', 'Gros arbre': 'Forêt', 'Arbres': 'Forêt',
   // Bâtiments
   'Maison-1': 'Bâtiments', 'Maison-2': 'Bâtiments', 'Maison-3': 'Bâtiments', 'Maison-4': 'Bâtiments',
-  'Maisons': 'Bâtiments', 'Églises': 'Bâtiments', 'Tours de guet': 'Bâtiments',
+  'Maisons': 'Bâtiments', 'Églises': 'Bâtiments', 'Tours de guet': 'Bâtiments', 'Gares': 'Bâtiments',
   // Nature
   'Fleurs': 'Nature', 'Champignons': 'Nature', 'Rochers': 'Nature', 'Bottes foin': 'Nature',
-  'Roseaux': 'Nature', 'Plantes': 'Nature', 'Brindilles': 'Nature', 'Arbustes': 'Nature', 'Blé': 'Nature', 'Brins de blé': 'Nature',
-  // Animaux champ
+  'Roseaux': 'Nature', 'Plantes': 'Nature', 'Plantes à baies': 'Nature',
+  'Brindilles': 'Nature', 'Arbustes': 'Nature', 'Blé': 'Nature', 'Brins de blé': 'Nature',
+  "Brins d'herbe": 'Nature',
+  // Animaux — toute faune, champêtre ou volante (2026-07-04 : Moutons/Corbeaux/Mouettes
+  // étaient éparpillés dans Village/Transport ou pas classés du tout, cf. bug "Terrain Autre")
   'Cerfs': 'Animaux', 'Animaux (champ)': 'Animaux',
+  'Moutons': 'Animaux', 'Corbeaux': 'Animaux', 'Mouettes': 'Animaux',
   // Village
   'Chiens': 'Village', 'Chevaux': 'Village',
-  'Charrettes': 'Village', 'Tonneaux': 'Village', 'Moulins': 'Village', 'Corbeaux': 'Village',
+  'Charrettes': 'Village', 'Tonneaux': 'Village', 'Moulins': 'Village',
   'Bancs': 'Village', 'Panneaux': 'Village', 'Fontaines': 'Village', 'Props ambiants': 'Village',
   // Transport
-  'Trains': 'Transport', 'Gares': 'Transport', 'Voies ferrées': 'Transport',
-  'Rails métal': 'Transport', 'Routes': 'Transport', 'Traverses': 'Transport', 'Micro-props': 'Transport',
+  'Trains': 'Transport', 'Voies ferrées': 'Transport',
+  'Rails métal': 'Transport', 'Routes': 'Transport', 'Traverses': 'Transport',
+  // "Autres props inconnues" n'a volontairement aucun groupe → tombe dans le panier "Autres"
+  // (catégorie fourre-tout réelle, ne devrait pas être rattachée à un groupe thématique précis)
   // Eau
-  'Bateaux': 'Eau', 'Barque 1': 'Eau', 'Barque 2': 'Eau', 'Barques': 'Eau',
+  'Bateaux': 'Eau', 'Barque 1': 'Eau', 'Barque 2': 'Eau', 'Barque 3': 'Eau', 'Barques': 'Eau',
   "Gouttes d'eau": 'Eau', 'Filets eau': 'Eau', 'Brume eau': 'Eau', 'Effets eau': 'Eau',
   'Plages': 'Eau', 'Mers': 'Eau',
   // Terrain
   'Terrain Prairie': 'Terrain', 'Terrain Forêt': 'Terrain', 'Terrain Village': 'Terrain',
   'Terrain Rail': 'Terrain', 'Terrain Mer': 'Terrain', 'Terrain Champ': 'Terrain',
   'Terrain Vide': 'Terrain', 'Terrain Autre': 'Terrain', 'Terrain (fusionné)': 'Terrain',
+  // Personnages
+  'Femme 1': 'Personnages', 'Femme 2': 'Personnages', 'Femme 3': 'Personnages',
+  'Femme 4': 'Personnages', 'Femme 5': 'Personnages',
+  'Homme 1': 'Personnages', 'Homme 2': 'Personnages', 'Homme 3': 'Personnages',
+  'Fermier': 'Personnages', 'Forgeron': 'Personnages', 'Marchand': 'Personnages', 'Tavernier': 'Personnages',
+  'Garde': 'Personnages', 'Soldat': 'Personnages', 'Chevalier': 'Personnages', 'Villageois': 'Personnages',
+  'Archer': 'Personnages', 'Guerrier 1': 'Personnages', 'Guerrier 2': 'Personnages', 'Guerrier 3': 'Personnages',
+  'Magicien': 'Personnages', 'Moine': 'Personnages', 'Sorcière': 'Personnages', 'Rôdeurs forêt': 'Personnages',
   // Divers
   'Coffres bonus': 'Divers', 'Étoiles & comètes': 'Divers', 'Grille': 'Divers',
 };
 
-export const GROUP_ORDER = ['Forêt', 'Bâtiments', 'Nature', 'Animaux', 'Village', 'Transport', 'Eau', 'Terrain', 'Divers'];
-export const GROUP_ICONS = { 'Forêt': '🌲', 'Bâtiments': '🏠', 'Nature': '🌿', 'Animaux': '🐾', 'Village': '🏘️', 'Transport': '🚂', 'Eau': '🌊', 'Terrain': '🗺️', 'Divers': '✦' };
+export const GROUP_ORDER = ['Forêt', 'Bâtiments', 'Nature', 'Animaux', 'Village', 'Personnages', 'Transport', 'Eau', 'Terrain', 'Divers'];
+export const GROUP_ICONS = { 'Forêt': '🌲', 'Bâtiments': '🏠', 'Nature': '🌿', 'Animaux': '🐾', 'Village': '🏘️', 'Personnages': '🧑', 'Transport': '🚂', 'Eau': '🌊', 'Terrain': '🗺️', 'Divers': '✦' };
 
 // ─── Espèces d'arbres connues ─────────────────────────────────────────────────
 const _TREE_SPECIES_MAP = {
@@ -134,11 +181,55 @@ const _TREE_SPECIES_MAP = {
 };
 const _TREE_SPECIES_KEYS = Object.keys(_TREE_SPECIES_MAP);
 
+// ─── Personnages — labels par variante (clé PROP_MODEL_DEFS sans le préfixe "character-") ────
+// characterOverlay.js nomme chaque clone "village-character-glb-<variante>" ou
+// "forest-character-glb-<variante>" — permet une ventilation complète (cf. HUD FPS, 2026-07-04).
+const _CHARACTER_LABELS = {
+  'femme-1':    'Femme 1',
+  'femme-2':    'Femme 2',
+  'femme-3':    'Femme 3',
+  'femme-4':    'Femme 4',
+  'femme-5':    'Femme 5',
+  'homme-1':    'Homme 1',
+  'homme-2':    'Homme 2',
+  'homme-3':    'Homme 3',
+  'fermier':    'Fermier',
+  'forgeron':   'Forgeron',
+  'marchand':   'Marchand',
+  'tavernier':  'Tavernier',
+  'garde':      'Garde',
+  'soldat':     'Soldat',
+  'chevalier':  'Chevalier',
+  'archer':     'Archer',
+  'guerrier-1': 'Guerrier 1',
+  'guerrier-2': 'Guerrier 2',
+  'guerrier-3': 'Guerrier 3',
+  'magicien':   'Magicien',
+  'monk':       'Moine',
+  'sorciere':   'Sorcière',
+};
+
+// Clés du même _CHARACTER_LABELS, réutilisées pour reconnaître les InstancedMesh de
+// personnages (2026-07-06, instancing characterOverlay.js — nom "instanced-character-
+// <bareKey>-<chunkKey>"). Aucune clé n'est préfixe d'une autre (femme-1..5, guerrier-1..3,
+// etc.) : un simple startsWith(bareKey + '-') après le préfixe suffit, sans ambiguïté.
+const _CHARACTER_BARE_KEYS = Object.keys(_CHARACTER_LABELS);
+
+function _classifyCharacter(name) {
+  if (!name) return null;
+  if (name.startsWith('village-character-glb-')) {
+    return _CHARACTER_LABELS[name.slice('village-character-glb-'.length)] ?? 'Villageois';
+  }
+  if (name.startsWith('forest-character-glb-')) {
+    return _CHARACTER_LABELS[name.slice('forest-character-glb-'.length)] ?? 'Rôdeurs forêt';
+  }
+  if (name.startsWith('field-farmer-character-glb-')) return 'Fermier';
+  return null;
+}
+
 // ─── GLB individuels — premier match gagne ────────────────────────────────────
 const _GLB_LABELS = [
-  ['village-house-glb-maison-medievale-moyenne', 'Maison moyenne'],
-  ['village-house-glb-maison-medievale-petite',  'Maison petite'],
-  ['village-house-glb',                          'Maisons'],
+  ['village-house-glb',                          'Maisons'], // regroupe toutes les variantes (petite/moyenne — 2026-07-04)
   ['village-watchtower-glb-zone-reward',      'Tours de guet'],
   ['village-animal-dog-glb',                  'Chiens'],
   ['village-animal-horse-glb',                'Chevaux'],
@@ -150,6 +241,7 @@ const _GLB_LABELS = [
   ['decorative-stone',                        'Voies ferrées'],
   ['water-shore-inert-boat-glb-shore-boat-1', 'Barque 1'],
   ['water-shore-inert-boat-glb-shore-boat-2', 'Barque 2'],
+  ['water-shore-inert-boat-glb-shore-boat-3', 'Barque 3'],
   ['animated-water-boat-glb',                 'Bateaux'],
   ['water-shore-inert-boat-glb',              'Barques'],
   ['village-stone-road-glb-network',          'Routes'],
@@ -159,6 +251,8 @@ const _GLB_LABELS = [
   ['village-barrel-glb',                      'Tonneaux'],
   ['field-zone-mill-glb',                     'Moulins'],
   ['field-birds-glb-animated-flock',          'Corbeaux'],
+  ['water-seagull-glb-instance',              'Mouettes'],
+  ['animal-sheep-glb',                        'Moutons'],
   ['bench',                                   'Bancs'],
   ['signpost',                                'Panneaux'],
   ['fountain',                                'Fontaines'],
@@ -183,13 +277,24 @@ function _classifyInstanced(obj) {
   if (n.startsWith('instanced-prop-hay'))            return 'Bottes foin';
   if (n.startsWith('instanced-prop-reed'))           return 'Roseaux';
   if (n.startsWith('instanced-prop-plant'))          return 'Plantes';
+  if (n.startsWith('instanced-prop-berry-'))         return 'Plantes à baies';
   if (n.startsWith('instanced-prop-brindille'))      return 'Brindilles';
   if (n.startsWith('instanced-prop-shrub'))          return 'Arbustes';
+  if (n.startsWith('instanced-house-'))              return 'Maisons'; // 2026-07-05 : maisons instancées (houseOverlay.js)
+  if (n.startsWith('instanced-character-')) {
+    // 2026-07-06 : personnages instanciés (characterOverlay.js) — nom
+    // "instanced-character-<bareKey>-<chunkKey>". bareKey peut contenir des tirets
+    // (femme-1, guerrier-2…) donc on cherche le préfixe exact parmi les clés connues
+    // plutôt que de couper au premier '-'.
+    const rest = n.slice('instanced-character-'.length);
+    const bareKey = _CHARACTER_BARE_KEYS.find(k => rest === k || rest.startsWith(k + '-'));
+    if (bareKey) return _CHARACTER_LABELS[bareKey];
+  }
   if (n.startsWith('hex-grid-fill'))                 return 'Grille';
   if (n.includes('wheat') || n.includes('blade'))    return 'Blé';
   if (n.includes('wood-sleeper'))                    return 'Traverses';
   const cat = obj.userData?.lodCategory;
-  if (cat === 'micro')  return 'Micro-props';
+  if (cat === 'micro')  return 'Autres props inconnues';
   if (cat === 'plant')  return 'Plantes';
   if (cat === 'rock')   return 'Rochers';
   if (cat === 'animal') return 'Animaux (champ)';
@@ -206,9 +311,14 @@ function _classifyGlb(name) {
 
 function _geomTris(geometry) {
   if (!geometry) return 0;
-  if (geometry.index) return geometry.index.count / 3;
-  const pos = geometry.attributes?.position;
-  return pos ? Math.floor(pos.count / 3) : 0;
+  const base = geometry.index ? geometry.index.count / 3 : Math.floor((geometry.attributes?.position?.count ?? 0) / 3);
+  // InstancedBufferGeometry (herbe, blé — cf. grassBladeOverlay.js/fieldWheatOverlay.js) :
+  // un seul Mesh dessine geometry.instanceCount répétitions de cette géométrie de base en
+  // 1 draw call. Sans ce facteur, le HUD ne comptait QUE la géométrie de base (une poignée
+  // de triangles) au lieu des dizaines de milliers réellement rendus par secteur — la
+  // quasi-totalité du coût de l'herbe/blé restait invisible (2026-07-04).
+  const instances = geometry.isInstancedBufferGeometry ? (geometry.instanceCount ?? 1) : 1;
+  return base * instances;
 }
 
 function _glbStats(obj) {
@@ -246,6 +356,7 @@ function _classifyMesh(name) {
     return 'Terrain Autre';
   }
   if (name.includes('wheat'))                                    return 'Brins de blé';
+  if (name.startsWith('grass-'))                                 return "Brins d'herbe";
   if (name.includes('sand-beach') || name.includes('shore'))    return 'Plages';
   if (name.includes('water-drop'))                              return "Gouttes d'eau";
   if (name.includes('water-streak') || name.includes('water-falling') ||
@@ -281,7 +392,7 @@ function _traverseNode(obj, counts) {
     return;
   }
 
-  const glbLabel = _classifyGlb(obj.name);
+  const glbLabel = _classifyCharacter(obj.name) ?? _classifyGlb(obj.name);
   if (glbLabel) {
     const e   = _acc(counts, glbLabel);
     const st  = _glbStats(obj);

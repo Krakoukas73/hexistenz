@@ -19,6 +19,7 @@ import { getEdgeType } from './tileGenerator.js';
 import { getGlobalWindUniforms } from './globalWind.js';
 import { WORLD_CURVATURE_UNIFORMS } from './worldCurvature.js';
 import { getTerrainSurfaceY } from './terrainHeight.js';
+import { GROUND_CLEARANCE } from './propPlacement.js';
 import { wheatVertexShader, wheatFragmentShader } from './shaders/shaderChampBle.js';
 import { getSectorContour, getTileCenterType, getCenterContour } from './tileMesh.js';
 import {
@@ -305,7 +306,7 @@ export function rebuildFieldWheatOverlay(group, placedTiles) {
       mesh.receiveShadow  = false;
       mesh.userData.disableCastShadow = true;  // protège contre la traversée de threeSetup.js
       // Positionné à la vraie surface du champ (terrain relief inclus)
-      mesh.position.set(tileWorld.x, surfaceY + 0.004, tileWorld.z); // +4 mm : base des brins au-dessus de la surface visuelle
+      mesh.position.set(tileWorld.x, surfaceY + GROUND_CLEARANCE, tileWorld.z); // formule unique (2026-07-04)
 
       if (!byChunk.has(chunkKey)) byChunk.set(chunkKey, { meshes: [], centers: [] });
       const chunk = byChunk.get(chunkKey);
@@ -362,7 +363,7 @@ export function rebuildFieldWheatOverlay(group, placedTiles) {
       _cMesh.castShadow     = false;
       _cMesh.receiveShadow  = false;
       _cMesh.userData.disableCastShadow = true;
-      _cMesh.position.set(tileWorld.x, _cSurfaceY + 0.004, tileWorld.z); // +4 mm cohérent avec les secteurs
+      _cMesh.position.set(tileWorld.x, _cSurfaceY + GROUND_CLEARANCE, tileWorld.z); // formule unique, cohérent avec les secteurs
 
       if (!byChunk.has(chunkKey)) byChunk.set(chunkKey, { meshes: [], centers: [] });
       const _cChunk = byChunk.get(chunkKey);

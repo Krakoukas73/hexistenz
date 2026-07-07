@@ -57,10 +57,6 @@ export function hasAdjacentPlacedTile(hex, placedTiles, specialCells = null) {
   return HEX_DIRECTIONS.some(direction => getNeighborTile(hex, direction, placedTiles) || getNeighborSpecialCell(hex, direction, specialCells));
 }
 
-export function hasValidNetworkConnections(hex, placedTiles, tile, specialCells = null) {
-  return getNetworkConnectionConflicts(hex, placedTiles, tile, specialCells).length === 0;
-}
-
 export function getNetworkConnectionConflicts(hex, placedTiles, tile, specialCells = null) {
   const conflicts = [];
 

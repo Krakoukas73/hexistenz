@@ -328,15 +328,26 @@ function _buildWake(mesh, pts) {
  * Met à jour la visibilité des bateaux selon la distance caméra.
  * À appeler tous les 3 frames depuis scene.js (même cadence que forestLOD).
  */
+// Frustum réutilisable + rayon de culling généreux (jamais de cull à tort : couvre
+// la coque + sillage + drop de courbure — cf. updateRailTrainLOD).
+const _boatLodFrustum = new THREE.Frustum();
+const _boatLodMatrix  = new THREE.Matrix4();
+const _boatLodSphere  = new THREE.Sphere();
+const _BOAT_CULL_RADIUS = 2.0;
+
 export function updateWaterBoatLOD(group, camera, lodFactor = 1.0) {
   const boats = group.userData.boats ?? [];
   const eff = LOD_BOAT_CULL_DISTANCE * lodFactor;
   const distSq = eff * eff;
+  _boatLodMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  _boatLodFrustum.setFromProjectionMatrix(_boatLodMatrix);
   // Distance 3D complète (X + Y + Z) : corrige le bug vue top-down où camera XZ ≈ bateau XZ
   // → dist2D ≈ 0 → bateau toujours visible. En vue verticale, la hauteur Y de la caméra
-  // est grande → distance 3D correcte → cull effectif.
+  // est grande → distance 3D correcte → cull effectif. + frustum (hors-champ latéral/arrière).
   for (const boat of boats) {
-    const visible = camera.position.distanceToSquared(boat.trackCenter) < distSq;
+    _boatLodSphere.set(boat.trackCenter, _BOAT_CULL_RADIUS);
+    const visible = camera.position.distanceToSquared(boat.trackCenter) < distSq
+      && _boatLodFrustum.intersectsSphere(_boatLodSphere);
     boat.object.visible = visible;
     if (boat.wake) boat.wake.visible = visible;
   }
@@ -441,8 +452,12 @@ function prepareBoatPrototype(model) {
 
   wrapper.traverse(object => {
     if (!object.isMesh) return;
-    object.castShadow = true;
+    // 2026-07-04 perf : bateau animé (tangage sur trajet), ombre peu visible en mouvement
+    // sur l'eau — retirée pour réduire les shadow casters. N'affecte pas l'animation.
+    object.castShadow = false;
     object.receiveShadow = true;
+    object.userData.disableCastShadow  = true; // empêche applySceneShadowFlags() de la réactiver
+    object.userData.shadowFlagsApplied = true;
     if (object.material) object.material = cloneBoatMaterial(object.material);
   });
 
@@ -585,7 +600,7 @@ function createSurfaceRipple(seedKey) {
   return ring;
 }
 
-function collectWaterZone(startTile, startEdge, placedTiles, visited) {
+export function collectWaterZone(startTile, startEdge, placedTiles, visited) {
   const stack = [{ tile: startTile, edge: startEdge }];
   const sectors = [];
 
@@ -606,7 +621,7 @@ function collectWaterZone(startTile, startEdge, placedTiles, visited) {
   return { sectors };
 }
 
-function buildWaterGraph(zone) {
+export function buildWaterGraph(zone) {
   const graph = { nodes: new Map(), adjacency: new Map() };
   const zoneNodeIds = new Set(zone.sectors.map(sector => makeNodeKey(sector.tile.key, sector.edge)));
 
@@ -681,7 +696,7 @@ function midpoint(a, b) {
   return { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
 }
 
-function isWaterEdge(placedTile, edge) {
+export function isWaterEdge(placedTile, edge) {
   return getEdgeType(placedTile?.tile?.edges?.[edge]) === EDGE_TYPES.water;
 }
 
@@ -701,7 +716,7 @@ function addEdge(graph, a, b) {
   graph.adjacency.get(b)?.add(a);
 }
 
-function findComponents(graph) {
+export function findComponents(graph) {
   const visited = new Set();
   const components = [];
 

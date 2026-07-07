@@ -82,6 +82,7 @@ function fmt_date($iso) {
     <li><a href="#missions" data-fr>Missions</a>    <a href="#missions" data-en>Missions</a></li>
     <li><a href="#gameplay" data-fr>Gameplay</a>    <a href="#gameplay" data-en>Gameplay</a></li>
     <li><a href="#gallery"  data-fr>Galerie</a>     <a href="#gallery"  data-en>Gallery</a></li>
+    <li><a href="#creatures" data-fr>Créatures</a>  <a href="#creatures" data-en>Creatures</a></li>
     <li><a href="#daynnight" data-fr>Jour/Nuit</a>  <a href="#daynnight" data-en>Day/Night</a></li>
     <li><a href="#eda"      data-fr>Personnalisation</a> <a href="#eda" data-en>Customization</a></li>
     <li><a href="#multi"    data-fr>Multijoueur</a> <a href="#multi"    data-en>Multiplayer</a></li>
@@ -198,7 +199,7 @@ function fmt_date($iso) {
     <div class="factions-grid">
       <div class="faction-card platiste">
         <div class="faction-img" style="display:block;padding:0;">
-          <img src="images/platiste.png" alt="Mode Platiste" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <img src="images/platiste.jpg" alt="Mode Platiste" style="width:100%;height:100%;object-fit:cover;display:block;">
         </div>
         <div class="faction-body">
           <span class="faction-tag" data-fr>Mode Platiste</span>
@@ -259,7 +260,7 @@ function fmt_date($iso) {
     <div class="biomes-grid">
       <div class="biome-card grass">
         <div class="biome-banner">
-          <img src="images/biome-prairie.png" alt="Prairie" class="biome-banner-img">
+          <img src="images/biome-prairie.jpg" alt="Prairie" class="biome-banner-img">
           <div class="biome-banner-overlay">
             <div class="biome-name" data-fr>Prairie</div><div class="biome-name" data-en>Grassland</div>
           </div>
@@ -272,7 +273,7 @@ function fmt_date($iso) {
       </div>
       <div class="biome-card field">
         <div class="biome-banner">
-          <img src="images/biome-ble.png" alt="Champ" class="biome-banner-img">
+          <img src="images/biome-ble.jpg" alt="Champ" class="biome-banner-img">
           <div class="biome-banner-overlay">
             <div class="biome-name" data-fr>Champ</div><div class="biome-name" data-en>Field</div>
           </div>
@@ -285,7 +286,7 @@ function fmt_date($iso) {
       </div>
       <div class="biome-card forest">
         <div class="biome-banner">
-          <img src="images/biome-foret.png" alt="Forêt" class="biome-banner-img">
+          <img src="images/biome-foret.jpg" alt="Forêt" class="biome-banner-img">
           <div class="biome-banner-overlay">
             <div class="biome-name" data-fr>Forêt</div><div class="biome-name" data-en>Forest</div>
           </div>
@@ -298,7 +299,7 @@ function fmt_date($iso) {
       </div>
       <div class="biome-card house">
         <div class="biome-banner">
-          <img src="images/biome-village.png" alt="Village" class="biome-banner-img">
+          <img src="images/biome-village.jpg" alt="Village" class="biome-banner-img">
           <div class="biome-banner-overlay">
             <div class="biome-name" data-fr>Village</div><div class="biome-name" data-en>Village</div>
           </div>
@@ -311,7 +312,7 @@ function fmt_date($iso) {
       </div>
       <div class="biome-card water">
         <div class="biome-banner">
-          <img src="images/biome-eau.png" alt="Eau" class="biome-banner-img">
+          <img src="images/biome-eau.jpg" alt="Eau" class="biome-banner-img">
           <div class="biome-banner-overlay">
             <div class="biome-name" data-fr>Eau</div><div class="biome-name" data-en>Water</div>
           </div>
@@ -324,7 +325,7 @@ function fmt_date($iso) {
       </div>
       <div class="biome-card rail">
         <div class="biome-banner">
-          <img src="images/biome-train.png" alt="Voie ferrée" class="biome-banner-img">
+          <img src="images/biome-train.jpg" alt="Voie ferrée" class="biome-banner-img">
           <div class="biome-banner-overlay">
             <div class="biome-name" data-fr>Voie ferrée</div><div class="biome-name" data-en>Railway</div>
           </div>
@@ -508,38 +509,137 @@ function fmt_date($iso) {
 
     <div class="gallery-grid">
       <div class="gallery-card" style="grid-column:span 2;">
-        <img src="images/automne.png" alt="Preset Automne" class="gallery-img">
+        <img src="images/automne.jpg" alt="Preset Automne" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Automne</span><span data-en>Autumn</span></div></div>
       </div>
 
       <div class="gallery-card">
-        <img src="images/ete-vif.png" alt="Preset Été vif" class="gallery-img">
+        <img src="images/ete-vif.jpg" alt="Preset Été vif" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Été vif</span><span data-en>Vivid Summer</span></div></div>
       </div>
 
       <div class="gallery-card">
-        <img src="images/foret-nordique.png" alt="Preset Nordique" class="gallery-img">
+        <img src="images/foret-nordique.jpg" alt="Preset Nordique" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Nordique</span><span data-en>Nordic</span></div></div>
       </div>
 
       <div class="gallery-card" style="grid-column:span 2;">
-        <img src="images/amiga.png" alt="Preset Amiga" class="gallery-img">
+        <img src="images/amiga.jpg" alt="Preset Amiga" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Amiga</span><span data-en>Amiga</span></div></div>
       </div>
 
       <div class="gallery-card gallery-card--contain" style="grid-column:span 2;">
-        <img src="images/ega.png" alt="Preset EGA" class="gallery-img">
+        <img src="images/ega.jpg" alt="Preset EGA" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>EGA 16 couleurs</span><span data-en>EGA 16 colors</span></div></div>
       </div>
 
       <div class="gallery-card gallery-card--contain" style="grid-column:span 2;">
-        <img src="images/cga.png" alt="Preset CGA" class="gallery-img">
+        <img src="images/cga.jpg" alt="Preset CGA" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>CGA 320×200 4 couleurs</span><span data-en>CGA 320×200 4 colors</span></div></div>
       </div>
 
       <div class="gallery-card gallery-card--contain" style="grid-column:span 2;">
-        <img src="images/apple2.png" alt="Preset Apple II" class="gallery-img">
+        <img src="images/apple2.jpg" alt="Preset Apple II" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Apple II</span><span data-en>Apple II</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CREATURES ═══════════ -->
+<section id="creatures">
+  <div class="container">
+    <p class="section-label" data-fr>La vie du monde</p>
+    <p class="section-label" data-en>The world's life</p>
+    <h2 class="section-title" data-fr>Un monde rempli de créatures</h2>
+    <h2 class="section-title" data-en>A world full of creatures</h2>
+    <p class="section-sub" data-fr>Le monde ne se contente pas d'exister : il respire. Animaux, oiseaux et habitants animent chaque biome au fil des saisons.</p>
+    <p class="section-sub" data-en>The world doesn't just exist — it breathes. Animals, birds and inhabitants bring every biome to life through the seasons.</p>
+
+    <div class="creatures-grid">
+      <div class="creature-card">
+        <div class="creature-banner">
+          <img src="images/moutons.jpg" alt="Moutons" class="creature-banner-img">
+          <div class="creature-banner-overlay">
+            <div class="creature-name" data-fr>Moutons</div><div class="creature-name" data-en>Sheep</div>
+          </div>
+        </div>
+        <div class="creature-body">
+          <div class="creature-desc" data-fr>Des troupeaux paissent tranquillement dans les prairies, se déplaçant au gré des herbes qui ondulent sous le vent.</div>
+          <div class="creature-desc" data-en>Flocks graze peacefully in the grasslands, drifting along with the wind-swayed grass.</div>
+        </div>
+      </div>
+      <div class="creature-card">
+        <div class="creature-banner">
+          <img src="images/corbeaux.jpg" alt="Corbeaux" class="creature-banner-img">
+          <div class="creature-banner-overlay">
+            <div class="creature-name" data-fr>Corbeaux</div><div class="creature-name" data-en>Crows</div>
+          </div>
+        </div>
+        <div class="creature-body">
+          <div class="creature-desc" data-fr>Des vols de corbeaux tournoient au-dessus des champs de blé, guettant la moindre parcelle laissée sans surveillance.</div>
+          <div class="creature-desc" data-en>Murders of crows circle above the wheat fields, watching for any unguarded patch.</div>
+        </div>
+      </div>
+      <div class="creature-card">
+        <div class="creature-banner">
+          <img src="images/fermier.jpg" alt="Fermier" class="creature-banner-img">
+          <div class="creature-banner-overlay">
+            <div class="creature-name" data-fr>Fermier</div><div class="creature-name" data-en>Farmer</div>
+          </div>
+        </div>
+        <div class="creature-body">
+          <div class="creature-desc" data-fr>Fourche à la main, le fermier veille sur ses blés et va et vient au rythme des saisons agricoles.</div>
+          <div class="creature-desc" data-en>Pitchfork in hand, the farmer tends his wheat, coming and going with the rhythm of the farming seasons.</div>
+        </div>
+      </div>
+      <div class="creature-card">
+        <div class="creature-banner">
+          <img src="images/monk.jpg" alt="Druide" class="creature-banner-img">
+          <div class="creature-banner-overlay">
+            <div class="creature-name" data-fr>Druide</div><div class="creature-name" data-en>Druid</div>
+          </div>
+        </div>
+        <div class="creature-body">
+          <div class="creature-desc" data-fr>Une silhouette solitaire erre entre les arbres, gardienne discrète des forêts et de leurs secrets.</div>
+          <div class="creature-desc" data-en>A solitary figure wanders among the trees, a quiet guardian of the forests and their secrets.</div>
+        </div>
+      </div>
+      <div class="creature-card">
+        <div class="creature-banner">
+          <img src="images/sorciere.jpg" alt="Sorcière" class="creature-banner-img">
+          <div class="creature-banner-overlay">
+            <div class="creature-name" data-fr>Sorcière</div><div class="creature-name" data-en>Witch</div>
+          </div>
+        </div>
+        <div class="creature-body">
+          <div class="creature-desc" data-fr>Dans certaines forêts, à la tombée de la nuit, on raconte que des sorcières rôdent entre les arbres, attirées par le silence et la lueur des feux de camp oubliés. Rares sont ceux qui les aperçoivent — plus rares encore ceux qui osent les suivre.</div>
+          <div class="creature-desc" data-en>In certain forests, as night falls, witches are said to wander among the trees, drawn by the silence and the glow of forgotten campfires. Few ever catch sight of them — fewer still dare to follow.</div>
+        </div>
+      </div>
+      <div class="creature-card">
+        <div class="creature-banner">
+          <img src="images/melies.jpg" alt="Lune de Méliès" class="creature-banner-img">
+          <div class="creature-banner-overlay">
+            <div class="creature-name" data-fr>Lune de Méliès</div><div class="creature-name" data-en>Méliès Moon</div>
+          </div>
+        </div>
+        <div class="creature-body">
+          <div class="creature-desc" data-fr>En mode nuit, la lune arbore le visage emblématique du Voyage dans la Lune de Méliès — un clin d'œil au cinéma muet niché au cœur du ciel étoilé.</div>
+          <div class="creature-desc" data-en>In night mode, the moon wears the iconic face from Méliès' A Trip to the Moon — a nod to silent-era cinema tucked into the starry sky.</div>
+        </div>
+      </div>
+      <div class="creature-card">
+        <div class="creature-banner">
+          <img src="images/mouettes.jpg" alt="Mouettes" class="creature-banner-img">
+          <div class="creature-banner-overlay">
+            <div class="creature-name" data-fr>Mouettes</div><div class="creature-name" data-en>Seagulls</div>
+          </div>
+        </div>
+        <div class="creature-body">
+          <div class="creature-desc" data-fr>De petits groupes de mouettes tournoient au-dessus des plus grandes étendues d'eau, quelques individus s'écartant parfois du reste de la troupe.</div>
+          <div class="creature-desc" data-en>Small flocks of seagulls circle above the largest bodies of water, with the occasional straggler drifting away from the group.</div>
+        </div>
       </div>
     </div>
   </div>
@@ -557,11 +657,13 @@ function fmt_date($iso) {
 
     <div class="daynight-grid">
       <div class="daynight-card day">
-        <img src="images/jour.png" alt="Mode Jour" class="daynight-img">
+        <img src="images/jour.jpg" alt="Mode Jour" class="daynight-img">
         <div class="daynight-body">
-        <div class="daynight-icon">☀️</div>
-        <div class="daynight-name" data-fr>Mode Jour</div>
-        <div class="daynight-name" data-en>Day Mode</div>
+        <div class="daynight-head">
+          <div class="daynight-icon">☀️</div>
+          <div class="daynight-name" data-fr>Mode Jour</div>
+          <div class="daynight-name" data-en>Day Mode</div>
+        </div>
         <ul class="daynight-list">
           <li data-fr>🌤 Soleil orbitant sur sa propre couche de rendu</li>
           <li data-en>🌤 Sun orbiting on its own render layer</li>
@@ -575,11 +677,13 @@ function fmt_date($iso) {
         </div>
       </div>
       <div class="daynight-card night">
-        <img src="images/nuit.png" alt="Mode Nuit" class="daynight-img">
+        <img src="images/nuit.jpg" alt="Mode Nuit" class="daynight-img">
         <div class="daynight-body">
-        <div class="daynight-icon">🌙</div>
-        <div class="daynight-name" data-fr>Mode Nuit</div>
-        <div class="daynight-name" data-en>Night Mode</div>
+        <div class="daynight-head">
+          <div class="daynight-icon">🌙</div>
+          <div class="daynight-name" data-fr>Mode Nuit</div>
+          <div class="daynight-name" data-en>Night Mode</div>
+        </div>
         <ul class="daynight-list">
           <li data-fr>🌙 Lune, gradient zenith/horizon nocturne profond</li>
           <li data-en>🌙 Moon, deep nocturnal zenith/horizon gradient</li>
@@ -589,6 +693,24 @@ function fmt_date($iso) {
           <li data-en>☄️ Streaking comets — click to make them explode</li>
           <li data-fr>🌑 Atmosphère sombre, fumée des villages plus visible</li>
           <li data-en>🌑 Dark atmosphere, village smoke more visible</li>
+        </ul>
+        </div>
+      </div>
+      <div class="daynight-card" style="grid-column:span 2;">
+        <img src="images/godrays.jpg" alt="God Rays" class="daynight-img">
+        <div class="daynight-body">
+        <div class="daynight-head">
+          <div class="daynight-icon">🔆</div>
+          <div class="daynight-name" data-fr>God Rays</div>
+          <div class="daynight-name" data-en>God Rays</div>
+        </div>
+        <ul class="daynight-list">
+          <li data-fr>☀️ Rayons de lumière volumétriques émergeant du soleil ou de la lune</li>
+          <li data-en>☀️ Volumetric light shafts emerging from the sun or the moon</li>
+          <li data-fr>🌲 Traversent frondaisons, tours et nuages pour un éclairage cinématique</li>
+          <li data-en>🌲 Pierce through foliage, towers and clouds for cinematic lighting</li>
+          <li data-fr>🎚️ Longueur, diffusion et seuil réglables via l'éditeur de direction artistique</li>
+          <li data-en>🎚️ Length, diffusion and threshold tunable via the art-direction editor</li>
         </ul>
         </div>
       </div>
@@ -610,8 +732,6 @@ function fmt_date($iso) {
       <div class="eda-showcase-card">
         <img src="images/eda-1.png" alt="EDA — onglet LUT" class="eda-showcase-img">
         <div class="eda-showcase-body">
-          <div class="eda-showcase-tab" data-fr>Onglet 1</div>
-          <div class="eda-showcase-tab" data-en>Tab 1</div>
           <div class="eda-showcase-label" data-fr>LUT</div>
           <div class="eda-showcase-label" data-en>LUT</div>
           <p class="eda-showcase-desc" data-fr>Brouillard, astre lumineux, étalonnage colorimétrique complet (courbes RVB, gamma, niveaux) et palette par biome.</p>
@@ -622,8 +742,6 @@ function fmt_date($iso) {
       <div class="eda-showcase-card">
         <img src="images/eda-2.png" alt="EDA — onglet Cinématique" class="eda-showcase-img">
         <div class="eda-showcase-body">
-          <div class="eda-showcase-tab" data-fr>Onglet 2</div>
-          <div class="eda-showcase-tab" data-en>Tab 2</div>
           <div class="eda-showcase-label" data-fr>Cinématique</div>
           <div class="eda-showcase-label" data-en>Cinematic</div>
           <p class="eda-showcase-desc" data-fr>God rays, tilt-shift, bloom, pixelisation rétro et courbure d'écran — pour filmer le monde plutôt que le regarder.</p>
@@ -634,8 +752,6 @@ function fmt_date($iso) {
       <div class="eda-showcase-card">
         <img src="images/eda-3.png" alt="EDA — onglet Environnement" class="eda-showcase-img">
         <div class="eda-showcase-body">
-          <div class="eda-showcase-tab" data-fr>Onglet 3</div>
-          <div class="eda-showcase-tab" data-en>Tab 3</div>
           <div class="eda-showcase-label" data-fr>Environnement</div>
           <div class="eda-showcase-label" data-en>Environment</div>
           <p class="eda-showcase-desc" data-fr>Nuages, vent (blés, herbes, arbres), forme du monde (bouliste/platiste) et bascule Jour/Nuit.</p>

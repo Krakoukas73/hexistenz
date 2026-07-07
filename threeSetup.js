@@ -5,19 +5,54 @@ import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examp
 import { RenderPixelatedPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/RenderPixelatedPass.js';
 import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js';
-import { GRID_RADIUS, HEX_SIZE } from './config.js';
+import { GRID_RADIUS, HEX_SIZE, MAX_PIXEL_RATIO } from './config.js';
 import { COLOR_GRADING_SHADER } from './visualEnvironment.js';
 import { CINEMATIC_SHADER } from './cinematicPass.js';
 import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS, getWorldCurvatureDrop, markNoWorldCurvature } from './worldCurvature.js';
 import { ensureStarUniverse, updateStarUniverse } from './starUniverse.js';
+import { createGpuProfiler } from './gpuProfiler.js';
+import { clamp01 } from './tileUtils.js';
 
 export const WORLD_LAYER = 0;
 export const TEXT_LAYER  = 1;
 
+// Groupes de scène LOURDS et SANS sprite texte (TEXT_LAYER), masqués le temps de
+// la passe texte (renderTextLayer) pour éviter que renderer.render() ne parcoure
+// leurs sous-arbres profonds (squelettes, milliers de props) inutilement. Ne PAS
+// y mettre waterZoneOverlay (contient les labels de zone) ni quoi que ce soit
+// portant un sprite TEXT_LAYER. Sûr : un groupe oublié = juste moins d'optim, le
+// texte s'affiche toujours. Noms = ceux posés par create*Overlay() / .name.
+const TEXT_PASS_SKIP_NAMES = new Set([
+  'grass-blade-overlay',
+  'sheep-overlay',
+  'forest-tree-glb-overlay',
+  'field-wheat-overlay',
+  'field-water-edge-effects-overlay',
+  'house-overlay',
+  'water-boat-overlay',
+  'rail-train-overlay',
+  'multiplayer-remote-ghosts',
+  'terrain-merged-render',
+  'character-overlay-glb', // instancié (2026-07-06) — sans sprite texte, safe à masquer aussi
+]);
+
 // Initialisation Three.js isolée pour garder scene.js centré sur la logique de jeu.
 export function createRenderer(canvas) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
+  // antialias: false — tout le rendu passe par l'EffectComposer dont les render
+  // targets sont en samples:0 (aucun MSAA). Le MSAA du framebuffer par défaut ne
+  // s'appliquerait qu'au quad plein écran final de l'OutputPass (bords hors-écran)
+  // → aucun effet visuel, seulement un coût mémoire + resolve à chaque présentation.
+  // Vérifié : composer.renderTarget1/2.samples === 0. Rendu strictement identique.
+  // powerPreference 'high-performance' (2026-07-05) : sans ce flag, le navigateur/OS/driver
+  // choisit lui-même le GPU et l'état d'alimentation (souvent un mode économe par défaut sur
+  // laptop hybride ou sous throttling thermique/DVFS) — cf. diagnostic oscillation GPU : le
+  // temps CPU de soumission (~19-22ms, stable) ne bouge pas alors que le temps GPU réel mesuré
+  // (EXT_disjoint_timer_query) oscille de ~15ms à 45+ms sur une scène quasi statique (nuages
+  // désactivés, ombre recalculée ou non — les deux cas oscillent pareil, cf. gpuProfiler.js
+  // split "ombre recalculée"/"ombre réutilisée" qui montrent la même amplitude interne). Ça
+  // pointe vers du scaling de fréquence GPU pilote/OS plutôt qu'un vrai surcoût de rendu.
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -26,6 +61,19 @@ export function createRenderer(canvas) {
   renderer.shadowMap.type = THREE.BasicShadowMap;
   renderer.shadowMap.autoUpdate = true;
   renderer.info.autoReset = false; // reset manuel dans animate() pour cumuler toutes les passes
+  // 2026-07-05 — CORRECTIF RÉEL du throttle GPU périodique (~0.9s, ~48-52ms/coup) : analyse de
+  // la trace Performance (Trace-20260705T225903) montre 52%+ du temps de CHAQUE stall dans
+  // WebGLProgram.onFirstUse → gl.getProgramInfoLog/getShaderInfoLog/getProgramParameter. Ce bloc
+  // entier (three.module.js ~L20271) n'existe QUE si renderer.debug.checkShaderErrors === true
+  // (valeur par défaut de Three.js) — ce sont des appels de VALIDATION synchrones qui forcent le
+  // driver GPU à attendre la fin du link du shader, à chaque toute première utilisation réelle
+  // d'un matériau (mesure exacte, pas une supposition). renderer.compile() (tenté avant) ne
+  // suffit PAS : il déclenche la compilation mais PAS cet appel de validation, qui reste
+  // paresseux et n'arrive que lors du premier rendu réel — d'où l'absence d'effet du fix
+  // précédent. Désactiver ce flag (recommandation officielle Three.js une fois les shaders du
+  // projet validés) supprime entièrement ce coût, quel que soit le moment où un matériau est
+  // utilisé pour la première fois.
+  renderer.debug.checkShaderErrors = false;
   return renderer;
 }
 
@@ -44,8 +92,8 @@ export function createThreeScene() {
 
   const sun = new THREE.DirectionalLight(0xffd08a, 3.35);
   sun.name = 'main-sun-shadow-light';
-  sun.userData.orbit = { radius: 10.5, height: 8.4, speed: 0.06, visualScale: 1.18 };
-  sun.position.set(-7.5, 8.4, 5.5);
+  sun.userData.orbit = { radius: 10.5, height: 3.40, speed: 0.06, visualScale: 1.18 };
+  sun.position.set(-7.5, 3.40, 5.5);
   sun.castShadow = true;
   sun.shadow.mapSize.set(1024, 1024);   // 2048→1024 : −75% GPU shadow work (pixel size 3 = shadow detail indiscernable)
   sun.shadow.bias = -0.00012;
@@ -105,7 +153,7 @@ export function updateSunShadowOrbit(scene, timeSeconds, focusPoint = null, came
     sun.shadow.camera.far = Math.max(sun.shadow.camera.far ?? 48, 160);
   }
 
-  const orbit = sun.userData.orbit ?? { radius: 10.5, height: 8.4, speed: 0.42, visualScale: 1.18 };
+  const orbit = sun.userData.orbit ?? { radius: 10.5, height: 3.40, speed: 0.42, visualScale: 1.18 };
   // Garde-fou : si orbit.speed n'est pas un nombre fini (config pas encore appliquée, valeur
   // corrompue en localStorage…), on retombe sur la vitesse par défaut plutôt que de propager
   // un NaN dans position/rotation — un NaN une fois écrit dans une matrice de transformation
@@ -299,7 +347,7 @@ function createVisibleSunObject() {
   };
 
   _loadAstre('./glb/astres/soleil.glb', 'visible-sky-sun-glb');
-  _loadAstre('./glb/astres/lune.glb',   'visible-sky-moon-glb');
+  _loadAstre('./glb/astres/lune_melies.glb', 'visible-sky-moon-glb');
 
   return group;
 }
@@ -324,20 +372,20 @@ export function setAstreMode(scene, isSoleil) {
   _applyAstreVisibility(group, isSoleil);
 }
 
-/** @deprecated — utiliser setAstreMode() à la place. Conservé pour compatibilité. */
-export function getAstreType(scene) {
-  const isSoleil = scene.getObjectByName('visible-sky-sun')?.userData?.isSoleil;
-  return isSoleil === false ? 'lune' : 'soleil';
-}
-
 export function createCamera() {
   return new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.02, 1000);
 }
 
 export function createPixelPostprocess(renderer, scene, camera) {
   const composer = new EffectComposer(renderer);
-  composer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
+  composer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
   composer.setSize(window.innerWidth, window.innerHeight);
+
+  // Mesure GPU réelle (2026-07-04, affinée 2026-07-05) — cf. gpuTimer.js : le chrono JS
+  // autour de render() ne mesurait que la soumission CPU, pas l'exécution GPU réelle.
+  // 2026-07-05 : un seul timer global ne dit pas QUELLE passe est responsable quand le
+  // GPU oscille (cf. gpuProfiler.js) — remplacé par N timers séquentiels, un par passe.
+  const gpuProfiler = createGpuProfiler(renderer);
 
   const settings = {
     enabled: true,
@@ -387,12 +435,29 @@ export function createPixelPostprocess(renderer, scene, camera) {
       }
       this.fsQuad.render(renderer);
     };
+    // Chronométrage GPU dédié à cette passe (monde + ciel/nuages + eau + ombres internes) —
+    // appliqué APRÈS le monkey-patch ci-dessus pour englober tout son travail réel.
+    // 2026-07-05 : hypothèse nuages réfutée par le test utilisateur (oscillation identique
+    // nuages désactivés) — shaderCiel.js confirmé avec bypass correct (uEnabled<0.5 → return
+    // avant le ray-march, donc coût nuages bien nul). Nouvelle piste : renderer.shadowMap.autoUpdate
+    // n'est vrai qu'1 frame sur 3 (cf. scene.js ~L670) → la shadow map (terrain entier, 53.9%
+    // des triangles) n'est recalculée que 33% des frames, à l'intérieur de CETTE passe. Split
+    // conditionnel pour isoler ce coût sans ambiguïté (pas de désalignement possible : le
+    // prédicat est évalué en synchrone à l'appel, pas sur l'historique async du timer GPU).
+    gpuProfiler.wrapPassConditional(
+      pixelPass,
+      'beauty — ombre recalculée ce frame',
+      'beauty — ombre réutilisée (cache)',
+      (r) => r.shadowMap.autoUpdate
+    );
   }
 
   const colorGradingPass = new ShaderPass(COLOR_GRADING_SHADER);
+  gpuProfiler.wrapPass(colorGradingPass, 'colorGrading (LUT)');
 
   // ── Effets cinématiques (tilt-shift · vignette · grain · aberration) ──────
   const cinemaPass = new ShaderPass(CINEMATIC_SHADER);
+  gpuProfiler.wrapPass(cinemaPass, 'cinématique (godrays/bloom/CRT)');
   // uResolution nécessite un THREE.Vector2 pour le .set() dans render() ;
   // on l'injecte ici car cinematicPass.js ne dépend pas de THREE.
   cinemaPass.uniforms.uResolution = { value: new THREE.Vector2(window.innerWidth, window.innerHeight) };
@@ -489,10 +554,13 @@ export function createPixelPostprocess(renderer, scene, camera) {
     cinemaPass.uniforms.uGodRays.value = baseIntensity * fade;
   }
 
+  const outputPass = new OutputPass();
+  gpuProfiler.wrapPass(outputPass, 'output (tonemap/sRGB)');
+
   composer.addPass(pixelPass);
   composer.addPass(colorGradingPass);
   composer.addPass(cinemaPass);
-  composer.addPass(new OutputPass());
+  composer.addPass(outputPass);
 
   function renderWorldLayer() {
     camera.layers.set(WORLD_LAYER);
@@ -515,7 +583,25 @@ export function createPixelPostprocess(renderer, scene, camera) {
     // plutôt que de forcer true, ce qui court-circuiterait le throttle.
     const prevAutoUpdate = renderer.shadowMap.autoUpdate;
     renderer.shadowMap.autoUpdate = false;
-    renderer.render(scene, camera);
+
+    // OPTIM CPU : renderer.render() parcourt tout le graphe (projectObject) même
+    // pour ne dessiner que les quelques labels texte. Les gros groupes ci-dessous
+    // n'ont AUCUN sprite TEXT_LAYER (les labels de tuiles sont désactivés — cf.
+    // tileLabels.shouldShowValue ; seuls les labels de zone de waterZoneOverlay
+    // existent). On masque ces sous-arbres profonds (squelettes moutons/persos,
+    // milliers de props) le temps de la passe texte → Three saute leur récursion.
+    // Mesuré : passe texte ~6.8 ms → ~0.5 ms (CPU submission). Restauré juste après.
+    const _hidden = [];
+    for (const child of scene.children) {
+      if (child.visible && TEXT_PASS_SKIP_NAMES.has(child.name)) {
+        child.visible = false;
+        _hidden.push(child);
+      }
+    }
+
+    gpuProfiler.timeSync('texte (labels hex)', () => renderer.render(scene, camera));
+
+    for (const child of _hidden) child.visible = true;
     renderer.shadowMap.autoUpdate = prevAutoUpdate;
   }
 
@@ -598,13 +684,25 @@ export function createPixelPostprocess(renderer, scene, camera) {
       cinemaPass.uniforms.uResolution.value.y  = renderer.domElement.height;
       _updateGodRaysUniform();
 
+      // Chaque passe (beauty/colorGrading/cinéma/output/texte) est chronométrée
+      // individuellement par gpuProfiler (cf. gpuProfiler.js) — jamais de requête
+      // TIME_ELAPSED imbriquée puisque les passes s'exécutent séquentiellement.
       renderWorldLayer();
       renderTextLayer();
+      gpuProfiler.poll(); // récupère les résultats async disponibles (peut dater de 1-3 frames)
 
       scene.background = previousBackground;
       scene.fog = previousFog;
       renderer.autoClear = previousAutoClear;
       camera.layers.mask = previousMask;
+    },
+    gpuProfiler,
+    wrapExtraPass(pass, label) {
+      return gpuProfiler.wrapPass(pass, label);
+    },
+    gpuTimerSupported: gpuProfiler.supported,
+    getGpuMs() {
+      return gpuProfiler.getTotalMs();
     }
   };
 }
@@ -626,10 +724,6 @@ function applyPixelPassSettings(pixelPass, settings) {
 
 function clampPixelSize(value) {
   return Math.min(50, Math.max(1, Math.round(Number(value) || 4)));
-}
-
-function clamp01(value) {
-  return Math.min(1, Math.max(0, Number(value) || 0));
 }
 
 export function applySceneShadowFlags(scene) {
@@ -743,6 +837,6 @@ export function resizeRenderer(renderer, camera, postprocess = null) {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  postprocess?.composer?.setPixelRatio?.(Math.min(window.devicePixelRatio, 1.25));
+  postprocess?.composer?.setPixelRatio?.(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
   postprocess?.composer?.setSize?.(window.innerWidth, window.innerHeight);
 }

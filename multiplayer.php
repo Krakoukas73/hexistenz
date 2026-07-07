@@ -53,7 +53,19 @@ try {
         with_room_lock($gamesDir, $code, function () use ($gamesDir, $code) {
             $path = existing_room_path($gamesDir, $code);
             if (!$path) respond(false, "Partie $code introuvable sur le serveur PHP dans /json/games.", 404, debug_paths($gamesDir, $code));
-            respond(true, null, 200, array('room' => read_room($path)));
+            $room = read_room($path);
+            // 2026-07-06 — FUITE TROUVÉE (root cause du throttle GPU périodique) : update_cursor()
+            // ajoutait un curseur par playerId mais n'en supprimait JAMAIS. Un fichier de room testé
+            // pendant des jours accumule un curseur fantôme par rechargement/session de test — 21
+            // trouvés dans room_SMALL.json, certains vieux de plus de 24 jours, tous "visible" pour
+            // toujours. Chacun fait recréer un mesh de tuile transparent (DoubleSide) toutes les
+            // 900ms côté client → c'est le cycle ~51-54 frames observé depuis le début de l'enquête.
+            // Purge à la lecture ET on réécrit si quelque chose a été retiré, pour que le fichier
+            // guérisse tout seul dès le prochain poll, sans script de nettoyage manuel.
+            if (prune_stale_cursors($room)) {
+                write_room_unlocked($path, $room);
+            }
+            respond(true, null, 200, array('room' => $room));
         });
     }
 
@@ -238,8 +250,44 @@ function update_cursor($gamesDir, $code, $playerId, $cursor) {
     $room['players'][$playerId]['lastSeen'] = time();
     if (isset($room['state']['players'][$playerId])) $room['state']['players'][$playerId]['lastSeen'] = ms_now();
 
+    // Purge aussi ici (cf. prune_stale_cursors dans l'action 'poll') : sinon un joueur qui reste
+    // connecté longtemps réécrit sans cesse le fichier sans jamais déclencher le nettoyage du poll.
+    prune_stale_cursors($room);
+
     write_room_unlocked($path, $room);
     respond(true, null, 200, array('room' => $room));
+}
+
+// 2026-07-06 — TTL généreux (largement au-dessus de l'intervalle de poll client, 900ms) : un
+// curseur silencieux plus de 20s est considéré abandonné (onglet fermé, page rechargée sans
+// déconnexion propre, session de test terminée). Retire l'entrée de 'cursors' ET 'state.cursors'.
+// Retourne true si quelque chose a été supprimé (pour ne réécrire le fichier que si nécessaire).
+function prune_stale_cursors(&$room) {
+    $ttlMs = 20000;
+    $now = ms_now();
+    $removed = false;
+
+    if (isset($room['cursors']) && is_array($room['cursors'])) {
+        foreach ($room['cursors'] as $pid => $cursor) {
+            $updatedAt = isset($cursor['updatedAt']) ? (int)$cursor['updatedAt'] : 0;
+            if ($updatedAt <= 0 || ($now - $updatedAt) > $ttlMs) {
+                unset($room['cursors'][$pid]);
+                $removed = true;
+            }
+        }
+    }
+
+    if (isset($room['state']['cursors']) && is_array($room['state']['cursors'])) {
+        foreach ($room['state']['cursors'] as $pid => $cursor) {
+            $updatedAt = isset($cursor['updatedAt']) ? (int)$cursor['updatedAt'] : 0;
+            if ($updatedAt <= 0 || ($now - $updatedAt) > $ttlMs) {
+                unset($room['state']['cursors'][$pid]);
+                $removed = true;
+            }
+        }
+    }
+
+    return $removed;
 }
 
 function sync_top_level_state(&$room) {

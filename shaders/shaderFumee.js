@@ -27,12 +27,18 @@ export const SMOKE_FRAG = /* glsl */`
   uniform float     uSmokeCount;
   uniform float     uLocoCount;   // nb de locos en tête du tableau (scale ×1.14)
   uniform float     uHasDepth;    // 1.0 si tDepth est valide, 0.0 sinon
+  // Slab world-Y du volume de fumée — corrigé le 2026-07-04 (bug "fumée invisible/écrasée
+  // en bouliste, loin du centre") : c'était deux constantes ABSOLUES fixes (-0.05 / 1.3),
+  // calibrées pour des cheminées toutes proches de y≈0.28 (terrain plat, sans courbure).
+  // uSmokePos[i].y inclut déjà le drop de courbure (getWorldCurvatureDrop, potentiellement
+  // plusieurs unités négatives loin du centre) — avec un slab fixe, la source réelle tombe
+  // hors de l'intervalle marché → le ray-march ne l'atteint jamais (fumée disparaît) ou n'en
+  // capte qu'une fine tranche (fumée écrasée sur un plan plat). Calculées côté CPU à partir
+  // du min/max RÉEL des sources (déjà courbées) — cf. smokeVolumePass.js.
+  uniform float     uSmokeYBase;
+  uniform float     uSmokeYTop;
 
   varying vec2 vUv;
-
-  // Slab world-Y du volume de fumée
-  #define SMOKE_Y_BASE  (-0.05)
-  #define SMOKE_Y_TOP    1.3
 
   // ── Bruit de valeur procédural ───────────────────────────────────────────────
 
@@ -192,8 +198,8 @@ export const SMOKE_FRAG = /* glsl */`
 
     // Intersection rayon × slab Y
     float tMin, tMax;
-    const float Y_BASE = SMOKE_Y_BASE;
-    const float Y_TOP  = SMOKE_Y_TOP;
+    float Y_BASE = uSmokeYBase;
+    float Y_TOP  = uSmokeYTop;
 
     if (abs(D.y) > 0.0001) {
       float tA = (Y_BASE - O.y) / D.y;

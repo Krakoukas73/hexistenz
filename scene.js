@@ -7,21 +7,23 @@ import { createGrid, ensureGridCellsAroundHex, getGridCellCount, getGridKeys, up
 import { addSpecialCellMesh, createSpecialCells, createSpecialCellsMesh, removeSpecialCellMesh, updateSpecialCellsMeshAnimation } from './specialCells.js';
 import { BONUS_CELL_SCORE, addBonusCellMesh, createBonusCells, createBonusCellsMesh, removeBonusCellMesh, updateBonusCellsMeshAnimation } from './bonusCells.js';
 import { axialToWorld, makeHexKey } from './hex.js';
+import { clearGroup } from './tileUtils.js';
 import { createTileMesh } from './tileMesh.js';
-import { updateAnimatedBiomeTextures } from './tileTextures.js';
+import { updateAnimatedBiomeTextures, debugBiomeMaterialSnapshot } from './tileTextures.js';
 import { isRealisticWaterMaterial, triggerRealisticWaterRipple, updateRealisticWater } from './realisticWater.js';
 import { canPlaceTileAt, getPlacementValidation, setPlacementGridKeys } from './placementRules.js';
 import { calculatePlacementScore } from './scoring.js';
 import { createDeck, getEdgeType, rotateTile } from './tileGenerator.js';
 import { createUI, setGridOnlyModeVisible, setHelpVisible, setText, updateDeckUI, updateKeyboardUI, updateMissionUI, updateScoreUI, updateStatsUI } from './ui.js';
 import { createPlacementFeedbackOverlay, getPlacementLabel } from './placementOverlay.js';
-import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay, rebuildWaterZoneOverlay, updateHoverZoneOverlayAnimation, updateZoneLabelLOD, updateBeachLOD } from './waterZoneOverlay.js';
+import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay, rebuildWaterZoneOverlay, updateHoverZoneOverlayAnimation, updateZoneLabelLOD, updateBeachLOD, getHoverRebuildStats, resetHoverRebuildStats } from './waterZoneOverlay.js';
 import { createRailTrainOverlay, rebuildRailTrainOverlay, updateRailTrainOverlay, updateRailTrainLOD, getTrainLocoPositions } from './railTrainOverlay.js';
 import { createWaterBoatOverlay, rebuildWaterBoatOverlay, updateWaterBoatOverlay, updateWaterBoatLOD } from './waterBoatOverlay.js';
 import { createForestOverlay, rebuildForestOverlay, updateForestLOD } from './forestOverlay.js';
 import { createFieldWheatOverlay, rebuildFieldWheatOverlay, updateFieldWheatLOD } from './fieldWheatOverlay.js';
 import { createGrassBladeOverlay, rebuildGrassBladeOverlay, updateGrassBladeLOD } from './grassBladeOverlay.js';
 import { createHouseOverlay, rebuildHouseOverlay, updateHouseOverlay, updateHouseLOD, getHouseChimneyPositions } from './houseOverlay.js';
+import { createCharacterOverlay, rebuildCharacterOverlay, updateCharacterLOD } from './characterOverlay.js';
 import { createSmokeVolumePass, updateSmokeVolumePass, MAX_SMOKE_SOURCES } from './smokeVolumePass.js';
 import { addSingleTileToDecorOverlay, createDecorOverlay, rebuildDecorOverlay, updateDecorOverlay, updateNaturalPropsLOD, updateFieldDecorLOD, computeLodHeightFactor } from './decorOverlay.js';
 import { addBonusCellChest, createBonusCellChestOverlay, rebuildBonusCellChestOverlay, removeBonusCellChest, updateBonusCellChestOverlay, updateBonusCellChestLOD } from './bonusCellChestOverlay.js';
@@ -29,10 +31,13 @@ import { createSheepOverlay, rebuildSheepOverlay, updateSheepOverlay, updateShee
 import { createAmbientSoundDesign, startEndingMusic, startIngameMusic, toggleMute } from './soundDesign.js';
 import { createVisualEnvironment } from './visualEnvironment.js';
 import { createCometSky, updateCometSky, tryCometHit, removeCometFromSky, spawnCometExplosion } from './cometSky.js';
-import { createCloudSky, updateCloudSky, getCloudUserEnabled } from './cloudSky.js';
+import { createCloudSky, updateCloudSky, getCloudUserEnabled, getCloudSkyParams } from './cloudSky.js';
 import { updateGlobalWind } from './globalWind.js';
 import { resetPropHitboxRegistry } from './propHitboxRegistry.js';
 import { createDebugLightUI, tickFps } from './debugLightUi.js';
+import { createEnvironmentDirector } from './environmentDirector.js';
+import { createEnvironmentDebugPanel } from './environmentDebugUi.js';
+import { createQualityUi } from './qualityUi.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, setAstreMode, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './threeSetup.js';
 import { applyShadowCulling, rebuildShadowCasters } from './shadowCulling.js';
@@ -44,6 +49,12 @@ import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
 import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, setMissionTurn } from './missions.js';
 import { pollRoom, updateCursor, updateRoomState } from './multiplayerClient.js';
 
+// 2026-07-05 — marqueur de chargement, au niveau module (s'exécute à l'évaluation du fichier,
+// AVANT tout appel de fonction) : preuve absolue que CE scene.js (avec le fix shader précompile)
+// est bien celui exécuté par le navigateur. Si ce log n'apparaît jamais dans une session, le
+// fichier chargé n'est pas celui-ci, point final — ce n'est pas un bug dans le code qui suit.
+console.warn('[SCENE-JS-BUILD] scene.js chargé — build shader-precompile 2026-07-05-23h40');
+
 export function initScene(options = {}) {
   const canvas = document.getElementById('app');
   const renderer = createRenderer(canvas);
@@ -54,6 +65,7 @@ export function initScene(options = {}) {
 
   // ── Pass fumée volumétrique : inséré AVANT colorGradingPass ──────────────────
   const smokeVolumePass = createSmokeVolumePass();
+  postprocess.wrapExtraPass(smokeVolumePass, 'fumée volumétrique'); // chronométrage GPU dédié (cf. gpuProfiler.js)
   {
     const idx = postprocess.composer.passes.indexOf(postprocess.colorGradingPass);
     postprocess.composer.passes.splice(idx, 0, smokeVolumePass);
@@ -97,6 +109,36 @@ export function initScene(options = {}) {
   let hiddenSpecialCellKey = null;
   let shadowRefreshFrame = 0;
   let cometHits = 0;
+  // 2026-07-05 — diagnostic pur (aucun impact sur le rendu) : corréler l'oscillation GPU
+  // avec le mouvement caméra (zoom amorti via CameraControls.zoomDamping) et le nombre de
+  // triangles réellement soumis. Reset toutes les 120f, aligné sur gpuProfiler.report().
+  let _diagTrianglesMin = Infinity, _diagTrianglesMax = -Infinity;
+  let _diagRadiusMin = Infinity, _diagRadiusMax = -Infinity;
+  // 2026-07-05 — diagnostic pur : la dernière série montre le disjointRatio à 0/6734+ polls
+  // (aucun changement de fréquence GPU PENDANT une requête de mesure) MAIS surtout que TOUTES
+  // les passes oscillent de la même façon, y compris "texte (labels hex)" et "output" qui ne
+  // font quasi aucun travail (pics à 2-3ms sur des passes normalement ~0.00-0.02ms) — signe
+  // d'une contention externe au pipeline de rendu (autre appli/processus GPU, VSync/present
+  // stall, composition bureau) plutôt qu'un coût de calcul propre au jeu. Ce tracker mesure
+  // l'écart réel entre deux requestAnimationFrame (attendu ≈16.7ms @60fps) : si CET écart lui
+  // aussi grimpe en même temps que le GPU mesuré, c'est un stall de présentation/scheduling
+  // du navigateur ou de l'OS, pas un vrai surcoût de rendu du jeu.
+  let _rafPrevTs = null;
+  let _rafDeltaMin = Infinity, _rafDeltaMax = -Infinity;
+  // 2026-07-05 — diagnostic pur : rayon caméra rock-solide (54.550-54.550, aucun mouvement)
+  // pendant que le GPU réel continue d'osciller fortement → hypothèse caméra définitivement
+  // écartée. Nouvelle piste concrète et testable : les deux traversées périodiques de scène
+  // ci-dessous (curvature+shadowFlags+culling+env tous les 120f, rebuildShadowCasters tous les
+  // 180f) mutent castShadow/visible/curvature sur potentiellement des centaines d'objets — si
+  // elles invalident des shadow maps ou forcent des recompilations de shader, le coût GPU réel
+  // peut apparaître sur les frames JUSTE APRÈS, pas de façon aléatoire. On log ici le gpuMs BRUT
+  // frame par frame (pas de min/max agrégé) sur une fenêtre courte après chaque déclenchement,
+  // pour voir si le pic colle exactement au frame de la traversée.
+  let _gpuSpikeWatchUntilFrame = -1;
+  // 2026-07-05 — traque le delta frame-à-frame de renderer.info.memory.geometries (cf. [GEO-DELTA]).
+  let _geoPrevCount = null;
+  // 2026-07-05 — piste Garbage Collector JS : min/max du tas JS par fenêtre 120f (cf. [RAF-STALL]).
+  let _heapMin = Infinity, _heapMax = -Infinity;
   const waterClickRaycaster = new THREE.Raycaster();
   const waterClickPointer = new THREE.Vector2();
   let totalGridTiles = getTotalGridTiles(GRID_RADIUS);
@@ -114,6 +156,7 @@ export function initScene(options = {}) {
   const fieldWheatOverlay = createFieldWheatOverlay();
   const grassBladeOverlay = createGrassBladeOverlay();
   const houseOverlay = createHouseOverlay();
+  const characterOverlay = createCharacterOverlay();
   const fieldWaterEffectsOverlay = createDecorOverlay();
   const bonusCellChestOverlay = createBonusCellChestOverlay();
   const sheepOverlay = createSheepOverlay();
@@ -123,6 +166,15 @@ export function initScene(options = {}) {
   // Créé ici (et non plus juste après createCamera) : le panel VENT/NUAGES a besoin
   // des références forestOverlay (arbres GPU-wind) et cloudSky (nuages horizon jour).
   createDebugLightUI({ visualEnvironment, postprocess, forestOverlay, cloudSky });
+
+  // Phase 0 roadmap VFX : squelette du directeur d'environnement (pas d'effet
+  // visuel encore, cf. environmentDirector.js). Panneau debug séparé du HUD
+  // principal — sera fusionné dans createDebugLightUI plus tard si validé.
+  const environmentDirector = createEnvironmentDirector();
+  createEnvironmentDebugPanel(environmentDirector);
+
+  // Réglage de densité de contenu (qualité/FPS) — bouton flottant "⚙ QUALITÉ".
+  createQualityUi();
 
   // isSoleil : override localStorage > tirage aléatoire si aucune préférence stockée
   const _storedDayNight = localStorage.getItem('hexistenz_daynightmode');
@@ -175,13 +227,13 @@ export function initScene(options = {}) {
 
   ghostTile.visible = false;
 
-  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, bonusCellChestOverlay, waterZoneOverlay, waterSurfaceOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, grassBladeOverlay, houseOverlay, fieldWaterEffectsOverlay, sheepOverlay, cometSky, remoteGhosts, ghostTile, terrainMergeGroup);
+  scene.add(gridOverlay, specialCellsMesh, bonusCellsMesh, bonusCellChestOverlay, waterZoneOverlay, waterSurfaceOverlay, hoverZoneOverlay, railTrainOverlay, waterBoatOverlay, forestOverlay, fieldWheatOverlay, grassBladeOverlay, houseOverlay, characterOverlay, fieldWaterEffectsOverlay, sheepOverlay, cometSky, remoteGhosts, ghostTile, terrainMergeGroup);
 
   // ── Toggle Jour/Nuit depuis le panel LUT ────────────────────────────────────
   document.addEventListener('hexistenz:dayNightChange', (e) => {
     isSoleil = (e.detail.mode === 'soleil');
     cometSky.visible = !isSoleil;
-    setAstreMode(scene, isSoleil);  // soleil.glb visible le jour, lune.glb la nuit
+    setAstreMode(scene, isSoleil);  // soleil.glb visible le jour, lune_melies.glb la nuit
     if (isSoleil) {
       updateCloudSky(cloudSky, {
         enabled: true,
@@ -371,6 +423,15 @@ export function initScene(options = {}) {
   // Permet au LUT panel (et tout autre module) de déclencher un reset caméra
   window.addEventListener('hexistenz:resetCamera', () => controls.reset());
 
+  // Réglage de densité de contenu (qualité/FPS) : reconstruit tout le contenu
+  // scalé (props naturels, herbe, moutons — pas les personnages, instanciés
+  // séparément et non concernés par ce réglage, cf. characterOverlay.js).
+  window.addEventListener('dorfromantik:content-density-changed', () => {
+    rebuildInitialDerivedOverlays();
+    applySceneCurvatureFlags(scene);
+    applySceneShadowFlags(scene);
+  });
+
   window.addEventListener('keyup', event => {
     if (event.key.toLowerCase() === 'r') rotationKeyActive = false;
   });
@@ -501,10 +562,152 @@ export function initScene(options = {}) {
   // FLASH-DIAG : déclaré AVANT animate() pour éviter la temporal dead zone
   let _flashPrevVisCount = -1;
 
+  // 2026-07-05 — CORRECTIF v2 : renderer.compile() (tenté avant) retraverse TOUTE la scène à
+  // chaque appel (~53ms fixe, même quand rien de neuf), et [MEMORY-DIAG] prouve que le nombre de
+  // programmes (155) est déjà STABLE dès la 1ère fenêtre de mesure — aucun NOUVEAU shader n'est
+  // compilé pendant les stalls. Le vrai coût est ailleurs : WebGLProgram n'introspecte les
+  // emplacements uniform/attribut (new WebGLUniforms / fetchAttributeLocations, cf. lecture du
+  // code source three.module.js:20355-20356) que lors du tout PREMIER DESSIN réel de ce
+  // programme — pas à sa compilation. Des programmes déjà compilés dès le début restent "jamais
+  // dessinés" tant qu'aucun objet ne les utilise réellement (LOD, distance, occlusion), ce qui
+  // explique le motif étalé dans le temps même caméra fixe (bateaux/trains/moutons qui bougent
+  // font apparaître nouveaux objets/LOD au fil du temps). Fix : forcer directement
+  // program.getUniforms() sur chaque WebGLProgram déjà créé (renderer.info.programs) — sans
+  // retraverser la scène, donc quasi gratuit pour les programmes déjà "chauds" (retour immédiat
+  // sur cache), et ne paie le vrai coût que pour ceux réellement jamais utilisés.
+  function warmUpAllPrograms(reasonTag) {
+    const programs = renderer.info.programs;
+    if (!programs || programs.length === 0) return;
+    const _t0 = performance.now();
+    let _warmed = 0;
+    for (const program of programs) {
+      try {
+        // getUniforms()/getAttributes() sont idempotents (cache interne à WebGLProgram) —
+        // rappeler sur un programme déjà "chaud" ne coûte quasiment rien.
+        if (program.getUniforms) { program.getUniforms(); _warmed++; }
+        if (program.getAttributes) program.getAttributes();
+      } catch (err) {
+        console.warn('[SHADER-WARMUP] échec sur un programme (non bloquant):', err);
+      }
+    }
+    const _ms = performance.now() - _t0;
+    if (_ms > 1) console.warn(`[SHADER-WARMUP:${reasonTag}] ${_warmed}/${programs.length} programmes: ${_ms.toFixed(1)}ms`);
+  }
+
+  // 2026-07-06 — le warmup ne trouve JAMAIS rien à chauffer (0 occurrence >1ms, même à chaque
+  // frame) alors que [RAF-STALL] persiste identique et que programmes.length reste PLAT (113) :
+  // ça ne prouve PAS l'absence de nouveaux programmes — juste que le COMPTE net ne bouge pas.
+  // Si un programme est créé ET libéré (churn) au même rythme, le total reste stable alors que
+  // CHAQUE nouveau programme paie quand même son coût onFirstUse à sa création. On compare ici
+  // l'ENSEMBLE des cacheKey (pas juste leur nombre) d'une frame à l'autre pour détecter un
+  // roulement caché derrière un total stable.
+  let _prevProgramKeys = null;
+  function checkProgramChurn() {
+    const programs = renderer.info.programs;
+    if (!programs) return;
+    const keys = new Set(programs.map(p => p.cacheKey));
+    if (_prevProgramKeys) {
+      const added = [...keys].filter(k => !_prevProgramKeys.has(k));
+      const removed = [...(_prevProgramKeys)].filter(k => !keys.has(k));
+      if (added.length || removed.length) {
+        const addedNames = added.slice(0, 3).map(k => {
+          const p = programs.find(pr => pr.cacheKey === k);
+          return `${p?.name ?? '?'}(used×${p?.usedTimes ?? '?'})`;
+        });
+        console.warn(`[PROGRAM-CHURN] frame=${shadowRefreshFrame} +${added.length}/-${removed.length} (total=${keys.size}) | ajoutés: ${addedNames.join(' || ')}`);
+      }
+    }
+    _prevProgramKeys = keys;
+  }
+
+  // 2026-07-06 — DIAG BORNÉ, sans setter/stack-trace (l'ancien watcher a fait planter le jeu).
+  // On échantillonne .transparent/.side des matériaux biome à cadence contrôlée (pas chaque frame),
+  // on n'écrit QU'UNE SEULE fois un résumé compact quand le buffer est plein — impossible de spammer.
+  const _matDiagLog = [];
+  let _matDiagPrevSnap = null;
+  let _matDiagDone = false;
+  let _matDiagSamples = 0;
+  function checkBiomeMaterialFlicker() {
+    if (_matDiagDone) return;
+    const snap = debugBiomeMaterialSnapshot();
+    _matDiagSamples++;
+    if (snap !== _matDiagPrevSnap) {
+      _matDiagLog.push(`f${shadowRefreshFrame}:${snap}`);
+      _matDiagPrevSnap = snap;
+    }
+    // 2026-07-06 v2 — le premier seuil (1000 échantillons ≈ 50s) supposait une capture console
+    // démarrée dès frame 0. En pratique le log fourni par l'utilisateur ne commence QUE vers la
+    // frame 600 (l'outil de capture met du temps à s'attacher après le reload) : tout diagnostic
+    // "une seule fois, tôt" est invisible. Seuil abaissé + déclenché aussi par le temps réel
+    // écoulé (pas seulement le nombre d'appels) pour sortir un résultat même sur un test court.
+    if (_matDiagLog.length >= 40 || _matDiagSamples >= 300) {
+      _matDiagDone = true;
+      // 2026-07-06 v3 — RAF-STALL/PROGRAM-CHURN (une seule ligne) apparaissent TOUJOURS dans les
+      // exports de l'utilisateur ; MAT-SNAPSHOT-LOG/TRANSPARENT-USERS (multi-lignes, "\n" +
+      // join('\n')) n'apparaissent JAMAIS malgré un code confirmé exécuté (aucune exception,
+      // frames couvertes) — l'outil de capture de l'utilisateur semble perdre les messages
+      // multi-lignes. On repasse en UNE SEULE ligne par message, comme les diagnostics qui marchent.
+      console.warn(`[MAT-SNAPSHOT-LOG] ${_matDiagLog.length} changement(s) sur ${_matDiagSamples} échantillons || ` + _matDiagLog.join(' || '));
+    }
+  }
+
+  // 2026-07-06 — [MAT-SNAPSHOT-LOG] a prouvé qu'un 2e jeu de matériaux biome transparents
+  // (opacity != 1) apparaît une seule fois vers la frame 15, puis reste stable pour tout le
+  // reste de la session — donc le PROGRAM-CHURN qui continue ensuite (~toutes les 51f, tout
+  // au long du test) ne vient PAS d'un matériau qui change, mais d'un OBJET qui utilise ce
+  // matériau transparent et qui est rendu/pas rendu de façon intermittente.
+  // 2026-07-06 v2 — un déclenchement unique à frame===60 s'est révélé invisible : la capture
+  // console de l'utilisateur démarre tard (log fourni commençait à la frame ~601). On répète
+  // ce passage (borné à 5 fois max, tous les 200f) pour couvrir toute capture qui démarre en
+  // retard, plutôt que de rater la fenêtre une fois de plus.
+  let _findTransparentUserCount = 0;
+  function findTransparentBiomeUsers() {
+    if (_findTransparentUserCount >= 5) return;
+    _findTransparentUserCount++;
+    const hits = [];
+    scene.traverse(o => {
+      if (!o.isMesh || !o.material) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      for (const m of mats) {
+        if (m?.name?.startsWith('biome-') && m.transparent === true) {
+          hits.push(`${o.name || '(sans nom)'} | parent=${o.parent?.name || '?'} | visible=${o.visible} | mat=${m.name} | opacity=${m.opacity}`);
+        }
+      }
+    });
+    console.warn(`[TRANSPARENT-USERS] frame=${shadowRefreshFrame} ${hits.length} objet(s) trouvé(s) || ` + hits.join(' || '));
+  }
+  warmUpAllPrograms('init');
+
   animate();
 
   function animate() {
     requestAnimationFrame(animate);
+
+    // Diag pur (cf. déclaration _rafDelta plus haut) — écart réel entre deux frames,
+    // indépendant de tout calcul GPU/JS : révèle les stalls de présentation/scheduling.
+    {
+      const _now = performance.now();
+      if (_rafPrevTs !== null) {
+        const _d = _now - _rafPrevTs;
+        if (_d < _rafDeltaMin) _rafDeltaMin = _d;
+        if (_d > _rafDeltaMax) _rafDeltaMax = _d;
+        // 2026-07-05 — scanScene() écarté (0 occurrence SCANSCENE-DIAG, écart rAF inchangé).
+        // Log direct de CHAQUE stall réel (>35ms) avec le contexte nécessaire pour trancher
+        // entre "shadow map autoUpdate coûteux 1 frame/3" et "stall navigateur/OS externe au JS" :
+        // %3 = cadence shadow refresh, visibilityState = onglet au premier plan ou non.
+        if (_d > 35) {
+          // %3 (shadow) écarté (2026-07-05, log précédent : les 3 valeurs 0/1/2 apparaissent
+          // pour le stall, aucune corrélation). Prochaine piste testée ici sans nouvelle manip :
+          // Garbage Collector JS. performance.memory (Chrome/Edge only) expose le tas JS utilisé —
+          // si un GC majeur cause le stall, usedJSHeapSize doit chuter nettement pile à ce frame.
+          const _mem = performance.memory
+            ? ` heapMB=${(performance.memory.usedJSHeapSize / 1048576).toFixed(1)}`
+            : ' heapMB=n/a(pas Chrome/Edge)';
+          console.warn(`[RAF-STALL] frame=${shadowRefreshFrame} delta=${_d.toFixed(1)}ms | %3=${shadowRefreshFrame % 3} shadowAutoUpdate=${renderer.shadowMap.autoUpdate} visibility=${document.visibilityState} t=${(_now / 1000).toFixed(1)}s${_mem}`);
+        }
+      }
+      _rafPrevTs = _now;
+    }
 
     // ── PERF-TIMING : log toutes les 120 frames ─────────────────────────────
     const _PT_ENABLE = (shadowRefreshFrame % 120 === 1);
@@ -574,6 +777,10 @@ export function initScene(options = {}) {
     // curvature + shadowFlags : chaque passe coûte 40-55ms → réduit à 1×/120f (~2s @ 60fps).
     // Avant : 1×/20f = freeze de 50ms toutes les 333ms. Maintenant : 1×/2s.
     if ((shadowRefreshFrame++ % 120) === 0) {
+      // Chronométré réellement (2026-07-05, cf. gpuProfiler.js) : jusqu'ici ce bloc n'était
+      // que COMMENTÉ comme coûtant 40-55ms — jamais mesuré en direct. Le log permet de voir
+      // dans F12 si CE bloc coïncide temporellement avec un pic GPU/FPS observé par ailleurs.
+      const _t120 = performance.now();
       applySceneCurvatureFlags(scene);
       applySceneShadowFlags(scene);     // restaure castShadow (écrase le culling précédent)
       // Fix scintillement ombres : re-appliquer le culling immédiatement après la restauration
@@ -581,12 +788,17 @@ export function initScene(options = {}) {
       const _shadowExtent120 = Math.max(8, Math.min(18, camera.position.y * 0.58));
       applyShadowCulling(controls.target, _shadowExtent120 * 1.5);
       visualEnvironment.apply();
+      console.warn(`[TRAVERSE-DIAG 120f] curvature+shadowFlags+culling+env: ${(performance.now() - _t120).toFixed(1)}ms | frame=${shadowRefreshFrame}`);
+      _gpuSpikeWatchUntilFrame = Math.max(_gpuSpikeWatchUntilFrame, shadowRefreshFrame + 20);
     }
     // rebuildShadowCasters : coûteux (20-25ms, scene.traverse), réduit à 1×/180f (~3s @ 60fps).
     if ((shadowRefreshFrame % 180) === 0) {
+      const _t180 = performance.now();
       rebuildShadowCasters(scene);
       const _shadowExtent = Math.max(8, Math.min(18, camera.position.y * 0.58));
       applyShadowCulling(controls.target, _shadowExtent * 1.5);
+      console.warn(`[TRAVERSE-DIAG 180f] rebuildShadowCasters+culling: ${(performance.now() - _t180).toFixed(1)}ms | frame=${shadowRefreshFrame}`);
+      _gpuSpikeWatchUntilFrame = Math.max(_gpuSpikeWatchUntilFrame, shadowRefreshFrame + 20);
     }
     if ((shadowRefreshFrame % 9) === 0) {
       const lodFactor = computeLodHeightFactor(camera);
@@ -596,9 +808,10 @@ export function initScene(options = {}) {
       updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera, lodFactor);
       updateFieldDecorLOD(fieldWaterEffectsOverlay, camera, lodFactor);
       updateWaterBoatLOD(waterBoatOverlay, camera, lodFactor);
-      updateWaterSurfaceLOD(waterSurfaceOverlay, camera);
+      updateWaterSurfaceLOD(waterSurfaceOverlay, camera, lodFactor);
       updateRailTrainLOD(railTrainOverlay, camera, lodFactor);
       updateHouseLOD(houseOverlay, camera, lodFactor);
+      updateCharacterLOD(characterOverlay, camera, lodFactor);
       updateBonusCellChestLOD(bonusCellChestOverlay, camera, lodFactor);
       updateSheepLOD(sheepOverlay, camera, lodFactor);
       updateZoneLabelLOD(waterZoneOverlay, camera, scene);
@@ -646,6 +859,13 @@ export function initScene(options = {}) {
     if (fieldWaterEffectsOverlay.userData.pendingModelRebuild) {
       fieldWaterEffectsOverlay.userData.pendingModelRebuild = false;
       overlayRebuildQueue.set('decor', { rebuild: () => rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles), lod: () => { updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera); updateFieldDecorLOD(fieldWaterEffectsOverlay, camera); } });
+      // Personnages : partagent propGlbLibrary avec le décor (characterOverlay.js n'a pas
+      // son propre chargeur GLB) — même signal de disponibilité que 'decor' ci-dessus.
+      // Au tout premier appel (boot), propGlbLibrary est encore vide : rebuildCharacterOverlay
+      // dans rebuildInitialDerivedOverlays() ne pose donc aucune instance — ce rebuild différé,
+      // une fois les GLB chargés, est ce qui peuple réellement l'overlay (même pattern déjà
+      // en place pour forest/decor, cf. pendingModelRebuild).
+      overlayRebuildQueue.set('character', { rebuild: () => rebuildCharacterOverlay(characterOverlay, placedTiles), lod: () => updateCharacterLOD(characterOverlay, camera) });
     }
     // ── Rebuilds différés : 1 overlay/frame — étale le travail lourd sans bloquer le RAF ──
     if (overlayRebuildQueue.size > 0) {
@@ -653,6 +873,22 @@ export function initScene(options = {}) {
       overlayRebuildQueue.delete(name);
       entry.rebuild();
       entry.lod?.(); // LOD immédiat → évite le pop-in des objets lointains recréés visibles=true
+      // 2026-07-05 v2 — renderer.compile() crée/lie les NOUVEAUX programmes introduits par ce
+      // rebuild (nécessaire — warmUpAllPrograms ne peut pas créer de programme, seulement
+      // "chauffer" ceux qui existent déjà), MAIS ne déclenche pas à lui seul l'introspection
+      // uniform/attribut (cf. lecture three.module.js : compile()→prepareMaterial()→getProgram()
+      // n'appelle jamais getUniforms()). D'où le enchaînement des deux : compile() fait exister
+      // le programme, warmUpAllPrograms() paie tout de suite son coût d'introspection, ici plutôt
+      // que plus tard pendant le jeu.
+      try {
+        const _compileT0 = performance.now();
+        renderer.compile(scene, camera);
+        warmUpAllPrograms(`rebuild:${name}`);
+        const _compileMs = performance.now() - _compileT0;
+        if (_compileMs > 1) console.warn(`[SHADER-PRECOMPILE] compile+warmup après rebuild "${name}": ${_compileMs.toFixed(1)}ms`);
+      } catch (err) {
+        console.warn('[SHADER-PRECOMPILE] échec (non bloquant):', err);
+      }
     }
 
     // Shadow throttle : recalcul 1 frame sur 3 — entre deux updates la shadow map
@@ -662,11 +898,63 @@ export function initScene(options = {}) {
     renderer.shadowMap.autoUpdate = (shadowRefreshFrame % 3 === 0);
 
     if (_PT_ENABLE) _ptRest = performance.now();
+    // 2026-07-06 v3 — [SHADER-WARMUP] ne loguait JAMAIS (0 occurrence) alors que [RAF-STALL]
+    // continuait identique : le rendu organique gagne toujours la course contre un warmup toutes
+    // les 120 frames (~2s) — un objet peut être dessiné pour la 1ère fois n'importe quelle frame
+    // ENTRE deux passages du warmup, qui ne trouve donc plus rien à faire (déjà payé par le rendu
+    // normal juste avant). Passage à CHAQUE frame, juste avant le rendu, pour de vrai devancer le
+    // rendu organique — itérer ~155 programmes déjà compilés et rappeler un getter idempotent
+    // doit rester sub-milliseconde si rien de neuf, donc sans risque à cette fréquence.
+    warmUpAllPrograms('perframe');
+    checkProgramChurn();
+    if ((shadowRefreshFrame % 3) === 0) checkBiomeMaterialFlicker();
+    if ((shadowRefreshFrame % 200) === 60) findTransparentBiomeUsers();
     renderer.info.reset();   // reset unique avant toutes les passes (autoReset=false)
     postprocess.render();
+    // Diag pur (cf. déclaration _diagTrianglesMin/Max plus haut) — lu juste après render()
+    // pour capturer le nombre réel de triangles soumis cette frame, et le rayon caméra
+    // (variation continue si le zoom est encore en cours d'amortissement).
+    {
+      const _tris = renderer.info.render.triangles;
+      if (_tris < _diagTrianglesMin) _diagTrianglesMin = _tris;
+      if (_tris > _diagTrianglesMax) _diagTrianglesMax = _tris;
+      const _rad = controls.spherical.radius;
+      if (_rad < _diagRadiusMin) _diagRadiusMin = _rad;
+      if (_rad > _diagRadiusMax) _diagRadiusMax = _rad;
+      if (performance.memory) {
+        const _heap = performance.memory.usedJSHeapSize / 1048576;
+        if (_heap < _heapMin) _heapMin = _heap;
+        if (_heap > _heapMax) _heapMax = _heap;
+      }
+    }
+    // gpuMs : temps GPU réel (EXT_disjoint_timer_query_webgl2), asynchrone — begin/end posés
+    // chaque frame dans postprocess.render() (threeSetup.js), résultat lu ici quand dispo
+    // (peut dater de 1-3 frames, cf. gpuTimer.js). Remplace renderMs (soumission CPU
+    // seule — cf. HUD FPS, 2026-07-04 : ce chrono ne reflétait pas le vrai temps GPU).
+    const _gpuMs = postprocess.getGpuMs?.() ?? null;
+    const _gpuTimerSupported = postprocess.gpuTimerSupported ?? false;
+    // 2026-07-05 — traque FRAME PAR FRAME (coût nul : juste une lecture de compteur) le
+    // delta de renderer.info.memory.geometries pour identifier la PÉRIODICITÉ exacte de la
+    // fuite (verrouillée sur %9 / %120 / %180, ou vraiment sur CHAQUE frame ?). Le format
+    // %9/%120/%180 permet de recouper directement avec les blocs LOD/curvature/shadowCasters.
+    if (_geoPrevCount === null) _geoPrevCount = renderer.info.memory.geometries;
+    else {
+      const _geoNow = renderer.info.memory.geometries;
+      const _geoDelta = _geoNow - _geoPrevCount;
+      if (_geoDelta !== 0) {
+        console.log(`[GEO-DELTA] frame=${shadowRefreshFrame} delta=${_geoDelta > 0 ? '+' : ''}${_geoDelta} total=${_geoNow} | %9=${shadowRefreshFrame % 9} %120=${shadowRefreshFrame % 120} %180=${shadowRefreshFrame % 180}`);
+      }
+      _geoPrevCount = _geoNow;
+    }
+    // Fenêtre de surveillance armée juste après une traversée périodique (cf. déclaration
+    // _gpuSpikeWatchUntilFrame plus haut) — log brut, frame par frame, pas d'agrégat, pour
+    // voir si le pic GPU colle exactement au frame de la traversée ou est indépendant.
+    if (shadowRefreshFrame <= _gpuSpikeWatchUntilFrame) {
+      console.log(`[GPU-SPIKE-WATCH] frame=${shadowRefreshFrame} gpuMs=${_gpuMs != null ? _gpuMs.toFixed(2) : 'n/a'}`);
+    }
     if (_PT_ENABLE) {
       const _ptEnd = performance.now();
-      tickFps(renderer, scene, { jsMs: _ptRest - _pt0, renderMs: _ptEnd - _ptRest });
+      tickFps(renderer, scene, { jsMs: _ptRest - _pt0, renderMs: _ptEnd - _ptRest, gpuMs: _gpuMs, gpuTimerSupported: _gpuTimerSupported });
       console.log(
         `[PERF-TIMING 120f] flash=${(_ptFlash-_pt0).toFixed(1)}ms` +
         ` | ctrl=${(_ptCtrl-_ptFlash).toFixed(1)}ms` +
@@ -675,10 +963,88 @@ export function initScene(options = {}) {
         ` | sound=${(_ptSound-_ptDecor).toFixed(1)}ms` +
         ` | rest+LOD=${(_ptRest-_ptSound).toFixed(1)}ms` +
         ` | render=${(_ptEnd-_ptRest).toFixed(1)}ms` +
-        ` | TOTAL-JS=${(_ptEnd-_pt0).toFixed(1)}ms`
+        ` | TOTAL-JS=${(_ptEnd-_pt0).toFixed(1)}ms` +
+        ` | GPU réel=${_gpuMs != null ? _gpuMs.toFixed(1) + 'ms' : 'n/a'}`
       );
+      // ── Détail GPU par passe (2026-07-05) — cf. gpuProfiler.js. Contexte joint pour
+      // corréler une passe qui grimpe avec ciel/nuages, altitude caméra ou cadence ombre :
+      // c'est le point de départ pour trouver l'origine d'une oscillation GPU inexpliquée.
+      postprocess.gpuProfiler?.report({
+        camY: Number(camera.position.y.toFixed(2)),
+        nuagesActifs: isSoleil && getCloudUserEnabled(),
+        nuagesCouverture: getCloudSkyParams(cloudSky).coverage,
+        ombreAutoUpdateCetteFrame: renderer.shadowMap.autoUpdate,
+        frame: shadowRefreshFrame,
+        'frame%3 (cadence ombre)': shadowRefreshFrame % 3,
+        'frame%120 (curvature/shadowFlags/culling)': shadowRefreshFrame % 120,
+        'frame%180 (rebuildShadowCasters)': shadowRefreshFrame % 180,
+      });
+      // Ligne dédiée (pas noyée dans l'objet contexte tronqué "{…}" par Chrome au copier-coller,
+      // même piège que pour disjoint) — triangles/rayon caméra pour la piste "mouvement caméra",
+      // écart rAF pour la piste "stall de présentation/scheduling" (cf. Gestionnaire des tâches
+      // Windows 2026-07-05 : 21% GPU réel constaté pendant que le timer WebGL affiche 99%, et FPS
+      // stable à 60 tout du long → signe fort que le timer mesure autre chose qu'un vrai calcul).
+      console.log(
+        `[SCENE-DIAG 120f] triangles ${_diagTrianglesMin}–${_diagTrianglesMax} | ` +
+        `rayon caméra ${_diagRadiusMin.toFixed(3)}–${_diagRadiusMax.toFixed(3)} | ` +
+        `écart rAF ${_rafDeltaMin.toFixed(1)}–${_rafDeltaMax.toFixed(1)}ms (attendu≈16.7)`
+      );
+      // Piste Garbage Collector JS (cf. [RAF-STALL]) : un dent-de-scie net (montée continue
+      // puis chute brutale) sur cette fenêtre = signature classique d'un GC majeur qui bloque
+      // le thread principal — expliquerait un stall invisible dans tout le JS qu'on mesure.
+      if (Number.isFinite(_heapMin)) {
+        console.log(`[HEAP-DIAG 120f] tas JS ${_heapMin.toFixed(1)}–${_heapMax.toFixed(1)}MB`);
+      }
+      _heapMin = Infinity; _heapMax = -Infinity;
+      // 2026-07-05 — diagnostic pur : le GPU-SPIKE-WATCH montre qu'une seule traversée
+      // périodique (frame=721, curvature+shadowFlags+culling+env) a fait grimper le GPU réel
+      // de ~15ms à un plateau soutenu de ~30-34ms sur 15+ frames — pas les autres occurrences
+      // de la même fonction (frame=601, 841, 961 : bruit normal, pas de plateau). Un événement
+      // qui ne se reproduit pas identiquement à chaque exécution de la MÊME fonction suggère un
+      // état accumulé (fuite mémoire GPU : géométries/textures/programmes shader non libérés)
+      // plutôt qu'un coût de calcul fixe. On logue ici les compteurs Three.js qui détecteraient
+      // exactement ça — une croissance non bornée au fil de la session pointerait vers une fuite
+      // dans applySceneCurvatureFlags/applySceneShadowFlags/applyShadowCulling/rebuildShadowCasters.
+      console.log(
+        `[MEMORY-DIAG 120f] géométries=${renderer.info.memory.geometries} | textures=${renderer.info.memory.textures} | programmes=${renderer.info.programs?.length ?? 'n/a'}`
+      );
+      // 2026-07-05 — vérifie le garde anti-thrash ajouté dans rebuildHoverZoneOverlay
+      // (waterZoneOverlay.js) : appels = combien de fois controls.onHover a déclenché la
+      // fonction (~fréquence mousemove) ; pleins = combien ont réellement reconstruit la
+      // géométrie (signature de zone changée). Si "pleins" reste élevé même souris immobile
+      // sur une même zone → le garde ne fonctionne pas comme prévu. Triangles = coût RENDU
+      // (pas rebuild) du contour actuellement affiché — sépare "coût de reconstruction" de
+      // "coût de dessin d'un contour déjà construit, chaque frame, tant qu'il reste visible".
+      {
+        const _hoverStats = getHoverRebuildStats();
+        let _hoverTris = 0;
+        hoverZoneOverlay.traverse(o => { if (o.isMesh && o.geometry?.index) _hoverTris += o.geometry.index.count / 3; });
+        console.log(
+          `[HOVER-DIAG 120f] appels=${_hoverStats.calls} pleins=${_hoverStats.full} | triangles contour actuel=${_hoverTris}`
+        );
+        resetHoverRebuildStats();
+      }
+      // 2026-07-05 — le hover est disculpé (pleins reste bas, géométries montent quand même,
+      // linéairement, MÊME à pleins=0) : la fuite est ailleurs, continue, indépendante du survol.
+      // Recensement : combien de géométries DISTINCTES sont actuellement attachées au graphe de
+      // scène (vivantes, potentiellement visibles ou non) vs. le total compté par le renderer.
+      // Si "orphelines" grossit au même rythme que le total → des objets sont créés PUIS retirés
+      // de la scène sans jamais disposer leur géométrie (pattern effet transitoire). Si "vivantes"
+      // grossit au même rythme → des meshes s'accumulent dans le graphe sans jamais être retirés.
+      {
+        const _liveGeo = new Set();
+        scene.traverse(o => { if (o.geometry) _liveGeo.add(o.geometry.uuid); });
+        const _total = renderer.info.memory.geometries;
+        console.log(
+          `[GEO-CENSUS 120f] vivantes(scene graph)=${_liveGeo.size} | total(renderer.info)=${_total} | orphelines=${_total - _liveGeo.size}`
+        );
+      }
+      // Reset pour la prochaine fenêtre de 120f (aligné sur le cycle de report ci-dessus).
+      _diagTrianglesMin = Infinity; _diagTrianglesMax = -Infinity;
+      _diagRadiusMin = Infinity; _diagRadiusMax = -Infinity;
+      _rafDeltaMin = Infinity; _rafDeltaMax = -Infinity;
     } else {
-      tickFps(renderer, scene); // lu APRÈS render → stats complètes de toutes les passes
+      tickFps(renderer, scene, { gpuMs: _gpuMs, gpuTimerSupported: _gpuTimerSupported }); // lu APRÈS render → stats complètes de toutes les passes
     }
   }
 
@@ -711,6 +1077,7 @@ export function initScene(options = {}) {
     rebuildFieldWheatOverlay(fieldWheatOverlay, placedTiles);
     rebuildGrassBladeOverlay(grassBladeOverlay, placedTiles);
     rebuildHouseOverlay(houseOverlay, placedTiles);
+    rebuildCharacterOverlay(characterOverlay, placedTiles);
     rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles);
     rebuildSheepOverlay(sheepOverlay, placedTiles);
   }
@@ -926,6 +1293,8 @@ export function initScene(options = {}) {
     if (_tEdgeTypes.has(EDGE_TYPES.grass)) overlayRebuildQueue.set('sheep', { rebuild: () => rebuildSheepOverlay(sheepOverlay, placedTiles), lod: () => updateSheepLOD(sheepOverlay, camera) });
     if (_needsForest) overlayRebuildQueue.set('forest', { rebuild: () => rebuildForestOverlay(forestOverlay, placedTiles, placedTile), lod: () => updateForestLOD(forestOverlay, camera) });
     if (_needsHouse)  overlayRebuildQueue.set('house',  { rebuild: () => rebuildHouseOverlay(houseOverlay, placedTiles),           lod: () => updateHouseLOD(houseOverlay, camera) });
+    // Personnages : mêmes conditions de déclenchement que forest (house/forest/field, cf. _needsForest).
+    if (_needsForest) overlayRebuildQueue.set('character', { rebuild: () => rebuildCharacterOverlay(characterOverlay, placedTiles), lod: () => updateCharacterLOD(characterOverlay, camera) });
     // Décor incrémental : toujours exécuté (O(1), 28ms, gère tous les biomes).
     // rebuildDecorOverlay complet reste utilisé pour undo/init/applyRemoteGameState.
     overlayRebuildQueue.set('decor', { rebuild: () => addSingleTileToDecorOverlay(fieldWaterEffectsOverlay, placedTile, placedTiles), lod: () => { updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera); updateFieldDecorLOD(fieldWaterEffectsOverlay, camera); } });
@@ -1084,6 +1453,7 @@ export function initScene(options = {}) {
     overlayRebuildQueue.set('grass',  { rebuild: () => rebuildGrassBladeOverlay(grassBladeOverlay, placedTiles),   lod: () => updateGrassBladeLOD(grassBladeOverlay, camera) });
     overlayRebuildQueue.set('forest', { rebuild: () => rebuildForestOverlay(forestOverlay, placedTiles),           lod: () => updateForestLOD(forestOverlay, camera) });
     overlayRebuildQueue.set('house',  { rebuild: () => rebuildHouseOverlay(houseOverlay, placedTiles),             lod: () => updateHouseLOD(houseOverlay, camera) });
+    overlayRebuildQueue.set('character', { rebuild: () => rebuildCharacterOverlay(characterOverlay, placedTiles), lod: () => updateCharacterLOD(characterOverlay, camera) });
     overlayRebuildQueue.set('decor',  { rebuild: () => rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles), lod: () => { updateNaturalPropsLOD(fieldWaterEffectsOverlay, camera); updateFieldDecorLOD(fieldWaterEffectsOverlay, camera); } });
     overlayRebuildQueue.set('sheep',  { rebuild: () => rebuildSheepOverlay(sheepOverlay, placedTiles),             lod: () => updateSheepLOD(sheepOverlay, camera) });
     totalScore = Math.max(0, totalScore - (last.score ?? 0));
@@ -1163,9 +1533,27 @@ export function initScene(options = {}) {
   }
 
   function renderRemoteCursors(cursors) {
-    remoteGhosts.clear();
+    // 2026-07-05 — FUITE TROUVÉE : remoteGhosts.clear() est Object3D.clear() natif Three.js,
+    // qui vide juste le tableau children SANS disposer géométrie/matériaux. Appelé toutes les
+    // 900ms (setInterval refreshMultiplayerRoom) via createTileMesh() pour chaque curseur
+    // distant → un tuile-mesh complet (dizaines de géométries) jeté sans dispose, en boucle
+    // indéfiniment. Preuve : [GEO-DELTA] +127 géométries toutes les ~54 frames (~900ms @60fps),
+    // et [GEO-CENSUS] montrait ces géométries totalement absentes du graphe de scène
+    // (orphelines) — créées, affichées un instant, puis jetées sans libération.
+    clearGroup(remoteGhosts);
+    // 2026-07-06 — root cause du throttle GPU périodique (~51-54 frames, présent depuis le début
+    // de l'enquête) : update_cursor() côté PHP (multiplayer.php) ajoutait un curseur par playerId
+    // mais n'en supprimait jamais. room_SMALL.json en avait accumulé 21, certains vieux de +24
+    // jours, tous "visible" pour toujours — chacun recrée un mesh de tuile transparent DoubleSide
+    // toutes les 900ms (cf. setInterval refreshMultiplayerRoom). Fix serveur ajouté (purge par TTL
+    // dans multiplayer.php), + ce filtre client en défense : ignore tout curseur silencieux >20s,
+    // même si un vieux fichier de room n'a pas encore été nettoyé côté serveur.
+    const _cursorTtlMs = 20000;
+    const _cursorNow = Date.now();
     for (const [cursorPlayerId, cursor] of Object.entries(cursors ?? {})) {
       if (cursorPlayerId === playerId || !cursor?.visible || !cursor?.tile) continue;
+      const _cursorAge = _cursorNow - Number(cursor.updatedAt ?? 0);
+      if (!Number.isFinite(_cursorAge) || _cursorAge > _cursorTtlMs) continue;
       if (!Number.isFinite(Number(cursor.q)) || !Number.isFinite(Number(cursor.r))) continue;
       const position = axialToWorld(Number(cursor.q), Number(cursor.r));
       const mesh = createTileMesh(stripRuntimeTile(cursor.tile), { opacity: cursor.valid ? 0.42 : 0.22, worldX: position.x, worldZ: position.z, previewWater: true });
@@ -1340,6 +1728,7 @@ export function initScene(options = {}) {
         overlayRebuildQueue.set('wheat',  { rebuild: () => rebuildFieldWheatOverlay(fieldWheatOverlay, placedTiles),   lod: () => updateFieldWheatLOD(fieldWheatOverlay, camera) });
         overlayRebuildQueue.set('grass',  { rebuild: () => rebuildGrassBladeOverlay(grassBladeOverlay, placedTiles),   lod: () => updateGrassBladeLOD(grassBladeOverlay, camera) });
         overlayRebuildQueue.set('house',  { rebuild: () => rebuildHouseOverlay(houseOverlay, placedTiles),             lod: () => updateHouseLOD(houseOverlay, camera) });
+        overlayRebuildQueue.set('character', { rebuild: () => rebuildCharacterOverlay(characterOverlay, placedTiles), lod: () => updateCharacterLOD(characterOverlay, camera) });
         overlayRebuildQueue.set('rail',   { rebuild: () => rebuildRailTrainOverlay(railTrainOverlay, placedTiles),     lod: () => updateRailTrainLOD(railTrainOverlay, camera) });
         overlayRebuildQueue.set('sheep',  { rebuild: () => rebuildSheepOverlay(sheepOverlay, placedTiles),             lod: () => updateSheepLOD(sheepOverlay, camera) });
         // Forest + Décor : incrémental si 1 seule tuile ajoutée, complet si multi-tuiles

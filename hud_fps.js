@@ -17,12 +17,34 @@ let _fpsHudExpanded = localStorage.getItem('hexistenz_fps_hud_expanded') !== 'fa
 // Tri colonnes : persistant entre les rebuilds 500ms
 let _hudSortKey     = 'draws';     // 'count' | 'draws' | 'shadows' | 'tris'
 let _hudSortDir     = -1;          // -1 = desc, +1 = asc
-// Timing CPU/GPU passé depuis scene.js pour les indices d'efficacité
-let _lastPerfTiming = { jsMs: 0, renderMs: 0 };
+// Timing CPU/GPU passé depuis scene.js pour les indices d'efficacité.
+// gpuMs : temps GPU réel (EXT_disjoint_timer_query_webgl2, async — cf. gpuTimer.js).
+// renderMs : ancien chrono CPU (soumission des draw calls, PAS le temps GPU réel) — gardé
+// en repli si l'extension est indisponible sur ce driver/navigateur (gpuTimerSupported=false).
+let _lastPerfTiming = { jsMs: 0, renderMs: 0, gpuMs: null, gpuTimerSupported: false };
 
 
 function _fmtNum(n) {
   return Math.round(n).toLocaleString('fr-FR');
+}
+
+// % d'une catégorie par rapport au total de triangles de la scène (info.render.triangles).
+// Volontairement calculé sur le TOTAL réel (pas la somme "trackée"), donc les % des
+// catégories ne totalisent pas 100% — le reste correspond aux objets non trackés par le HUD.
+function _fmtPct(value, total) {
+  if (!total) return '–';
+  return (value / total * 100).toFixed(1);
+}
+
+// Choix de la valeur GPU à afficher : temps réel (EXT_disjoint_timer_query_webgl2) si
+// dispo, sinon repli sur l'ancien chrono CPU de soumission (renderMs) — mais alors
+// `real=false`, à utiliser pour prévenir que ce n'est qu'une estimation.
+function _gpuDisplayInfo() {
+  const { renderMs, gpuMs, gpuTimerSupported } = _lastPerfTiming;
+  const real = gpuTimerSupported && gpuMs != null;
+  const ms   = real ? gpuMs : renderMs;
+  const load = ms > 0 ? Math.min(100, ms / 16.67 * 100) : 0;
+  return { ms, load, real };
 }
 
 function _hudCopyText() {
@@ -32,10 +54,9 @@ function _hudCopyText() {
   const tex   = info?.memory?.textures ?? '–';
   const prog  = info?.programs?.length  ?? '–';
 
-  const renderMs  = _lastPerfTiming.renderMs;
   const jsMs      = _lastPerfTiming.jsMs;
-  const gpuLoad   = renderMs > 0 ? Math.min(100, renderMs / 16.67 * 100) : 0;
   const cpuLoad   = jsMs     > 0 ? Math.min(100, jsMs     / 16.67 * 100) : 0;
+  const gpu       = _gpuDisplayInfo();
 
   const trackedDc = Object.values(_cachedCounts).reduce((s, e) => s + e.draws, 0);
   const trackedTris = Object.values(_cachedCounts).reduce((s, e) => s + e.tris, 0);
@@ -44,7 +65,7 @@ function _hudCopyText() {
 
   let text = `${_lastHudFps} FPS\n`;
   text += `🖥️ CPU : ${Math.round(cpuLoad)}%  (JS ${jsMs.toFixed(1)}ms / 16.7ms)\n`;
-  text += `🎮 GPU : ${Math.round(gpuLoad)}%  (render ${renderMs.toFixed(1)}ms / 16.7ms)\n`;
+  text += `🎮 GPU : ${Math.round(gpu.load)}%  (${gpu.real ? 'réel' : '≈ estimé, EXT_disjoint_timer_query indisponible'} ${gpu.ms.toFixed(1)}ms / 16.7ms)\n`;
   text += `---\n`;
   text += `Draw calls : ${calls}\n`;
   text += `  ↳ HUD trackés : ${trackedDc}\n`;
@@ -70,7 +91,7 @@ function _hudCopyText() {
     text += `\n── ${displayName} ──\n`;
     for (const [label, { count, draws, tris: t, shadows }] of items) {
       const shStr = shadows > 0 ? ` | ☂${shadows}` : '';
-      text += `${label}: ${count} obj | ${draws} dc${shStr} | ${_fmtNum(t)}▲\n`;
+      text += `${label}: ${count} obj | ${draws} dc${shStr} | ${_fmtNum(t)}▲ (${_fmtPct(t, tris)}%)\n`;
     }
   }
   return text;
@@ -126,14 +147,15 @@ function _buildHud(fps, info) {
   const shadowDc      = typeof calls === 'number' ? Math.max(0, calls - trackedDc) : '–';
   const shadowStr     = shadowDc === '–' ? '–' : `≈ ${_fmtNum(shadowDc)} (☂${shadowCasters} casters)`;
   const totalObjects  = Object.values(_cachedCounts).reduce((s, e) => s + e.count, 0);
+  const totalTrisNum  = info?.render?.triangles ?? 0; // dénominateur du % triangles par catégorie
 
   const adj = _fpsAdjective(fps);
 
   // GPU / CPU load indices — % du budget frame utilisé (0%=idle=vert, 100%=saturé=rouge)
-  const renderMs = _lastPerfTiming.renderMs;
   const jsMs     = _lastPerfTiming.jsMs;
-  const gpuLoad  = renderMs > 0 ? Math.min(100, renderMs / 16.67 * 100) : 0;
   const cpuLoad  = jsMs     > 0 ? Math.min(100, jsMs     / 16.67 * 100) : 0;
+  const gpu      = _gpuDisplayInfo(); // { ms, load, real } — real=false si EXT_disjoint_timer_query indisponible
+  const gpuLoad  = gpu.load;
   const gpuColor = gpuLoad  <= 30 ? '#4ade80' : gpuLoad  <= 65 ? '#fbbf24' : gpuLoad  <= 85 ? '#fb923c' : '#f87171';
   const cpuColor = cpuLoad  <= 30 ? '#4ade80' : cpuLoad  <= 65 ? '#fbbf24' : cpuLoad  <= 85 ? '#fb923c' : '#f87171';
 
@@ -155,8 +177,9 @@ function _buildHud(fps, info) {
 
   if (!_fpsHudExpanded) return header;
 
-  const msHint = renderMs > 0
-    ? `<div style="font-size:10px;color:rgba(180,215,255,0.50);margin-top:2px">GPU ${renderMs.toFixed(1)}ms · CPU ${jsMs.toFixed(1)}ms · budget 16.7ms</div>`
+  const gpuLabel = gpu.real ? 'GPU réel' : 'GPU≈ (soumission CPU seule, EXT indisponible)';
+  const msHint = gpu.ms > 0
+    ? `<div style="font-size:10px;color:rgba(180,215,255,0.50);margin-top:2px">${gpuLabel} ${gpu.ms.toFixed(1)}ms · CPU ${jsMs.toFixed(1)}ms · budget 16.7ms</div>`
     : '';
 
   // Tout le contenu détaillé est dans un div scrollable pour ne jamais dépasser la hauteur écran
@@ -224,7 +247,7 @@ function _buildHud(fps, info) {
       for (const [label, { count, draws, tris: t, shadows }] of items) {
         sumCount += count; sumDraws += draws; sumShadows += shadows; sumTris += t;
         const heavy = trackedDc > 0 && draws / trackedDc >= 0.10;
-        detailRows.push(_rowCat(label, count, draws, t, shadows, heavy));
+        detailRows.push(_rowCat(label, count, draws, t, shadows, heavy, totalTrisNum));
       }
     }
 
@@ -236,7 +259,7 @@ function _buildHud(fps, info) {
       `<strong class="fps-hud-cat-count">${_fmtNum(sumCount)}</strong>` +
       `<span class="fps-hud-cat-dc">${sumDraws}dc</span>` +
       `<span class="fps-hud-cat-shadow">${sumShadows > 0 ? '☂' + sumShadows : ''}</span>` +
-      `<span class="fps-hud-cat-tri">${_fmtNum(sumTris)}▲</span>` +
+      `<span class="fps-hud-cat-tri">${_fmtNum(sumTris)}▲<span class="fps-hud-cat-tri-pct" title="% du total triangles scène">${_fmtPct(sumTris, totalTrisNum)}%</span></span>` +
       `</div>`
     );
   }
@@ -249,8 +272,8 @@ function _row(label, value, helpKey = '') {
   return `<div class="fps-hud-row"><span>${label}</span><strong${attr}>${value}</strong></div>`;
 }
 
-// Ligne catégorie étendue : icône + label | count | draw calls (×ratio) | shadows | triangles
-function _rowCat(label, count, draws, tris, shadows, isHeavy = false) {
+// Ligne catégorie étendue : icône + label | count | draw calls (×ratio) | shadows | triangles (+ %)
+function _rowCat(label, count, draws, tris, shadows, isHeavy = false, totalTris = 0) {
   const icon = CATEGORY_ICONS[label] ?? '◆';
   const shadowStr = shadows > 0 ? `<span class="fps-hud-cat-shadow" title="Objets castant une ombre">☂${shadows}</span>` : `<span class="fps-hud-cat-shadow"></span>`;
   const heavyCls = isHeavy ? ' fps-hud-row-cat--heavy' : '';
@@ -264,24 +287,40 @@ function _rowCat(label, count, draws, tris, shadows, isHeavy = false) {
     ratioStr = `<span style="font-size:9px;color:${col};margin-left:2px" title="${rFmt} DC par objet">×${rFmt}</span>`;
   }
 
+  const pctStr = `<span class="fps-hud-cat-tri-pct" title="% du total triangles scène">${_fmtPct(tris, totalTris)}%</span>`;
+
   return `<div class="fps-hud-row fps-hud-row-cat${heavyCls}">` +
     `<span class="fps-hud-cat-label"><span class="fps-hud-cat-icon">${icon}</span>${label}</span>` +
     `<strong class="fps-hud-cat-count">${_fmtNum(count)}</strong>` +
     `<span class="fps-hud-cat-dc">${draws}dc${ratioStr}</span>` +
     shadowStr +
-    `<span class="fps-hud-cat-tri">${_fmtNum(tris)}▲</span>` +
+    `<span class="fps-hud-cat-tri">${_fmtNum(tris)}▲${pctStr}</span>` +
     `</div>`;
 }
 
 export function tickFps(renderer, scene, perfTiming = null) {
-  if (perfTiming) _lastPerfTiming = perfTiming;
+  // Fusion (pas remplacement) : gpuMs est mis à jour quasi chaque frame (poll async, cf.
+  // gpuTimer.js) alors que jsMs/renderMs ne sont échantillonnés qu'1 frame sur 120
+  // (cf. scene.js) — un remplacement complet effacerait jsMs/renderMs le reste du temps.
+  if (perfTiming) Object.assign(_lastPerfTiming, perfTiming);
   _fpsFrameCount++;
   const now = performance.now();
 
-  // Scan scène toutes les 2 s (coûteux, on ralentit)
-  if (scene && now - _statsLastTime > 2000) {
+  // Scan scène toutes les 2 s (coûteux, on ralentit) — MAIS seulement si le panneau détaillé
+  // est réellement ouvert : _cachedCounts n'est utilisé que par _buildHud() quand
+  // _fpsHudExpanded=true (cf. `if (!_fpsHudExpanded) return header;` plus bas). Repéré
+  // 2026-07-05 : ce scan tournait AVANT inconditionnellement, TOUJOURS, même HUD fermé —
+  // et son coût (scene.traverse() complet, des milliers de nœuds) tombe APRÈS le point de
+  // mesure _ptEnd dans scene.js (tickFps est appelé une fois _ptEnd déjà capturé), donc
+  // invisible dans [PERF-TIMING]/TOTAL-JS tout en bloquant le thread principal avant le
+  // prochain requestAnimationFrame → explique un [SCENE-DIAG] écart rAF élevé (jusqu'à
+  // 48-56ms) sans aucune trace dans le JS mesuré. Log de coût réel gardé pour vérification.
+  if (scene && _fpsHudExpanded && now - _statsLastTime > 2000) {
+    const _scanT0 = performance.now();
     _cachedCounts = scanScene(scene);
     _statsLastTime = now;
+    const _scanMs = performance.now() - _scanT0;
+    if (_scanMs > 5) console.warn(`[SCANSCENE-DIAG] scanScene() coût réel: ${_scanMs.toFixed(1)}ms (bloque le thread principal, invisible dans PERF-TIMING)`);
   }
 
   // Affichage toutes les 500 ms
@@ -329,7 +368,11 @@ export function initFpsHud(root) {
   function _syncFpsFullscreen() {
     const scorePanel = document.getElementById('scorePanel');
     const lutOpen = !root.classList.contains('collapsed');
-    if (scorePanel) scorePanel.style.display = (_fpsHudExpanded || lutOpen) ? 'none' : '';
+    const shouldHide = _fpsHudExpanded || lutOpen;
+    // Classe sur <body> + règle CSS !important (debugLightUi.js) plutôt qu'un style inline direct :
+    // même mécanisme éprouvé que body.huds-force-hidden, garantit la priorité sur toute autre règle.
+    document.body.classList.toggle('fps-hud-deployed', shouldHide);
+    if (scorePanel) scorePanel.style.display = shouldHide ? 'none' : '';
     root.classList.toggle('fps-hud-fullscreen', _fpsHudExpanded);
   }
 

@@ -2,6 +2,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 import { HEX_SIZE } from './config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { getAllGridHexes } from './gridRegions.js';
+import { randomIntBetween as getRandomInt, shuffleInPlace } from './random.js';
 
 export const BONUS_CELL_MIN = 1;
 export const BONUS_CELL_MAX = 4;
@@ -174,14 +175,3 @@ function createStarGeometry(outerRadius, innerRadius, points) {
   return new THREE.ShapeGeometry(shape);
 }
 
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function shuffleInPlace(items) {
-  for (let i = items.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [items[i], items[j]] = [items[j], items[i]];
-  }
-  return items;
-}
