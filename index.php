@@ -8,6 +8,8 @@ if (file_exists($varsFile)) {
         $version = $m[1];
     }
 }
+$cssFile = __DIR__ . '/css/presentation.css';
+$cssVersion = file_exists($cssFile) ? filemtime($cssFile) : time();
 
 // Highscores — top 10, même logique que highscore.php
 $highscores = [];
@@ -66,7 +68,7 @@ function fmt_date($iso) {
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/presentation.css" />
+  <link rel="stylesheet" href="css/presentation.css?v=<?= $cssVersion ?>" />
 </head>
 <body>
 
@@ -76,14 +78,18 @@ function fmt_date($iso) {
 <!-- ─── NAV ────────────────────────────────────────────────────── -->
 <nav>
   <a class="nav-logo" href="#">⬡ HEXISTENZ<?php if ($version): ?><span class="nav-version"><?= htmlspecialchars($version) ?></span><?php endif; ?></a>
-  <ul class="nav-links">
+  <button class="nav-toggle" id="navToggle" type="button" aria-label="Menu" aria-controls="navLinks" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-links" id="navLinks">
     <li><a href="#factions" data-fr>Factions</a>    <a href="#factions" data-en>Factions</a></li>
     <li><a href="#biomes"   data-fr>Biomes</a>      <a href="#biomes"   data-en>Biomes</a></li>
     <li><a href="#missions" data-fr>Missions</a>    <a href="#missions" data-en>Missions</a></li>
     <li><a href="#gameplay" data-fr>Gameplay</a>    <a href="#gameplay" data-en>Gameplay</a></li>
-    <li><a href="#gallery"  data-fr>Galerie</a>     <a href="#gallery"  data-en>Gallery</a></li>
+    <li><a href="#gallery"  data-fr>Ambiances</a>   <a href="#gallery"  data-en>Moods</a></li>
     <li><a href="#creatures" data-fr>Créatures</a>  <a href="#creatures" data-en>Creatures</a></li>
-    <li><a href="#daynnight" data-fr>Jour/Nuit</a>  <a href="#daynnight" data-en>Day/Night</a></li>
+    <li><a href="#audio"    data-fr>Audio</a>       <a href="#audio"    data-en>Audio</a></li>
+    <li><a href="#daynnight" data-fr>Environnement</a> <a href="#daynnight" data-en>Environment</a></li>
     <li><a href="#eda"      data-fr>Personnalisation</a> <a href="#eda" data-en>Customization</a></li>
     <li><a href="#multi"    data-fr>Multijoueur</a> <a href="#multi"    data-en>Multiplayer</a></li>
     <li><a href="#scores"   data-fr>Classement</a>  <a href="#scores"   data-en>Leaderboard</a></li>
@@ -169,7 +175,7 @@ function fmt_date($iso) {
           <div class="stat-item"><div class="stat-num">6</div><div class="stat-label" data-fr>Biomes</div><div class="stat-label" data-en>Biomes</div></div>
           <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label" data-fr>Parties</div><div class="stat-label" data-en>Games</div></div>
           <div class="stat-item"><div class="stat-num" style="font-size:22px;line-height:1.4;" data-fr>Solo<br>& Multi</div><div class="stat-num" style="font-size:22px;line-height:1.4;" data-en>Solo<br>& Multi</div></div>
-          <div class="stat-item"><div class="stat-num">16</div><div class="stat-label" data-fr>Ambiances</div><div class="stat-label" data-en>Presets</div></div>
+          <div class="stat-item"><div class="stat-num" style="font-size:22px;line-height:1.4;" data-fr>Nombreux</div><div class="stat-num" style="font-size:22px;line-height:1.4;" data-en>Many</div><div class="stat-label" data-fr>Ambiances</div><div class="stat-label" data-en>Presets</div></div>
         </div>
       </div>
 
@@ -492,6 +498,20 @@ function fmt_date($iso) {
         <div class="score-pill"><div class="score-pill-pts">+1500</div><div class="score-pill-label" data-fr>Case bonus recouverte</div><div class="score-pill-label" data-en>Bonus cell covered</div></div>
       </div>
     </div>
+
+    <div class="kbd-strip">
+      <div class="kbd-strip-item"><kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd><span data-fr>caméra</span><span data-en>camera</span></div>
+      <div class="kbd-strip-item"><kbd data-fr>Clic gauche</kbd><kbd data-en>Left click</kbd><span data-fr>déplacer la caméra</span><span data-en>move camera</span></div>
+      <div class="kbd-strip-item"><kbd data-fr>Clic droit</kbd><kbd data-en>Right click</kbd><span data-fr>rotation caméra</span><span data-en>rotate camera</span></div>
+      <div class="kbd-strip-item"><kbd data-fr>Molette</kbd><kbd data-en>Wheel</kbd><span data-fr>zoom</span><span data-en>zoom</span></div>
+      <div class="kbd-strip-item"><kbd>R</kbd><span data-fr>réinitialiser la caméra</span><span data-en>reset camera</span></div>
+      <div class="kbd-strip-item"><kbd>Ctrl</kbd><kbd>Z</kbd><span data-fr>annuler</span><span data-en>undo</span></div>
+      <div class="kbd-strip-item"><kbd>E</kbd><span data-fr>personnalisation</span><span data-en>customization</span></div>
+      <div class="kbd-strip-item"><kbd>F</kbd><span data-fr>HUD performances</span><span data-en>performance HUD</span></div>
+      <div class="kbd-strip-item"><kbd>Espace</kbd><span data-fr>mode immersif</span><span data-en>immersive mode</span></div>
+      <div class="kbd-strip-item"><kbd>M</kbd><span data-fr>muet</span><span data-en>mute</span></div>
+      <div class="kbd-strip-item"><kbd>H</kbd><span data-fr>aide</span><span data-en>help</span></div>
+    </div>
   </div>
 </section>
 
@@ -500,12 +520,12 @@ function fmt_date($iso) {
   <div class="container">
     <p class="section-label" data-fr>Ambiances visuelles</p>
     <p class="section-label" data-en>Visual presets</p>
-    <h2 class="section-title" data-fr>16 atmosphères</h2>
+    <h2 class="section-title" data-fr>Plusieurs atmosphères</h2>
     <h2 class="section-title" data-fr>Une infinité de personnalisations</h2>
-    <h2 class="section-title" data-en>16 atmospheres</h2>
+    <h2 class="section-title" data-en>Several atmospheres</h2>
     <h2 class="section-title" data-en>Infinite customizations</h2>
-    <p class="section-sub" data-fr>16 presets visuels prêts à l'emploi — mais chacun est une base : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… Des centaines de combinaisons pour transformer le monde entier à votre goût. Chaque personnalisation s'exporte en un clic et peut être partagée avec d'autres joueurs.</p>
-    <p class="section-sub" data-en>16 ready-to-use visual presets — but each is a starting point: color LUT, cinematic effects (chromatic aberration, film grain, tilt-shift), retro pixelization, EGA and Amiga aesthetics, volumetric smoke, procedural sky… Hundreds of combinations to transform the entire world to your taste. Every customization can be exported in one click and shared with other players.</p>
+    <p class="section-sub" data-fr>De nombreux presets visuels prêts à l'emploi — mais chacun est une base : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… Des centaines de combinaisons pour transformer le monde entier à votre goût. Chaque personnalisation s'exporte en un clic et peut être partagée avec d'autres joueurs.</p>
+    <p class="section-sub" data-en>Many ready-to-use visual presets — but each is a starting point: color LUT, cinematic effects (chromatic aberration, film grain, tilt-shift), retro pixelization, EGA and Amiga aesthetics, volumetric smoke, procedural sky… Hundreds of combinations to transform the entire world to your taste. Every customization can be exported in one click and shared with other players.</p>
 
     <div class="gallery-grid">
       <div class="gallery-card" style="grid-column:span 2;">
@@ -542,6 +562,11 @@ function fmt_date($iso) {
         <img src="images/apple2.jpg" alt="Preset Apple II" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Apple II</span><span data-en>Apple II</span></div></div>
       </div>
+
+      <div class="gallery-card">
+        <img src="images/pysche-lsd.jpg" alt="Preset Psyché-LSD" class="gallery-img">
+        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Psyché-LSD</span><span data-en>Psyché-LSD</span></div></div>
+      </div>
     </div>
   </div>
 </section>
@@ -551,7 +576,7 @@ function fmt_date($iso) {
   <div class="container">
     <p class="section-label" data-fr>La vie du monde</p>
     <p class="section-label" data-en>The world's life</p>
-    <h2 class="section-title" data-fr>Un monde rempli de créatures</h2>
+    <h2 class="section-title" data-fr>Un monde de créatures</h2>
     <h2 class="section-title" data-en>A world full of creatures</h2>
     <p class="section-sub" data-fr>Le monde ne se contente pas d'exister : il respire. Animaux, oiseaux et habitants animent chaque biome au fil des saisons.</p>
     <p class="section-sub" data-en>The world doesn't just exist — it breathes. Animals, birds and inhabitants bring every biome to life through the seasons.</p>
@@ -641,6 +666,126 @@ function fmt_date($iso) {
           <div class="creature-desc" data-en>Small flocks of seagulls circle above the largest bodies of water, with the occasional straggler drifting away from the group.</div>
         </div>
       </div>
+      <div class="creature-card">
+        <div class="creature-banner">
+          <img src="images/lucioles.jpg" alt="Lucioles" class="creature-banner-img">
+          <div class="creature-banner-overlay">
+            <div class="creature-name" data-fr>Lucioles</div><div class="creature-name" data-en>Fireflies</div>
+          </div>
+        </div>
+        <div class="creature-body">
+          <div class="creature-desc" data-fr>À la tombée de la nuit, des nuées de lucioles scintillantes vagabondent au ras du sol, dessinant des points de lumière chaude qui dérivent doucement autour de la caméra.</div>
+          <div class="creature-desc" data-en>As night falls, swarms of twinkling fireflies drift close to the ground, tracing warm points of light that softly wander around the camera.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="population-strip">
+      <div class="population-group">
+        <div class="population-group-label" data-fr>Villages</div>
+        <div class="population-group-label" data-en>Villages</div>
+        <div class="population-tags">
+          <span class="population-tag" data-fr>Villageoises</span><span class="population-tag" data-en>Village women</span>
+          <span class="population-tag" data-fr>Villageois</span><span class="population-tag" data-en>Village men</span>
+          <span class="population-tag" data-fr>Fermier</span><span class="population-tag" data-en>Farmer</span>
+          <span class="population-tag" data-fr>Forgeron</span><span class="population-tag" data-en>Blacksmith</span>
+          <span class="population-tag" data-fr>Marchand</span><span class="population-tag" data-en>Merchant</span>
+          <span class="population-tag" data-fr>Tavernier</span><span class="population-tag" data-en>Innkeeper</span>
+          <span class="population-tag" data-fr>Garde</span><span class="population-tag" data-en>Guard</span>
+          <span class="population-tag" data-fr>Soldat</span><span class="population-tag" data-en>Soldier</span>
+          <span class="population-tag" data-fr>Chevalier</span><span class="population-tag" data-en>Knight</span>
+        </div>
+      </div>
+      <div class="population-group">
+        <div class="population-group-label" data-fr>Forêts</div>
+        <div class="population-group-label" data-en>Forests</div>
+        <div class="population-tags">
+          <span class="population-tag" data-fr>Archer</span><span class="population-tag" data-en>Archer</span>
+          <span class="population-tag" data-fr>Guerriers</span><span class="population-tag" data-en>Warriors</span>
+          <span class="population-tag" data-fr>Magicien</span><span class="population-tag" data-en>Mage</span>
+          <span class="population-tag" data-fr>Moine</span><span class="population-tag" data-en>Monk</span>
+          <span class="population-tag" data-fr>Sorcière</span><span class="population-tag" data-en>Witch</span>
+        </div>
+      </div>
+      <div class="population-group">
+        <div class="population-group-label" data-fr>Champs de blés</div>
+        <div class="population-group-label" data-en>Wheat fields</div>
+        <div class="population-tags">
+          <span class="population-tag" data-fr>Corbeaux</span><span class="population-tag" data-en>Crows</span>
+          <span class="population-tag" data-fr>Moulin</span><span class="population-tag" data-en>Windmill</span>
+          <span class="population-tag" data-fr>Épouvantail</span><span class="population-tag" data-en>Scarecrow</span>
+        </div>
+      </div>
+      <div class="population-group">
+        <div class="population-group-label" data-fr>Eau</div>
+        <div class="population-group-label" data-en>Water</div>
+        <div class="population-tags">
+          <span class="population-tag" data-fr>Bateau</span><span class="population-tag" data-en>Boat</span>
+          <span class="population-tag" data-fr>Barques</span><span class="population-tag" data-en>Rowboats</span>
+          <span class="population-tag" data-fr>Mouettes</span><span class="population-tag" data-en>Seagulls</span>
+        </div>
+      </div>
+      <div class="population-group">
+        <div class="population-group-label" data-fr>Prairies</div>
+        <div class="population-group-label" data-en>Grasslands</div>
+        <div class="population-tags">
+          <span class="population-tag" data-fr>Cerfs</span><span class="population-tag" data-en>Deer</span>
+          <span class="population-tag" data-fr>Fleurs sauvages</span><span class="population-tag" data-en>Wildflowers</span>
+        </div>
+      </div>
+    </div>
+    <p class="population-note" data-fr>22 visages différents peuplent villages et forêts, chacun avec sa silhouette, son costume, son rôle. Pas de figurants copiés-collés : une vraie population, tuile après tuile.</p>
+    <p class="population-note" data-en>22 different faces populate villages and forests, each with its own silhouette, costume and role. No copy-pasted extras — a genuine population, tile after tile.</p>
+  </div>
+</section>
+
+<!-- ═══════════ AUDIO ═══════════ -->
+<section id="audio">
+  <div class="container">
+    <p class="section-label" data-fr>Ambiance sonore</p>
+    <p class="section-label" data-en>Sound design</p>
+    <h2 class="section-title" data-fr>Un monde qui s'entend</h2>
+    <h2 class="section-title" data-en>A world you can hear</h2>
+    <p class="section-sub" data-fr>Le son suit la caméra en temps réel — chaque biome, chaque train, chaque bateau a sa propre voix, qui monte et s'efface avec la distance.</p>
+    <p class="section-sub" data-en>Sound follows the camera in real time — every biome, train and boat has its own voice, rising and fading with distance.</p>
+
+    <div class="audio-grid">
+      <div class="audio-card">
+        <div class="audio-icon">🎧</div>
+        <div>
+          <div class="audio-name" data-fr>Son spatial 3D</div>
+          <div class="audio-name" data-en>3D spatial sound</div>
+          <div class="audio-desc" data-fr>Ambiances de village, chants d'oiseaux de forêt et de prairie, corbeaux au-dessus des champs, ressac des plages, trains et bateaux — chaque source varie en volume selon sa distance et sa direction réelles.</div>
+          <div class="audio-desc" data-en>Village ambience, forest and grassland birdsong, crows over the fields, waves on the shore, trains and boats — every source's volume follows its real distance and direction.</div>
+        </div>
+      </div>
+      <div class="audio-card">
+        <div class="audio-icon">🎻</div>
+        <div>
+          <div class="audio-name" data-fr>Chi Mai, le thème caché</div>
+          <div class="audio-name" data-en>Chi Mai, the hidden theme</div>
+          <div class="audio-desc" data-fr>Descendez la caméra au ras d'un champ de blé et un thème mélodique secret se déclenche — la musique et les autres sons s'effacent doucement pour lui laisser toute la place.</div>
+          <div class="audio-desc" data-en>Bring the camera down low over a wheat field and a hidden melodic theme kicks in — the music and other sounds fade away to make room for it.</div>
+        </div>
+      </div>
+      <div class="audio-card">
+        <div class="audio-icon">🎶</div>
+        <div>
+          <div class="audio-name" data-fr>Musique adaptative</div>
+          <div class="audio-name" data-en>Adaptive music</div>
+          <div class="audio-desc" data-fr>Pistes d'intro, de jeu et de fin qui s'enchaînent en fondu doux, piochées dans plusieurs variantes pour ne jamais sonner deux fois pareil d'une partie à l'autre.</div>
+          <div class="audio-desc" data-en>Intro, in-game and ending tracks crossfade smoothly, drawn from several variants so no two games sound quite the same.</div>
+        </div>
+      </div>
+      <div class="audio-card">
+        <div class="audio-icon">🔇</div>
+        <div>
+          <div class="audio-name" data-fr>Silence à la demande</div>
+          <div class="audio-name" data-en>Silence on demand</div>
+          <div class="audio-desc" data-fr>La touche M coupe et rétablit instantanément toute la bande-son, musique comprise — utile pour une partie tranquille en réunion ou en visio.</div>
+          <div class="audio-desc" data-en>The M key instantly cuts and restores the entire soundtrack, music included — handy for a quiet game during a call or a meeting.</div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -650,8 +795,8 @@ function fmt_date($iso) {
   <div class="container">
     <p class="section-label" data-fr>Ambiance du monde</p>
     <p class="section-label" data-en>World atmosphere</p>
-    <h2 class="section-title" data-fr>Jour & Nuit</h2>
-    <h2 class="section-title" data-en>Day & Night</h2>
+    <h2 class="section-title" data-fr>Environnement</h2>
+    <h2 class="section-title" data-en>Environment</h2>
     <p class="section-sub" data-fr>Un seul interrupteur change tout. Le soleil, les nuages et le ciel bleu laissent place aux étoiles, à la lune et aux comètes.</p>
     <p class="section-sub" data-en>One switch changes everything. Sun, clouds and blue sky give way to stars, moon and comets.</p>
 
@@ -696,6 +841,26 @@ function fmt_date($iso) {
         </ul>
         </div>
       </div>
+      <div class="daynight-card smoke" style="grid-column:span 2;">
+        <img src="images/fumees.jpg" alt="Fumée" class="daynight-img">
+        <div class="daynight-body">
+        <div class="daynight-head">
+          <div class="daynight-icon">💨</div>
+          <div class="daynight-name" data-fr>Fumée</div>
+          <div class="daynight-name" data-en>Smoke</div>
+        </div>
+        <ul class="daynight-list">
+          <li data-fr>🏠 Jusqu'à 48 colonnes de fumée simultanées, ray-marchées en temps réel au-dessus des cheminées et des locomotives</li>
+          <li data-en>🏠 Up to 48 simultaneous smoke columns, ray-marched in real time above chimneys and locomotives</li>
+          <li data-fr>🌬️ Turbulence à 4 octaves qui dérive avec la hauteur — chaque colonne est unique</li>
+          <li data-en>🌬️ 4-octave turbulence that drifts with height — every column is unique</li>
+          <li data-fr>🎲 Seule une maison sur trois fume, tirée au hasard à la génération de la tuile</li>
+          <li data-en>🎲 Only one house in three smokes, randomly chosen when the tile is generated</li>
+          <li data-fr>🌙 Plus mystérieuse encore à la tombée de la nuit</li>
+          <li data-en>🌙 Even more atmospheric once night falls</li>
+        </ul>
+        </div>
+      </div>
       <div class="daynight-card" style="grid-column:span 2;">
         <img src="images/godrays.jpg" alt="God Rays" class="daynight-img">
         <div class="daynight-body">
@@ -714,6 +879,42 @@ function fmt_date($iso) {
         </ul>
         </div>
       </div>
+      <div class="daynight-card rain" style="grid-column:span 2;">
+        <img src="images/pluie.jpg" alt="Pluie" class="daynight-img">
+        <div class="daynight-body">
+        <div class="daynight-head">
+          <div class="daynight-icon">🌧️</div>
+          <div class="daynight-name" data-fr>Pluie</div>
+          <div class="daynight-name" data-en>Rain</div>
+        </div>
+        <ul class="daynight-list">
+          <li data-fr>💧 Averse dynamique déclenchable à la volée depuis le HUD Météo</li>
+          <li data-en>💧 Dynamic showers you can trigger on the fly from the Weather HUD</li>
+          <li data-fr>⛈️ S'enchaîne naturellement avec l'orage et les éclairs</li>
+          <li data-en>⛈️ Chains naturally into storms and lightning</li>
+          <li data-fr>🎬 Ambiance renforcée par la vignette et le grain pellicule de la cinématique</li>
+          <li data-en>🎬 Atmosphere strengthened by the cinematic vignette and film grain</li>
+        </ul>
+        </div>
+      </div>
+      <div class="daynight-card mist" style="grid-column:span 2;">
+        <img src="images/brume.jpg" alt="Brume matinale" class="daynight-img">
+        <div class="daynight-body">
+        <div class="daynight-head">
+          <div class="daynight-icon">🌫️</div>
+          <div class="daynight-name" data-fr>Brume matinale</div>
+          <div class="daynight-name" data-en>Morning mist</div>
+        </div>
+        <ul class="daynight-list">
+          <li data-fr>🌫️ Voile bas qui étouffe les distances et adoucit les silhouettes</li>
+          <li data-en>🌫️ Low veil that mutes distances and softens silhouettes</li>
+          <li data-fr>☀️ Se dissipe progressivement au fil des minutes</li>
+          <li data-en>☀️ Gradually lifts as the minutes pass</li>
+          <li data-fr>🎚️ Densité et couleur du brouillard pilotables dans l'éditeur de direction artistique</li>
+          <li data-en>🎚️ Fog density and colour tunable in the art-direction editor</li>
+        </ul>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -721,12 +922,12 @@ function fmt_date($iso) {
 <!-- ═══════════ PERSONNALISATION EXTRÊME (EDA) ═══════════ -->
 <section id="eda">
   <div class="container">
-    <p class="section-label" data-fr>Éditeur de direction artistique</p>
-    <p class="section-label" data-en>Art direction editor</p>
+    <p class="section-label" data-fr>Éditeur de direction artistique (EDA)</p>
+    <p class="section-label" data-en>Art direction editor (EDA)</p>
     <h2 class="section-title" data-fr>Personnalisation extrême</h2>
     <h2 class="section-title" data-en>Extreme customization</h2>
-    <p class="section-sub" data-fr>Au-delà des 16 presets, l'EDA ouvre des dizaines de metrics ajustables en temps réel, réparties en 3 onglets — LUT, Cinématique, Environnement. Chaque curseur répond instantanément, sans rechargement, et l'ensemble se copie/exporte en JSON pour être rejoué ou partagé.</p>
-    <p class="section-sub" data-en>Beyond the 16 presets, the EDA exposes dozens of metrics adjustable in real time, spread across 3 tabs — LUT, Cinematic, Environment. Every slider responds instantly, no reload, and the whole configuration copies/exports as JSON to be replayed or shared.</p>
+    <p class="section-sub" data-fr>Au-delà des nombreux presets, l'EDA ouvre des dizaines de metrics ajustables en temps réel, réparties en 3 onglets — LUT, Cinématique, Environnement. Chaque curseur répond instantanément, sans rechargement, et l'ensemble se copie/exporte en JSON pour être rejoué ou partagé.</p>
+    <p class="section-sub" data-en>Beyond the many presets, the EDA exposes dozens of metrics adjustable in real time, spread across 3 tabs — LUT, Cinematic, Environment. Every slider responds instantly, no reload, and the whole configuration copies/exports as JSON to be replayed or shared.</p>
 
     <div class="eda-showcase-grid">
       <div class="eda-showcase-card">
@@ -754,8 +955,8 @@ function fmt_date($iso) {
         <div class="eda-showcase-body">
           <div class="eda-showcase-label" data-fr>Environnement</div>
           <div class="eda-showcase-label" data-en>Environment</div>
-          <p class="eda-showcase-desc" data-fr>Nuages, vent (blés, herbes, arbres), forme du monde (bouliste/platiste) et bascule Jour/Nuit.</p>
-          <p class="eda-showcase-desc" data-en>Clouds, wind (wheat, grass, trees), world shape (globe/flat) and Day/Night switch.</p>
+          <p class="eda-showcase-desc" data-fr>Nuages et couverture nuageuse, vent (blés, herbes, arbres), météo dynamique (brume, lucioles, pluie), forme du monde (bouliste/platiste), bascule Jour/Nuit et presets de qualité/densité.</p>
+          <p class="eda-showcase-desc" data-en>Clouds and cloud coverage, wind (wheat, grass, trees), dynamic weather (mist, fireflies, rain), world shape (globe/flat), Day/Night switch and quality/density presets.</p>
         </div>
       </div>
     </div>
@@ -937,6 +1138,62 @@ function fmt_date($iso) {
   }
   const saved = localStorage.getItem('hexistenz_pres_lang');
   if (saved === 'en') setLang('en');
+
+  const navToggle = document.getElementById('navToggle');
+  const navLinks  = document.getElementById('navLinks');
+  function closeNav() {
+    navLinks.classList.remove('open');
+    navToggle.classList.remove('open');
+    navToggle.setAttribute('aria-expanded', 'false');
+  }
+  navToggle?.addEventListener('click', () => {
+    const isOpen = navLinks.classList.toggle('open');
+    navToggle.classList.toggle('open', isOpen);
+    navToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+  navLinks?.addEventListener('click', (e) => {
+    if (e.target.tagName === 'A') closeNav();
+  });
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 900) closeNav();
+  });
+
+  // ── Scroll spy : souligne dans la nav la rubrique actuellement visible ──────
+  // Réutilise la classe .active déjà stylée en CSS (identique au hover, cf.
+  // .nav-links a.active dans presentation.css) — pas de nouveau style à écrire.
+  // Chaque rubrique a DEUX <a> (data-fr/data-en, même href) : on active les deux
+  // pour rester cohérent quelle que soit la langue affichée.
+  (function initScrollSpy() {
+    const navEl = document.querySelector('nav');
+    const sections = Array.from(document.querySelectorAll('section[id]'))
+      .filter(s => document.querySelector(`.nav-links a[href="#${s.id}"]`));
+    if (!sections.length) return;
+
+    function setActive(id) {
+      document.querySelectorAll('.nav-links a').forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === `#${id}`);
+      });
+    }
+
+    // La marge haute correspond à la hauteur de la nav fixed (+1px de marge) : une
+    // section n'est considérée "active" qu'une fois passée sous la barre. La marge
+    // basse (-65%) réduit la zone d'observation effective à une fine bande sous la
+    // nav, pour qu'une seule rubrique soit active à la fois même sur les petites
+    // sections proches les unes des autres.
+    let observer;
+    function build() {
+      observer?.disconnect();
+      const navH = navEl ? navEl.offsetHeight : 60;
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) setActive(entry.target.id);
+        });
+      }, { rootMargin: `-${navH + 1}px 0px -65% 0px`, threshold: 0 });
+      sections.forEach(s => observer.observe(s));
+    }
+    build();
+    window.addEventListener('resize', build);
+  })();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>

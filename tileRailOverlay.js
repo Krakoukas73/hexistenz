@@ -10,7 +10,7 @@ import {
 import { getEdgeType } from './tileGenerator.js';
 import { getTerrainSurfaceY, getTerrainNormalAt } from './terrainHeight.js';
 import { hashUnitFull as hashUnit, hashNumber } from './hashUtils.js';
-import { smoothstep } from './tileUtils.js';
+import { smoothstep, clamp } from './tileUtils.js';
 
 const materialCache = new Map();
 const geometryCache = new Map();
@@ -927,10 +927,5 @@ function getStoneGeometry(seedKey) {
 
 function positiveModulo(value, divisor) {
   return ((value % divisor) + divisor) % divisor;
-}
-
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
 }
 

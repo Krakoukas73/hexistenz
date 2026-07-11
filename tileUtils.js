@@ -41,3 +41,16 @@ export function smoothstep(edge0, edge1, value) {
 export function clamp01(value) {
   return Math.min(1, Math.max(0, Number(value) || 0));
 }
+
+// clamp/easeInOutSine génériques — factorisés depuis railTrainOverlay.js/tileRailOverlay.js
+// (clamp, identique) et cometSky.js/railTrainOverlay.js/waterBoatOverlay.js (easeInOutSine,
+// formule identique). Entrée clampée dans [0,1] (comme la version cometSky.js, la plus
+// prudente des 3) : sans effet sur les call sites existants qui passent déjà une valeur
+// dans cette plage, mais protège contre un léger dépassement (ex. progress > 1 par arrondi).
+export function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+export function easeInOutSine(value) {
+  return -(Math.cos(Math.PI * clamp(value, 0, 1)) - 1) / 2;
+}

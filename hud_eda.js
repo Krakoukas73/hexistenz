@@ -9,6 +9,10 @@ import { getGrassWindParams, setGrassWindParams } from './grassBladeOverlay.js';
 import { getTreeWindParams, setTreeWindParams } from './forestOverlay.js';
 import { getCloudSkyParams, setCloudSkyParams, setCloudUserEnabled } from './cloudSky.js';
 import { WATER_RENDER, WHEAT_WIND_STRENGTH, WHEAT_WIND_SPEED, GRASS_WIND_STRENGTH, GRASS_WIND_SPEED, GRASS_WIND_SWAY, TREE_WIND } from './config.js';
+import { getContentDensity, setContentDensity, MIN_DENSITY, MAX_DENSITY } from './contentDensity.js';
+import { ENVIRONMENT_EVENTS, onEnvironmentChange, triggerEnvironmentEvent, stopEnvironmentEvent, stopAllEnvironmentEvents, isEnvironmentEventActive } from './environmentDirector.js';
+import { getVfxSettings, setVfxSetting, resetVfxSettings, getAllVfxSettings, setAllVfxSettings, onVfxSettingsChange } from './vfxSettings.js';
+import { escapeHtml } from './domUtils.js';
 
 // ─── Panel EDA (Éditeur de Direction Artistique) — extrait de debugLightUi.js (2026-07-02) ───
 // Ce module construit et câble tout le contenu du panel EDA (3 onglets : LUT / Cinématique /
@@ -23,7 +27,7 @@ const CIN_DEFAULTS = Object.freeze({
   enabled: false,
   tilt: 0.60, focusCenter: 0.50, focusBand: 0.35,
   vignette: 0.55, grain: 0.30, chromatic: 0.45,
-  halation: 0.0, barrel: 0.0, scanLines: 0.0,
+  halation: 0.0, barrel: 0.0, scanLines: 0.0, scanLinesIntensity: 0.52,
   godRays: 0.0, godRaysLength: 0.40, godRaysDiffusion: 0.85, godRaysThreshold: 0.70,
   godRaysLayers: 0.0,
   godRaysEnabled: true, tiltShiftEnabled: true,
@@ -44,6 +48,7 @@ function _normalizeCin(s) {
     halation:    clp(s.halation,    CIN_DEFAULTS.halation,    1),
     barrel:      clp(s.barrel,      CIN_DEFAULTS.barrel,      1),
     scanLines:   clp(s.scanLines,   CIN_DEFAULTS.scanLines,   6), // 0–6 px
+    scanLinesIntensity: clp(s.scanLinesIntensity, CIN_DEFAULTS.scanLinesIntensity, 1),
     godRays:          clp(s.godRays,          CIN_DEFAULTS.godRays,          1),
     godRaysLength:    clp(s.godRaysLength,    CIN_DEFAULTS.godRaysLength,    1),
     godRaysDiffusion: clp(s.godRaysDiffusion, CIN_DEFAULTS.godRaysDiffusion, 1),
@@ -96,6 +101,26 @@ const WAKE_SLIDERS = [
   { key: 'scale',    label: 'Finesse',         min: 2,    max: 16,   step: 0.2  },
   { key: 'density',  label: 'Densité',         min: 0,    max: 0.5,  step: 0.005 },
   { key: 'opacity',  label: 'Opacité',         min: 0.2,  max: 1.0,  step: 0.02 },
+];
+// ─── VFX MÉTÉO (rubrique 2, groupe "brume/lucioles/pluie" — sur vfxSettings.js) ─────
+// Contrairement à EAU/VENT/NUAGES (get/set dédiés par overlay), les réglages VFX
+// météo passent par un petit store commun (vfxSettings.js, persistance localStorage
+// déjà gérée là-bas) — inutile de dupliquer la logique get/set ici.
+const VFX_MIST_SLIDERS = [
+  { key: 'densite',   label: 'Densité',   min: 0,   max: 1,   step: 0.01 },
+  { key: 'compacite', label: 'Compacité', min: 0,   max: 1,   step: 0.01 },
+  { key: 'elevation', label: 'Élévation', min: 0,   max: 1,   step: 0.01 },
+];
+const VFX_FIREFLY_SLIDERS = [
+  { key: 'densite',       label: 'Densité',       min: 0,    max: 1,   step: 0.01 },
+  { key: 'taille',        label: 'Taille',        min: 0.04, max: 0.4, step: 0.01 },
+  { key: 'vagabondage',   label: 'Vagabondage',   min: 0.1,  max: 2,   step: 0.05 },
+  { key: 'scintillement', label: 'Scintillement', min: 0,    max: 1,   step: 0.01 },
+];
+const VFX_RAIN_SLIDERS = [
+  { key: 'densite',      label: 'Densité',       min: 0,    max: 1,    step: 0.01 },
+  { key: 'vitesse',      label: 'Vitesse chute', min: 3,    max: 20,   step: 0.5 },
+  { key: 'tailleGoutte', label: 'Taille goutte', min: 0.01, max: 0.12, step: 0.005 },
 ];
 const WATER_DEFAULTS = Object.freeze({
   foamEnabled: true,
@@ -252,7 +277,6 @@ const LUT_SECTIONS = [
   },
   {
     label: '🎚️ 3. Étalonnage',
-    hostId: 'debugLightPaletteHost', // rendu en colonne B de l'onglet LUT (avant Palette biomes)
     toggleId: 'debugGradingEnabled',
     togglePath: 'grading.enabled',
     sliders: [
@@ -274,7 +298,6 @@ const LUT_SECTIONS = [
   },
   {
     label: '🎨 4. Palette biomes',
-    hostId: 'debugLightPaletteHost', // rendu en colonne B de l'onglet LUT (après Étalonnage, cf. hostId ci-dessus)
     toggleId: 'debugPaletteEnabled',
     togglePath: 'palette.enabled',
     sliders: [
@@ -327,20 +350,11 @@ export const EDA_BODY_HTML = `
       <div class="debug-light-tab-panels">
 
       <div class="debug-light-tab-panel" data-tab-panel="1">
-      <div class="debug-light-columns">
-      <div class="debug-light-lut-scroll">
-        <div id="debugLightControls" class="debug-light-controls"></div>
-      </div><!-- /.debug-light-lut-scroll -->
-
-      <div class="debug-light-col-third">
-      <div id="debugLightPaletteHost"></div>
-      </div><!-- /palette host col -->
-      </div><!-- /.debug-light-columns -->
+        <div class="debug-light-columns" id="debugLightControls"></div>
       </div><!-- /.debug-light-tab-panel[1] -->
 
       <div class="debug-light-tab-panel" data-tab-panel="2">
       <div class="debug-light-columns">
-      <div class="debug-light-col-right">
 
       <div class="debug-light-cinema-section">
         <div class="debug-light-pix-head">
@@ -380,10 +394,15 @@ export const EDA_BODY_HTML = `
           <input id="cinScanLines" type="range" min="0" max="6" step="1" />
           <output id="cinScanLinesValue"></output>
         </div>
+        <div class="debug-light-row">
+          <span data-help="cin.scanLinesIntensity">Intensité scanlines</span>
+          <input id="cinScanLinesIntensity" type="range" min="0" max="1" step="0.01" />
+          <output id="cinScanLinesIntensityValue"></output>
+        </div>
+      </div><!-- /1. CINÉMATIQUE -->
 
-        <div class="debug-light-pix-sep"></div>
-
-        <div class="lut-section-head lut-section-head--with-toggle">
+      <div class="debug-light-cinema-section">
+        <div class="debug-light-pix-head">
           <span>${_emojiHeadHtml('🌅 2. God Rays')}</span>
           <label class="pix-switch" title="Activer / désactiver les god rays">
             <input id="godRaysEnabled" type="checkbox" />
@@ -417,10 +436,10 @@ export const EDA_BODY_HTML = `
           <output id="cinGodRaysLayersValue"></output>
         </div>
         </div><!-- /#godRaysRows -->
+      </div><!-- /2. God Rays -->
 
-        <div class="debug-light-pix-sep"></div>
-
-        <div class="lut-section-head lut-section-head--with-toggle">
+      <div class="debug-light-cinema-section">
+        <div class="debug-light-pix-head">
           <span>${_emojiHeadHtml('🎞️ 3. Tilt-shift')}</span>
           <label class="pix-switch" title="Activer / désactiver le tilt-shift">
             <input id="tiltShiftEnabled" type="checkbox" />
@@ -444,10 +463,10 @@ export const EDA_BODY_HTML = `
           <output id="cinFocusBandValue"></output>
         </div>
         </div><!-- /#tiltShiftRows -->
+      </div><!-- /3. Tilt-shift -->
 
-        <div class="debug-light-pix-sep"></div>
-
-        <div class="lut-section-head lut-section-head--with-toggle">
+      <div class="debug-light-cinema-section">
+        <div class="debug-light-pix-head">
           <span>${_emojiHeadHtml('✨ 4. Bloom')}</span>
           <label class="pix-switch" title="Activer / désactiver le bloom">
             <input id="bloomEnabled" type="checkbox" />
@@ -476,10 +495,7 @@ export const EDA_BODY_HTML = `
           <output id="cinBloomSoftnessValue"></output>
         </div>
         </div><!-- /#bloomRows -->
-      </div>
-      </div><!-- /.debug-light-col-right (1. CINÉMATIQUE + 2-4 sous-rubriques) -->
-
-      <div class="debug-light-col-third">
+      </div><!-- /4. Bloom -->
 
       <div class="debug-light-pix-section">
         <div class="debug-light-pix-head">
@@ -504,9 +520,7 @@ export const EDA_BODY_HTML = `
           <input id="pixDepthEdge" type="range" min="0" max="1" step="0.01" />
           <output id="pixDepthEdgeValue"></output>
         </div>
-      </div>
-
-      <div class="debug-light-pix-sep"></div>
+      </div><!-- /5. PIXELISATION -->
 
       <div class="debug-light-crt-section">
         <div class="debug-light-pix-head">
@@ -531,20 +545,17 @@ export const EDA_BODY_HTML = `
           <input id="cinCrtCornerDark" type="range" min="0" max="1" step="0.01" />
           <output id="cinCrtCornerDarkValue"></output>
         </div>
-      </div>
-      </div><!-- /.debug-light-col-third (5. PIXÉLISATION + 6. COURBURE ÉCRAN) -->
+      </div><!-- /6. COURBURE ÉCRAN -->
+
       </div><!-- /.debug-light-columns -->
       </div><!-- /.debug-light-tab-panel[2] -->
 
       <div class="debug-light-tab-panel" data-tab-panel="3">
       <div class="debug-light-columns">
-      <div class="debug-light-col-right">
 
       <div class="debug-light-water-section">
         <div id="debugLightWaterControls"></div>
       </div>
-
-      <div class="debug-light-pix-sep"></div>
 
       <div class="debug-light-cloud-section">
         <div class="debug-light-pix-head">
@@ -556,9 +567,6 @@ export const EDA_BODY_HTML = `
         </div>
         <div id="debugLightCloudControls"></div>
       </div>
-      </div><!-- /.debug-light-col-right (1. Écume + 2. Sillage bateau + 3. Nuages) -->
-
-      <div class="debug-light-col-third">
 
       <div class="debug-light-wind-section">
         <div class="debug-light-pix-head">
@@ -570,8 +578,6 @@ export const EDA_BODY_HTML = `
         </div>
         <div id="debugLightWindControls"></div>
       </div>
-
-      <div class="debug-light-pix-sep"></div>
 
       <div class="debug-light-worldshape-section">
         <div class="debug-light-pix-head">
@@ -587,8 +593,6 @@ export const EDA_BODY_HTML = `
         </div>
       </div>
 
-      <div class="debug-light-pix-sep"></div>
-
       <div class="debug-light-daynight-section">
         <div class="debug-light-pix-head">
           <span><span class="rubrique-emoji">🌓</span> 6. Jour / Nuit</span>
@@ -602,7 +606,29 @@ export const EDA_BODY_HTML = `
           <output id="dayNightModeLabel" style="grid-column: 3;"></output>
         </div>
       </div>
-      </div><!-- /.debug-light-col-third (4. VENT + 5. Forme du monde + 6. Jour/Nuit) -->
+
+      <div class="debug-light-quality-section">
+        <div class="debug-light-pix-head">
+          <span><span class="rubrique-emoji">🎚️</span> 7. Qualité / densité</span>
+        </div>
+        <div class="debug-light-presets-label" style="margin-top:10px;">Préréglages</div>
+        <div id="debugLightQualityPresets" class="debug-light-presets"></div>
+        <div id="debugLightQualityControls"></div>
+      </div>
+
+      <div class="debug-light-weather-section">
+        <div class="debug-light-pix-head">
+          <span><span class="rubrique-emoji">🌦️</span> 8. Météo</span>
+        </div>
+        <div id="debugLightWeatherRows"></div>
+        <button type="button" id="debugLightWeatherStopAll" class="debug-light-weather-stopall" title="Arrête tous les évènements environnementaux en cours">⏹ Tout arrêter</button>
+        <!-- VFX MÉTÉO (ex-rubrique 2 indépendante) fusionnée ici le 2026-07-10 : réglages
+             fins (brume/lucioles/pluie) rattachés aux déclencheurs d'évènements ci-dessus,
+             même thème. #debugLightVfxControls peuplé plus bas (querySelector par id,
+             inchangé par ce déplacement). -->
+        <div id="debugLightVfxControls"></div>
+      </div>
+
       </div><!-- /.debug-light-columns -->
       </div><!-- /.debug-light-tab-panel[3] -->
 
@@ -613,7 +639,7 @@ export const EDA_BODY_HTML = `
       <div class="debug-light-footer">
         <div class="debug-light-export">
           <div class="debug-light-export-row">
-            <button id="debugLightCopy" type="button" title="Copier tous les paramètres LUT + PIX + EAU + CINÉMA + VENT + NUAGES + Forme du monde + Jour/Nuit courants en JSON">📋 Copier</button>
+            <button id="debugLightCopy" type="button" title="Copier tous les paramètres LUT + PIX + EAU + CINÉMA + VENT + NUAGES + Forme du monde + Jour/Nuit + Densité + Météo courants en JSON (base pour un futur preset d'ambiance intégrant des effets météo pré-configurés)">📋 Copier</button>
             <button id="debugLightUndo" type="button" disabled title="Annuler la dernière modification (Undo)">↩ Undo</button>
             <button id="debugLightRedo" type="button" disabled title="Rétablir la modification annulée (Redo)">↪ Redo</button>
             <button id="debugLightReset" type="button" title="Réinitialiser aux valeurs par défaut">Reset</button>
@@ -627,7 +653,7 @@ export const EDA_BODY_HTML = `
     </div>
 `;
 
-export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverlay = null, cloudSky = null, fpsApi }) {
+export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverlay = null, cloudSky = null, environmentDirector = null, fpsApi }) {
   const state = visualEnvironment.config ?? cloneVisualConfig(DEFAULT_VISUAL_ENVIRONMENT_CONFIG);
 
   const savedConfig = loadLutConfig();
@@ -636,7 +662,8 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   }
 
   // ─── Onglets EDA (TITRE 1/2/3) — regroupent les rubriques sous le header ambiances ──
-  // Contenu affiché sur 2 colonnes par onglet (au lieu des 3 colonnes fixes précédentes).
+  // Contenu affiché en flux "journal" sur 3 colonnes fluides (les rubriques remplissent la
+  // colonne 1, puis la 2, puis la 3, sans jamais être coupées à cheval sur deux colonnes).
   const EDA_TAB_STORAGE_KEY = 'hexistenz_eda_tab';
   const tabBtns   = root.querySelectorAll('.debug-light-tab-btn');
   const tabPanels = root.querySelectorAll('.debug-light-tab-panel');
@@ -666,11 +693,15 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   let lastPresetPixelization = null;  // pixelisation associée au dernier preset
   let lastPresetCinema       = null;  // cinéma associé au dernier preset
   let lastPresetWind         = null;  // vent associé au dernier preset
+  let lastPresetCloud        = null;  // nuages associés au dernier preset
+  let lastPresetWater        = null;  // eau (écume/sillage) associée au dernier preset
   let _comparing             = false;
   let _stateBeforeCompare    = null;  // snapshot state au moment du clic "Comparer" → restauré par "⟳ Retour"
   let _pixelBeforeCompare    = null;  // pixelisation en cours avant entrée en mode comparer
   let _cinBeforeCompare      = null;  // cinéma en cours avant entrée en mode comparer
   let _windBeforeCompare     = null;  // vent en cours avant entrée en mode comparer
+  let _cloudBeforeCompare    = null;  // nuages en cours avant entrée en mode comparer
+  let _waterBeforeCompare    = null;  // eau en cours avant entrée en mode comparer
 
   // ─── Rendu des contrôles LUT par section ────────────────────────────────────
   // Les sections avec `togglePath` (Étalonnage, Palette biomes) portent un switch
@@ -709,18 +740,11 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
       sectionEl.appendChild(grid);
     }
 
-    // Par défaut la section reste dans la colonne LUT (`controls`) ; certaines rubriques
-    // (ex. Palette biomes) sont délocalisées dans une autre colonne via `hostId`.
-    const hostEl = section.hostId ? root.querySelector(`#${section.hostId}`) : controls;
-    const _hostTarget = hostEl ?? controls;
-    // Séparateur visible entre rubriques (pas avant la toute première de la colonne) —
-    // même élément que celui déjà utilisé entre PIXÉLISATION/CINÉMA et NUAGES/VENT.
-    if (_hostTarget.children.length > 0) {
-      const sep = document.createElement('div');
-      sep.className = 'debug-light-pix-sep';
-      _hostTarget.appendChild(sep);
-    }
-    _hostTarget.appendChild(sectionEl);
+    // Les 4 rubriques LUT sont posées directement dans `#debugLightControls`
+    // (= `.debug-light-columns`) : le flux journal 3-colonnes les répartit tout seul.
+    // Plus de séparateur visible entre rubriques : l'espacement vient du margin-bottom
+    // uniforme appliqué en CSS à chaque enfant direct de `.debug-light-columns`.
+    controls.appendChild(sectionEl);
 
     if (section.togglePath) {
       const toggleEl = sectionEl.querySelector(`#${section.toggleId}`);
@@ -773,12 +797,31 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
       // même piège que celui rencontré avec crtEnabled sur les ambiances CRT.
       const wind = preset.wind ?? WIND_DEFAULTS;
       _commitWind(wind);
+      // Nuages : même logique que le vent — remplacement complet (pas de merge partiel)
+      // pour éviter qu'une couverture/vitesse de nuages d'un preset ne fuite sur le suivant.
+      const cloud = preset.cloud ?? CLOUD_DEFAULTS;
+      _commitCloud(cloud);
+      // Eau (écume/sillage) : idem, remplacement complet. Absent → WATER_DEFAULTS.
+      const water = preset.water ?? WATER_DEFAULTS;
+      _commitWater(water);
+      // Jour/Nuit : contrairement à vent/nuages/eau, on ne force PAS de valeur par défaut
+      // si le preset ne le précise pas (contrairement au reste, ce n'est pas un simple
+      // "effet visuel" mais un mode d'éclairage global — un preset silencieux dessus ne
+      // doit pas basculer le jour/nuit courant du joueur). Appliqué seulement si présent.
+      if (preset.dayNight && preset.dayNight !== _dayNightCurrent) {
+        _dayNightCurrent = preset.dayNight;
+        localStorage.setItem('hexistenz_daynightmode', preset.dayNight);
+        _renderDayNightControls();
+        document.dispatchEvent(new CustomEvent('hexistenz:dayNightChange', { detail: { mode: preset.dayNight } }));
+      }
       applyAll();
       // Snapshot pour "Comparer"
       lastPresetState        = JSON.parse(JSON.stringify(state));
       lastPresetPixelization = pix;
       lastPresetCinema       = cin;
       lastPresetWind         = wind;
+      lastPresetCloud        = cloud;
+      lastPresetWater        = water;
       lastPresetEl.textContent = preset.name;
       compareBtn.disabled   = false;
       _comparing            = false;
@@ -975,9 +1018,8 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   }
   waterFoamEnabledEl.addEventListener('change', () => { pushUndo(); _commitWater({ foamEnabled: waterFoamEnabledEl.checked }); });
 
-  const waterSep = document.createElement('div');
-  waterSep.className = 'debug-light-pix-sep';
-  waterControlsHost.appendChild(waterSep);
+  // Plus de séparateur visible entre Écume et Sillage bateau (2026-07-08) :
+  // l'espacement vient uniquement du gap:8px de #debugLightWaterControls.
 
   const waterWakeHead = document.createElement('div');
   waterWakeHead.className = 'lut-section-head lut-section-head--with-toggle';
@@ -1000,6 +1042,53 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   waterWakeEnabledEl.addEventListener('change', () => { pushUndo(); _commitWater({ wakeEnabled: waterWakeEnabledEl.checked }); });
 
   _renderWaterControls(_waterCurrent);
+
+  // ─── Contrôles VFX MÉTÉO (onglet Environnement, rubrique 8 "Météo", fusionné le
+  // 2026-07-10 — ex-rubrique 2 indépendante, cf. #debugLightVfxControls déplacé dans
+  // .debug-light-weather-section) ────────────────────────────────────────────────
+  // Brume/lucioles/pluie : réglages en direct via vfxSettings.js (get/set + persistance
+  // localStorage déjà gérées là-bas, pas de state dupliqué ici — même esprit que Qualité/
+  // densité ci-dessous, mais un store partagé au lieu d'un getter/setter par overlay).
+  {
+    const vfxHost = root.querySelector('#debugLightVfxControls');
+    const vfxGroups = [
+      { effect: 'groundMist', title: '🌫️ Brume matinale', sliders: VFX_MIST_SLIDERS },
+      { effect: 'fireflies',  title: '✨ Lucioles',        sliders: VFX_FIREFLY_SLIDERS },
+      { effect: 'rain',       title: '🌧️ Pluie / Orage',   sliders: VFX_RAIN_SLIDERS }
+    ];
+    for (const group of vfxGroups) {
+      const head = document.createElement('div');
+      head.className = 'lut-section-head lut-section-head--with-toggle';
+      head.innerHTML = `<span>${group.title}</span><button type="button" class="debug-light-weather-btn debug-light-vfx-reset" title="Réinitialiser" style="width:auto;padding:2px 8px;">↺</button>`;
+      vfxHost.appendChild(head);
+      const rows = document.createElement('div');
+      rows.className = 'debug-light-subgroup';
+      vfxHost.appendChild(rows);
+      const sliderEls = [];
+      const renderGroup = () => {
+        const current = getVfxSettings(group.effect);
+        for (const { s, input, output } of sliderEls) {
+          input.value = String(current[s.key]);
+          output.textContent = formatNumber(current[s.key]);
+        }
+      };
+      const initial = getVfxSettings(group.effect);
+      for (const s of group.sliders) {
+        const { row, input, output } = createRawSlider(s.label, s.min, s.max, s.step, initial[s.key],
+          v => setVfxSetting(group.effect, s.key, v), pushUndo, null);
+        sliderEls.push({ s, input, output });
+        rows.appendChild(row);
+      }
+      head.querySelector('.debug-light-vfx-reset').addEventListener('click', () => {
+        pushUndo();
+        resetVfxSettings(group.effect);
+        renderGroup();
+      });
+      // Resync visuel si la valeur change hors slider (undo/redo, setAllVfxSettings) —
+      // sinon les sliders affichent une position périmée après un Annuler/Refaire.
+      onVfxSettingsChange((effect) => { if (effect === null || effect === group.effect) renderGroup(); });
+    }
+  }
 
   // ─── Contrôles CINÉMA embarqués dans le panel CUSTOMISATION ─────────────────
   let _cinCurrent = _normalizeCin({ ...CIN_DEFAULTS, ...(_readCinStored() ?? {}) });
@@ -1024,6 +1113,8 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   const cinBarrelValEl      = root.querySelector('#cinBarrelValue');
   const cinScanLinesEl      = root.querySelector('#cinScanLines');
   const cinScanLinesValEl   = root.querySelector('#cinScanLinesValue');
+  const cinScanLinesIntensityEl    = root.querySelector('#cinScanLinesIntensity');
+  const cinScanLinesIntensityValEl = root.querySelector('#cinScanLinesIntensityValue');
   const cinGodRaysEl              = root.querySelector('#cinGodRays');
   const cinGodRaysValEl            = root.querySelector('#cinGodRaysValue');
   const cinGodRaysLengthEl        = root.querySelector('#cinGodRaysLength');
@@ -1077,6 +1168,8 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     cinBarrelValEl.textContent        = _cinCurrent.barrel.toFixed(2);
     cinScanLinesEl.value              = String(Math.round(_cinCurrent.scanLines));
     cinScanLinesValEl.textContent     = String(Math.round(_cinCurrent.scanLines)) + 'px';
+    cinScanLinesIntensityEl.value            = String(_cinCurrent.scanLinesIntensity);
+    cinScanLinesIntensityValEl.textContent   = _cinCurrent.scanLinesIntensity.toFixed(2);
     cinGodRaysEl.value                = String(_cinCurrent.godRays);
     cinGodRaysValEl.textContent       = _cinCurrent.godRays.toFixed(2);
     cinGodRaysLengthEl.value          = String(_cinCurrent.godRaysLength);
@@ -1108,7 +1201,11 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     bloomEnabledEl.checked            = _cinCurrent.bloomEnabled;
     bloomRowsEl.classList.toggle('subgroup-disabled', !_cinCurrent.bloomEnabled);
     crtEnabledEl.checked              = _cinCurrent.crtEnabled;
-    root.querySelector('.debug-light-cinema-section').classList.toggle('cinema-section--disabled', !_cinCurrent.enabled);
+    // Le toggle master CINÉMATIQUE grise les 4 sous-rubriques (1. Cinéma, 2. God Rays,
+    // 3. Tilt-shift, 4. Bloom), qui sont désormais des sections indépendantes dans le
+    // flux 3-colonnes (aplaties depuis l'ancienne section unique le 2026-07-08).
+    root.querySelectorAll('.debug-light-cinema-section').forEach(el =>
+      el.classList.toggle('cinema-section--disabled', !_cinCurrent.enabled));
     root.querySelector('.debug-light-crt-section').classList.toggle('crt-section--disabled', !_cinCurrent.crtEnabled);
   }
 
@@ -1119,7 +1216,9 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     _storeCinSettings(next);
   }
 
-  // Sync depuis l'extérieur (touche C dans scene.js → postprocess.toggleCinema)
+  // Sync depuis l'extérieur — plus de raccourci clavier dédié depuis le 2026-07-08
+  // (touche C retirée à la demande utilisateur), mécanisme conservé au cas où un
+  // futur appelant externe (preset, script) modifierait le cinéma hors panel.
   function _syncCinControls() {
     const ext = postprocess?.getCinemaSettings?.();
     if (ext) _renderCinControls({ ..._cinCurrent, ...ext });
@@ -1127,7 +1226,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
 
   // Undo/Redo couvrent aussi le CINÉMA : capture de l'état AVANT modification.
   cinEnabledEl.addEventListener('change', () => { pushUndo(); _commitCin({ enabled: cinEnabledEl.checked }); });
-  [cinTiltEl, cinFocusCenterEl, cinFocusBandEl, cinVignetteEl, cinGrainEl, cinChromaticEl, cinHalationEl, cinBarrelEl, cinScanLinesEl,
+  [cinTiltEl, cinFocusCenterEl, cinFocusBandEl, cinVignetteEl, cinGrainEl, cinChromaticEl, cinHalationEl, cinBarrelEl, cinScanLinesEl, cinScanLinesIntensityEl,
    cinGodRaysEl, cinGodRaysLengthEl, cinGodRaysDiffusionEl, cinGodRaysThresholdEl, cinGodRaysLayersEl,
    cinBloomIntensityEl, cinBloomThresholdEl, cinBloomRadiusEl, cinBloomSoftnessEl,
    cinCrtCurvatureEl, cinCrtMaskEl, cinCrtCornerDarkEl]
@@ -1141,6 +1240,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   cinHalationEl.addEventListener('input',     () => _commitCin({ halation:    Number(cinHalationEl.value) }));
   cinBarrelEl.addEventListener('input',       () => _commitCin({ barrel:      Number(cinBarrelEl.value) }));
   cinScanLinesEl.addEventListener('input',    () => _commitCin({ scanLines:   Number(cinScanLinesEl.value) }));
+  cinScanLinesIntensityEl.addEventListener('input', () => _commitCin({ scanLinesIntensity: Number(cinScanLinesIntensityEl.value) }));
   cinGodRaysEl.addEventListener('input',          () => _commitCin({ godRays:          Number(cinGodRaysEl.value) }));
   cinGodRaysLengthEl.addEventListener('input',    () => _commitCin({ godRaysLength:    Number(cinGodRaysLengthEl.value) }));
   cinGodRaysDiffusionEl.addEventListener('input', () => _commitCin({ godRaysDiffusion: Number(cinGodRaysDiffusionEl.value) }));
@@ -1158,7 +1258,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   bloomEnabledEl.addEventListener('change', () => { pushUndo(); _commitCin({ bloomEnabled: bloomEnabledEl.checked }); });
   crtEnabledEl.addEventListener('change',   () => { pushUndo(); _commitCin({ crtEnabled:   crtEnabledEl.checked }); });
 
-  // Hook pour que la touche T puisse notifier le panel (sync checkbox + disabled state)
+  // Hook de sync externe (cf. _syncCinControls ci-dessus) — dormant depuis le retrait de la touche C.
   postprocess?.onExternalCinemaChange?.(_syncCinControls);
 
   _renderCinControls(_cinCurrent);
@@ -1324,12 +1424,16 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
       _pixelBeforeCompare = { ..._pixCurrent }; // snapshot courant des settings PIX
       _cinBeforeCompare   = { ..._cinCurrent }; // snapshot courant des settings CINÉMA
       _windBeforeCompare  = { ..._windCurrent }; // snapshot courant des settings VENT
+      _cloudBeforeCompare = { ..._cloudCurrent }; // snapshot courant des settings NUAGES
+      _waterBeforeCompare = { ..._waterCurrent }; // snapshot courant des settings EAU
       // Afficher la dernière ambiance preset
       visualEnvironment.apply(lastPresetState);
       applyColorGradingUniforms(postprocess?.colorGradingPass, lastPresetState);
       if (lastPresetPixelization) _commitPix(lastPresetPixelization);
       if (lastPresetCinema)       _commitCin(lastPresetCinema);
       if (lastPresetWind)         _commitWind(lastPresetWind);
+      if (lastPresetCloud)        _commitCloud(lastPresetCloud);
+      if (lastPresetWater)        _commitWater(lastPresetWater);
     } else {
       // Restaurer exactement ce qui était affiché AVANT de cliquer "Comparer"
       if (_stateBeforeCompare) {
@@ -1342,13 +1446,25 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
       if (_pixelBeforeCompare) { _commitPix(_pixelBeforeCompare); _pixelBeforeCompare = null; }
       if (_cinBeforeCompare)   { _commitCin(_cinBeforeCompare);   _cinBeforeCompare   = null; }
       if (_windBeforeCompare)  { _commitWind(_windBeforeCompare); _windBeforeCompare  = null; }
+      if (_cloudBeforeCompare) { _commitCloud(_cloudBeforeCompare); _cloudBeforeCompare = null; }
+      if (_waterBeforeCompare) { _commitWater(_waterBeforeCompare); _waterBeforeCompare = null; }
     }
   });
 
   root.querySelector('#debugLightCopy').addEventListener('click', async function () {
+    // Densité (rubrique 7) et météo (rubrique 8) inclus depuis 2026-07-08 : un futur
+    // preset d'ambiance pourra pré-configurer un niveau de perf + des évènements
+    // environnementaux (ex. "Orage" en cours) en plus de l'aspect visuel LUT/cinéma.
+    // vfx (brume/lucioles/pluie, réglages fins de la rubrique 8) ajouté le 2026-07-10 :
+    // manquait jusqu'ici, "weather" ne donnait que la LISTE des évènements actifs, pas
+    // leurs sous-paramètres (densité/taille/vitesse…) — le bouton ne copiait donc pas
+    // TOUS les réglages des 3 onglets comme attendu.
     const combined = {
       lut: visualEnvironment.exportConfig(), pix: _pixCurrent, cinema: _cinCurrent, water: _waterCurrent,
       wind: _windCurrent, cloud: _cloudCurrent, dayNight: _dayNightCurrent,
+      density: getContentDensity(),
+      weather: environmentDirector ? [...environmentDirector.active.keys()] : [],
+      vfx: getAllVfxSettings(),
     };
     const text = JSON.stringify(combined, null, 2);
     await copyToClipboard(text).catch(err => console.warn('[debugLightUI] copie impossible', err));
@@ -1376,11 +1492,12 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     window.dispatchEvent(new CustomEvent('hexistenz:resetCamera'));
   });
 
-  // ─── Synchroniser la largeur du LUT panel avec #tileUI (×3 — 3 colonnes égales) ───────
-  // +50% vs l'ancien ×2 : chaque colonne garde la même largeur qu'avant (= largeur #tileUI),
-  // on ajoute simplement une 3e colonne (VENT + NUAGES) au lieu d'agrandir les 2 existantes.
+  // ─── Synchroniser la largeur du LUT panel avec #tileUI (×2.8) ───────────────────────
+  // 2026-07-08 : +40% vs l'ancien ×2 (2 × 1.4 = 2.8) pour accueillir le flux journal
+  // sur 3 colonnes. Chaque colonne fait donc ~2.8/3 ≈ 0.93 × largeur #tileUI (un peu
+  // plus étroite que les 2 anciennes colonnes ×1, compensé par une 3e colonne complète).
   const lutBody = root.querySelector('.debug-light-body');
-  const LUT_WIDTH_FACTOR = 2; // 2 colonnes de largeur égale (chacune = largeur d'origine #tileUI) — depuis le passage en onglets
+  const LUT_WIDTH_FACTOR = 2.8; // +40% par rapport au ×2 précédent (flux journal 3-col)
   function _syncLutWidth() {
     const tileUI = document.getElementById('tileUI');
     if (tileUI && lutBody) {
@@ -1397,6 +1514,100 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
       new ResizeObserver(_syncLutWidth).observe(tileUI);
     }
   });
+
+  // ─── Contrôles QUALITÉ / DENSITÉ (onglet Environnement, rubrique 7) ──────────
+  // Ex-panneau flottant qualityUi.js (bouton "⚙ QUALITÉ"), fusionné dans l'EDA le
+  // 2026-07-08 — même geste que l'intégration du HUD EAU (§19 / cf. import ci-dessus).
+  // Réglage MACHINE (perf), pas "regard" : hors undo/redo et hors export 📋 Copier,
+  // comme Forme du monde / Jour-Nuit — mais ici l'export n'a de toute façon aucun
+  // sens à partager entre joueurs (dépend de la machine de chacun). Persistance
+  // propre à contentDensity.js (localStorage 'hexistenz_content_density').
+  const QUALITY_PRESETS = [
+    { emoji: '🐌', label: 'Faible', value: 0.30 },
+    { emoji: '🚶', label: 'Moyen',  value: 0.55 },
+    { emoji: '🏃', label: 'Élevé',  value: 0.80 },
+    { emoji: '🚀', label: 'Max',    value: 1.00 },
+  ];
+  const qualityPresetsContainer = root.querySelector('#debugLightQualityPresets');
+  const qualityControlsHost     = root.querySelector('#debugLightQualityControls');
+  let _qualityDensitySlider = null;
+  let _qualityDebounceTimer = null;
+
+  // Debounce : le rebuild (props naturels/herbe/moutons) est coûteux — on attend
+  // la fin du drag/clic plutôt que de reconstruire à chaque pas de slider (même
+  // logique que l'ancien qualityUi.js, 220 ms).
+  function _applyDensity(value) {
+    clearTimeout(_qualityDebounceTimer);
+    _qualityDebounceTimer = setTimeout(() => { setContentDensity(value); }, 220);
+  }
+
+  for (const preset of QUALITY_PRESETS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'debug-light-preset-btn';
+    btn.innerHTML = `<span class="preset-emoji">${preset.emoji}</span><span class="preset-label">${preset.label}</span>`;
+    btn.title = `Densité ${preset.label.toLowerCase()} (${preset.value.toFixed(2)})`;
+    btn.addEventListener('click', () => {
+      if (_qualityDensitySlider) {
+        _qualityDensitySlider.input.value = String(preset.value);
+        _qualityDensitySlider.output.textContent = formatNumber(preset.value);
+      }
+      _applyDensity(preset.value);
+    });
+    qualityPresetsContainer.appendChild(btn);
+  }
+
+  _qualityDensitySlider = createRawSlider('Densité', MIN_DENSITY, MAX_DENSITY, 0.05, getContentDensity(),
+    v => _applyDensity(v), null, 'quality.density');
+  qualityControlsHost.appendChild(_qualityDensitySlider.row);
+
+  // ─── Contrôles MÉTÉO (onglet Environnement, rubrique 8) ──────────────────────
+  // Ex-panneau flottant "🌦 ENV" (environmentDebugUi.js), fusionné dans l'EDA le
+  // 2026-07-08 — même geste que l'intégration Qualité/densité ci-dessus. Câble
+  // directement environmentDirector : trigger, stop, stopAll + rafraîchissement
+  // via onEnvironmentChange + timer 500 ms (pour capter aussi l'auto-expiration).
+  if (environmentDirector) {
+    const weatherHost    = root.querySelector('#debugLightWeatherRows');
+    const weatherStopAll = root.querySelector('#debugLightWeatherStopAll');
+    const _weatherRows   = new Map();
+
+    for (const [id, def] of Object.entries(ENVIRONMENT_EVENTS)) {
+      const row = document.createElement('div');
+      row.className = 'debug-light-weather-row';
+      const requiresLabel = def.requires ? ` <em class="weather-requires">(nécessite ${ENVIRONMENT_EVENTS[def.requires].label})</em>` : '';
+      row.innerHTML = `
+        <span class="weather-label">${def.label}${requiresLabel}</span>
+        <span class="weather-status"></span>
+        <button type="button" class="debug-light-weather-btn">Déclencher</button>
+      `;
+      const btn    = row.querySelector('.debug-light-weather-btn');
+      const status = row.querySelector('.weather-status');
+
+      const refresh = () => {
+        const active = isEnvironmentEventActive(environmentDirector, id);
+        status.textContent = active ? '● actif' : '';
+        btn.textContent    = active ? 'Stop' : 'Déclencher';
+        btn.classList.toggle('debug-light-weather-btn--active', active);
+        btn.disabled = !active && def.requires && !isEnvironmentEventActive(environmentDirector, def.requires);
+      };
+
+      btn.addEventListener('click', () => {
+        if (isEnvironmentEventActive(environmentDirector, id)) stopEnvironmentEvent(environmentDirector, id);
+        else triggerEnvironmentEvent(environmentDirector, id, performance.now() * 0.001);
+        refresh();
+      });
+
+      _weatherRows.set(id, refresh);
+      weatherHost.appendChild(row);
+      refresh();
+    }
+
+    weatherStopAll.addEventListener('click', () => stopAllEnvironmentEvents(environmentDirector));
+
+    const _refreshAllWeather = () => { for (const r of _weatherRows.values()) r(); };
+    onEnvironmentChange(environmentDirector, _refreshAllWeather);
+    setInterval(_refreshAllWeather, 500); // capte l'auto-expiration entre 2 transitions
+  }
 
   // ─── Mini HUD clavier (bottom-right, toujours visible) ─────────────────────
   const kbdHint = document.createElement('div');
@@ -1431,9 +1642,13 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     if (_comparing) { _comparing = false; _updateCompareBtn(); }
   }
 
-  // Snapshot combiné LUT + PIX + CINÉMA + EAU + VENT + NUAGES — undo/redo agissent sur tout le panneau CUSTOMISATION.
+  // Snapshot combiné LUT + PIX + CINÉMA + EAU + VENT + NUAGES + VFX MÉTÉO — undo/redo
+  // agissent sur tout le panneau CUSTOMISATION. vfx ajouté le 2026-07-10 (même lacune
+  // que celle corrigée sur le bouton "📋 Copier" : les sliders brume/lucioles/pluie
+  // appellent pushUndo() avant modification, mais le snapshot ne capturait pas leur
+  // valeur → Annuler ne les rétablissait pas).
   function _snapshotAll() {
-    return JSON.stringify({ lut: state, pix: _pixCurrent, cin: _cinCurrent, water: _waterCurrent, wind: _windCurrent, cloud: _cloudCurrent });
+    return JSON.stringify({ lut: state, pix: _pixCurrent, cin: _cinCurrent, water: _waterCurrent, wind: _windCurrent, cloud: _cloudCurrent, vfx: getAllVfxSettings() });
   }
 
   function _restoreSnapshot(json) {
@@ -1445,6 +1660,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     _commitWater(snap.water);
     if (snap.wind)  _commitWind(snap.wind);
     if (snap.cloud) _commitCloud(snap.cloud);
+    if (snap.vfx)   setAllVfxSettings(snap.vfx);
     applyAll();
   }
 
@@ -1568,14 +1784,6 @@ function _emojiHeadHtml(label) {
   const m = /^(\S+)(\s[\s\S]*)$/.exec(label);
   if (!m) return escapeHtml(label);
   return `<span class="rubrique-emoji">${m[1]}</span>${escapeHtml(m[2])}`;
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('"', '&quot;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
 }
 
 function getPath(source, path) {

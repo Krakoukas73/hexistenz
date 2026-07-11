@@ -3,6 +3,7 @@ import { HEX_SIZE } from './config.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { getAllGridHexes } from './gridRegions.js';
 import { randomIntBetween as getRandomInt, shuffleInPlace } from './random.js';
+import { GROUND_CLEARANCE } from './propPlacement.js';
 
 export const BONUS_CELL_MIN = 1;
 export const BONUS_CELL_MAX = 4;
@@ -29,7 +30,7 @@ export function createBonusCellsMesh(bonusCells) {
   for (const cell of bonusCells.values()) {
     const position = axialToWorld(cell.q, cell.r);
     const mesh = createBonusCellMesh(cell);
-    mesh.position.set(position.x, getGridPlaneY(), position.z);
+    mesh.position.set(position.x, GROUND_CLEARANCE, position.z);
     group.add(mesh);
   }
 
@@ -41,7 +42,7 @@ export function addBonusCellMesh(group, cell) {
 
   const position = axialToWorld(cell.q, cell.r);
   const mesh = createBonusCellMesh(cell);
-  mesh.position.set(position.x, getGridPlaneY(), position.z);
+  mesh.position.set(position.x, GROUND_CLEARANCE, position.z);
   group.add(mesh);
 }
 
@@ -78,14 +79,6 @@ export function updateBonusCellsMeshAnimation(group, timeSeconds = 0) {
       child.material.opacity = animation.opacityBase + wave * animation.opacityPulse;
     }
   });
-}
-
-
-function getGridPlaneY() {
-  // Niveau 0 monde = base/fond de toutes les tuiles (cf. tileMesh.js::getBiomeSurfaceY).
-  // L'ancienne formule (waterY - waterThickness - 0.010 ≈ -0.145) faisait flotter
-  // les cellules bonus très en dessous du sol au lieu de les poser au niveau des tuiles.
-  return 0.003;
 }
 
 function createBonusCellMesh(cell = null) {

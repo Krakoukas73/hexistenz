@@ -492,15 +492,6 @@ body::after {
     font-weight: 400;
   }
 
-  .highscore-panel {
-    margin-top: 10px;
-    padding-top: 8px;
-  }
-
-  .highscore-list li {
-    min-height: 20px;
-    margin: 4px 0;
-  }
 
   .abandon-button,
   .new-game-button {

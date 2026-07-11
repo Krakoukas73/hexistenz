@@ -4,11 +4,12 @@ import { DECK_SIZE } from './config.js';
 import { createDeck } from './tileGenerator.js';
 import { createSpecialCells } from './specialCells.js';
 import { createBonusCells } from './bonusCells.js';
-import { createMissionManager } from './missions.js';
+import { createMissionManager, serializeMissionManager, clonePlain } from './missions.js';
 import { makeHexKey } from './hex.js';
 import { createRoom, generateRoomCode, getOrCreatePlayerId, joinRoom, listRooms } from './multiplayerClient.js';
 import { getWorldShapeMode } from './worldCurvature.js';
 import { LUT_HELP, ensureHelpTooltip, attachHelpTooltip, hideHelpTooltip } from './help.js';
+import { escapeHtml } from './domUtils.js';
 
 const MENU_BACKGROUND_ENDPOINT = './backgrounds.php';
 const MENU_BACKGROUND_INTERVAL_MS = 12000;
@@ -680,20 +681,6 @@ function createInitialMultiplayerState({ roomCode, playerId, playerName }) {
   };
 }
 
-function serializeMissionManager(manager) {
-  return {
-    active: manager.active.map(clonePlain),
-    generatedTileIds: [...manager.generatedTileIds],
-    targetLevelByType: Object.fromEntries(manager.targetLevelByType),
-    nextId: manager.nextId,
-    turn: manager.turn
-  };
-}
-
-function clonePlain(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-
 function readPlayerName(overlay) {
   const value = overlay.querySelector('[data-field="name"]').value.trim().slice(0, 24);
   return value || `Joueur-${Math.floor(Math.random() * 900 + 100)}`;
@@ -711,12 +698,3 @@ function setStatus(overlay, message) {
   overlay.querySelector('.multi-status').textContent = message;
 }
 
-function escapeHtml(value) {
-  return String(value).replace(/[&<>'"]/g, char => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    "'": '&#039;',
-    '"': '&quot;'
-  })[char]);
-}

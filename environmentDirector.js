@@ -15,10 +15,10 @@
  *   // dans animate() :
  *   updateEnvironmentDirector(environmentDirector, timeSeconds);
  *
- * Déclenchement pour l'instant MANUEL uniquement (panneau debug, cf.
- * environmentDebugUi.js) : aucun tirage aléatoire automatique tant que les
- * effets réels ne sont pas branchés (évite de valider une machine à états
- * dans le vide).
+ * Déclenchement pour l'instant MANUEL uniquement (rubrique "8. Météo" du HUD
+ * EDA, onglet Environnement — cf. hud_eda.js, wireEdaPanel) : aucun tirage
+ * aléatoire automatique tant que les effets réels ne sont pas branchés
+ * (évite de valider une machine à états dans le vide).
  */
 
 // ─── Catalogue des évènements ───────────────────────────────────────────────

@@ -8,7 +8,7 @@ import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getTrainRailY } from './terrainHeight.js';
 import { getWorldCurvatureDrop } from './worldCurvature.js';
-import { smoothstep } from './tileUtils.js';
+import { smoothstep, clamp, easeInOutSine } from './tileUtils.js';
 
 const TRAIN_Y = (TILE_VISUAL.railY ?? -0.043) - 0.050; // centre train = sous la surface du rail
 const TRAIN_SPEED = 0.18;
@@ -1027,15 +1027,6 @@ function lerpAngle(from, to, t) {
   const delta = Math.atan2(Math.sin(to - from), Math.cos(to - from));
   return from + delta * Math.max(0, Math.min(1, t));
 }
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function easeInOutSine(t) {
-  return -(Math.cos(Math.PI * t) - 1) / 2;
-}
-
 
 function lerp(a, b, t) {
   return a + (b - a) * t;

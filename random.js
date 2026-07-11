@@ -19,6 +19,19 @@ export function pickRandom(items) {
   return items[randomInt(items.length)];
 }
 
+// PRNG seedé (mulberry32) — factorisé depuis fieldWheatOverlay.js/grassBladeOverlay.js
+// (copies byte-identiques). starUniverse.js a sa propre variante légèrement différente,
+// non touchée ici (pas un vrai doublon, juste un autre PRNG au même nom).
+export function mulberry32(seed) {
+  let t = (seed * 999983) >>> 0;
+  return function () {
+    t += 0x6D2B79F5;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 export function pickWeighted(weightMap) {
   const entries = Object.entries(weightMap).filter(([, weight]) => weight > 0);
   const total = entries.reduce((sum, [, weight]) => sum + weight, 0);

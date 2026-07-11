@@ -1,0 +1,38 @@
+/* ─── Popup de score central ──────────────────────────────────────────────
+   Élément unique #scorePopup (game.php), piloté par scorePopup.js via la
+   Web Animations API (opacity/transform uniquement — cf. scorePopup.js).
+   Fixé au centre exact de l'écran, indépendant de Three.js/de la caméra,
+   non interactif, au-dessus du canvas (#app, z-index:1) et des HUD
+   (#arcadeScore/#scorePanel/#tileUI, z-index max 12) — mais sous les
+   overlays modaux (help.css/multiplayerUi.css, z-index 9999-10000). */
+
+#scorePopup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 500;
+
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+
+  pointer-events: none;
+  user-select: none;
+
+  font-family: 'BebasNeue', system-ui, sans-serif;
+  font-size: 208px;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow:
+    0 0 48px rgba(120, 255, 170, 0.80),
+    0 0 18px rgba(120, 255, 170, 0.65);
+
+  will-change: transform, opacity;
+}
+
+@media (max-width: 640px) {
+  #scorePopup {
+    font-size: 132px;
+  }
+}

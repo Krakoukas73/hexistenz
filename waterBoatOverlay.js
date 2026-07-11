@@ -8,7 +8,7 @@ import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeType } from './tileGenerator.js';
 import { hashUnit100k as hashUnit } from './hashUtils.js';
 import { createOuterVertices } from './hexGeometry.js';
-import { makeNodeKey, getTileCenterType, clearGroup, smoothstep } from './tileUtils.js';
+import { makeNodeKey, getTileCenterType, clearGroup, smoothstep, easeInOutSine } from './tileUtils.js';
 
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));
@@ -901,6 +901,3 @@ function positiveModulo(value, modulo) {
   return ((value % modulo) + modulo) % modulo;
 }
 
-function easeInOutSine(value) {
-  return -(Math.cos(Math.PI * value) - 1) / 2;
-}

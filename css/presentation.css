@@ -122,19 +122,45 @@ nav {
 #lang-toggle button.active { background: var(--blue-mid); color: var(--blue); }
 .nav-links {
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 0 20px;
   list-style: none;
   flex: 1;
 }
 .nav-links a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  padding: 0 2px 6px;
   font-size: 10px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--text-dim);
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color 0.25s ease, text-shadow 0.25s ease;
 }
-.nav-links a:hover { color: var(--blue); }
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  left: 2px; right: 2px; bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--blue), transparent);
+  transform: scaleX(0);
+  opacity: 0;
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+.nav-links a:hover,
+.nav-links a.active {
+  color: var(--blue);
+  text-shadow: 0 0 12px rgba(120, 180, 255, 0.55);
+}
+.nav-links a:hover::after,
+.nav-links a.active::after {
+  transform: scaleX(1);
+  opacity: 1;
+}
 .nav-cta {
   font-family: var(--font-body);
   font-size: 11px;
@@ -150,6 +176,31 @@ nav {
   flex-shrink: 0;
 }
 .nav-cta:hover { background: rgba(120,180,255,0.40); }
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.nav-toggle span {
+  display: block;
+  width: 16px;
+  height: 2px;
+  background: var(--text-dim);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-toggle.open span:nth-child(2) { opacity: 0; }
+.nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 /* ─── TYPOGRAPHY ─────────────────────────────────────────────── */
 .section-label {
@@ -184,6 +235,13 @@ nav {
   opacity: 0.7;
   margin-bottom: 6px;
   font-style: italic;
+}
+.ambiance-subtitle {
+  font-family: var(--font-title);
+  font-size: clamp(22px, 2.6vw, 30px);
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  margin-bottom: 20px;
 }
 
 /* ─── BUTTONS ────────────────────────────────────────────────── */
@@ -237,7 +295,7 @@ nav {
 }
 
 .hero-content {
-  padding-top: 56px;
+  padding-top: 96px;
   padding-bottom: 80px;
 }
 .hero-inner {
@@ -569,6 +627,75 @@ nav {
 .score-pill-pts { font-family: var(--font-title); font-size: 26px; letter-spacing: 0.04em; color: var(--gold); line-height: 1; }
 .score-pill-label { font-size: 11px; color: var(--text-dim); letter-spacing: 0.08em; }
 
+/* ─── KBD STRIP (raccourcis, discret) ───────────────────────────── */
+.kbd-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 22px;
+  margin-top: 40px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+.kbd-strip-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+/* ─── POPULATION STRIP (variété des personnages, créatures) ────── */
+.population-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin-top: 40px;
+  padding-top: 26px;
+  border-top: 1px solid var(--border);
+}
+.population-group { flex: 1; min-width: 240px; }
+.population-group-label {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 10px;
+}
+.population-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+.population-tag {
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  padding: 5px 11px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-dim);
+}
+.population-note {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  max-width: 640px;
+}
+
+.kbd-strip kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  padding: 3px 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--text);
+  line-height: 1;
+}
+
 /* ─── FACTIONS ───────────────────────────────────────────────── */
 .factions-grid {
   display: grid;
@@ -651,6 +778,26 @@ nav {
 .mission-icon { font-size: 26px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
 .mission-name { font-family: var(--font-title); font-size: 17px; letter-spacing: 0.05em; margin-bottom: 6px; }
 .mission-desc { font-size: 11px; color: var(--text-dim); line-height: 1.6; }
+
+/* ─── AUDIO ──────────────────────────────────────────────────── */
+.audio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 44px;
+}
+.audio-card {
+  padding: 22px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.audio-icon { font-size: 26px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+.audio-name { font-family: var(--font-title); font-size: 17px; letter-spacing: 0.05em; margin-bottom: 6px; }
+.audio-desc { font-size: 11.5px; color: var(--text-dim); line-height: 1.6; }
 
 /* ─── GALLERY ────────────────────────────────────────────────── */
 .gallery-grid {
@@ -777,6 +924,8 @@ nav {
 }
 .daynight-card.day  .daynight-name { color: #f0d060; }
 .daynight-card.night .daynight-name { color: #90b8ff; }
+.daynight-card.smoke .daynight-name { color: #c8a8ff; }
+.daynight-card.smoke:hover { border-color: rgba(180,140,255,0.55); }
 .daynight-list {
   list-style: none;
   display: flex;
@@ -792,11 +941,10 @@ nav {
 /* ─── EDA SHOWCASE (personnalisation extrême) ──────────────────── */
 .eda-showcase-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 20px;
   margin-top: 44px;
 }
-.eda-showcase-card:last-child { grid-column: span 2; max-width: calc(50% - 10px); margin: 0 auto; }
 .eda-showcase-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -807,8 +955,7 @@ nav {
 .eda-showcase-card:hover { border-color: rgba(120,180,255,0.55); box-shadow: 0 12px 36px rgba(0,0,0,0.45); }
 .eda-showcase-img {
   width: 100%;
-  aspect-ratio: 1/1;
-  object-fit: fill;
+  height: auto;
   display: block;
   border-bottom: 1px solid var(--border);
 }
@@ -947,27 +1094,83 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
 [data-lang="en"] [data-fr] { display: none !important; }
 
 /* ─── RESPONSIVE ─────────────────────────────────────────────── */
+/* Nav mobile — dropdown + hamburger, seuil volontairement bas (téléphone/petite
+   tablette) pour ne jamais chevaucher la zone où les liens tiennent en 2 lignes. */
+@media (max-width: 860px) {
+  nav { padding: 12px 18px; }
+  .nav-toggle { display: flex; order: 1; margin-left: auto; }
+  .nav-links {
+    display: none;
+    flex-wrap: nowrap;
+    position: fixed;
+    top: 59px; left: 0; right: 0;
+    flex-direction: column;
+    gap: 0;
+    max-height: calc(100vh - 59px);
+    overflow-y: auto;
+    background: rgba(7,12,20,0.97);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(14px);
+    padding: 6px 24px 18px;
+  }
+  .nav-links.open { display: flex; }
+  .nav-links li { width: 100%; }
+  .nav-links a {
+    display: block;
+    padding: 13px 2px;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  #lang-toggle { order: 2; }
+  .nav-cta { order: 3; }
+  .hero-content { padding-top: 56px; }
+}
+/* Nav compact forcée par JS (cf. script en bas de page) dès que la barre
+   dépasserait 2 lignes — mesuré réellement (nombre de rangées de <li>),
+   pas un seuil px deviné. Mêmes règles que le breakpoint 860px ci-dessus. */
+body.nav-compact nav { padding: 12px 18px; }
+body.nav-compact .nav-toggle { display: flex; order: 1; margin-left: auto; }
+body.nav-compact .nav-links {
+  display: none;
+  flex-wrap: nowrap;
+  position: fixed;
+  top: 59px; left: 0; right: 0;
+  flex-direction: column;
+  gap: 0;
+  max-height: calc(100vh - 59px);
+  overflow-y: auto;
+  background: rgba(7,12,20,0.97);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  padding: 6px 24px 18px;
+}
+body.nav-compact .nav-links.open { display: flex; }
+body.nav-compact .nav-links li { width: 100%; }
+body.nav-compact .nav-links a {
+  display: block;
+  padding: 13px 2px;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+body.nav-compact #lang-toggle { order: 2; }
+body.nav-compact .nav-cta { order: 3; }
+body.nav-compact .hero-content { padding-top: 56px; }
 @media (max-width: 900px) {
   .hero-inner, .multi-inner { grid-template-columns: 1fr; }
-  .biomes-grid, .missions-grid, .hero-inspi-grid { grid-template-columns: repeat(2, 1fr); }
+  .biomes-grid, .missions-grid, .audio-grid, .hero-inspi-grid { grid-template-columns: repeat(2, 1fr); }
   .steps-grid  { grid-template-columns: repeat(2, 1fr); }
   .gallery-grid { grid-template-columns: 1fr; }
   .gallery-card:nth-child(1) { grid-column: span 1; }
-  .eda-showcase-grid { grid-template-columns: 1fr 1fr; }
   .stats-bar { flex-wrap: wrap; }
   .stat-item { min-width: 50%; }
   .footer-inner { flex-direction: column; text-align: center; }
-  nav { padding: 12px 18px; }
-  .nav-links { display: none; }
   .hs-card { grid-template-columns: 40px 1fr auto; }
 
   .hero-banner { height: 50vh; }
   .hero-subtitle { white-space: normal; }
 }
 @media (max-width: 600px) {
-  .biomes-grid, .missions-grid, .steps-grid, .hero-inspi-grid, .creatures-grid { grid-template-columns: 1fr; }
-  .eda-showcase-grid { grid-template-columns: 1fr; }
-  .eda-showcase-card:last-child { grid-column: span 1; max-width: none; }
+  .biomes-grid, .missions-grid, .audio-grid, .steps-grid, .hero-inspi-grid, .creatures-grid { grid-template-columns: 1fr; }
   .hs-meta { gap: 8px; }
 
   /* Stats-bar en grille 2×2 sur petits écrans */
@@ -982,4 +1185,9 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   }
   .stat-item:nth-child(odd)  { border-right: 1px solid var(--border); }
   .stat-item:nth-last-child(-n+2) { border-bottom: none; }
+
+  nav { gap: 10px; padding: 10px 14px; }
+  .nav-logo { font-size: 20px; }
+  .nav-version { display: none; }
+  .nav-cta { padding: 8px 14px; font-size: 10px; }
 }

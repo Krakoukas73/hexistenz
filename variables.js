@@ -13,7 +13,7 @@
 // ----------------------------------------------------------------------------
 // VERSION
 // ----------------------------------------------------------------------------
-export const HEXISTENZ_VERSION = 'v0.9.2';
+export const HEXISTENZ_VERSION = 'v0.9.2.5.3';
 
 // ----------------------------------------------------------------------------
 // GRILLE / DECK
@@ -544,6 +544,11 @@ export const ROCK_DENSITY = {
   normalScaleMin:    0.55,
   normalScaleRange:  0.40   // → [0.55, 0.95]  (petits plus petits, médiane ≈ 0.75)
 };
+
+// ----------------------------------------------------------------------------
+// VFX MÉTÉO (weatherVfxOverlay.js, morningMistOverlay.js)
+// ----------------------------------------------------------------------------
+export const VFX_WORLD_RADIUS = 15; // rayon (unités monde) de la zone couverte par lucioles/brume
 
 // ----------------------------------------------------------------------------
 // SCORE — ÉVÉNEMENTS SPÉCIAUX

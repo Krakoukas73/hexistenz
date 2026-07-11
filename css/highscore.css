@@ -2,116 +2,98 @@
   display: none !important;
 }
 
-.highscore-panel {
+/* Modal fin de partie — centré plein écran, indépendant du HUD #scorePanel.
+   Le classement (liste) ne s'affiche JAMAIS ici : uniquement dans la prez
+   (index.php, rubrique Classement mondial). Seul le prompt pseudo/enregistrement
+   vit dans le jeu (2026-07-11). */
+.highscore-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: rgba(3, 6, 10, 0.72);
+  backdrop-filter: blur(6px);
+  font-family: monospace;
+}
+
+.highscore-modal.hidden {
   display: none;
 }
 
-.highscore-title {
-  margin-bottom: 8px;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  color: rgba(180, 215, 255, 0.82);
-}
-
-.highscore-list {
-  margin: 0;
-  list-style: none;
-  padding-left: 0;
-  font-size: 12px;
-  color: rgba(225, 242, 255, 0.86);
-}
-
-.highscore-list li {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  clear: both;
-  min-height: 24px;
-  margin: 6px 0;
-  padding-left: 0;
-  line-height: 1.15;
-}
-
-/* Top-3 : espacement encore plus généreux */
-.highscore-list li:nth-child(-n+3) {
-  margin: 16px 0;
-}
-
-/* Trait estompé après le 3e score */
-.highscore-list li:nth-child(3) {
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(120, 180, 255, 0.18);
-  margin-bottom: 18px;
-}
-
-.highscore-list li > span {
-  display: inline-block;
-  min-width: 0;
-  max-width: 156px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: bottom;
-  white-space: nowrap;
-}
-
-.highscore-list li strong {
-  flex: 0 0 auto;
-  float: none;
-  color: #ffffff;
-  text-align: right;
-}
-
-.highscore-list li strong em {
-  display: block;
-  margin-top: 1px;
-  color: rgba(180, 215, 255, 0.78);
-  font-size: 10px;
-  font-style: normal;
-  font-weight: 700;
-}
-
-.highscore-submit {
-  display: flex;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.highscore-submit input {
-  min-width: 0;
-  width: 100%;
-  height: 30px;
+.highscore-modal-panel {
+  width: min(480px, calc(100vw - 48px));
   box-sizing: border-box;
-  padding: 0 8px;
-  border: 1px solid rgba(120, 180, 255, 0.38);
-  border-radius: 7px;
-  outline: none;
-  background: rgba(0, 0, 0, 0.45);
-  color: #ffffff;
-  font-family: monospace;
+  padding: 34px 38px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  background:
+    linear-gradient(135deg, rgba(22, 31, 45, 0.97), rgba(7, 11, 18, 0.97)),
+    radial-gradient(circle at top left, rgba(58, 125, 255, 0.20), transparent 45%);
+  border: 1px solid rgba(120, 180, 255, 0.42);
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
 }
 
-.highscore-submit button {
-  height: 30px;
-  padding: 0 10px;
-  border: 1px solid rgba(120, 180, 255, 0.38);
-  border-radius: 7px;
+.highscore-modal-kicker {
+  color: rgba(220, 240, 255, 0.62);
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.highscore-modal-score {
+  font-family: 'BebasNeue', system-ui, sans-serif;
+  font-size: clamp(52px, 9vw, 88px);
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 0 26px rgba(120, 180, 255, 0.45);
+}
+
+.highscore-modal-sub {
+  margin-top: -4px;
+  font-size: 13px;
+  color: rgba(220, 240, 255, 0.72);
+}
+
+/* Bouton "Enregistrer" — ciblé par id pour ne pas déteindre sur les boutons
+   .abandon-button/.new-game-button réutilisés dans le modal de confirmation
+   d'abandon (même conteneur .highscore-modal-panel, styles différents voulus). */
+#btnSaveScore {
+  width: 100%;
+  height: 50px;
+  margin-top: 6px;
+  border: 1px solid rgba(120, 180, 255, 0.42);
+  border-radius: 11px;
   background: #1b1f2a;
   color: rgba(240, 250, 255, 0.96);
   font-family: monospace;
+  font-size: 15px;
   font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
-.highscore-submit button:hover {
+#btnSaveScore:hover {
   background: #2a3142;
   color: #ffffff;
 }
 
+#btnSaveScore:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
 .highscore-status {
   min-height: 16px;
-  margin-top: 8px;
-  font-size: 11px;
+  font-size: 12px;
   color: rgba(225, 242, 255, 0.72);
 }
 
@@ -157,60 +139,3 @@
   cursor: default;
   opacity: 0.48;
 }
-
-
-.highscore-rank-medal {
-  display: inline-block;
-  width: 24px;
-  margin-right: 3px;
-  font-size: 20px;
-  line-height: 1;
-  vertical-align: -3px;
-}
-
-.highscore-entry-main {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.highscore-player {
-  display: inline-block;
-  min-width: 0;
-  max-width: 156px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: bottom;
-  white-space: nowrap;
-}
-
-.highscore-stats-line {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 3px;
-  max-width: 188px;
-  line-height: 1;
-}
-
-.highscore-stat-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-  padding: 2px 4px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(245, 250, 255, 0.90);
-  font-size: 9px;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.stats-summary-chip { background: rgba(180, 215, 255, 0.13); color: #eaf6ff; }
-.stats-grass-chip { background: rgba(107, 186, 100, 0.22); }
-.stats-field-chip { background: rgba(230, 185, 68, 0.24); }
-.stats-forest-chip { background: rgba(52, 132, 78, 0.26); }
-.stats-house-chip { background: rgba(195, 112, 67, 0.24); }
-.stats-water-chip { background: rgba(70, 160, 220, 0.25); }
-.stats-rail-chip { background: rgba(150, 150, 160, 0.22); }

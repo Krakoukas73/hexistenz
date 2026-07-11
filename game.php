@@ -10,6 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/multiplayerUi.css" />
+  <link rel="stylesheet" href="css/scorePopup.css" />
   <style>
     /* Harmonisation HUD/aide : village = nouvelles couleurs brun/gris terre battue + gravier. */
     .swatch.house {
@@ -32,6 +33,33 @@
 <body>
   <canvas id="app"></canvas>
 
+  <div id="scorePopup" aria-hidden="true"></div>
+
+  <!-- Modal fin de partie : enregistrement du score au classement mondial.
+       Centré plein écran, indépendant du HUD #scorePanel (jamais la liste des
+       highscores ici — celle-ci ne vit que dans la prez, rubrique Classement). -->
+  <div id="highscoreModal" class="highscore-modal hidden">
+    <div class="highscore-modal-panel">
+      <div class="highscore-modal-kicker">Partie terminée — score final</div>
+      <div class="highscore-modal-score"><span id="highscoreModalScoreValue">0</span></div>
+      <button id="btnSaveScore" type="button">Enregistrer</button>
+      <div id="highscoreStatus" class="highscore-status"></div>
+    </div>
+  </div>
+
+  <!-- Modal de confirmation "ABANDONNER" — évite qu'un clic accidentel termine la partie
+       (une partie abandonnée ne peut plus être reprise, cf. multiplayer.php). -->
+  <div id="abandonConfirmModal" class="highscore-modal hidden">
+    <div class="highscore-modal-panel">
+      <div class="highscore-modal-kicker">Abandonner la partie ?</div>
+      <div class="highscore-modal-sub">Cette partie ne pourra plus être reprise ensuite.</div>
+      <div class="game-action-row">
+        <button id="btnAbandonCancel" class="new-game-button" type="button">ANNULER</button>
+        <button id="btnAbandonConfirm" class="abandon-button" type="button">ABANDONNER</button>
+      </div>
+    </div>
+  </div>
+
   <div id="arcadeScore"><span id="dbgScore">0</span><span class="arcade-suffix">pts <span id="dbgLastScore"></span></span></div>
 
   <aside id="scorePanel">
@@ -49,18 +77,7 @@
       <button id="btnAbandonGame" class="abandon-button" type="button">ABANDONNER</button>
       <button id="btnNewGame" class="new-game-button" type="button">NOUVELLE PARTIE</button>
     </div>
-    <div id="highscorePanel" class="highscore-panel">
-      <div class="highscore-title">HIGHSCORES</div>
-      <ol id="highscoreList" class="highscore-list">
-        <li>Chargement...</li>
-      </ol>
-      <div id="highscoreSubmit" class="highscore-submit hidden">
-        <input id="highscoreName" type="text" maxlength="20" placeholder="Pseudo" autocomplete="off" />
-        <button id="btnSaveScore" type="button">OK</button>
-      </div>
-      <div id="highscoreStatus" class="highscore-status"></div>
-    </div>
-	
+
     <div id="statsPanel" class="stats-panel">
 	  <div class="stats-title">STATISTIQUES DE LA PARTIE</div>
       <div class="stats-summary-row">
@@ -238,8 +255,7 @@
             <div><kbd>Clic droit</kbd><span>Rotation de la caméra</span></div>
             <div class="control-sep" aria-hidden="true"></div>
             <div><kbd>F</kbd><span>Afficher / masquer le HUD performances avancé</span></div>
-            <div><kbd>L</kbd><span>Panneau des LUT</span></div>
-            <div><kbd>C</kbd><span>Effets cinématiques</span></div>
+            <div><kbd>E</kbd><span>Personnalisation (EDA)</span></div>
           </div>
         </article>
       </div>

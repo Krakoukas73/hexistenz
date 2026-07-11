@@ -38,3 +38,15 @@ function roundAxial(q, r) {
 export function makeHexKey(q, r) {
   return `${q},${r}`;
 }
+
+// Distance axiale (Chebyshev sur coordonnées cube) — factorisée depuis specialCells.js.
+// houseOverlay.js avait une fonction homonyme (signature positionnelle q1,r1,q2,r2,
+// formule Manhattan/2 mathématiquement équivalente) mais jamais appelée : code mort,
+// supprimé plutôt que conservé comme 2e variante.
+export function getHexDistance(a, b) {
+  return Math.max(
+    Math.abs(a.q - b.q),
+    Math.abs(a.r - b.r),
+    Math.abs((-a.q - a.r) - (-b.q - b.r))
+  );
+}

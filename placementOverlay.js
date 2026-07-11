@@ -43,7 +43,10 @@ function createConflictMarker(edge) {
   const barA = new THREE.Mesh(geometry, material);
   const barB = new THREE.Mesh(geometry, material);
 
-  marker.position.set(Math.cos(angle) * 0.82, 0.075, Math.sin(angle) * 0.82);
+  // Y relevé au-dessus des épis de blé (surfaceY champ ≈0.094 + brin jusqu'à ≈0.052,
+  // cf. WHEAT_HEIGHT_MAX*WHEAT_GLOBAL_HEIGHT dans variables.js) : à 0.075 la croix
+  // passait partiellement sous les blés les plus hauts et devenait illisible.
+  marker.position.set(Math.cos(angle) * 0.82, 0.17, Math.sin(angle) * 0.82);
   marker.rotation.y = -angle;
   barA.rotation.y = Math.PI / 4;
   barB.rotation.y = -Math.PI / 4;

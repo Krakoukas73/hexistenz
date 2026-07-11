@@ -15,6 +15,7 @@ import { EDGE_TYPES, HEX_SIZE, SECTOR_DEFS } from './config.js';
 import { hashUnitFull as hashUnit } from './hashUtils.js';
 import { createOuterVertices } from './hexGeometry.js';
 import { axialToWorld } from './hex.js';
+import { mulberry32 } from './random.js';
 import { getEdgeType } from './tileGenerator.js';
 import { getGlobalWindUniforms } from './globalWind.js';
 import { WORLD_CURVATURE_UNIFORMS } from './worldCurvature.js';
@@ -130,16 +131,6 @@ function getWheatMaterial() {
 }
 
 // ─── PRNG léger (déterministe, seedé depuis FNV-1a) ──────────────────────────
-function mulberry32(seed) {
-  let t = (seed * 999983) >>> 0;
-  return function () {
-    t += 0x6D2B79F5;
-    let r = Math.imul(t ^ (t >>> 15), 1 | t);
-    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
-    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 // ─── Sampler polygone (contour réel après turbulence) ────────────────────────
 // Remplace randomPointInTrapezoid : utilise le polygone retourné par getSectorContour
 // plutôt qu'un trapèze idéal, pour aligner le semis sur la géométrie réellement rendue.

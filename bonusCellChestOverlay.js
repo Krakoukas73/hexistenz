@@ -18,6 +18,7 @@ import { createGLTFLoader } from './glbLoader.js';
 import { clone as cloneSkeleton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js';
 import { HEX_SIZE } from './config.js';
 import { axialToWorld } from './hex.js';
+import { GROUND_CLEARANCE } from './propPlacement.js';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -176,13 +177,6 @@ function prepareChestPrototype(model) {
 
 // ─── Helpers privés ───────────────────────────────────────────────────────────
 
-function getGridPlaneY() {
-  // Même Y que les bonus cells : niveau 0 monde = base/fond de toutes les tuiles
-  // (cf. tileMesh.js::getBiomeSurfaceY). cf. bonusCells.js::getGridPlaneY pour le détail
-  // du bug corrigé (l'ancienne formule plaçait les coffres ~0.15 unité sous le sol).
-  return 0.003;
-}
-
 function _addChestForCell(group, cell) {
   const proto = chestPrototype;
   if (!proto) return;
@@ -200,7 +194,7 @@ function _addChestForCell(group, cell) {
   }
 
   const pos = axialToWorld(cell.q, cell.r);
-  chest.position.set(pos.x, getGridPlaneY() + CHEST_Y_OFFSET, pos.z);
+  chest.position.set(pos.x, GROUND_CLEARANCE + CHEST_Y_OFFSET, pos.z);
 
   group.add(chest);
 }

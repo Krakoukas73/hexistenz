@@ -1,6 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { HEX_SIZE } from './config.js';
-import { axialToWorld, makeHexKey } from './hex.js';
+import { axialToWorld, makeHexKey, getHexDistance } from './hex.js';
 import { getAllGridHexes } from './gridRegions.js';
 import { randomIntBetween as getRandomInt, shuffleInPlace } from './random.js';
 
@@ -71,7 +71,10 @@ export function addSpecialCellMesh(group, cell) {
 
   const position = axialToWorld(cell.q, cell.r);
   const mesh = createSpecialCellMesh(cell);
-  mesh.position.set(position.x, 0.02, position.z);
+  // Sync avec createSpecialCellsMesh (2026-07-10) : cellules recréées après undo/redo
+  // apparaissaient sensiblement plus haut que celles générées au départ car ce chemin
+  // incrémental gardait encore l'ancien y=0.02 abandonné dans le chemin initial.
+  mesh.position.set(position.x, 0.003, position.z);
   group.add(mesh);
 }
 
@@ -339,14 +342,6 @@ function pickRandomFreeHex(availableHexes, cells) {
 function addSpecialCell(cells, hex) {
   const key = makeHexKey(hex.q, hex.r);
   cells.set(key, { ...hex, key, isSpecialCell: true });
-}
-
-function getHexDistance(a, b) {
-  return Math.max(
-    Math.abs(a.q - b.q),
-    Math.abs(a.r - b.r),
-    Math.abs((-a.q - a.r) - (-b.q - b.r))
-  );
 }
 
 function weightedPick(items) {

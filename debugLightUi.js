@@ -12,7 +12,7 @@ import { EDA_BODY_HTML, wireEdaPanel } from './hud_eda.js';
 
 export { tickFps };
 
-export function createDebugLightUI({ visualEnvironment, postprocess, forestOverlay = null, cloudSky = null }) {
+export function createDebugLightUI({ visualEnvironment, postprocess, forestOverlay = null, cloudSky = null, environmentDirector = null }) {
   if (!visualEnvironment) return null;
 
   installDebugLightCss();
@@ -35,7 +35,7 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
   document.body.appendChild(root);
 
   const fpsApi = initFpsHud(root);
-  return wireEdaPanel(root, { visualEnvironment, postprocess, forestOverlay, cloudSky, fpsApi });
+  return wireEdaPanel(root, { visualEnvironment, postprocess, forestOverlay, cloudSky, environmentDirector, fpsApi });
 }
 
 /* ── Tout ce qui suit (constantes LUT/CIN/PIX/EAU/VENT/NUAGES, Perf HUD, câblage du panel,
@@ -398,8 +398,8 @@ function installDebugLightCss() {
       margin: 16px 0;
     }
 
-    /* Sections PIX, CINEMA, EAU, VENT, NUAGES & COURBURE ÉCRAN : espacement vertical entre
-       leurs sliders — élargi (8px) depuis le passage en onglets, qui laisse plus de place. */
+    /* Sections PIX, CINEMA, EAU, VENT, NUAGES, COURBURE ÉCRAN & MÉTÉO : espacement vertical
+       entre leurs sliders — élargi (8px) depuis le passage en onglets, qui laisse plus de place. */
     .debug-light-pix-section,
     .debug-light-cinema-section,
     .debug-light-water-section,
@@ -408,24 +408,34 @@ function installDebugLightCss() {
     .debug-light-crt-section,
     .debug-light-worldshape-section,
     .debug-light-daynight-section,
+    .debug-light-weather-section,
     .debug-light-subgroup {
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
 
-    /* Pas de margin-bottom ici : l'espacement avec le premier slider vient uniquement du
-       gap:8px du conteneur parent (.debug-light-xxx-section) — sinon les deux s'additionnent
-       (16px) alors que le reste des lignes n'a que 8px, ce qui donne un rythme incohérent. */
+    /* Titres de rubrique EDA (CINÉMA / PIX / CRT / EAU / NUAGES / VENT / Forme / Jour-Nuit /
+       Qualité / Météo / God Rays / Tilt-shift / Bloom) — fond sombre pour mise en valeur
+       (2026-07-08) + barre latérale accent. Pas de margin-bottom ici : l'espacement avec le
+       premier slider vient uniquement du gap:8px du conteneur parent (.debug-light-xxx-section). */
     .debug-light-pix-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.45);
+      border-left: 3px solid rgba(145,205,255,0.32);
     }
-    /* Titre de rubrique (EAU / PIXELISATION / CINÉMA) — même CSS que .score-title (HUD score) */
+    /* Texte du titre à l'intérieur de la barre sombre — mêmes valeurs que .lut-section-head
+       (text-transform: uppercase inclus) pour que TOUS les titres de rubrique (peu importe
+       leur casse dans le markup : "Météo", "God Rays", "CINÉMATIQUE"...) apparaissent avec
+       la même typographie en majuscules. */
     .debug-light-pix-head > span {
       font-size: 12px;
       letter-spacing: 0.18em;
+      text-transform: uppercase;
       color: rgba(180,215,255,0.82);
     }
 
@@ -582,12 +592,11 @@ function installDebugLightCss() {
       pointer-events: auto;
       /* box-sizing: border-box → width JS inclut padding + border, comme offsetWidth de #tileUI */
       box-sizing: border-box;
-      /* Largeur initiale : sera écrasée par JS (×2 de la largeur #tileUI — 2 colonnes égales) */
+      /* Largeur initiale : sera écrasée par JS (×2.8 de la largeur #tileUI — flux journal 3 col) */
       width: min(620px, calc(100vw - 92px));
-      /* height (pas juste max-height) : avec le contenu réparti en onglets sur 2 colonnes plus
-         courtes, le panel se contentait sinon de la hauteur de son contenu (flex 1 1 auto) au lieu
-         de remplir l'écran. Hauteur fixe → les colonnes (flex 1 1 0, overflow-y: auto) s'étirent
-         pour occuper tout l'espace vertical dispo, et ne scrollent que si leur contenu déborde. */
+      /* height (pas juste max-height) : avec le contenu réparti en onglets et un flux
+         multi-column, la zone .debug-light-columns doit pouvoir scroller si le contenu
+         dépasse la hauteur d'écran — d'où hauteur fixe (pas seulement max-height). */
       height: calc(100vh - 28px);
       max-height: calc(100vh - 28px);
       /* Occupe toute la hauteur dispo — chaque colonne défile indépendamment en interne */
@@ -604,8 +613,9 @@ function installDebugLightCss() {
     }
 
     /* ── Onglets EDA (sous le header ambiances) — regroupent les rubriques par thème,
-       chaque onglet affichant son contenu sur 2 colonnes (au lieu des 3 colonnes fixes
-       d'origine, devenues trop chargées à l'affichage simultané). ── */
+       chaque onglet affichant son contenu sur 3 colonnes fluides type journal (les
+       rubriques remplissent la colonne 1, puis 2, puis 3, aucune n'est coupée à
+       cheval sur deux colonnes — cf. 'break-inside: avoid' plus bas). ── */
     .debug-light-tabs {
       display: flex;
       gap: 6px;
@@ -657,55 +667,52 @@ function installDebugLightCss() {
       display: flex;
     }
 
-    /* Contenu de chaque onglet réparti sur 2 colonnes de largeur égale */
+    /* ── Flux "journal" 3 colonnes fluides (2026-07-08) ─────────────────────────
+       Chaque onglet remplit d'abord la colonne 1, puis la 2, puis la 3. Une seule
+       barre de scroll pour tout l'onglet (les colonnes s'étendent sur la même
+       hauteur totale, cf. 'columns: 3' + 'overflow-y: auto'). Aucune rubrique
+       enfant direct de '.debug-light-columns' ne peut être coupée à cheval sur
+       deux colonnes (cf. 'break-inside: avoid' sur chaque rubrique). */
     .debug-light-columns {
-      display: flex;
-      flex-direction: row;
-      gap: 14px;
+      columns: 3;
+      column-gap: 14px;
       flex: 1 1 auto;
       min-height: 0;
-    }
-
-    /* Colonne A (onglet LUT) : garde sa largeur d'origine (conteneur flex, pas de scroll propre) */
-    .debug-light-lut-scroll {
-      flex: 1 1 0;
-      min-width: 0;
-      min-height: 0;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Colonne B de l'onglet LUT (Étalonnage + Palette biomes) — même rythme vertical (gap: 8px)
-       que les autres colonnes ; sans cette règle, les 2 rubriques n'avaient aucun espacement
-       entre elles (aucun gap défini sur ce host, contrairement à #debugLightControls). */
-    #debugLightPaletteHost {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    /* Colonne A et colonne B (génériques, réutilisées dans les 3 onglets) —
-       2 colonnes de largeur égale, chacune défile en bloc indépendamment. */
-    .debug-light-col-right,
-    .debug-light-col-third {
-      flex: 1 1 0;
-      min-width: 0;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
       overflow-y: auto;
       overflow-x: hidden;
       padding-right: 4px;
       scrollbar-width: thin;
       scrollbar-color: rgba(120,180,255,0.35) transparent;
     }
-    .debug-light-col-right::-webkit-scrollbar,
-    .debug-light-col-third::-webkit-scrollbar { width: 4px; }
-    .debug-light-col-right::-webkit-scrollbar-thumb,
-    .debug-light-col-third::-webkit-scrollbar-thumb { background: rgba(120,180,255,0.35); border-radius: 2px; }
-    .debug-light-col-right::-webkit-scrollbar-track,
-    .debug-light-col-third::-webkit-scrollbar-track { background: transparent; }
+    .debug-light-columns::-webkit-scrollbar { width: 4px; }
+    .debug-light-columns::-webkit-scrollbar-thumb { background: rgba(120,180,255,0.35); border-radius: 2px; }
+    .debug-light-columns::-webkit-scrollbar-track { background: transparent; }
+
+    /* Chaque rubrique enfant direct = bloc indissociable dans le flux journal.
+       'break-inside: avoid' + 'margin: 0 0 14px' fournissent l'espacement inter-
+       rubrique — plus besoin de '.debug-light-pix-sep' entre les rubriques
+       top-level (ceux à l'intérieur d'une même rubrique, ex. Écume/Sillage,
+       restent visibles). */
+    .debug-light-columns > .lut-section,
+    .debug-light-columns > .debug-light-cinema-section,
+    .debug-light-columns > .debug-light-pix-section,
+    .debug-light-columns > .debug-light-crt-section,
+    .debug-light-columns > .debug-light-water-section,
+    .debug-light-columns > .debug-light-cloud-section,
+    .debug-light-columns > .debug-light-wind-section,
+    .debug-light-columns > .debug-light-worldshape-section,
+    .debug-light-columns > .debug-light-daynight-section,
+    .debug-light-columns > .debug-light-quality-section,
+    .debug-light-columns > .debug-light-weather-section {
+      break-inside: avoid;
+      -webkit-column-break-inside: avoid;
+      page-break-inside: avoid;
+      margin: 0 0 14px 0;
+    }
+    /* Séparateurs top-level masqués (l'espacement est fourni par le margin-bottom
+       ci-dessus). Les séparateurs à l'intérieur d'une rubrique — ex. Écume/Sillage
+       dans .debug-light-water-section — restent visibles. */
+    .debug-light-columns > .debug-light-pix-sep { display: none; }
 
     .debug-light-panel.collapsed .debug-light-body { display: none; }
 
@@ -825,30 +832,9 @@ function installDebugLightCss() {
       font-style: italic;
     }
 
-    .debug-light-controls {
-      display: grid;
-      grid-template-columns: 1fr;
-      /* align-content: start — sans ça, align-content:normal (≈ stretch) répartit tout
-         l'espace vertical libre EN PLUS entre les rangées de la grille quand le contenu est
-         plus court que le conteneur (flex:1 1 auto le rend haut), créant un immense "trou"
-         entre les rubriques au lieu d'un simple gap de 8px. */
-      align-content: start;
-      gap: 8px;
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding-right: 4px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(120,180,255,0.35) transparent;
-    }
-    .debug-light-controls::-webkit-scrollbar { width: 4px; }
-    .debug-light-controls::-webkit-scrollbar-thumb { background: rgba(120,180,255,0.35); border-radius: 2px; }
-    .debug-light-controls::-webkit-scrollbar-track { background: transparent; }
-
     /* EAU (Écume/Sillage bateau) et VENT (4.1/4.2/4.3) : plusieurs sous-rubriques empilées
        dans un même conteneur plat (pas de wrapper .lut-section par sous-groupe comme dans
-       l'onglet LUT) — même rythme vertical élargi (gap: 8px) que .debug-light-controls. */
+       l'onglet LUT) — rythme vertical (gap: 8px) identique à celui des .lut-section. */
     #debugLightWaterControls,
     #debugLightWindControls {
       display: flex;
@@ -879,6 +865,10 @@ function installDebugLightCss() {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.45);
+      border-left: 3px solid rgba(145,205,255,0.32);
       font-size: 12px;
       letter-spacing: 0.18em;
       text-transform: uppercase;
@@ -893,25 +883,22 @@ function installDebugLightCss() {
       justify-content: space-between;
     }
     /* Sous-titre RÉELLEMENT imbriqué sous une rubrique parente (Brins de blés/d'herbes/Arbres
-       sous "4. VENT") : garde l'ancien style plus discret, avec séparateur, pour marquer la
-       subordination — contrairement aux rubriques ci-dessus, désormais mises à plat. */
+       sous "4. VENT") : plus de séparateur (border-top retiré 2026-07-08), l'espacement
+       inter-sous-rubriques vient du gap:8px du parent. Fond sombre léger appliqué en bas
+       de fichier avec les autres têtes de rubrique. */
     .lut-section-head--nested {
       font-size: 11px;
       font-weight: 900;
       letter-spacing: 0.16em;
       color: rgba(212,236,255,0.92);
-      padding: 10px 0 2px;
-      margin-top: 8px;
-      border-top: 1px solid rgba(120,180,255,0.14);
+      /* Fond sombre plus léger que les rubriques principales pour marquer la subordination */
+      padding: 5px 8px;
+      border-radius: 5px;
+      background: rgba(0,0,0,0.30);
+      border-left: 2px solid rgba(145,205,255,0.22);
     }
-    /* Premier sous-titre imbriqué d'un groupe (Brins de blés, juste après l'en-tête "4. VENT")
-       — pas de séparateur puisqu'il suit directement l'en-tête de rubrique, pas un autre
-       sous-titre. */
-    .lut-section-head--nested.lut-subhead-first {
-      margin-top: 0;
-      padding-top: 2px;
-      border-top: none;
-    }
+    /* .lut-subhead-first — conservé sans effet, la classe reste posée par le JS pour compat */
+    .lut-section-head--nested.lut-subhead-first { /* no-op depuis retrait du border-top */ }
 
     /* ── Grille 2 colonnes pour toutes les couleurs ── */
     .color-grid {
@@ -996,6 +983,107 @@ function installDebugLightCss() {
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
+
+    /* ── MÉTÉO (rubrique 8, onglet Environnement) ─────────────────────────────
+       Ex-panneau flottant "🌦 ENV", intégré dans l'EDA le 2026-07-08. Une ligne
+       par évènement environnemental : label + statut ("● actif") + bouton
+       Déclencher/Stop. Suit le style des .debug-light-row (police, couleur label)
+       avec un bouton dérivé de .debug-light-preset-btn (charte bleutée EDA), et
+       un état "actif" qui bascule le bouton en tonalité rouge/stop. */
+    /* Rows Météo aérées verticalement (gap 10px vs 8px des autres sections) — les 7 lignes
+       ne sont plus collées. Chaque row : label (flex) + statut (auto) + bouton (taille fixe
+       identique à la charte .debug-light-preset-btn). */
+    #debugLightWeatherRows {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .debug-light-weather-row {
+      display: grid;
+      grid-template-columns: 1fr auto 96px;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      line-height: 1.55;
+      color: rgba(180,215,255,0.82);
+    }
+    .debug-light-weather-row .weather-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .debug-light-weather-row .weather-requires {
+      font-style: italic;
+      font-size: 9px;
+      color: rgba(180,215,255,0.55);
+      letter-spacing: 0.02em;
+    }
+    .debug-light-weather-row .weather-status {
+      color: rgba(88,228,153,0.95);
+      font-size: 10px;
+      min-width: 42px;
+      text-align: right;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    /* Bouton Déclencher/Stop — même charte que .debug-light-preset-btn (rubrique 7 :
+       Faible/Moyen/Élevé/Max). Padding, border-radius, letter-spacing, box-shadow alignés
+       pour un rendu HUD cohérent. */
+    .debug-light-weather-btn {
+      padding: 8px 9px;
+      border: 1px solid rgba(145,205,255,0.42);
+      border-radius: 8px;
+      background: rgba(25,56,82,0.78);
+      color: rgba(230,246,255,0.96);
+      font-family: monospace;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.10s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.30);
+    }
+    .debug-light-weather-btn:hover:not(:disabled) {
+      background: rgba(38,86,124,0.90);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .debug-light-weather-btn:active:not(:disabled) { transform: translateY(0); }
+    .debug-light-weather-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    /* État "actif" — bouton passe en tonalité stop (rouge), même code couleur que
+       le futur "⏹ Tout arrêter" pour cohérence visuelle. */
+    .debug-light-weather-btn--active {
+      background: rgba(120,50,50,0.72);
+      border-color: rgba(220,140,140,0.55);
+      color: rgba(255,225,225,0.95);
+    }
+    .debug-light-weather-btn--active:hover:not(:disabled) {
+      background: rgba(160,70,70,0.88);
+    }
+
+    /* Bouton "⏹ Tout arrêter" — full-width, tonalité stop */
+    .debug-light-weather-stopall {
+      width: 100%;
+      padding: 7px 9px;
+      margin-top: 4px;
+      border: 1px solid rgba(220,140,140,0.55);
+      border-radius: 8px;
+      background: rgba(80,30,30,0.72);
+      color: rgba(255,225,225,0.95);
+      font-family: monospace;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.12s, transform 0.10s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.30);
+    }
+    .debug-light-weather-stopall:hover {
+      background: rgba(120,40,40,0.90);
+      transform: translateY(-1px);
+    }
+    .debug-light-weather-stopall:active { transform: translateY(0); }
 
     /* Titre de rubrique AMBIANCES — même CSS que .score-title (HUD score) */
     .debug-light-presets-label {

@@ -442,12 +442,6 @@ function rankWatchtowerCandidate(sectorRef, zone, selectedSectors = new Set()) {
   return -(alreadySelectedPenalty + value * 90 + edgeBias * 4 + seed);
 }
 
-function getHexDistance(q1, r1, q2, r2) {
-  const dq = q1 - q2;
-  const dr = r1 - r2;
-  return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2;
-}
-
 // ─── Utilitaires de placement ─────────────────────────────────────────────────
 
 function getColumnAnchors(columnCount) {

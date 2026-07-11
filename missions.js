@@ -6,6 +6,7 @@ import { makeNodeKey, getTileEdgeType, getTileCenterType } from './tileUtils.js'
 import { collectZone, getFullTextureNeighbors } from './zoneUtils.js';
 import { countWaterBoats } from './waterBoatOverlay.js';
 import { countFieldMills } from './fieldZonesOverlay.js';
+import { pickRandom } from './random.js';
 
 export { MISSION_REWARD, MISSION_TILE_REWARD, MISSION_CHANCE, COMPLETED_MISSION_VISIBLE_TURNS };
 
@@ -141,6 +142,26 @@ export function restoreMissionSnapshots(manager, missions) {
   }
 }
 
+// Clone JSON profond — utilisé pour sérialiser l'état des missions (undo, sync
+// multijoueur) sans partager de références avec l'état vivant. Factorisé depuis
+// scene.js/multiplayerUi.js (2 copies byte-identiques).
+export function clonePlain(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+// Sérialisation du missionManager pour l'undo local (scene.js) et la synchronisation
+// multijoueur (multiplayerUi.js) — même copie exacte dans les 2 fichiers, centralisée
+// ici pour éviter toute divergence future entre les deux usages.
+export function serializeMissionManager(manager) {
+  return {
+    active: manager.active.map(clonePlain),
+    generatedTileIds: [...manager.generatedTileIds],
+    targetLevelByType: Object.fromEntries(manager.targetLevelByType),
+    nextId: manager.nextId,
+    turn: manager.turn
+  };
+}
+
 export function setMissionTurn(manager, turn) {
   manager.turn = Math.max(0, Number(turn) || 0);
 }
@@ -265,6 +286,26 @@ export function formatMissionLabel(mission, progressByType = new Map()) {
   const unit = mission.unit ? ` ${mission.unit}` : '';
   const label = MISSION_TYPE_LABEL[mission.type] ?? mission.label;
   return `${label} : ${progress}/${mission.target}${unit}`;
+}
+
+// Phrase courte affichée au-dessus de la barre de progression dans le HUD (2026-07-11) —
+// une par type de mission, au format "Verbe + objectif chiffré" (ex: "Construire un
+// village de 17 maisons"), demande explicite utilisateur.
+const MISSION_TITLE_BUILDERS = {
+  [EDGE_TYPES.forest]: (target) => `Développer une forêt de ${target} arbres`,
+  [EDGE_TYPES.house]:  (target) => `Construire un village de ${target} maisons`,
+  [EDGE_TYPES.rail]:   (target) => `Étendre une voie ferrée de ${target} rails`,
+  [EDGE_TYPES.water]:  (target) => `Relier une voie d'eau de ${target} cases`,
+  [EDGE_TYPES.grass]:  (target) => `Étendre une prairie de ${target} cases`,
+  [EDGE_TYPES.field]:  (target) => `Cultiver ${target} cases de champs de blé`,
+  [TRAIN_MISSION_TYPE]: (target) => `Faire circuler ${target} train${target > 1 ? 's' : ''}`,
+  [BOAT_MISSION_TYPE]:  (target) => `Faire apparaître ${target} bateau${target > 1 ? 'x' : ''}`,
+  [MILL_MISSION_TYPE]:  (target) => `Faire tourner ${target} moulin${target > 1 ? 's' : ''}`,
+};
+
+export function formatMissionTitle(mission) {
+  const build = MISSION_TITLE_BUILDERS[mission.type];
+  return build ? build(mission.target) : `${MISSION_TYPE_LABEL[mission.type] ?? mission.label} : ${mission.target}`;
 }
 
 
@@ -405,6 +446,3 @@ function connectRailNodes(adjacency, a, b) {
   adjacency.get(b).add(a);
 }
 
-function pickRandom(items) {
-  return items[Math.floor(Math.random() * items.length)];
-}

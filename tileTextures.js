@@ -1,6 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { EDGE_COLOR, EDGE_TYPES } from './config.js';
-import { getRealisticWaterMaterial } from './realisticWater.js';
+import { getRealisticWaterMaterial, shortestHueDelta } from './realisticWater.js';
 
 const materialCache = new Map();
 const generatedTextureCache = new Map();
@@ -524,11 +524,6 @@ function applyCanvasPalette(type, ctx) {
   ctx.putImageData(image, 0, 0);
 }
 
-function shortestHueDelta(from, to) {
-  let delta = ((to - from + 0.5) % 1) - 0.5;
-  if (delta < -0.5) delta += 1;
-  return delta;
-}
 
 // 2026-07-06 — DIAG BORNÉ (remplace le watcher par setter qui a fait planter Chrome) : simple
 // lecture passive de .transparent/.side sur les matériaux biome mis en cache, sans setter, sans

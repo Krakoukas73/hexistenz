@@ -163,6 +163,14 @@ function join_room($gamesDir, $code, $playerId, $playerName, $playerState) {
         respond(false, "Partie $code trouvée, mais elle n'a pas de snapshot complet. Ancien JSON refusé.", 409);
     }
 
+    // 2026-07-11 : une partie abandonnée/terminée ne peut plus être rejointe — sinon on
+    // peut reprendre indéfiniment la même partie (mêmes tuiles) et refaire le même score
+    // à l'infini. Rejet explicite ici en plus du filtrage de list_room_details() : couvre
+    // aussi une reprise via un ancien lien direct ?multi=CODE, pas seulement via la liste.
+    if (room_is_finished($room)) {
+        respond(false, "Partie $code déjà terminée — elle ne peut plus être rejouée.", 409);
+    }
+
     if (!isset($room['players']) || !is_array($room['players'])) $room['players'] = array();
     if (!isset($room['cursors']) || !is_array($room['cursors'])) $room['cursors'] = array();
     if (!isset($room['state']['players']) || !is_array($room['state']['players'])) $room['state']['players'] = array();
@@ -288,6 +296,17 @@ function prune_stale_cursors(&$room) {
     }
 
     return $removed;
+}
+
+// 2026-07-11 : une partie est "terminée" dès que gameOver=true a été persisté — via
+// sync_top_level_state() ce flag existe à la fois sur $room['gameOver'] (top-level, ce
+// qu'on vérifie prioritairement) et $room['state']['gameOver'] (repli, au cas où un
+// ancien appel n'aurait synchronisé que l'un des deux).
+function room_is_finished($room) {
+    if (!is_array($room)) return false;
+    if (!empty($room['gameOver'])) return true;
+    if (!empty($room['state']['gameOver'])) return true;
+    return false;
 }
 
 function sync_top_level_state(&$room) {
@@ -418,6 +437,12 @@ function list_room_details($gamesDir) {
 
             $json = @file_get_contents($path);
             $room = $json ? json_decode($json, true) : null;
+
+            // 2026-07-11 : une partie abandonnée/terminée ne doit plus jamais apparaître
+            // dans la liste des parties en cours — sinon on peut la resélectionner et
+            // refaire indéfiniment le même score sur les mêmes tuiles. cf. room_is_finished().
+            if (room_is_finished($room)) continue;
+
             if (is_array($room)) {
                 if (isset($room['updatedAt'])) $updatedAt = (int)$room['updatedAt'];
                 if (isset($room['players']) && is_array($room['players'])) $players = count($room['players']);

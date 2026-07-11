@@ -35,9 +35,9 @@ import { createCloudSky, updateCloudSky, getCloudUserEnabled, getCloudSkyParams 
 import { updateGlobalWind } from './globalWind.js';
 import { resetPropHitboxRegistry } from './propHitboxRegistry.js';
 import { createDebugLightUI, tickFps } from './debugLightUi.js';
-import { createEnvironmentDirector } from './environmentDirector.js';
-import { createEnvironmentDebugPanel } from './environmentDebugUi.js';
-import { createQualityUi } from './qualityUi.js';
+import { createEnvironmentDirector, updateEnvironmentDirector } from './environmentDirector.js';
+import { createMorningMistOverlay, updateMorningMist } from './morningMistOverlay.js';
+import { createWeatherVfxOverlay, updateWeatherVfxOverlay } from './weatherVfxOverlay.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, setAstreMode, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './threeSetup.js';
 import { applyShadowCulling, rebuildShadowCasters } from './shadowCulling.js';
@@ -46,8 +46,9 @@ import { createWaterSurfaceOverlay, rebuildWaterSurfaceOverlay, updateWaterSurfa
 // createPostprocessHud supprimé : PIX HUD fusionné dans debugLightUi (panel CUSTOMISATION)
 // createWaterDebugPanel supprimé : HUD EAU (Cyril) fusionné dans debugLightUi (panel CUSTOMISATION, avant PIXELISATION)
 import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
-import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, consumeCompletedMissions, createMissionManager, formatMissionLabel, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, setMissionTurn } from './missions.js';
+import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, clonePlain, consumeCompletedMissions, createMissionManager, formatMissionTitle, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, serializeMissionManager, setMissionTurn } from './missions.js';
 import { pollRoom, updateCursor, updateRoomState } from './multiplayerClient.js';
+import { showScorePopup } from './scorePopup.js';
 
 // 2026-07-05 — marqueur de chargement, au niveau module (s'exécute à l'évaluation du fichier,
 // AVANT tout appel de fonction) : preuve absolue que CE scene.js (avec le fix shader précompile)
@@ -124,6 +125,7 @@ export function initScene(options = {}) {
   // aussi grimpe en même temps que le GPU mesuré, c'est un stall de présentation/scheduling
   // du navigateur ou de l'OS, pas un vrai surcoût de rendu du jeu.
   let _rafPrevTs = null;
+  let _vfxPrevTimeSeconds = null;
   let _rafDeltaMin = Infinity, _rafDeltaMax = -Infinity;
   // 2026-07-05 — diagnostic pur : rayon caméra rock-solide (54.550-54.550, aucun mouvement)
   // pendant que le GPU réel continue d'osciller fortement → hypothèse caméra définitivement
@@ -163,18 +165,22 @@ export function initScene(options = {}) {
   const cometSky  = createCometSky();
   const cloudSky  = createCloudSky(scene);
 
+  // Phase 0 roadmap VFX : squelette du directeur d'environnement (pas d'effet
+  // visuel encore, cf. environmentDirector.js). Créé AVANT createDebugLightUI :
+  // le panel EDA reçoit `environmentDirector` en param pour câbler sa rubrique
+  // Météo (onglet 3, rubrique 8) — fusion 2026-07-08 de l'ex-HUD flottant "🌦 ENV"
+  // (environmentDebugUi.js, supprimé).
+  const environmentDirector = createEnvironmentDirector();
+  const weatherVfxOverlay = createWeatherVfxOverlay(scene);
+  const morningMistOverlay = createMorningMistOverlay(scene);
+
   // Créé ici (et non plus juste après createCamera) : le panel VENT/NUAGES a besoin
   // des références forestOverlay (arbres GPU-wind) et cloudSky (nuages horizon jour).
-  createDebugLightUI({ visualEnvironment, postprocess, forestOverlay, cloudSky });
+  createDebugLightUI({ visualEnvironment, postprocess, forestOverlay, cloudSky, environmentDirector });
 
-  // Phase 0 roadmap VFX : squelette du directeur d'environnement (pas d'effet
-  // visuel encore, cf. environmentDirector.js). Panneau debug séparé du HUD
-  // principal — sera fusionné dans createDebugLightUI plus tard si validé.
-  const environmentDirector = createEnvironmentDirector();
-  createEnvironmentDebugPanel(environmentDirector);
-
-  // Réglage de densité de contenu (qualité/FPS) — bouton flottant "⚙ QUALITÉ".
-  createQualityUi();
+  // Réglage de densité de contenu (qualité/FPS) : intégré au panel EDA depuis le
+  // 2026-07-08 (onglet Environnement, rubrique 7) — cf. hud_eda.js. Plus de bouton
+  // flottant séparé (ex-qualityUi.js, supprimé).
 
   // isSoleil : override localStorage > tirage aléatoire si aucune préférence stockée
   const _storedDayNight = localStorage.getItem('hexistenz_daynightmode');
@@ -304,7 +310,17 @@ export function initScene(options = {}) {
 
   ui.abandonGame?.addEventListener('click', event => {
     event.stopPropagation();
+    requestAbandonConfirm();
+  });
+
+  ui.abandonConfirmBtn?.addEventListener('click', event => {
+    event.stopPropagation();
     abandonGame();
+  });
+
+  ui.abandonCancelBtn?.addEventListener('click', event => {
+    event.stopPropagation();
+    cancelAbandonConfirm();
   });
 
   ui.newGame?.addEventListener('click', event => {
@@ -408,11 +424,6 @@ export function initScene(options = {}) {
       event.preventDefault();
       if (gridOnlyMode) toggleGridOnlyMode(false);
       toggleHelp();
-      return;
-    }
-
-    if (key === 'c') {
-      postprocess?.toggleCinema?.();
       return;
     }
 
@@ -735,6 +746,11 @@ export function initScene(options = {}) {
     if (_PT_ENABLE) _ptCtrl = performance.now();
 
     const timeSeconds = performance.now() * 0.001;
+    const deltaSeconds = _vfxPrevTimeSeconds == null ? 0 : Math.min(0.1, timeSeconds - _vfxPrevTimeSeconds);
+    _vfxPrevTimeSeconds = timeSeconds;
+    updateEnvironmentDirector(environmentDirector, timeSeconds);
+    updateMorningMist(morningMistOverlay, environmentDirector, timeSeconds, deltaSeconds);
+    updateWeatherVfxOverlay(weatherVfxOverlay, environmentDirector, timeSeconds, deltaSeconds, controls.target);
     updateAnimatedBiomeTextures(timeSeconds);
     updateGlobalWind(timeSeconds);
     updateRealisticWater(timeSeconds);
@@ -1310,6 +1326,7 @@ export function initScene(options = {}) {
     refreshMissionUI();
     lastScore = placedTile.score;
     updateScoreUI(ui, totalScore, lastScore, placedTiles.size, totalGridTiles);
+    showScorePopup(placedTile.score); // pose LOCALE validée uniquement — jamais dans updateScoreUI() (init/undo/sync/grille)
     refreshStatsUI();
     if (isMultiplayer) persistMultiplayerState();
     if (deck.length === 0) endGame();
@@ -1329,7 +1346,13 @@ export function initScene(options = {}) {
   }
 
   function refreshMissionUI() {
-    updateMissionUI(ui, missionManager.active, formatMissionLabel, getMissionProgressByType(placedTiles));
+    // Une mission réalisée disparaît IMMÉDIATEMENT du tableau "missions en cours"
+    // (demande explicite, 2026-07-11 — auparavant grisée et visible encore quelques
+    // tours). Le retrait différé (COMPLETED_MISSION_VISIBLE_TURNS, missions.js) reste
+    // inchangé côté logique/undo : missionManager.active garde encore ces missions un
+    // moment pour permettre restoreMissionSnapshots()/restoreMissions() lors d'un
+    // undo — seul l'affichage les masque dès la complétion, via ce filtre.
+    updateMissionUI(ui, missionManager.active.filter(m => !m.completed), formatMissionTitle, getMissionProgressByType(placedTiles));
   }
 
   function getFullGameStats() {
@@ -1490,13 +1513,25 @@ export function initScene(options = {}) {
     return !gameOver && deck.length > 0 && canPlaceTileAt(hex, placedTiles, null, specialCells);
   }
 
+  function requestAbandonConfirm() {
+    if (gameOver) return;
+    ui.abandonConfirmModal?.classList.remove('hidden');
+  }
+
+  function cancelAbandonConfirm() {
+    ui.abandonConfirmModal?.classList.add('hidden');
+  }
+
   function abandonGame() {
+    ui.abandonConfirmModal?.classList.add('hidden');
     if (gameOver) return;
     endGame('PARTIE ABANDONNÉE');
   }
 
   function startNewGame() {
-    window.location.reload();
+    // Sans le query ?multi=... : une partie terminée/abandonnée ne peut plus être
+    // reprise (cf. multiplayer.php::join_room), inutile de laisser traîner son code.
+    window.location.href = window.location.pathname;
   }
 
   function endGame(label = 'FIN DU DECK') {
@@ -1509,7 +1544,11 @@ export function initScene(options = {}) {
     ui.abandonGame?.setAttribute('disabled', 'disabled');
     setText(ui.placement, label);
     refreshStatsUI();
-    askHighscoreSubmit(highscoreUI, totalScore, getFullGameStats());
+    // Marque la partie terminée côté serveur : plus jamais listée/rejoignable ensuite
+    // (cf. multiplayer.php::list_room_details / join_room). Sans cet appel explicite,
+    // gameOver=true ne serait jamais poussé au serveur (plus aucune pose après la fin).
+    if (isMultiplayer) persistMultiplayerState();
+    askHighscoreSubmit(highscoreUI, totalScore, getFullGameStats(), playerName);
   }
 
   function getGridPercent() {
@@ -1850,16 +1889,6 @@ function hydrateMissionManager(snapshot) {
   };
 }
 
-function serializeMissionManager(manager) {
-  return {
-    active: manager.active.map(clonePlain),
-    generatedTileIds: [...manager.generatedTileIds],
-    targetLevelByType: Object.fromEntries(manager.targetLevelByType),
-    nextId: manager.nextId,
-    turn: manager.turn
-  };
-}
-
 function serializePlacedTile(placedTile) {
   return {
     q: placedTile.q,
@@ -1885,10 +1914,6 @@ function stripRuntimeTile(tile) {
     center: tile.center,
     rotation: tile.rotation ?? 0
   });
-}
-
-function clonePlain(value) {
-  return JSON.parse(JSON.stringify(value));
 }
 
 function createMultiplayerBadge(roomCode, playerName) {

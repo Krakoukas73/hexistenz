@@ -325,6 +325,11 @@ Complémentaire au contour normal : ensemble ils donnent un look cartoon ou BD.`
     `Bascule entre le jour et la nuit.
 Change l'astre visible (soleil/lune), le ciel, les couleurs ambiantes et fait apparaître les comètes de nuit.`,
 
+  'quality.density':
+    `Multiplicateur global de densité de contenu (0.15 à 1.0).
+Réduit le nombre de props naturels, brins d'herbe et moutons pour alléger le parcours du graphe et viser 60 FPS sur machine faible.
+N'affecte pas le terrain, l'eau, les bâtiments ni les personnages (gameplay et systèmes déjà optimisés séparément). Reconstruit le contenu à chaque changement.`,
+
   // ── Cinéma ─────────────────────────────────────────────────────────────────
   'cin.tilt':
     `Intensité de l'effet tilt-shift : flou progressif en haut et en bas du cadre.
@@ -370,6 +375,10 @@ Simule les objectifs fisheye ou grand-angle. Renforce l'aspect "caméra de surve
     `Lignes horizontales sombres entrelacées, imitant un moniteur CRT ou une vieille télé.
 0 = aucune scanline. 6 = lignes très marquées, look rétro-TV.
 Puissant combiné avec une palette CGA/EGA pour l'esthétique vintage.`,
+
+  'cin.scanLinesIntensity':
+    `Profondeur du noir des scanlines. 0 = transparent (aucun assombrissement, même avec
+des scanlines actives). 1 = noir total. Sans effet si Scan lines est à 0.`,
 
   'cin.godRays':
     `Intensité des rayons crépusculaires (god rays) émanant de la position écran du soleil.

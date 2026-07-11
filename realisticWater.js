@@ -116,7 +116,11 @@ function forceWaterPaletteColor(base, target, strength, saturation, contrast, wa
   return color;
 }
 
-function shortestHueDelta(from, to) {
+// Exportée (2026-07-11) : identique dans tileTextures.js, qui l'importe désormais d'ici
+// au lieu d'en garder sa propre copie. Sens du partage choisi pour éviter un import
+// circulaire — tileTextures.js dépend déjà de realisticWater.js (getRealisticWaterMaterial),
+// l'inverse aurait créé une boucle.
+export function shortestHueDelta(from, to) {
   let delta = ((to - from + 0.5) % 1) - 0.5;
   if (delta < -0.5) delta += 1;
   return delta;

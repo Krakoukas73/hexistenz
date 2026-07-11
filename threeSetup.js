@@ -469,6 +469,9 @@ export function createPixelPostprocess(renderer, scene, camera) {
     tilt: 0.60, focusCenter: 0.50, focusBand: 0.35,
     vignette: 0.55, grain: 0.30, chromatic: 0.45,
     halation: 0.0, barrel: 0.0, scanLines: 0.0,
+    // scanLinesIntensity : profondeur du noir des scanlines (0=transparent, 1=noir total).
+    // Défaut 0.52 = ancienne valeur codée en dur dans le shader, pour zéro régression.
+    scanLinesIntensity: 0.52,
     godRays: 0.0, godRaysLength: 0.40, godRaysDiffusion: 0.85, godRaysThreshold: 0.70,
     godRaysLayers: 0.0,
     godRaysEnabled: true, tiltShiftEnabled: true,
@@ -494,6 +497,7 @@ export function createPixelPostprocess(renderer, scene, camera) {
     cinemaPass.uniforms.uHalation.value    = s.halation;
     cinemaPass.uniforms.uBarrel.value      = s.barrel;
     cinemaPass.uniforms.uScanLines.value   = s.scanLines;
+    cinemaPass.uniforms.uScanLinesIntensity.value = s.scanLinesIntensity;
     cinemaPass.uniforms.uGodRays.value          = s.godRays;
     cinemaPass.uniforms.uGodRaysLength.value    = s.godRaysLength;
     cinemaPass.uniforms.uGodRaysDiffusion.value = s.godRaysDiffusion;
@@ -645,6 +649,7 @@ export function createPixelPostprocess(renderer, scene, camera) {
       if ('halation'    in partial) c.halation    = Math.max(0, Math.min(1, Number(partial.halation)));
       if ('barrel'      in partial) c.barrel      = Math.max(0, Math.min(1, Number(partial.barrel)));
       if ('scanLines'   in partial) c.scanLines   = Math.max(0, Math.min(6, Number(partial.scanLines)));
+      if ('scanLinesIntensity' in partial) c.scanLinesIntensity = Math.max(0, Math.min(1, Number(partial.scanLinesIntensity)));
       if ('godRays'          in partial) c.godRays          = Math.max(0, Math.min(1, Number(partial.godRays)));
       if ('godRaysLength'    in partial) c.godRaysLength    = Math.max(0, Math.min(1, Number(partial.godRaysLength)));
       if ('godRaysDiffusion' in partial) c.godRaysDiffusion = Math.max(0, Math.min(1, Number(partial.godRaysDiffusion)));
@@ -666,11 +671,6 @@ export function createPixelPostprocess(renderer, scene, camera) {
     },
     onExternalCinemaChange(cb) {
       _cinemaListener = cb;
-    },
-    toggleCinema() {
-      _cinemaSettings.enabled = !_cinemaSettings.enabled;
-      _applyCinemaUniforms(_cinemaSettings);
-      _cinemaListener?.({ ..._cinemaSettings });
     },
     render() {
       const previousMask = camera.layers.mask;
