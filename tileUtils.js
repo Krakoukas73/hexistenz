@@ -43,7 +43,7 @@ export function clamp01(value) {
 }
 
 // clamp/easeInOutSine génériques — factorisés depuis railTrainOverlay.js/tileRailOverlay.js
-// (clamp, identique) et cometSky.js/railTrainOverlay.js/waterBoatOverlay.js (easeInOutSine,
+// (clamp, identique) et cometSky.js/railTrainOverlay.js/shaders/waterBoatOverlay.js (easeInOutSine,
 // formule identique). Entrée clampée dans [0,1] (comme la version cometSky.js, la plus
 // prudente des 3) : sans effet sur les call sites existants qui passent déjà une valeur
 // dans cette plage, mais protège contre un léger dépassement (ex. progress > 1 par arrondi).

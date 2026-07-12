@@ -1,5 +1,5 @@
 /**
- * shaderCiel.js — Shaders GLSL du ciel volumétrique avec nuages.
+ * shaderSky.js — Shaders GLSL du ciel volumétrique avec nuages (ex-shaderCiel.js, renommé en anglais le 2026-07-11).
  *
  * Approche : sphère atmosphérique centrée sous la caméra (cameraPosition.y − 450, r=500).
  * La caméra est à l'intérieur de la sphère → chaque rayon sort par la surface opposée.

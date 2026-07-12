@@ -1,6 +1,6 @@
 import { renderMiniTile } from './tileMesh.js';
 import { LUT_HELP, ensureHelpTooltip, delegateHelpTooltip, attachHelpTooltip } from './help.js';
-import { MISSION_TYPE_ICON, MISSION_HELP } from './missions.js';
+import { MISSION_TYPE_ICON, MISSION_HELP } from './missionLabels.js';
 import { escapeHtml } from './domUtils.js';
 
 export function createUI() {
@@ -74,9 +74,16 @@ export function createUI() {
     statRail:         'game.rail',
     statLargestRail:  'game.largestRail',
   };
+  // Attaché sur la cellule entière (label + valeur), pas seulement sur le nombre —
+  // sinon le survol ne se déclenche que si la souris est pile sur les chiffres.
+  // .stats-summary-card (Moulins/Trains/Bateaux/Comètes) englobe le label dans un
+  // <span> frère du groupe nombre+emoji : closest() le retrouve. Pour les 12 autres
+  // (Total/Surface max par biome), le parentElement direct contient déjà les deux.
   for (const [id, helpKey] of Object.entries(_statHelpMap)) {
     const el = document.getElementById(id);
-    if (el) el.dataset.statHelp = helpKey;
+    if (!el) continue;
+    const cell = el.closest('.stats-summary-card') ?? el.parentElement ?? el;
+    cell.dataset.statHelp = helpKey;
   }
   const statsPanel = document.getElementById('statsPanel');
   if (statsPanel) {

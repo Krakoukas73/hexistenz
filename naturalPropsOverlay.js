@@ -371,60 +371,9 @@ function buildNaturalPropInstancedMeshes(group, accumulator) {
 }
 
 // ─── Helpers props naturels ───────────────────────────────────────────────────
-
-function addNaturalPropCluster(group, placedTile, edge, type, kind, placedTiles) {
-  const seed   = `${placedTile.key}:natural:${kind}:${edge}`;
-  const chance = getNaturalPropChance(kind, type, placedTile, edge, placedTiles);
-  if (hashUnit(seed) > chance) return;
-
-  const count        = getNaturalPropCount(kind, type, seed, placedTile, edge, placedTiles);
-  const centerLocal  = getNaturalSectorPoint(edge, `${seed}:cluster-center`);
-  const clusterRadius = getNaturalClusterRadius(kind);
-
-  for (let i = 0; i < count; i += 1) {
-    const local         = getNaturalClusterPoint(edge, centerLocal, `${seed}:point:${i}`, clusterRadius);
-    const footprintRadius = getNaturalPropFootprint(kind);
-    if (!isSingleTerrainFootprint(local, placedTile, type, footprintRadius)) continue;
-
-    const key  = pickNaturalPropVariant(kind, `${seed}:variant:${i}`, seed);
-    const prop = createPropModel(key, `${seed}:model:${i}`);
-    if (!prop) continue;
-
-    const tilePos = axialToWorld(placedTile.q, placedTile.r);
-    prop.name = `${type}-${kind}-ambient-glb`;
-    prop.position.set(tilePos.x + local.x, 0, tilePos.z + local.z);
-    const yaw         = hashUnit(`${seed}:yaw:${i}`) * Math.PI * 2;
-    const groundOffset = kind === 'flower' ? 0.006 : (kind === 'reed' ? 0.010 : (kind === 'mushroom' ? 0.004 : 0.000));
-    const surfaceY = placeObjectOnTerrain(prop, local, type, hashNumber(`${seed}:terrain:${i}`) % 97, {
-      groundOffset,
-      alignToSlope:    kind !== 'reed' && kind !== 'hay-bale' && kind !== 'pile-de-bois',
-      yaw,
-      edgeLockStart:   0.98,
-      edgeLockEnd:     1.0,
-      normalSampleStep: HEX_SIZE * 0.012
-    }) - groundOffset;
-
-    const jitter = getNaturalPropScaleJitter(kind, seed, i);
-    prop.scale.multiplyScalar(jitter);
-    if (kind === 'rock' && isNearWaterDecorArea(placedTile, edge, placedTiles)) {
-      prop.scale.multiplyScalar(1.22 + hashUnit(`${seed}:shore-rock-scale:${i}`) * 0.36);
-    }
-    if (kind === 'reed') {
-      prop.rotation.x += (hashUnit(`${seed}:leanx:${i}`) - 0.5) * 0.10;
-      prop.rotation.z += (hashUnit(`${seed}:leanz:${i}`) - 0.5) * 0.10;
-    }
-    if (kind === 'mushroom') {
-      prop.rotation.x += (hashUnit(`${seed}:mushleanx:${i}`) - 0.5) * 0.035;
-      prop.rotation.z += (hashUnit(`${seed}:mushleanz:${i}`) - 0.5) * 0.035;
-    }
-
-    snapPropBottomToSurface(prop, surfaceY, getNaturalPropGroundClearance(kind));
-    // Orientation perpendiculaire à la surface courbée (mode bouliste)
-    getCurvatureTiltQuaternion(tilePos.x + local.x, tilePos.z + local.z, _npCurvQuat);
-    prop.quaternion.premultiply(_npCurvQuat);
-    group.add(prop);
-  }
-}
+// addNaturalPropCluster supprimée le 2026-07-11 (code mort confirmé par grep sur
+// tout le dépôt, cf. CONTEXT.md §21) : plus aucun appelant. Les helpers ci-dessous
+// (getNaturalPropChance, etc.) restent utilisés par d'autres fonctions du fichier.
 
 function getNaturalPropChance(kind, type, placedTile, edge, placedTiles) {
   const nearWater = placedTile && edge && placedTiles && isNearWaterDecorArea(placedTile, edge, placedTiles);

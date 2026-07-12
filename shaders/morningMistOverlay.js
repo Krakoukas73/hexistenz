@@ -1,7 +1,7 @@
 /**
  * morningMistOverlay.js — Brume matinale : nappe de bruit procédural (FBM)
  * qui dérive ET ondule doucement au ras du sol (un peu comme l'eau —
- * shaderEau.js), PAS des particules/sprites individuels.
+ * shaderWater.js), PAS des particules/sprites individuels.
  *
  * Historique (2026-07-08) : la 1ère version (VFXParticles, sphères
  * translucides) ne donnait jamais un aspect vapeur/brume convaincant quel
@@ -9,7 +9,7 @@
  * à un plan à bruit continu. La 2e version (deux plans empilés, réglage
  * "hauteur" pour l'écart entre eux) a été jugée inutile — retirée : un seul
  * plan, dont la hauteur ondule dans le vertex shader (bruit + temps, comme
- * le clapot de shaderEau.js) pour un aspect irrégulier et animé en XYZ
+ * le clapot de shaderWater.js) pour un aspect irrégulier et animé en XYZ
  * (dérive horizontale du bruit + ondulation verticale), au lieu d'une
  * altitude parfaitement plate.
  *
@@ -32,17 +32,17 @@
  *               réel ondule autour de cette valeur, ce n'est pas un plafond plat)
  *
  * Intégration dans scene.js :
- *   import { createMorningMistOverlay, updateMorningMist } from './morningMistOverlay.js';
+ *   import { createMorningMistOverlay, updateMorningMist } from './shaders/morningMistOverlay.js';
  *   const morningMistOverlay = createMorningMistOverlay(scene);
  *   // dans animate() :
  *   updateMorningMist(morningMistOverlay, environmentDirector, timeSeconds, deltaSeconds);
  */
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { getEnvironmentEventFade, isEnvironmentEventActive } from './environmentDirector.js';
-import { getVfxSettings, onVfxSettingsChange } from './vfxSettings.js';
-import { VFX_WORLD_RADIUS } from './variables.js';
-import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS } from './worldCurvature.js';
+import { getEnvironmentEventFade, isEnvironmentEventActive } from '../environmentDirector.js';
+import { getVfxSettings, onVfxSettingsChange } from '../vfxSettings.js';
+import { VFX_WORLD_RADIUS } from '../variables.js';
+import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS } from '../worldCurvature.js';
 
 const MIST_EVENT_ID = 'morningMist';
 const MIST_NAME = 'hexistenz-vfx-ground-mist';
@@ -87,7 +87,7 @@ const VERTEX_SHADER = /* glsl */ `
   varying vec2 vWorldXZ;
   void main() {
     // Ondulation verticale irrégulière (pas un plafond plat) — même principe que
-    // le clapot de l'eau (shaderEau.js) : bruit + temps, pas une simple sinusoïde.
+    // le clapot de l'eau (shaderWater.js) : bruit + temps, pas une simple sinusoïde.
     float n1 = valueNoise2D(position.xz * 0.12 + uSeed + uTime * 0.035);
     float n2 = valueNoise2D(position.xz * 0.29 - uSeed * 1.7 - uTime * 0.021);
     float bob = (n1 - 0.5) * 0.5 + (n2 - 0.5) * 0.22;

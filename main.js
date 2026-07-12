@@ -1,5 +1,5 @@
 import { showPreloader }    from './preloader.js';
-import { showStartupScreen } from './multiplayerUi.js';
+import { showStartupScreen } from './startupMenu.js';
 
 function boot() {
   showPreloader(showStartupScreen);

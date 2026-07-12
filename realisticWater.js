@@ -2,7 +2,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS } from './worldCurvature.js';
 import { WATER_RENDER } from './config.js';
-import { waterVertexShaderTemplate, waterFragmentShader } from './shaders/shaderEau.js';
+import { waterVertexShaderTemplate, waterFragmentShader } from './shaders/shaderWater.js';
 
 const waterMaterials = new Set();
 

@@ -3,7 +3,7 @@ import { getWorldShapeMode, setWorldShapeMode } from './worldCurvature.js';
 import { LUT_HELP, attachHelpTooltip } from './help.js';
 import { copyToClipboard } from './hud_fps.js';
 import { getWaterFoamParams, setWaterFoamParams } from './realisticWater.js';
-import { getWakeParams, setWakeParams } from './waterBoatOverlay.js';
+import { getWakeParams, setWakeParams } from './shaders/waterBoatOverlay.js';
 import { getWheatWindParams, setWheatWindParams } from './fieldWheatOverlay.js';
 import { getGrassWindParams, setGrassWindParams } from './grassBladeOverlay.js';
 import { getTreeWindParams, setTreeWindParams } from './forestOverlay.js';
@@ -11,12 +11,13 @@ import { getCloudSkyParams, setCloudSkyParams, setCloudUserEnabled } from './clo
 import { WATER_RENDER, WHEAT_WIND_STRENGTH, WHEAT_WIND_SPEED, GRASS_WIND_STRENGTH, GRASS_WIND_SPEED, GRASS_WIND_SWAY, TREE_WIND } from './config.js';
 import { getContentDensity, setContentDensity, MIN_DENSITY, MAX_DENSITY } from './contentDensity.js';
 import { ENVIRONMENT_EVENTS, onEnvironmentChange, triggerEnvironmentEvent, stopEnvironmentEvent, stopAllEnvironmentEvents, isEnvironmentEventActive } from './environmentDirector.js';
-import { getVfxSettings, setVfxSetting, resetVfxSettings, getAllVfxSettings, setAllVfxSettings, onVfxSettingsChange } from './vfxSettings.js';
+import { getVfxSettings, setVfxSetting, resetVfxSettings, onVfxSettingsChange, isVfxGroupExpanded, setVfxGroupExpanded } from './vfxSettings.js';
 import { escapeHtml } from './domUtils.js';
 
-// ─── Panel EDA (Éditeur de Direction Artistique) — extrait de debugLightUi.js (2026-07-02) ───
+// ─── edaPanelWiring.js (ex-hud_eda.js, renommé le 2026-07-11) — extrait de debugLightUi.js
+// (2026-07-02, façade elle-même renommée edaPanelHost.js le 2026-07-11) ───
 // Ce module construit et câble tout le contenu du panel EDA (3 onglets : LUT / Cinématique /
-// Environnement) à l'intérieur du `root` (#debugLightPanel) créé par la façade debugLightUi.js,
+// Environnement) à l'intérieur du `root` (#debugLightPanel) créé par la façade edaPanelHost.js,
 // qui héberge aussi le HUD FPS (hud_fps.js) dans le même élément DOM.
 
 // ─── PIX HUD constants (embedded inside CUSTOMISATION panel) ─────────────────
@@ -117,11 +118,42 @@ const VFX_FIREFLY_SLIDERS = [
   { key: 'vagabondage',   label: 'Vagabondage',   min: 0.1,  max: 2,   step: 0.05 },
   { key: 'scintillement', label: 'Scintillement', min: 0,    max: 1,   step: 0.01 },
 ];
+// VFX_RAIN_SLIDERS refondu 2026-07-12 (livraison Cyril « nuages metaball + pluie + impacts ») :
+// vitesse retirée (la vitesse terminale est physique, cf. TERMINAL_FALL_SPEED dans
+// rainCloudOverlay.js — un slider n'aurait pas de sens isolé de la taille), tailleGoutte
+// resserrée à [0.001, 0.010] pour rester dans la plage « gouttes fines », impactSol ajouté.
 const VFX_RAIN_SLIDERS = [
-  { key: 'densite',      label: 'Densité',       min: 0,    max: 1,    step: 0.01 },
-  { key: 'vitesse',      label: 'Vitesse chute', min: 3,    max: 20,   step: 0.5 },
-  { key: 'tailleGoutte', label: 'Taille goutte', min: 0.01, max: 0.12, step: 0.005 },
+  { key: 'densite',      label: 'Densité',       min: 0,     max: 1,     step: 0.01 },
+  { key: 'tailleGoutte', label: 'Taille goutte', min: 0.001, max: 0.010, step: 0.0005 },
+  { key: 'impactSol',    label: 'Impact sol',    min: 0,     max: 1,     step: 0.05 },
 ];
+const VFX_CLOUD_SLIDERS = [
+  { key: 'densite',   label: 'Densité',   min: 0,   max: 1,   step: 0.01 },
+  { key: 'altitude',  label: 'Altitude',  min: 1,   max: 10,  step: 0.1 },
+  { key: 'epaisseur', label: 'Épaisseur', min: 0.1, max: 1.5, step: 0.05 },
+];
+const VFX_STORM_SLIDERS = [
+  { key: 'frequenceEclairs', label: 'Fréquence éclairs', min: 0, max: 1, step: 0.01 },
+  { key: 'luminositeEclair', label: 'Luminosité éclair',  min: 0, max: 2, step: 0.05 },
+  { key: 'intensitePluie',   label: 'Intensité pluie',    min: 1, max: 3, step: 0.05 },
+];
+// Liste des effets VFX gérés par vfxSettings.js — sert au snapshot Undo/Redo et à
+// l'export 📋 Copier depuis que getAllVfxSettings/setAllVfxSettings ont été retirés
+// (remplacement complet par la version Cyril, 2026-07-12).
+const _VFX_EFFECT_KEYS = ['groundMist', 'fireflies', 'clouds', 'rain', 'storm'];
+function _snapshotAllVfx() {
+  const snap = {};
+  for (const e of _VFX_EFFECT_KEYS) snap[e] = { ...getVfxSettings(e) };
+  return snap;
+}
+function _restoreAllVfx(snapshot) {
+  if (!snapshot) return;
+  for (const e of _VFX_EFFECT_KEYS) {
+    const src = snapshot[e];
+    if (!src) continue;
+    for (const [key, value] of Object.entries(src)) setVfxSetting(e, key, value);
+  }
+}
 const WATER_DEFAULTS = Object.freeze({
   foamEnabled: true,
   wakeEnabled: true,
@@ -325,11 +357,30 @@ const LUT_SECTIONS = [
 // Presets rétro CRT : scanLines > 0 ; tous les autres : scanLines = 0.
 const VISUAL_PRESETS = await fetch('./json/ambiances.json')
   .then(r => r.json())
-  .catch(e => { console.error('[hud_eda] Impossible de charger ambiances.json :', e); return []; });
+  .catch(e => { console.error('[edaPanelWiring] Impossible de charger ambiances.json :', e); return []; });
+
+// Passage bilingue FR/EN le 2026-07-12 : mini-HUD clavier (bas d'écran), textes
+// sous json/languages/{french,english}.json (clé game.kbdHint), même mécanisme
+// que les autres modules (top-level await + localStorage 'hexistenz_pres_lang').
+function _getGameLang() {
+  try {
+    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
+  } catch {
+    return 'fr';
+  }
+}
+const _edaLangFile = _getGameLang() === 'en' ? 'english' : 'french';
+const _kbdHintText = await fetch(`./json/languages/${_edaLangFile}.json`)
+  .then(r => r.json())
+  .then(data => data?.game?.kbdHint ?? '')
+  .catch(err => {
+    console.error(`[edaPanelWiring] Impossible de charger ${_edaLangFile}.json`, err);
+    return '';
+  });
 
 // ─── Markup — contenu de .debug-light-body, extrait du template racine ─────
 // (le compteur FPS + les 2 boutons #fpsHudToggle/#debugLightToggle restent dans la façade
-// debugLightUi.js, qui assemble .debug-light-left-col + EDA_BODY_HTML dans le même root.)
+// edaPanelHost.js, qui assemble .debug-light-left-col + EDA_BODY_HTML dans le même root.)
 export const EDA_BODY_HTML = `
     <div class="debug-light-body">
       <div class="debug-light-main-title">Éditeur de direction artistique</div>
@@ -620,13 +671,13 @@ export const EDA_BODY_HTML = `
         <div class="debug-light-pix-head">
           <span><span class="rubrique-emoji">🌦️</span> 8. Météo</span>
         </div>
-        <div id="debugLightWeatherRows"></div>
-        <button type="button" id="debugLightWeatherStopAll" class="debug-light-weather-stopall" title="Arrête tous les évènements environnementaux en cours">⏹ Tout arrêter</button>
-        <!-- VFX MÉTÉO (ex-rubrique 2 indépendante) fusionnée ici le 2026-07-10 : réglages
-             fins (brume/lucioles/pluie) rattachés aux déclencheurs d'évènements ci-dessus,
-             même thème. #debugLightVfxControls peuplé plus bas (querySelector par id,
-             inchangé par ce déplacement). -->
+        <!-- Refonte 2026-07-12 (livraison Cyril « nuages metaball + pluie + impacts ») :
+             UN seul host pour tous les items VFX + évènements (brume, lucioles, nuages,
+             pluie, orage, éclair, feu, panique). Chaque item porte son propre switch +
+             (si applicable) ses sliders — cf. wireEdaPanel::vfxGroups. Le bouton
+             "⏹ Tout arrêter" reste en fin de rubrique pour couper tous les évènements. -->
         <div id="debugLightVfxControls"></div>
+        <button type="button" id="debugLightWeatherStopAll" class="debug-light-weather-stopall" title="Arrête tous les évènements environnementaux en cours">⏹ Tout arrêter</button>
       </div>
 
       </div><!-- /.debug-light-columns -->
@@ -1043,52 +1094,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
 
   _renderWaterControls(_waterCurrent);
 
-  // ─── Contrôles VFX MÉTÉO (onglet Environnement, rubrique 8 "Météo", fusionné le
-  // 2026-07-10 — ex-rubrique 2 indépendante, cf. #debugLightVfxControls déplacé dans
-  // .debug-light-weather-section) ────────────────────────────────────────────────
-  // Brume/lucioles/pluie : réglages en direct via vfxSettings.js (get/set + persistance
-  // localStorage déjà gérées là-bas, pas de state dupliqué ici — même esprit que Qualité/
-  // densité ci-dessous, mais un store partagé au lieu d'un getter/setter par overlay).
-  {
-    const vfxHost = root.querySelector('#debugLightVfxControls');
-    const vfxGroups = [
-      { effect: 'groundMist', title: '🌫️ Brume matinale', sliders: VFX_MIST_SLIDERS },
-      { effect: 'fireflies',  title: '✨ Lucioles',        sliders: VFX_FIREFLY_SLIDERS },
-      { effect: 'rain',       title: '🌧️ Pluie / Orage',   sliders: VFX_RAIN_SLIDERS }
-    ];
-    for (const group of vfxGroups) {
-      const head = document.createElement('div');
-      head.className = 'lut-section-head lut-section-head--with-toggle';
-      head.innerHTML = `<span>${group.title}</span><button type="button" class="debug-light-weather-btn debug-light-vfx-reset" title="Réinitialiser" style="width:auto;padding:2px 8px;">↺</button>`;
-      vfxHost.appendChild(head);
-      const rows = document.createElement('div');
-      rows.className = 'debug-light-subgroup';
-      vfxHost.appendChild(rows);
-      const sliderEls = [];
-      const renderGroup = () => {
-        const current = getVfxSettings(group.effect);
-        for (const { s, input, output } of sliderEls) {
-          input.value = String(current[s.key]);
-          output.textContent = formatNumber(current[s.key]);
-        }
-      };
-      const initial = getVfxSettings(group.effect);
-      for (const s of group.sliders) {
-        const { row, input, output } = createRawSlider(s.label, s.min, s.max, s.step, initial[s.key],
-          v => setVfxSetting(group.effect, s.key, v), pushUndo, null);
-        sliderEls.push({ s, input, output });
-        rows.appendChild(row);
-      }
-      head.querySelector('.debug-light-vfx-reset').addEventListener('click', () => {
-        pushUndo();
-        resetVfxSettings(group.effect);
-        renderGroup();
-      });
-      // Resync visuel si la valeur change hors slider (undo/redo, setAllVfxSettings) —
-      // sinon les sliders affichent une position périmée après un Annuler/Refaire.
-      onVfxSettingsChange((effect) => { if (effect === null || effect === group.effect) renderGroup(); });
-    }
-  }
+  // (Rubrique 8 Météo — construite plus bas, une fois environmentDirector disponible.)
 
   // ─── Contrôles CINÉMA embarqués dans le panel CUSTOMISATION ─────────────────
   let _cinCurrent = _normalizeCin({ ...CIN_DEFAULTS, ...(_readCinStored() ?? {}) });
@@ -1464,7 +1470,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
       wind: _windCurrent, cloud: _cloudCurrent, dayNight: _dayNightCurrent,
       density: getContentDensity(),
       weather: environmentDirector ? [...environmentDirector.active.keys()] : [],
-      vfx: getAllVfxSettings(),
+      vfx: _snapshotAllVfx(),
     };
     const text = JSON.stringify(combined, null, 2);
     await copyToClipboard(text).catch(err => console.warn('[debugLightUI] copie impossible', err));
@@ -1561,50 +1567,142 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     v => _applyDensity(v), null, 'quality.density');
   qualityControlsHost.appendChild(_qualityDensitySlider.row);
 
-  // ─── Contrôles MÉTÉO (onglet Environnement, rubrique 8) ──────────────────────
-  // Ex-panneau flottant "🌦 ENV" (environmentDebugUi.js), fusionné dans l'EDA le
-  // 2026-07-08 — même geste que l'intégration Qualité/densité ci-dessus. Câble
-  // directement environmentDirector : trigger, stop, stopAll + rafraîchissement
-  // via onEnvironmentChange + timer 500 ms (pour capter aussi l'auto-expiration).
+  // ─── Contrôles VFX MÉTÉO (onglet Environnement, rubrique 8) ─────────────────
+  // Refonte 2026-07-12 (livraison Cyril « nuages metaball + pluie + impacts ») :
+  // fusion des deux ex-boucles (VFX sliders + boutons Déclencher/Stop) en UN
+  // seul modèle unifié — chaque item = 1 switch (qui est l'état actif de l'évènement,
+  // ou juste "déplier les sliders" pour 'clouds' qui n'a pas d'évènement propre)
+  // + optionnellement des sliders (repliés quand off). Règles pluie⇄nuages :
+  //   1) activer 'clouds' → n'active PAS la pluie (indépendant) ;
+  //   2) activer 'rain'/'storm' → force 'clouds' à s'activer (la pluie ne tombe que
+  //      des nuages, cf. rainCloudOverlay.js::updateRainCloudOverlay) ;
+  //   3) désactiver 'rain' → nuages restent ;
+  //   4) désactiver 'clouds' → coupe AUSSI rain/storm (pas de nuages, pas de pluie).
   if (environmentDirector) {
-    const weatherHost    = root.querySelector('#debugLightWeatherRows');
+    const vfxHost = root.querySelector('#debugLightVfxControls');
     const weatherStopAll = root.querySelector('#debugLightWeatherStopAll');
-    const _weatherRows   = new Map();
+    const vfxGroups = [
+      { effect: 'groundMist', eventId: 'morningMist', title: '🌫️ Brume matinale', sliders: VFX_MIST_SLIDERS },
+      { effect: 'fireflies',  eventId: 'fireflies',   title: '✨ Lucioles',        sliders: VFX_FIREFLY_SLIDERS },
+      { effect: 'clouds',     eventId: null,          title: '☁️ Nuages de pluie', sliders: VFX_CLOUD_SLIDERS },
+      { effect: 'rain',       eventId: 'rain',        title: '🌧️ Pluie',          sliders: VFX_RAIN_SLIDERS },
+      { effect: 'storm',      eventId: 'storm',       title: '⛈️ Orage',          sliders: VFX_STORM_SLIDERS },
+      { effect: null,         eventId: 'lightning',   title: '⚡ Éclair',          sliders: null },
+      { effect: null,         eventId: 'fire',        title: '🔥 Feu',            sliders: null },
+      { effect: null,         eventId: 'panic',       title: '🐑 Panique animale', sliders: null }
+    ];
+    const _weatherRefreshers = [];
+    let _forceCloudsOn = null;         // rempli quand la carte 'clouds' est construite
+    const _refreshByEvent = {};        // permet à 'clouds' de décocher rain/storm
 
-    for (const [id, def] of Object.entries(ENVIRONMENT_EVENTS)) {
-      const row = document.createElement('div');
-      row.className = 'debug-light-weather-row';
-      const requiresLabel = def.requires ? ` <em class="weather-requires">(nécessite ${ENVIRONMENT_EVENTS[def.requires].label})</em>` : '';
-      row.innerHTML = `
-        <span class="weather-label">${def.label}${requiresLabel}</span>
-        <span class="weather-status"></span>
-        <button type="button" class="debug-light-weather-btn">Déclencher</button>
-      `;
-      const btn    = row.querySelector('.debug-light-weather-btn');
-      const status = row.querySelector('.weather-status');
+    for (const group of vfxGroups) {
+      const def = group.eventId ? ENVIRONMENT_EVENTS[group.eventId] : null;
+      const requiresLabel = def?.requires ? ` <em class="weather-requires">(nécessite ${ENVIRONMENT_EVENTS[def.requires].label})</em>` : '';
+      const switchTitle = group.eventId ? 'Activer / désactiver' : 'Activer / désactiver les nuages';
 
-      const refresh = () => {
-        const active = isEnvironmentEventActive(environmentDirector, id);
-        status.textContent = active ? '● actif' : '';
-        btn.textContent    = active ? 'Stop' : 'Déclencher';
-        btn.classList.toggle('debug-light-weather-btn--active', active);
-        btn.disabled = !active && def.requires && !isEnvironmentEventActive(environmentDirector, def.requires);
+      const head = document.createElement('div');
+      head.className = 'lut-section-head lut-section-head--with-toggle weather-merged-head';
+      head.innerHTML =
+        `<span class="weather-label">${group.title}${requiresLabel}</span>` +
+        `<span class="weather-head-controls">` +
+          (group.sliders ? `<button type="button" class="debug-light-weather-btn debug-light-vfx-reset" title="Réinitialiser" style="width:auto;padding:2px 8px;">↺</button>` : '') +
+          `<label class="pix-switch" title="${switchTitle}"><input type="checkbox" class="weather-merged-switch" /><span></span></label>` +
+        `</span>`;
+      vfxHost.appendChild(head);
+
+      const rows = group.sliders ? document.createElement('div') : null;
+      if (rows) {
+        rows.className = 'debug-light-subgroup debug-light-vfx-rows';
+        vfxHost.appendChild(rows);
+      }
+
+      const switchEl = head.querySelector('.weather-merged-switch');
+      const applyRowsVisible = (visible) => {
+        if (rows) rows.classList.toggle('debug-light-vfx-rows--collapsed', !visible);
       };
 
-      btn.addEventListener('click', () => {
-        if (isEnvironmentEventActive(environmentDirector, id)) stopEnvironmentEvent(environmentDirector, id);
-        else triggerEnvironmentEvent(environmentDirector, id, performance.now() * 0.001);
+      if (group.eventId) {
+        const refresh = () => {
+          const active = isEnvironmentEventActive(environmentDirector, group.eventId);
+          switchEl.checked = active;
+          switchEl.disabled = !active && def.requires && !isEnvironmentEventActive(environmentDirector, def.requires);
+          applyRowsVisible(active);
+        };
+        switchEl.addEventListener('change', () => {
+          if (switchEl.checked) {
+            // duration: Infinity → l'évènement NE s'auto-expire PAS pour un déclenchement
+            // manuel debug. L'auto-expiration servira au futur cycle météo automatique.
+            triggerEnvironmentEvent(environmentDirector, group.eventId, performance.now() * 0.001, { duration: Infinity });
+            // Règle 2 : activer Pluie/Orage force Nuages aussi (la pluie ne tombe que des nuages).
+            if (group.eventId === 'rain' || group.eventId === 'storm') _forceCloudsOn?.();
+          } else {
+            stopEnvironmentEvent(environmentDirector, group.eventId);
+          }
+          refresh();
+        });
+        _weatherRefreshers.push(refresh);
+        _refreshByEvent[group.eventId] = refresh;
         refresh();
-      });
+      } else if (group.sliders) {
+        // 'clouds' : pas d'évènement environmentDirector propre. Le switch reste un vrai on/off,
+        // il déplie les sliders ET gate le rendu des nuages (isVfxGroupExpanded('clouds') lu par
+        // rainCloudOverlay.js). Off par défaut. Activer Pluie/Orage force ce switch à on (règle 2).
+        const applyExpanded = (expanded) => {
+          switchEl.checked = expanded;
+          applyRowsVisible(expanded);
+        };
+        applyExpanded(isVfxGroupExpanded(group.effect));
+        if (group.effect === 'clouds') {
+          _forceCloudsOn = () => {
+            if (isVfxGroupExpanded('clouds')) return;
+            setVfxGroupExpanded('clouds', true);
+            applyExpanded(true);
+          };
+        }
+        switchEl.addEventListener('change', () => {
+          setVfxGroupExpanded(group.effect, switchEl.checked);
+          applyExpanded(switchEl.checked);
+          // Règle 4 : couper "Nuages" coupe AUSSI rain/storm.
+          if (group.effect === 'clouds' && !switchEl.checked) {
+            for (const ev of ['rain', 'storm']) {
+              if (isEnvironmentEventActive(environmentDirector, ev)) {
+                stopEnvironmentEvent(environmentDirector, ev);
+                _refreshByEvent[ev]?.();
+              }
+            }
+          }
+        });
+      }
 
-      _weatherRows.set(id, refresh);
-      weatherHost.appendChild(row);
-      refresh();
+      if (group.sliders) {
+        const sliderEls = [];
+        const renderGroup = () => {
+          const current = getVfxSettings(group.effect);
+          for (const { s, input, output } of sliderEls) {
+            input.value = String(current[s.key]);
+            output.textContent = formatNumber(current[s.key]);
+          }
+        };
+        const initial = getVfxSettings(group.effect);
+        for (const s of group.sliders) {
+          const { row, input, output } = createRawSlider(s.label, s.min, s.max, s.step, initial[s.key],
+            v => setVfxSetting(group.effect, s.key, v), pushUndo, null);
+          sliderEls.push({ s, input, output });
+          rows.appendChild(row);
+        }
+        head.querySelector('.debug-light-vfx-reset').addEventListener('click', () => {
+          pushUndo();
+          resetVfxSettings(group.effect);
+          renderGroup();
+        });
+        // Resync visuel si la valeur change hors slider (undo/redo, restore snapshot).
+        onVfxSettingsChange((effect) => { if (effect === null || effect === group.effect) renderGroup(); });
+      }
     }
 
     weatherStopAll.addEventListener('click', () => stopAllEnvironmentEvents(environmentDirector));
 
-    const _refreshAllWeather = () => { for (const r of _weatherRows.values()) r(); };
+    const _refreshAllWeather = () => { for (const r of _weatherRefreshers) r(); };
     onEnvironmentChange(environmentDirector, _refreshAllWeather);
     setInterval(_refreshAllWeather, 500); // capte l'auto-expiration entre 2 transitions
   }
@@ -1612,7 +1710,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   // ─── Mini HUD clavier (bottom-right, toujours visible) ─────────────────────
   const kbdHint = document.createElement('div');
   kbdHint.id = 'kbdHintHud';
-  kbdHint.innerHTML = 'H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif';
+  kbdHint.innerHTML = _kbdHintText || 'H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif';
   document.body.appendChild(kbdHint);
 
   applyAll();
@@ -1648,7 +1746,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   // appellent pushUndo() avant modification, mais le snapshot ne capturait pas leur
   // valeur → Annuler ne les rétablissait pas).
   function _snapshotAll() {
-    return JSON.stringify({ lut: state, pix: _pixCurrent, cin: _cinCurrent, water: _waterCurrent, wind: _windCurrent, cloud: _cloudCurrent, vfx: getAllVfxSettings() });
+    return JSON.stringify({ lut: state, pix: _pixCurrent, cin: _cinCurrent, water: _waterCurrent, wind: _windCurrent, cloud: _cloudCurrent, vfx: _snapshotAllVfx() });
   }
 
   function _restoreSnapshot(json) {
@@ -1660,7 +1758,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     _commitWater(snap.water);
     if (snap.wind)  _commitWind(snap.wind);
     if (snap.cloud) _commitCloud(snap.cloud);
-    if (snap.vfx)   setAllVfxSettings(snap.vfx);
+    if (snap.vfx)   _restoreAllVfx(snap.vfx);
     applyAll();
   }
 

@@ -1,6 +1,6 @@
 /**
  * domUtils.js — Petits utilitaires DOM/texte partagés entre les panneaux HUD
- * (highscore.js, hud_eda.js, multiplayerUi.js, ui.js).
+ * (highscore.js, edaPanelWiring.js, startupMenu.js/multiplayerRooms.js (ex-multiplayerUi.js), ui.js).
  *
  * escapeHtml existait en 4 exemplaires légèrement différents (ordre des
  * caractères, apostrophe parfois non échappée) — version canonique ici,

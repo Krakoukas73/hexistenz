@@ -3,5 +3,16 @@
 @import url('./help.css');
 @import url('./highscore.css');
 @import url('./missions.css');
+@import url('./eda.css');
+@import url('./startupMenu.css');
+@import url('./preloader.css');
 
 /* postprocessHud.css supprimé : PIX HUD fusionné dans debugLightUi (panel CUSTOMISATION) */
+/* eda.css : CSS du panneau EDA + HUD FPS, ex-installDebugLightCss() dans debugLightUi.js
+   (renommé edaPanelHost.js le 2026-07-11 — CSS extrait la même date, pur découpage
+   fichier, aucune règle modifiée). */
+/* startupMenu.css : écran démarrage + carrousel de fond, ex-ensureMenuBackgroundStyles()
+   dans multiplayerUi.js (renommé startupMenu.js le 2026-07-11 — CSS extrait la même
+   date, injection JS supprimée au profit du chargement statique). */
+/* preloader.css : écran de chargement initial, ex-injectStyles() dans preloader.js
+   (CSS extrait le 2026-07-11, injection JS supprimée au profit du chargement statique). */

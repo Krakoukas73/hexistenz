@@ -1,7 +1,7 @@
 /**
  * sceneProfiler.js — Classification et comptage des objets de la scène Three.js.
  *
- * Extrait de debugLightUi.js : logique indépendante du HUD, réutilisable.
+ * Extrait de debugLightUi.js (renommé edaPanelHost.js le 2026-07-11) : logique indépendante du HUD, réutilisable.
  * Fournit :
  *   scanScene(scene)  → counts : Record<label, {count, draws, tris, shadows}>
  *   GROUP_ORDER, GROUP_ICONS, ITEM_GROUP, CATEGORY_ICONS  → métadonnées UI
@@ -264,6 +264,12 @@ const _GLB_LABELS = [
 
 function _classifyInstanced(obj) {
   const n = obj.name ?? '';
+  // VFX météo (weatherVfxOverlay.js / rainCloudOverlay.js) — VFXParticles.getMesh() et
+  // l'InstancedMesh des puffs/gouttes/impacts sont tous des InstancedMesh.
+  if (n === 'hexistenz-vfx-fireflies')            return 'Lucioles';
+  if (n === 'hexistenz-vfx-rain')                 return 'Pluie';
+  if (n === 'hexistenz-vfx-rain-impact')          return 'Pluie';
+  if (n.startsWith('hexistenz-vfx-rain-clouds'))  return 'Nuages de pluie';
   if (n.startsWith('instanced-tree-')) {
     const rest = n.slice('instanced-tree-'.length);
     const species = _TREE_SPECIES_KEYS.find(k => rest.startsWith(k));

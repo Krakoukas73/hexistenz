@@ -18,7 +18,7 @@ import { createUI, setGridOnlyModeVisible, setHelpVisible, setText, updateDeckUI
 import { createPlacementFeedbackOverlay, getPlacementLabel } from './placementOverlay.js';
 import { createHoverZoneOverlay, createWaterZoneOverlay, rebuildHoverZoneOverlay, rebuildWaterZoneOverlay, updateHoverZoneOverlayAnimation, updateZoneLabelLOD, updateBeachLOD, getHoverRebuildStats, resetHoverRebuildStats } from './waterZoneOverlay.js';
 import { createRailTrainOverlay, rebuildRailTrainOverlay, updateRailTrainOverlay, updateRailTrainLOD, getTrainLocoPositions } from './railTrainOverlay.js';
-import { createWaterBoatOverlay, rebuildWaterBoatOverlay, updateWaterBoatOverlay, updateWaterBoatLOD } from './waterBoatOverlay.js';
+import { createWaterBoatOverlay, rebuildWaterBoatOverlay, updateWaterBoatOverlay, updateWaterBoatLOD } from './shaders/waterBoatOverlay.js';
 import { createForestOverlay, rebuildForestOverlay, updateForestLOD } from './forestOverlay.js';
 import { createFieldWheatOverlay, rebuildFieldWheatOverlay, updateFieldWheatLOD } from './fieldWheatOverlay.js';
 import { createGrassBladeOverlay, rebuildGrassBladeOverlay, updateGrassBladeLOD } from './grassBladeOverlay.js';
@@ -34,19 +34,21 @@ import { createCometSky, updateCometSky, tryCometHit, removeCometFromSky, spawnC
 import { createCloudSky, updateCloudSky, getCloudUserEnabled, getCloudSkyParams } from './cloudSky.js';
 import { updateGlobalWind } from './globalWind.js';
 import { resetPropHitboxRegistry } from './propHitboxRegistry.js';
-import { createDebugLightUI, tickFps } from './debugLightUi.js';
+import { createDebugLightUI, tickFps } from './edaPanelHost.js';
 import { createEnvironmentDirector, updateEnvironmentDirector } from './environmentDirector.js';
-import { createMorningMistOverlay, updateMorningMist } from './morningMistOverlay.js';
+import { createMorningMistOverlay, updateMorningMist } from './shaders/morningMistOverlay.js';
 import { createWeatherVfxOverlay, updateWeatherVfxOverlay } from './weatherVfxOverlay.js';
+import { createRainCloudOverlay, rebuildRainCloudOverlay, updateRainCloudOverlay } from './rainCloudOverlay.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, setAstreMode, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './threeSetup.js';
 import { applyShadowCulling, rebuildShadowCasters } from './shadowCulling.js';
 import { addTileToTerrainMerge, createTerrainMergeGroup, hideTerrainMeshes, rebuildTerrainMerge } from './terrainMerge.js';
 import { createWaterSurfaceOverlay, rebuildWaterSurfaceOverlay, updateWaterSurfaceLOD } from './waterSurfaceOverlay.js';
-// createPostprocessHud supprimé : PIX HUD fusionné dans debugLightUi (panel CUSTOMISATION)
-// createWaterDebugPanel supprimé : HUD EAU (Cyril) fusionné dans debugLightUi (panel CUSTOMISATION, avant PIXELISATION)
+// createPostprocessHud supprimé : PIX HUD fusionné dans le panel EDA (edaPanelHost.js/edaPanelWiring.js, ex-debugLightUi.js/hud_eda.js, panel CUSTOMISATION)
+// createWaterDebugPanel supprimé : HUD EAU (Cyril) fusionné dans le panel EDA (panel CUSTOMISATION, avant PIXELISATION)
 import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
-import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, clonePlain, consumeCompletedMissions, createMissionManager, formatMissionTitle, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, serializeMissionManager, setMissionTurn } from './missions.js';
+import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, clonePlain, consumeCompletedMissions, createMissionManager, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, serializeMissionManager, setMissionTurn } from './missions.js';
+import { formatMissionTitle } from './missionLabels.js';
 import { pollRoom, updateCursor, updateRoomState } from './multiplayerClient.js';
 import { showScorePopup } from './scorePopup.js';
 
@@ -55,6 +57,26 @@ import { showScorePopup } from './scorePopup.js';
 // est bien celui exécuté par le navigateur. Si ce log n'apparaît jamais dans une session, le
 // fichier chargé n'est pas celui-ci, point final — ce n'est pas un bug dans le code qui suit.
 console.warn('[SCENE-JS-BUILD] scene.js chargé — build shader-precompile 2026-07-05-23h40');
+
+// Passage bilingue FR/EN le 2026-07-12 : hint temporaire "sortir du super-immersif",
+// texte sous json/languages/{french,english}.json (clé game.superImmersifExitHint),
+// même mécanisme que les autres modules (top-level await + localStorage
+// 'hexistenz_pres_lang').
+function _getGameLang() {
+  try {
+    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
+  } catch {
+    return 'fr';
+  }
+}
+const _sceneLangFile = _getGameLang() === 'en' ? 'english' : 'french';
+const _superImmersifExitHintText = await fetch(`./json/languages/${_sceneLangFile}.json`)
+  .then(r => r.json())
+  .then(data => data?.game?.superImmersifExitHint ?? '')
+  .catch(err => {
+    console.error(`[scene] Impossible de charger ${_sceneLangFile}.json`, err);
+    return '';
+  });
 
 export function initScene(options = {}) {
   const canvas = document.getElementById('app');
@@ -173,13 +195,19 @@ export function initScene(options = {}) {
   const environmentDirector = createEnvironmentDirector();
   const weatherVfxOverlay = createWeatherVfxOverlay(scene);
   const morningMistOverlay = createMorningMistOverlay(scene);
+  // Nuages « chou-fleur » (metaballs marching-cubes) + pluie qui tombe réellement de
+  // chaque nuage + impacts au sol (livraison Cyril 2026-07-11) — remplace la pluie
+  // VFXParticles auparavant portée par weatherVfxOverlay. Rebuild sur changement de
+  // plateau ; update chaque frame ; visibilité gérée en interne via isVfxGroupExpanded
+  // + isEnvironmentEventActive('rain'/'storm').
+  const rainCloudOverlay = createRainCloudOverlay(scene);
 
   // Créé ici (et non plus juste après createCamera) : le panel VENT/NUAGES a besoin
   // des références forestOverlay (arbres GPU-wind) et cloudSky (nuages horizon jour).
   createDebugLightUI({ visualEnvironment, postprocess, forestOverlay, cloudSky, environmentDirector });
 
   // Réglage de densité de contenu (qualité/FPS) : intégré au panel EDA depuis le
-  // 2026-07-08 (onglet Environnement, rubrique 7) — cf. hud_eda.js. Plus de bouton
+  // 2026-07-08 (onglet Environnement, rubrique 7) — cf. edaPanelWiring.js. Plus de bouton
   // flottant séparé (ex-qualityUi.js, supprimé).
 
   // isSoleil : override localStorage > tirage aléatoire si aucune préférence stockée
@@ -201,7 +229,7 @@ export function initScene(options = {}) {
     if (_starsEarly) _starsEarly.visible = true;
   }
   // Sync case à cocher Jour/Nuit du panel EDA (onglet Environnement, rubrique 6) + localStorage
-  // au mode résolu (random → valeur concrète). Le listener dans hud_eda.js est déjà câblé à ce
+  // au mode résolu (random → valeur concrète). Le listener dans edaPanelWiring.js est déjà câblé à ce
   // stade (createDebugLightUI ci-dessus) ; celui de scene.js (plus bas) ne l'est pas encore →
   // pas de double application du rendu jour/nuit (déjà fait directement ci-dessus).
   {
@@ -750,7 +778,8 @@ export function initScene(options = {}) {
     _vfxPrevTimeSeconds = timeSeconds;
     updateEnvironmentDirector(environmentDirector, timeSeconds);
     updateMorningMist(morningMistOverlay, environmentDirector, timeSeconds, deltaSeconds);
-    updateWeatherVfxOverlay(weatherVfxOverlay, environmentDirector, timeSeconds, deltaSeconds, controls.target);
+    updateWeatherVfxOverlay(weatherVfxOverlay, environmentDirector, timeSeconds, deltaSeconds);
+    updateRainCloudOverlay(rainCloudOverlay, environmentDirector, timeSeconds, deltaSeconds);
     updateAnimatedBiomeTextures(timeSeconds);
     updateGlobalWind(timeSeconds);
     updateRealisticWater(timeSeconds);
@@ -1096,6 +1125,10 @@ export function initScene(options = {}) {
     rebuildCharacterOverlay(characterOverlay, placedTiles);
     rebuildDecorOverlay(fieldWaterEffectsOverlay, placedTiles);
     rebuildSheepOverlay(sheepOverlay, placedTiles);
+    // Nuages de pluie (metaballs) : recalculés à partir des tuiles posées — chaque tuile
+    // a une chance déterministe (hashUtils) de porter un nuage. Marching cubes mis en
+    // cache par seed → seule la 1re passe est coûteuse (~30 ms), les suivantes réutilisent.
+    rebuildRainCloudOverlay(rainCloudOverlay, placedTiles);
   }
 
   function refreshDeckUI() {
@@ -1121,7 +1154,7 @@ export function initScene(options = {}) {
     if (existing) { clearTimeout(existing._timer); existing.remove(); }
     const el = document.createElement('div');
     el.id = 'superImmersifExitHint';
-    el.textContent = 'ESPACE pour sortir du monde super immersif';
+    el.textContent = _superImmersifExitHintText || 'ESPACE pour sortir du monde super immersif';
     Object.assign(el.style, {
       position:        'fixed',
       top:             '18px',

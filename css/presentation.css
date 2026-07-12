@@ -1000,10 +1000,10 @@ nav {
 .hs-list { display: flex; flex-direction: column; gap: 10px; margin-top: 40px; }
 .hs-card {
   display: grid;
-  grid-template-columns: 52px 1fr auto;
+  grid-template-columns: 88px 1fr auto;
   gap: 0 20px;
   align-items: center;
-  padding: 18px 22px;
+  padding: 20px 24px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -1013,9 +1013,17 @@ nav {
 .hs-card.gold-1 { border-color: rgba(240,208,80,0.40); }
 .hs-card.gold-2 { border-color: rgba(200,180,140,0.30); }
 .hs-card.gold-3 { border-color: rgba(160,140,100,0.25); }
+
+/* Rang : gros numéro centré (pas de médaille — retirée à la demande utilisateur). */
+.hs-rank-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
 .hs-rank {
   font-family: var(--font-title);
-  font-size: 32px;
+  font-size: 46px;
   letter-spacing: 0.02em;
   color: var(--text-dim);
   line-height: 1;
@@ -1024,31 +1032,87 @@ nav {
 .hs-card.gold-1 .hs-rank { color: var(--gold); }
 .hs-card.gold-2 .hs-rank { color: #d8c8a0; }
 .hs-card.gold-3 .hs-rank { color: #c0a878; }
+
 .hs-main {}
-.hs-name { font-size: 16px; font-weight: 700; margin-bottom: 5px; color: var(--text); letter-spacing: 0.02em; }
+
+/* Nom + date : bien plus visibles qu'avant (16px→20px, date sortie du petit
+   texte gris pour devenir une ligne propre en bleu clair). */
+.hs-name { font-family: var(--font-title); font-size: 27px; font-weight: 800; margin-bottom: 4px; color: var(--text); letter-spacing: 0.07em; }
+.hs-date {
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue);
+  letter-spacing: 0.04em;
+}
+
+/* "Tuiles posées" : seule sur sa ligne, en gros — la stat vedette de la carte. */
+.hs-headline-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--text);
+}
+.hs-headline-stat .icon { font-size: 31px; }
+
+/* Toutes les AUTRES petites stats (lignes, bateaux, comètes, détail des biomes) :
+   un seul flux .hs-meta, un seul style, plus petit que la stat vedette.
+   row-gap réduit de 28% (14px→10px) : espacement vertical entre lignes wrappées
+   uniquement — column-gap (entre stats sur une même ligne) inchangé. */
 .hs-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  font-size: 11px;
-  color: var(--text-dim);
-  letter-spacing: 0.04em;
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 9px;
+  margin-bottom: 6px;
 }
-.hs-meta-item { display: flex; align-items: center; gap: 4px; }
-.hs-meta-item .icon { font-size: 13px; }
-.hs-date { color: rgba(120,180,255,0.40); }
-.hs-meta-biomes { margin-top: 5px; gap: 10px; opacity: 0.75; }
-.hs-biome-chip { font-size: 10px; gap: 3px; }
-.hs-biome-total { color: var(--text-dim); }
-.hs-biome-sep  { color: rgba(120,180,255,0.35); }
-.hs-biome-max  { color: rgba(120,180,255,0.60); }
+.hs-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-family: 'Space Mono';
+  font-weight: 400;
+  color: var(--text);
+}
+/* Icônes des petites stats : même badge rond bleu que .player-dot.active */
+.hs-meta-item .icon {
+  width: 34px;
+  height: 34px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid var(--blue);
+  background: var(--blue-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  flex-shrink: 0;
+}
+
+.hs-biome-label { color: var(--text); font-weight: 400; }
+/* Chiffres des stats (lignes/bateaux/comètes + totaux/max biomes) : Bebas Neue bleu,
+   détachés de la typo Space Mono des labels. Taille +10% (22px→24px). */
+.hs-stat-num, .hs-biome-total, .hs-biome-max {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--blue);
+}
+.hs-biome-note { color: var(--text-dim); font-size: 10px; font-weight: 600; }
+
 .hs-score-col { text-align: right; }
 .hs-score {
   font-family: var(--font-title);
-  font-size: 36px;
+  font-size: 41px;
   letter-spacing: 0.04em;
   color: var(--blue);
   line-height: 1;
+  text-shadow: 0 0 50px rgba(120,180,255,0.5);
 }
 .hs-card.gold-1 .hs-score { color: var(--gold); }
 .hs-empty { text-align: center; padding: 56px; color: var(--text-dim); font-size: 14px; border: 1px solid var(--border); border-radius: 12px; margin-top: 40px; }
@@ -1164,7 +1228,12 @@ body.nav-compact .hero-content { padding-top: 56px; }
   .stats-bar { flex-wrap: wrap; }
   .stat-item { min-width: 50%; }
   .footer-inner { flex-direction: column; text-align: center; }
-  .hs-card { grid-template-columns: 40px 1fr auto; }
+  .hs-card { grid-template-columns: 60px 1fr auto; padding: 16px 16px; }
+  .hs-rank { font-size: 32px; }
+  .hs-name { font-size: 17px; }
+  .hs-score { font-size: 28px; }
+  .hs-headline-stat { font-size: 15px; }
+  .hs-headline-stat .icon { font-size: 26px; }
 
   .hero-banner { height: 50vh; }
   .hero-subtitle { white-space: normal; }

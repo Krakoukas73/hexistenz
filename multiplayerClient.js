@@ -1,3 +1,25 @@
+// Passage bilingue FR/EN le 2026-07-12 : les 2 messages d'erreur réseau
+// viennent de json/languages/{french,english}.json (clé game.multiplayerClient),
+// même mécanisme que les autres modules (top-level await + localStorage
+// 'hexistenz_pres_lang'). Repli FR en dur (chemin d'erreur réseau).
+function getGameLang() {
+  try {
+    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
+  } catch {
+    return 'fr';
+  }
+}
+
+const _langFile = getGameLang() === 'en' ? 'english' : 'french';
+
+const _mcText = await fetch(`./json/languages/${_langFile}.json`)
+  .then(r => r.json())
+  .then(data => data?.game?.multiplayerClient ?? {})
+  .catch(err => {
+    console.error(`[multiplayerClient] Impossible de charger ${_langFile}.json`, err);
+    return {};
+  });
+
 const API_URL = './multiplayer.php';
 const PLAYER_ID_KEY = 'dorfromantik.multiplayer.tabPlayerId';
 
@@ -64,11 +86,13 @@ async function parseApiResponse(response) {
   try {
     data = text ? JSON.parse(text) : null;
   } catch (error) {
-    throw new Error(`Réponse serveur illisible (${response.status}) : ${text.slice(0, 180)}`);
+    const tpl = _mcText.unreadableResponse ?? 'Réponse serveur illisible ({status}) : {text}';
+    throw new Error(tpl.replace('{status}', response.status).replace('{text}', text.slice(0, 180)));
   }
 
   if (!response.ok || data?.ok === false) {
-    throw new Error(data?.error || `Erreur serveur ${response.status}`);
+    const tpl = _mcText.serverError ?? 'Erreur serveur {status}';
+    throw new Error(data?.error || tpl.replace('{status}', response.status));
   }
 
   return data;

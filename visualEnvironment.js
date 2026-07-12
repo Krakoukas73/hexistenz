@@ -4,7 +4,7 @@ import { applyRealisticWaterPalette } from './realisticWater.js';
 import {
   colorGradingVertexShader, colorGradingFragmentShader,
   domeCielVertexShader,     domeCielFragmentShader
-} from './shaders/shaderEnvironnement.js';
+} from './shaders/shaderEnvironment.js';
 import { clamp01 } from './tileUtils.js';
 
 export const DEFAULT_VISUAL_ENVIRONMENT_CONFIG = {
@@ -92,7 +92,7 @@ export const COLOR_GRADING_SHADER = {
     uPaletteDither: { value: 0.0 },
     uPixelSize: { value: 1.0 }
   },
-  // Shaders externalisés dans shaders/shaderEnvironnement.js
+  // Shaders externalisés dans shaders/shaderEnvironment.js
   vertexShader:   colorGradingVertexShader,
   fragmentShader: colorGradingFragmentShader
 };
@@ -261,7 +261,7 @@ function createEnvironmentDome(config) {
       uBottomColor: { value: new THREE.Color(config.environment.domeColorBottom) },
       uOpacity: { value: Number(config.environment.domeOpacity ?? 0) }
     },
-    // Shaders externalisés dans shaders/shaderEnvironnement.js
+    // Shaders externalisés dans shaders/shaderEnvironment.js
     vertexShader:   domeCielVertexShader,
     fragmentShader: domeCielFragmentShader,
     side: THREE.BackSide,

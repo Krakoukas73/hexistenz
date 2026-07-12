@@ -1,8 +1,27 @@
 <?php
-	// RIEN
+// Textes bilingues du jeu — json/languages/{french,english}.json (2026-07-12),
+// clé "game.ui". Même mécanisme que index.php (dual-render data-fr/data-en +
+// tr($t,$lang,$path)) : la langue affichée est purement client-side (CSS +
+// script de bootstrap ci-dessous), pilotée par le même choix que la prez
+// (localStorage 'hexistenz_pres_lang'). Chargement dupliqué volontairement
+// (pas d'include partagé avec index.php) pour ne pas toucher un fichier déjà
+// validé.
+$langDir = __DIR__ . '/json/languages/';
+$t = [
+    'fr' => json_decode(@file_get_contents($langDir . 'french.json'), true) ?: [],
+    'en' => json_decode(@file_get_contents($langDir . 'english.json'), true) ?: [],
+];
+function tr($t, $lang, $path) {
+    $node = $t[$lang] ?? [];
+    foreach (explode('.', $path) as $part) {
+        if (!is_array($node) || !array_key_exists($part, $node)) return '';
+        $node = $node[$part];
+    }
+    return $node;
+}
 ?>
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-lang="fr">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,6 +36,9 @@
       background: linear-gradient(135deg, #b8ad90 0%, #8b8069 42%, #706653 68%, #a99d80 100%);
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), inset 0 -2px 4px rgba(47,43,35,0.35);
     }
+    /* Bascule bilingue FR/EN (mêmes règles que css/presentation.css pour la prez). */
+    [data-lang="fr"] [data-en] { display: none !important; }
+    [data-lang="en"] [data-fr] { display: none !important; }
   </style>
 
   <!-- Three.js local — élimine la dépendance CDN et la double-instance -->
@@ -29,6 +51,13 @@
       }
     }
   </script>
+  <script>
+    // Restaure la langue choisie dans la prez, avant le premier paint (évite tout flash FR/EN).
+    (function() {
+      var l = localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
+      document.documentElement.dataset.lang = l;
+    })();
+  </script>
 </head>
 <body>
   <canvas id="app"></canvas>
@@ -40,9 +69,9 @@
        highscores ici — celle-ci ne vit que dans la prez, rubrique Classement). -->
   <div id="highscoreModal" class="highscore-modal hidden">
     <div class="highscore-modal-panel">
-      <div class="highscore-modal-kicker">Partie terminée — score final</div>
+      <div class="highscore-modal-kicker"><span data-fr><?= tr($t,'fr','game.ui.modals.scoreEnd.kicker') ?></span><span data-en><?= tr($t,'en','game.ui.modals.scoreEnd.kicker') ?></span></div>
       <div class="highscore-modal-score"><span id="highscoreModalScoreValue">0</span></div>
-      <button id="btnSaveScore" type="button">Enregistrer</button>
+      <button id="btnSaveScore" type="button"><span data-fr><?= tr($t,'fr','game.ui.modals.scoreEnd.save') ?></span><span data-en><?= tr($t,'en','game.ui.modals.scoreEnd.save') ?></span></button>
       <div id="highscoreStatus" class="highscore-status"></div>
     </div>
   </div>
@@ -51,11 +80,11 @@
        (une partie abandonnée ne peut plus être reprise, cf. multiplayer.php). -->
   <div id="abandonConfirmModal" class="highscore-modal hidden">
     <div class="highscore-modal-panel">
-      <div class="highscore-modal-kicker">Abandonner la partie ?</div>
-      <div class="highscore-modal-sub">Cette partie ne pourra plus être reprise ensuite.</div>
+      <div class="highscore-modal-kicker"><span data-fr><?= tr($t,'fr','game.ui.modals.abandon.kicker') ?></span><span data-en><?= tr($t,'en','game.ui.modals.abandon.kicker') ?></span></div>
+      <div class="highscore-modal-sub"><span data-fr><?= tr($t,'fr','game.ui.modals.abandon.sub') ?></span><span data-en><?= tr($t,'en','game.ui.modals.abandon.sub') ?></span></div>
       <div class="game-action-row">
-        <button id="btnAbandonCancel" class="new-game-button" type="button">ANNULER</button>
-        <button id="btnAbandonConfirm" class="abandon-button" type="button">ABANDONNER</button>
+        <button id="btnAbandonCancel" class="new-game-button" type="button"><span data-fr><?= tr($t,'fr','game.ui.modals.abandon.cancel') ?></span><span data-en><?= tr($t,'en','game.ui.modals.abandon.cancel') ?></span></button>
+        <button id="btnAbandonConfirm" class="abandon-button" type="button"><span data-fr><?= tr($t,'fr','game.ui.modals.abandon.confirm') ?></span><span data-en><?= tr($t,'en','game.ui.modals.abandon.confirm') ?></span></button>
       </div>
     </div>
   </div>
@@ -65,54 +94,54 @@
   <aside id="scorePanel">
     <div id="multiplayerInfo" hidden class="multiplayer-info">
       <div class="multiplayer-info-block">
-        <div class="score-title">JOUEUR</div>
+        <div class="score-title"><span data-fr><?= tr($t,'fr','game.ui.hud.player') ?></span><span data-en><?= tr($t,'en','game.ui.hud.player') ?></span></div>
         <div id="multiPlayerName" class="multiplayer-info-value">—</div>
       </div>
       <div class="multiplayer-info-block">
-        <div class="score-title">PARTIE</div>
+        <div class="score-title"><span data-fr><?= tr($t,'fr','game.ui.hud.room') ?></span><span data-en><?= tr($t,'en','game.ui.hud.room') ?></span></div>
         <div id="multiRoomCode" class="multiplayer-info-value">—</div>
       </div>
     </div>
     <div class="game-action-row">
-      <button id="btnAbandonGame" class="abandon-button" type="button">ABANDONNER</button>
-      <button id="btnNewGame" class="new-game-button" type="button">NOUVELLE PARTIE</button>
+      <button id="btnAbandonGame" class="abandon-button" type="button"><span data-fr><?= tr($t,'fr','game.ui.hud.abandon') ?></span><span data-en><?= tr($t,'en','game.ui.hud.abandon') ?></span></button>
+      <button id="btnNewGame" class="new-game-button" type="button"><span data-fr><?= tr($t,'fr','game.ui.hud.newGame') ?></span><span data-en><?= tr($t,'en','game.ui.hud.newGame') ?></span></button>
     </div>
 
     <div id="statsPanel" class="stats-panel">
-	  <div class="stats-title">STATISTIQUES DE LA PARTIE</div>
+	  <div class="stats-title"><span data-fr><?= tr($t,'fr','game.ui.hud.statsTitle') ?></span><span data-en><?= tr($t,'en','game.ui.hud.statsTitle') ?></span></div>
       <div class="stats-summary-row">
-        <div class="stats-summary-card stats-field"><span>Moulins</span><div class="stats-num-group"><strong id="statMills">0</strong><span class="stats-emoji">⚙️</span></div></div>
-        <div class="stats-summary-card stats-trains"><span>Trains</span><div class="stats-num-group"><strong id="statTrains">0</strong><span class="stats-emoji">🚂</span></div></div><div class="stats-summary-card stats-boats"><span>Bateaux</span><div class="stats-num-group"><strong id="statBoats">0</strong><span class="stats-emoji">⛵</span></div></div><div class="stats-summary-card stats-comets"><span>Comètes</span><div class="stats-num-group"><strong id="statComets">0</strong><span class="stats-emoji">☄️</span></div></div>
+        <div class="stats-summary-card stats-field"><span><span data-fr><?= tr($t,'fr','game.ui.hud.mills') ?></span><span data-en><?= tr($t,'en','game.ui.hud.mills') ?></span></span><div class="stats-num-group"><strong id="statMills">0</strong><span class="stats-emoji">⚙️</span></div></div>
+        <div class="stats-summary-card stats-trains"><span><span data-fr><?= tr($t,'fr','game.ui.hud.trains') ?></span><span data-en><?= tr($t,'en','game.ui.hud.trains') ?></span></span><div class="stats-num-group"><strong id="statTrains">0</strong><span class="stats-emoji">🚂</span></div></div><div class="stats-summary-card stats-boats"><span><span data-fr><?= tr($t,'fr','game.ui.hud.boats') ?></span><span data-en><?= tr($t,'en','game.ui.hud.boats') ?></span></span><div class="stats-num-group"><strong id="statBoats">0</strong><span class="stats-emoji">⛵</span></div></div><div class="stats-summary-card stats-comets"><span><span data-fr><?= tr($t,'fr','game.ui.hud.comets') ?></span><span data-en><?= tr($t,'en','game.ui.hud.comets') ?></span></span><div class="stats-num-group"><strong id="statComets">0</strong><span class="stats-emoji">☄️</span></div></div>
       </div>
       <div class="stats-card-grid">
         <div class="stats-card stats-grass">
-          <div class="stats-card-head"><span class="stats-icon">🌿</span><span>Prairie</span></div>
-          <div class="stats-metrics"><div><span>Total</span><strong id="statGrass">0</strong></div><div><span>Surface max</span><strong id="statLargestGrass">0</strong></div></div>
+          <div class="stats-card-head"><span class="stats-icon">🌿</span><span><span data-fr><?= tr($t,'fr','game.ui.hud.biomes.grass') ?></span><span data-en><?= tr($t,'en','game.ui.hud.biomes.grass') ?></span></span></div>
+          <div class="stats-metrics"><div><span><span data-fr><?= tr($t,'fr','game.ui.hud.total') ?></span><span data-en><?= tr($t,'en','game.ui.hud.total') ?></span></span><strong id="statGrass">0</strong></div><div><span><span data-fr><?= tr($t,'fr','game.ui.hud.surfaceMax') ?></span><span data-en><?= tr($t,'en','game.ui.hud.surfaceMax') ?></span></span><strong id="statLargestGrass">0</strong></div></div>
         </div>
 
         <div class="stats-card stats-field">
-          <div class="stats-card-head"><span class="stats-icon">🌾</span><span>Champ de blé</span></div>
-          <div class="stats-metrics"><div><span>Total</span><strong id="statField">0</strong></div><div><span>Surface max</span><strong id="statLargestField">0</strong></div></div>
+          <div class="stats-card-head"><span class="stats-icon">🌾</span><span><span data-fr><?= tr($t,'fr','game.ui.hud.biomes.field') ?></span><span data-en><?= tr($t,'en','game.ui.hud.biomes.field') ?></span></span></div>
+          <div class="stats-metrics"><div><span><span data-fr><?= tr($t,'fr','game.ui.hud.total') ?></span><span data-en><?= tr($t,'en','game.ui.hud.total') ?></span></span><strong id="statField">0</strong></div><div><span><span data-fr><?= tr($t,'fr','game.ui.hud.surfaceMax') ?></span><span data-en><?= tr($t,'en','game.ui.hud.surfaceMax') ?></span></span><strong id="statLargestField">0</strong></div></div>
         </div>
 
         <div class="stats-card stats-forest">
-          <div class="stats-card-head"><span class="stats-icon">🌲</span><span>Forêt</span></div>
-          <div class="stats-metrics"><div><span>Total</span><strong id="statForest">0</strong></div><div><span>Surface max</span><strong id="statLargestForest">0</strong></div></div>
+          <div class="stats-card-head"><span class="stats-icon">🌲</span><span><span data-fr><?= tr($t,'fr','game.ui.hud.biomes.forest') ?></span><span data-en><?= tr($t,'en','game.ui.hud.biomes.forest') ?></span></span></div>
+          <div class="stats-metrics"><div><span><span data-fr><?= tr($t,'fr','game.ui.hud.total') ?></span><span data-en><?= tr($t,'en','game.ui.hud.total') ?></span></span><strong id="statForest">0</strong></div><div><span><span data-fr><?= tr($t,'fr','game.ui.hud.surfaceMax') ?></span><span data-en><?= tr($t,'en','game.ui.hud.surfaceMax') ?></span></span><strong id="statLargestForest">0</strong></div></div>
         </div>
 
         <div class="stats-card stats-house">
-          <div class="stats-card-head"><span class="stats-icon">🛖</span><span>Village</span></div>
-          <div class="stats-metrics"><div><span>Total</span><strong id="statHouse">0</strong></div><div><span>Surface max</span><strong id="statLargestHouse">0</strong></div></div>
+          <div class="stats-card-head"><span class="stats-icon">🛖</span><span><span data-fr><?= tr($t,'fr','game.ui.hud.biomes.house') ?></span><span data-en><?= tr($t,'en','game.ui.hud.biomes.house') ?></span></span></div>
+          <div class="stats-metrics"><div><span><span data-fr><?= tr($t,'fr','game.ui.hud.total') ?></span><span data-en><?= tr($t,'en','game.ui.hud.total') ?></span></span><strong id="statHouse">0</strong></div><div><span><span data-fr><?= tr($t,'fr','game.ui.hud.surfaceMax') ?></span><span data-en><?= tr($t,'en','game.ui.hud.surfaceMax') ?></span></span><strong id="statLargestHouse">0</strong></div></div>
         </div>
 
         <div class="stats-card stats-water">
-          <div class="stats-card-head"><span class="stats-icon">💧</span><span>Eau</span></div>
-          <div class="stats-metrics"><div><span>Total</span><strong id="statWater">0</strong></div><div><span>Surface max</span><strong id="statLargestWater">0</strong></div></div>
+          <div class="stats-card-head"><span class="stats-icon">💧</span><span><span data-fr><?= tr($t,'fr','game.ui.hud.biomes.water') ?></span><span data-en><?= tr($t,'en','game.ui.hud.biomes.water') ?></span></span></div>
+          <div class="stats-metrics"><div><span><span data-fr><?= tr($t,'fr','game.ui.hud.total') ?></span><span data-en><?= tr($t,'en','game.ui.hud.total') ?></span></span><strong id="statWater">0</strong></div><div><span><span data-fr><?= tr($t,'fr','game.ui.hud.surfaceMax') ?></span><span data-en><?= tr($t,'en','game.ui.hud.surfaceMax') ?></span></span><strong id="statLargestWater">0</strong></div></div>
         </div>
 
         <div class="stats-card stats-rail">
-          <div class="stats-card-head"><span class="stats-icon">🛤️</span><span>Voie ferrée</span></div>
-          <div class="stats-metrics"><div><span>Total</span><strong id="statRail">0</strong></div><div><span>Voie max</span><strong id="statLargestRail">0</strong></div></div>
+          <div class="stats-card-head"><span class="stats-icon">🛤️</span><span><span data-fr><?= tr($t,'fr','game.ui.hud.biomes.rail') ?></span><span data-en><?= tr($t,'en','game.ui.hud.biomes.rail') ?></span></span></div>
+          <div class="stats-metrics"><div><span><span data-fr><?= tr($t,'fr','game.ui.hud.total') ?></span><span data-en><?= tr($t,'en','game.ui.hud.total') ?></span></span><strong id="statRail">0</strong></div><div><span><span data-fr><?= tr($t,'fr','game.ui.hud.railMax') ?></span><span data-en><?= tr($t,'en','game.ui.hud.railMax') ?></span></span><strong id="statLargestRail">0</strong></div></div>
         </div>
       </div>
     </div>
@@ -122,30 +151,30 @@
   <aside id="tileUI">
     <div class="tilePreviewRow">
       <div class="tileBox">
-        <div class="title">TUILE COURANTE</div>
+        <div class="title"><span data-fr><?= tr($t,'fr','game.ui.hud.activeTileTitle') ?></span><span data-en><?= tr($t,'en','game.ui.hud.activeTileTitle') ?></span></div>
         <div id="activeTile"></div>
       </div>
       <div class="tileBox">
-        <div class="title">TUILE SUIVANTE</div>
+        <div class="title"><span data-fr><?= tr($t,'fr','game.ui.hud.nextTileTitle') ?></span><span data-en><?= tr($t,'en','game.ui.hud.nextTileTitle') ?></span></div>
         <div id="nextTile"></div>
       </div>
     </div>
 
     <div class="tileCountRow">
       <div class="deckRemainingBox">
-        <div class="title">RESTANTES</div>
+        <div class="title"><span data-fr><?= tr($t,'fr','game.ui.hud.deckRemaining') ?></span><span data-en><?= tr($t,'en','game.ui.hud.deckRemaining') ?></span></div>
         <div id="deckRemaining">50</div>
       </div>
       <div class="deckRemainingBox">
-        <div class="title">POSÉES</div>
+        <div class="title"><span data-fr><?= tr($t,'fr','game.ui.hud.tilesPlaced') ?></span><span data-en><?= tr($t,'en','game.ui.hud.tilesPlaced') ?></span></div>
         <div id="tilesPlaced">0</div>
       </div>
     </div>
 
     <div class="missionsBox">
-      <div class="title">MISSIONS EN COURS</div>
+      <div class="title"><span data-fr><?= tr($t,'fr','game.ui.hud.missionsTitle') ?></span><span data-en><?= tr($t,'en','game.ui.hud.missionsTitle') ?></span></div>
       <ul id="missionList" class="missionList">
-        <li class="mission-empty">Aucune mission</li>
+        <li class="mission-empty"><span data-fr><?= tr($t,'fr','game.ui.hud.noMission') ?></span><span data-en><?= tr($t,'en','game.ui.hud.noMission') ?></span></li>
       </ul>
     </div>
   </aside>
@@ -154,80 +183,73 @@
     <div class="help-panel" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
       <header class="help-header">
         <div>
-          <h1 id="helpTitle">Aide</h1>
-          
+          <h1 id="helpTitle"><span data-fr><?= tr($t,'fr','game.ui.help.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.title') ?></span></h1>
+
         </div>
-        <button id="btnCloseHelp" class="help-close" type="button" aria-label="Fermer l'aide">×</button>
+        <button id="btnCloseHelp" class="help-close" type="button" aria-label="<?= htmlspecialchars(tr($t,'fr','game.ui.help.closeAria')) ?>">×</button>
       </header>
 
       <div class="help-grid">
         <article class="help-card help-card-wide">
-          <h2>🎯 Objectif du jeu</h2>
-          <p>Pose les tuiles hexagonales, connecte les textures identiques et termine les missions. Chaque bord bien aligné paie ; eau et rails paient davantage.</p>
+          <h2>🎯 <span data-fr><?= tr($t,'fr','game.ui.help.objective.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.objective.title') ?></span></h2>
+          <p><span data-fr><?= tr($t,'fr','game.ui.help.objective.text') ?></span><span data-en><?= tr($t,'en','game.ui.help.objective.text') ?></span></p>
           <div class="score-strip">
-            <div><strong>+2 points</strong><span>par tuile posée</span></div>
-            <div><strong>+10 points</strong><span>par bord identique contre une tuile voisine</span></div>
-            <div><strong>+25 points</strong><span>par connexion eau/eau ou rail/rail</span></div>
-            <div><strong>+50 points</strong><span>bonus quand une tuile est entourée sur ses 6 côtés</span></div>
-            <div><strong>+100 points + 3 tuiles</strong><span>par mission terminée</span></div>
-            <div><strong>+1500 points</strong><span>si tu poses une tuile sur une case bonus</span></div>
+            <div><strong>+2 points</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.objective.points.tile') ?></span><span data-en><?= tr($t,'en','game.ui.help.objective.points.tile') ?></span></span></div>
+            <div><strong>+10 points</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.objective.points.edge') ?></span><span data-en><?= tr($t,'en','game.ui.help.objective.points.edge') ?></span></span></div>
+            <div><strong>+25 points</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.objective.points.waterRail') ?></span><span data-en><?= tr($t,'en','game.ui.help.objective.points.waterRail') ?></span></span></div>
+            <div><strong>+50 points</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.objective.points.surround') ?></span><span data-en><?= tr($t,'en','game.ui.help.objective.points.surround') ?></span></span></div>
+            <div><strong>+100 points + 3 tuiles</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.objective.points.mission') ?></span><span data-en><?= tr($t,'en','game.ui.help.objective.points.mission') ?></span></span></div>
+            <div><strong>+1500 points</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.objective.points.bonus') ?></span><span data-en><?= tr($t,'en','game.ui.help.objective.points.bonus') ?></span></span></div>
           </div>
         </article>
 
         <article class="help-card">
-          <h2>🧩 Placement</h2>
+          <h2>🧩 <span data-fr><?= tr($t,'fr','game.ui.help.placement.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.placement.title') ?></span></h2>
           <ul>
-            <li>Départ : 50 tuiles. La première est libre, les suivantes touchent une tuile posée.</li>
-            <li>Case occupée interdite. Pioche vide = fin.</li>
-            <li>2 côtés compatibles : +1 tuile ; 3 côtés compatibles : +2 tuiles.</li>
-            <li>Tuile encerclée sur 6 côtés : +50 points.</li>
-            <li>La tuile fantôme indique l’emplacement possible.</li>
-            <li>À chaque pose, la zone jouable s’étend doucement : les cases jusqu’à 3 hexagones autour de la tuile deviennent disponibles.</li>
-            <li>Les cases bonus dorées apparaissent à la génération : occupe-les pour gagner +1500 points.</li>
+<?php foreach (tr($t,'fr','game.ui.help.placement.items') as $i => $frItem): $enItem = tr($t,'en','game.ui.help.placement.items')[$i] ?? ''; ?>
+            <li><span data-fr><?= $frItem ?></span><span data-en><?= $enItem ?></span></li>
+<?php endforeach; ?>
           </ul>
         </article>
 
         <article class="help-card">
-          <h2>🌊 Eaux et rails</h2>
-          <p>L’eau et le rail sont des réseaux stricts et plus difficiles à placer. En échange, chaque connexion correcte rapporte plus de points.</p>
-          <div class="rule-line"><span class="swatch water"></span><strong>Eau</strong><span>se connecte uniquement à eau : +25</span></div>
-          <div class="rule-line"><span class="swatch rail"></span><strong>Rail</strong><span>se connecte uniquement à rail : +25</span></div>
+          <h2>🌊 <span data-fr><?= tr($t,'fr','game.ui.help.waterRail.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.waterRail.title') ?></span></h2>
+          <p><span data-fr><?= tr($t,'fr','game.ui.help.waterRail.text') ?></span><span data-en><?= tr($t,'en','game.ui.help.waterRail.text') ?></span></p>
+          <div class="rule-line"><span class="swatch water"></span><strong>Eau</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.waterRail.water') ?></span><span data-en><?= tr($t,'en','game.ui.help.waterRail.water') ?></span></span></div>
+          <div class="rule-line"><span class="swatch rail"></span><strong>Rail</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.waterRail.rail') ?></span><span data-en><?= tr($t,'en','game.ui.help.waterRail.rail') ?></span></span></div>
         </article>
 
         <article class="help-card">
-          <h2>⭐ Cases bonus</h2>
-          <p>Entre 1 et 4 cases bonus sont générées sur la grille. Elles ne changent aucune règle de placement : si tu arrives à poser une tuile dessus, elles disparaissent et rapportent immédiatement +1500 points.</p>
-          <div class="rule-line"><span class="swatch bonus-cell"></span><strong>Bonus</strong><span>objectif optionnel, pur score, zéro piège</span></div>
+          <h2>⭐ <span data-fr><?= tr($t,'fr','game.ui.help.bonusCells.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.bonusCells.title') ?></span></h2>
+          <p><span data-fr><?= tr($t,'fr','game.ui.help.bonusCells.text') ?></span><span data-en><?= tr($t,'en','game.ui.help.bonusCells.text') ?></span></p>
+          <div class="rule-line"><span class="swatch bonus-cell"></span><strong>Bonus</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.bonusCells.label') ?></span><span data-en><?= tr($t,'en','game.ui.help.bonusCells.label') ?></span></span></div>
         </article>
 
         <article class="help-card">
-          <h2>🕳️ Cellules noires</h2>
-          <p>Les cellules noires sont des tuiles spéciales déjà présentes sur la grille. Elles agissent comme des jokers : elles remplacent ce qui manque autour d’elles et acceptent les connexions avec toutes les textures adjacentes.</p>
-          <div class="rule-line"><span class="swatch black-cell"></span><strong>Joker</strong><span>compte comme compatible avec tout bord voisin</span></div>
+          <h2>🕳️ <span data-fr><?= tr($t,'fr','game.ui.help.blackCells.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.blackCells.title') ?></span></h2>
+          <p><span data-fr><?= tr($t,'fr','game.ui.help.blackCells.text') ?></span><span data-en><?= tr($t,'en','game.ui.help.blackCells.text') ?></span></p>
+          <div class="rule-line"><span class="swatch black-cell"></span><strong>Joker</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.blackCells.label') ?></span><span data-en><?= tr($t,'en','game.ui.help.blackCells.label') ?></span></span></div>
         </article>
 
         <article class="help-card help-card-textures">
-          <h2>🎨 Textures & valeurs</h2>
+          <h2>🎨 <span data-fr><?= tr($t,'fr','game.ui.help.textures.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.textures.title') ?></span></h2>
           <div class="legend-grid">
-            <div><span class="swatch field"></span><span>Champ de blé</span><code>1-2 blés</code></div>
-            <div><span class="swatch forest"></span><span>Forêt</span><code>1-6 arbres</code></div>
-            <div><span class="swatch grass"></span><span>Prairie</span><code>1</code></div>
-            <div><span class="swatch house"></span><span>Village</span><code>1-4 maisons</code></div>
-            <div><span class="swatch water"></span><span>Eau</span><code>1</code></div>
-            <div><span class="swatch rail"></span><span>Rail</span><code>1</code></div>
+<?php foreach (['field','forest','grass','house','water','rail'] as $tex): ?>
+            <div><span class="swatch <?= $tex ?>"></span><span><span data-fr><?= tr($t,'fr',"game.ui.help.textures.$tex.label") ?></span><span data-en><?= tr($t,'en',"game.ui.help.textures.$tex.label") ?></span></span><code><span data-fr><?= tr($t,'fr',"game.ui.help.textures.$tex.code") ?></span><span data-en><?= tr($t,'en',"game.ui.help.textures.$tex.code") ?></span></code></div>
+<?php endforeach; ?>
           </div>
         </article>
 
 
 
         <article class="help-card help-card-wide">
-          <h2>🚩 Missions</h2>
-          <p>À chaque nouvelle tuile courante, 20% de chance d’ajouter une mission. Elle peut demander forêt, village, voie ferrée, voie d’eau, prairie, champ de blé, trains visibles, bateaux ou moulins.</p>
-          <p>Récompense : +100 points et +3 tuiles. Les objectifs progressent par type, une mission terminée reste visible 5 tours. Les valeurs réelles comptent : prairie/eau/rail = 1 ; champ de blé = 1-2 ; maison = 1-4 ; forêt = 1-6 arbres. Les moulins ⚙️ comptent le nombre de grandes zones de champ actives.</p>
+          <h2>🚩 <span data-fr><?= tr($t,'fr','game.ui.help.missions.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.missions.title') ?></span></h2>
+          <p><span data-fr><?= tr($t,'fr','game.ui.help.missions.text1') ?></span><span data-en><?= tr($t,'en','game.ui.help.missions.text1') ?></span></p>
+          <p><span data-fr><?= tr($t,'fr','game.ui.help.missions.text2') ?></span><span data-en><?= tr($t,'en','game.ui.help.missions.text2') ?></span></p>
         </article>
 
         <article class="help-card help-card-controls">
-          <h2>⌨️ Contrôles</h2>
+          <h2>⌨️ <span data-fr><?= tr($t,'fr','game.ui.help.controls.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.title') ?></span></h2>
           <div class="control-map">
             <div style="flex-direction:column; align-items:flex-start; gap:4px;">
               <div class="kbd-cross-pair">
@@ -240,22 +262,22 @@
                   <kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd>
                 </div>
               </div>
-              <span>Déplacer la caméra</span>
+              <span><span data-fr><?= tr($t,'fr','game.ui.help.controls.moveCamera') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.moveCamera') ?></span></span>
             </div>
-            <div><kbd>R</kbd><span>Réinitialiser la caméra</span></div>
-            <div><kbd>+</kbd><kbd>-</kbd><span>Zoomer / dézoomer la caméra</span></div>
-            <div><kbd>Ctrl+Z</kbd><span>Annuler le dernier mouvement</span></div>
-            <div><kbd>H</kbd><kbd>ESC</kbd><span>Afficher / masquer cette aide</span></div>
-            <div><kbd>M</kbd><span>Couper / activer tous les sons</span></div>
-            <div><kbd>ESPACE</kbd><span>Mode immersif</span></div>
-            <div><kbd>SHIFT+ESPACE</kbd><span>Mode super-immersif</span></div>
-            <div><kbd>SHIFT</kbd><span>Accélère les déplacements et le zoom</span></div>
-            <div><kbd>Molette</kbd><span>Zoom ou rotation si disponible</span></div>
-            <div><kbd>Clic gauche</kbd><span>Déplacer la caméra</span></div>
-            <div><kbd>Clic droit</kbd><span>Rotation de la caméra</span></div>
+            <div><kbd>R</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.resetCamera') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.resetCamera') ?></span></span></div>
+            <div><kbd>+</kbd><kbd>-</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.zoom') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.zoom') ?></span></span></div>
+            <div><kbd>Ctrl+Z</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.undo') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.undo') ?></span></span></div>
+            <div><kbd>H</kbd><kbd>ESC</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.toggleHelp') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.toggleHelp') ?></span></span></div>
+            <div><kbd>M</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.muteSound') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.muteSound') ?></span></span></div>
+            <div><kbd>ESPACE</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.immersive') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.immersive') ?></span></span></div>
+            <div><kbd>SHIFT+ESPACE</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.superImmersive') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.superImmersive') ?></span></span></div>
+            <div><kbd>SHIFT</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.speedUp') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.speedUp') ?></span></span></div>
+            <div><kbd>Molette</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.wheelZoomRotate') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.wheelZoomRotate') ?></span></span></div>
+            <div><kbd>Clic gauche</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.moveCamera') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.moveCamera') ?></span></span></div>
+            <div><kbd>Clic droit</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.rightClick') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.rightClick') ?></span></span></div>
             <div class="control-sep" aria-hidden="true"></div>
-            <div><kbd>F</kbd><span>Afficher / masquer le HUD performances avancé</span></div>
-            <div><kbd>E</kbd><span>Personnalisation (EDA)</span></div>
+            <div><kbd>F</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.perfHud') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.perfHud') ?></span></span></div>
+            <div><kbd>E</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.eda') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.eda') ?></span></span></div>
           </div>
         </article>
       </div>

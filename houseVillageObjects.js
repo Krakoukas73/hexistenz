@@ -157,7 +157,7 @@ function _extractTowerFromPack(packScene, nodeName) {
 
 // ─── Utilitaires GLB (privés) ─────────────────────────────────────────────────
 
-/** Nombre de triangles d'une géométrie Three.js (même logique que debugLightUi). */
+/** Nombre de triangles d'une géométrie Three.js (même logique que sceneProfiler/edaPanelHost). */
 function _geomTriCount(geo) {
   if (!geo) return 0;
   return geo.index ? geo.index.count / 3 : Math.floor((geo.attributes?.position?.count ?? 0) / 3);

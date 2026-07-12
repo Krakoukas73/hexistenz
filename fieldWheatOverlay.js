@@ -21,7 +21,7 @@ import { getGlobalWindUniforms } from './globalWind.js';
 import { WORLD_CURVATURE_UNIFORMS } from './worldCurvature.js';
 import { getTerrainSurfaceY } from './terrainHeight.js';
 import { GROUND_CLEARANCE } from './propPlacement.js';
-import { wheatVertexShader, wheatFragmentShader } from './shaders/shaderChampBle.js';
+import { wheatVertexShader, wheatFragmentShader } from './shaders/shaderWheatField.js';
 import { getSectorContour, getTileCenterType, getCenterContour } from './tileMesh.js';
 import {
   WHEAT_BLADE_COUNT, WHEAT_BLADE_WIDTH, WHEAT_BLADE_SEGMENTS,
@@ -123,7 +123,7 @@ function getWheatMaterial() {
       uEarColor:     { value: new THREE.Color(WHEAT_EAR_COLOR) },
       uWorldCurvatureEnabled: WORLD_CURVATURE_UNIFORMS.uWorldCurvatureEnabled
     },
-    // Shaders externalisés dans shaders/shaderChampBle.js
+    // Shaders externalisés dans shaders/shaderWheatField.js
     vertexShader:   wheatVertexShader,
     fragmentShader: wheatFragmentShader
   });

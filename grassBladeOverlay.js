@@ -31,7 +31,7 @@ import { WORLD_CURVATURE_UNIFORMS } from './worldCurvature.js';
 import { getTerrainSurfaceY } from './terrainHeight.js';
 import { GROUND_CLEARANCE } from './propPlacement.js';
 import { scaledCountMin } from './contentDensity.js';
-import { grassBladeVertexShader, grassBladeFragmentShader } from './shaders/shaderBrinsHerbe.js';
+import { grassBladeVertexShader, grassBladeFragmentShader } from './shaders/shaderGrassBlades.js';
 import { getSectorContour, getTileCenterType, getCenterContour } from './tileMesh.js';
 import {
   GRASS_BLADE_COUNT,

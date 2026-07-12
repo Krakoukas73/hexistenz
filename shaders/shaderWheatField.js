@@ -1,5 +1,5 @@
 /**
- * shaderChampBle.js — Shaders GLSL des brins de blé animés.
+ * shaderWheatField.js — Shaders GLSL des brins de blé animés (ex-shaderChampBle.js, renommé en anglais le 2026-07-11).
  *
  * Utilisé par fieldWheatOverlay.js.
  *

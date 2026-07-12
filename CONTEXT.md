@@ -2,7 +2,7 @@
 
 ## 1. Nature du projet
 
-**Version courante : `v0.9.2.5.3`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
+**Version courante : `v0.9.2.5.7`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
 
 Jeu web contemplatif de pose de tuiles hexagonales, inspiré de Dorfromantik / The Settlers / HoMM. Le joueur pioche une tuile, la tourne, la pose sur une grille hexagonale. Chaque tuile a 6 secteurs triangulaires (biomes ou réseaux). Objectif : connecter les biomes, compléter des missions, maximiser le score.
 
@@ -87,25 +87,24 @@ Cycle : `createXxxOverlay()` → `rebuildXxxOverlay(group, placedTiles)` → `up
 
 | Fichier | Contenu |
 |---|---|
-| `waterZoneOverlay.js` | BFS zones eau, hover, labels valeur |
+| `waterZoneOverlay.js` | BFS zones eau, hover ; labels valeur/sprites délégués à `waterZoneLabels.js` (split 2026-07-11, cf. §21) |
 | `waterSurfaceOverlay.js` | Nappe d'eau continue par zone, rivage organique (cf. §19) |
 | `waterBeachGeometry.js` | Plages procédurales, alignées sur le rivage organique |
 | `waterZoneBoundary.js` | Halos/contours de zone |
-| `waterBoatOverlay.js` | Bateaux GLB animés, graphe nav |
+| `shaders/waterBoatOverlay.js` | Bateaux GLB animés, graphe nav (déplacé dans `shaders/` le 2026-07-11, cf. §21) |
 | `forestOverlay.js` | Arbres GLB (InstancedMesh) |
 | `houseOverlay.js` | Maisons, église, cimetière, tours de guet |
 | `tileRailOverlay.js` | Rails procéduraux, traverses, ballast |
 | `railTrainOverlay.js` | Trains GLB, wagons, gares terminus |
-| `decorOverlay.js` | Orchestrateur props : moulins, fontaines, tonneaux, barques côtières, animaux… |
+| `decorOverlay.js` | Orchestrateur props : moulins, fontaines, tonneaux, barques côtières… ; chargement GLB props délégué à `decorPropModels.js`, oiseaux/mouettes à `decorBirdModels.js` (split 2026-07-11, cf. §21) |
 | `naturalPropsOverlay.js` | Fleurs/rochers/roseaux/bottes/cerfs (InstancedMesh) |
 | `villageDecorOverlay.js` | Panneaux, charrettes, chiens, chevaux, tonneaux |
 | `fieldWheatOverlay.js` | Brins de blé procéduraux, effets champ |
 | `fieldZonesOverlay.js` | Moulins, bâtiments spéciaux champ, safe zones |
 | `sheepOverlay.js` | Moutons animés (SkinnedMesh) sur les zones prairies |
 | `bonusCellChestOverlay.js` | Coffre animé sur chaque cellule bonus |
-| `morningMistOverlay.js` | Brume matinale volumétrique (nappe de brouillard, courbure monde) — piloté par `environmentDirector` (cf. §29) |
+| `shaders/morningMistOverlay.js` | Brume matinale volumétrique (nappe de brouillard, courbure monde) — piloté par `environmentDirector` (cf. §29), déplacé dans `shaders/` le 2026-07-11 (cf. §21) |
 | `weatherVfxOverlay.js` | Lucioles + pluie/orage via moteur particules `wawa-vfx-vanilla` — piloté par `environmentDirector` (cf. §29) |
-| `tileRoadOverlay.js` | **Routes désactivées** — stubs no-op |
 
 ---
 
@@ -325,7 +324,9 @@ Pipeline Three.js r160 : `RenderPixelatedPass → SmokeVolumePass → ShaderPass
 
 **pixelPass** : jamais désactivé (enabled=false casserait le readBuffer). Quand pixelisation "off" : neutralisé (`pixelSize=1`, `forces=0`). `uPixelSize` synchronisé dans `colorGradingPass` pour alignement Bayer.
 
-### Pass cinématique (`cinematicPass.js` + `shaders/shaderCinematique.js`)
+### Pass cinématique (`shaders/shaderCinematique.js`)
+
+`cinematicPass.js` (simple ré-export de compatibilité) supprimé le 2026-07-11 (round 4, cf. §21) — `threeSetup.js` importe `CINEMATIC_SHADER` directement depuis `shaders/shaderCinematique.js`.
 
 Fragment shader, dans l'ordre d'exécution : **courbure écran (CRT)** (déforme l'UV en amont, anisotropie légère horizontale/verticale) → distorsion barillet (bâtie sur l'UV déjà courbée) → tilt-shift → aberration chromatique → gaussienne 9-taps → halation → **God Rays** → **bloom** (seuil + 8-tap radial) → vignette → grain film → scan lines, puis en toute fin **masque/assombrissement de bords CRT** (mix distance Chebyshev/radiale, indépendant des coins uniquement). Bypass total classique en tête de `main()` : `if (uEnabled < 0.5) { gl_FragColor = texture2D(tDiffuse, vUv); return; }` — zéro coût GPU quand le master cinéma est désactivé.
 
@@ -412,7 +413,9 @@ updateSmokeVolumePass(smokeVolumePass, _smokeSrcs, camera, _smokeLocos.length,
 
 ---
 
-## 13. Panel CUSTOMISATION / EDA (`debugLightUi.js` + `json/ambiances.json`)
+## 13. Panel CUSTOMISATION / EDA (`edaPanelHost.js` + `edaPanelWiring.js` + `json/ambiances.json`)
+
+**Renommage 2026-07-11** (cf. §21) : `debugLightUi.js` → `edaPanelHost.js` (façade DOM partagée), `hud_eda.js` → `edaPanelWiring.js` (câblage des 3 onglets, ex-`wireEdaPanel`). Aucun changement de comportement — pur renommage + extraction CSS (cf. §20).
 
 Touche **E** → ouvre/ferme le panel EDA (Éditeur de Direction Artistique). Touche **F** → HUD perf avancé (FPS détaillé), indépendant de l'EDA.
 
@@ -469,13 +472,15 @@ Ex-panneau flottant `qualityUi.js` (bouton "⚙ QUALITÉ"), intégré dans le pa
 
 Ex-HUD flottant `environmentDebugUi.js` ("🌦 ENV", bas-gauche), fusionné dans le panel EDA le 2026-07-08 puis **supprimé**. Génère dynamiquement une ligne par événement du catalogue `ENVIRONMENT_EVENTS` (`environmentDirector.js`) : label + suffixe italique « (nécessite X) » quand `def.requires` est renseigné + `<span class="weather-status">` (● actif) + bouton `.debug-light-weather-btn` (même charte visuelle que `.debug-light-preset-btn` de la rubrique 7, variante `--active` en tonalité stop rouge quand l'événement tourne). Un bouton `⏹ Tout arrêter` (`.debug-light-weather-stopall`) full-width en bas de rubrique. Câblage direct à l'API de `environmentDirector.js` : `triggerEnvironmentEvent`/`stopEnvironmentEvent`/`stopAllEnvironmentEvents`, rafraîchissement des statuts via `onEnvironmentChange` + `setInterval(500 ms)` (capte aussi l'auto-expiration entre 2 transitions). Le bouton d'un événement à prérequis (Éclair → Orage, Panique animale → Feu) est désactivé tant que le prérequis n'est pas actif. `environmentDirector` est créé dans `scene.js` **avant** `createDebugLightUI(...)` et passé en param (`{ ...visualEnvironment, postprocess, forestOverlay, cloudSky, environmentDirector }`) → `wireEdaPanel`.
 
-**Depuis le 2026-07-09 (merge VFX Cyril, cf. §29), les hooks ne sont plus inertes** : déclencher `groundMist`/`fireflies`/`rain`/`storm` active l'effet visuel correspondant (fondu entrée/sortie) via `morningMistOverlay.js` + `weatherVfxOverlay.js`. Leurs paramètres fins sont pilotés dans la **même rubrique 8** (cf. sous-section suivante) :
+**Depuis le 2026-07-09 (merge VFX Cyril, cf. §29), les hooks ne sont plus inertes** : déclencher `groundMist`/`fireflies`/`rain`/`storm` active l'effet visuel correspondant (fondu entrée/sortie) via `shaders/morningMistOverlay.js` + `weatherVfxOverlay.js`. Leurs paramètres fins sont pilotés dans la **même rubrique 8** (cf. sous-section suivante) :
 
 **Réglages VFX MÉTÉO — fusionnés dans la rubrique 8 (2026-07-10, ex-rubrique 2 indépendante)** : trois groupes de sliders (🌫️ Brume matinale / ✨ Lucioles / 🌧️ Pluie-Orage), chacun avec un bouton ↺ réinitialiser, affichés sous les boutons de déclenchement d'évènements et le bouton `⏹ Tout arrêter` de la rubrique 8 (même conteneur `.debug-light-weather-section`, même thème « météo »). Contrairement à EAU/VENT/NUAGES (getters/setters dédiés par overlay), ces réglages passent par le store commun `vfxSettings.js` (`getVfxSettings`/`setVfxSetting`/`resetVfxSettings`, persistance localStorage gérée là-bas). Générés dans `hud_eda.js` (`#debugLightVfxControls`, déplacé dans le markup mais toujours peuplé par le même `querySelector('#debugLightVfxControls')` — sélection par id, insensible à l'emplacement) via `createRawSlider` — hors export 📋 Copier (réglage machine, pas « regard »), undo/redo câblé via `pushUndo`. Classe CSS `.debug-light-vfx-section` (ex-wrapper à en-tête propre "2. VFX MÉTÉO") supprimée de `debugLightUi.js`, devenue morte après la fusion.
 
 ---
 
-## 14. Labels de zones (`waterZoneOverlay.js` + `tileLabels.js`)
+## 14. Labels de zones (`waterZoneLabels.js` + `tileLabels.js`)
+
+`waterZoneLabels.js` extrait de `waterZoneOverlay.js` le 2026-07-11 (round 3, cf. §21) — héberge tous les sprites/labels valeur, `waterZoneOverlay.js` conserve BFS/hover et importe en retour.
 
 Sprites `THREE.Sprite` canvas hexagonal — ratio W/H = 2/√3 ≈ 1.155. Font **DeltaBlock**.
 
@@ -585,9 +590,9 @@ Meshes sans ombres (oiseaux…) : `disableCastShadow=true, shadowFlagsApplied=tr
 5. Alpha : `uOpacity × mix(0.66,1.0,depthT)`, plancher relevé par l'écume.
 6. Gamma `pow(base, 0.9)`.
 
-**Réglages live** : intégrés dans le panel CUSTOMISATION/EDA (onglet Environnement, rubriques 1 "🫧 Écume" et 2 "🚤 Sillage bateau", cf. §13) — sliders écume (portée, finesse, densité rive/surface, netteté, vitesse, étendue dégradé, opacité) + sillage bateau (largeur, divergence, longueur, finesse, densité, opacité). Setters/getters : `getWaterFoamParams/setWaterFoamParams` (`realisticWater.js`), `getWakeParams/setWakeParams` (`waterBoatOverlay.js`). `waterDebugUi.js` (ancien panneau flottant autonome 💧 EAU, fusionné dans l'EDA) supprimé le 2026-07-04 — code mort, `createWaterDebugPanel()` n'était plus appelé nulle part.
+**Réglages live** : intégrés dans le panel CUSTOMISATION/EDA (onglet Environnement, rubriques 1 "🫧 Écume" et 2 "🚤 Sillage bateau", cf. §13) — sliders écume (portée, finesse, densité rive/surface, netteté, vitesse, étendue dégradé, opacité) + sillage bateau (largeur, divergence, longueur, finesse, densité, opacité). Setters/getters : `getWaterFoamParams/setWaterFoamParams` (`realisticWater.js`), `getWakeParams/setWakeParams` (`shaders/waterBoatOverlay.js`). `waterDebugUi.js` (ancien panneau flottant autonome 💧 EAU, fusionné dans l'EDA) supprimé le 2026-07-04 — code mort, `createWaterDebugPanel()` n'était plus appelé nulle part.
 
-**Sillage bateau** (`waterBoatOverlay.js`) : ruban en V dynamique (`WAKE_MAX_POINTS = 26`), dense près du bateau et se dissipant vers l'arrière (gradient de densité dans `foamPattern`), `ShaderMaterial` singleton partagé par tous les sillages. Points enregistrés à distance ABSOLUE derrière le bateau (`dBehind`, anti-pop à l'ajout/retrait d'un point) ; tête du ruban recollée au bateau chaque frame (apex fluide, pas de saut au commit d'un nouveau segment). Fondu de queue qui atteint vraiment 0 (`smoothstep(0.45, 1.0, vAlong)`, plus d'arrêt net). **LOD bateau (fix 2026-07-03)** : `updateWaterBoatLOD` calcule désormais la distance caméra↔bateau en 3D complet (X+Y+Z) au lieu de XZ seul — corrige un bug où la vue verticale (top-down, caméra XZ ≈ bateau XZ, dist2D≈0) rendait les bateaux toujours visibles quelle que soit l'altitude caméra.
+**Sillage bateau** (`shaders/waterBoatOverlay.js`) : ruban en V dynamique (`WAKE_MAX_POINTS = 26`), dense près du bateau et se dissipant vers l'arrière (gradient de densité dans `foamPattern`), `ShaderMaterial` singleton partagé par tous les sillages. Points enregistrés à distance ABSOLUE derrière le bateau (`dBehind`, anti-pop à l'ajout/retrait d'un point) ; tête du ruban recollée au bateau chaque frame (apex fluide, pas de saut au commit d'un nouveau segment). Fondu de queue qui atteint vraiment 0 (`smoothstep(0.45, 1.0, vAlong)`, plus d'arrêt net). **LOD bateau (fix 2026-07-03)** : `updateWaterBoatLOD` calcule désormais la distance caméra↔bateau en 3D complet (X+Y+Z) au lieu de XZ seul — corrige un bug où la vue verticale (top-down, caméra XZ ≈ bateau XZ, dist2D≈0) rendait les bateaux toujours visibles quelle que soit l'altitude caméra.
 
 **LOD nappe d'eau** (`waterSurfaceOverlay.js::updateWaterSurfaceLOD` + `realisticWater.js::getFlatWaterMaterial`, 2026-07-02) : au-delà de `LOD_WATER_SHADER_DISTANCE = 16` (distance caméra→centre de tuile, XZ), les triangles de la nappe basculent du matériau shader complet (voronoï d'écume ×2, reflets, vagues — coûteux) vers un matériau plat (`MeshBasicMaterial` bleu uni, sans normale requise). Bascule via `geometry.groups` (2 matériaux sur le même `BufferGeometry`, `lodRanges` calculées une fois par rebuild, tuiles contiguës fusionnées en groupes) — aucun re-upload GPU des sommets. Même matériau plat réutilisé pour les tuiles fantômes (`tileMesh.js` : hover local + curseurs multijoueur distants), qui n'ont de toute façon pas les attributs `aShoreDist`/`aSteep`. **Piège vécu** : un `MeshLambertMaterial` essayé en premier — sans attribut `normal` sur la nappe fusionnée (seuls position/aShoreDist/aSteep fournis), le vecteur normal nul produit un NaN après normalisation dans le vertex shader → triangles clippés → l'eau lointaine devenait invisible au lieu de bleu uni. `MeshBasicMaterial` (non éclairé) n'a besoin d'aucune normale — fix retenu. cf. piège en §26.
 
@@ -616,13 +621,16 @@ Mode "bouliste" : le monde entier est simulé comme une calotte sphérique via u
 
 ## 20. Architecture fichiers (principaux)
 
-> Tous les fichiers sont à la **racine**. Le sous-dossier `stable/` a été supprimé mi-2026.
+> La plupart des fichiers sont à la **racine**. Le sous-dossier `stable/` a été supprimé mi-2026.
+> `shaders/` contient le GLSL pur (`shaderXxx.js`) **et**, depuis le 2026-07-11 (cf. §21),
+> deux modules overlay avec shader embarqué déplacés depuis la racine : `waterBoatOverlay.js`
+> et `morningMistOverlay.js`.
 
 ### Arborescence JSON (données persistées serveur)
 
 ```
 json/
-  ambiances.json        Presets LUT (16 presets) — chargé par debugLightUi.js
+  ambiances.json        Presets LUT (16 presets) — chargé par edaPanelWiring.js
   highscores.json       Classement (géré par highscore.php, max 50 entrées)
   games/                Sauvegardes parties multijoueur (géré par multiplayer.php)
     room_<code>.json    Une partie = un fichier JSON
@@ -636,7 +644,8 @@ main.js                        Bootstrap
 scene.js                       Orchestrateur principal
 preloader.js                   Préchargement GLB + OGG avant le menu
 tileGenerator.js               Génération tuiles
-tileMesh.js / tileTextures.js  Géométrie et textures tuiles
+tileMesh.js / tileTextures.js  Géométrie et textures tuiles ; dessin canvas délégué à
+                                tileTextureDrawing.js (split 2026-07-11, §21)
 terrainHeight.js               Surface Y, relief, normale
 terrainMerge.js                Fusion meshes terrain par biome (~14 DCs) — eau exclue (cf. §19)
 hex.js / hexGeometry.js        Coordonnées axiales, géométrie hex
@@ -648,14 +657,16 @@ propHitboxRegistry.js          Registre hitboxes collision props (évite chevauc
 raggedEdge.js                  Bords irréguliers du plateau
 random.js                      Générateur pseudo-aléatoire
 tileRailOverlay.js             Rails procéduraux
-tileRoadOverlay.js             Routes — stubs no-op (GLBs supprimés)
-railTrainOverlay.js            Trains GLB, wagons, gares
-waterZoneOverlay.js            BFS zones eau, labels sprites, calcule et transmet le shoreMap organique
+railTrainOverlay.js            Trains GLB, wagons, gares — scindé en 2026-07-11 (§21) : constantes dans
+                                railTrainConstants.js, graphe nav railGraph.js, gares railStations.js,
+                                véhicules railTrainVehicle.js, chargement GLB railTrackGlb.js
+waterZoneOverlay.js            BFS zones eau, calcule et transmet le shoreMap organique ; labels sprites
+                                délégués à waterZoneLabels.js (split 2026-07-11, §21)
 waterSurfaceOverlay.js         Nappe d'eau continue par zone (surface+riverbed+jupe), rivage organique
 shoreField.js                  shoreNoise/shoreSteepness — bruit de rivage organique, buildShoreDisplacementMap
 waterBeachGeometry.js          Plages procédurales, épouse le rivage organique via shoreMap partagé
 waterZoneBoundary.js           Halos/contours de zone (générique tous biomes, bords droits)
-waterBoatOverlay.js            Bateaux GLB animés + sillage en V (écume)
+shaders/waterBoatOverlay.js    Bateaux GLB animés + sillage en V (écume) — déplacé dans shaders/ le 2026-07-11 (§21)
 realisticWater.js              ShaderMaterial eau « cute cartoon » + écume Danil, réglages live
 shaders/shaderEau.js           GLSL eau (aShoreDist/aSteep) + FOAM_GLSL partagé (eau + sillage)
 fieldWheatOverlay.js           Brins de blé procéduraux, BFS local
@@ -665,18 +676,26 @@ forestOverlay.js               Arbres InstancedMesh
 houseOverlay.js                Village GLB
 houseVillageMaterials.js       Matériaux partagés maisons/village
 houseVillageObjects.js         Maisons, tours, église
-decorOverlay.js                Orchestrateur props décor + PROP_MODEL_DEFS + constantes partagées
+decorOverlay.js                Orchestrateur props décor + PROP_MODEL_DEFS + constantes partagées ;
+                                chargement GLB props délégué à decorPropModels.js, oiseaux/mouettes à
+                                decorBirdModels.js (split 2026-07-11, §21)
 naturalPropsOverlay.js         Fleurs, rochers, roseaux, bottes, cerfs (InstancedMesh)
 villageDecorOverlay.js         Panneaux, charrettes, chiens, chevaux, barques côtières
 bonusCellChestOverlay.js       Coffres animés cellules bonus
-threeSetup.js                  Renderer, caméra, postprocess, layers, IBL, sun orbit
-cinematicPass.js               CINEMATIC_SHADER (tilt-shift, grain, aberration…), touche T
+threeSetup.js                  Renderer, caméra, postprocess, layers, IBL, sun orbit — importe
+                                CINEMATIC_SHADER directement depuis shaders/shaderCinematique.js
+                                (cinematicPass.js, simple ré-export, supprimé le 2026-07-11, §21)
 visualEnvironment.js           LUT, lumières, environnement IBL, config défaut
-debugLightUi.js                Panneau CUSTOMISATION + HUD perf + sceneProfiler
+edaPanelHost.js                Façade panel CUSTOMISATION (DOM partagé) — ex-debugLightUi.js (renommé 2026-07-11, §21) ;
+                                CSS extrait le même jour vers css/eda.css (ex-installDebugLightCss(), §21)
+hud_fps.js                     HUD perf avancé (touche F), self-contained — extrait de debugLightUi.js le 2026-07-02
+edaPanelWiring.js              Câblage panel EDA 3 onglets (wireEdaPanel) — ex-hud_eda.js (renommé 2026-07-11, §21)
 sceneProfiler.js               Comptage DC/triangles/objets par catégorie (HUD)
 worldCurvature.js              Courbure monde GPU (calotte, drop en cos) + picking souris + tilt props (§19b)
 shadowCulling.js               Culling ombres par distance
-soundDesign.js                 Audio spatial, layers, chi-mai, corbeaux, ambiances
+soundDesign.js                 Audio spatial, layers, chi-mai, corbeaux, ambiances — scindé en
+                                musicPlayer.js (lecture musicale) + ambientSoundDesign.js (ambiances
+                                environnementales) le 2026-07-11 (§21)
 globalWind.js / starUniverse.js / cometSky.js
 cloudSky.js / shaders/shaderCiel.js   Ciel volumétrique nuages procéduraux
 smokeVolumePass.js                    ShaderPass fumée volumétrique (maisons + locos)
@@ -684,34 +703,41 @@ shaders/shaderFumee.js                GLSL ray-march fumée (Gaussian évasé, t
 hashUtils.js / hexLabelFont.js / tileLabels.js
 domUtils.js                    escapeHtml() canonique (2026-07-11, factorisation — cf. §21)
 bonusCells.js / specialCells.js / highscore.js
-multiplayerClient.js / multiplayerUi.js / controls.js / missions.js
-ui.js / help.js / grid.js / gridRegions.js
+multiplayerClient.js / controls.js / missions.js — missions.js : labels/icônes/formatMissionTitle
+                                délégués à missionLabels.js (split 2026-07-11, §21)
+startupMenu.js                 Menus démarrage/multijoueur — ex-multiplayerUi.js (renommé + scindé
+                                2026-07-11, §21) : carrousel fond menuBackgroundCarousel.js, salons
+                                multiplayerRooms.js, état partagé startupMenuShared.js
+ui.js / help.js / grid.js / gridRegions.js — help.js : textes délégués à helpTexts.js, tooltips à
+                                helpTooltip.js (split 2026-07-11, §21)
 scorePopup.js                  Popup score central "+N" (WAAPI, pose locale uniquement) — cf. historique 2026-07-10 (§21)
 contentDensity.js                     Multiplicateur densité contenu (qualité/FPS), scaledCount/scaledCountMin (§21)
-                                       — UI dans hud_eda.js (onglet Environnement, rubrique 7 "Qualité/densité",
+                                       — UI dans edaPanelWiring.js (onglet Environnement, rubrique 7 "Qualité/densité",
                                        2026-07-08 ; ex-panneau flottant qualityUi.js, supprimé)
 environmentDirector.js                Machine à états évènements environnementaux (Phase 0 VFX) — INERTE, rien n'est branché
-                                       — UI dans hud_eda.js (onglet Environnement, rubrique 8 "Météo", 2026-07-08 ;
+                                       — UI dans edaPanelWiring.js (onglet Environnement, rubrique 8 "Météo", 2026-07-08 ;
                                        ex-panneau flottant environmentDebugUi.js, supprimé)
-morningMistOverlay.js                 Modulation fog pour évènement 'morningMist' — NON appelée dans animate() (dormant)
+shaders/morningMistOverlay.js         Modulation fog pour évènement 'morningMist' — appelée dans animate() depuis le
+                                       merge VFX Cyril du 2026-07-09 (§29) ; déplacé dans shaders/ le 2026-07-11 (§21).
+                                       Note : ce commentaire disait encore "dormant/NON appelée" avant cette correction,
+                                       stale depuis le merge du 07-09 — corrigé au passage (§21)
 ```
 
 ---
 
 ## 21. Historique — épisodes non couverts ailleurs
 
-La quasi-totalité des évolutions passées (eau, courbure monde, panel EDA, fumée, ciel, LOD, pools de props, HUD…) est documentée à l'**état courant** dans ses sections dédiées (§6 à §20) — inutile de dupliquer un journal des changements en plus. Seuls les deux épisodes suivants ne sont capturés nulle part ailleurs :
+La quasi-totalité des évolutions passées (eau, courbure monde, panel EDA, fumée, ciel, LOD, pools de props, HUD…) est documentée à l'**état courant** dans ses sections dédiées (§6 à §20) — inutile de dupliquer un journal des changements en plus. Seuls les épisodes suivants (chronologiques) ne sont capturés nulle part ailleurs — root causes, décisions arbitrées avec l'utilisateur, pièges non génériques :
 
 **⚠️ Merge VFX Cyril intégralement annulé** (2026-07-03) : un merge annoncé (god rays, feu/tornade/éclair/embers, cycle jour/nuit progressif, brume, audio VFX — 14 fichiers dont `vfxEngine.js`, `dayNightCycle.js`, `effectScheduler.js`, `mistManager.js`, `particlePool.js`, `effects/*`, `shaders/shaderGodRays.js`, `shaders/shaderParticles.js`) a été entièrement défait sur décision utilisateur ("aucune n'a été validée"). Aucun de ces fichiers n'existe dans les sources, `HEXISTENZ_VERSION` est resté à `v0.9.1.10`. **Ne pas supposer ce système présent** dans une future session — vérifier par `grep`/`find` avant de s'y référer.
 
-**Merge du système eau (intégration Cyril, 2026-07-01)** — la branche fusionnée partait d'une base vieille de 3 jours ; 3 régressions ont été repérées et écartées à l'intégration : suppression de `sheepOverlay` dans `scene.js`, retour de `TREE_WIND.strength` à 0.062 (annulait le fix "brindilles", §9), perte d'arguments dans `maybeGenerateMissionForTile`/`updateDeckUI`. Leçon : re-fusionner une branche ancienne exige de rediffer chaque fichier touché, pas seulement de merger — cf. piège en §26.
+**Merge du système eau (intégration Cyril, 2026-07-01)** — branche partie d'une base vieille de 3 jours, 3 régressions repérées et écartées à l'intégration (suppression `sheepOverlay`, retour `TREE_WIND.strength` à 0.062, perte d'arguments `maybeGenerateMissionForTile`/`updateDeckUI`). Leçon : rediffer chaque fichier touché, pas seulement merger — cf. piège §26.
 
 **⚙️ Throttle GPU périodique résolu — curseurs multijoueur fantômes jamais expirés** (2026-07-06, v0.9.2) : investigation de ~2 jours sur un GPU qui throttlait (jusqu'à 100%) même caméra/scène strictement immobiles, en solo comme en multi — sauf qu'il n'existe plus de vrai mode solo dans Hexistenz (toute partie est jouable en multijoueur via `?multi=CODE`). Root cause : `multiplayer.php::update_cursor()` ajoutait un curseur par `playerId` à chaque survol distant mais n'en supprimait **jamais** côté serveur. Une room de test (`room_SMALL.json`) avait accumulé 21 curseurs fantômes, certains vieux de +24 jours, tous `visible=true` pour toujours — chacun faisait recréer un mesh de tuile transparent (`DoubleSide`) via `renderRemoteCursors()` (scene.js) toutes les 900ms (`setInterval(refreshMultiplayerRoom, 900)`), soit le cycle de ~51-54 frames observé depuis le début. Le nombre de fantômes grossissait à chaque nouvelle session de test, expliquant l'aggravation progressive du symptôme au fil des jours. Fix : purge automatique par TTL (20s) côté serveur (`prune_stale_cursors()`, appelée sur `poll` et `cursor`) + filtre défensif identique côté client. Résultat validé : GPU 100% → 2-3% en caméra haute idle. cf. piège en §26.
 
-**📋 Merge Cyril → sources live (2026-07-07)** : dossier `hexistenz-merge-piregwan-2026-07-06/` reçu de Cyril (zip, cf. workflow ci-dessus), fusionné manuellement fichier par fichier dans les sources (pas de git ici). La branche Cyril partait d'une base antérieure au 2026-07-06 — **même piège que le merge eau du 07-01** (ci-dessus) : plusieurs de ses fichiers réintroduisaient des régressions sur des optims déjà validées depuis (instancing personnages §9/§17, `LOD_GRASS_CULL_DISTANCE` −10%, `_LOD_HEIGHT_MIN_FACTOR` 0.80, reclassement LOD des baies en `'plant'`, VOLUMETRIC_SMOKE_ENABLED, reflets eau). Chaque fichier a été rediffé individuellement avant merge (cf. piège §21/§26 déjà documenté). Décisions retenues avec l'utilisateur :
-- **Adopté tel quel** : `contentDensity.js`/`qualityUi.js` (nouveau système de densité de contenu, bouton "⚙ QUALITÉ") appliqué à moutons/herbe/props naturels (PAS aux personnages, cf. ci-dessous) ; frustum culling ajouté à `updateRailTrainLOD`/`updateWaterBoatLOD` ; `threeSetup.js` (antialias:false, `MAX_PIXEL_RATIO=1.0`, masquage de sous-arbres lourds pendant `renderTextLayer`) ; `FOREST_CHUNK_SIZE=6` (chunk arbres distinct de `HEX_CHUNK_SIZE`) ; simplification du shader d'eau (retrait Fresnel/glints, validé par l'utilisateur — eau plus "flat cartoon") ; scaffolding VFX Phase 0/1a inerte (`environmentDirector.js`, `environmentDebugUi.js`, `morningMistOverlay.js` — aucun effet visuel, `updateMorningMist`/`updateEnvironmentDirector` non appelés dans `animate()`).
-- **Rejeté (gardé la version actuelle, plus récente/validée)** : `characterOverlay.js`, `decorOverlay.js`, `sceneProfiler.js` (la branche Cyril revenait à des personnages GLB individuels non instanciés + son propre density-gate — l'instancing déjà validé (378→62 dc) couvre mieux le problème perf ; pas de density-gate sur les personnages dans ce merge) ; `waterSurfaceOverlay.js` (Cyril retirait le paramètre `lodFactor` de réduction LOD selon hauteur caméra) ; `VOLUMETRIC_SMOKE_ENABLED=false` (fumée reste activée par défaut, choix utilisateur) ; les fonctions de diagnostic per-frame dans `scene.js` (`warmUpAllPrograms`/`checkProgramChurn`/`checkBiomeMaterialFlicker`/`findTransparentBiomeUsers`/`[RAF-STALL]`, cf. throttle GPU ci-dessus déjà résolu) — laissées en l'état, retrait différé sur confirmation explicite de l'utilisateur.
-- Données runtime (`json/highscores.json`, `json/games/room_*.json`) : non touchées, la copie de Cyril était une capture plus ancienne.
+**📋 Merge Cyril → sources live (2026-07-07)** : dossier reçu de Cyril, fusionné manuellement fichier par fichier (pas de git ici). Même piège que le merge eau du 07-01 : branche partie d'une base antérieure au 07-06, plusieurs fichiers réintroduisaient des régressions sur des optims déjà validées (instancing personnages §9/§17, LOD baies/herbe, VOLUMETRIC_SMOKE_ENABLED, reflets eau) — chaque fichier rediffé individuellement avant merge.
+- **Adopté** : `contentDensity.js`/`qualityUi.js` (densité de contenu, bouton "⚙ QUALITÉ", appliqué à moutons/herbe/props naturels, PAS aux personnages) ; frustum culling `updateRailTrainLOD`/`updateWaterBoatLOD` ; réglages perf `threeSetup.js` ; `FOREST_CHUNK_SIZE=6` ; simplification shader d'eau (retrait Fresnel/glints, validé) ; scaffolding VFX Phase 0/1a inerte (`environmentDirector.js` etc., branché seulement au 07-09, cf. ci-dessous).
+- **Rejeté** (version actuelle gardée, plus récente/validée) : `characterOverlay.js`/`decorOverlay.js`/`sceneProfiler.js` (Cyril revenait à des personnages non instanciés) ; `waterSurfaceOverlay.js` (retirait le `lodFactor` LOD caméra) ; `VOLUMETRIC_SMOKE_ENABLED=false` (fumée reste activée par défaut) ; fonctions de diagnostic per-frame `scene.js` (throttle GPU déjà résolu, cf. ci-dessous).
 
 **📋 Suite du merge Cyril — ajustements utilisateur (2026-07-08)** : quatre retouches sur la base intégrée la veille, toutes validées par l'utilisateur.
 - **Touche C (cinéma) retirée intégralement** — l'utilisateur n'en voulait plus du tout : handler `key === 'c'` supprimé de `scene.js`, méthode `postprocess.toggleCinema()` supprimée de `threeSetup.js` (devenue inatteignable, plus aucun appelant), commentaires stales corrigés dans `hud_eda.js`. Le master switch CINÉMATIQUE reste accessible uniquement via sa case à cocher dans le panel EDA (`cinEnabledEl`, indépendante de `toggleCinema()`). Aides mises à jour (`game.php`, prez).
@@ -726,36 +752,16 @@ La quasi-totalité des évolutions passées (eau, courbure monde, panel EDA, fum
 - **Séparateurs horizontaux retirés** — le flux journal + `margin-bottom: 14px` sur chaque enfant direct de `.debug-light-columns` fournissent l'espacement. Le `.debug-light-pix-sep` créé côté JS entre les sections LUT a été supprimé (la boucle `for (const section of LUT_SECTIONS)` fait maintenant `controls.appendChild(sectionEl)` sans séparateur préliminaire). Idem `waterSep` entre Écume et Sillage bateau, et `border-top`/`padding-top`/`margin-top` retirés de `.lut-section-head--nested` (séparateurs 4.1↔4.2↔4.3). Les séparateurs top-level du markup HTML (`.debug-light-columns > .debug-light-pix-sep`) sont masqués défensivement en CSS (`display: none`) au cas où un futur ajout en injecterait un.
 - **Boutons Météo alignés sur la charte EDA** — première version des `.debug-light-weather-btn` (padding 4/6, font-size 10px) trop compacte et collée : passés à `padding: 8px 9px`, `border-radius: 8px`, `font-size: 11px`, `box-shadow: 0 2px 6px rgba(0,0,0,0.30)` — mêmes valeurs que `.debug-light-preset-btn`. Wrapper `#debugLightWeatherRows { display:flex; flex-direction:column; gap: 10px }` pour aérer les 7 lignes.
 
-**📋 Prez — menu mobile + variété des personnages (2026-07-08)** : deux correctifs supplémentaires sur `index.php`/`presentation.css`.
-- **Nav responsive cassée** — `.nav-links { display: none; }` sous 900px masquait toute la navigation sans alternative. Ajout d'un bouton hamburger (`#navToggle`, 3 barres, classe `.open` pour l'animation croix) qui bascule `#navLinks.open` en dropdown plein-largeur position:fixed sous la nav (fond flouté, liens empilés). JS de toggle + fermeture au clic sur un lien + fermeture auto si la fenêtre repasse au-dessus de 900px (`resize`). Ajustements 600px en plus (logo réduit, version masquée, CTA compacté) pour que logo+hamburger+lang+CTA tiennent sur une ligne aux plus petites largeurs.
-- **Variété des personnages sous-représentée** — la section `#creatures` ne nommait que 3 humains (Fermier, Druide, Sorcière) alors que `characterOverlay.js` définit 22 variantes réelles (`VILLAGE_CHARACTER_KEYS` ×15 : Femme 1-5, Homme 1-3, Fermier, Forgeron, Marchand, Tavernier, Garde, Soldat, Chevalier ; `FOREST_CHARACTER_KEYS` ×7 : Archer, Guerrier 1-3, Magicien, Moine, Sorcière). Ajout d'un bloc `.population-strip` discret (2 colonnes Villages/Forêts, tags pill réutilisant `--bg-card`/`--border`) sous la grille `.creatures-grid`, listant les 22 archétypes + note de synthèse. Pas de nouvelles cartes lourdes — liste compacte façon `.kbd-strip`.
+**📋 Prez — nav mobile + variété des personnages (2026-07-08)** : `index.php`/`presentation.css`. Nav responsive cassée sous 900px (menu masqué sans alternative) → hamburger + dropdown. Le seuil pixel-perfect s'est révélé impossible à caler (signalé "trop tôt" après plusieurs remontées) — remplacé par un fallback tolérant : `flex-wrap` à 1300px (nav sur 2 lignes) avant bascule en dropdown à 860px (seuil bas, zone tactile sans ambiguïté). Leçon : face à un seuil responsive contesté, préférer un fallback qui absorbe l'incertitude plutôt qu'ajuster un chiffre exact. Séparément, section `#creatures` enrichie d'un bloc `.population-strip` listant les 22 archétypes réels de `characterOverlay.js` (la vitrine n'en montrait que 3).
 
-**📋 Nav mobile — correction du seuil de déclenchement (2026-07-08, suite)** : l'utilisateur a signalé le hamburger déclenché "bien avant 900px", puis toujours "bien avant" après passage à 1180px — remonter le chiffre ne réglait rien (probable écart de mesure lié au scaling d'affichage, jamais confirmé côté navigateur). Plutôt que de continuer à deviner un seuil pile-poil, la logique a été rendue tolérante à l'ambiguïté :
-  - `@media (max-width: 1300px)` : `.nav-links` passe en `flex-wrap: wrap` (2 lignes dans la barre) au lieu d'exiger un seul rang — plus de seuil fragile à faire correspondre exactement. `.hero-content` gagne un `padding-top` temporairement plus grand (96px) pour ne pas être chevauché par une nav sur 2 lignes.
-  - `@media (max-width: 860px)` : bascule en dropdown + hamburger (seuil volontairement bas, sans ambiguïté possible — zone téléphone/petite tablette), restaure `.hero-content { padding-top: 56px }` puisque la nav redevient courte (liens dans le tiroir, plus dans la barre).
-  - Cache-buster `?v=<?= $cssVersion ?>` (basé sur `filemtime()` de `presentation.css`) conservé sur le `<link>` pour éviter la confusion "css caché" à chaque future édition.
-
-**📋 Merge VFX météo Cyril → sources live (2026-07-09, validé)** : intégration du moteur d'effets météo qui branche enfin les hooks `environmentDirector` restés inertes depuis le scaffolding Phase 0/1a du 2026-07-07. Système décrit à l'état courant en **§29**. Contrairement aux deux merges précédents (eau 07-01, Cyril 07-07) partis de bases anciennes et truffés de régressions, celui-ci était **propre** : diff préalable des 2 fichiers fusionnés (`hud_eda.js`, `debugLightUi.js`) confirmé comme **superset strict** des versions live du 08-07 (uniquement des ajouts, zéro ligne retirée/modifiée) → copie directe sans risque. Contenu : 4 fichiers neufs (`vfxSettings.js`, `weatherVfxOverlay.js`, `vendor/wawa-vfx-vanilla.js`, + `morningMistOverlay.js` passé de l'ex-stub fog-only 3 Ko à la version 8 Ko) ; 2 fusions (rubrique EDA « 2. VFX MÉTÉO ») ; patch manuel `scene.js` (3 imports, instanciation des 2 overlays après `createEnvironmentDirector()`, `let _vfxPrevTimeSeconds` dans `initScene`, 5 lignes d'update dans `animate()` — dernier param `controls.target` **et non** `camera`, sinon la boîte de pluie peut tomber hors champ) + `variables.js` (`VFX_WORLD_RADIUS = 15`). Point de vigilance résolu : les nouveaux fichiers importent THREE via l'URL CDN `three@0.160.0` et `wawa-vfx-vanilla.js` via le specifier nu `"three"` — l'importmap de `game.php` remappe **les deux** vers `./vendor/three.module.js` local → une seule instance, pas de duplication. `node --check` OK sur les 8 fichiers. Dossier `/cyril` supprimé après validation.
-
-**📋 Prez — retouches galerie/créatures/titres (2026-07-09)** : trois ajustements sur `index.php`, tous à la demande utilisateur.
-- **Galerie ambiances** (`.gallery-grid`, §13) — carte ajoutée pour le preset `Psyché-LSD` (déjà présent dans `json/ambiances.json` depuis un ajout antérieur, mais absent de la vitrine). Image `images/pysche-lsd.jpg` — **typo volontaire confirmée par l'utilisateur** ("pysche", pas "psyche") : ne pas "corriger" sans revérifier.
-- **Population-strip** (§21 entrée 2026-07-08 ci-dessus) — tentative initiale erronée : ajout de 2 `.creature-card` avec image ("Eau"/"Prairies") dans `.creatures-grid`, retirée sur correction explicite de l'utilisateur ("je n'ai pas spécifié d'image"). Remplacé par 2 `.population-group` supplémentaires **sans image** dans `.population-strip`, aux côtés de Villages/Forêts/Champs de blés : **Eau** (Bateau, Barques, Mouettes) et **Prairies** (Cerfs, Fleurs sauvages) — 5 groupes au total désormais.
-- **Titres** — `<h2 class="section-title">` : "16 atmosphères" → "Plusieurs atmosphères" (FR **et** EN "16 atmospheres" → "Several atmospheres", parité demandée) ; section créatures "Un monde rempli de créatures" → "Un monde de créatures".
-- **⚠️ Incohérence connue, non corrigée** — le chiffre "16" subsiste ailleurs sur la page : stat-item ~L178 ("16" Ambiances), section-sub ~L527 ("16 presets visuels prêts à l'emploi"), §895-896 ("Au-delà des 16 presets"). `json/ambiances.json` en contient réellement **14** (§13) — c'est précisément pour ça que le titre a été dépluralisé en "Plusieurs". Pas touché faute de consigne explicite sur ces occurrences ; à corriger si demandé.
-
-**📋 Prez — scroll spy + carte Lucioles (2026-07-11)** : deux ajouts sur `index.php`. Scroll spy sur le menu header : `IntersectionObserver` (rootMargin dérivé de `navEl.offsetHeight`) bascule la classe `.active` (déjà stylée comme le hover) sur le lien de la rubrique visible à l'écran, FR et EN. Carte `.creature-card` "Lucioles"/"Fireflies" ajoutée dans `.creatures-grid`, à côté de Mouettes (image `images/lucioles.jpg`, non vérifiable depuis le sandbox — dossier `images/` non monté).
+**📋 Merge VFX météo Cyril → sources live (2026-07-09, validé)** : intégration du moteur d'effets météo qui branche enfin les hooks `environmentDirector` restés inertes depuis le scaffolding Phase 0/1a du 2026-07-07. Système décrit à l'état courant en **§29**. Contrairement aux deux merges précédents (eau 07-01, Cyril 07-07), celui-ci était **propre** : diff préalable confirmé comme superset strict des versions live (uniquement des ajouts) → copie directe sans risque. Point de vigilance résolu : les nouveaux fichiers importent THREE via l'URL CDN et via le specifier nu `"three"` — l'importmap de `game.php` remappe les deux vers `./vendor/three.module.js` local → une seule instance, pas de duplication.
 
 **📋 Authentification joueur — OAuth étudié puis abandonné au profit d'un fix léger (2026-07-11)** : analyse de faisabilité demandée pour éviter de redemander le pseudo à chaque partie. Constat : pas de DB/sessions côté serveur, HTTPS OK en prod (hexistenz.world) mais réplique de test 192.168.0.41 en HTTP seul — casserait le flux normal "tester en local avant prod" pour un vrai OAuth. Décision utilisateur : abandon OAuth, fix minimal retenu. Implémenté dans `highscore.js` : clé `localStorage['hexistenz.playerName']` (fallback sur la clé multijoueur existante `dorfromantik.multiplayer.name`), champ pseudo préempli au chargement, valeur conservée (plus jamais vidée) après soumission réussie d'un score.
 
 **📋 Factorisation doublons triviaux + régression `clonePlain` (2026-07-11)** : audit complet des sources sur demande utilisateur ("factoriser ce qui peut l'être, pas de duplicatas") — rapport livré, seul le lot "doublons triviaux à risque nul" autorisé (rail/boat, blé/herbe, découpage scene.js/hud_eda.js explicitement hors périmètre, décision séparée). Dix identifiants consolidés : `escapeHtml` → `domUtils.js` ; `mulberry32`/`pickRandom` → `random.js` ; `easeInOutSine`/`clamp` → `tileUtils.js` ; `hashRaggedInnerEdge`/`hashRaggedEdge`/`hash01` → import direct depuis `raggedEdge.js` (déjà la source canonique) ; `serializeMissionManager`/`clonePlain` → `missions.js` ; `getHexDistance` → `hex.js` (variante morte de `houseOverlay.js` supprimée, jamais appelée) ; `shortestHueDelta` → gardé canonique dans `realisticWater.js`, importé par `tileTextures.js` (sens choisi pour éviter un import circulaire) ; `getGridPlaneY()` (qui ne faisait que retourner `0.003` en dur) → remplacé par la constante `GROUND_CLEARANCE` (`propPlacement.js`) directement dans `bonusCells.js`/`bonusCellChestOverlay.js`.
 **Régression vécue** : suppression du `clonePlain` local de `multiplayerUi.js` en ne vérifiant son usage que dans `serializeMissionManager` de ce même fichier — 4 autres appels indépendants (deck/specialCells/bonusCells, sérialisation multijoueur) l'utilisaient encore, cassant le chargement de partie (`clonePlain is not defined`). Fix : ajouté à l'import existant depuis `missions.js`. cf. piège §26.
 
-**📋 Popup de score central "+N" (`scorePopup.js`, 2026-07-10)** : nouveau module autonome affichant brièvement la valeur du dernier coup au centre exact de l'écran après une pose LOCALE validée. Validé par l'utilisateur puis ajusté le même jour (taille/durée).
-- **Architecture** — `scorePopup.js` (export unique `showScorePopup(score)`) + `#scorePopup` (`game.php`, juste après `<canvas id="app">`) + `css/scorePopup.css` (nouveau fichier, lié séparément via `<link>` dans `game.php` — **pas** importé par `css/style.css`, ne pas oublier ce lien si `style.css` est un jour réorganisé). Indépendant de Three.js/de la caméra : DOM pur, `position: fixed`, centré `top/left 50% + translate(-50%,-50%)`, `pointer-events: none`, `z-index: 500` (au-dessus du canvas `#app` z-index 1 et des HUD z-index max 12, sous les modales help/multiplayer 9999-10000).
-- **Déclenchement** — un seul point d'appel : `scene.js::placeTile()`, juste après `lastScore = placedTile.score` / `updateScoreUI(...)`. Volontairement **pas** branché dans `updateScoreUI()` elle-même, qui tourne aussi pour le hit comète, l'undo, la sync multijoueur (`applyRemoteGameState`) et l'extension de grille (`expandGridAroundPlacedTile`) — ces appels sont restés intacts, aucun popup ne s'y déclenche. Garde interne dans `showScorePopup(score)` : valeur non finie ou ≤ 0 → no-op (pas de popup pour un score nul/négatif ou un `#scorePopup` absent du DOM).
-- **Animation** — Web Animations API, un seul `Animation` actif à la fois (`_activeAnimation` module-level) : un nouveau score arrivant pendant l'anim en cours l'annule proprement (`cancel()`) puis relance immédiatement avec la nouvelle valeur — jamais d'empilement, jamais de second élément DOM créé. Keyframes `scale(0.35)→1.15→1→1→1.8` / `opacity 0→1→1→1→0`, `translate(-50%,-50%)` conservé à chaque étape (centrage exact tout au long). Variante `prefers-reduced-motion: reduce` : simple fondu sans scale, durée réduite.
-- **Ajustement utilisateur, même jour** — taille et persistance jugées trop faibles après validation initiale : `font-size` 104px→**152px** (mobile ≤640px : 68→96px, `css/scorePopup.css`) ; durée totale 850ms→**1250ms** avec palier de maintien élargi (offset 0.40-0.72 → **0.27-0.80**, ~270ms de lisibilité → ~660ms) — entrée et sortie gardées à une vitesse comparable à l'origine, seul le maintien s'allonge. Reduced-motion aligné proportionnellement (350→500ms, hold 0.2-0.75→0.14-0.82).
-- **Second ajustement utilisateur, même jour** — encore trop petit/trop court : `font-size` 152px→**208px** (mobile 96→132px). Durée totale 1250ms→**1650ms**, entrée/sortie recalées pour garder la **même vitesse en ms** qu'à l'étape précédente (overshoot ~237ms → offset 0.144, retour scale 1 ~337ms → offset 0.204, sortie ~250ms → offset 0.848-1) — seul le palier de maintien s'allonge encore (~660ms → **~1063ms**). Reduced-motion 500→650ms (hold offset 0.14-0.82 → 0.11-0.89). Si une 3ᵉ demande similaire arrive, augmenter direct `ANIM_DURATION_MS`/`font-size` par palier plutôt que redemander — pattern déjà répété deux fois.
+**📋 Popup de score central "+N" (`scorePopup.js`, 2026-07-10)** : module autonome, valeur du dernier coup affichée brièvement au centre écran après une pose LOCALE (seul point d'appel `scene.js::placeTile()` — pas branché sur hit comète/undo/sync multi/extension grille). Architecture : `scorePopup.js` (`showScorePopup(score)`) + `#scorePopup` (`game.php`) + `css/scorePopup.css` (lié séparément via `<link>`, **pas** importé par `css/style.css` — ne pas oublier ce lien si `style.css` est réorganisé). DOM pur `position:fixed`, `z-index:500`, Web Animations API (un seul `Animation` actif, annulé/relancé proprement si un nouveau score arrive pendant l'anim). État final : `font-size` 208px (mobile 132px), `ANIM_DURATION_MS = 1650`, `prefers-reduced-motion` : fondu simple 650ms. Leçon : l'utilisateur a redemandé "plus grand/plus long" deux fois d'affilée le même jour — si un 3ᵉ tour survient, augmenter directement par palier plutôt que redemander une valeur précise.
 
 **📋 EDA — fusion VFX MÉTÉO dans la rubrique 8 Météo (`hud_eda.js` + `debugLightUi.js`, 2026-07-10)** : demande utilisateur pour résoudre une incohérence de numérotation de l'onglet Environnement — la rubrique "2. VFX MÉTÉO" (ajoutée lors du merge Cyril du 2026-07-09, §29) coexistait avec "2. Sillage bateau" (généré dynamiquement dans `.debug-light-water-section`, cf. §13), soit deux rubriques "2." distinctes en même temps.
 - **Changement** — le wrapper `<div class="debug-light-vfx-section">` (en-tête propre "🌫️ 2. VFX MÉTÉO") supprimé de `hud_eda.js` ; son contenu, `<div id="debugLightVfxControls">`, déplacé physiquement dans `.debug-light-weather-section` (rubrique "8. Météo"), après `#debugLightWeatherRows` et le bouton `⏹ Tout arrêter`. Les 3 sous-rubriques internes (🌫️ Brume matinale / ✨ Lucioles / 🌧️ Pluie-Orage, avec bouton ↺ chacune) sont conservées telles quelles.
@@ -771,6 +777,56 @@ La quasi-totalité des évolutions passées (eau, courbure monde, panel EDA, fum
 - **"Enregistrer" clôt la partie** — après un POST réussi, redirection (`window.location.href = window.location.pathname`, ~700ms après confirmation) vers l'écran de sélection de nouvelle partie. Le `pathname` sans query `?multi=` évite de laisser traîner le code d'une room désormais terminée (cf. point suivant). `startNewGame()` (bouton "NOUVELLE PARTIE") suit la même logique de reload sans query.
 - **Confirmation d'abandon** — `btnAbandonGame` n'appelle plus `abandonGame()` directement : un nouveau modal `#abandonConfirmModal` (même famille `.highscore-modal`) demande confirmation (boutons ANNULER/ABANDONNER, réutilisant `.new-game-button`/`.abandon-button`). `scene.js` : `requestAbandonConfirm()` → affiche le modal, `abandonGame()` → exécuté seulement au clic sur ABANDONNER.
 - **Verrou anti-rejeu serveur (`multiplayer.php`)** — une partie terminée (abandon ou deck vide) ne doit plus jamais être rejouable, sinon on peut reprendre indéfiniment la même partie/les mêmes tuiles et refaire le même score à l'infini. `endGame()` (`scene.js`) appelle désormais explicitement `persistMultiplayerState()` après avoir posé `gameOver = true` — **avant ce fix, `gameOver:true` n'était jamais poussé au serveur** (le seul autre point d'appel, en fin de pose de tuile, a lieu AVANT que `gameOver` passe à `true`, et plus aucune pose ne survient après la fin de partie). Nouvelle fonction PHP `room_is_finished($room)` (vérifie `$room['gameOver']` puis repli `$room['state']['gameOver']`, déjà synchronisés en top-level par `sync_top_level_state()` existant) : `list_room_details()` exclut désormais ces rooms de la liste ("parties disponibles"), `join_room()` les rejette explicitement (409) même via un lien direct `?multi=CODE` — double verrou, liste ET jonction directe.
+
+**📋 Prez — carte "meilleurs bâtisseurs" (`index.php`, 2026-07-11)** : piège de communication (pas de code) — la consigne "les autres stats" voulait dire UN SEUL bloc visuel `.hs-meta` regroupant locomotives/bateaux/moulins/comètes ET détail biomes, pas deux `<div>` distincts ; a demandé une dizaine d'allers-retours avant clarification. Toute future retouche doit d'abord relire la structure `$smallStats` de `index.php` en entier (une seule chaîne PHP concaténée, un seul conteneur `.hs-meta` en sortie) avant de modifier un sous-élément.
+
+**📋 Stat "moulins" ajoutée au classement (2026-07-11)** : `millCount` propagé `highscore.js` → `highscore.php` → `index.php` (icône ⚙️). Absente des scores enregistrés avant ce fix (comportement attendu, pas un bug).
+
+**📋 Audit fichiers volumineux/mal nommés/mal placés + 3 refactors validés sans risque (2026-07-11)** : audit demandé sur les gros fichiers scindables, les noms trompeurs et les fichiers mal placés (`/shaders` et autres). Trois constats validés par l'utilisateur et implémentés le jour même :
+- **CSS extrait de `debugLightUi.js`** — `installDebugLightCss()` (~1150 lignes de CSS injectées via un template literal JS, tout le fichier ou presque) était une feuille de style déguisée en code, pas de la logique. Extrait tel quel (aucune règle modifiée) vers **`css/eda.css`**, chargé statiquement via `@import` dans `css/style.css`. Le fichier JS passe de 1211 à ~45 lignes ; plus aucune injection CSS au runtime. Élimine au passage le risque de piège backticks déjà rencontré une fois sur ce même mécanisme (cf. `feedback-backticks-template-css`, §21 entrée 2026-07-08).
+- **Renommage `debugLightUi.js` → `edaPanelHost.js`, `hud_eda.js` → `edaPanelWiring.js`** — les deux anciens noms ne disaient rien de leur rôle réel (l'un pilotait un "panneau lumière de debug", l'autre un "HUD" générique, alors que les deux hébergent/câblent le même panel EDA). Renommage pur, aucun changement de comportement : les 2 imports externes (`scene.js` → `edaPanelHost.js` ; `edaPanelHost.js` → `edaPanelWiring.js`) et tous les commentaires de doc dans les fichiers tiers (`hud_fps.js`, `domUtils.js`, `environmentDirector.js`, `sceneProfiler.js`, `help.js`, `houseVillageObjects.js`, `variables.js`, `tileUtils.js`, `vfxSettings.js`) mis à jour. `wireEdaPanel`/`EDA_BODY_HTML` (exports) inchangés.
+- **`waterBoatOverlay.js` et `morningMistOverlay.js` déplacés dans `shaders/`** — ces deux overlays contiennent du GLSL embarqué (shader de sillage, modulation fog) comme les autres modules déjà présents dans `shaders/` (`shaderEau.js` etc.), contrairement au reste des overlays qui vivent à la racine. Déplacement pur : imports internes vers la racine repassés en `../` (ex. `../config.js`, `../hex.js`), import déjà présent vers `./shaders/shaderEau.js` simplifié en `./shaderEau.js` (même dossier désormais). Les 4 importateurs externes (`scene.js` ×2, `edaPanelWiring.js`, `missions.js`, `waterBirdOverlay.js`) mis à jour vers `./shaders/...`. `shaders/` contient donc désormais un mélange GLSL pur + overlays à shader embarqué (cf. §20).
+- **Correction au passage** : le commentaire de `morningMistOverlay.js` dans l'arborescence §20 affirmait encore "NON appelée dans animate() (dormant)" — stale depuis le merge VFX Cyril du 2026-07-09 (§21 même section) qui l'a effectivement branché. Corrigé.
+- Vérifié : `node --check` sur les ~16 fichiers touchés (aucune erreur de syntaxe), grep croisé pour confirmer l'absence de référence orpheline vers les anciens chemins/noms.
+- **Non retenu pour l'instant** (audité mais pas implémenté, risque jugé trop élevé pour un refactor "sans risque") : découpage de `scene.js` (une seule closure géante `initScene()`, 1901 lignes — déjà explicitement écarté par l'utilisateur lors de l'audit factorisation du 07-11, cf. entrée précédente) et de `hud_eda.js`/`edaPanelWiring.js` (`wireEdaPanel()` ~1000 lignes, même famille de closure unique) ; fusion des deux implémentations de lissage de polyligne 2D dupliquées entre `railTrainOverlay.js` et `tileRailOverlay.js` ; renommage de `config.js` (simple re-export de `variables.js`) et des fichiers dev (`generate.php`, `check-glb.php`) — nécessiterait une nouvelle décision explicite avant d'y toucher.
+
+**📋 Audit fichiers volumineux/mal nommés/mal placés — round 2 : 4 découpages + 1 renommage + extraction CSS + 4 suppressions code mort (2026-07-11)** : suite directe de l'audit précédent, mêmes critères (découpage sans risque, renommage, déplacement, code mort), nouvelle série de propositions validées par l'utilisateur ("recommence l'analyse... -> GO").
+- **`railTrainOverlay.js` scindé en 5 fichiers** — `railTrainConstants.js` (constantes partagées), `railGraph.js` (graphe de navigation), `railStations.js` (gares terminus), `railTrainVehicle.js` (locos/wagons), `railTrackGlb.js` (chargement GLB voie). Fichier d'origine devenu orchestrateur fin.
+- **`help.js` scindé** — textes d'aide extraits vers `helpTexts.js`, logique d'affichage/positionnement vers `helpTooltip.js`.
+- **`multiplayerUi.js` renommé `startupMenu.js` et scindé** — le nom `multiplayerUi` ne décrivait plus le rôle réel (menus de démarrage en général, pas seulement multijoueur). Sous-fichiers : `menuBackgroundCarousel.js` (carrousel visuel du fond de menu), `multiplayerRooms.js` (liste/gestion des salons), `startupMenuShared.js` (état partagé entre les deux).
+- **`soundDesign.js` scindé** — `musicPlayer.js` (lecture de la musique de fond) et `ambientSoundDesign.js` (ambiances sonores environnementales, chi-mai, corbeaux, etc.).
+- **CSS extrait de `preloader.js`** — même pattern que `debugLightUi.js`/`css/eda.css` de l'audit précédent : template literal CSS sorti vers un fichier `.css` dédié, chargé statiquement.
+- **Code mort supprimé** — `addNaturalPropCluster` et `getTerrainTopY`, confirmés orphelins par grep repo-wide avant suppression (`getTerrainTopY` est l'origine de la `TERRAIN_RELIEF` locale devenue orpheline dans `tileMesh.js`, supprimée au round 3 ci-dessous).
+- Vérifié : `node --check` sur tous les fichiers touchés + grep croisé imports, aucune référence orpheline.
+
+**📋 Audit round 3 : 4 découpages supplémentaires + suppression code mort, avec un piège vécu (2026-07-11)** : même méthodologie, nouvelle demande "recommence l'analyse... découpages sans risque et code mort validés -> GO".
+- **`waterZoneOverlay.js` → `waterZoneLabels.js`** — tous les sprites/labels de valeur de zone extraits (fichier d'origine garde BFS/hover). cf. §14.
+- **`tileTextures.js` → `tileTextureDrawing.js`** — fonctions de dessin canvas extraites (`drawTexture`, `drawWaterTexture`, etc.), état animé exposé via accesseurs (`setActiveTexturePalette`/`getAnimatedTextureState`/`getAllAnimatedTextureStates`) plutôt que des bindings partagés bruts.
+- **`missions.js` → `missionLabels.js`** — icônes, aide, `formatMissionLabel`/`formatMissionTitle` extraits. cf. §30.
+- **`decorOverlay.js` → `decorPropModels.js` + `decorBirdModels.js`** — chargement GLB props et oiseaux/mouettes extraits, avec accesseurs `isPropModelsLoading()`/`isBirdModelLoading()`/`isSeagullModelLoading()` pour l'état partagé. Import circulaire sous-fichiers ↔ `decorOverlay.js` conservé (même convention déjà en place dans ce fichier, valide car tout accès croisé se fait dans des corps de fonction, jamais au top-level).
+- **`TERRAIN_RELIEF` locale supprimée dans `tileMesh.js`** — devenue orpheline après la suppression de `getTerrainTopY` (round 2 ci-dessus). Ne pas confondre avec la `TERRAIN_RELIEF` EXPORTÉE de `variables.js` (vivante, utilisée par `terrainHeight.js`/`tileRailOverlay.js`).
+- **🪤 Piège vécu — `Uncaught SyntaxError: Identifier 'propGlbLibrary' has already been declared`** : régression ayant cassé le rendu de la grille, signalée par l'utilisateur. Root cause : le découpage de `decorOverlay.js` a été fait via un trim `sed -n '1,808p'` en bash pour couper le fichier, mais l'ancien bloc "État singleton partagé" (`propGlbLibrary`/`propAnimationsLibrary`/`propModelsLoading`/`propModelsRequested`) se trouvait justement DANS la plage conservée (avant la ligne 808) et n'a pas été retiré séparément — il entrait en conflit avec le nouvel `import { propGlbLibrary, ... } from './decorPropModels.js'` ajouté plus haut dans le même fichier. **Leçon** : un trim de fichier par plage de lignes (sed/bash) ne remplace pas une relecture ciblée des blocs déplacés — toujours grep chaque identifiant déplacé dans le fichier source APRÈS le trim pour confirmer l'absence de doublon, ne pas se fier uniquement à `node --check` exécuté sur un état intermédiaire. Fix : bloc obsolète remplacé par un commentaire explicatif, `_propInstanceDummy`/`_snapNormal` conservés (toujours utilisés). Sweep de vérification étendu à tous les fichiers des rounds 2/3 (grep de chaque identifiant déplacé) : aucun autre doublon trouvé.
+- Vérifié : `node --check` sur 20 fichiers, tous OK.
+
+**📋 Audit round 4 : nettoyage fichiers JS < 1Ko (2026-07-11)** : demande explicite de vérifier les fichiers JS sous 1Ko (certains à une seule ligne) pour fusion/suppression, avec consigne stricte de proposer avant d'agir suite au piège ci-dessus. 7 candidats analysés, seuls 2 retenus comme "solides et sans risque" :
+- **`cinematicPass.js` supprimé** — n'était qu'un ré-export de compatibilité (`export { CINEMATIC_SHADER } from './shaders/shaderCinematique.js';`), un seul importateur (`threeSetup.js`), redirigé pour importer directement depuis `shaders/shaderCinematique.js`. cf. §12/§27.E.
+- **`tileRoadOverlay.js` supprimé** — stub no-op confirmé (`createRoadCenterOverlay()` retournait toujours `null`, GLBs routes retirés du projet), site d'appel mort dans `tileMesh.js` retiré avec lui.
+- **5 candidats écartés, volontairement non touchés** : `config.js` (50+ importateurs, trop risqué malgré la taille) ; `main.js` (point d'entrée normal) ; `gameRules.js` (module de règles métier légitimement petit) ; `domUtils.js` (résultat d'une factorisation réussie antérieure, ne pas défaire) ; `glbLoader.js` (utilitaire central, petit par nature et non par négligence).
+- Vérifié : `node --check` + grep croisé, 2 commentaires historiques stales référençant `cinematicPass.js` corrigés au passage (`threeSetup.js`, `shaders/shaderCinematique.js`).
+
+**📋 Passage bilingue FR/EN complet — prez + jeu (2026-07-12)** : jusque-là seule la prez (`index.php`) était bilingue (dual-render `data-fr`/`data-en` + CSS `[data-lang]` + `setLang()`), le jeu (`game.php` et tous les modules JS) restait 100% français. Demande utilisateur : propager le choix de langue fait dans la prez à l'ensemble du jeu, en 2 fichiers JSON partagés. Étapes validées une à une :
+- **Textes de la prez extraits en JSON** — `json/languages/french.json`/`english.json` créés (nav/hero/factions/biomes/missions/gameplay/gallery/creatures/audio/daynnight/eda/multi/scores/footer), `index.php` rebranché dessus via un nouvel helper PHP `tr($t,$lang,$path)` (dot-path, repli `''`). Architecture dual-render/CSS-toggle existante conservée à l'identique — seul le sourcing du texte change (JSON au lieu de codé en dur). Fichier passé de 1240 à 923 lignes.
+- **Convention adoptée côté jeu** (différente de `tr()` PHP) : chaque module JS fait son propre `await fetch('./json/languages/${lang}.json')` top-level (précédent déjà en place : `edaPanelWiring.js`/`ambiances.json`), lit `localStorage['hexistenz_pres_lang']` (repli `'fr'`), avec repli textuel FR codé en dur à chaque site d'usage (`?? 'texte français'`) si le fetch échoue. Choix délibéré de ne pas créer de loader/cache partagé — chaque fichier reste autonome (philosophie "pas de bundler" du projet) ; les fetches dupliqués du même petit JSON sont sans conséquence (cache HTTP navigateur).
+- **`helpTexts.js`** — `LUT_HELP` (~150 tooltips) → clé `game.help`, clés à points internes gardées plates (pas de dot-path imbriqué, incompatible avec des clés du genre `'renderer.toneMappingExposure'`).
+- **`missionLabels.js`** (2 temps, à la demande explicite de l'utilisateur) — 1) `MISSION_HELP` → `game.missionHelp` (9 textes) ; 2) `MISSION_TITLE_BUILDERS` (pluriel FR codé en dur, ex. `train${target>1?'s':''}`, `bateau${target>1?'x':''}`) → `game.missionTitles`, templates `{one, other}` pré-rédigés par langue (gère aussi les pluriels irréguliers) + substitution `{target}`.
+- **`game.php`** — même pattern dual-render/`tr()` que `index.php`, JSON de langue chargé en tête de fichier volontairement dupliqué (pas d'include partagé, pour ne pas retoucher un `index.php` déjà validé) : clé `game.ui` (modals, HUD, aide en jeu — ~82 clés).
+- **`highscore.js`** — 4 messages de statut + nom par défaut → `game.highscore`.
+- **`multiplayerRooms.js`** — écran setup multijoueur complet (labels, placeholders, statuts, pluriels joueur(s)/tuile(s)/partie(s) via `{one, other}`) → `game.multiplayerRooms` (~25 clés).
+- **`startupMenu.js` + `preloader.js`** — menus pré-partie (prénom, solo/multi, platiste/bouliste, note "changer de faction") + écran de chargement → `game.startupMenu`/`game.preloader`.
+- **`placementOverlay.js` + `multiplayerClient.js`** — label de validité de placement affiché en continu en jeu (OK/HORS GRILLE/INTERDIT/RÉSEAU INCOMPATIBLE + noms de biomes dans les conflits) + 2 messages d'erreur réseau → `game.placementOverlay`/`game.multiplayerClient`.
+- **3 oublis signalés par l'utilisateur, corrigés** : (1) tooltip hover du panel STATISTIQUES posé uniquement sur le `<strong>` (le nombre) au lieu de toute la cellule — `ui.js` corrigé (`el.closest('.stats-summary-card') ?? el.parentElement`, selon la structure DOM) ; (2) mini-HUD clavier bas d'écran ("H ou ESC → aide...") trouvé dans `edaPanelWiring.js` (pas `game.php` — d'où l'oubli initial) → `game.kbdHint`, plus un hint apparenté dans `scene.js` ("ESPACE pour sortir du super-immersif") → `game.superImmersifExitHint` ; (3) adjectif de qualité FPS (`hud_fps.js::_fpsAdjective` — Désastreux/Mauvais/Médiocre/Passable/Bon/Splendide) → `game.fpsAdjectives`.
+- **Prez — badge "Solo & Multi" corrigé** — la puce de la stats-bar en haut de page (`hero.stats.solo_multi`) présentait Solo et Multi comme deux modes produit distincts, ce qui ne correspond plus à la réalité depuis longtemps (cf. entrée 2026-07-06 ci-dessus : "il n'existe plus de vrai mode solo... toute partie est jouable en multijoueur"). Remplacé par "Multijoueur"/"Multiplayer" seul (choix validé par l'utilisateur). Vérifié par grep repo-wide : aucune autre évocation de cette dichotomie dans la prez — le menu solo/multi du jeu lui-même et la section MULTIJOUEUR dédiée restent exacts et inchangés (ce sont des choix fonctionnels réels, pas une évocation obsolète).
+- Vérifié à chaque étape : JSON valide et de structure FR/EN identique (`node -e "JSON.parse(...)"`), syntaxe JS valide (`node --check`, avec reconstruction manuelle des fichiers quand le cache bash montrait du contenu périmé/tronqué — cf. piège §26 et mémoire `feedback-verif-mount-cowork`, réapparu plusieurs fois cette session), zéro changement de signature dans les fichiers consommateurs de chaque module touché.
 
 ---
 
@@ -809,7 +865,7 @@ Historique fréquence/taille (avant l'exposition en uniform) : 0.0212242 → 0.0
 
 `isSoleil` (booléen mutable dans scene.js) — persistent via `localStorage('hexistenz_daynightmode')`.
 
-Case à cocher `#dayNightToggle` dans `hud_eda.js` — onglet Environnement, rubrique 6 "Jour / Nuit" (déplacée du footer en juillet 2026). Dispatche `hexistenz:dayNightChange` (CustomEvent), lu par scene.js et par le panel lui-même (pour resynchroniser la case si l'événement vient d'ailleurs, ex. init aléatoire jour/nuit dans `scene.js`).
+Case à cocher `#dayNightToggle` dans `edaPanelWiring.js` (ex-`hud_eda.js`) — onglet Environnement, rubrique 6 "Jour / Nuit" (déplacée du footer en juillet 2026). Dispatche `hexistenz:dayNightChange` (CustomEvent), lu par scene.js et par le panel lui-même (pour resynchroniser la case si l'événement vient d'ailleurs, ex. init aléatoire jour/nuit dans `scene.js`).
 
 **Star occluder** (`hexistenz-grid-star-occluder`) : rendu à `renderOrder=-500` pour masquer les étoiles sous le plateau. Mis à `visible=false` à l'init pour que les cellules vides montrent le ciel.
 
@@ -984,7 +1040,7 @@ ShaderPass, ray-march slab Y dynamique (`uSmokeYBase`/`uSmokeYTop`, recalculé p
 
 ---
 
-### E. Effets cinématiques (`cinematicPass.js` + `shaders/shaderCinematique.js`)
+### E. Effets cinématiques (`shaders/shaderCinematique.js`)
 
 Fragment shader : courbure écran CRT → barillet → tilt-shift → aberration chromatique → gaussienne 9-taps → halation → God Rays → bloom → vignette → grain film → scan lines. Bloom et courbure écran CRT ajoutés le 2026-07-02, cf. §12/§13.
 
@@ -1050,14 +1106,14 @@ Vertex shader GPU, mode "bouliste". Formule de drop en distance d'arc (`-R(1-cos
 
 ---
 
-## 29. VFX Météo (`environmentDirector.js` + `morningMistOverlay.js` + `weatherVfxOverlay.js` + `vfxSettings.js`)
+## 29. VFX Météo (`environmentDirector.js` + `shaders/morningMistOverlay.js` + `weatherVfxOverlay.js` + `vfxSettings.js`)
 
 Système d'effets météo visuels piloté par événements, intégré le 2026-07-09 (cf. §21). Remplace le scaffolding inerte Phase 0/1a.
 
 **Chef d'orchestre — `environmentDirector.js`** (déjà présent) : catalogue `ENVIRONMENT_EVENTS` (morningMist/fireflies/rain/storm/lightning/fire/panic). API : `triggerEnvironmentEvent`/`stopEnvironmentEvent`/`stopAllEnvironmentEvents`/`isEnvironmentEventActive`/`onEnvironmentChange`/`updateEnvironmentDirector`/`getEnvironmentEventFade` (fondus entrée/sortie, défaut 6 s). Déclenchement manuel via rubrique EDA « 8. Météo » (§13).
 
 **Overlays visuels** (branchés sur le director) :
-- `morningMistOverlay.js` — nappe de brume volumétrique, respecte la courbure du monde (`WORLD_CURVATURE_SHADER`/`_UNIFORMS`). Réagit à l'event `groundMist`.
+- `shaders/morningMistOverlay.js` — nappe de brume volumétrique, respecte la courbure du monde (`WORLD_CURVATURE_SHADER`/`_UNIFORMS`). Réagit à l'event `groundMist`.
 - `weatherVfxOverlay.js` — lucioles + pluie/orage via le moteur de particules `vendor/wawa-vfx-vanilla.js` (`VFXEmitter`/`VFXParticles`/`AppearanceMode`, port vanilla de wawa-vfx). Réagit aux events `fireflies`/`rain`/`storm`. Repositionné chaque frame sur `controls.target` (point du sol regardé).
 
 **Store de réglages — `vfxSettings.js`** : `getVfxSettings(effect)`/`setVfxSetting(effect, key, value)`/`resetVfxSettings(effect)`/`onVfxSettingsChange(listener)` + `VFX_SETTINGS_DEFAULTS`. Persistance localStorage interne. Édité en direct dans la rubrique EDA « 8. Météo » (fusionné le 2026-07-10, ex-rubrique 2 indépendante — §13). Zone couverte = `VFX_WORLD_RADIUS` (`variables.js`, 15 unités).
@@ -1068,11 +1124,11 @@ Système d'effets météo visuels piloté par événements, intégré le 2026-07
 
 ---
 
-## 30. Système de missions (`missions.js` + `ui.js` + `scene.js`)
+## 30. Système de missions (`missions.js` + `missionLabels.js` + `ui.js` + `scene.js`)
 
 **Modèle** : `missionManager.active` = tableau d'objets `{ id, tileId, type, label, unit, target, baseline, completed?, completedAtTurn? }`. `baseline` = valeur de progression au moment de la génération de la mission ; `gained = clamp(current − baseline, 0, target − baseline)` ; `total = target − baseline` (l'"étendue" de la mission — ex. mission 9/15 rails générée à baseline=9 → total=6). Formulation confirmée par l'utilisateur : si une mission est réussie à 24, la suivante générée avec target=30 aura `total = 30 − 24 = 6`.
 
-**Titre court** (`formatMissionTitle(mission)`, `missions.js`) : phrase courte par type au-dessus de la barre ("Construire un village de 17 maisons", etc.), builders dans `MISSION_TITLE_BUILDERS` par `EDGE_TYPES`/type spécial (train/bateau/moulin). Remplace l'ancien `formatMissionLabel` (conservé, non appelé).
+**Titre court** (`formatMissionTitle(mission)`, `missionLabels.js` — extrait de `missions.js` le 2026-07-11, round 3, cf. §21) : phrase courte par type au-dessus de la barre ("Construire un village de 17 maisons", etc.), builders dans `MISSION_TITLE_BUILDERS` par `EDGE_TYPES`/type spécial (train/bateau/moulin). Remplace l'ancien `formatMissionLabel` (conservé dans `missionLabels.js`, non appelé).
 
 **Barre de progression graduée** (`ui.js::updateMissionUI`) : `MAX_TICKS = 24` — nombre de graduations = `total` (1:1 en dessous du cap, arrondi proportionnel au-delà). Chaque graduation est un `<span class="mission-bar-seg[ seg-filled tierClass]">` coloré au fur et à mesure que `gained` grimpe (couleurs de palier conservées, `bar-mid`/`bar-near`/`bar-close`). Remplace l'ancienne barre à largeur continue (`.mission-bar-fill`).
 

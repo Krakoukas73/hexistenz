@@ -24,7 +24,7 @@
  */
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { cloudVertexShader, cloudFragmentShader } from './shaders/shaderCiel.js';
+import { cloudVertexShader, cloudFragmentShader } from './shaders/shaderSky.js';
 import { markNoWorldCurvature } from './worldCurvature.js';
 
 const CLOUD_SKY_NAME  = 'hexistenz-cloud-sky';

@@ -13,7 +13,7 @@
 // ----------------------------------------------------------------------------
 // VERSION
 // ----------------------------------------------------------------------------
-export const HEXISTENZ_VERSION = 'v0.9.2.5.3';
+export const HEXISTENZ_VERSION = 'v0.9.2.5.7';
 
 // ----------------------------------------------------------------------------
 // GRILLE / DECK
@@ -546,7 +546,7 @@ export const ROCK_DENSITY = {
 };
 
 // ----------------------------------------------------------------------------
-// VFX MÉTÉO (weatherVfxOverlay.js, morningMistOverlay.js)
+// VFX MÉTÉO (weatherVfxOverlay.js, shaders/morningMistOverlay.js)
 // ----------------------------------------------------------------------------
 export const VFX_WORLD_RADIUS = 15; // rayon (unités monde) de la zone couverte par lucioles/brume
 

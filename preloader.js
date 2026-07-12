@@ -146,95 +146,32 @@ const ASSETS_OGG = [
 ];
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
-
-function injectStyles() {
-  if (document.getElementById('preloader-styles')) return;
-  const style = document.createElement('style');
-  style.id = 'preloader-styles';
-  style.textContent = `
-    #preloader-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-      background:
-        radial-gradient(circle at 50% 15%, rgba(115, 190, 255, 0.10), transparent 34%),
-        linear-gradient(135deg, #071019 0%, #111827 46%, #05070b 100%);
-      transition: opacity 0.55s ease;
-    }
-
-    #preloader-overlay.fade-out {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    #preloader-logo {
-      width: min(440px, 72vw);
-      object-fit: contain;
-      filter: drop-shadow(0 14px 28px rgba(0,0,0,0.55));
-      margin-bottom: 20px;
-      display: block;
-      user-select: none;
-      pointer-events: none;
-    }
-
-    #preloader-hex-ring {
-      width: 64px;
-      height: 64px;
-      margin-bottom: 28px;
-      animation: preloader-hex-spin 2.4s linear infinite;
-      opacity: 0.72;
-    }
-
-    @keyframes preloader-hex-spin {
-      from { transform: rotate(0deg);   }
-      to   { transform: rotate(360deg); }
-    }
-
-    #preloader-bar-wrap {
-      width: min(320px, 64vw);
-      height: 3px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 2px;
-      overflow: hidden;
-      margin-bottom: 14px;
-    }
-
-    #preloader-bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #3b82f6, #60a5fa);
-      border-radius: 2px;
-      transition: width 0.18s ease-out;
-    }
-
-    #preloader-label {
-      font-family: system-ui, sans-serif;
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(180, 210, 255, 0.42);
-      margin-bottom: 6px;
-    }
-
-    #preloader-filename {
-      font-family: system-ui, sans-serif;
-      font-size: 10px;
-      letter-spacing: 0.06em;
-      color: rgba(180, 210, 255, 0.22);
-      max-width: min(320px, 64vw);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      text-align: center;
-    }
-  `;
-  document.head.appendChild(style);
+// CSS extrait le 2026-07-11 vers css/preloader.css (découpage sans risque, cf.
+// CONTEXT.md §21) : ex-injectStyles(), ~82 lignes de CSS injecté via template
+// literal JS, aucune closure. Chargé statiquement via @import dans css/style.css,
+// plus besoin d'injection JS au runtime.
+//
+// Passage bilingue FR/EN le 2026-07-12 : le texte "Chargement…" vient de
+// json/languages/{french,english}.json (clé game.preloader), même mécanisme
+// que les autres modules (top-level await + localStorage 'hexistenz_pres_lang').
+// Repli FR en dur : c'est le tout premier écran affiché, avant même le fetch.
+function getGameLang() {
+  try {
+    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
+  } catch {
+    return 'fr';
+  }
 }
+
+const _langFile = getGameLang() === 'en' ? 'english' : 'french';
+
+const _plText = await fetch(`./json/languages/${_langFile}.json`)
+  .then(r => r.json())
+  .then(data => data?.game?.preloader ?? {})
+  .catch(err => {
+    console.error(`[preloader] Impossible de charger ${_langFile}.json`, err);
+    return {};
+  });
 
 function createOverlay() {
   const el = document.createElement('div');
@@ -259,7 +196,7 @@ function createOverlay() {
     <div id="preloader-bar-wrap">
       <div id="preloader-bar"></div>
     </div>
-    <div id="preloader-label">Chargement…</div>
+    <div id="preloader-label">${_plText.loading ?? 'Chargement…'}</div>
     <div id="preloader-filename"></div>
   `;
   document.body.appendChild(el);
@@ -272,7 +209,7 @@ function setProgress(overlay, loaded, total, url = '') {
   const filename = overlay.querySelector('#preloader-filename');
   const pct      = total > 0 ? Math.round((loaded / total) * 100) : 0;
   if (bar)      bar.style.width = pct + '%';
-  if (label)    label.textContent = `Chargement… ${pct} %`;
+  if (label)    label.textContent = (_plText.loadingPct ?? 'Chargement… {pct} %').replace('{pct}', pct);
   if (filename) filename.textContent = url ? url.split('/').pop() : '';
 }
 
@@ -313,7 +250,6 @@ async function fetchAsset(url) {
  * puis appelle `onReady()` une fois terminé.
  */
 export async function showPreloader(onReady) {
-  injectStyles();
   const overlay = createOverlay();
 
   const all    = [...ASSETS_GLB, ...ASSETS_OGG];

@@ -1,7 +1,31 @@
+// Passage bilingue FR/EN le 2026-07-12 : les 4 messages de statut + le nom par
+// défaut viennent de json/languages/{french,english}.json (clé game.highscore),
+// même mécanisme que helpTexts.js (top-level await + localStorage
+// 'hexistenz_pres_lang'). Repli FR en dur à chaque site d'appel : ce sont des
+// messages affichés pendant l'enregistrement du score (chemin critique), on
+// évite un texte vide si le fetch échoue.
+function getGameLang() {
+  try {
+    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
+  } catch {
+    return 'fr';
+  }
+}
+
+const _langFile = getGameLang() === 'en' ? 'english' : 'french';
+
+const _hsText = await fetch(`./json/languages/${_langFile}.json`)
+  .then(r => r.json())
+  .then(data => data?.game?.highscore ?? {})
+  .catch(err => {
+    console.error(`[highscore] Impossible de charger ${_langFile}.json`, err);
+    return {};
+  });
+
 const API_URL = 'highscore.php';
-const DEFAULT_NAME = 'Joueur';
+const DEFAULT_NAME = _hsText.defaultName ?? 'Joueur';
 // Persistance du pseudo (2026-07-11) : le pseudo est désormais demandé une seule fois,
-// dans les menus de sélection avant partie (multiplayerUi.js) — jamais reredemandé ici.
+// dans les menus de sélection avant partie (startupMenu.js, ex-multiplayerUi.js) — jamais reredemandé ici.
 // Clé dédiée au classement, avec repli sur le pseudo multijoueur existant.
 const NAME_STORAGE_KEY = 'hexistenz.playerName';
 
@@ -62,7 +86,7 @@ async function submitCurrentScore(ui, elements) {
   const name = sanitizeName(elements.currentName || DEFAULT_NAME);
 
   if (score <= 0) return;
-  setStatus(elements, 'Enregistrement...');
+  setStatus(elements, _hsText.saving ?? 'Enregistrement...');
   if (elements.saveButton) elements.saveButton.disabled = true;
 
   try {
@@ -77,7 +101,7 @@ async function submitCurrentScore(ui, elements) {
 
     storeName(name); // mémorisé pour la prochaine partie — ne plus redemander
 
-    setStatus(elements, 'Score enregistré ! Retour au menu...');
+    setStatus(elements, _hsText.saved ?? 'Score enregistré ! Retour au menu...');
 
     // La partie est close : retour à l'écran de sélection de nouvelle partie.
     // window.location.pathname (sans query ?multi=) évite de laisser traîner le code
@@ -86,7 +110,7 @@ async function submitCurrentScore(ui, elements) {
       window.location.href = window.location.pathname;
     }, RETURN_TO_MENU_DELAY_MS);
   } catch (error) {
-    setStatus(elements, 'Erreur highscore.');
+    setStatus(elements, _hsText.error ?? 'Erreur highscore.');
     if (elements.saveButton) elements.saveButton.disabled = false;
     console.error(error);
   }
@@ -99,6 +123,7 @@ function sanitizeGameStats(stats) {
     tiles: safeInt(stats.tiles),
     trainLines: safeInt(stats.trainLines),
     boatCount: safeInt(stats.boatCount),
+    millCount: safeInt(stats.millCount),
     cometHits: safeInt(stats.cometHits),
     totals: {},
     largest: {}

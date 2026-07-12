@@ -1,8 +1,8 @@
 /**
- * shaderCinematique.js — Shader de post-traitement cinématique.
+ * shaderCinematic.js — Shader de post-traitement cinématique (ex-shaderCinematique.js, renommé en anglais le 2026-07-11).
  *
- * Contenu migré depuis cinematicPass.js (qui reste un re-export pour
- * compatibilité avec stable/threeSetup.js sans modification du code validé).
+ * Importé directement par threeSetup.js (ex-détour via cinematicPass.js, simple
+ * ré-export de compatibilité supprimé le 2026-07-11, round 4, cf. CONTEXT.md §21).
  *
  * Effets :
  *   1. Distorsion barillet  (barrel lens distortion)

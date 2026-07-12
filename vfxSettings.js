@@ -24,9 +24,25 @@ const DEFAULTS = {
     scintillement: 0.85 // 0..1 — intensité du clignotement
   },
   rain: {
-    densite:    0.5, // 0..1 — nombre de gouttes
-    vitesse:    10,  // vitesse de chute (unités monde/s)
-    tailleGoutte: 0.045 // largeur du streak
+    // Pas de réglage de vitesse : dans la vraie vie, la vitesse de chute d'une goutte dépend
+    // de sa taille et plafonne à une vitesse terminale — on simule directement cette vitesse
+    // terminale (constante, cf. TERMINAL_FALL_SPEED dans weatherVfxOverlay.js) plutôt que
+    // d'exposer un curseur qui n'aurait pas de sens physique isolé de la taille.
+    densite:      0.5,   // 0..1 — densité de gouttes (max slider = pluie battante, cf. MAX_DROPS_PER_ANCHOR)
+    tailleGoutte: 0.005, // taille du streak — au-delà de ~0.005 ça devient trop gros (retour user 2026-07-11)
+    impactSol:    0.6    // 0..1 — intensité des taches d'impact au sol (0 = désactivé)
+  },
+  clouds: {
+    densite:   0.10, // 0..1 — couverture (proportion de tuiles portant un nuage). Volontairement
+                     //        clairsemé : quelques cumulus « cute » distincts, pas un mur continu.
+    altitude:  5.0,  // unités monde — hauteur de la nappe de nuages au-dessus du sol (assez haut
+                     //                pour flotter, éviter le mur à l'horizon en caméra rasante)
+    epaisseur: 0.6   // taille/boursouflure d'un nuage (0.1=petit et net, 1.5=gros)
+  },
+  storm: {
+    frequenceEclairs:  0.5, // 0..1 — nombre d'éclairs par minute (mappé sur un intervalle mini/maxi)
+    luminositeEclair:  1.0, // 0..2 — intensité du flash + du halo bleuté
+    intensitePluie:    1.6  // multiplicateur appliqué sur les réglages "rain" pendant l'orage
   }
 };
 
@@ -56,23 +72,6 @@ export function getVfxSettings(effect) {
   return _settings[effect];
 }
 
-/** Snapshot complet (groundMist + fireflies + rain) — utilisé par le bouton "📋 Copier"
- * de l'EDA pour inclure les réglages fins météo dans l'export JSON d'une ambiance. */
-export function getAllVfxSettings() {
-  return _clone(_settings);
-}
-
-/** Applique un snapshot complet (voir getAllVfxSettings) — utilisé pour appliquer un
- * preset d'ambiance qui embarque ses propres réglages fins météo. */
-export function setAllVfxSettings(snapshot) {
-  if (!snapshot) return;
-  for (const effect of Object.keys(_settings)) {
-    if (snapshot[effect]) Object.assign(_settings[effect], snapshot[effect]);
-  }
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(_settings)); } catch (_) { /* stockage indisponible */ }
-  for (const listener of _listeners) listener(null, null, null);
-}
-
 export function setVfxSetting(effect, key, value) {
   if (!_settings[effect] || !(key in _settings[effect])) return;
   _settings[effect][key] = value;
@@ -90,6 +89,30 @@ export function resetVfxSettings(effect) {
 export function onVfxSettingsChange(listener) {
   _listeners.add(listener);
   return () => _listeners.delete(listener);
+}
+
+// ─── État du switch par item (rubrique 2 EDA) ───────────────────────────────
+// Pour les effets à évènement (brume/lucioles/pluie/orage...) ce switch EST le
+// déclencheur (cf. hud_eda.js) — environmentDirector reste la source de vérité de
+// l'état "actif" et n'est JAMAIS persisté (Map en mémoire, toujours vide au
+// chargement) : ces switches-là repartent donc déjà à off à coup sûr. Pour 'clouds'
+// (pas d'évènement propre) ce flag EST en plus le on/off réel du rendu (cf.
+// rainCloudOverlay.js).
+//
+// PAS de persistance localStorage pour ce flag (retiré le 2026-07-09, après une
+// clé 'hexistenz_vfx_expanded' puis 'hexistenz_vfx_expanded_v2' qui laissaient
+// toutes les deux 'clouds' coincé sur `true` d'une session à l'autre — le switch
+// "Nuages de pluie" apparaissait coché au chargement sans nuages affichés, cf.
+// retour utilisateur répété). En mémoire seulement → false à chaque rechargement
+// de page, sans exception possible.
+const _expanded = {};
+
+export function isVfxGroupExpanded(effect) {
+  return !!_expanded[effect];
+}
+
+export function setVfxGroupExpanded(effect, value) {
+  _expanded[effect] = !!value;
 }
 
 export { DEFAULTS as VFX_SETTINGS_DEFAULTS };

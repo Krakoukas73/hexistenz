@@ -7,7 +7,9 @@ import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/
 import { OutputPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js';
 import { GRID_RADIUS, HEX_SIZE, MAX_PIXEL_RATIO } from './config.js';
 import { COLOR_GRADING_SHADER } from './visualEnvironment.js';
-import { CINEMATIC_SHADER } from './cinematicPass.js';
+// cinematicPass.js supprimé le 2026-07-11 (round 4, découpage sans risque, cf. CONTEXT.md §21) :
+// n'était qu'un ré-export de compatibilité vers ce même chemin, seul importateur (ici).
+import { CINEMATIC_SHADER } from './shaders/shaderCinematic.js';
 import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS, getWorldCurvatureDrop, markNoWorldCurvature } from './worldCurvature.js';
 import { ensureStarUniverse, updateStarUniverse } from './starUniverse.js';
 import { createGpuProfiler } from './gpuProfiler.js';
@@ -438,7 +440,7 @@ export function createPixelPostprocess(renderer, scene, camera) {
     // Chronométrage GPU dédié à cette passe (monde + ciel/nuages + eau + ombres internes) —
     // appliqué APRÈS le monkey-patch ci-dessus pour englober tout son travail réel.
     // 2026-07-05 : hypothèse nuages réfutée par le test utilisateur (oscillation identique
-    // nuages désactivés) — shaderCiel.js confirmé avec bypass correct (uEnabled<0.5 → return
+    // nuages désactivés) — shaderSky.js confirmé avec bypass correct (uEnabled<0.5 → return
     // avant le ray-march, donc coût nuages bien nul). Nouvelle piste : renderer.shadowMap.autoUpdate
     // n'est vrai qu'1 frame sur 3 (cf. scene.js ~L670) → la shadow map (terrain entier, 53.9%
     // des triangles) n'est recalculée que 33% des frames, à l'intérieur de CETTE passe. Split
@@ -459,9 +461,9 @@ export function createPixelPostprocess(renderer, scene, camera) {
   const cinemaPass = new ShaderPass(CINEMATIC_SHADER);
   gpuProfiler.wrapPass(cinemaPass, 'cinématique (godrays/bloom/CRT)');
   // uResolution nécessite un THREE.Vector2 pour le .set() dans render() ;
-  // on l'injecte ici car cinematicPass.js ne dépend pas de THREE.
+  // on l'injecte ici car shaderCinematic.js ne dépend pas de THREE.
   cinemaPass.uniforms.uResolution = { value: new THREE.Vector2(window.innerWidth, window.innerHeight) };
-  // uSunScreenPos : injecté ici (pas dans shaderCinematique.js) pour ne pas dépendre de
+  // uSunScreenPos : injecté ici (pas dans shaderCinematic.js) pour ne pas dépendre de
   // THREE dans ce fichier-là — même logique que uResolution ci-dessus.
   cinemaPass.uniforms.uSunScreenPos = { value: new THREE.Vector2(0.5, 0.5) };
   const _cinemaSettings = {

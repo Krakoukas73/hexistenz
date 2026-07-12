@@ -31,7 +31,7 @@ import {
 } from './config.js';
 import { hashUnit10k as hashUnit, hashNumber } from './hashUtils.js';
 import { makeNodeKey } from './tileUtils.js';
-import { collectWaterZone, buildWaterGraph, findComponents, isWaterEdge } from './waterBoatOverlay.js';
+import { collectWaterZone, buildWaterGraph, findComponents, isWaterEdge } from './shaders/waterBoatOverlay.js';
 // Import circulaire résolu via live bindings ES modules — uniquement dans des corps de fonctions.
 import { createSeagullFlock } from './decorOverlay.js';
 

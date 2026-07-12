@@ -1,5 +1,5 @@
 /**
- * shaderFumee.js — Fumée volumétrique pour Hexistenz.
+ * shaderSmoke.js — Fumée volumétrique pour Hexistenz (ex-shaderFumee.js, renommé en anglais le 2026-07-11).
  *
  * v4 : Gaussian pur (plus de tube creux → plus d'anneaux),
  *      évasement réel avec la hauteur, turbulence plus visible,

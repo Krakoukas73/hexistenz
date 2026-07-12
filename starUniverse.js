@@ -2,7 +2,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 import { GRID_RADIUS, HEX_SIZE, TILE_VISUAL } from './config.js';
 import { axialToWorld } from './hex.js';
 import { markNoWorldCurvature } from './worldCurvature.js';
-import { starVertexShader, starFragmentShader } from './shaders/shaderEtoiles.js';
+import { starVertexShader, starFragmentShader } from './shaders/shaderStars.js';
 
 const STAR_UNIVERSE_NAME = 'hexistenz-distant-star-universe';
 const GRID_OCCLUDER_NAME = 'hexistenz-grid-star-occluder';
@@ -81,7 +81,7 @@ function createStarUniverse({ radius = DEFAULT_RADIUS, starCount = DEFAULT_STAR_
       uTime: { value: 0 },
       uPixelRatio: { value: Math.min(window.devicePixelRatio || 1, 1.25) }
     },
-    // Shaders externalisés dans shaders/shaderEtoiles.js
+    // Shaders externalisés dans shaders/shaderStars.js
     vertexShader:   starVertexShader,
     fragmentShader: starFragmentShader,
     transparent: false,

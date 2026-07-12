@@ -4,15 +4,16 @@ import { makeHexKey } from './hex.js';
 import { getEdgeType, getEdgeValue } from './tileGenerator.js';
 import { makeNodeKey, getTileEdgeType, getTileCenterType } from './tileUtils.js';
 import { collectZone, getFullTextureNeighbors } from './zoneUtils.js';
-import { countWaterBoats } from './waterBoatOverlay.js';
+import { countWaterBoats } from './shaders/waterBoatOverlay.js';
 import { countFieldMills } from './fieldZonesOverlay.js';
 import { pickRandom } from './random.js';
 
 export { MISSION_REWARD, MISSION_TILE_REWARD, MISSION_CHANCE, COMPLETED_MISSION_VISIBLE_TURNS };
 
-const TRAIN_MISSION_TYPE = 'train';
-const BOAT_MISSION_TYPE  = 'boat';
-const MILL_MISSION_TYPE  = 'mill';
+// Exportées : réutilisées par missionLabels.js (icônes/aide/titres) — source canonique.
+export const TRAIN_MISSION_TYPE = 'train';
+export const BOAT_MISSION_TYPE  = 'boat';
+export const MILL_MISSION_TYPE  = 'mill';
 
 // Paliers calibrés sur l'effort réel de zone :
 // - prairie, eau et rail valent toujours 1 unité par triangle ;
@@ -144,13 +145,13 @@ export function restoreMissionSnapshots(manager, missions) {
 
 // Clone JSON profond — utilisé pour sérialiser l'état des missions (undo, sync
 // multijoueur) sans partager de références avec l'état vivant. Factorisé depuis
-// scene.js/multiplayerUi.js (2 copies byte-identiques).
+// scene.js/multiplayerRooms.js (ex-multiplayerUi.js) (2 copies byte-identiques).
 export function clonePlain(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
 // Sérialisation du missionManager pour l'undo local (scene.js) et la synchronisation
-// multijoueur (multiplayerUi.js) — même copie exacte dans les 2 fichiers, centralisée
+// multijoueur (multiplayerRooms.js, ex-multiplayerUi.js) — même copie exacte dans les 2 fichiers, centralisée
 // ici pour éviter toute divergence future entre les deux usages.
 export function serializeMissionManager(manager) {
   return {
@@ -237,77 +238,12 @@ function purgeOldCompletedMissions(manager) {
   return purged;
 }
 
-export const MISSION_TYPE_ICON = {
-  [EDGE_TYPES.forest]: '🌲',
-  [EDGE_TYPES.house]:  '🛖',
-  [EDGE_TYPES.rail]:   '🛤️',
-  [EDGE_TYPES.water]:  '💧',
-  [EDGE_TYPES.grass]:  '🌿',
-  [EDGE_TYPES.field]:  '🌾',
-  train:               '🚂',
-  boat:                '⛵',
-  mill:                '⚙️',
-};
-
-const MISSION_TYPE_LABEL = Object.fromEntries(MISSION_TYPES.map(m => [m.type, m.label]));
-
-export const MISSION_HELP = {
-  [EDGE_TYPES.forest]: `Pose des tuiles avec des secteurs forêt 🌲.
-Chaque triangle de forêt placé sur le plateau fait progresser cette mission.
-Les zones denses rapportent davantage de points en fin de partie.`,
-  [EDGE_TYPES.house]:  `Pose des tuiles avec des secteurs village 🛖.
-Chaque triangle de maison placé fait progresser cette mission.
-Les villages connectés au réseau ferré sont particulièrement rentables.`,
-  [EDGE_TYPES.rail]:   `Pose des tuiles avec des rails 🛤️.
-Chaque triangle de voie ferrée placé fait progresser cette mission.
-Les rails seuls ne rapportent rien sans gare à chaque extrémité.`,
-  [EDGE_TYPES.water]:  `Pose des tuiles avec des secteurs eau 💧.
-Chaque triangle d'eau placé fait progresser cette mission.
-Les grandes étendues d'eau peuvent accueillir des bateaux.`,
-  [EDGE_TYPES.grass]:  `Pose des tuiles avec des secteurs prairie 🌿.
-Chaque triangle de prairie placé fait progresser cette mission.
-Les grandes zones contiguës de prairie rapportent un bonus de surface.`,
-  [EDGE_TYPES.field]:  `Pose des tuiles avec des secteurs champ de blé 🌾.
-Chaque triangle de champ placé fait progresser cette mission.
-Les champs proches de villages ou de rivières donnent des bonus.`,
-  train: `Relie deux gares avec des rails continus 🚂.
-Chaque nouvelle ligne de train complétée fait progresser cette mission.
-Plus la ligne est longue, plus le score est élevé.`,
-  boat:  `Crée des étendues d'eau entourées de terres ⛵.
-Un bateau apparaît automatiquement sur chaque lac fermé par des tuiles terrestres.
-Chaque nouveau bateau fait progresser cette mission.`,
-  mill:  `Construis de grandes zones de champs de blé ⚙️.
-Un moulin apparaît automatiquement au centre de chaque zone de champ suffisamment grande.
-Chaque nouveau moulin fait progresser cette mission.`,
-};
-
-export function formatMissionLabel(mission, progressByType = new Map()) {
-  const progress = Math.min(progressByType.get(mission.type) ?? 0, mission.target);
-  const unit = mission.unit ? ` ${mission.unit}` : '';
-  const label = MISSION_TYPE_LABEL[mission.type] ?? mission.label;
-  return `${label} : ${progress}/${mission.target}${unit}`;
-}
-
-// Phrase courte affichée au-dessus de la barre de progression dans le HUD (2026-07-11) —
-// une par type de mission, au format "Verbe + objectif chiffré" (ex: "Construire un
-// village de 17 maisons"), demande explicite utilisateur.
-const MISSION_TITLE_BUILDERS = {
-  [EDGE_TYPES.forest]: (target) => `Développer une forêt de ${target} arbres`,
-  [EDGE_TYPES.house]:  (target) => `Construire un village de ${target} maisons`,
-  [EDGE_TYPES.rail]:   (target) => `Étendre une voie ferrée de ${target} rails`,
-  [EDGE_TYPES.water]:  (target) => `Relier une voie d'eau de ${target} cases`,
-  [EDGE_TYPES.grass]:  (target) => `Étendre une prairie de ${target} cases`,
-  [EDGE_TYPES.field]:  (target) => `Cultiver ${target} cases de champs de blé`,
-  [TRAIN_MISSION_TYPE]: (target) => `Faire circuler ${target} train${target > 1 ? 's' : ''}`,
-  [BOAT_MISSION_TYPE]:  (target) => `Faire apparaître ${target} bateau${target > 1 ? 'x' : ''}`,
-  [MILL_MISSION_TYPE]:  (target) => `Faire tourner ${target} moulin${target > 1 ? 's' : ''}`,
-};
-
-export function formatMissionTitle(mission) {
-  const build = MISSION_TITLE_BUILDERS[mission.type];
-  return build ? build(mission.target) : `${MISSION_TYPE_LABEL[mission.type] ?? mission.label} : ${mission.target}`;
-}
-
+// MISSION_TYPE_ICON, MISSION_HELP, formatMissionLabel, formatMissionTitle et leurs
+// MISSION_TITLE_BUILDERS extraits vers missionLabels.js le 2026-07-11 (round 3,
+// découpage sans risque, cf. CONTEXT.md §21) : présentation pure, séparée du cycle
+// de vie du manager. MISSION_TYPE_LABEL exportée ici car c'est la source canonique
+// (dérivée de MISSION_TYPES) — missionLabels.js l'importe, dépendance à sens unique.
+export const MISSION_TYPE_LABEL = Object.fromEntries(MISSION_TYPES.map(m => [m.type, m.label]));
 
 function getNextMissionTarget(manager, missionDefinition) {
   const level = manager.targetLevelByType.get(missionDefinition.type) ?? 0;

@@ -1,0 +1,1205 @@
+/* css/eda.css — CSS du panneau EDA (Éditeur de Direction Artistique) + HUD FPS.
+   Extrait de debugLightUi.js le 2026-07-11 (ex-installDebugLightCss(), ~1150 lignes
+   injectées via un template literal JS ; fichier lui-même renommé edaPanelHost.js
+   la même date) — pur découpage, aucune règle modifiée.
+   Chargé via @import dans css/style.css. cf. CONTEXT.md §13/§20/§21. */
+
+.debug-light-panel {
+  position: fixed;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 3000;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  pointer-events: none;
+  color: #f4ead6;
+  font: 12px/1.35 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.debug-light-left-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.fps-counter {
+  pointer-events: auto;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(240,250,255,0.96);
+  background: rgba(0,0,0,0.68);
+  border: 1px solid rgba(120,180,255,0.38);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  padding: 14px 16px;
+  width: 432px; /* +20% (2026-07-04) — place pour le % de triangles par catégorie */
+  max-width: calc(100vw - 28px);
+  box-sizing: border-box;
+  /* Limite la hauteur totale à l'écran disponible, avec scroll interne.
+     Réserve : 34px (boutons) + 6px (gap) + 14px (bas) + 14px (haut) = 68px */
+  max-height: calc(100vh - 72px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Zone scrollable : tout ce qui est sous le header FPS + indices */
+.fps-hud-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
+  /* Scrollbar discrète */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120,180,255,0.35) transparent;
+}
+.fps-hud-body::-webkit-scrollbar { width: 4px; }
+.fps-hud-body::-webkit-scrollbar-thumb { background: rgba(120,180,255,0.35); border-radius: 2px; }
+.fps-hud-body::-webkit-scrollbar-track { background: transparent; }
+
+.fps-hud-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+/* Modèle bouton unifié HUD LUT + HUD FPS : même CSS que .new-game-button (HUD score) */
+.fps-hud-copy {
+  background: rgba(25, 56, 82, 0.78);
+  border: 1px solid rgba(145, 205, 255, 0.42);
+  border-radius: 4px;
+  color: rgba(230, 246, 255, 0.96);
+  font-family: monospace;
+  font-weight: 900;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 5px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.fps-hud-copy:hover {
+  background: rgba(38, 86, 124, 0.9);
+  color: #ffffff;
+}
+
+.fps-hud-fps {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: rgba(240,250,255,0.96);
+  font-family: 'BebasNeue', system-ui, sans-serif;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.fps-hud-fps > span:first-child {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(180,215,255,0.82);
+  letter-spacing: 0.18em;
+}
+
+.fps-adj {
+  font-size: 18px;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0.04em;
+}
+.fps-adj-red        { color: #f87171; }
+.fps-adj-orange     { color: #fb923c; }
+.fps-adj-amber      { color: #fbbf24; }
+.fps-adj-yellow     { color: #fde047; }
+.fps-adj-lightgreen { color: #86efac; }
+.fps-adj-green      { color: #4ade80; }
+
+.fps-hud-sep {
+  border-top: 1px solid rgba(120,180,255,0.22);
+  margin: 6px 0;
+}
+
+/* Lignes clé/valeur (Draw calls, Triangles…) — mêmes couleurs que score-title/valeurs */
+.fps-hud-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(180,215,255,0.82);
+}
+
+.fps-hud-row strong {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: rgba(240,250,255,0.96);
+  flex-shrink: 0;
+  text-align: right;
+}
+
+/* Lignes catégories (icône + label + stats colonnes) */
+.fps-hud-row-cat {
+  display: grid;
+  /* obj réduite, ☂ élargie d'autant (2026-07-04) — la colonne ombres tronquait les
+     valeurs à 3 chiffres (ex. ☂210) ; dernière colonne élargie pour le % de triangles */
+  grid-template-columns: 1fr 2ch 11ch 4.7ch 15ch;
+  gap: 3px;
+  align-items: baseline;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.55;
+  color: rgba(180,215,255,0.82);
+  border-radius: 4px;
+  padding: 1px 2px;
+}
+
+.fps-hud-row-cat--heavy {
+  background: rgba(220, 40, 40, 0.20);
+  border-left: 3px solid rgba(255,80,80,0.80);
+  padding-left: 5px;
+  border-radius: 4px;
+  color: rgba(255,220,220,0.90);
+}
+
+.fps-hud-cat-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fps-hud-cat-icon {
+  font-size: 11px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.fps-hud-cat-count {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: rgba(240,250,255,0.96);
+  text-align: right;
+}
+
+.fps-hud-cat-dc {
+  font-variant-numeric: tabular-nums;
+  color: rgba(255,210,100,0.90);
+  text-align: right;
+}
+
+.fps-hud-cat-tri {
+  font-variant-numeric: tabular-nums;
+  color: rgba(130,195,255,0.90);
+  text-align: right;
+}
+
+.fps-hud-cat-tri-pct {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(130,195,255,0.55);
+  margin-left: 3px;
+}
+
+.fps-hud-cat-shadow {
+  font-variant-numeric: tabular-nums;
+  color: rgba(180,140,255,0.90);
+  text-align: right;
+}
+
+/* Rangée GPU / CPU — aussi grosse que le FPS, sous le header */
+.fps-hud-eff-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+  margin-bottom: 2px;
+  align-items: baseline;
+}
+
+.fps-hud-eff-item {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.fps-hud-eff-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(180,215,255,0.70);
+}
+
+.fps-hud-eff-value {
+  font-size: 26px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  font-family: 'BebasNeue', system-ui, sans-serif;
+}
+
+.fps-hud-eff-pct {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* En-têtes de groupe-catégorie — sous-titre, même CSS que .stats-title (HUD score) */
+.fps-hud-group-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(212,236,255,0.92);
+  margin-top: 5px;
+  margin-bottom: 1px;
+  border-bottom: 1px solid rgba(120,180,255,0.12);
+  padding-bottom: 1px;
+}
+
+/* En-têtes de colonnes triables */
+.fps-hud-col-header {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: right;
+  padding: 2px 0;
+}
+
+.fps-hud-col-header:hover {
+  color: rgba(255,230,150,0.95) !important;
+}
+
+/* Ligne totaux */
+.fps-hud-row-total {
+  background: rgba(120,180,255,0.08);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.debug-light-btn-row {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.debug-light-toggle {
+  position: relative;
+  pointer-events: auto;
+  flex-shrink: 0;
+  min-width: 48px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 10px;
+  color: rgba(247,239,225,0.7);
+  background: linear-gradient(135deg, #4a5568, #2d3748);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+
+.debug-light-toggle--lut-active {
+  background: linear-gradient(135deg, #ffd36d, #b58239);
+  color: #1c140c;
+  border-color: rgba(255,255,255,0.28);
+}
+
+.debug-light-toggle--fps {
+  background: linear-gradient(135deg, #4a5568, #2d3748);
+  color: rgba(247,239,225,0.7);
+  border-color: rgba(255,255,255,0.18);
+}
+
+.debug-light-toggle--fps.debug-light-toggle--fps-active {
+  background: linear-gradient(135deg, #ffd36d, #b58239);
+  color: #1c140c;
+  border-color: rgba(255,255,255,0.28);
+}
+
+/* Lettre de raccourci clavier dans les boutons toggle */
+.debug-light-toggle .btn-key {
+  background: transparent;
+  color: #ffd36d;
+  font-weight: 900;
+  font-style: normal;
+}
+/* Sur fond doré (bouton actif) : assombrir la lettre pour qu'elle reste lisible */
+.debug-light-toggle--fps-active .btn-key,
+.debug-light-toggle--lut-active .btn-key {
+  color: rgba(80, 40, 0, 0.75);
+}
+
+/* ─── PIX section inside CUSTOMISATION panel ─────────────────────────── */
+.debug-light-pix-sep {
+  height: 1px;
+  background: rgba(120,180,255,0.22);
+  margin: 16px 0;
+}
+
+/* Sections PIX, CINEMA, EAU, VENT, NUAGES, COURBURE ÉCRAN & MÉTÉO : espacement vertical
+   entre leurs sliders — élargi (8px) depuis le passage en onglets, qui laisse plus de place. */
+.debug-light-pix-section,
+.debug-light-cinema-section,
+.debug-light-water-section,
+.debug-light-wind-section,
+.debug-light-cloud-section,
+.debug-light-crt-section,
+.debug-light-worldshape-section,
+.debug-light-daynight-section,
+.debug-light-weather-section,
+.debug-light-subgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Titres de rubrique EDA (CINÉMA / PIX / CRT / EAU / NUAGES / VENT / Forme / Jour-Nuit /
+   Qualité / Météo / God Rays / Tilt-shift / Bloom) — fond sombre pour mise en valeur
+   (2026-07-08) + barre latérale accent. Pas de margin-bottom ici : l'espacement avec le
+   premier slider vient uniquement du gap:8px du conteneur parent (.debug-light-xxx-section). */
+.debug-light-pix-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.45);
+  border-left: 3px solid rgba(145,205,255,0.32);
+}
+/* Texte du titre à l'intérieur de la barre sombre — mêmes valeurs que .lut-section-head
+   (text-transform: uppercase inclus) pour que TOUS les titres de rubrique (peu importe
+   leur casse dans le markup : "Météo", "God Rays", "CINÉMATIQUE"...) apparaissent avec
+   la même typographie en majuscules. */
+.debug-light-pix-head > span {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(180,215,255,0.82);
+}
+
+/* Emoji de rubrique/sous-rubrique : +35% par rapport au texte qui l'entoure (em = relatif
+   à la taille de police du parent, donc +35% correct dans tous les contextes : 12px pour
+   les rubriques principales, 11px pour les sous-rubriques LUT/EAU/VENT). */
+.rubrique-emoji {
+  font-size: 1.35em;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: -0.12em;
+}
+
+/* Dans les 3 onglets EDA (LUT / Cinématique / Environnement) uniquement : encore +12%
+   par rapport à la valeur précédente (1.82 × 1.12 ≈ 2.04em au total, soit ×1.35 ×1.12
+   par rapport à la base). Le header AMBIANCES, hors onglets, reste à 1.35em. */
+.debug-light-tab-panel .rubrique-emoji {
+  font-size: 2.04em;
+}
+
+/* Toggle switch (same style as postprocessHud) */
+.pix-switch {
+  flex: 0 0 auto;
+  position: relative;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+.pix-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.pix-switch span {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.22);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+  transition: background 0.16s, box-shadow 0.16s;
+}
+.pix-switch span::after {
+  content: '';
+  position: absolute;
+  left: 3px; top: 3px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #f7efe1;
+  box-shadow: 0 2px 7px rgba(0,0,0,0.35);
+  transition: transform 0.16s;
+}
+.pix-switch input:checked + span { background: rgba(88,228,153,0.55); box-shadow: inset 0 0 0 1px rgba(175,255,213,0.45), 0 0 14px rgba(88,228,153,0.22); }
+.pix-switch input:checked + span::after { transform: translateX(16px); }
+
+.pix-control {
+  display: block;
+  margin-top: 8px;
+}
+.pix-control span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+  font-size: 9px;
+  font-weight: 800;
+  color: rgba(180,215,255,0.82);
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+.pix-control strong {
+  min-width: 28px;
+  text-align: right;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.pix-control input[type="range"],
+.debug-light-row input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(120,170,255,0.22);
+  outline: none;
+  cursor: pointer;
+  margin: 5px 0;
+}
+.pix-control input[type="range"]::-webkit-slider-thumb,
+.debug-light-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(200,225,255,0.92);
+  box-shadow: 0 0 0 2px rgba(120,180,255,0.30), 0 1px 4px rgba(0,0,0,0.45);
+  cursor: pointer;
+  transition: background 0.12s, box-shadow 0.12s;
+}
+.pix-control input[type="range"]::-webkit-slider-thumb:hover,
+.debug-light-row input[type="range"]::-webkit-slider-thumb:hover {
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(140,200,255,0.45), 0 1px 6px rgba(0,0,0,0.50);
+}
+.pix-control input[type="range"]::-moz-range-thumb,
+.debug-light-row input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(200,225,255,0.92);
+  box-shadow: 0 0 0 2px rgba(120,180,255,0.30), 0 1px 4px rgba(0,0,0,0.45);
+  cursor: pointer;
+}
+.pix-control input[type="range"]::-moz-range-track,
+.debug-light-row input[type="range"]::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(120,170,255,0.22);
+}
+.pix-select {
+  width: 100%;
+  margin-top: 0;
+  padding: 3px 6px;
+  border: 1px solid rgba(120,180,255,0.30);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.10);
+  color: rgba(220,235,255,0.90);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pix-select option { color: #111827; }
+.pix-reset-btn {
+  width: 100%;
+  margin-top: 7px;
+  padding: 5px 7px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.10);
+  color: rgba(180,215,255,0.80);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.pix-reset-btn:hover { background: rgba(255,255,255,0.24); }
+.pix-section--disabled .debug-light-row { opacity: 0.55; }
+.cinema-section--disabled .debug-light-row { opacity: 0.55; }
+.wind-section--disabled .debug-light-row { opacity: 0.55; }
+.cloud-section--disabled .debug-light-row { opacity: 0.55; }
+.crt-section--disabled .debug-light-row { opacity: 0.55; }
+/* Sous-groupes à case à cocher individuelle (God Rays / Tilt-shift / Bloom / Écume / Sillage) */
+.debug-light-subgroup.subgroup-disabled .debug-light-row { opacity: 0.55; }
+
+.debug-light-body {
+  pointer-events: auto;
+  /* box-sizing: border-box → width JS inclut padding + border, comme offsetWidth de #tileUI */
+  box-sizing: border-box;
+  /* Largeur initiale : sera écrasée par JS (×2.8 de la largeur #tileUI — flux journal 3 col) */
+  width: min(620px, calc(100vw - 92px));
+  /* height (pas juste max-height) : avec le contenu réparti en onglets et un flux
+     multi-column, la zone .debug-light-columns doit pouvoir scroller si le contenu
+     dépasse la hauteur d'écran — d'où hauteur fixe (pas seulement max-height). */
+  height: calc(100vh - 28px);
+  max-height: calc(100vh - 28px);
+  /* Occupe toute la hauteur dispo — chaque colonne défile indépendamment en interne */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 12px;
+  font-family: monospace;
+  border: 1px solid rgba(120,180,255,0.38);
+  border-radius: 12px;
+  /* Même charte graphique que #scorePanel : sans flou, cohérent avec les autres HUDs */
+  background: rgba(0,0,0,0.68);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+/* ── Onglets EDA (sous le header ambiances) — regroupent les rubriques par thème,
+   chaque onglet affichant son contenu sur 3 colonnes fluides type journal (les
+   rubriques remplissent la colonne 1, puis 2, puis 3, aucune n'est coupée à
+   cheval sur deux colonnes — cf. 'break-inside: avoid' plus bas). ── */
+.debug-light-tabs {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+.debug-light-tab-btn {
+  flex: 1;
+  padding: 8px 9px;
+  border: 1px solid rgba(120,180,255,0.32);
+  border-radius: 8px;
+  background: rgba(18,28,52,0.80);
+  color: rgba(210,230,255,0.70);
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.debug-light-tab-btn:hover {
+  border-color: rgba(140,200,255,0.50);
+  color: rgba(230,246,255,0.95);
+}
+.debug-light-tab-btn--active {
+  background: rgba(90,140,255,0.30);
+  border-color: rgba(145,205,255,0.65);
+  color: #ffffff;
+}
+
+/* Conteneur des panneaux d'onglet : un seul panneau visible (.debug-light-tab-panel--active),
+   les autres sont display:none — pas de layout ni de coût pour les onglets masqués. */
+.debug-light-tab-panels {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.debug-light-tab-panel {
+  display: none;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.debug-light-tab-panel--active {
+  display: flex;
+}
+
+/* ── Flux "journal" 3 colonnes fluides (2026-07-08) ─────────────────────────
+   Chaque onglet remplit d'abord la colonne 1, puis la 2, puis la 3. Une seule
+   barre de scroll pour tout l'onglet (les colonnes s'étendent sur la même
+   hauteur totale, cf. 'columns: 3' + 'overflow-y: auto'). Aucune rubrique
+   enfant direct de '.debug-light-columns' ne peut être coupée à cheval sur
+   deux colonnes (cf. 'break-inside: avoid' sur chaque rubrique). */
+.debug-light-columns {
+  columns: 3;
+  column-gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120,180,255,0.35) transparent;
+}
+.debug-light-columns::-webkit-scrollbar { width: 4px; }
+.debug-light-columns::-webkit-scrollbar-thumb { background: rgba(120,180,255,0.35); border-radius: 2px; }
+.debug-light-columns::-webkit-scrollbar-track { background: transparent; }
+
+/* Chaque rubrique enfant direct = bloc indissociable dans le flux journal.
+   'break-inside: avoid' + 'margin: 0 0 14px' fournissent l'espacement inter-
+   rubrique — plus besoin de '.debug-light-pix-sep' entre les rubriques
+   top-level (ceux à l'intérieur d'une même rubrique, ex. Écume/Sillage,
+   restent visibles). */
+.debug-light-columns > .lut-section,
+.debug-light-columns > .debug-light-cinema-section,
+.debug-light-columns > .debug-light-pix-section,
+.debug-light-columns > .debug-light-crt-section,
+.debug-light-columns > .debug-light-water-section,
+.debug-light-columns > .debug-light-cloud-section,
+.debug-light-columns > .debug-light-wind-section,
+.debug-light-columns > .debug-light-worldshape-section,
+.debug-light-columns > .debug-light-daynight-section,
+.debug-light-columns > .debug-light-quality-section,
+.debug-light-columns > .debug-light-weather-section {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  margin: 0 0 14px 0;
+}
+/* Séparateurs top-level masqués (l'espacement est fourni par le margin-bottom
+   ci-dessus). Les séparateurs à l'intérieur d'une rubrique — ex. Écume/Sillage
+   dans .debug-light-water-section — restent visibles. */
+.debug-light-columns > .debug-light-pix-sep { display: none; }
+
+.debug-light-panel.collapsed .debug-light-body { display: none; }
+
+/* Titre principal du HUD EDA — au-dessus de tout (ambiances comprises) */
+.debug-light-main-title {
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(230,246,255,0.96);
+  padding-bottom: 8px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(120,180,255,0.24);
+}
+
+/* Header plein largeur (ambiances) — au-dessus des 2 colonnes */
+.debug-light-header {
+  flex-shrink: 0;
+}
+
+/* Footer plein largeur (forme du monde + jour/nuit + export) — sous les 2 colonnes */
+.debug-light-footer {
+  flex-shrink: 0;
+}
+
+.debug-light-export {
+  margin-bottom: 10px;
+}
+
+/* Grid (et non flex) pour que "Comparer" (ligne 2, colonne 1) fasse exactement
+   la même largeur que "Copier" (ligne 1, colonne 1) : les 2 lignes partagent
+   le même découpage de colonnes 1fr/1fr/1fr/1fr. */
+.debug-light-export-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+.debug-light-export-row + .debug-light-export-row {
+  margin-top: 6px;
+}
+
+/* ── Modèle bouton bleu — CSS strictement identique à .new-game-button (HUD score) ──
+   Copier / Redo / Comparer / bouton Fermer / ambiances. */
+.debug-light-export #debugLightCopy,
+.debug-light-export #debugLightRedo,
+.debug-light-export #debugLightCompare {
+  margin-top: 0;
+  padding: 8px 9px;
+  border: 1px solid rgba(145, 205, 255, 0.42);
+  border-radius: 8px;
+  background: rgba(25, 56, 82, 0.78);
+  color: rgba(230, 246, 255, 0.96);
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+.debug-light-export #debugLightCopy:hover:not(:disabled),
+.debug-light-export #debugLightRedo:hover:not(:disabled),
+.debug-light-export #debugLightCompare:hover:not(:disabled) {
+  background: rgba(38, 86, 124, 0.9);
+  color: #ffffff;
+}
+
+/* ── Modèle bouton rouge — CSS strictement identique à .abandon-button (HUD score) ──
+   Undo / Reset : actions destructives (annulent / réinitialisent des réglages). */
+.debug-light-export #debugLightUndo,
+.debug-light-export #debugLightReset {
+  margin-top: 0;
+  padding: 8px 9px;
+  border: 1px solid rgba(255, 120, 120, 0.46);
+  border-radius: 8px;
+  background: rgba(80, 16, 20, 0.78);
+  color: rgba(255, 235, 235, 0.96);
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+.debug-light-export #debugLightUndo:hover:not(:disabled),
+.debug-light-export #debugLightReset:hover:not(:disabled) {
+  background: rgba(120, 24, 30, 0.9);
+  color: #ffffff;
+}
+
+#debugLightUndo:disabled,
+#debugLightRedo:disabled,
+#debugLightCompare:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.debug-light-compare-btn--active {
+  background: rgba(90,140,255,0.30) !important;
+  border-color: rgba(120,180,255,0.55) !important;
+  color: #b0d0ff !important;
+}
+
+.debug-light-last-preset {
+  grid-column: 2 / -1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: rgba(180,215,255,0.60);
+  font-style: italic;
+}
+
+/* EAU (Écume/Sillage bateau) et VENT (4.1/4.2/4.3) : plusieurs sous-rubriques empilées
+   dans un même conteneur plat (pas de wrapper .lut-section par sous-groupe comme dans
+   l'onglet LUT) — rythme vertical (gap: 8px) identique à celui des .lut-section. */
+#debugLightWaterControls,
+#debugLightWindControls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Chaque rubrique LUT (Brouillard / Astre lumineux / Étalonnage / Palette biomes) */
+.lut-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* Rubrique désactivée (switch Étalonnage / Palette biomes) — même effet que PIX/CINÉMA */
+.lut-section--disabled .debug-light-row,
+.lut-section--disabled .color-grid {
+  opacity: 0.55;
+}
+
+/* ── Titres de rubrique "à plat" (LUT, God Rays/Tilt-shift/Bloom, Écume/Sillage bateau) —
+   même style visuel que .debug-light-pix-head (rubriques Cinéma/Pixélisation/Nuages/Vent),
+   puisque ce ne sont plus des sous-rubriques mais des rubriques de plein droit. Aucune
+   marge/bordure propre ici : l'espacement de base vient du gap du conteneur flex parent
+   (8px), et un séparateur visible (.debug-light-pix-sep) est explicitement inséré ENTRE
+   deux rubriques (jamais avant la première d'une colonne) — jamais de margin/border sur
+   l'en-tête lui-même, pour ne pas cumuler deux sources d'espacement différentes. */
+.lut-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.45);
+  border-left: 3px solid rgba(145,205,255,0.32);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(180,215,255,0.82);
+}
+/* Sous-titre avec switch (Étalonnage / Palette biomes / God Rays / Tilt-shift / Bloom /
+   Écume / Sillage bateau) : titre + interrupteur alignés — redondant avec la base
+   ci-dessus (conservé pour compat, la classe reste posée par le JS). */
+.lut-section-head--with-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+/* Sous-titre RÉELLEMENT imbriqué sous une rubrique parente (Brins de blés/d'herbes/Arbres
+   sous "4. VENT") : plus de séparateur (border-top retiré 2026-07-08), l'espacement
+   inter-sous-rubriques vient du gap:8px du parent. Fond sombre léger appliqué en bas
+   de fichier avec les autres têtes de rubrique. */
+.lut-section-head--nested {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: rgba(212,236,255,0.92);
+  /* Fond sombre plus léger que les rubriques principales pour marquer la subordination */
+  padding: 5px 8px;
+  border-radius: 5px;
+  background: rgba(0,0,0,0.30);
+  border-left: 2px solid rgba(145,205,255,0.22);
+}
+/* .lut-subhead-first — conservé sans effet, la classe reste posée par le JS pour compat */
+.lut-section-head--nested.lut-subhead-first { /* no-op depuis retrait du border-top */ }
+
+/* ── Grille 2 colonnes pour toutes les couleurs ── */
+.color-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 8px;
+  margin-top: 4px;
+}
+/* Chaque cellule : [swatch 20px] [label] — ordre inversé par grid-column */
+.color-grid .debug-light-row {
+  grid-template-columns: 20px 1fr;
+  gap: 5px;
+  font-size: 11px;       /* même taille que les sliders */
+  line-height: 1.55;
+  color: rgba(180,215,255,0.82);
+}
+.color-grid .debug-light-row span {
+  grid-column: 2;
+  grid-row: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.color-grid .debug-light-row input[type="color"] {
+  grid-column: 1;
+  grid-row: 1;
+  width: 20px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,0.20);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+}
+.color-grid .debug-light-row output { display: none; }
+
+/* ── Tooltip custom LUT ── */
+#lutHelpTooltip {
+  position: fixed;
+  z-index: 9999;
+  max-width: 240px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  background: rgba(6,12,26,0.96);
+  border: 1px solid rgba(120,180,255,0.28);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.65), 0 0 0 1px rgba(120,180,255,0.06);
+  backdrop-filter: blur(12px);
+  color: rgba(205,225,255,0.94);
+  font: 11px/1.55 system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  white-space: pre-wrap;
+  word-break: break-word;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+#lutHelpTooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.debug-light-row {
+  display: grid;
+  grid-template-columns: 122px 1fr 58px;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(180,215,255,0.82);
+}
+
+/* .debug-light-row input[type="range"] → style mutualisé avec .pix-control ci-dessus */
+.debug-light-row input[type="color"] {
+  width: 100%;
+  height: 24px;
+  border: 0;
+  background: transparent;
+}
+
+.debug-light-row output {
+  color: rgba(240,250,255,0.96);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── MÉTÉO (rubrique 8, onglet Environnement) ─────────────────────────────
+   Ex-panneau flottant "🌦 ENV", intégré dans l'EDA le 2026-07-08. Une ligne
+   par évènement environnemental : label + statut ("● actif") + bouton
+   Déclencher/Stop. Suit le style des .debug-light-row (police, couleur label)
+   avec un bouton dérivé de .debug-light-preset-btn (charte bleutée EDA), et
+   un état "actif" qui bascule le bouton en tonalité rouge/stop. */
+/* .debug-light-weather-row : ancien schéma "1 row par évènement avec bouton Déclencher/Stop",
+   remplacé le 2026-07-12 par le modèle Cyril (switch + sliders repliables, cf. plus bas
+   #debugLightVfxControls / .weather-merged-head). Les règles ci-dessous sont conservées :
+   .weather-label et .weather-requires restent réutilisées par le nouveau modèle, et
+   .debug-light-weather-btn sert toujours au bouton "↺ reset" du head et aux couleurs
+   partagées de "⏹ Tout arrêter". */
+.debug-light-weather-row {
+  display: grid;
+  grid-template-columns: 1fr auto 96px;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(180,215,255,0.82);
+}
+.debug-light-weather-row .weather-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.debug-light-weather-row .weather-requires {
+  font-style: italic;
+  font-size: 9px;
+  color: rgba(180,215,255,0.55);
+  letter-spacing: 0.02em;
+}
+.debug-light-weather-row .weather-status {
+  color: rgba(88,228,153,0.95);
+  font-size: 10px;
+  min-width: 42px;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* Bouton Déclencher/Stop — même charte que .debug-light-preset-btn (rubrique 7 :
+   Faible/Moyen/Élevé/Max). Padding, border-radius, letter-spacing, box-shadow alignés
+   pour un rendu HUD cohérent. */
+.debug-light-weather-btn {
+  padding: 8px 9px;
+  border: 1px solid rgba(145,205,255,0.42);
+  border-radius: 8px;
+  background: rgba(25,56,82,0.78);
+  color: rgba(230,246,255,0.96);
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.10s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.30);
+}
+.debug-light-weather-btn:hover:not(:disabled) {
+  background: rgba(38,86,124,0.90);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.debug-light-weather-btn:active:not(:disabled) { transform: translateY(0); }
+.debug-light-weather-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+/* État "actif" — bouton passe en tonalité stop (rouge), même code couleur que
+   le futur "⏹ Tout arrêter" pour cohérence visuelle. */
+.debug-light-weather-btn--active {
+  background: rgba(120,50,50,0.72);
+  border-color: rgba(220,140,140,0.55);
+  color: rgba(255,225,225,0.95);
+}
+.debug-light-weather-btn--active:hover:not(:disabled) {
+  background: rgba(160,70,70,0.88);
+}
+
+/* Bouton "⏹ Tout arrêter" — full-width, tonalité stop */
+.debug-light-weather-stopall {
+  width: 100%;
+  padding: 7px 9px;
+  margin-top: 4px;
+  border: 1px solid rgba(220,140,140,0.55);
+  border-radius: 8px;
+  background: rgba(80,30,30,0.72);
+  color: rgba(255,225,225,0.95);
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.12s, transform 0.10s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.30);
+}
+.debug-light-weather-stopall:hover {
+  background: rgba(120,40,40,0.90);
+  transform: translateY(-1px);
+}
+.debug-light-weather-stopall:active { transform: translateY(0); }
+
+/* ── Refonte 2026-07-12 (livraison Cyril « nuages metaball + pluie + impacts ») ─
+   Chaque item VFX/Météo = un head à switch (+ éventuel bouton reset ↺) + un bloc
+   de sliders repliable (.debug-light-vfx-rows). Un seul host #debugLightVfxControls
+   dans la rubrique 8. Les classes .weather-label et .weather-requires sont réutilisées
+   du bloc précédent (label + suffixe italique « (nécessite X) »). */
+#debugLightVfxControls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lut-section-head.weather-merged-head { justify-content: space-between; }
+.lut-section-head.weather-merged-head .weather-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lut-section-head.weather-merged-head .weather-requires {
+  font-style: italic;
+  font-size: 9px;
+  color: rgba(180,215,255,0.55);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.weather-head-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.debug-light-vfx-reset {
+  /* padding + width fixés inline pour compatibilité avec .debug-light-weather-btn */
+  min-width: 26px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+}
+/* État replié : sliders masqués sans démontage DOM (rétablis instantanément à
+   la ré-ouverture). Marge inter-items préservée par le gap:8px du host. */
+.debug-light-vfx-rows { transition: opacity 0.12s; }
+.debug-light-vfx-rows--collapsed {
+  display: none;
+}
+
+/* Titre de rubrique AMBIANCES — même CSS que .score-title (HUD score) */
+.debug-light-presets-label {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: rgba(180,215,255,0.82);
+  margin-bottom: 5px;
+}
+
+.debug-light-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+/* Ambiances (presets) — même modèle bouton que .new-game-button (HUD score) */
+.debug-light-preset-btn {
+  flex: 1 0 auto;
+  min-width: 96px;
+  max-width: calc(33.33% - 4px);
+  padding: 8px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(145, 205, 255, 0.42);
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(25, 56, 82, 0.78);
+  color: rgba(230, 246, 255, 0.96);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background 0.12s, border-color 0.12s, transform 0.10s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.30);
+}
+
+.debug-light-preset-btn .preset-emoji {
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.debug-light-preset-btn .preset-label {
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: rgba(230, 246, 255, 0.96);
+}
+
+.debug-light-preset-btn:hover {
+  background: rgba(38, 86, 124, 0.9);
+  border-color: rgba(145, 205, 255, 0.42);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.debug-light-preset-btn:hover .preset-label { color: #ffffff; }
+
+.debug-light-preset-btn:active {
+  background: rgba(20, 44, 66, 0.9);
+  transform: translateY(0);
+}
+
+
+/* ── Mini HUD clavier (bottom-right) ── */
+#kbdHintHud {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2900;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(240,250,255,0.96);
+  background: rgba(0,0,0,0.68);
+  border: 1px solid rgba(120,180,255,0.38);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  padding: 8px 14px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+body.grid-only-mode #kbdHintHud { display: none; }
+/* EDA ouvert : masque le mini HUD clavier (redondant avec le panel, et le chevauche) */
+body.lut-panel-open #kbdHintHud { display: none; }
+
+/* Super-immersif (SHIFT+ESPACE) : aucun HUD — mode capture d'écran */
+body.huds-force-hidden #debugLightPanel { display: none !important; }
+body.huds-force-hidden #tileUI         { display: none !important; }
+body.huds-force-hidden #scorePanel     { display: none !important; }
+body.huds-force-hidden #arcadeScore    { display: none !important; }
+
+/* LUT ouvert → masquer les HUDs droits (tuile courante / suivante / restantes / missions) */
+body.lut-panel-open #tileUI { display: none !important; }
+
+/* HUD FPS déployé (ou EDA ouvert) → masque le score (panneau + gros score arcade en haut à
+   gauche + dernier coup entre parenthèses, ce dernier est un enfant de #arcadeScore donc
+   masqué avec lui), même mécanisme que huds-force-hidden ci-dessus (classe body + !important)
+   plutôt qu'un style inline direct : garantit la priorité sur toute autre règle CSS,
+   cf. piège HUD FPS/score 2026-07-05. */
+body.fps-hud-deployed #scorePanel  { display: none !important; }
+body.fps-hud-deployed #arcadeScore { display: none !important; }
+
+/* FPS HUD plein hauteur — le scorePanel est masqué via JS, le fps-counter occupe toute la hauteur */
+.debug-light-panel.fps-hud-fullscreen {
+  top: 14px;
+  align-items: flex-start;
+}
+.debug-light-panel.fps-hud-fullscreen .debug-light-left-col {
+  height: 100%;
+}
+.debug-light-panel.fps-hud-fullscreen .fps-counter {
+  flex: 1 1 auto;
+  max-height: none;
+}

@@ -1,0 +1,839 @@
+{
+  "nav": {
+    "links": {
+      "factions": "Factions",
+      "biomes": "Biomes",
+      "missions": "Missions",
+      "gameplay": "Gameplay",
+      "gallery": "Moods",
+      "creatures": "Creatures",
+      "audio": "Audio",
+      "daynnight": "Environment",
+      "eda": "Customization",
+      "multi": "Multiplayer",
+      "scores": "Leaderboard"
+    },
+    "play": "Play Now"
+  },
+  "hero": {
+    "subtitle": "A contemplative hexagonal game made with love ❤️ Three.js and a lot of tiles",
+    "inspi_text": "Inspired by <em>Dorfromantik</em>, the pastoral soul of <em>The Settlers</em> (Blue Byte, 1993)\n          and the wondrous worlds of <em>Heroes of Might and Magic</em> (3DO).",
+    "inspi_buy": {
+      "dorfromantik": "Dorfromantik on Steam",
+      "settlers": "The Settlers on Ubisoft",
+      "heroes3": "Heroes III on GOG"
+    },
+    "tagline": "Place hexagonal tiles. Grow vast forests of firs and birches, swaying wheat fields with their mills,\n          medieval villages with smoking rooftops, sprawling railway networks and wide rivers where your boats sail.\n          Complete missions, intercept comets, surround your tiles. Build a living world, one tile at a time.",
+    "btn_play": "Play Now",
+    "btn_how": "How to play?",
+    "stats": {
+      "biomes_label": "Biomes",
+      "games_label": "Games",
+      "factions_label": "Factions"
+    }
+  },
+  "factions": {
+    "label": "Two ways to see the world",
+    "title1": "Flat-worlders and globe-believers",
+    "title2": "Two irreconcilable factions",
+    "sub": "Hexistenz splits its builders into two irreconcilable factions. A visual option,\n      a philosophical commitment. Which side are you on?",
+    "flat": {
+      "tag": "Flat Mode",
+      "name": "🪨 The Flat World",
+      "desc": "The grid stretches out flat and ordered. Every tile joins a perfectly level plateau,\n            just as the ancients always knew.\n            For those who trust their eyes."
+    },
+    "globe": {
+      "tag": "Globe Mode",
+      "name": "🌍 The Spherical World",
+      "desc": "The curvature of the world reveals itself as the grid grows — distant tiles\n            arc toward the horizon. A real-time GPU effect that adds breathtaking depth\n            to every game."
+    },
+    "vs": "The debate is not settled."
+  },
+  "biomes": {
+    "label": "The biomes",
+    "title": "Six biomes to connect",
+    "sub": "Each tile has six triangular sectors. Match identical biomes to form zones and maximize your score.",
+    "grass": {
+      "name": "Grassland",
+      "desc": "Grassy expanses where every blade trembles in the wind, dotted with wildflowers, rocks, deer and shrubs. Neutral ground between major networks.",
+      "tag": "Neutral biome"
+    },
+    "field": {
+      "name": "Field",
+      "desc": "Wind-swayed wheat, procedural mills and hay bales. The chi-mai plays when the camera grazes the ears of grain.",
+      "tag": "Agricultural zone"
+    },
+    "forest": {
+      "name": "Forest",
+      "desc": "Firs, birches, poplars as InstancedMesh, their canopies swaying in the wind down to the undergrowth. Mushrooms, woodpiles, deer — up to 22 million triangles on screen.",
+      "tag": "Dense woodland"
+    },
+    "house": {
+      "name": "Village",
+      "desc": "Medieval houses with volumetric smoke, watchtowers, fountains, animated carts, dogs and horses.",
+      "tag": "Human settlement"
+    },
+    "water": {
+      "name": "Water",
+      "desc": "Continuous water sheet with an organic shoreline, animated waves and watercolor-style foam. Animated boats with wake, procedural beaches and zone halos.",
+      "tag": "Water network ⛵"
+    },
+    "rail": {
+      "name": "Railway",
+      "desc": "Procedural tracks, sleepers, ballast. Trains with wagons, terminus stations and locomotive smoke.",
+      "tag": "Rail network 🚂"
+    }
+  },
+  "missions": {
+    "label": "Objectives",
+    "title": "Missions",
+    "sub": "Each game generates automatic objectives tied to biomes and networks. Completing one scores 100 points and, more importantly, adds 3 new tiles to the draw pile — theoretically enabling infinite games.",
+    "zone": {
+      "name": "Biome zone",
+      "desc": "Reach a minimum area in a given biome: <em>\"8-sector forest\"</em>, <em>\"12-sector grassland\"</em>…"
+    },
+    "rail": {
+      "name": "Rail line",
+      "desc": "Lay a required number of rail sectors. Each placed rail triangle counts toward this mission."
+    },
+    "trains": {
+      "name": "Trains",
+      "desc": "Build a required number of active train lines — each line connects two stations via continuous, unbroken rails."
+    },
+    "water": {
+      "name": "Waterway",
+      "desc": "Form a water zone of a minimum area. Each placed water triangle counts toward this mission."
+    },
+    "boats": {
+      "name": "Boats",
+      "desc": "Spawn a required number of boats on the grid. A boat appears automatically on each lake enclosed by land tiles."
+    },
+    "comets": {
+      "name": "Comets",
+      "desc": "Comets streak across the sky in real time. Click on them to make them explode and rack up points — reflexes and vigilance required."
+    },
+    "village": {
+      "name": "Thriving village",
+      "desc": "Build a dense village: cluster enough adjacent house sectors to reach the required threshold."
+    },
+    "fields": {
+      "name": "Cultivated lands",
+      "desc": "Expand fields into continuous zones. Mills only appear when the zone is large enough to host them."
+    },
+    "mills": {
+      "name": "Windmills",
+      "desc": "Build large wheat field zones to spawn windmills. A mill appears automatically at the centre of each large enough field zone."
+    }
+  },
+  "gameplay": {
+    "label": "Game mechanics",
+    "title": "How to play",
+    "sub": "A simple loop, infinite depth. Every tile placed transforms the world.",
+    "ui_caption": "Current tile · Next tile · Remaining tiles",
+    "steps": {
+      "draw": {
+        "title": "Draw",
+        "desc": "A hexagonal tile appears — six triangular sectors, each a biome. Watch the next one to plan ahead."
+      },
+      "orient": {
+        "title": "Orient",
+        "desc": "Rotate the tile to align its edges. Water and rail require continuity — a bad placement can break the network."
+      },
+      "place": {
+        "title": "Place",
+        "desc": "Choose a spot on the axial grid. Surrounding a tile with six neighbors earns a large immediate bonus."
+      },
+      "score": {
+        "title": "Score",
+        "desc": "Complete missions and zones, intercept comets, then submit your best score to the global leaderboard."
+      }
+    },
+    "score_label": "Scoring system",
+    "pills": {
+      "place": "Tile placed",
+      "edge": "Matching edge",
+      "network": "Network connected",
+      "surround": "Tile surrounded",
+      "mission": "Mission complete",
+      "comet": "Comet intercepted",
+      "bonus": "Bonus cell covered"
+    },
+    "kbd": {
+      "camera_label": "camera",
+      "left_click_kbd": "Left click",
+      "left_click_desc": "move camera",
+      "right_click_kbd": "Right click",
+      "right_click_desc": "rotate camera",
+      "wheel_kbd": "Wheel",
+      "wheel_desc": "zoom",
+      "reset_cam": "reset camera",
+      "undo": "undo",
+      "customization": "customization",
+      "perf_hud": "performance HUD",
+      "immersive": "immersive mode",
+      "mute": "mute",
+      "help": "help"
+    }
+  },
+  "gallery": {
+    "label": "Visual presets",
+    "title1": "Several atmospheres",
+    "title2": "Infinite customizations",
+    "sub": "Many ready-to-use visual presets — but each is a starting point: color LUT, cinematic effects (chromatic aberration, film grain, tilt-shift), retro pixelization, EGA and Amiga aesthetics, volumetric smoke, procedural sky… Hundreds of combinations to transform the entire world to your taste. Every customization can be exported in one click and shared with other players.",
+    "preset_word": "Preset",
+    "presets": {
+      "autumn": "Autumn",
+      "summer": "Vivid Summer",
+      "nordic": "Nordic",
+      "amiga": "Amiga",
+      "ega": "EGA 16 colors",
+      "cga": "CGA 320×200 4 colors",
+      "apple2": "Apple II",
+      "psyche": "Psyché-LSD"
+    }
+  },
+  "creatures": {
+    "label": "The world's life",
+    "title": "A world full of creatures",
+    "sub": "The world doesn't just exist — it breathes. Animals, birds and inhabitants bring every biome to life through the seasons.",
+    "sheep": {
+      "name": "Sheep",
+      "desc": "Flocks graze peacefully in the grasslands, drifting along with the wind-swayed grass."
+    },
+    "crows": {
+      "name": "Crows",
+      "desc": "Murders of crows circle above the wheat fields, watching for any unguarded patch."
+    },
+    "farmer": {
+      "name": "Farmer",
+      "desc": "Pitchfork in hand, the farmer tends his wheat, coming and going with the rhythm of the farming seasons."
+    },
+    "druid": {
+      "name": "Druid",
+      "desc": "A solitary figure wanders among the trees, a quiet guardian of the forests and their secrets."
+    },
+    "witch": {
+      "name": "Witch",
+      "desc": "In certain forests, as night falls, witches are said to wander among the trees, drawn by the silence and the glow of forgotten campfires. Few ever catch sight of them — fewer still dare to follow."
+    },
+    "moon": {
+      "name": "Méliès Moon",
+      "desc": "In night mode, the moon wears the iconic face from Méliès' A Trip to the Moon — a nod to silent-era cinema tucked into the starry sky."
+    },
+    "seagulls": {
+      "name": "Seagulls",
+      "desc": "Small flocks of seagulls circle above the largest bodies of water, with the occasional straggler drifting away from the group."
+    },
+    "fireflies": {
+      "name": "Fireflies",
+      "desc": "As night falls, swarms of twinkling fireflies drift close to the ground, tracing warm points of light that softly wander around the camera."
+    },
+    "population": {
+      "villages_label": "Villages",
+      "forests_label": "Forests",
+      "fields_label": "Wheat fields",
+      "water_label": "Water",
+      "meadows_label": "Grasslands",
+      "tags": {
+        "village_women": "Village women",
+        "village_men": "Village men",
+        "farmer": "Farmer",
+        "blacksmith": "Blacksmith",
+        "merchant": "Merchant",
+        "innkeeper": "Innkeeper",
+        "guard": "Guard",
+        "soldier": "Soldier",
+        "knight": "Knight",
+        "archer": "Archer",
+        "warriors": "Warriors",
+        "mage": "Mage",
+        "monk": "Monk",
+        "witch": "Witch",
+        "crows": "Crows",
+        "windmill": "Windmill",
+        "scarecrow": "Scarecrow",
+        "boat": "Boat",
+        "rowboats": "Rowboats",
+        "seagulls": "Seagulls",
+        "deer": "Deer",
+        "wildflowers": "Wildflowers"
+      }
+    },
+    "note": "22 different faces populate villages and forests, each with its own silhouette, costume and role. No copy-pasted extras — a genuine population, tile after tile."
+  },
+  "audio": {
+    "label": "Sound design",
+    "title": "A world you can hear",
+    "sub": "Sound follows the camera in real time — every biome, train and boat has its own voice, rising and fading with distance.",
+    "spatial": {
+      "name": "3D spatial sound",
+      "desc": "Village ambience, forest and grassland birdsong, crows over the fields, waves on the shore, trains and boats — every source's volume follows its real distance and direction."
+    },
+    "chimai": {
+      "name": "Chi Mai, the hidden theme",
+      "desc": "Bring the camera down low over a wheat field and a hidden melodic theme kicks in — the music and other sounds fade away to make room for it."
+    },
+    "adaptive": {
+      "name": "Adaptive music",
+      "desc": "Intro, in-game and ending tracks crossfade smoothly, drawn from several variants so no two games sound quite the same."
+    },
+    "silence": {
+      "name": "Silence on demand",
+      "desc": "The M key instantly cuts and restores the entire soundtrack, music included — handy for a quiet game during a call or a meeting."
+    }
+  },
+  "daynnight": {
+    "label": "World atmosphere",
+    "title": "Environment",
+    "sub": "One switch changes everything. Sun, clouds and blue sky give way to stars, moon and comets.",
+    "day": {
+      "name": "Day Mode",
+      "list": [
+        "🌤 Sun orbiting on its own render layer",
+        "⛅ Procedural volumetric sky with animated FBM clouds",
+        "🔵 Zenith/horizon gradient in warm blue tones",
+        "🚫 Comets hidden — too much light for them"
+      ]
+    },
+    "night": {
+      "name": "Night Mode",
+      "list": [
+        "🌙 Moon, deep nocturnal zenith/horizon gradient",
+        "✨ Twinkling stars on a dedicated sphere",
+        "☄️ Streaking comets — click to make them explode",
+        "🌑 Dark atmosphere, village smoke more visible"
+      ]
+    },
+    "smoke": {
+      "name": "Smoke",
+      "list": [
+        "🏠 Up to 48 simultaneous smoke columns, ray-marched in real time above chimneys and locomotives",
+        "🌬️ 4-octave turbulence that drifts with height — every column is unique",
+        "🎲 Only one house in three smokes, randomly chosen when the tile is generated",
+        "🌙 Even more atmospheric once night falls"
+      ]
+    },
+    "godrays": {
+      "name": "God Rays",
+      "list": [
+        "☀️ Volumetric light shafts emerging from the sun or the moon",
+        "🌲 Pierce through foliage, towers and clouds for cinematic lighting",
+        "🎚️ Length, diffusion and threshold tunable via the art-direction editor"
+      ]
+    },
+    "rain": {
+      "name": "Rain",
+      "list": [
+        "💧 Dynamic showers you can trigger on the fly from the Weather HUD",
+        "⛈️ Chains naturally into storms and lightning",
+        "🎬 Atmosphere strengthened by the cinematic vignette and film grain"
+      ]
+    },
+    "mist": {
+      "name": "Morning mist",
+      "list": [
+        "🌫️ Low veil that mutes distances and softens silhouettes",
+        "☀️ Gradually lifts as the minutes pass",
+        "🎚️ Fog density and colour tunable in the art-direction editor"
+      ]
+    }
+  },
+  "eda": {
+    "label": "Art direction editor (EDA)",
+    "title": "Extreme customization",
+    "sub": "Beyond the many presets, the EDA exposes dozens of metrics adjustable in real time, spread across 3 tabs — LUT, Cinematic, Environment. Every slider responds instantly, no reload, and the whole configuration copies/exports as JSON to be replayed or shared.",
+    "lut": {
+      "label": "LUT",
+      "desc": "Fog, light source, full color grading (RGB curves, gamma, levels) and per-biome palette."
+    },
+    "cinematic": {
+      "label": "Cinematic",
+      "desc": "God rays, tilt-shift, bloom, retro pixelization and screen curvature — to film the world rather than just look at it."
+    },
+    "environment": {
+      "label": "Environment",
+      "desc": "Clouds and cloud coverage, wind (wheat, grass, trees), dynamic weather (mist, fireflies, rain), world shape (globe/flat), Day/Night switch and quality/density presets."
+    }
+  },
+  "multi": {
+    "title1": "Multiplayer",
+    "title2": "Build together",
+    "sub": "Join or create a room with a 6-letter code. The grid is shared in real time — each player places their tiles and sees others' moves as they happen.",
+    "features": [
+      "All games are saved — resume or replay at any time",
+      "Rooms joinable at any time, even mid-game",
+      "Real-time sync · PHP + JSON backend",
+      "The map grows collaboratively, tile by tile"
+    ],
+    "btn_create": "Create a game",
+    "room_title": "Room code",
+    "room_status": "Game in progress · 3 players",
+    "tiles_placed_label": "Tiles placed"
+  },
+  "scores": {
+    "label": "Global leaderboard",
+    "title": "The greatest builders",
+    "empty": "No scores yet — be the first to place your tile.",
+    "try_luck": "Try your luck →",
+    "headline_stat": "tiles placed",
+    "trains_s": "line",
+    "trains_p": "lines",
+    "boats_s": "boat",
+    "boats_p": "boats",
+    "mills_s": "mill",
+    "mills_p": "mills",
+    "comets_s": "comet",
+    "comets_p": "comets",
+    "largest_zone": "largest zone",
+    "biome_labels": {
+      "forest": {
+        "en": "Forest"
+      },
+      "water": {
+        "en": "Water"
+      },
+      "house": {
+        "en": "Village"
+      },
+      "field": {
+        "en": "Wheat field"
+      },
+      "grass": {
+        "en": "Meadow"
+      },
+      "rail": {
+        "en": "Rail"
+      }
+    }
+  },
+  "footer": {
+    "copy": "A contemplative hexagonal game made with love ❤️ Three.js and a lot of tiles · 2025–2026",
+    "github": "On GitHub"
+  },
+  "game": {
+    "help": {
+      "renderer.toneMappingExposure": "Global renderer exposure (ACESFilmic). Controls how much light reaches the \"sensor\" before any grading.\nValues < 1 darken the whole scene, > 2 can blow out highlights.\nTypical: 1.2–1.8 for a natural look.",
+      "environment.fogDensity": "Density of the exponential fog (FogExp2). Only active when \"Linear Far\" is at 0.\nVisibility drops off very quickly: at 0.07 the scene is almost opaque.\nFor a controlled visual range, prefer linear mode via \"Near\" and \"Far\".",
+      "environment.fogNear": "Distance in 3D units where linear fog begins.\nAs soon as \"Far\" > 0, automatically switches from FogExp2 to THREE.Fog(near, far).\nAt 0: fog starts right in the foreground. At 5: nearby objects stay sharp.",
+      "environment.fogFar": "Distance at which linear fog is fully opaque.\nSet to 0 to return to exponential mode.\nExample: Near = 3, Far = 18 → a 15-unit visual range — atmospheric without drowning everything.",
+      "lights.hemisphereIntensity": "Intensity of the hemisphere light (sky + ground).\nLights faces not directly exposed to the sun.\nToo high: flattens shadows and removes depth. Too low: back faces fall into total darkness.",
+      "lights.sunIntensity": "Power of the directional light (sun).\nDetermines shadow hardness and relief contrast.\nValues > 5 can blow out light surfaces if global exposure is also high.",
+      "lights.sunOrbitRadius": "Radius of the sun's circular orbit around the scene's center.\nA small radius (< 5) gives steeply angled light from the center; a large one (> 20) gives more grazing light from the edges.",
+      "lights.sunOrbitHeight": "Vertical height of the sun above the scene plane.\nHigh = short shadows, overhead light. Low = long, grazing shadows (golden hour or sunset).",
+      "lights.sunOrbitSpeed": "Angular speed of the sun in radians/second.\nAt 0.06, a full revolution takes ≈ 100 seconds. At 0: fixed sun. At 1: shadows rotate quickly.",
+      "lights.sunVisualScale": "Apparent size of the solar disc in the sky.\nPurely visual — affects neither light power nor shadows.",
+      "lights.fillIntensity": "Intensity of a soft fill light, opposite the sun.\nOpens up harsh shadow areas. Useful to avoid fully black patches under overhangs or on the far side of hills.",
+      "grading.brightness": "Additional brightness offset applied after rendering.\nAdds a constant value to all channels.\nDiffers from exposure: doesn't amplify highlights, doesn't change tonemapping.",
+      "grading.contrast": "Global contrast via pivoting around 50% gray.\n> 1: pushes darks and lights apart (cinematic look). < 1: compresses (flat/washed-out look).\nAt extremes → solid black or white.",
+      "grading.saturation": "Global saturation. Blends the grayscale (luma) version with the original color.\n0 = grayscale. 1 = normal. > 1 = oversaturated.\nAt very high values (3+), colors clip and can invert.",
+      "grading.vibrance": "Smart vibrance: boosts dull colors while sparing already-saturated hues.\nGentler than raw saturation for natural greens.\nNegative: mutes vivid colors first.",
+      "grading.hue": "Global rotation of all hues around the color wheel.\n±0.5 = half turn (red ↔ cyan). Subtle at low values.\nUseful to correct a color cast or create an offbeat palette.",
+      "grading.gamma": "Gamma correction applied to midtones.\n< 1 = brighter midtones; > 1 = darker.\nDoesn't act linearly on the extremes (pure blacks/whites).",
+      "grading.blackLevel": "Black point level. Lifts pure blacks toward gray.\nCreates a \"washed-out filmic\" or \"lifted blacks\" look.\nToo high = loss of depth and density in shadows.",
+      "grading.whiteLevel": "White point level. Compresses highlights below 1.0.\nAt 0.871: pure whites turn cream, nothing clips.\nUseful for a soft look, a subtle \"S-curve\".",
+      "grading.red": "Multiplicative gain of the red channel after grading.\n> 1 warms the scene (orange/amber tint). < 1 cools it down.\nCombined with green and blue, allows fine white-balance correction.",
+      "grading.green": "Multiplicative gain of the green channel.\nGreen dominates perceived luminance (≈ 59%).\nLowering this channel gives a purplish/magenta effect; raising it greens the image and perceptually brightens it.",
+      "grading.blue": "Multiplicative gain of the blue channel.\nIncreasing gives a cold/nocturnal mood. Reducing dries out the blues for a warm or sepia look.",
+      "grading.redCurve": "Red tonal curve: applies a power function to the channel.\n< 1 = convex curve (lifts red midtones). > 1 = digs into midtones.\nApplied after the red gain.",
+      "grading.greenCurve": "Green tonal curve. Shapes the green channel's response in the midtones.\nUseful to fine-tune perceived contrast without touching the extremes.",
+      "grading.blueCurve": "Blue tonal curve. Shapes the mood in the midtones.\nCurve < 1 = denser blues in the highlights. > 1 = dug-out blues (warm look in the mids).",
+      "palette.strength": "Overall strength of palette harmonization on targeted textures.\n0: no effect. 1: textures are fully recolored toward their target color.\nWorks by matching GLB material names.",
+      "palette.saturation": "Saturation applied after palette harmonization.\n< 1: calms down recolored textures. > 1: intensifies them.\nLets you adjust without touching the target colors.",
+      "palette.contrast": "Contrast applied to colors after harmonization.\nA slight boost (1.05–1.2) improves the readability of recolored textures.",
+      "palette.warmShift": "Global warm/cool shift applied to the whole biome palette.\nNegative → cooler/bluer tones. Positive → warmer/golden tones.",
+      "environment.skyColor": "Renderer background color, visible beyond the dome and objects.\nGenerally dark so it doesn't poke through behind the scenery.",
+      "environment.fogColor": "Color of the fog, exponential or linear.\nObjects blend into this hue as distance increases.\nShould match the sky color for a coherent horizon.",
+      "environment.domeColorTop": "Color of the top of the spherical atmospheric dome.\nVisible in the sky above objects (if domeOpacity > 0).",
+      "environment.domeColorBottom": "Color of the base of the atmospheric dome.\nSimulates the horizon or a low ground-level haze.",
+      "lights.hemisphereSkyColor": "Tint of the \"sky\" component of the hemisphere light.\nColors upward-facing surfaces (roofs, flat surfaces).",
+      "lights.hemisphereGroundColor": "Tint of the \"ground\" component of the hemisphere light.\nColors downward-facing surfaces (undersides of bridges, house bellies).",
+      "lights.sunColor": "Color of the sun's directional light.\nOrange at sunset, white at midday, bluish under an overcast sky.\nStrongly influences the color of cast shadows.",
+      "lights.fillColor": "Color of the fill light.\nGenerally complementary to the sun to balance out shadows.",
+      "palette.targets.field": "Target color for harmonizing cultivated field textures.",
+      "palette.targets.forest": "Target color for forest and tree textures.",
+      "palette.targets.grass": "Target color for meadows and grass.",
+      "palette.targets.house": "Target color for houses and village buildings.",
+      "palette.targets.rail": "Target color for rails and railway infrastructure.",
+      "palette.targets.water": "Target color for water (lakes, rivers, sea).",
+      "pix.pixelSize": "Size of one pixel in screen units. At 1: native resolution. At 8: heavily pixelated, 8-bit-style render.\nHigh values reduce GPU load (fewer fragments to compute) and reinforce the retro look.\nCombined with edges, gives a lowpoly + outline style.",
+      "pix.normalEdge": "Intensity of edges based on surface normals.\nDetects boundaries between differently-oriented planes (e.g. a roof edge, a wall corner).\n0 = no normal-based edges. 1 = strong outlines on every geometric transition.",
+      "pix.depthEdge": "Intensity of edges based on depth (z-buffer).\nTraces silhouettes between objects at different distances.\nComplements the normal-based edges: together they give a cartoon or comic-book look.",
+      "pix.worldShape": "Chooses the world's apparent curvature.\n\"Globe\": the world is a sphere, the horizon curves — mini-planet effect.\n\"Flat\": no curvature, traditional flat view — classic isometric look.",
+      "env.dayNight": "Toggles between day and night.\nChanges the visible celestial body (sun/moon), the sky, ambient colors, and brings out comets at night.",
+      "quality.density": "Global content density multiplier (0.15 to 1.0).\nReduces the number of natural props, grass blades and sheep to lighten the scene graph traversal and target 60 FPS on weaker machines.\nDoesn't affect terrain, water, buildings, or characters (gameplay and systems already optimized separately). Rebuilds the content on every change.",
+      "cin.tilt": "Intensity of the tilt-shift effect: progressive blur at the top and bottom of the frame.\nSimulates a tilt lens that reduces depth of field at the center.\nGives the illusion of a miniature model — very strong at 1.",
+      "cin.focusCenter": "Vertical position of the tilt-shift's sharp focus band.\n0 = top of frame, 0.5 = center, 1 = bottom.\nMoving it down puts ground-level elements in focus.",
+      "cin.focusBand": "Width of the tilt-shift's sharp band (as a fraction of height).\n0.1 = very thin band, 0.5 = half the image in focus, 1 = everything sharp (effect disabled).",
+      "cin.vignette": "Darkening of the frame's edges and corners.\nSimulates light falloff at the edges of a wide-angle lens.\nEnhances the sense of depth and draws the eye toward the center.\nGoes up to 2: beyond 1, the edges turn almost fully black.",
+      "cin.grain": "Amount of film grain added on top of the render.\nSimulates the imperfections of silver-halide film or a sensitive sensor.\nSubtle at 0.2, pervasive at 1.",
+      "cin.chromatic": "Chromatic aberration: lateral shift of the color channels toward the edges.\nSimulates the flaws of an imperfect lens that doesn't focus all wavelengths at the same point.\nSubtle at 0.2, psychedelic beyond 0.7.",
+      "cin.halation": "Glowing halo around very bright areas, typical of silver-halide film.\nStrong light slightly \"bleeds\" onto neighboring dark areas.\nAdds warmth and an organic feel — beautiful on sunsets.",
+      "cin.barrel": "Barrel distortion: the edges of the image are pushed outward.\nSimulates fisheye or wide-angle lenses. Reinforces a \"CCTV camera\" or lo-fi look.\nAt 1, the image bulges strongly.",
+      "cin.scanLines": "Interlaced dark horizontal lines, mimicking a CRT monitor or an old TV.\n0 = no scanlines. 6 = very pronounced lines, retro-TV look.\nPowerful when combined with a CGA/EGA palette for a vintage aesthetic.",
+      "cin.scanLinesIntensity": "Blackness depth of the scanlines. 0 = transparent (no darkening, even with\nscanlines active). 1 = fully black. No effect if Scan lines is at 0.",
+      "cin.godRays": "Intensity of the crepuscular rays (god rays) emanating from the sun's screen position.\nLightweight screen-space effect, no extra render pass — especially visible\nnear the horizon or when the sun is partly hidden behind a tree or a tower.\n0 = disabled (zero GPU cost).",
+      "cin.godRaysLength": "Reach of the rays, as a fraction of the screen, between the displayed pixel and the sun.\nLow = short rays localized around the sun. High = rays that stretch across\na large part of the frame.",
+      "cin.godRaysDiffusion": "Falloff of the rays along their path toward the sun.\nLow = short, crisp rays. High = long, soft rays that extend\nfar from the light source.",
+      "cin.godRaysThreshold": "Brightness threshold above which a pixel is treated as a light source\n(sky, sun) and contributes to the rays. Low = more areas contribute (rays\nare more present). High = only the brightest areas (the sun itself) generate them.",
+      "cin.godRaysLayers": "Breaks the smooth ray gradient into stacked density slices — a layered,\ntranslucent-veils effect (mille-feuille) rather than a continuous halo.\n0 = classic smooth gradient. 1 = pronounced layering, visibly stratified rays.",
+      "cin.bloomIntensity": "Bloom intensity: a soft glowing halo around highlights (sun, moon,\nstars, lit windows, HUD elements). Only affects pixels above the\nthreshold set below — never blurs the whole image.\n0 = disabled (zero GPU cost).",
+      "cin.bloomThreshold": "Brightness threshold above which a pixel contributes to the bloom.\nLow = more areas (even moderately bright ones) generate a halo.\nHigh = only the most intense sources (sun, lamps) generate one.",
+      "cin.bloomRadius": "Radius of the blur applied around bloom source pixels, in screen pixels.\nLow = tight, crisp halo. High = wider, more diffuse halo.",
+      "cin.bloomSoftness": "Softness of the transition at the bloom threshold.\nLow = sharp cutoff between \"contributes\" and \"doesn't contribute\".\nHigh = gradual transition, softer halo at the edge of sources.",
+      "cin.crtCurvature": "CRT-style screen curvature: warps the image as if it were displayed\non a curved surface. Independent from the barrel (lens) distortion\nabove. 0 = no deformation (zero GPU cost).",
+      "cin.crtMask": "Masks the areas that fall outside the frame once screen curvature is applied\n(black edges) instead of stretching them. 0 = stretched edges (no mask),\n1 = off-screen edges fully masked in black. No effect if curvature is at 0.",
+      "cin.crtCornerDark": "Additional darkening of the screen corners, typical of a CRT tube.\n0 = no darkening. No effect if screen curvature is at 0.",
+      "water.foamWidth": "Reach of the foam band near the shore (in meters).\n0 = no shoreline foam. High values = a wide white fringe all along the coasts.",
+      "water.foamScale": "Scale of the foam texture. The higher the value, the finer and denser the foam patterns.\nLow = large blotches, high = fine, foam-like grain.",
+      "water.foamDensity": "Trigger threshold for shoreline foam. The higher the value, the more surface the foam covers near the edge.",
+      "water.foamAmbient": "Threshold for ambient foam, visible across the whole water surface (not just the shore).\n0 = perfectly smooth surface offshore. High values = whitecaps/chop diffused everywhere.",
+      "water.foamSharp": "Sharpness of the foam edge. Low = soft, diffuse transition. High = crisp, cut-out outline.",
+      "water.foamSpeed": "Animation speed of the foam (pattern scrolling over time). 0 = frozen, static foam.",
+      "water.deepDistance": "Shore-to-open-water distance over which the shallow/deep color gradient extends.\nLow = tight transition near the edge. High = gradient spread over a large area.",
+      "water.opacity": "Base opacity of the water sheet. Low = translucent water that shows the bottom. High = opaque water.",
+      "wake.armWidth": "Half-width of each arm of the V-shaped wake behind the boat.",
+      "wake.spread": "Divergence of the V: how fast the two arms spread apart from each other moving away from the boat.",
+      "wake.length": "Length over which the wake fades behind the boat before disappearing.",
+      "wake.scale": "Scale of the wake's foam pattern. The higher the value, the finer the grain.",
+      "wake.density": "Foam coverage of the wake. Low = discreet wake, high = dense foam trail.",
+      "wake.opacity": "Maximum opacity of the wake, strongest right behind the boat and then fading with length.",
+      "wind.wheat.strength": "Amplitude of the wheat ears' swaying. 0 = still.",
+      "wind.wheat.speed": "Oscillation speed of the wheat in the wind.",
+      "wind.grass.strength": "Amplitude of the grass blades' swaying.",
+      "wind.grass.speed": "Oscillation speed of the grass in the wind.",
+      "wind.grass.sway": "Additional sinusoidal sway of each blade, independent from the wind noise.",
+      "wind.tree.strength": "Amplitude of the treetops' swaying. Changing this setting recompiles the shaders of already-planted trees (a brief stutter is possible).",
+      "wind.tree.speed": "Oscillation speed of the trees in the wind.",
+      "wind.tree.frequency": "Spatial frequency of the main wind wave along the trunk/foliage.",
+      "wind.tree.turbulence": "Intensity of the gusts and secondary detail added to the main wind wave.",
+      "wind.tree.gustStrength": "Weight of the gusts (slower, broader variation) in the overall motion.",
+      "wind.tree.detailStrength": "Weight of the fine detail (fast ripple) in the overall motion.",
+      "cloud.coverage": "Cloud coverage at the horizon. 0 = clear sky, 1 = overcast sky.",
+      "cloud.scale": "Scale of the cloud pattern. High value = smaller, finer clouds; low value = broad masses.",
+      "cloud.speed": "Drift speed of the clouds at the horizon.",
+      "stats.drawCalls": "Total number of render calls (draw calls) issued by Three.js this frame.\nEvery visible object costs at least 1 draw call — shadows add more.\n> 200 dc: watch performance on mobile GPUs.",
+      "stats.trackedDc": "Draw calls attributed to tracked object categories (tiles, trees, rails…).\nThe difference from the total = uncategorized draw calls (UI, helpers, skybox…).",
+      "stats.shadows": "Estimated draw calls used for shadow rendering (shadow map).\nEvery shadow-\"casting\" object re-renders the scene from the sun's perspective.\nReduce shadowMapSize or the number of casters to lower this cost.",
+      "stats.triangles": "Total number of triangles rendered this frame.\nAn indicator of geometric complexity — shadows double this figure.\nLOD (level of detail) meshes reduce this count at a distance.",
+      "stats.objects": "Total number of 3D objects (Mesh, Group…) tracked in the scene.\nDoesn't exactly match draw calls: one object can generate several passes.",
+      "stats.textures": "Number of active textures in GPU memory.\nAn unreleased texture stays in VRAM. Worth watching after loading new tiles.",
+      "stats.shaders": "Number of compiled and active shader programs (GLSL).\nEach material + defines combination = one shader. Too many variants = stutter on the first frame.",
+      "game.tiles": "Total number of tiles placed on the board since the start of the game.\nEach tile can belong to one or more biomes depending on its composition.",
+      "game.mills": "Number of mills present on the grid.\nA mill automatically appears at the center of each large wheat field zone.",
+      "game.trains": "Train lines formed: one line = two stations connected by continuous rails.\nThe longer the line, the higher the score points.",
+      "game.boats": "Active boats: a boat appears on every body of water surrounded by land.\nEach boat generates points as long as it stays \"afloat\".",
+      "game.comets": "Comets intercepted: random events that streak across the board.\nPlacing a tile at the predicted spot at the right moment lets you intercept them.",
+      "game.grass": "Total meadow tiles placed.\nMax area = largest contiguous meadow zone (adjacent tiles of the same biome).",
+      "game.largestGrass": "Largest contiguous meadow zone (in number of connected tiles).\nA large contiguous zone earns more points at the end of the game.",
+      "game.field": "Total wheat field tiles placed.\nFields adjacent to villages or rivers give bonuses.",
+      "game.largestField": "Largest contiguous field zone. Determines the final harvest bonus.",
+      "game.forest": "Total forest tiles placed.\nDense forests (large zones) are wildlife refuges and earn more.",
+      "game.largestForest": "Largest contiguous forest. Forests > 7 tiles sometimes trigger special events.",
+      "game.house": "Total village tiles placed.\nIsolated houses are worth little; a dense village well-connected to the rail network earns a lot.",
+      "game.largestHouse": "Largest contiguous village. A village = adjacent houses.\nNumerous, dense villages maximize the urban bonus.",
+      "game.water": "Total water tiles placed (lakes, rivers, sea).\nWater bordering other biomes creates valued coastal zones.",
+      "game.largestWater": "Largest contiguous body of water. A lake > 5 tiles can host extra boats.",
+      "game.rail": "Total rail tiles placed.\nRails alone earn nothing — it's the connection between two stations that creates a line.",
+      "game.largestRail": "Longest contiguous railway (in tiles). An indicator of the network's maximum reach.",
+      "game.activeTile": "The tile you're about to place next.\nMove the cursor with Z/Q/S/D, rotate with R, and place with SPACE.\nEach face of the tile corresponds to a biome — plan your connections!",
+      "game.nextTile": "The next tile that will come into play after you place the current one.\nAnticipate its shape to prepare the best spot for it.",
+      "game.deckRemaining": "Number of tiles remaining in the draw pile.\nThe game ends when the pile is empty — make every placement count!",
+      "hs.summary": "Game summary: tiles placed, train lines, boats, comets intercepted.",
+      "hs.grass": "Meadow — total tiles / largest contiguous zone.",
+      "hs.field": "Wheat field — total tiles / largest contiguous zone.",
+      "hs.forest": "Forest — total tiles / largest contiguous zone.",
+      "hs.house": "Village — total tiles / largest contiguous zone.",
+      "hs.water": "Water — total tiles / largest contiguous body.",
+      "hs.rail": "Railway — total tiles / longest contiguous line.",
+      "fps.fps": "Frames per second rendered by the Three.js engine.\n60 FPS = smooth rendering, frame budget respected. < 30 FPS = noticeable slowdowns.\nThe value turns red when the frame budget (16.7 ms) is consistently exceeded.",
+      "fps.adj": "Qualitative assessment of current smoothness.\nGreen (Excellent / Smooth): all good. Orange (Fair / Okay): acceptable but keep an eye on it.\nRed (Tight / Straining / Maxed out): the engine is under pressure — look for the bottleneck.",
+      "fps.cpu": "Percentage of the frame budget (16.7 ms) consumed by the JavaScript thread.\nIncludes game logic, overlay updates, animations, and GC pauses.\n> 80%: the CPU is the bottleneck — reduce update frequency or the number of active overlays.",
+      "fps.gpu": "Percentage of the frame budget consumed by GPU rendering.\nMeasured via a real, asynchronous GPU timing query (EXT_disjoint_timer_query_webgl2) —\nthe displayed value may lag by 1 to a few frames. If the extension is unavailable on this\ndriver/browser, falls back to a CPU submission timer (prefixed \"≈\", less reliable).\n> 80%: the GPU is saturated — reduce triangles/fragments (vegetation, post-processing), draw calls, or shadows.",
+      "menu.solo": "Solo mode — play alone, at your own pace.\nYour scores are submitted to the global leaderboard once the game ends.",
+      "menu.multi": "Multiplayer mode — play in real time with other players.\nCreate a room and share the code, or join an existing game.",
+      "menu.platiste": "Flat geometry — the grid sits on a horizontal plane.\nBetter readability and predictable behavior: recommended for beginners.",
+      "menu.bouliste": "Spherical geometry — the tiles follow a planet's curvature.\nA more immersive view, but the curved grid can be disorienting at first.",
+      "menu.confirm": "Confirm and move to the next step.",
+      "menu.create": "Create a new multiplayer room.\nA unique code is generated automatically — share it with other players so they can join you.",
+      "menu.join": "Join an existing room with the code shown above.",
+      "menu.back": "Return to the home screen.",
+      "game.gridPercent": "Number of tiles placed on the grid since the start of the game.\nEvery placement increases this counter, including in multiplayer mode.",
+      "game.lastScore": "Points earned on the last placement.\nIncludes the zone bonus if the tile grew or closed a contiguous zone, plus any mission bonuses.",
+      "game.newGame": "Start a new game.\nThe current game stays active and playable — you can return to it at any time from the menu.",
+      "game.abandonGame": "Abandon the current game.\nThe game will be permanently closed: you won't be able to play it again or submit a new score."
+    },
+    "missionHelp": {
+      "forest": "Place tiles with forest 🌲 sectors.\nEvery forest triangle placed on the board advances this mission.\nDense zones earn more points at the end of the game.",
+      "house": "Place tiles with village 🛖 sectors.\nEvery house triangle placed advances this mission.\nVillages connected to the rail network are especially profitable.",
+      "rail": "Place tiles with rails 🛤️.\nEvery railway triangle placed advances this mission.\nRails alone earn nothing without a station at each end.",
+      "water": "Place tiles with water 💧 sectors.\nEvery water triangle placed advances this mission.\nLarge bodies of water can host boats.",
+      "grass": "Place tiles with meadow 🌿 sectors.\nEvery meadow triangle placed advances this mission.\nLarge contiguous meadow zones earn an area bonus.",
+      "field": "Place tiles with wheat field 🌾 sectors.\nEvery field triangle placed advances this mission.\nFields near villages or rivers give bonuses.",
+      "train": "Connect two stations with continuous rails 🚂.\nEvery new completed train line advances this mission.\nThe longer the line, the higher the score.",
+      "boat": "Create bodies of water surrounded by land ⛵.\nA boat automatically appears on every lake enclosed by land tiles.\nEvery new boat advances this mission.",
+      "mill": "Build large wheat field zones ⚙️.\nA mill automatically appears at the center of every sufficiently large field zone.\nEvery new mill advances this mission."
+    },
+    "missionTitles": {
+      "forest": {
+        "one": "Grow a forest of {target} trees",
+        "other": "Grow a forest of {target} trees"
+      },
+      "house": {
+        "one": "Build a village of {target} houses",
+        "other": "Build a village of {target} houses"
+      },
+      "rail": {
+        "one": "Extend a railway of {target} rails",
+        "other": "Extend a railway of {target} rails"
+      },
+      "water": {
+        "one": "Connect a waterway of {target} tiles",
+        "other": "Connect a waterway of {target} tiles"
+      },
+      "grass": {
+        "one": "Extend a meadow of {target} tiles",
+        "other": "Extend a meadow of {target} tiles"
+      },
+      "field": {
+        "one": "Cultivate {target} wheat field tiles",
+        "other": "Cultivate {target} wheat field tiles"
+      },
+      "train": {
+        "one": "Run {target} train",
+        "other": "Run {target} trains"
+      },
+      "boat": {
+        "one": "Launch {target} boat",
+        "other": "Launch {target} boats"
+      },
+      "mill": {
+        "one": "Turn {target} mill",
+        "other": "Turn {target} mills"
+      }
+    },
+    "ui": {
+      "modals": {
+        "scoreEnd": {
+          "kicker": "Game over — final score",
+          "save": "Save"
+        },
+        "abandon": {
+          "kicker": "Abandon the game?",
+          "sub": "This game cannot be resumed afterward.",
+          "cancel": "CANCEL",
+          "confirm": "ABANDON"
+        }
+      },
+      "hud": {
+        "player": "PLAYER",
+        "room": "ROOM",
+        "abandon": "ABANDON",
+        "newGame": "NEW GAME",
+        "statsTitle": "GAME STATISTICS",
+        "mills": "Mills",
+        "trains": "Trains",
+        "boats": "Boats",
+        "comets": "Comets",
+        "total": "Total",
+        "surfaceMax": "Max area",
+        "railMax": "Max track",
+        "biomes": {
+          "grass": "Meadow",
+          "field": "Wheat field",
+          "forest": "Forest",
+          "house": "Village",
+          "water": "Water",
+          "rail": "Railway"
+        },
+        "activeTileTitle": "CURRENT TILE",
+        "nextTileTitle": "NEXT TILE",
+        "deckRemaining": "REMAINING",
+        "tilesPlaced": "PLACED",
+        "missionsTitle": "ACTIVE MISSIONS",
+        "noMission": "No mission"
+      },
+      "help": {
+        "title": "Help",
+        "closeAria": "Close help",
+        "objective": {
+          "title": "Game objective",
+          "text": "Place hexagonal tiles, connect matching textures, and complete missions. Every well-aligned edge pays off; water and rails pay even more.",
+          "points": {
+            "tile": "per tile placed",
+            "edge": "per matching edge against a neighboring tile",
+            "waterRail": "per water/water or rail/rail connection",
+            "surround": "bonus when a tile is surrounded on all 6 sides",
+            "mission": "per completed mission",
+            "bonus": "if you place a tile on a bonus cell"
+          }
+        },
+        "placement": {
+          "title": "Placement",
+          "items": [
+            "Start: 50 tiles. The first is free, later ones must touch a placed tile.",
+            "Occupied cells are forbidden. Empty deck = game over.",
+            "2 matching sides: +1 tile; 3 matching sides: +2 tiles.",
+            "Tile surrounded on 6 sides: +50 points.",
+            "The ghost tile shows the possible placement.",
+            "With every placement, the playable area slowly expands: cells up to 3 hexagons around the tile become available.",
+            "Golden bonus cells appear at generation: occupy them to earn +1500 points."
+          ]
+        },
+        "waterRail": {
+          "title": "Water and rails",
+          "text": "Water and rail are strict networks and harder to place. In exchange, every correct connection earns more points.",
+          "water": "connects only to water: +25",
+          "rail": "connects only to rail: +25"
+        },
+        "bonusCells": {
+          "title": "Bonus cells",
+          "text": "Between 1 and 4 bonus cells are generated on the grid. They do not change any placement rule: if you manage to place a tile on one, it disappears and immediately earns +1500 points.",
+          "label": "optional objective, pure score, zero risk"
+        },
+        "blackCells": {
+          "title": "Black cells",
+          "text": "Black cells are special tiles already present on the grid. They act as jokers: they fill in whatever is missing around them and accept connections with any adjacent texture.",
+          "label": "counts as compatible with any neighboring edge"
+        },
+        "textures": {
+          "title": "Textures & values",
+          "field": {
+            "label": "Wheat field",
+            "code": "1-2 sheaves"
+          },
+          "forest": {
+            "label": "Forest",
+            "code": "1-6 trees"
+          },
+          "grass": {
+            "label": "Meadow",
+            "code": "1"
+          },
+          "house": {
+            "label": "Village",
+            "code": "1-4 houses"
+          },
+          "water": {
+            "label": "Water",
+            "code": "1"
+          },
+          "rail": {
+            "label": "Rail",
+            "code": "1"
+          }
+        },
+        "missions": {
+          "title": "Missions",
+          "text1": "Each time a new current tile appears, there is a 20% chance of adding a mission. It may ask for forest, village, railway, waterway, meadow, wheat field, visible trains, boats, or mills.",
+          "text2": "Reward: +100 points and +3 tiles. Objectives progress by type; a completed mission stays visible for 5 turns. Actual values count: meadow/water/rail = 1; wheat field = 1-2; house = 1-4; forest = 1-6 trees. Mills ⚙️ count the number of active large field zones."
+        },
+        "controls": {
+          "title": "Controls",
+          "moveCamera": "Move the camera",
+          "resetCamera": "Reset the camera",
+          "zoom": "Zoom in / out",
+          "undo": "Undo the last move",
+          "toggleHelp": "Show / hide this help",
+          "muteSound": "Mute / unmute all sounds",
+          "immersive": "Immersive mode",
+          "superImmersive": "Super-immersive mode",
+          "speedUp": "Speeds up movement and zoom",
+          "wheelZoomRotate": "Zoom or rotate if available",
+          "rightClick": "Rotate the camera",
+          "perfHud": "Show / hide the advanced performance HUD",
+          "eda": "Customization (EDA)"
+        }
+      }
+    },
+    "highscore": {
+      "saving": "Saving...",
+      "saved": "Score saved! Returning to menu...",
+      "error": "Highscore error.",
+      "defaultName": "Player"
+    },
+    "multiplayerRooms": {
+      "modeCopy": "Create a new game or join an existing one with a code.",
+      "nameLabel": "Nickname",
+      "namePlaceholder": "Your nickname",
+      "codeLabel": "Game code",
+      "codePlaceholder": "e.g. 377EA7",
+      "availableRoomsLabel": "Available games / backups",
+      "loadingRooms": "Loading games...",
+      "btnCreate": "Create",
+      "btnJoin": "Join",
+      "btnBack": "Back",
+      "selectExisting": "Select an existing game",
+      "noRoomsFound": "No games found in /json/games",
+      "listUnavailable": "List unavailable - PHP server silent",
+      "roomsCount": {
+        "one": "{count} game available / backups",
+        "other": "{count} games available / backups"
+      },
+      "unknownDate": "unknown date",
+      "playerWord": {
+        "one": "player",
+        "other": "players"
+      },
+      "tileWord": {
+        "one": "tile",
+        "other": "tiles"
+      },
+      "creatingRoom": "Creating game {code}...",
+      "missingCode": "Missing game code.",
+      "joiningRoom": "Connecting to game {code}...",
+      "roomNotFound": "Game {code} found, but snapshot missing. Stale JSON rejected.",
+      "defaultNamePrefix": "Player"
+    },
+    "startupMenu": {
+      "nameChoice": {
+        "title": "What's your name?",
+        "label": "Your first name (or nickname)",
+        "placeholder": "e.g. Alex",
+        "confirm": "CONTINUE →"
+      },
+      "home": {
+        "title": "Choose the game mode: solo or multiplayer.",
+        "solo": "SOLO",
+        "multi": "MULTI"
+      },
+      "worldShape": {
+        "title": "Choose your planet's geometry:",
+        "flat": "FLAT",
+        "globe": "GLOBE",
+        "note": "We recommend \"<i>flat</i>\" to start. You'll be able to switch factions at any time in-game, because even planets are entitled to an identity crisis."
+      }
+    },
+    "preloader": {
+      "loading": "Loading…",
+      "loadingPct": "Loading… {pct} %"
+    },
+    "placementOverlay": {
+      "ok": "OK",
+      "outOfGrid": "OUT OF GRID",
+      "forbidden": "FORBIDDEN",
+      "incompatibleNetwork": "INCOMPATIBLE NETWORK",
+      "edgeTypes": {
+        "field": "field",
+        "forest": "forest",
+        "water": "water",
+        "rail": "rail",
+        "house": "house",
+        "grass": "meadow"
+      }
+    },
+    "multiplayerClient": {
+      "unreadableResponse": "Unreadable server response ({status}): {text}",
+      "serverError": "Server error {status}"
+    },
+    "kbdHint": "H or ESC&nbsp;→ help &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; SPACE&nbsp;→ immersive &nbsp;|&nbsp; SHIFT+SPACE&nbsp;→ super-immersive",
+    "superImmersifExitHint": "SPACE to exit super-immersive mode",
+    "fpsAdjectives": {
+      "disastrous": "Disastrous",
+      "bad": "Bad",
+      "mediocre": "Mediocre",
+      "passable": "Passable",
+      "good": "Good",
+      "splendid": "Splendid"
+    }
+  }
+}

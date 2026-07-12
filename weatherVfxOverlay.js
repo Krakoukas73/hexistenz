@@ -1,28 +1,32 @@
 /**
- * weatherVfxOverlay.js — Effets météo (lucioles, pluie) branchés sur
- * environmentDirector, construits sur la librairie wawa-vfx-vanilla
- * (vendor/wawa-vfx-vanilla.js — VFXParticles/VFXEmitter, instanced, 1 draw
- * call par système, animé côté GPU).
+ * weatherVfxOverlay.js — Lucioles (fireflies) branchées sur environmentDirector.
  *
- * Réglages en direct : voir vfxSettings.js (densité/taille/vitesse...),
- * modifiables via le panneau vfxSettingsUi.js sans recharger la page —
- * on ré-applique juste .updateSettings() sur l'émetteur concerné.
+ * Construit sur wawa-vfx-vanilla (vendor/wawa-vfx-vanilla.js — VFXParticles/VFXEmitter,
+ * instanced, 1 draw call, animé côté GPU).
+ *
+ * Historique 2026-07-11 : ce fichier gérait aussi la pluie (VFXParticles rain), retirée
+ * lors de la livraison Cyril « nuages metaball + pluie + impacts ». La pluie est
+ * désormais rendue par `rainCloudOverlay.js` (metaballs marching-cubes pour les nuages,
+ * gouttes streak sous chaque nuage, impacts au sol). Le weatherVfxOverlay ne s'occupe
+ * plus que des lucioles, seule espèce restée sur cette lib.
+ *
+ * Réglages en direct : voir vfxSettings.js (densité/taille…), modifiables via le HUD
+ * EDA sans recharger — on ré-applique juste .updateSettings() sur l'émetteur.
  *
  * Intégration dans scene.js :
  *   import { createWeatherVfxOverlay, updateWeatherVfxOverlay } from './weatherVfxOverlay.js';
  *   const weatherVfxOverlay = createWeatherVfxOverlay(scene);
  *   // dans animate() :
- *   updateWeatherVfxOverlay(weatherVfxOverlay, environmentDirector, timeSeconds, deltaSeconds, camera);
+ *   updateWeatherVfxOverlay(weatherVfxOverlay, environmentDirector, timeSeconds, deltaSeconds);
  */
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { VFXEmitter, VFXParticles, AppearanceMode } from './vendor/wawa-vfx-vanilla.js';
-import { getEnvironmentEventFade, isEnvironmentEventActive } from './environmentDirector.js';
+import { getEnvironmentEventFade } from './environmentDirector.js';
 import { getVfxSettings, onVfxSettingsChange } from './vfxSettings.js';
 import { VFX_WORLD_RADIUS } from './variables.js';
 
 const FIREFLY_POOL_CAPACITY = 220; // capacité max du pool (buffer figé à la création) — la "densité" pioche dedans
-const RAIN_POOL_CAPACITY = 4000;
 
 function _fireflyEmitterSettings(s) {
   return {
@@ -39,24 +43,6 @@ function _fireflyEmitterSettings(s) {
     size: [s.taille * 0.7, s.taille * 1.3],
     colorStart: ['#d9ff7a', '#baff5a'],
     colorEnd: ['#5a7a1a', '#3a5a10']
-  };
-}
-
-function _rainEmitterSettings(s) {
-  return {
-    loop: true,
-    duration: 1.2,
-    nbParticles: Math.round(400 + s.densite * 3200),
-    spawnMode: 'time',
-    particlesLifetime: [0.9, 1.2],
-    startPositionMin: [-14, 8, -14],
-    startPositionMax: [14, 14, 14],
-    directionMin: [0, -1, 0],
-    directionMax: [0, -1, 0],
-    speed: [s.vitesse * 1.3, s.vitesse * 1.6],
-    size: [s.tailleGoutte, s.tailleGoutte],
-    colorStart: ['#dce8f0'],
-    colorEnd: ['#aec2d0']
   };
 }
 
@@ -78,59 +64,20 @@ export function createWeatherVfxOverlay(scene) {
   fireflyEmitter.name = 'hexistenz-vfx-fireflies-emitter';
   scene.add(fireflyEmitter);
 
-  const rainSettings = getVfxSettings('rain');
-  const rainParticles = new VFXParticles('hexistenz-vfx-rain', {
-    nbParticles: RAIN_POOL_CAPACITY,
-    renderMode: 'stretchBillboard',
-    stretchScale: 8,
-    appearance: AppearanceMode.Circular,
-    intensity: 1.6,
-    fadeAlpha: [0.0, 0.85],
-    fadeSize: [0.0, 1.0],
-    blendingMode: THREE.NormalBlending
-  });
-  rainParticles.getMesh().name = 'hexistenz-vfx-rain';
-  rainParticles.getMesh().visible = false;
-  scene.add(rainParticles.getMesh());
-  const rainEmitter = new VFXEmitter('hexistenz-vfx-rain', _rainEmitterSettings(rainSettings));
-  rainEmitter.name = 'hexistenz-vfx-rain-emitter';
-  scene.add(rainEmitter);
-
-  const overlay = { fireflyParticles, fireflyEmitter, rainParticles, rainEmitter };
+  const overlay = { fireflyParticles, fireflyEmitter };
 
   onVfxSettingsChange((effect) => {
     if (effect === 'fireflies') fireflyEmitter.updateSettings(_fireflyEmitterSettings(getVfxSettings('fireflies')));
-    if (effect === 'rain') rainEmitter.updateSettings(_rainEmitterSettings(getVfxSettings('rain')));
   });
 
   return overlay;
 }
 
-/** Évènement pluie : 'rain' et 'storm' partagent le même rendu (exclusiveGroup 'weather' → jamais actifs ensemble). */
-function _activeRainEventId(environmentDirector) {
-  if (isEnvironmentEventActive(environmentDirector, 'rain')) return 'rain';
-  if (isEnvironmentEventActive(environmentDirector, 'storm')) return 'storm';
-  return null;
-}
-
-export function updateWeatherVfxOverlay(overlay, environmentDirector, timeSeconds, deltaSeconds, focusPoint) {
+export function updateWeatherVfxOverlay(overlay, environmentDirector, timeSeconds, deltaSeconds /* focusPoint retiré : plus de pluie centrée sur controls.target ici */) {
   const fireflyFade = getEnvironmentEventFade(environmentDirector, 'fireflies', timeSeconds, { fadeIn: 6, fadeOut: 6 });
   overlay.fireflyEmitter.shouldEmit = fireflyFade > 0.001;
   overlay.fireflyParticles.getMesh().visible = fireflyFade > 0.001;
   overlay.fireflyParticles.updateSettings({ intensity: 2.4 * fireflyFade });
   overlay.fireflyEmitter.update(timeSeconds, deltaSeconds);
   overlay.fireflyParticles.update(timeSeconds);
-
-  const rainEventId = _activeRainEventId(environmentDirector);
-  const rainFade = rainEventId
-    ? getEnvironmentEventFade(environmentDirector, rainEventId, timeSeconds, { fadeIn: 4, fadeOut: 5 })
-    : 0;
-  overlay.rainEmitter.shouldEmit = rainFade > 0.001;
-  overlay.rainParticles.getMesh().visible = rainFade > 0.001;
-  overlay.rainParticles.updateSettings({ intensity: 1.6 * rainFade });
-  // Centré sur le point du sol regardé (controls.target), pas la position de l'œil caméra :
-  // une boîte "au-dessus de camera.position" peut tomber hors du champ visible selon l'angle.
-  if (focusPoint) overlay.rainEmitter.position.set(focusPoint.x, focusPoint.y, focusPoint.z);
-  overlay.rainEmitter.update(timeSeconds, deltaSeconds);
-  overlay.rainParticles.update(timeSeconds);
 }

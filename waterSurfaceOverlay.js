@@ -226,7 +226,7 @@ export function rebuildWaterSurfaceOverlay(group, placedTiles) {
  * 2026-07-06 — lodFactor (cf. computeLodHeightFactor, decorOverlay.js) : contrairement à
  * TOUS les autres overlays (herbe/blé/props/maisons/trains…), cette fonction ignorait
  * jusqu'ici la hauteur caméra — le rayon shader complet restait fixe même au ras de l'eau,
- * là où le shader (foamTex = 2 voronoï 3×3/fragment, cf. shaderEau.js) coûte le plus et où
+ * là où le shader (foamTex = 2 voronoï 3×3/fragment, cf. shaderWater.js) coûte le plus et où
  * la nappe peut couvrir une grande partie de l'écran (vue rasante).
  *
  * @param {THREE.Group} group   — waterSurfaceOverlay (retourné par createWaterSurfaceOverlay)

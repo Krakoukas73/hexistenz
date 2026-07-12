@@ -1,10 +1,31 @@
 import { LUT_HELP, delegateHelpTooltip } from './help.js';
 import { scanScene, GROUP_ORDER, GROUP_ICONS, ITEM_GROUP, CATEGORY_ICONS } from './sceneProfiler.js';
 
+// Passage bilingue FR/EN le 2026-07-12 : les 6 adjectifs de qualité FPS viennent
+// de json/languages/{french,english}.json (clé game.fpsAdjectives), même
+// mécanisme que les autres modules (top-level await + localStorage
+// 'hexistenz_pres_lang').
+function _getGameLang() {
+  try {
+    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
+  } catch {
+    return 'fr';
+  }
+}
+const _fpsLangFile = _getGameLang() === 'en' ? 'english' : 'french';
+const _fpsAdjText = await fetch(`./json/languages/${_fpsLangFile}.json`)
+  .then(r => r.json())
+  .then(data => data?.game?.fpsAdjectives ?? {})
+  .catch(err => {
+    console.error(`[hud_fps] Impossible de charger ${_fpsLangFile}.json`, err);
+    return {};
+  });
+
 // ─── Perf HUD (module-level, self-contained) ─────────────────────────────────
-// Extrait de debugLightUi.js (2026-07-02) : compteur FPS + panneau perf avancé (touche F).
-// N'a jamais dépendu du panel EDA — seul `initFpsHud(root)` a besoin du `root` partagé
-// (les deux HUDs vivent dans le même élément DOM #debugLightPanel, cf. hud_eda.js).
+// Extrait de debugLightUi.js (2026-07-02, renommé edaPanelHost.js le 2026-07-11) : compteur
+// FPS + panneau perf avancé (touche F). N'a jamais dépendu du panel EDA — seul
+// `initFpsHud(root)` a besoin du `root` partagé (les deux HUDs vivent dans le même élément
+// DOM #debugLightPanel, cf. edaPanelWiring.js, ex-hud_eda.js).
 let _fpsFrameCount  = 0;
 let _fpsLastTime    = performance.now();
 let _statsLastTime  = 0;           // dernier scan scène
@@ -97,7 +118,7 @@ function _hudCopyText() {
   return text;
 }
 
-// Exportée : réutilisée telle quelle par le bouton "📋 Copier" du panel EDA (hud_eda.js),
+// Exportée : réutilisée telle quelle par le bouton "📋 Copier" du panel EDA (edaPanelWiring.js),
 // qui partageait déjà cette fonction avec le HUD FPS avant le découpage en modules.
 export function copyToClipboard(text) {
   // Fallback textarea pour contextes HTTP / file:// où navigator.clipboard est absent
@@ -125,12 +146,12 @@ function _copyHud() {
 }
 
 function _fpsAdjective(fps) {
-  if (fps < 15) return { text: 'Désastreux', cls: 'fps-adj-red' };
-  if (fps < 25) return { text: 'Mauvais',    cls: 'fps-adj-orange' };
-  if (fps < 35) return { text: 'Médiocre',   cls: 'fps-adj-amber' };
-  if (fps < 50) return { text: 'Passable',   cls: 'fps-adj-yellow' };
-  if (fps < 70) return { text: 'Bon',        cls: 'fps-adj-lightgreen' };
-  return              { text: 'Splendide',   cls: 'fps-adj-green' };
+  if (fps < 15) return { text: _fpsAdjText.disastrous ?? 'Désastreux', cls: 'fps-adj-red' };
+  if (fps < 25) return { text: _fpsAdjText.bad         ?? 'Mauvais',    cls: 'fps-adj-orange' };
+  if (fps < 35) return { text: _fpsAdjText.mediocre    ?? 'Médiocre',   cls: 'fps-adj-amber' };
+  if (fps < 50) return { text: _fpsAdjText.passable    ?? 'Passable',   cls: 'fps-adj-yellow' };
+  if (fps < 70) return { text: _fpsAdjText.good        ?? 'Bon',        cls: 'fps-adj-lightgreen' };
+  return              { text: _fpsAdjText.splendid     ?? 'Splendide',   cls: 'fps-adj-green' };
 }
 
 function _buildHud(fps, info) {
@@ -341,12 +362,12 @@ export function tickFps(renderer, scene, perfTiming = null) {
   }
 }
 
-// ─── Wiring DOM — extrait de createDebugLightUI (debugLightUi.js) ───────────
-// `root` est l'élément partagé #debugLightPanel créé par la façade (debugLightUi.js) :
-// il contient à la fois #fps-counter (ce module) et le panel EDA (hud_eda.js).
+// ─── Wiring DOM — extrait de createDebugLightUI (debugLightUi.js, ex-nom, cf. edaPanelHost.js) ───
+// `root` est l'élément partagé #debugLightPanel créé par la façade (edaPanelHost.js) :
+// il contient à la fois #fps-counter (ce module) et le panel EDA (edaPanelWiring.js).
 // `_syncFpsFullscreen` lit `root.classList.contains('collapsed')` — état géré par
-// hud_eda.js (_setLutOpen) sur ce même `root` — d'où le besoin d'appeler `syncFullscreen()`
-// (valeur de retour) depuis hud_eda.js à chaque ouverture/fermeture du panel EDA.
+// edaPanelWiring.js (_setLutOpen) sur ce même `root` — d'où le besoin d'appeler `syncFullscreen()`
+// (valeur de retour) depuis edaPanelWiring.js à chaque ouverture/fermeture du panel EDA.
 export function initFpsHud(root) {
   _fpsEl = root.querySelector('#fps-counter');
   // Délégation de clic sur le conteneur HUD → bouton copier (innerHTML est recréé à chaque frame)
@@ -369,7 +390,7 @@ export function initFpsHud(root) {
     const scorePanel = document.getElementById('scorePanel');
     const lutOpen = !root.classList.contains('collapsed');
     const shouldHide = _fpsHudExpanded || lutOpen;
-    // Classe sur <body> + règle CSS !important (debugLightUi.js) plutôt qu'un style inline direct :
+    // Classe sur <body> + règle CSS !important (css/eda.css) plutôt qu'un style inline direct :
     // même mécanisme éprouvé que body.huds-force-hidden, garantit la priorité sur toute autre règle.
     document.body.classList.toggle('fps-hud-deployed', shouldHide);
     if (scorePanel) scorePanel.style.display = shouldHide ? 'none' : '';

@@ -1,8 +1,7 @@
 /**
- * shadersEffects.js — GLSL shaders pour les effets visuels de Hexistenz.
- *
- * Ce fichier centralise tous les shaders GLSL du projet pour faciliter
- * la maintenance et la réutilisation.
+ * shaderGrassBlades.js — Shaders GLSL des brins d'herbe/prairie animés (ex-shaderBrinsHerbe.js,
+ * renommé en anglais le 2026-07-11 ; le nom "shadersEffects.js" ci-dessus était déjà stale
+ * avant ce renommage, ne correspondait à aucun fichier réel).
  *
  * Exports actuels :
  *   grassBladeVertexShader   — spine Bezier cubique + vent value-noise

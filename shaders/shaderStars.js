@@ -1,5 +1,5 @@
 /**
- * shaderEtoiles.js — Shaders GLSL du champ d'étoiles (starUniverse).
+ * shaderStars.js — Shaders GLSL du champ d'étoiles (starUniverse). (ex-shaderEtoiles.js, renommé en anglais le 2026-07-11)
  *
  * Utilisé par stable/starUniverse.js.
  * Points GPU (THREE.Points) avec scintillement animé.

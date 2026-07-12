@@ -11,6 +11,24 @@ if (file_exists($varsFile)) {
 $cssFile = __DIR__ . '/css/presentation.css';
 $cssVersion = file_exists($cssFile) ? filemtime($cssFile) : time();
 
+// Textes bilingues de la prez — json/languages/{french,english}.json (2026-07-12).
+// $t['fr']/$t['en'] sont les 2 tableaux ; toutes les paires data-fr/data-en du
+// markup ci-dessous lisent leur contenu ici plutôt que du texte codé en dur.
+$langDir = __DIR__ . '/json/languages/';
+$t = [
+    'fr' => json_decode(@file_get_contents($langDir . 'french.json'), true) ?: [],
+    'en' => json_decode(@file_get_contents($langDir . 'english.json'), true) ?: [],
+];
+// Accesseur sûr : $tr('fr','hero.tagline') — évite les notices sur clé manquante.
+function tr($t, $lang, $path) {
+    $node = $t[$lang] ?? [];
+    foreach (explode('.', $path) as $part) {
+        if (!is_array($node) || !array_key_exists($part, $node)) return '';
+        $node = $node[$part];
+    }
+    return $node;
+}
+
 // Highscores — top 10, même logique que highscore.php
 $highscores = [];
 $hsFile = __DIR__ . '/json/highscores.json';
@@ -39,6 +57,7 @@ if (file_exists($hsFile)) {
                         'tiles'        => isset($stats['tiles'])      ? (int)$stats['tiles']      : 0,
                         'trains'       => isset($stats['trainLines']) ? (int)$stats['trainLines'] : 0,
                         'boats'        => isset($stats['boatCount'])  ? (int)$stats['boatCount']  : 0,
+                        'mills'        => isset($stats['millCount'])  ? (int)$stats['millCount']  : 0,
                         'comets'       => isset($stats['cometHits'])  ? (int)$stats['cometHits']  : 0,
                         'totals'       => $biomeTotals,
                         'largest'      => $biomeLargest,
@@ -82,24 +101,24 @@ function fmt_date($iso) {
     <span></span><span></span><span></span>
   </button>
   <ul class="nav-links" id="navLinks">
-    <li><a href="#factions" data-fr>Factions</a>    <a href="#factions" data-en>Factions</a></li>
-    <li><a href="#biomes"   data-fr>Biomes</a>      <a href="#biomes"   data-en>Biomes</a></li>
-    <li><a href="#missions" data-fr>Missions</a>    <a href="#missions" data-en>Missions</a></li>
-    <li><a href="#gameplay" data-fr>Gameplay</a>    <a href="#gameplay" data-en>Gameplay</a></li>
-    <li><a href="#gallery"  data-fr>Ambiances</a>   <a href="#gallery"  data-en>Moods</a></li>
-    <li><a href="#creatures" data-fr>Créatures</a>  <a href="#creatures" data-en>Creatures</a></li>
-    <li><a href="#audio"    data-fr>Audio</a>       <a href="#audio"    data-en>Audio</a></li>
-    <li><a href="#daynnight" data-fr>Environnement</a> <a href="#daynnight" data-en>Environment</a></li>
-    <li><a href="#eda"      data-fr>Personnalisation</a> <a href="#eda" data-en>Customization</a></li>
-    <li><a href="#multi"    data-fr>Multijoueur</a> <a href="#multi"    data-en>Multiplayer</a></li>
-    <li><a href="#scores"   data-fr>Classement</a>  <a href="#scores"   data-en>Leaderboard</a></li>
+    <li><a href="#factions" data-fr><?= tr($t,'fr','nav.links.factions') ?></a>    <a href="#factions" data-en><?= tr($t,'en','nav.links.factions') ?></a></li>
+    <li><a href="#biomes"   data-fr><?= tr($t,'fr','nav.links.biomes') ?></a>      <a href="#biomes"   data-en><?= tr($t,'en','nav.links.biomes') ?></a></li>
+    <li><a href="#missions" data-fr><?= tr($t,'fr','nav.links.missions') ?></a>    <a href="#missions" data-en><?= tr($t,'en','nav.links.missions') ?></a></li>
+    <li><a href="#gameplay" data-fr><?= tr($t,'fr','nav.links.gameplay') ?></a>    <a href="#gameplay" data-en><?= tr($t,'en','nav.links.gameplay') ?></a></li>
+    <li><a href="#gallery"  data-fr><?= tr($t,'fr','nav.links.gallery') ?></a>   <a href="#gallery"  data-en><?= tr($t,'en','nav.links.gallery') ?></a></li>
+    <li><a href="#creatures" data-fr><?= tr($t,'fr','nav.links.creatures') ?></a>  <a href="#creatures" data-en><?= tr($t,'en','nav.links.creatures') ?></a></li>
+    <li><a href="#audio"    data-fr><?= tr($t,'fr','nav.links.audio') ?></a>       <a href="#audio"    data-en><?= tr($t,'en','nav.links.audio') ?></a></li>
+    <li><a href="#daynnight" data-fr><?= tr($t,'fr','nav.links.daynnight') ?></a> <a href="#daynnight" data-en><?= tr($t,'en','nav.links.daynnight') ?></a></li>
+    <li><a href="#eda"      data-fr><?= tr($t,'fr','nav.links.eda') ?></a> <a href="#eda" data-en><?= tr($t,'en','nav.links.eda') ?></a></li>
+    <li><a href="#multi"    data-fr><?= tr($t,'fr','nav.links.multi') ?></a> <a href="#multi"    data-en><?= tr($t,'en','nav.links.multi') ?></a></li>
+    <li><a href="#scores"   data-fr><?= tr($t,'fr','nav.links.scores') ?></a>  <a href="#scores"   data-en><?= tr($t,'en','nav.links.scores') ?></a></li>
   </ul>
   <div id="lang-toggle">
     <button onclick="setLang('fr')" id="btn-fr" class="active">FR</button>
     <button onclick="setLang('en')" id="btn-en">EN</button>
   </div>
-  <a href="game.php" class="nav-cta" data-fr>Jouer</a>
-  <a href="game.php" class="nav-cta" data-en>Play Now</a>
+  <a href="game.php" class="nav-cta" data-fr><?= tr($t,'fr','nav.play') ?></a>
+  <a href="game.php" class="nav-cta" data-en><?= tr($t,'en','nav.play') ?></a>
 </nav>
 
 <!-- ═══════════ HERO ═══════════ -->
@@ -111,17 +130,15 @@ function fmt_date($iso) {
       <div class="hero-text">
         <h1 class="hero-title">⬡ HEXISTENZ</h1>
         <p class="hero-subtitle">
-          <span data-fr>Jeu hexagonal contemplatif fait avec nostalgie et amour ❤️ Three.js et beaucoup de tuiles</span>
-          <span data-en>A contemplative hexagonal game made with love ❤️ Three.js and a lot of tiles</span>
+          <span data-fr><?= tr($t,'fr','hero.subtitle') ?></span>
+          <span data-en><?= tr($t,'en','hero.subtitle') ?></span>
         </p>
 
         <p class="hero-inspi" data-fr>
-          Inspiré de <em>Dorfromantik</em>, de l'âme pastorale de <em>The Settlers</em> (Blue Byte, 1993)
-          et des mondes merveilleux de <em>Heroes of Might and Magic</em> (3DO).
+          <?= tr($t,'fr','hero.inspi_text') ?>
         </p>
         <p class="hero-inspi" data-en>
-          Inspired by <em>Dorfromantik</em>, the pastoral soul of <em>The Settlers</em> (Blue Byte, 1993)
-          and the wondrous worlds of <em>Heroes of Might and Magic</em> (3DO).
+          <?= tr($t,'en','hero.inspi_text') ?>
         </p>
 
         <div class="hero-inspi-grid">
@@ -132,7 +149,7 @@ function fmt_date($iso) {
                 <div class="hero-inspi-name">Dorfromantik</div>
               </div>
             </div>
-            <a class="hero-inspi-buy" href="https://store.steampowered.com/app/1455840/Dorfromantik/" target="_blank" rel="noopener">🎮 <span data-fr>Dorfromantik sur Steam</span><span data-en>Dorfromantik on Steam</span></a>
+            <a class="hero-inspi-buy" href="https://store.steampowered.com/app/1455840/Dorfromantik/" target="_blank" rel="noopener">🎮 <span data-fr><?= tr($t,'fr','hero.inspi_buy.dorfromantik') ?></span><span data-en><?= tr($t,'en','hero.inspi_buy.dorfromantik') ?></span></a>
           </div>
           <div class="hero-inspi-col">
             <div class="hero-inspi-card">
@@ -141,7 +158,7 @@ function fmt_date($iso) {
                 <div class="hero-inspi-name">The Settlers</div>
               </div>
             </div>
-            <a class="hero-inspi-buy" href="https://www.ubisoft.com/en-gb/games/the-settlers-history-edition" target="_blank" rel="noopener">🎮 <span data-fr>The Settlers sur Ubisoft</span><span data-en>The Settlers on Ubisoft</span></a>
+            <a class="hero-inspi-buy" href="https://www.ubisoft.com/en-gb/games/the-settlers-history-edition" target="_blank" rel="noopener">🎮 <span data-fr><?= tr($t,'fr','hero.inspi_buy.settlers') ?></span><span data-en><?= tr($t,'en','hero.inspi_buy.settlers') ?></span></a>
           </div>
           <div class="hero-inspi-col">
             <div class="hero-inspi-card">
@@ -150,32 +167,26 @@ function fmt_date($iso) {
                 <div class="hero-inspi-name">Heroes of Might &amp; Magic</div>
               </div>
             </div>
-            <a class="hero-inspi-buy" href="https://www.gog.com/en/game/heroes_of_might_and_magic_3_complete_edition" target="_blank" rel="noopener">🎮 <span data-fr>Heroes III sur GOG</span><span data-en>Heroes III on GOG</span></a>
+            <a class="hero-inspi-buy" href="https://www.gog.com/en/game/heroes_of_might_and_magic_3_complete_edition" target="_blank" rel="noopener">🎮 <span data-fr><?= tr($t,'fr','hero.inspi_buy.heroes3') ?></span><span data-en><?= tr($t,'en','hero.inspi_buy.heroes3') ?></span></a>
           </div>
         </div>
 
         <p class="hero-tagline" data-fr>
-          Posez des tuiles hexagonales. Développez de vastes forêts de sapins et de bouleaux, des champs de blé
-          ondoyants avec leurs moulins, des villages médiévaux aux toits fumants, des réseaux de voies ferrées
-          et de larges rivières où voguent vos bateaux. Remplissez des missions, interceptez des comètes,
-          entourez vos tuiles. Bâtissez un monde vivant, tuile après tuile.
+          <?= tr($t,'fr','hero.tagline') ?>
         </p>
         <p class="hero-tagline" data-en>
-          Place hexagonal tiles. Grow vast forests of firs and birches, swaying wheat fields with their mills,
-          medieval villages with smoking rooftops, sprawling railway networks and wide rivers where your boats sail.
-          Complete missions, intercept comets, surround your tiles. Build a living world, one tile at a time.
+          <?= tr($t,'en','hero.tagline') ?>
         </p>
         <div class="hero-buttons">
-          <a href="game.php" class="btn-primary" data-fr>Jouer maintenant</a>
-          <a href="game.php" class="btn-primary" data-en>Play Now</a>
-          <a href="#gameplay" class="btn-secondary" data-fr>Comment jouer ?</a>
-          <a href="#gameplay" class="btn-secondary" data-en>How to play?</a>
+          <a href="game.php" class="btn-primary" data-fr><?= tr($t,'fr','hero.btn_play') ?></a>
+          <a href="game.php" class="btn-primary" data-en><?= tr($t,'en','hero.btn_play') ?></a>
+          <a href="#gameplay" class="btn-secondary" data-fr><?= tr($t,'fr','hero.btn_how') ?></a>
+          <a href="#gameplay" class="btn-secondary" data-en><?= tr($t,'en','hero.btn_how') ?></a>
         </div>
         <div class="stats-bar">
-          <div class="stat-item"><div class="stat-num">6</div><div class="stat-label" data-fr>Biomes</div><div class="stat-label" data-en>Biomes</div></div>
-          <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label" data-fr>Parties</div><div class="stat-label" data-en>Games</div></div>
-          <div class="stat-item"><div class="stat-num" style="font-size:22px;line-height:1.4;" data-fr>Solo<br>& Multi</div><div class="stat-num" style="font-size:22px;line-height:1.4;" data-en>Solo<br>& Multi</div></div>
-          <div class="stat-item"><div class="stat-num" style="font-size:22px;line-height:1.4;" data-fr>Nombreux</div><div class="stat-num" style="font-size:22px;line-height:1.4;" data-en>Many</div><div class="stat-label" data-fr>Ambiances</div><div class="stat-label" data-en>Presets</div></div>
+          <div class="stat-item"><div class="stat-num">6</div><div class="stat-label" data-fr><?= tr($t,'fr','hero.stats.biomes_label') ?></div><div class="stat-label" data-en><?= tr($t,'en','hero.stats.biomes_label') ?></div></div>
+          <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label" data-fr><?= tr($t,'fr','hero.stats.games_label') ?></div><div class="stat-label" data-en><?= tr($t,'en','hero.stats.games_label') ?></div></div>
+          <div class="stat-item"><div class="stat-num">2</div><div class="stat-label" data-fr><?= tr($t,'fr','hero.stats.factions_label') ?></div><div class="stat-label" data-en><?= tr($t,'en','hero.stats.factions_label') ?></div></div>
         </div>
       </div>
 
@@ -187,19 +198,17 @@ function fmt_date($iso) {
 <!-- ═══════════ FACTIONS ═══════════ -->
 <section id="factions">
   <div class="container">
-    <p class="section-label" data-fr>Deux façons de voir le monde</p>
-    <p class="section-label" data-en>Two ways to see the world</p>
-    <h2 class="section-title" data-fr>Platistes et boulistes</h2>
-    <h2 class="section-title" data-en>Flat-worlders and globe-believers</h2>
-    <h2 class="section-title" data-fr>Deux factions irréconciliables</h2>
-    <h2 class="section-title" data-en>Two irreconcilable factions</h2>
+    <p class="section-label" data-fr><?= tr($t,'fr','factions.label') ?></p>
+    <p class="section-label" data-en><?= tr($t,'en','factions.label') ?></p>
+    <h2 class="section-title" data-fr><?= tr($t,'fr','factions.title1') ?></h2>
+    <h2 class="section-title" data-en><?= tr($t,'en','factions.title1') ?></h2>
+    <h2 class="section-title" data-fr><?= tr($t,'fr','factions.title2') ?></h2>
+    <h2 class="section-title" data-en><?= tr($t,'en','factions.title2') ?></h2>
     <p class="section-sub" data-fr>
-      Hexistenz divise les bâtisseurs en deux factions irréconciliables. Une option visuelle,
-      un engagement philosophique. De quel côté êtes-vous&nbsp;?
+      <?= tr($t,'fr','factions.sub') ?>
     </p>
     <p class="section-sub" data-en>
-      Hexistenz splits its builders into two irreconcilable factions. A visual option,
-      a philosophical commitment. Which side are you on?
+      <?= tr($t,'en','factions.sub') ?>
     </p>
 
     <div class="factions-grid">
@@ -208,19 +217,15 @@ function fmt_date($iso) {
           <img src="images/platiste.jpg" alt="Mode Platiste" style="width:100%;height:100%;object-fit:cover;display:block;">
         </div>
         <div class="faction-body">
-          <span class="faction-tag" data-fr>Mode Platiste</span>
-          <span class="faction-tag" data-en>Flat Mode</span>
-          <div class="faction-name" data-fr>🪨 Le Monde Plat</div>
-          <div class="faction-name" data-en>🪨 The Flat World</div>
+          <span class="faction-tag" data-fr><?= tr($t,'fr','factions.flat.tag') ?></span>
+          <span class="faction-tag" data-en><?= tr($t,'en','factions.flat.tag') ?></span>
+          <div class="faction-name" data-fr><?= tr($t,'fr','factions.flat.name') ?></div>
+          <div class="faction-name" data-en><?= tr($t,'en','factions.flat.name') ?></div>
           <p class="faction-desc" data-fr>
-            La grille s'étend à l'horizontale, pure et ordonnée. Chaque tuile posée rejoint
-            un plateau parfaitement plan, comme les anciens l'ont toujours su.
-            Pour ceux qui font confiance à leurs yeux.
+            <?= tr($t,'fr','factions.flat.desc') ?>
           </p>
           <p class="faction-desc" data-en>
-            The grid stretches out flat and ordered. Every tile joins a perfectly level plateau,
-            just as the ancients always knew.
-            For those who trust their eyes.
+            <?= tr($t,'en','factions.flat.desc') ?>
           </p>
         </div>
       </div>
@@ -230,118 +235,60 @@ function fmt_date($iso) {
           <img src="images/bouliste-transparent.png" alt="Mode Bouliste" style="width:100%;height:100%;object-fit:cover;display:block;">
         </div>
         <div class="faction-body">
-          <span class="faction-tag" data-fr>Mode Bouliste</span>
-          <span class="faction-tag" data-en>Globe Mode</span>
-          <div class="faction-name" data-fr>🌍 Le Monde Sphérique</div>
-          <div class="faction-name" data-en>🌍 The Spherical World</div>
+          <span class="faction-tag" data-fr><?= tr($t,'fr','factions.globe.tag') ?></span>
+          <span class="faction-tag" data-en><?= tr($t,'en','factions.globe.tag') ?></span>
+          <div class="faction-name" data-fr><?= tr($t,'fr','factions.globe.name') ?></div>
+          <div class="faction-name" data-en><?= tr($t,'en','factions.globe.name') ?></div>
           <p class="faction-desc" data-fr>
-            La courbure du monde se révèle à mesure que la grille grandit — les tuiles
-            lointaines s'incurvent vers l'horizon. Un effet GPU en temps réel qui donne
-            une profondeur vertigineuse à chaque partie.
+            <?= tr($t,'fr','factions.globe.desc') ?>
           </p>
           <p class="faction-desc" data-en>
-            The curvature of the world reveals itself as the grid grows — distant tiles
-            arc toward the horizon. A real-time GPU effect that adds breathtaking depth
-            to every game.
+            <?= tr($t,'en','factions.globe.desc') ?>
           </p>
         </div>
       </div>
     </div>
 
-    <div class="faction-vs" data-fr>Le débat n'est pas clos.</div>
-    <div class="faction-vs" data-en>The debate is not settled.</div>
+    <div class="faction-vs" data-fr><?= tr($t,'fr','factions.vs') ?></div>
+    <div class="faction-vs" data-en><?= tr($t,'en','factions.vs') ?></div>
   </div>
 </section>
 
 <!-- ═══════════ BIOMES ═══════════ -->
 <section id="biomes">
   <div class="container">
-    <p class="section-label" data-fr>Les biomes</p>
-    <p class="section-label" data-en>The biomes</p>
-    <h2 class="section-title" data-fr>Six biomes à connecter</h2>
-    <h2 class="section-title" data-en>Six biomes to connect</h2>
-    <p class="section-sub" data-fr>Chaque tuile est composée de six secteurs triangulaires. Assemblez les biomes identiques pour former des zones et maximiser votre score.</p>
-    <p class="section-sub" data-en>Each tile has six triangular sectors. Match identical biomes to form zones and maximize your score.</p>
+    <p class="section-label" data-fr><?= tr($t,'fr','biomes.label') ?></p>
+    <p class="section-label" data-en><?= tr($t,'en','biomes.label') ?></p>
+    <h2 class="section-title" data-fr><?= tr($t,'fr','biomes.title') ?></h2>
+    <h2 class="section-title" data-en><?= tr($t,'en','biomes.title') ?></h2>
+    <p class="section-sub" data-fr><?= tr($t,'fr','biomes.sub') ?></p>
+    <p class="section-sub" data-en><?= tr($t,'en','biomes.sub') ?></p>
 
     <div class="biomes-grid">
-      <div class="biome-card grass">
+      <?php
+      $biomeCards = [
+        ['key' => 'grass',  'img' => 'images/biome-prairie.jpg', 'alt' => 'Prairie',    'cls' => 'grass'],
+        ['key' => 'field',  'img' => 'images/biome-ble.jpg',     'alt' => 'Champ',      'cls' => 'field'],
+        ['key' => 'forest', 'img' => 'images/biome-foret.jpg',   'alt' => 'Forêt',      'cls' => 'forest'],
+        ['key' => 'house',  'img' => 'images/biome-village.jpg','alt' => 'Village',    'cls' => 'house'],
+        ['key' => 'water',  'img' => 'images/biome-eau.jpg',     'alt' => 'Eau',        'cls' => 'water'],
+        ['key' => 'rail',   'img' => 'images/biome-train.jpg',   'alt' => 'Voie ferrée','cls' => 'rail'],
+      ];
+      foreach ($biomeCards as $bc): $k = $bc['key']; ?>
+      <div class="biome-card <?= $bc['cls'] ?>">
         <div class="biome-banner">
-          <img src="images/biome-prairie.jpg" alt="Prairie" class="biome-banner-img">
+          <img src="<?= $bc['img'] ?>" alt="<?= htmlspecialchars($bc['alt']) ?>" class="biome-banner-img">
           <div class="biome-banner-overlay">
-            <div class="biome-name" data-fr>Prairie</div><div class="biome-name" data-en>Grassland</div>
+            <div class="biome-name" data-fr><?= tr($t,'fr',"biomes.$k.name") ?></div><div class="biome-name" data-en><?= tr($t,'en',"biomes.$k.name") ?></div>
           </div>
         </div>
         <div class="biome-body">
-          <div class="biome-desc" data-fr>Étendues herbeuses où chaque brin frémit sous le vent, parsemées de fleurs sauvages, rochers, cerfs et buissons. Terrain neutre entre les grands réseaux.</div>
-          <div class="biome-desc" data-en>Grassy expanses where every blade trembles in the wind, dotted with wildflowers, rocks, deer and shrubs. Neutral ground between major networks.</div>
-          <span class="biome-tag" data-fr>Biome neutre</span><span class="biome-tag" data-en>Neutral biome</span>
+          <div class="biome-desc" data-fr><?= tr($t,'fr',"biomes.$k.desc") ?></div>
+          <div class="biome-desc" data-en><?= tr($t,'en',"biomes.$k.desc") ?></div>
+          <span class="biome-tag" data-fr><?= tr($t,'fr',"biomes.$k.tag") ?></span><span class="biome-tag" data-en><?= tr($t,'en',"biomes.$k.tag") ?></span>
         </div>
       </div>
-      <div class="biome-card field">
-        <div class="biome-banner">
-          <img src="images/biome-ble.jpg" alt="Champ" class="biome-banner-img">
-          <div class="biome-banner-overlay">
-            <div class="biome-name" data-fr>Champ</div><div class="biome-name" data-en>Field</div>
-          </div>
-        </div>
-        <div class="biome-body">
-          <div class="biome-desc" data-fr>Blé soumis au vent, moulins procéduraux et bottes de foin. Le chi-maï résonne quand la caméra effleure les épis.</div>
-          <div class="biome-desc" data-en>Wind-swayed wheat, procedural mills and hay bales. The chi-mai plays when the camera grazes the ears of grain.</div>
-          <span class="biome-tag" data-fr>Réseau agricole</span><span class="biome-tag" data-en>Agricultural zone</span>
-        </div>
-      </div>
-      <div class="biome-card forest">
-        <div class="biome-banner">
-          <img src="images/biome-foret.jpg" alt="Forêt" class="biome-banner-img">
-          <div class="biome-banner-overlay">
-            <div class="biome-name" data-fr>Forêt</div><div class="biome-name" data-en>Forest</div>
-          </div>
-        </div>
-        <div class="biome-body">
-          <div class="biome-desc" data-fr>Sapins, bouleaux, peupliers en InstancedMesh, dont les frondaisons ondulent au vent jusque dans le sous-bois. Champignons, piles de bois, cerfs — jusqu'à 22 millions de triangles.</div>
-          <div class="biome-desc" data-en>Firs, birches, poplars as InstancedMesh, their canopies swaying in the wind down to the undergrowth. Mushrooms, woodpiles, deer — up to 22 million triangles on screen.</div>
-          <span class="biome-tag" data-fr>Forêt dense</span><span class="biome-tag" data-en>Dense woodland</span>
-        </div>
-      </div>
-      <div class="biome-card house">
-        <div class="biome-banner">
-          <img src="images/biome-village.jpg" alt="Village" class="biome-banner-img">
-          <div class="biome-banner-overlay">
-            <div class="biome-name" data-fr>Village</div><div class="biome-name" data-en>Village</div>
-          </div>
-        </div>
-        <div class="biome-body">
-          <div class="biome-desc" data-fr>Maisons médiévales avec fumée volumétrique, tours de guet, fontaines, charrettes, chiens et chevaux animés.</div>
-          <div class="biome-desc" data-en>Medieval houses with volumetric smoke, watchtowers, fountains, animated carts, dogs and horses.</div>
-          <span class="biome-tag" data-fr>Habitat humain</span><span class="biome-tag" data-en>Human settlement</span>
-        </div>
-      </div>
-      <div class="biome-card water">
-        <div class="biome-banner">
-          <img src="images/biome-eau.jpg" alt="Eau" class="biome-banner-img">
-          <div class="biome-banner-overlay">
-            <div class="biome-name" data-fr>Eau</div><div class="biome-name" data-en>Water</div>
-          </div>
-        </div>
-        <div class="biome-body">
-          <div class="biome-desc" data-fr>Nappe continue au rivage organique, vagues et écume animées façon aquarelle. Bateaux animés à sillage, plages procédurales et halos de zone.</div>
-          <div class="biome-desc" data-en>Continuous water sheet with an organic shoreline, animated waves and watercolor-style foam. Animated boats with wake, procedural beaches and zone halos.</div>
-          <span class="biome-tag" data-fr>Réseau fluvial ⛵</span><span class="biome-tag" data-en>Water network ⛵</span>
-        </div>
-      </div>
-      <div class="biome-card rail">
-        <div class="biome-banner">
-          <img src="images/biome-train.jpg" alt="Voie ferrée" class="biome-banner-img">
-          <div class="biome-banner-overlay">
-            <div class="biome-name" data-fr>Voie ferrée</div><div class="biome-name" data-en>Railway</div>
-          </div>
-        </div>
-        <div class="biome-body">
-          <div class="biome-desc" data-fr>Rails procéduraux, traverses et ballast. Trains avec wagons, gares terminus et fumée des locomotives.</div>
-          <div class="biome-desc" data-en>Procedural tracks, sleepers, ballast. Trains with wagons, terminus stations and locomotive smoke.</div>
-          <span class="biome-tag" data-fr>Réseau ferroviaire 🚂</span><span class="biome-tag" data-en>Rail network 🚂</span>
-        </div>
-      </div>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>
@@ -349,95 +296,37 @@ function fmt_date($iso) {
 <!-- ═══════════ MISSIONS ═══════════ -->
 <section id="missions">
   <div class="container">
-    <p class="section-label" data-fr>Objectifs</p>
-    <p class="section-label" data-en>Objectives</p>
-    <h2 class="section-title" data-fr>Les missions</h2>
-    <h2 class="section-title" data-en>Missions</h2>
-    <p class="section-sub" data-fr>Chaque partie génère des objectifs automatiques liés aux biomes et aux réseaux. Les accomplir rapporte 100 points et surtout 3 nouvelles tuiles dans la pioche — ce qui garantit théoriquement des parties infinies.</p>
-    <p class="section-sub" data-en>Each game generates automatic objectives tied to biomes and networks. Completing one scores 100 points and, more importantly, adds 3 new tiles to the draw pile — theoretically enabling infinite games.</p>
+    <p class="section-label" data-fr><?= tr($t,'fr','missions.label') ?></p>
+    <p class="section-label" data-en><?= tr($t,'en','missions.label') ?></p>
+    <h2 class="section-title" data-fr><?= tr($t,'fr','missions.title') ?></h2>
+    <h2 class="section-title" data-en><?= tr($t,'en','missions.title') ?></h2>
+    <p class="section-sub" data-fr><?= tr($t,'fr','missions.sub') ?></p>
+    <p class="section-sub" data-en><?= tr($t,'en','missions.sub') ?></p>
 
     <div class="missions-grid">
+      <?php
+      $missionCards = [
+        ['key' => 'zone',    'icon' => '🌿'],
+        ['key' => 'rail',    'icon' => '🛤️'],
+        ['key' => 'trains',  'icon' => '🚂'],
+        ['key' => 'water',   'icon' => '💧'],
+        ['key' => 'boats',   'icon' => '⛵'],
+        ['key' => 'comets',  'icon' => '☄️'],
+        ['key' => 'village', 'icon' => '🏠'],
+        ['key' => 'fields',  'icon' => '🌾'],
+        ['key' => 'mills',   'icon' => '⚙️'],
+      ];
+      foreach ($missionCards as $mc): $k = $mc['key']; ?>
       <div class="mission-card">
-        <div class="mission-icon">🌿</div>
+        <div class="mission-icon"><?= $mc['icon'] ?></div>
         <div>
-          <div class="mission-name" data-fr>Zone biome</div>
-          <div class="mission-name" data-en>Biome zone</div>
-          <div class="mission-desc" data-fr>Atteindre une surface minimale dans un biome donné : <em>«&nbsp;Forêt de 8 secteurs&nbsp;»</em>, <em>«&nbsp;Prairie de 12 secteurs&nbsp;»</em>…</div>
-          <div class="mission-desc" data-en>Reach a minimum area in a given biome: <em>"8-sector forest"</em>, <em>"12-sector grassland"</em>…</div>
+          <div class="mission-name" data-fr><?= tr($t,'fr',"missions.$k.name") ?></div>
+          <div class="mission-name" data-en><?= tr($t,'en',"missions.$k.name") ?></div>
+          <div class="mission-desc" data-fr><?= tr($t,'fr',"missions.$k.desc") ?></div>
+          <div class="mission-desc" data-en><?= tr($t,'en',"missions.$k.desc") ?></div>
         </div>
       </div>
-      <div class="mission-card">
-        <div class="mission-icon">🛤️</div>
-        <div>
-          <div class="mission-name" data-fr>Voie ferrée</div>
-          <div class="mission-name" data-en>Rail line</div>
-          <div class="mission-desc" data-fr>Poser un nombre imposé de secteurs rail. Chaque triangle de voie ferrée posé fait progresser cette mission.</div>
-          <div class="mission-desc" data-en>Lay a required number of rail sectors. Each placed rail triangle counts toward this mission.</div>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon">🚂</div>
-        <div>
-          <div class="mission-name" data-fr>Trains</div>
-          <div class="mission-name" data-en>Trains</div>
-          <div class="mission-desc" data-fr>Constituer un nombre de lignes de train actives — chaque ligne relie deux gares via des rails continus sans interruption.</div>
-          <div class="mission-desc" data-en>Build a required number of active train lines — each line connects two stations via continuous, unbroken rails.</div>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon">💧</div>
-        <div>
-          <div class="mission-name" data-fr>Voie d'eau</div>
-          <div class="mission-name" data-en>Waterway</div>
-          <div class="mission-desc" data-fr>Former une étendue d'eau d'une surface minimale. Chaque triangle d'eau posé fait progresser cette mission.</div>
-          <div class="mission-desc" data-en>Form a water zone of a minimum area. Each placed water triangle counts toward this mission.</div>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon">⛵</div>
-        <div>
-          <div class="mission-name" data-fr>Bateaux</div>
-          <div class="mission-name" data-en>Boats</div>
-          <div class="mission-desc" data-fr>Faire apparaître un nombre de bateaux sur la grille. Un bateau naît automatiquement sur chaque lac fermé par des tuiles terrestres.</div>
-          <div class="mission-desc" data-en>Spawn a required number of boats on the grid. A boat appears automatically on each lake enclosed by land tiles.</div>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon">☄️</div>
-        <div>
-          <div class="mission-name" data-fr>Comètes</div>
-          <div class="mission-name" data-en>Comets</div>
-          <div class="mission-desc" data-fr>Des comètes traversent le ciel en temps réel. Cliquez dessus pour les faire exploser et engranger des points — réflexes et vigilance requis.</div>
-          <div class="mission-desc" data-en>Comets streak across the sky in real time. Click on them to make them explode and rack up points — reflexes and vigilance required.</div>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon">🏠</div>
-        <div>
-          <div class="mission-name" data-fr>Village prospère</div>
-          <div class="mission-name" data-en>Thriving village</div>
-          <div class="mission-desc" data-fr>Constituer un village dense : regrouper suffisamment de secteurs habitation adjacents pour atteindre le seuil fixé.</div>
-          <div class="mission-desc" data-en>Build a dense village: cluster enough adjacent house sectors to reach the required threshold.</div>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon">🌾</div>
-        <div>
-          <div class="mission-name" data-fr>Terres cultivées</div>
-          <div class="mission-name" data-en>Cultivated lands</div>
-          <div class="mission-desc" data-fr>Étendre les champs en zones continues. Les moulins n'apparaissent que lorsque la zone est assez vaste pour les accueillir.</div>
-          <div class="mission-desc" data-en>Expand fields into continuous zones. Mills only appear when the zone is large enough to host them.</div>
-        </div>
-      </div>
-      <div class="mission-card">
-        <div class="mission-icon">⚙️</div>
-        <div>
-          <div class="mission-name" data-fr>Moulins à vent</div>
-          <div class="mission-name" data-en>Windmills</div>
-          <div class="mission-desc" data-fr>Construire de grandes zones de champs de blé pour y faire apparaître des moulins. Un moulin naît automatiquement au centre de chaque vaste zone de champ.</div>
-          <div class="mission-desc" data-en>Build large wheat field zones to spawn windmills. A mill appears automatically at the centre of each large enough field zone.</div>
-        </div>
-      </div>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>
@@ -445,72 +334,69 @@ function fmt_date($iso) {
 <!-- ═══════════ GAMEPLAY ═══════════ -->
 <section id="gameplay">
   <div class="container">
-    <p class="section-label" data-fr>Mécanique de jeu</p>
-    <p class="section-label" data-en>Game mechanics</p>
-    <h2 class="section-title" data-fr>Comment jouer</h2>
-    <h2 class="section-title" data-en>How to play</h2>
-    <p class="section-sub" data-fr>Une boucle simple, une profondeur infinie. Chaque tuile posée transforme le monde.</p>
-    <p class="section-sub" data-en>A simple loop, infinite depth. Every tile placed transforms the world.</p>
+    <p class="section-label" data-fr><?= tr($t,'fr','gameplay.label') ?></p>
+    <p class="section-label" data-en><?= tr($t,'en','gameplay.label') ?></p>
+    <h2 class="section-title" data-fr><?= tr($t,'fr','gameplay.title') ?></h2>
+    <h2 class="section-title" data-en><?= tr($t,'en','gameplay.title') ?></h2>
+    <p class="section-sub" data-fr><?= tr($t,'fr','gameplay.sub') ?></p>
+    <p class="section-sub" data-en><?= tr($t,'en','gameplay.sub') ?></p>
 
     <div class="gameplay-ui-preview">
       <img src="./images/tuiles.png" alt="Interface tuiles — tuile courante, suivante et restantes" loading="lazy">
-      <p class="gameplay-ui-caption" data-fr>Tuile courante · Tuile suivante · Tuiles restantes</p>
-      <p class="gameplay-ui-caption" data-en>Current tile · Next tile · Remaining tiles</p>
+      <p class="gameplay-ui-caption" data-fr><?= tr($t,'fr','gameplay.ui_caption') ?></p>
+      <p class="gameplay-ui-caption" data-en><?= tr($t,'en','gameplay.ui_caption') ?></p>
     </div>
 
     <div class="steps-grid">
+      <?php
+      $steps = [
+        ['key' => 'draw',   'icon' => '🎴'],
+        ['key' => 'orient', 'icon' => '🔄'],
+        ['key' => 'place',  'icon' => '🗺️'],
+        ['key' => 'score',  'icon' => '🏆'],
+      ];
+      foreach ($steps as $sc): $k = $sc['key']; ?>
       <div class="step-card">
-        <div class="step-icon">🎴</div>
-        <div class="step-title" data-fr>Piochez</div><div class="step-title" data-en>Draw</div>
-        <div class="step-desc" data-fr>Une tuile hexagonale apparaît — six secteurs triangulaires, chacun d'un biome. Observez la suivante pour anticiper.</div>
-        <div class="step-desc" data-en>A hexagonal tile appears — six triangular sectors, each a biome. Watch the next one to plan ahead.</div>
+        <div class="step-icon"><?= $sc['icon'] ?></div>
+        <div class="step-title" data-fr><?= tr($t,'fr',"gameplay.steps.$k.title") ?></div><div class="step-title" data-en><?= tr($t,'en',"gameplay.steps.$k.title") ?></div>
+        <div class="step-desc" data-fr><?= tr($t,'fr',"gameplay.steps.$k.desc") ?></div>
+        <div class="step-desc" data-en><?= tr($t,'en',"gameplay.steps.$k.desc") ?></div>
       </div>
-      <div class="step-card">
-        <div class="step-icon">🔄</div>
-        <div class="step-title" data-fr>Orientez</div><div class="step-title" data-en>Orient</div>
-        <div class="step-desc" data-fr>Pivotez la tuile pour aligner ses arêtes. Eau et rail imposent la continuité — une mauvaise pose bloque le réseau.</div>
-        <div class="step-desc" data-en>Rotate the tile to align its edges. Water and rail require continuity — a bad placement can break the network.</div>
-      </div>
-      <div class="step-card">
-        <div class="step-icon">🗺️</div>
-        <div class="step-title" data-fr>Posez</div><div class="step-title" data-en>Place</div>
-        <div class="step-desc" data-fr>Choisissez l'emplacement sur la grille axiale. Entourer une tuile de six voisins rapporte un gros bonus immédiat.</div>
-        <div class="step-desc" data-en>Choose a spot on the axial grid. Surrounding a tile with six neighbors earns a large immediate bonus.</div>
-      </div>
-      <div class="step-card">
-        <div class="step-icon">🏆</div>
-        <div class="step-title" data-fr>Scorez</div><div class="step-title" data-en>Score</div>
-        <div class="step-desc" data-fr>Complétez missions et zones, interceptez des comètes, soumettez votre meilleur score au classement mondial.</div>
-        <div class="step-desc" data-en>Complete missions and zones, intercept comets, then submit your best score to the global leaderboard.</div>
-      </div>
+      <?php endforeach; ?>
     </div>
 
     <div style="margin-top:52px;">
-      <p class="section-label" data-fr>Système de score</p>
-      <p class="section-label" data-en>Scoring system</p>
+      <p class="section-label" data-fr><?= tr($t,'fr','gameplay.score_label') ?></p>
+      <p class="section-label" data-en><?= tr($t,'en','gameplay.score_label') ?></p>
       <div class="score-pills">
-        <div class="score-pill"><div class="score-pill-pts">+2</div><div class="score-pill-label" data-fr>Pose de tuile</div><div class="score-pill-label" data-en>Tile placed</div></div>
-        <div class="score-pill"><div class="score-pill-pts">+10</div><div class="score-pill-label" data-fr>Arête compatible</div><div class="score-pill-label" data-en>Matching edge</div></div>
-        <div class="score-pill"><div class="score-pill-pts">+25</div><div class="score-pill-label" data-fr>Réseau connecté</div><div class="score-pill-label" data-en>Network connected</div></div>
-        <div class="score-pill"><div class="score-pill-pts">+50</div><div class="score-pill-label" data-fr>Tuile entourée</div><div class="score-pill-label" data-en>Tile surrounded</div></div>
-        <div class="score-pill"><div class="score-pill-pts">+100</div><div class="score-pill-label" data-fr>Mission accomplie</div><div class="score-pill-label" data-en>Mission complete</div></div>
-        <div class="score-pill"><div class="score-pill-pts">+75</div><div class="score-pill-label" data-fr>Comète interceptée</div><div class="score-pill-label" data-en>Comet intercepted</div></div>
-        <div class="score-pill"><div class="score-pill-pts">+1500</div><div class="score-pill-label" data-fr>Case bonus recouverte</div><div class="score-pill-label" data-en>Bonus cell covered</div></div>
+        <?php
+        $pills = [
+          ['key' => 'place',    'pts' => '+2'],
+          ['key' => 'edge',     'pts' => '+10'],
+          ['key' => 'network',  'pts' => '+25'],
+          ['key' => 'surround', 'pts' => '+50'],
+          ['key' => 'mission',  'pts' => '+100'],
+          ['key' => 'comet',    'pts' => '+75'],
+          ['key' => 'bonus',    'pts' => '+1500'],
+        ];
+        foreach ($pills as $pc): $k = $pc['key']; ?>
+        <div class="score-pill"><div class="score-pill-pts"><?= $pc['pts'] ?></div><div class="score-pill-label" data-fr><?= tr($t,'fr',"gameplay.pills.$k") ?></div><div class="score-pill-label" data-en><?= tr($t,'en',"gameplay.pills.$k") ?></div></div>
+        <?php endforeach; ?>
       </div>
     </div>
 
     <div class="kbd-strip">
-      <div class="kbd-strip-item"><kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd><span data-fr>caméra</span><span data-en>camera</span></div>
-      <div class="kbd-strip-item"><kbd data-fr>Clic gauche</kbd><kbd data-en>Left click</kbd><span data-fr>déplacer la caméra</span><span data-en>move camera</span></div>
-      <div class="kbd-strip-item"><kbd data-fr>Clic droit</kbd><kbd data-en>Right click</kbd><span data-fr>rotation caméra</span><span data-en>rotate camera</span></div>
-      <div class="kbd-strip-item"><kbd data-fr>Molette</kbd><kbd data-en>Wheel</kbd><span data-fr>zoom</span><span data-en>zoom</span></div>
-      <div class="kbd-strip-item"><kbd>R</kbd><span data-fr>réinitialiser la caméra</span><span data-en>reset camera</span></div>
-      <div class="kbd-strip-item"><kbd>Ctrl</kbd><kbd>Z</kbd><span data-fr>annuler</span><span data-en>undo</span></div>
-      <div class="kbd-strip-item"><kbd>E</kbd><span data-fr>personnalisation</span><span data-en>customization</span></div>
-      <div class="kbd-strip-item"><kbd>F</kbd><span data-fr>HUD performances</span><span data-en>performance HUD</span></div>
-      <div class="kbd-strip-item"><kbd>Espace</kbd><span data-fr>mode immersif</span><span data-en>immersive mode</span></div>
-      <div class="kbd-strip-item"><kbd>M</kbd><span data-fr>muet</span><span data-en>mute</span></div>
-      <div class="kbd-strip-item"><kbd>H</kbd><span data-fr>aide</span><span data-en>help</span></div>
+      <div class="kbd-strip-item"><kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.camera_label') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.camera_label') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-fr><?= tr($t,'fr','gameplay.kbd.left_click_kbd') ?></kbd><kbd data-en><?= tr($t,'en','gameplay.kbd.left_click_kbd') ?></kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.left_click_desc') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.left_click_desc') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-fr><?= tr($t,'fr','gameplay.kbd.right_click_kbd') ?></kbd><kbd data-en><?= tr($t,'en','gameplay.kbd.right_click_kbd') ?></kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.right_click_desc') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.right_click_desc') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-fr><?= tr($t,'fr','gameplay.kbd.wheel_kbd') ?></kbd><kbd data-en><?= tr($t,'en','gameplay.kbd.wheel_kbd') ?></kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.wheel_desc') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.wheel_desc') ?></span></div>
+      <div class="kbd-strip-item"><kbd>R</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.reset_cam') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.reset_cam') ?></span></div>
+      <div class="kbd-strip-item"><kbd>Ctrl</kbd><kbd>Z</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.undo') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.undo') ?></span></div>
+      <div class="kbd-strip-item"><kbd>E</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.customization') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.customization') ?></span></div>
+      <div class="kbd-strip-item"><kbd>F</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.perf_hud') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.perf_hud') ?></span></div>
+      <div class="kbd-strip-item"><kbd>Espace</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.immersive') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.immersive') ?></span></div>
+      <div class="kbd-strip-item"><kbd>M</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.mute') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.mute') ?></span></div>
+      <div class="kbd-strip-item"><kbd>H</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.help') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.help') ?></span></div>
     </div>
   </div>
 </section>
@@ -518,55 +404,37 @@ function fmt_date($iso) {
 <!-- ═══════════ GALLERY ═══════════ -->
 <section id="gallery">
   <div class="container">
-    <p class="section-label" data-fr>Ambiances visuelles</p>
-    <p class="section-label" data-en>Visual presets</p>
-    <h2 class="section-title" data-fr>Plusieurs atmosphères</h2>
-    <h2 class="section-title" data-fr>Une infinité de personnalisations</h2>
-    <h2 class="section-title" data-en>Several atmospheres</h2>
-    <h2 class="section-title" data-en>Infinite customizations</h2>
-    <p class="section-sub" data-fr>De nombreux presets visuels prêts à l'emploi — mais chacun est une base : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… Des centaines de combinaisons pour transformer le monde entier à votre goût. Chaque personnalisation s'exporte en un clic et peut être partagée avec d'autres joueurs.</p>
-    <p class="section-sub" data-en>Many ready-to-use visual presets — but each is a starting point: color LUT, cinematic effects (chromatic aberration, film grain, tilt-shift), retro pixelization, EGA and Amiga aesthetics, volumetric smoke, procedural sky… Hundreds of combinations to transform the entire world to your taste. Every customization can be exported in one click and shared with other players.</p>
+    <p class="section-label" data-fr><?= tr($t,'fr','gallery.label') ?></p>
+    <p class="section-label" data-en><?= tr($t,'en','gallery.label') ?></p>
+    <h2 class="section-title" data-fr><?= tr($t,'fr','gallery.title1') ?></h2>
+    <h2 class="section-title" data-fr><?= tr($t,'fr','gallery.title2') ?></h2>
+    <h2 class="section-title" data-en><?= tr($t,'en','gallery.title1') ?></h2>
+    <h2 class="section-title" data-en><?= tr($t,'en','gallery.title2') ?></h2>
+    <p class="section-sub" data-fr><?= tr($t,'fr','gallery.sub') ?></p>
+    <p class="section-sub" data-en><?= tr($t,'en','gallery.sub') ?></p>
 
     <div class="gallery-grid">
-      <div class="gallery-card" style="grid-column:span 2;">
-        <img src="images/automne.jpg" alt="Preset Automne" class="gallery-img">
-        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Automne</span><span data-en>Autumn</span></div></div>
+      <?php
+      $presets = [
+        ['key' => 'autumn', 'img' => 'images/automne.jpg',      'alt' => 'Preset Automne',   'span' => 2, 'contain' => false],
+        ['key' => 'summer', 'img' => 'images/ete-vif.jpg',      'alt' => 'Preset Été vif',   'span' => 0, 'contain' => false],
+        ['key' => 'nordic', 'img' => 'images/foret-nordique.jpg','alt' => 'Preset Nordique', 'span' => 0, 'contain' => false],
+        ['key' => 'amiga',  'img' => 'images/amiga.jpg',        'alt' => 'Preset Amiga',     'span' => 2, 'contain' => false],
+        ['key' => 'ega',    'img' => 'images/ega.jpg',          'alt' => 'Preset EGA',       'span' => 2, 'contain' => true],
+        ['key' => 'cga',    'img' => 'images/cga.jpg',          'alt' => 'Preset CGA',       'span' => 2, 'contain' => true],
+        ['key' => 'apple2', 'img' => 'images/apple2.jpg',       'alt' => 'Preset Apple II',  'span' => 2, 'contain' => true],
+        ['key' => 'psyche', 'img' => 'images/pysche-lsd.jpg',   'alt' => 'Preset Psyché-LSD','span' => 0, 'contain' => false],
+      ];
+      foreach ($presets as $pc):
+        $k = $pc['key'];
+        $cls = 'gallery-card' . ($pc['contain'] ? ' gallery-card--contain' : '');
+        $style = $pc['span'] ? ' style="grid-column:span ' . $pc['span'] . ';"' : '';
+      ?>
+      <div class="<?= $cls ?>"<?= $style ?>>
+        <img src="<?= $pc['img'] ?>" alt="<?= htmlspecialchars($pc['alt']) ?>" class="gallery-img">
+        <div class="gallery-overlay"><div class="gallery-label"><span data-fr><?= tr($t,'fr','gallery.preset_word') ?></span><span data-en><?= tr($t,'en','gallery.preset_word') ?></span><span data-fr><?= tr($t,'fr',"gallery.presets.$k") ?></span><span data-en><?= tr($t,'en',"gallery.presets.$k") ?></span></div></div>
       </div>
-
-      <div class="gallery-card">
-        <img src="images/ete-vif.jpg" alt="Preset Été vif" class="gallery-img">
-        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Été vif</span><span data-en>Vivid Summer</span></div></div>
-      </div>
-
-      <div class="gallery-card">
-        <img src="images/foret-nordique.jpg" alt="Preset Nordique" class="gallery-img">
-        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Nordique</span><span data-en>Nordic</span></div></div>
-      </div>
-
-      <div class="gallery-card" style="grid-column:span 2;">
-        <img src="images/amiga.jpg" alt="Preset Amiga" class="gallery-img">
-        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Amiga</span><span data-en>Amiga</span></div></div>
-      </div>
-
-      <div class="gallery-card gallery-card--contain" style="grid-column:span 2;">
-        <img src="images/ega.jpg" alt="Preset EGA" class="gallery-img">
-        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>EGA 16 couleurs</span><span data-en>EGA 16 colors</span></div></div>
-      </div>
-
-      <div class="gallery-card gallery-card--contain" style="grid-column:span 2;">
-        <img src="images/cga.jpg" alt="Preset CGA" class="gallery-img">
-        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>CGA 320×200 4 couleurs</span><span data-en>CGA 320×200 4 colors</span></div></div>
-      </div>
-
-      <div class="gallery-card gallery-card--contain" style="grid-column:span 2;">
-        <img src="images/apple2.jpg" alt="Preset Apple II" class="gallery-img">
-        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Apple II</span><span data-en>Apple II</span></div></div>
-      </div>
-
-      <div class="gallery-card">
-        <img src="images/pysche-lsd.jpg" alt="Preset Psyché-LSD" class="gallery-img">
-        <div class="gallery-overlay"><div class="gallery-label"><span data-fr>Preset</span><span data-en>Preset</span><span data-fr>Psyché-LSD</span><span data-en>Psyché-LSD</span></div></div>
-      </div>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>
@@ -574,218 +442,129 @@ function fmt_date($iso) {
 <!-- ═══════════ CREATURES ═══════════ -->
 <section id="creatures">
   <div class="container">
-    <p class="section-label" data-fr>La vie du monde</p>
-    <p class="section-label" data-en>The world's life</p>
-    <h2 class="section-title" data-fr>Un monde de créatures</h2>
-    <h2 class="section-title" data-en>A world full of creatures</h2>
-    <p class="section-sub" data-fr>Le monde ne se contente pas d'exister : il respire. Animaux, oiseaux et habitants animent chaque biome au fil des saisons.</p>
-    <p class="section-sub" data-en>The world doesn't just exist — it breathes. Animals, birds and inhabitants bring every biome to life through the seasons.</p>
+    <p class="section-label" data-fr><?= tr($t,'fr','creatures.label') ?></p>
+    <p class="section-label" data-en><?= tr($t,'en','creatures.label') ?></p>
+    <h2 class="section-title" data-fr><?= tr($t,'fr','creatures.title') ?></h2>
+    <h2 class="section-title" data-en><?= tr($t,'en','creatures.title') ?></h2>
+    <p class="section-sub" data-fr><?= tr($t,'fr','creatures.sub') ?></p>
+    <p class="section-sub" data-en><?= tr($t,'en','creatures.sub') ?></p>
 
     <div class="creatures-grid">
+      <?php
+      $creatures = [
+        ['key' => 'sheep',     'img' => 'images/moutons.jpg',  'alt' => 'Moutons'],
+        ['key' => 'crows',     'img' => 'images/corbeaux.jpg', 'alt' => 'Corbeaux'],
+        ['key' => 'farmer',    'img' => 'images/fermier.jpg',  'alt' => 'Fermier'],
+        ['key' => 'druid',     'img' => 'images/monk.jpg',     'alt' => 'Druide'],
+        ['key' => 'witch',     'img' => 'images/sorciere.jpg', 'alt' => 'Sorcière'],
+        ['key' => 'moon',      'img' => 'images/melies.jpg',   'alt' => 'Lune de Méliès'],
+        ['key' => 'seagulls',  'img' => 'images/mouettes.jpg', 'alt' => 'Mouettes'],
+        ['key' => 'fireflies', 'img' => 'images/lucioles.jpg', 'alt' => 'Lucioles'],
+      ];
+      foreach ($creatures as $cc): $k = $cc['key']; ?>
       <div class="creature-card">
         <div class="creature-banner">
-          <img src="images/moutons.jpg" alt="Moutons" class="creature-banner-img">
+          <img src="<?= $cc['img'] ?>" alt="<?= htmlspecialchars($cc['alt']) ?>" class="creature-banner-img">
           <div class="creature-banner-overlay">
-            <div class="creature-name" data-fr>Moutons</div><div class="creature-name" data-en>Sheep</div>
+            <div class="creature-name" data-fr><?= tr($t,'fr',"creatures.$k.name") ?></div><div class="creature-name" data-en><?= tr($t,'en',"creatures.$k.name") ?></div>
           </div>
         </div>
         <div class="creature-body">
-          <div class="creature-desc" data-fr>Des troupeaux paissent tranquillement dans les prairies, se déplaçant au gré des herbes qui ondulent sous le vent.</div>
-          <div class="creature-desc" data-en>Flocks graze peacefully in the grasslands, drifting along with the wind-swayed grass.</div>
+          <div class="creature-desc" data-fr><?= tr($t,'fr',"creatures.$k.desc") ?></div>
+          <div class="creature-desc" data-en><?= tr($t,'en',"creatures.$k.desc") ?></div>
         </div>
       </div>
-      <div class="creature-card">
-        <div class="creature-banner">
-          <img src="images/corbeaux.jpg" alt="Corbeaux" class="creature-banner-img">
-          <div class="creature-banner-overlay">
-            <div class="creature-name" data-fr>Corbeaux</div><div class="creature-name" data-en>Crows</div>
-          </div>
-        </div>
-        <div class="creature-body">
-          <div class="creature-desc" data-fr>Des vols de corbeaux tournoient au-dessus des champs de blé, guettant la moindre parcelle laissée sans surveillance.</div>
-          <div class="creature-desc" data-en>Murders of crows circle above the wheat fields, watching for any unguarded patch.</div>
-        </div>
-      </div>
-      <div class="creature-card">
-        <div class="creature-banner">
-          <img src="images/fermier.jpg" alt="Fermier" class="creature-banner-img">
-          <div class="creature-banner-overlay">
-            <div class="creature-name" data-fr>Fermier</div><div class="creature-name" data-en>Farmer</div>
-          </div>
-        </div>
-        <div class="creature-body">
-          <div class="creature-desc" data-fr>Fourche à la main, le fermier veille sur ses blés et va et vient au rythme des saisons agricoles.</div>
-          <div class="creature-desc" data-en>Pitchfork in hand, the farmer tends his wheat, coming and going with the rhythm of the farming seasons.</div>
-        </div>
-      </div>
-      <div class="creature-card">
-        <div class="creature-banner">
-          <img src="images/monk.jpg" alt="Druide" class="creature-banner-img">
-          <div class="creature-banner-overlay">
-            <div class="creature-name" data-fr>Druide</div><div class="creature-name" data-en>Druid</div>
-          </div>
-        </div>
-        <div class="creature-body">
-          <div class="creature-desc" data-fr>Une silhouette solitaire erre entre les arbres, gardienne discrète des forêts et de leurs secrets.</div>
-          <div class="creature-desc" data-en>A solitary figure wanders among the trees, a quiet guardian of the forests and their secrets.</div>
-        </div>
-      </div>
-      <div class="creature-card">
-        <div class="creature-banner">
-          <img src="images/sorciere.jpg" alt="Sorcière" class="creature-banner-img">
-          <div class="creature-banner-overlay">
-            <div class="creature-name" data-fr>Sorcière</div><div class="creature-name" data-en>Witch</div>
-          </div>
-        </div>
-        <div class="creature-body">
-          <div class="creature-desc" data-fr>Dans certaines forêts, à la tombée de la nuit, on raconte que des sorcières rôdent entre les arbres, attirées par le silence et la lueur des feux de camp oubliés. Rares sont ceux qui les aperçoivent — plus rares encore ceux qui osent les suivre.</div>
-          <div class="creature-desc" data-en>In certain forests, as night falls, witches are said to wander among the trees, drawn by the silence and the glow of forgotten campfires. Few ever catch sight of them — fewer still dare to follow.</div>
-        </div>
-      </div>
-      <div class="creature-card">
-        <div class="creature-banner">
-          <img src="images/melies.jpg" alt="Lune de Méliès" class="creature-banner-img">
-          <div class="creature-banner-overlay">
-            <div class="creature-name" data-fr>Lune de Méliès</div><div class="creature-name" data-en>Méliès Moon</div>
-          </div>
-        </div>
-        <div class="creature-body">
-          <div class="creature-desc" data-fr>En mode nuit, la lune arbore le visage emblématique du Voyage dans la Lune de Méliès — un clin d'œil au cinéma muet niché au cœur du ciel étoilé.</div>
-          <div class="creature-desc" data-en>In night mode, the moon wears the iconic face from Méliès' A Trip to the Moon — a nod to silent-era cinema tucked into the starry sky.</div>
-        </div>
-      </div>
-      <div class="creature-card">
-        <div class="creature-banner">
-          <img src="images/mouettes.jpg" alt="Mouettes" class="creature-banner-img">
-          <div class="creature-banner-overlay">
-            <div class="creature-name" data-fr>Mouettes</div><div class="creature-name" data-en>Seagulls</div>
-          </div>
-        </div>
-        <div class="creature-body">
-          <div class="creature-desc" data-fr>De petits groupes de mouettes tournoient au-dessus des plus grandes étendues d'eau, quelques individus s'écartant parfois du reste de la troupe.</div>
-          <div class="creature-desc" data-en>Small flocks of seagulls circle above the largest bodies of water, with the occasional straggler drifting away from the group.</div>
-        </div>
-      </div>
-      <div class="creature-card">
-        <div class="creature-banner">
-          <img src="images/lucioles.jpg" alt="Lucioles" class="creature-banner-img">
-          <div class="creature-banner-overlay">
-            <div class="creature-name" data-fr>Lucioles</div><div class="creature-name" data-en>Fireflies</div>
-          </div>
-        </div>
-        <div class="creature-body">
-          <div class="creature-desc" data-fr>À la tombée de la nuit, des nuées de lucioles scintillantes vagabondent au ras du sol, dessinant des points de lumière chaude qui dérivent doucement autour de la caméra.</div>
-          <div class="creature-desc" data-en>As night falls, swarms of twinkling fireflies drift close to the ground, tracing warm points of light that softly wander around the camera.</div>
-        </div>
-      </div>
+      <?php endforeach; ?>
     </div>
 
     <div class="population-strip">
       <div class="population-group">
-        <div class="population-group-label" data-fr>Villages</div>
-        <div class="population-group-label" data-en>Villages</div>
+        <div class="population-group-label" data-fr><?= tr($t,'fr','creatures.population.villages_label') ?></div>
+        <div class="population-group-label" data-en><?= tr($t,'en','creatures.population.villages_label') ?></div>
         <div class="population-tags">
-          <span class="population-tag" data-fr>Villageoises</span><span class="population-tag" data-en>Village women</span>
-          <span class="population-tag" data-fr>Villageois</span><span class="population-tag" data-en>Village men</span>
-          <span class="population-tag" data-fr>Fermier</span><span class="population-tag" data-en>Farmer</span>
-          <span class="population-tag" data-fr>Forgeron</span><span class="population-tag" data-en>Blacksmith</span>
-          <span class="population-tag" data-fr>Marchand</span><span class="population-tag" data-en>Merchant</span>
-          <span class="population-tag" data-fr>Tavernier</span><span class="population-tag" data-en>Innkeeper</span>
-          <span class="population-tag" data-fr>Garde</span><span class="population-tag" data-en>Guard</span>
-          <span class="population-tag" data-fr>Soldat</span><span class="population-tag" data-en>Soldier</span>
-          <span class="population-tag" data-fr>Chevalier</span><span class="population-tag" data-en>Knight</span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.village_women') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.village_women') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.village_men') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.village_men') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.farmer') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.farmer') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.blacksmith') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.blacksmith') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.merchant') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.merchant') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.innkeeper') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.innkeeper') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.guard') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.guard') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.soldier') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.soldier') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.knight') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.knight') ?></span>
         </div>
       </div>
       <div class="population-group">
-        <div class="population-group-label" data-fr>Forêts</div>
-        <div class="population-group-label" data-en>Forests</div>
+        <div class="population-group-label" data-fr><?= tr($t,'fr','creatures.population.forests_label') ?></div>
+        <div class="population-group-label" data-en><?= tr($t,'en','creatures.population.forests_label') ?></div>
         <div class="population-tags">
-          <span class="population-tag" data-fr>Archer</span><span class="population-tag" data-en>Archer</span>
-          <span class="population-tag" data-fr>Guerriers</span><span class="population-tag" data-en>Warriors</span>
-          <span class="population-tag" data-fr>Magicien</span><span class="population-tag" data-en>Mage</span>
-          <span class="population-tag" data-fr>Moine</span><span class="population-tag" data-en>Monk</span>
-          <span class="population-tag" data-fr>Sorcière</span><span class="population-tag" data-en>Witch</span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.archer') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.archer') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.warriors') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.warriors') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.mage') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.mage') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.monk') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.monk') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.witch') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.witch') ?></span>
         </div>
       </div>
       <div class="population-group">
-        <div class="population-group-label" data-fr>Champs de blés</div>
-        <div class="population-group-label" data-en>Wheat fields</div>
+        <div class="population-group-label" data-fr><?= tr($t,'fr','creatures.population.fields_label') ?></div>
+        <div class="population-group-label" data-en><?= tr($t,'en','creatures.population.fields_label') ?></div>
         <div class="population-tags">
-          <span class="population-tag" data-fr>Corbeaux</span><span class="population-tag" data-en>Crows</span>
-          <span class="population-tag" data-fr>Moulin</span><span class="population-tag" data-en>Windmill</span>
-          <span class="population-tag" data-fr>Épouvantail</span><span class="population-tag" data-en>Scarecrow</span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.crows') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.crows') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.windmill') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.windmill') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.scarecrow') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.scarecrow') ?></span>
         </div>
       </div>
       <div class="population-group">
-        <div class="population-group-label" data-fr>Eau</div>
-        <div class="population-group-label" data-en>Water</div>
+        <div class="population-group-label" data-fr><?= tr($t,'fr','creatures.population.water_label') ?></div>
+        <div class="population-group-label" data-en><?= tr($t,'en','creatures.population.water_label') ?></div>
         <div class="population-tags">
-          <span class="population-tag" data-fr>Bateau</span><span class="population-tag" data-en>Boat</span>
-          <span class="population-tag" data-fr>Barques</span><span class="population-tag" data-en>Rowboats</span>
-          <span class="population-tag" data-fr>Mouettes</span><span class="population-tag" data-en>Seagulls</span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.boat') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.boat') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.rowboats') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.rowboats') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.seagulls') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.seagulls') ?></span>
         </div>
       </div>
       <div class="population-group">
-        <div class="population-group-label" data-fr>Prairies</div>
-        <div class="population-group-label" data-en>Grasslands</div>
+        <div class="population-group-label" data-fr><?= tr($t,'fr','creatures.population.meadows_label') ?></div>
+        <div class="population-group-label" data-en><?= tr($t,'en','creatures.population.meadows_label') ?></div>
         <div class="population-tags">
-          <span class="population-tag" data-fr>Cerfs</span><span class="population-tag" data-en>Deer</span>
-          <span class="population-tag" data-fr>Fleurs sauvages</span><span class="population-tag" data-en>Wildflowers</span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.deer') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.deer') ?></span>
+          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.wildflowers') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.wildflowers') ?></span>
         </div>
       </div>
     </div>
-    <p class="population-note" data-fr>22 visages différents peuplent villages et forêts, chacun avec sa silhouette, son costume, son rôle. Pas de figurants copiés-collés : une vraie population, tuile après tuile.</p>
-    <p class="population-note" data-en>22 different faces populate villages and forests, each with its own silhouette, costume and role. No copy-pasted extras — a genuine population, tile after tile.</p>
+    <p class="population-note" data-fr><?= tr($t,'fr','creatures.note') ?></p>
+    <p class="population-note" data-en><?= tr($t,'en','creatures.note') ?></p>
   </div>
 </section>
 
 <!-- ═══════════ AUDIO ═══════════ -->
 <section id="audio">
   <div class="container">
-    <p class="section-label" data-fr>Ambiance sonore</p>
-    <p class="section-label" data-en>Sound design</p>
-    <h2 class="section-title" data-fr>Un monde qui s'entend</h2>
-    <h2 class="section-title" data-en>A world you can hear</h2>
-    <p class="section-sub" data-fr>Le son suit la caméra en temps réel — chaque biome, chaque train, chaque bateau a sa propre voix, qui monte et s'efface avec la distance.</p>
-    <p class="section-sub" data-en>Sound follows the camera in real time — every biome, train and boat has its own voice, rising and fading with distance.</p>
+    <p class="section-label" data-fr><?= tr($t,'fr','audio.label') ?></p>
+    <p class="section-label" data-en><?= tr($t,'en','audio.label') ?></p>
+    <h2 class="section-title" data-fr><?= tr($t,'fr','audio.title') ?></h2>
+    <h2 class="section-title" data-en><?= tr($t,'en','audio.title') ?></h2>
+    <p class="section-sub" data-fr><?= tr($t,'fr','audio.sub') ?></p>
+    <p class="section-sub" data-en><?= tr($t,'en','audio.sub') ?></p>
 
     <div class="audio-grid">
+      <?php
+      $audioCards = [
+        ['key' => 'spatial',  'icon' => '🎧'],
+        ['key' => 'chimai',   'icon' => '🎻'],
+        ['key' => 'adaptive', 'icon' => '🎶'],
+        ['key' => 'silence',  'icon' => '🔇'],
+      ];
+      foreach ($audioCards as $ac): $k = $ac['key']; ?>
       <div class="audio-card">
-        <div class="audio-icon">🎧</div>
+        <div class="audio-icon"><?= $ac['icon'] ?></div>
         <div>
-          <div class="audio-name" data-fr>Son spatial 3D</div>
-          <div class="audio-name" data-en>3D spatial sound</div>
-          <div class="audio-desc" data-fr>Ambiances de village, chants d'oiseaux de forêt et de prairie, corbeaux au-dessus des champs, ressac des plages, trains et bateaux — chaque source varie en volume selon sa distance et sa direction réelles.</div>
-          <div class="audio-desc" data-en>Village ambience, forest and grassland birdsong, crows over the fields, waves on the shore, trains and boats — every source's volume follows its real distance and direction.</div>
+          <div class="audio-name" data-fr><?= tr($t,'fr',"audio.$k.name") ?></div>
+          <div class="audio-name" data-en><?= tr($t,'en',"audio.$k.name") ?></div>
+          <div class="audio-desc" data-fr><?= tr($t,'fr',"audio.$k.desc") ?></div>
+          <div class="audio-desc" data-en><?= tr($t,'en',"audio.$k.desc") ?></div>
         </div>
       </div>
-      <div class="audio-card">
-        <div class="audio-icon">🎻</div>
-        <div>
-          <div class="audio-name" data-fr>Chi Mai, le thème caché</div>
-          <div class="audio-name" data-en>Chi Mai, the hidden theme</div>
-          <div class="audio-desc" data-fr>Descendez la caméra au ras d'un champ de blé et un thème mélodique secret se déclenche — la musique et les autres sons s'effacent doucement pour lui laisser toute la place.</div>
-          <div class="audio-desc" data-en>Bring the camera down low over a wheat field and a hidden melodic theme kicks in — the music and other sounds fade away to make room for it.</div>
-        </div>
-      </div>
-      <div class="audio-card">
-        <div class="audio-icon">🎶</div>
-        <div>
-          <div class="audio-name" data-fr>Musique adaptative</div>
-          <div class="audio-name" data-en>Adaptive music</div>
-          <div class="audio-desc" data-fr>Pistes d'intro, de jeu et de fin qui s'enchaînent en fondu doux, piochées dans plusieurs variantes pour ne jamais sonner deux fois pareil d'une partie à l'autre.</div>
-          <div class="audio-desc" data-en>Intro, in-game and ending tracks crossfade smoothly, drawn from several variants so no two games sound quite the same.</div>
-        </div>
-      </div>
-      <div class="audio-card">
-        <div class="audio-icon">🔇</div>
-        <div>
-          <div class="audio-name" data-fr>Silence à la demande</div>
-          <div class="audio-name" data-en>Silence on demand</div>
-          <div class="audio-desc" data-fr>La touche M coupe et rétablit instantanément toute la bande-son, musique comprise — utile pour une partie tranquille en réunion ou en visio.</div>
-          <div class="audio-desc" data-en>The M key instantly cuts and restores the entire soundtrack, music included — handy for a quiet game during a call or a meeting.</div>
-        </div>
-      </div>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>
@@ -793,128 +572,46 @@ function fmt_date($iso) {
 <!-- ═══════════ JOUR / NUIT ═══════════ -->
 <section id="daynnight">
   <div class="container">
-    <p class="section-label" data-fr>Ambiance du monde</p>
-    <p class="section-label" data-en>World atmosphere</p>
-    <h2 class="section-title" data-fr>Environnement</h2>
-    <h2 class="section-title" data-en>Environment</h2>
-    <p class="section-sub" data-fr>Un seul interrupteur change tout. Le soleil, les nuages et le ciel bleu laissent place aux étoiles, à la lune et aux comètes.</p>
-    <p class="section-sub" data-en>One switch changes everything. Sun, clouds and blue sky give way to stars, moon and comets.</p>
+    <p class="section-label" data-fr><?= tr($t,'fr','daynnight.label') ?></p>
+    <p class="section-label" data-en><?= tr($t,'en','daynnight.label') ?></p>
+    <h2 class="section-title" data-fr><?= tr($t,'fr','daynnight.title') ?></h2>
+    <h2 class="section-title" data-en><?= tr($t,'en','daynnight.title') ?></h2>
+    <p class="section-sub" data-fr><?= tr($t,'fr','daynnight.sub') ?></p>
+    <p class="section-sub" data-en><?= tr($t,'en','daynnight.sub') ?></p>
 
     <div class="daynight-grid">
-      <div class="daynight-card day">
-        <img src="images/jour.jpg" alt="Mode Jour" class="daynight-img">
+      <?php
+      $dnCards = [
+        ['key' => 'day',     'img' => 'images/jour.jpg',     'alt' => 'Mode Jour',     'icon' => '☀️', 'cls' => 'daynight-card day',   'span' => false],
+        ['key' => 'night',   'img' => 'images/nuit.jpg',     'alt' => 'Mode Nuit',     'icon' => '🌙', 'cls' => 'daynight-card night', 'span' => false],
+        ['key' => 'smoke',   'img' => 'images/fumees.jpg',   'alt' => 'Fumée',         'icon' => '💨', 'cls' => 'daynight-card smoke', 'span' => true],
+        ['key' => 'godrays', 'img' => 'images/godrays.jpg',  'alt' => 'God Rays',      'icon' => '🔆', 'cls' => 'daynight-card',       'span' => true],
+        ['key' => 'rain',    'img' => 'images/pluie.jpg',    'alt' => 'Pluie',         'icon' => '🌧️', 'cls' => 'daynight-card rain',  'span' => true],
+        ['key' => 'mist',    'img' => 'images/brume.jpg',    'alt' => 'Brume matinale','icon' => '🌫️', 'cls' => 'daynight-card mist',  'span' => true],
+      ];
+      foreach ($dnCards as $dc):
+        $k = $dc['key'];
+        $style = $dc['span'] ? ' style="grid-column:span 2;"' : '';
+        $list  = tr($t,'fr',"daynnight.$k.list");
+        $count = is_array($list) ? count($list) : 0;
+      ?>
+      <div class="<?= $dc['cls'] ?>"<?= $style ?>>
+        <img src="<?= $dc['img'] ?>" alt="<?= htmlspecialchars($dc['alt']) ?>" class="daynight-img">
         <div class="daynight-body">
         <div class="daynight-head">
-          <div class="daynight-icon">☀️</div>
-          <div class="daynight-name" data-fr>Mode Jour</div>
-          <div class="daynight-name" data-en>Day Mode</div>
+          <div class="daynight-icon"><?= $dc['icon'] ?></div>
+          <div class="daynight-name" data-fr><?= tr($t,'fr',"daynnight.$k.name") ?></div>
+          <div class="daynight-name" data-en><?= tr($t,'en',"daynnight.$k.name") ?></div>
         </div>
         <ul class="daynight-list">
-          <li data-fr>🌤 Soleil orbitant sur sa propre couche de rendu</li>
-          <li data-en>🌤 Sun orbiting on its own render layer</li>
-          <li data-fr>⛅ Ciel volumétrique procédural avec nuages FBM animés</li>
-          <li data-en>⛅ Procedural volumetric sky with animated FBM clouds</li>
-          <li data-fr>🔵 Gradient zenith/horizon aux teintes bleues chaudes</li>
-          <li data-en>🔵 Zenith/horizon gradient in warm blue tones</li>
-          <li data-fr>🚫 Comètes masquées — trop de clarté pour elles</li>
-          <li data-en>🚫 Comets hidden — too much light for them</li>
+          <?php for ($i = 0; $i < $count; $i++): ?>
+          <li data-fr><?= tr($t,'fr',"daynnight.$k.list.$i") ?></li>
+          <li data-en><?= tr($t,'en',"daynnight.$k.list.$i") ?></li>
+          <?php endfor; ?>
         </ul>
         </div>
       </div>
-      <div class="daynight-card night">
-        <img src="images/nuit.jpg" alt="Mode Nuit" class="daynight-img">
-        <div class="daynight-body">
-        <div class="daynight-head">
-          <div class="daynight-icon">🌙</div>
-          <div class="daynight-name" data-fr>Mode Nuit</div>
-          <div class="daynight-name" data-en>Night Mode</div>
-        </div>
-        <ul class="daynight-list">
-          <li data-fr>🌙 Lune, gradient zenith/horizon nocturne profond</li>
-          <li data-en>🌙 Moon, deep nocturnal zenith/horizon gradient</li>
-          <li data-fr>✨ Étoiles scintillantes sur une sphère dédiée</li>
-          <li data-en>✨ Twinkling stars on a dedicated sphere</li>
-          <li data-fr>☄️ Comètes qui filent — cliquez pour les faire exploser</li>
-          <li data-en>☄️ Streaking comets — click to make them explode</li>
-          <li data-fr>🌑 Atmosphère sombre, fumée des villages plus visible</li>
-          <li data-en>🌑 Dark atmosphere, village smoke more visible</li>
-        </ul>
-        </div>
-      </div>
-      <div class="daynight-card smoke" style="grid-column:span 2;">
-        <img src="images/fumees.jpg" alt="Fumée" class="daynight-img">
-        <div class="daynight-body">
-        <div class="daynight-head">
-          <div class="daynight-icon">💨</div>
-          <div class="daynight-name" data-fr>Fumée</div>
-          <div class="daynight-name" data-en>Smoke</div>
-        </div>
-        <ul class="daynight-list">
-          <li data-fr>🏠 Jusqu'à 48 colonnes de fumée simultanées, ray-marchées en temps réel au-dessus des cheminées et des locomotives</li>
-          <li data-en>🏠 Up to 48 simultaneous smoke columns, ray-marched in real time above chimneys and locomotives</li>
-          <li data-fr>🌬️ Turbulence à 4 octaves qui dérive avec la hauteur — chaque colonne est unique</li>
-          <li data-en>🌬️ 4-octave turbulence that drifts with height — every column is unique</li>
-          <li data-fr>🎲 Seule une maison sur trois fume, tirée au hasard à la génération de la tuile</li>
-          <li data-en>🎲 Only one house in three smokes, randomly chosen when the tile is generated</li>
-          <li data-fr>🌙 Plus mystérieuse encore à la tombée de la nuit</li>
-          <li data-en>🌙 Even more atmospheric once night falls</li>
-        </ul>
-        </div>
-      </div>
-      <div class="daynight-card" style="grid-column:span 2;">
-        <img src="images/godrays.jpg" alt="God Rays" class="daynight-img">
-        <div class="daynight-body">
-        <div class="daynight-head">
-          <div class="daynight-icon">🔆</div>
-          <div class="daynight-name" data-fr>God Rays</div>
-          <div class="daynight-name" data-en>God Rays</div>
-        </div>
-        <ul class="daynight-list">
-          <li data-fr>☀️ Rayons de lumière volumétriques émergeant du soleil ou de la lune</li>
-          <li data-en>☀️ Volumetric light shafts emerging from the sun or the moon</li>
-          <li data-fr>🌲 Traversent frondaisons, tours et nuages pour un éclairage cinématique</li>
-          <li data-en>🌲 Pierce through foliage, towers and clouds for cinematic lighting</li>
-          <li data-fr>🎚️ Longueur, diffusion et seuil réglables via l'éditeur de direction artistique</li>
-          <li data-en>🎚️ Length, diffusion and threshold tunable via the art-direction editor</li>
-        </ul>
-        </div>
-      </div>
-      <div class="daynight-card rain" style="grid-column:span 2;">
-        <img src="images/pluie.jpg" alt="Pluie" class="daynight-img">
-        <div class="daynight-body">
-        <div class="daynight-head">
-          <div class="daynight-icon">🌧️</div>
-          <div class="daynight-name" data-fr>Pluie</div>
-          <div class="daynight-name" data-en>Rain</div>
-        </div>
-        <ul class="daynight-list">
-          <li data-fr>💧 Averse dynamique déclenchable à la volée depuis le HUD Météo</li>
-          <li data-en>💧 Dynamic showers you can trigger on the fly from the Weather HUD</li>
-          <li data-fr>⛈️ S'enchaîne naturellement avec l'orage et les éclairs</li>
-          <li data-en>⛈️ Chains naturally into storms and lightning</li>
-          <li data-fr>🎬 Ambiance renforcée par la vignette et le grain pellicule de la cinématique</li>
-          <li data-en>🎬 Atmosphere strengthened by the cinematic vignette and film grain</li>
-        </ul>
-        </div>
-      </div>
-      <div class="daynight-card mist" style="grid-column:span 2;">
-        <img src="images/brume.jpg" alt="Brume matinale" class="daynight-img">
-        <div class="daynight-body">
-        <div class="daynight-head">
-          <div class="daynight-icon">🌫️</div>
-          <div class="daynight-name" data-fr>Brume matinale</div>
-          <div class="daynight-name" data-en>Morning mist</div>
-        </div>
-        <ul class="daynight-list">
-          <li data-fr>🌫️ Voile bas qui étouffe les distances et adoucit les silhouettes</li>
-          <li data-en>🌫️ Low veil that mutes distances and softens silhouettes</li>
-          <li data-fr>☀️ Se dissipe progressivement au fil des minutes</li>
-          <li data-en>☀️ Gradually lifts as the minutes pass</li>
-          <li data-fr>🎚️ Densité et couleur du brouillard pilotables dans l'éditeur de direction artistique</li>
-          <li data-en>🎚️ Fog density and colour tunable in the art-direction editor</li>
-        </ul>
-        </div>
-      </div>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>
@@ -922,43 +619,31 @@ function fmt_date($iso) {
 <!-- ═══════════ PERSONNALISATION EXTRÊME (EDA) ═══════════ -->
 <section id="eda">
   <div class="container">
-    <p class="section-label" data-fr>Éditeur de direction artistique (EDA)</p>
-    <p class="section-label" data-en>Art direction editor (EDA)</p>
-    <h2 class="section-title" data-fr>Personnalisation extrême</h2>
-    <h2 class="section-title" data-en>Extreme customization</h2>
-    <p class="section-sub" data-fr>Au-delà des nombreux presets, l'EDA ouvre des dizaines de metrics ajustables en temps réel, réparties en 3 onglets — LUT, Cinématique, Environnement. Chaque curseur répond instantanément, sans rechargement, et l'ensemble se copie/exporte en JSON pour être rejoué ou partagé.</p>
-    <p class="section-sub" data-en>Beyond the many presets, the EDA exposes dozens of metrics adjustable in real time, spread across 3 tabs — LUT, Cinematic, Environment. Every slider responds instantly, no reload, and the whole configuration copies/exports as JSON to be replayed or shared.</p>
+    <p class="section-label" data-fr><?= tr($t,'fr','eda.label') ?></p>
+    <p class="section-label" data-en><?= tr($t,'en','eda.label') ?></p>
+    <h2 class="section-title" data-fr><?= tr($t,'fr','eda.title') ?></h2>
+    <h2 class="section-title" data-en><?= tr($t,'en','eda.title') ?></h2>
+    <p class="section-sub" data-fr><?= tr($t,'fr','eda.sub') ?></p>
+    <p class="section-sub" data-en><?= tr($t,'en','eda.sub') ?></p>
 
     <div class="eda-showcase-grid">
+      <?php
+      $edaCards = [
+        ['key' => 'lut',         'img' => 'images/eda-1.png', 'alt' => 'EDA — onglet LUT'],
+        ['key' => 'cinematic',   'img' => 'images/eda-2.png', 'alt' => 'EDA — onglet Cinématique'],
+        ['key' => 'environment', 'img' => 'images/eda-3.png', 'alt' => 'EDA — onglet Environnement'],
+      ];
+      foreach ($edaCards as $ec): $k = $ec['key']; ?>
       <div class="eda-showcase-card">
-        <img src="images/eda-1.png" alt="EDA — onglet LUT" class="eda-showcase-img">
+        <img src="<?= $ec['img'] ?>" alt="<?= htmlspecialchars($ec['alt']) ?>" class="eda-showcase-img">
         <div class="eda-showcase-body">
-          <div class="eda-showcase-label" data-fr>LUT</div>
-          <div class="eda-showcase-label" data-en>LUT</div>
-          <p class="eda-showcase-desc" data-fr>Brouillard, astre lumineux, étalonnage colorimétrique complet (courbes RVB, gamma, niveaux) et palette par biome.</p>
-          <p class="eda-showcase-desc" data-en>Fog, light source, full color grading (RGB curves, gamma, levels) and per-biome palette.</p>
+          <div class="eda-showcase-label" data-fr><?= tr($t,'fr',"eda.$k.label") ?></div>
+          <div class="eda-showcase-label" data-en><?= tr($t,'en',"eda.$k.label") ?></div>
+          <p class="eda-showcase-desc" data-fr><?= tr($t,'fr',"eda.$k.desc") ?></p>
+          <p class="eda-showcase-desc" data-en><?= tr($t,'en',"eda.$k.desc") ?></p>
         </div>
       </div>
-
-      <div class="eda-showcase-card">
-        <img src="images/eda-2.png" alt="EDA — onglet Cinématique" class="eda-showcase-img">
-        <div class="eda-showcase-body">
-          <div class="eda-showcase-label" data-fr>Cinématique</div>
-          <div class="eda-showcase-label" data-en>Cinematic</div>
-          <p class="eda-showcase-desc" data-fr>God rays, tilt-shift, bloom, pixelisation rétro et courbure d'écran — pour filmer le monde plutôt que le regarder.</p>
-          <p class="eda-showcase-desc" data-en>God rays, tilt-shift, bloom, retro pixelization and screen curvature — to film the world rather than just look at it.</p>
-        </div>
-      </div>
-
-      <div class="eda-showcase-card">
-        <img src="images/eda-3.png" alt="EDA — onglet Environnement" class="eda-showcase-img">
-        <div class="eda-showcase-body">
-          <div class="eda-showcase-label" data-fr>Environnement</div>
-          <div class="eda-showcase-label" data-en>Environment</div>
-          <p class="eda-showcase-desc" data-fr>Nuages et couverture nuageuse, vent (blés, herbes, arbres), météo dynamique (brume, lucioles, pluie), forme du monde (bouliste/platiste), bascule Jour/Nuit et presets de qualité/densité.</p>
-          <p class="eda-showcase-desc" data-en>Clouds and cloud coverage, wind (wheat, grass, trees), dynamic weather (mist, fireflies, rain), world shape (globe/flat), Day/Night switch and quality/density presets.</p>
-        </div>
-      </div>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>
@@ -968,33 +653,30 @@ function fmt_date($iso) {
   <div class="container">
     <div class="multi-inner">
       <div>
-        <h2 class="section-title" data-fr>Multiplayer</h2>
-        <h2 class="section-title" data-fr>Bâtissez ensemble</h2>
-        <h2 class="section-title" data-en>Multiplayer</h2>
-        <h2 class="section-title" data-en>Build together</h2>
-        <p class="section-sub" data-fr>Rejoignez ou créez une salle avec un code à 6 lettres. La grille est partagée en temps réel — chaque joueur pose ses tuiles et voit les placements des autres au fur et à mesure.</p>
-        <p class="section-sub" data-en>Join or create a room with a 6-letter code. The grid is shared in real time — each player places their tiles and sees others' moves as they happen.</p>
+        <h2 class="section-title" data-fr><?= tr($t,'fr','multi.title1') ?></h2>
+        <h2 class="section-title" data-fr><?= tr($t,'fr','multi.title2') ?></h2>
+        <h2 class="section-title" data-en><?= tr($t,'en','multi.title1') ?></h2>
+        <h2 class="section-title" data-en><?= tr($t,'en','multi.title2') ?></h2>
+        <p class="section-sub" data-fr><?= tr($t,'fr','multi.sub') ?></p>
+        <p class="section-sub" data-en><?= tr($t,'en','multi.sub') ?></p>
         <ul class="multi-feature-list">
-          <li data-fr>Toutes les parties sont sauvegardées — reprenez ou rejouez à tout moment</li>
-          <li data-en>All games are saved — resume or replay at any time</li>
-          <li data-fr>Salles rejoignables à tout moment, même en cours de partie</li>
-          <li data-en>Rooms joinable at any time, even mid-game</li>
-          <li data-fr>Synchronisation temps réel · PHP + JSON</li>
-          <li data-en>Real-time sync · PHP + JSON backend</li>
-          <li data-fr>La carte se construit collaborativement, tuile après tuile</li>
-          <li data-en>The map grows collaboratively, tile by tile</li>
+          <?php $features = tr($t,'fr','multi.features'); $fCount = is_array($features) ? count($features) : 0; ?>
+          <?php for ($i = 0; $i < $fCount; $i++): ?>
+          <li data-fr><?= tr($t,'fr',"multi.features.$i") ?></li>
+          <li data-en><?= tr($t,'en',"multi.features.$i") ?></li>
+          <?php endfor; ?>
         </ul>
         <div style="margin-top:28px;">
-          <a href="game.php" class="btn-primary" data-fr>Créer une partie</a>
-          <a href="game.php" class="btn-primary" data-en>Create a game</a>
+          <a href="game.php" class="btn-primary" data-fr><?= tr($t,'fr','multi.btn_create') ?></a>
+          <a href="game.php" class="btn-primary" data-en><?= tr($t,'en','multi.btn_create') ?></a>
         </div>
       </div>
       <div class="room-demo">
-        <div class="room-demo-title" data-fr>Code de salle</div>
-        <div class="room-demo-title" data-en>Room code</div>
+        <div class="room-demo-title" data-fr><?= tr($t,'fr','multi.room_title') ?></div>
+        <div class="room-demo-title" data-en><?= tr($t,'en','multi.room_title') ?></div>
         <div class="room-code">HEXGRP</div>
-        <div style="font-size:10px;letter-spacing:0.14em;color:var(--text-dim);text-align:center;margin-top:4px;" data-fr>Partie en cours · 3 joueurs</div>
-        <div style="font-size:10px;letter-spacing:0.14em;color:var(--text-dim);text-align:center;margin-top:4px;" data-en>Game in progress · 3 players</div>
+        <div style="font-size:10px;letter-spacing:0.14em;color:var(--text-dim);text-align:center;margin-top:4px;" data-fr><?= tr($t,'fr','multi.room_status') ?></div>
+        <div style="font-size:10px;letter-spacing:0.14em;color:var(--text-dim);text-align:center;margin-top:4px;" data-en><?= tr($t,'en','multi.room_status') ?></div>
         <div class="room-players">
           <div class="player-dot active">🧑</div>
           <div class="player-dot active">👩</div>
@@ -1002,8 +684,8 @@ function fmt_date($iso) {
           <div class="player-dot">…</div>
         </div>
         <div class="room-scores">
-          <div style="font-size:9px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;" data-fr>Tuiles posées</div>
-          <div style="font-size:9px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;" data-en>Tiles placed</div>
+          <div style="font-size:9px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;" data-fr><?= tr($t,'fr','multi.tiles_placed_label') ?></div>
+          <div style="font-size:9px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;" data-en><?= tr($t,'en','multi.tiles_placed_label') ?></div>
           <div class="room-score-row">
             <span class="room-score-name">Piregwan</span>
             <span class="room-score-pts" style="color:var(--gold);">47</span>
@@ -1025,71 +707,88 @@ function fmt_date($iso) {
 <!-- ═══════════ HIGHSCORES ═══════════ -->
 <section id="scores">
   <div class="container">
-    <p class="section-label" data-fr>Classement mondial</p>
-    <p class="section-label" data-en>Global leaderboard</p>
-    <h2 class="section-title" data-fr>Les meilleurs bâtisseurs</h2>
-    <h2 class="section-title" data-en>The greatest builders</h2>
+    <p class="section-label" data-fr><?= tr($t,'fr','scores.label') ?></p>
+    <p class="section-label" data-en><?= tr($t,'en','scores.label') ?></p>
+    <h2 class="section-title" data-fr><?= tr($t,'fr','scores.title') ?></h2>
+    <h2 class="section-title" data-en><?= tr($t,'en','scores.title') ?></h2>
 
     <?php if (empty($highscores)): ?>
       <div class="hs-empty">
         <div style="font-size:32px;margin-bottom:12px;">🏆</div>
-        <div data-fr>Aucun score enregistré — soyez le premier à poser votre tuile.</div>
-        <div data-en>No scores yet — be the first to place your tile.</div>
+        <div data-fr><?= tr($t,'fr','scores.empty') ?></div>
+        <div data-en><?= tr($t,'en','scores.empty') ?></div>
       </div>
     <?php else: ?>
     <div class="hs-list">
       <?php foreach ($highscores as $i => $hs):
         $goldClass = $i === 0 ? 'gold-1' : ($i === 1 ? 'gold-2' : ($i === 2 ? 'gold-3' : ''));
         $dateStr   = fmt_date($hs['date']);
-        $biomeIcons = ['forest'=>'🌲','water'=>'💧','house'=>'🏘️','field'=>'🌾','grass'=>'🌿','rail'=>'🛤️'];
-        $biomeLabels = [
-          'forest' => ['fr'=>'Forêt',      'en'=>'Forest'],
-          'water'  => ['fr'=>'Eau',         'en'=>'Water'],
-          'house'  => ['fr'=>'Village',     'en'=>'Village'],
-          'field'  => ['fr'=>'Champ de blé','en'=>'Wheat field'],
-          'grass'  => ['fr'=>'Prairie',     'en'=>'Meadow'],
-          'rail'   => ['fr'=>'Voie ferrée', 'en'=>'Rail'],
-        ];
+        $biomeIcons = ['forest'=>'🌲','water'=>'💧','house'=>'🛖','field'=>'🌾','grass'=>'🌿','rail'=>'🛤️'];
       ?>
       <div class="hs-card <?= $goldClass ?>">
-        <div class="hs-rank"><?= $i + 1 ?></div>
+        <div class="hs-rank-col">
+          <div class="hs-rank"><?= $i + 1 ?></div>
+        </div>
         <div class="hs-main">
           <div class="hs-name"><?= htmlspecialchars($hs['name']) ?></div>
-          <div class="hs-meta">
-            <?php if ($hs['tiles']  > 0): ?>
-            <span class="hs-meta-item"><span class="icon">🗺️</span><?= number_format($hs['tiles']) ?> <span data-fr>tuiles</span><span data-en>tiles</span></span>
-            <?php endif; ?>
-            <?php if ($hs['trains'] > 0): ?>
-            <span class="hs-meta-item"><span class="icon">🚂</span><?= $hs['trains'] ?> <span data-fr>ligne<?= $hs['trains'] > 1 ? 's' : '' ?></span><span data-en>line<?= $hs['trains'] > 1 ? 's' : '' ?></span></span>
-            <?php endif; ?>
-            <?php if ($hs['boats']  > 0): ?>
-            <span class="hs-meta-item"><span class="icon">⛵</span><?= $hs['boats'] ?> <span data-fr>bateau<?= $hs['boats'] > 1 ? 'x' : '' ?></span><span data-en>boat<?= $hs['boats'] > 1 ? 's' : '' ?></span></span>
-            <?php endif; ?>
-            <?php if ($hs['comets'] > 0): ?>
-            <span class="hs-meta-item"><span class="icon">☄️</span><?= $hs['comets'] ?> <span data-fr>comète<?= $hs['comets'] > 1 ? 's' : '' ?></span><span data-en>comet<?= $hs['comets'] > 1 ? 's' : '' ?></span></span>
-            <?php endif; ?>
-            <?php if ($dateStr): ?>
-            <span class="hs-meta-item hs-date"><?= $dateStr ?></span>
-            <?php endif; ?>
-          </div>
+          <?php if ($dateStr): ?><div class="hs-date"><?= $dateStr ?></div><?php endif; ?>
+          <?php if ($hs['tiles'] > 0): ?>
+          <div class="hs-headline-stat"><span class="icon">⬡</span><?= number_format($hs['tiles']) ?> <span data-fr><?= tr($t,'fr','scores.headline_stat') ?></span><span data-en><?= tr($t,'en','scores.headline_stat') ?></span></div>
+          <?php endif; ?>
           <?php
-            $biomeChips = '';
+            // TOUTES les petites stats (lignes/bateaux/comètes + détail biomes) dans
+            // UN SEUL flux .hs-meta — pas deux blocs séparés qui se retrouvent sur des
+            // lignes différentes. Même style partout (cf. .hs-meta-item en CSS).
+            // Mots FR/EN (locomotive(s), bateau(x)/boat(s)…) lus depuis json/languages/*.json.
+            $smallStats = '';
+            if ($hs['trains'] > 0) {
+              $wFr = $hs['trains'] > 1 ? tr($t,'fr','scores.trains_p') : tr($t,'fr','scores.trains_s');
+              $wEn = $hs['trains'] > 1 ? tr($t,'en','scores.trains_p') : tr($t,'en','scores.trains_s');
+              $smallStats .= '<span class="hs-meta-item"><span class="icon">🚂</span><span class="hs-stat-num">' . $hs['trains'] . '</span>'
+                . ' <span data-fr>' . htmlspecialchars($wFr) . '</span>'
+                . '<span data-en>' . htmlspecialchars($wEn) . '</span></span>';
+            }
+            if ($hs['boats'] > 0) {
+              $wFr = $hs['boats'] > 1 ? tr($t,'fr','scores.boats_p') : tr($t,'fr','scores.boats_s');
+              $wEn = $hs['boats'] > 1 ? tr($t,'en','scores.boats_p') : tr($t,'en','scores.boats_s');
+              $smallStats .= '<span class="hs-meta-item"><span class="icon">⛵</span><span class="hs-stat-num">' . $hs['boats'] . '</span>'
+                . ' <span data-fr>' . htmlspecialchars($wFr) . '</span>'
+                . '<span data-en>' . htmlspecialchars($wEn) . '</span></span>';
+            }
+            if ($hs['mills'] > 0) {
+              $wFr = $hs['mills'] > 1 ? tr($t,'fr','scores.mills_p') : tr($t,'fr','scores.mills_s');
+              $wEn = $hs['mills'] > 1 ? tr($t,'en','scores.mills_p') : tr($t,'en','scores.mills_s');
+              $smallStats .= '<span class="hs-meta-item"><span class="icon">⚙️</span><span class="hs-stat-num">' . $hs['mills'] . '</span>'
+                . ' <span data-fr>' . htmlspecialchars($wFr) . '</span>'
+                . '<span data-en>' . htmlspecialchars($wEn) . '</span></span>';
+            }
+            if ($hs['comets'] > 0) {
+              $wFr = $hs['comets'] > 1 ? tr($t,'fr','scores.comets_p') : tr($t,'fr','scores.comets_s');
+              $wEn = $hs['comets'] > 1 ? tr($t,'en','scores.comets_p') : tr($t,'en','scores.comets_s');
+              $smallStats .= '<span class="hs-meta-item"><span class="icon">☄️</span><span class="hs-stat-num">' . $hs['comets'] . '</span>'
+                . ' <span data-fr>' . htmlspecialchars($wFr) . '</span>'
+                . '<span data-en>' . htmlspecialchars($wEn) . '</span></span>';
+            }
             foreach ($biomeIcons as $bt => $icon) {
               $tot = $hs['totals'][$bt] ?? 0;
               $max = $hs['largest'][$bt] ?? 0;
               if ($tot > 0 || $max > 0) {
-                $lFr = $biomeLabels[$bt]['fr'];
-                $lEn = $biomeLabels[$bt]['en'];
-                $biomeChips .= '<span class="hs-meta-item hs-biome-chip" title="' . $lFr . '">'
+                $lFr = $tot == 1 ? tr($t,'fr',"scores.biome_labels.$bt.s") : tr($t,'fr',"scores.biome_labels.$bt.p");
+                $lEn = tr($t,'en',"scores.biome_labels.$bt.en");
+                $smallStats .= '<span class="hs-meta-item hs-biome-chip">'
                   . '<span class="icon">' . $icon . '</span>'
                   . '<span class="hs-biome-total">' . number_format($tot) . '</span>'
-                  . '<span class="hs-biome-sep">/</span>'
-                  . '<span class="hs-biome-max">' . $max . '</span>'
+                  . '<span class="hs-biome-label" data-fr>' . htmlspecialchars($lFr) . '</span>'
+                  . '<span class="hs-biome-label" data-en>' . htmlspecialchars($lEn) . '</span>'
+                  . '<span class="hs-biome-note">'
+                    . '<span data-fr>' . htmlspecialchars(tr($t,'fr','scores.largest_zone')) . '</span><span data-en>' . htmlspecialchars(tr($t,'en','scores.largest_zone')) . '</span>'
+                    . '&nbsp;: <span class="hs-biome-max">' . $max . '</span>'
+                  . '</span>'
                   . '</span>';
               }
             }
-            if ($biomeChips): ?>
-          <div class="hs-meta hs-meta-biomes"><?= $biomeChips ?></div>
+            if ($smallStats): ?>
+          <div class="hs-meta"><?= $smallStats ?></div>
           <?php endif; ?>
         </div>
         <div class="hs-score-col">
@@ -1101,8 +800,8 @@ function fmt_date($iso) {
     <?php endif; ?>
 
     <div style="text-align:center;margin-top:40px;">
-      <a href="game.php" class="btn-primary" data-fr>Tenter votre chance →</a>
-      <a href="game.php" class="btn-primary" data-en>Try your luck →</a>
+      <a href="game.php" class="btn-primary" data-fr><?= tr($t,'fr','scores.try_luck') ?></a>
+      <a href="game.php" class="btn-primary" data-en><?= tr($t,'en','scores.try_luck') ?></a>
     </div>
   </div>
 </section>
@@ -1112,15 +811,15 @@ function fmt_date($iso) {
   <div class="container">
     <div class="footer-inner">
       <div class="footer-logo">⬡ HEXISTENZ</div>
-      <div class="footer-copy" data-fr>Jeu hexagonal contemplatif fait avec nostalgie et amour ❤️ Three.js et beaucoup de tuiles · 2025–2026</div>
-          <div class="footer-copy" data-en>A contemplative hexagonal game made with love ❤️ Three.js and a lot of tiles · 2025–2026</div>
+      <div class="footer-copy" data-fr><?= tr($t,'fr','footer.copy') ?></div>
+          <div class="footer-copy" data-en><?= tr($t,'en','footer.copy') ?></div>
       <div class="footer-links-group">
         <a href="https://krakoukas.com" class="footer-link" target="_blank" rel="noopener">Krakoukas</a>
         <span class="footer-sep">·</span>
         <a href="https://www.wildlabs.fr" class="footer-link" target="_blank" rel="noopener">Wildlabs</a>
         <span class="footer-sep">·</span>
-        <a href="https://github.com/Krakoukas73/hexistenz" class="footer-link" target="_blank" rel="noopener" data-fr>Sur GitHub</a>
-        <a href="https://github.com/Krakoukas73/hexistenz" class="footer-link" target="_blank" rel="noopener" data-en>On GitHub</a>
+        <a href="https://github.com/Krakoukas73/hexistenz" class="footer-link" target="_blank" rel="noopener" data-fr><?= tr($t,'fr','footer.github') ?></a>
+        <a href="https://github.com/Krakoukas73/hexistenz" class="footer-link" target="_blank" rel="noopener" data-en><?= tr($t,'en','footer.github') ?></a>
       </div>
     </div>
   </div>

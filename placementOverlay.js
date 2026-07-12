@@ -1,5 +1,27 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
+// Passage bilingue FR/EN le 2026-07-12 : le label de validité de placement
+// (affiché en continu pendant le jeu) vient de json/languages/{french,english}.json
+// (clé game.placementOverlay), même mécanisme que les autres modules
+// (top-level await + localStorage 'hexistenz_pres_lang').
+function getGameLang() {
+  try {
+    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
+  } catch {
+    return 'fr';
+  }
+}
+
+const _langFile = getGameLang() === 'en' ? 'english' : 'french';
+
+const _poText = await fetch(`./json/languages/${_langFile}.json`)
+  .then(r => r.json())
+  .then(data => data?.game?.placementOverlay ?? {})
+  .catch(err => {
+    console.error(`[placementOverlay] Impossible de charger ${_langFile}.json`, err);
+    return {};
+  });
+
 export function createPlacementFeedbackOverlay(validation) {
   const group = new THREE.Group();
   const color = validation.valid ? 0x35ff70 : 0xff3030;
@@ -26,13 +48,13 @@ export function createPlacementFeedbackOverlay(validation) {
 }
 
 export function getPlacementLabel(validation) {
-  if (validation.valid) return 'OK';
-  if (validation.reason === 'OUT_OF_GRID') return 'HORS GRILLE';
-  if (validation.reason !== 'INVALID_NETWORK_CONNECTION') return validation.reason ?? 'INTERDIT';
+  if (validation.valid) return _poText.ok ?? 'OK';
+  if (validation.reason === 'OUT_OF_GRID') return _poText.outOfGrid ?? 'HORS GRILLE';
+  if (validation.reason !== 'INVALID_NETWORK_CONNECTION') return validation.reason ?? (_poText.forbidden ?? 'INTERDIT');
 
   return validation.conflicts
     ?.map(conflict => `${formatEdgeType(conflict.ownType)} ≠ ${formatEdgeType(conflict.neighborType)}`)
-    .join(', ') || 'RÉSEAU INCOMPATIBLE';
+    .join(', ') || (_poText.incompatibleNetwork ?? 'RÉSEAU INCOMPATIBLE');
 }
 
 function createConflictMarker(edge) {
@@ -67,7 +89,7 @@ function getEdgeAngle(edge) {
 }
 
 function formatEdgeType(type) {
-  return {
+  return _poText.edgeTypes?.[type] ?? {
     field: 'champ',
     forest: 'forêt',
     water: 'eau',

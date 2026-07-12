@@ -1,5 +1,5 @@
 /**
- * shaderEau.js — Eau « cute cartoon » + écume voronoï animée (portée de Danil).
+ * shaderWater.js — Eau « cute cartoon » + écume voronoï animée (portée de Danil). (ex-shaderEau.js, renommé en anglais le 2026-07-11)
  *
  * Surface posée par waterSurfaceOverlay.js. Attributs :
  *   aShoreDist : distance MONDE au contour (champ continu) → profondeur + bande d'écume

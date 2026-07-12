@@ -15,7 +15,7 @@
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/ShaderPass.js';
-import { SMOKE_VERT, SMOKE_FRAG } from './shaders/shaderFumee.js';
+import { SMOKE_VERT, SMOKE_FRAG } from './shaders/shaderSmoke.js';
 
 export const MAX_SMOKE_SOURCES = 48;
 

@@ -6,7 +6,6 @@ import { getEdgeType } from './tileGenerator.js';
 import { getBiomeMaterial, getBiomeSideMaterial } from './tileTextures.js';
 import { getFlatWaterMaterial } from './realisticWater.js';
 import { createRailCenterOverlay } from './tileRailOverlay.js';
-import { createRoadCenterOverlay } from './tileRoadOverlay.js';
 import { createValueLabel, getMiniValueLabel } from './tileLabels.js';
 import { registerCurvedSprite } from './threeSetup.js';
 import { hashRaggedInnerEdge, hashRaggedEdge, hash01 } from './raggedEdge.js';
@@ -24,19 +23,10 @@ const RAGGED_EDGE = {
   lift: 0
 };
 
-const TERRAIN_RELIEF = {
-  enabled: true,
-  baseAmplitude: 0.064,
-  typeAmplitude: {
-    grass: 0.085,
-    forest: 0.083,
-    field: 0.075,
-    house: 0.039,
-    rail: 0.043,
-    water: 0.017
-  },
-  edgeFadeStart: 0.30
-};
+// TERRAIN_RELIEF (locale) supprimée le 2026-07-11 (round 3, cf. CONTEXT.md §21) :
+// devenue orpheline après la suppression de getTerrainTopY (round 2), aucun usage
+// ailleurs dans ce fichier. Ne pas confondre avec la TERRAIN_RELIEF EXPORTÉE de
+// variables.js (vivante, utilisée par terrainHeight.js/tileRailOverlay.js).
 
 // NB : constantes ci-dessous conservées pour référence — la géométrie réelle
 // est contrôlée par getSectorDepth() et TILE_VISUAL dans variables.js.
@@ -66,8 +56,9 @@ export function createTileMesh(tileOrEdges, options = {}) {
   const centerMesh = createCenterMesh(center, opacity, worldX, worldZ, previewWater);
   if (centerMesh) group.add(centerMesh);
 
-  const roadCenterOverlay = createRoadCenterOverlay(edges, SECTOR_DEFS, createOuterVertices);
-  if (roadCenterOverlay) group.add(roadCenterOverlay);
+  // tileRoadOverlay.js supprimé le 2026-07-11 (round 4, découpage sans risque, cf.
+  // CONTEXT.md §21) : createRoadCenterOverlay() était un stub qui retournait toujours
+  // null (GLBs routes retirés du projet) — ce bloc ne faisait déjà rigoureusement rien.
 
   const railCenterOverlay = createRailCenterOverlay(edges, SECTOR_DEFS, createOuterVertices);
   if (railCenterOverlay) group.add(railCenterOverlay);
@@ -334,41 +325,8 @@ function createThickSectorGeometry(a, b, depth, type = 'grass', aIndex = 0, bInd
 }
 
 
-function getTerrainTopY(point, type, salt = 0) {
-  const baseY = getBiomeLocalTopY(type);
-
-  // Les secteurs de voie ferrée sont volontairement plats : pas de pente locale,
-  // pas de turbulence verticale. Les rails/traverses/cailloux posés dessus
-  // héritent ainsi d'un support stable au lieu de disparaître dans le relief.
-  if (type === 'rail') return baseY;
-
-  if (!TERRAIN_RELIEF.enabled) return baseY;
-
-  const amplitude = TERRAIN_RELIEF.typeAmplitude[type] ?? TERRAIN_RELIEF.baseAmplitude;
-  const radius = Math.hypot(point.x, point.z) / Math.max(HEX_SIZE, 0.001);
-  const edgeFade = THREE.MathUtils.clamp((radius - TERRAIN_RELIEF.edgeFadeStart) / (1 - TERRAIN_RELIEF.edgeFadeStart), 0, 1);
-  const centerFade = 0.72 + edgeFade * 0.28;
-  const waveA = Math.sin(point.x * 3.10 + point.z * 1.85 + salt * 0.71);
-  const waveB = Math.cos(point.x * -2.45 + point.z * 4.15 + salt * 1.13);
-  const waveC = Math.sin((point.x + point.z) * 5.20 + salt * 0.37);
-  const grain = (hash01(hashTerrainPoint(point, type, salt)) - 0.5) * 2;
-  const relief = (waveA * 0.42 + waveB * 0.28 + waveC * 0.18 + grain * 0.12) * amplitude * centerFade;
-
-  // L'eau reste presque plane : assez de frémissement pour casser le plastique,
-  // pas assez pour créer une mer de Lego ivre.
-  if (type === 'water') return baseY + relief * 0.35;
-  return baseY + relief;
-}
-
-function hashTerrainPoint(point, type, salt) {
-  const text = `${type}:${salt}:${point.x.toFixed(3)}:${point.z.toFixed(3)}`;
-  let hash = 2166136261;
-  for (let i = 0; i < text.length; i++) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-}
+// getTerrainTopY / hashTerrainPoint supprimées le 2026-07-11 (code mort confirmé
+// par grep sur tout le dépôt, cf. CONTEXT.md §21) : plus aucun appelant.
 
 function getBiomeLocalTopY(type) {
   // Surface plate : toutes les tuiles ont leur dessus au niveau local 0.

@@ -1,5 +1,5 @@
 /**
- * shaderEnvironnement.js — Shaders GLSL de l'environnement visuel.
+ * shaderEnvironment.js — Shaders GLSL de l'environnement visuel (ex-shaderEnvironnement.js, renommé en anglais le 2026-07-11).
  *
  * Utilisé par visualEnvironment.js.
  *
