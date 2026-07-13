@@ -190,7 +190,9 @@ function tr($t, $lang, $path) {
       </header>
 
       <div class="help-grid">
-        <article class="help-card help-card-wide">
+       <div class="help-top-row">
+        <div class="help-col-main">
+        <article class="help-card help-card-wide help-card-rules">
           <h2>🎯 <span data-fr><?= tr($t,'fr','game.ui.help.objective.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.objective.title') ?></span></h2>
           <p><span data-fr><?= tr($t,'fr','game.ui.help.objective.text') ?></span><span data-en><?= tr($t,'en','game.ui.help.objective.text') ?></span></p>
           <div class="score-strip">
@@ -201,31 +203,30 @@ function tr($t, $lang, $path) {
             <div><strong>+100 points + 3 tuiles</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.objective.points.mission') ?></span><span data-en><?= tr($t,'en','game.ui.help.objective.points.mission') ?></span></span></div>
             <div><strong>+1500 points</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.objective.points.bonus') ?></span><span data-en><?= tr($t,'en','game.ui.help.objective.points.bonus') ?></span></span></div>
           </div>
-        </article>
-
-        <article class="help-card">
-          <h2>🧩 <span data-fr><?= tr($t,'fr','game.ui.help.placement.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.placement.title') ?></span></h2>
-          <ul>
+          <ul class="placement-list">
 <?php foreach (tr($t,'fr','game.ui.help.placement.items') as $i => $frItem): $enItem = tr($t,'en','game.ui.help.placement.items')[$i] ?? ''; ?>
             <li><span data-fr><?= $frItem ?></span><span data-en><?= $enItem ?></span></li>
 <?php endforeach; ?>
           </ul>
         </article>
 
-        <article class="help-card">
+        <div class="help-row-pair">
+        <article class="help-card help-card-waterrail">
           <h2>🌊 <span data-fr><?= tr($t,'fr','game.ui.help.waterRail.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.waterRail.title') ?></span></h2>
           <p><span data-fr><?= tr($t,'fr','game.ui.help.waterRail.text') ?></span><span data-en><?= tr($t,'en','game.ui.help.waterRail.text') ?></span></p>
           <div class="rule-line"><span class="swatch water"></span><strong>Eau</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.waterRail.water') ?></span><span data-en><?= tr($t,'en','game.ui.help.waterRail.water') ?></span></span></div>
           <div class="rule-line"><span class="swatch rail"></span><strong>Rail</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.waterRail.rail') ?></span><span data-en><?= tr($t,'en','game.ui.help.waterRail.rail') ?></span></span></div>
         </article>
 
-        <article class="help-card">
+        <article class="help-card help-card-bonus">
           <h2>⭐ <span data-fr><?= tr($t,'fr','game.ui.help.bonusCells.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.bonusCells.title') ?></span></h2>
           <p><span data-fr><?= tr($t,'fr','game.ui.help.bonusCells.text') ?></span><span data-en><?= tr($t,'en','game.ui.help.bonusCells.text') ?></span></p>
           <div class="rule-line"><span class="swatch bonus-cell"></span><strong>Bonus</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.bonusCells.label') ?></span><span data-en><?= tr($t,'en','game.ui.help.bonusCells.label') ?></span></span></div>
         </article>
+        </div>
 
-        <article class="help-card">
+        <div class="help-row-pair">
+        <article class="help-card help-card-blackcells">
           <h2>🕳️ <span data-fr><?= tr($t,'fr','game.ui.help.blackCells.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.blackCells.title') ?></span></h2>
           <p><span data-fr><?= tr($t,'fr','game.ui.help.blackCells.text') ?></span><span data-en><?= tr($t,'en','game.ui.help.blackCells.text') ?></span></p>
           <div class="rule-line"><span class="swatch black-cell"></span><strong>Joker</strong><span><span data-fr><?= tr($t,'fr','game.ui.help.blackCells.label') ?></span><span data-en><?= tr($t,'en','game.ui.help.blackCells.label') ?></span></span></div>
@@ -239,14 +240,8 @@ function tr($t, $lang, $path) {
 <?php endforeach; ?>
           </div>
         </article>
-
-
-
-        <article class="help-card help-card-wide">
-          <h2>🚩 <span data-fr><?= tr($t,'fr','game.ui.help.missions.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.missions.title') ?></span></h2>
-          <p><span data-fr><?= tr($t,'fr','game.ui.help.missions.text1') ?></span><span data-en><?= tr($t,'en','game.ui.help.missions.text1') ?></span></p>
-          <p><span data-fr><?= tr($t,'fr','game.ui.help.missions.text2') ?></span><span data-en><?= tr($t,'en','game.ui.help.missions.text2') ?></span></p>
-        </article>
+        </div>
+        </div>
 
         <article class="help-card help-card-controls">
           <h2>⌨️ <span data-fr><?= tr($t,'fr','game.ui.help.controls.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.title') ?></span></h2>
@@ -280,10 +275,17 @@ function tr($t, $lang, $path) {
             <div><kbd>E</kbd><span><span data-fr><?= tr($t,'fr','game.ui.help.controls.eda') ?></span><span data-en><?= tr($t,'en','game.ui.help.controls.eda') ?></span></span></div>
           </div>
         </article>
+       </div>
+
+        <article class="help-card help-card-wide help-card-missions">
+          <h2>🚩 <span data-fr><?= tr($t,'fr','game.ui.help.missions.title') ?></span><span data-en><?= tr($t,'en','game.ui.help.missions.title') ?></span></h2>
+          <p><span data-fr><?= tr($t,'fr','game.ui.help.missions.text1') ?></span><span data-en><?= tr($t,'en','game.ui.help.missions.text1') ?></span></p>
+          <p><span data-fr><?= tr($t,'fr','game.ui.help.missions.text2') ?></span><span data-en><?= tr($t,'en','game.ui.help.missions.text2') ?></span></p>
+        </article>
       </div>
     </div>
   </section>
 
-  <script type="module" src="main.js"></script>
+  <script type="module" src="javascript/main.js"></script>
 </body>
 </html>

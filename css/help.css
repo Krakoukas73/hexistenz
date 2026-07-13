@@ -18,7 +18,7 @@
 }
 
 .help-panel {
-  width: min(1180px, calc(100vw - 48px));
+  width: min(1440px, calc(100vw - 48px)); /* 1180px +22% */
   max-height: calc(100vh - 48px);
   overflow: hidden;
   display: flex;
@@ -82,11 +82,49 @@
   border-color: rgba(255, 95, 95, 0.95);
 }
 
+/* Refonte complète (grid → flexbox imbriqué) : les deux tentatives précédentes
+   (nth-of-type puis grid-template-areas) provoquaient un chevauchement visuel
+   entre "Règles de base" (dont la hauteur varie avec le contenu fusionné de
+   l'ex-carte "Placement") et la rangée suivante — la piste retenue est que
+   les rangées CSS Grid "auto" à l'intérieur d'un conteneur flex rétréci
+   (.help-panel > .help-grid, overflow-y:auto) ne recalculaient pas de façon
+   fiable dans ce contexte. Solution robuste : un simple empilement flexbox
+   (colonne) où chaque bloc garde sa hauteur naturelle de contenu — aucune
+   piste de chevauchement possible, c'est le flux de bloc CSS le plus basique.
+   Structure DOM (cf. game.php) :
+     .help-grid (colonne)
+       .help-top-row (ligne)
+         .help-col-main (colonne) : Règles de base + 2× .help-row-pair
+         .help-card-controls
+       .help-card-missions (pleine largeur, sous la ligne du dessus) */
 .help-grid {
-  display: grid;
-  grid-template-columns: 1.15fr 1fr 1fr;
-  grid-auto-rows: minmax(0, auto);
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+}
+
+.help-top-row {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.help-col-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 2.15 1 0%;
+  min-width: 0;
+}
+
+.help-row-pair {
+  display: flex;
+  gap: 12px;
+}
+
+.help-row-pair > .help-card {
+  flex: 1 1 0%;
+  min-width: 0;
 }
 
 .help-card {
@@ -98,17 +136,30 @@
   border-radius: 14px;
 }
 
-.help-card-wide {
-  grid-column: span 2;
+.help-card-controls {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* Colonne fixe dans .help-top-row, stretch (par défaut) = même hauteur que
+     .help-col-main. min-height:0 permet à .control-map (flex enfant) de
+     scroller au lieu de déborder si la liste est plus longue que l'espace
+     disponible (bug d'origine en 1080p). */
+  min-height: 0;
 }
 
-.help-card-controls {
-  grid-column: 3;
-  grid-row: 2 / span 2;
+.help-card-controls h2 {
+  flex: 0 0 auto;
 }
 
 .help-card-controls .control-map {
   grid-template-columns: 1fr;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 180, 255, 0.28) transparent;
 }
 
 .help-card h2 {
@@ -128,6 +179,10 @@
 .help-card ul {
   margin: 0;
   padding-left: 18px;
+}
+
+.help-card ul.placement-list {
+  margin-top: 10px;
 }
 
 .score-strip {
@@ -251,17 +306,24 @@ kbd {
 }
 
 @media (max-width: 900px) {
-  .help-grid,
   .control-map,
   .legend-grid,
   .score-strip {
     grid-template-columns: 1fr;
   }
 
-  .help-card-wide,
+  /* Écran étroit : on repasse tout en simple empilement vertical (une carte
+     par ligne, dans l'ordre du DOM) — .help-top-row et .help-row-pair
+     deviennent des colonnes au lieu de lignes. */
+  .help-top-row,
+  .help-row-pair {
+    flex-direction: column;
+  }
+
   .help-card-controls {
-    grid-column: span 1;
-    grid-row: auto;
+    flex: 0 0 auto;
+    height: auto;
+    max-height: 60vh;
   }
 
   .help-panel {
@@ -271,7 +333,7 @@ kbd {
 
 /* Aide condensée : elle doit tenir dans une page, pas devenir un parchemin maudit. */
 .help-panel {
-  width: min(1120px, calc(100vw - 36px));
+  width: min(1366px, calc(100vw - 36px)); /* 1120px +22% */
   max-height: calc(100vh - 36px);
   padding: 14px;
 }

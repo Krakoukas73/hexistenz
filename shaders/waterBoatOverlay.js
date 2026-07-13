@@ -1,14 +1,14 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { createGLTFLoader } from '../glbLoader.js';
-import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, BOAT_TARGET_LENGTH, SECTOR_DEFS, LOD_BOAT_CULL_DISTANCE, WATER_RENDER } from '../config.js';
-import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS } from '../worldCurvature.js';
+import { createGLTFLoader } from '../javascript/glbLoader.js';
+import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, BOAT_TARGET_LENGTH, SECTOR_DEFS, LOD_BOAT_CULL_DISTANCE, WATER_RENDER } from '../javascript/config.js';
+import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS } from '../javascript/worldCurvature.js';
 import { FOAM_GLSL } from './shaderWater.js';
-import { axialToWorld, makeHexKey } from '../hex.js';
-import { HEX_DIRECTIONS, getOppositeEdge } from '../placementRules.js';
-import { getEdgeType } from '../tileGenerator.js';
-import { hashUnit100k as hashUnit } from '../hashUtils.js';
-import { createOuterVertices } from '../hexGeometry.js';
-import { makeNodeKey, getTileCenterType, clearGroup, smoothstep, easeInOutSine } from '../tileUtils.js';
+import { axialToWorld, makeHexKey } from '../javascript/hex.js';
+import { HEX_DIRECTIONS, getOppositeEdge } from '../javascript/placementRules.js';
+import { getEdgeType } from '../javascript/tileGenerator.js';
+import { hashUnit100k as hashUnit } from '../javascript/hashUtils.js';
+import { createOuterVertices } from '../javascript/hexGeometry.js';
+import { makeNodeKey, getTileCenterType, clearGroup, smoothstep, easeInOutSine } from '../javascript/tileUtils.js';
 
 const SECTOR_BY_KEY = Object.fromEntries(SECTOR_DEFS.map(sector => [sector.key, sector]));
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(direction => [direction.edge, direction]));

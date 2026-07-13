@@ -656,7 +656,7 @@
         "title": "Help",
         "closeAria": "Close help",
         "objective": {
-          "title": "Game objective",
+          "title": "Basic rules",
           "text": "Place hexagonal tiles, connect matching textures, and complete missions. Every well-aligned edge pays off; water and rails pay even more.",
           "points": {
             "tile": "per tile placed",
@@ -670,13 +670,10 @@
         "placement": {
           "title": "Placement",
           "items": [
-            "Start: 50 tiles. The first is free, later ones must touch a placed tile.",
-            "Occupied cells are forbidden. Empty deck = game over.",
-            "2 matching sides: +1 tile; 3 matching sides: +2 tiles.",
-            "Tile surrounded on 6 sides: +50 points.",
-            "The ghost tile shows the possible placement.",
-            "With every placement, the playable area slowly expands: cells up to 3 hexagons around the tile become available.",
-            "Golden bonus cells appear at generation: occupy them to earn +1500 points."
+            "The game starts with 50 tiles.",
+            "The first one can be placed anywhere; later ones must touch a placed tile.",
+            "The game ends when the deck is empty.",
+            "The playable area expands with each placement."
           ]
         },
         "waterRail": {
@@ -740,8 +737,8 @@
           "speedUp": "Speeds up movement and zoom",
           "wheelZoomRotate": "Zoom or rotate if available",
           "rightClick": "Rotate the camera",
-          "perfHud": "Show / hide the advanced performance HUD",
-          "eda": "Customization (EDA)"
+          "perfHud": "Show / hide the FPS HUD",
+          "eda": "Show / hide the EDA HUD"
         }
       }
     },

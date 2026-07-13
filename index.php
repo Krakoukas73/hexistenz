@@ -1,7 +1,7 @@
 <?php
 // Version — extraite de variables.js
 $version = '';
-$varsFile = __DIR__ . '/variables.js';
+$varsFile = __DIR__ . '/javascript/variables.js';
 if (file_exists($varsFile)) {
     $js = file_get_contents($varsFile);
     if (preg_match("/HEXISTENZ_VERSION\s*=\s*'([^']+)'/", $js, $m)) {

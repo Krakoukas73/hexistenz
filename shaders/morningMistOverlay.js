@@ -39,10 +39,10 @@
  */
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { getEnvironmentEventFade, isEnvironmentEventActive } from '../environmentDirector.js';
-import { getVfxSettings, onVfxSettingsChange } from '../vfxSettings.js';
-import { VFX_WORLD_RADIUS } from '../variables.js';
-import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS } from '../worldCurvature.js';
+import { getEnvironmentEventFade, isEnvironmentEventActive } from '../javascript/environmentDirector.js';
+import { getVfxSettings, onVfxSettingsChange } from '../javascript/vfxSettings.js';
+import { VFX_WORLD_RADIUS } from '../javascript/variables.js';
+import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS } from '../javascript/worldCurvature.js';
 
 const MIST_EVENT_ID = 'morningMist';
 const MIST_NAME = 'hexistenz-vfx-ground-mist';

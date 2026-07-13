@@ -333,6 +333,31 @@
   border-color: rgba(255,255,255,0.28);
 }
 
+/* Sélecteur de langue en jeu (2026-07-13, v2) — un <select> unique (pas un bouton
+   par langue : rejeté par l'utilisateur, pas scalable) à côté des boutons FPS/EDA.
+   Hérite de `.debug-light-toggle` pour la taille/police/couleurs (même rangée),
+   avec juste les overrides nécessaires pour un <select> natif (reset de l'apparence
+   navigateur + petite flèche custom, texte centré). */
+.debug-light-lang-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  min-width: 56px;
+  text-align: center;
+  text-align-last: center;
+  padding-right: 22px;
+  background-image: linear-gradient(135deg, #4a5568, #2d3748),
+    url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 0 L5 6 L10 0 Z' fill='%23ffd36d'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 0 0, right 8px center;
+  background-size: 100% 100%, 9px 6px;
+}
+.debug-light-lang-select option {
+  background: #2d3748;
+  color: rgba(247,239,225,0.92);
+  font-weight: 700;
+}
+
 /* Lettre de raccourci clavier dans les boutons toggle */
 .debug-light-toggle .btn-key {
   background: transparent;

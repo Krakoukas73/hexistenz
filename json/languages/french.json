@@ -662,7 +662,7 @@
         "title": "Aide",
         "closeAria": "Fermer l'aide",
         "objective": {
-          "title": "Objectif du jeu",
+          "title": "Règles de base",
           "text": "Pose les tuiles hexagonales, connecte les textures identiques et termine les missions. Chaque bord bien aligné paie ; eau et rails paient davantage.",
           "points": {
             "tile": "par tuile posée",
@@ -676,13 +676,10 @@
         "placement": {
           "title": "Placement",
           "items": [
-            "Départ : 50 tuiles. La première est libre, les suivantes touchent une tuile posée.",
-            "Case occupée interdite. Pioche vide = fin.",
-            "2 côtés compatibles : +1 tuile ; 3 côtés compatibles : +2 tuiles.",
-            "Tuile encerclée sur 6 côtés : +50 points.",
-            "La tuile fantôme indique l'emplacement possible.",
-            "À chaque pose, la zone jouable s'étend doucement : les cases jusqu'à 3 hexagones autour de la tuile deviennent disponibles.",
-            "Les cases bonus dorées apparaissent à la génération : occupe-les pour gagner +1500 points."
+            "Début de partie avec 50 tuiles.",
+            "Le placement de la première est libre ; les suivantes devront toucher une tuile posée.",
+            "Le jeu prend fin quand la pioche est vide.",
+            "À chaque pose, la zone jouable s'étend."
           ]
         },
         "waterRail": {
@@ -746,8 +743,8 @@
           "speedUp": "Accélère les déplacements et le zoom",
           "wheelZoomRotate": "Zoom ou rotation si disponible",
           "rightClick": "Rotation de la caméra",
-          "perfHud": "Afficher / masquer le HUD performances avancé",
-          "eda": "Personnalisation (EDA)"
+          "perfHud": "Afficher / masquer le HUD FPS",
+          "eda": "Afficher / masquer le HUD EDA"
         }
       }
     },
