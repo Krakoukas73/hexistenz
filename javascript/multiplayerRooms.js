@@ -14,21 +14,9 @@ import { createRoom, generateRoomCode, getOrCreatePlayerId, joinRoom, listRooms 
 import { LUT_HELP, attachHelpTooltip, hideHelpTooltip } from './help.js';
 import { escapeHtml } from './domUtils.js';
 import { setStatus, normalizeWorldShapeMode, normalizeCode } from './startupMenuShared.js';
-import { registerLangRefresh } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
 
-// Passage bilingue FR/EN le 2026-07-12 : textes sous json/languages/{french,english}.json
-// (clé game.multiplayerRooms), même mécanisme que helpTexts.js/highscore.js
-// (top-level await + localStorage 'hexistenz_pres_lang'). Repli FR en dur à
-// chaque site d'appel (écran de setup multijoueur, chemin critique).
-function getGameLang() {
-  try {
-    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
-  } catch {
-    return 'fr';
-  }
-}
-
-const _langFile = getGameLang() === 'en' ? 'english' : 'french';
+const _langFile = getLangFile();
 
 const _mpText = await fetch(`./json/languages/${_langFile}.json`)
   .then(r => r.json())

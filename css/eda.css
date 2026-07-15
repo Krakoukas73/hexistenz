@@ -333,15 +333,35 @@
   border-color: rgba(255,255,255,0.28);
 }
 
+/* Boutons capture 📷 et galerie 🖼️ (2026-07-15) : emoji seul (pas de texte comme
+   FPS/EDA), agrandi de 30% et centré verticalement (flex, plutôt que de compter sur
+   line-height — plus fiable entre navigateurs pour un unique glyphe emoji). */
+#snapshotBtn,
+#galleryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3em;
+  line-height: 1;
+}
+
 /* Sélecteur de langue en jeu (2026-07-13, v2) — un <select> unique (pas un bouton
    par langue : rejeté par l'utilisateur, pas scalable) à côté des boutons FPS/EDA.
    Hérite de `.debug-light-toggle` pour la taille/police/couleurs (même rangée),
    avec juste les overrides nécessaires pour un <select> natif (reset de l'apparence
-   navigateur + petite flèche custom, texte centré). */
+   navigateur + petite flèche custom, texte centré). Certains overrides du navigateur
+   (bords, box-sizing) redéclarés explicitement ci-dessous : sur un <select>, le chrome
+   natif de l'OS peut resurgir malgré `appearance: none` seul, d'où les bords moins
+   arrondis que les 3 boutons voisins signalés le 2026-07-15. */
 .debug-light-lang-select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
+  box-sizing: border-box;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 10px;
+  background-clip: padding-box;
+  outline: none;
   min-width: 56px;
   text-align: center;
   text-align-last: center;

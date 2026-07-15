@@ -13,6 +13,7 @@ No install · No login · Just play
 [![Three.js](https://img.shields.io/badge/Three.js-r160-black?style=flat-square&logo=threedotjs)](https://threejs.org)
 [![WebGL](https://img.shields.io/badge/WebGL-2.0-red?style=flat-square)](https://www.khronos.org/webgl/)
 [![No bundler](https://img.shields.io/badge/no%20bundler-ES%20Modules-blue?style=flat-square)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)
+[![Languages](https://img.shields.io/badge/🌐-FR%20·%20EN%20·%20ES%20·%20IT%20·%20PT-informational?style=flat-square)](#)
 
 </div>
 
@@ -32,6 +33,9 @@ No install · No login · Just play
 > 🇫🇷 Hexistenz est un jeu de pose de tuiles hexagonales jouable **directement dans le navigateur**, sans installation. Inspiré de **Dorfromantik** et de l'esprit de **The Settlers (Blue Byte, 1993)**, il vous invite à construire patiemment un monde cohérent : prairies, forêts, champs, villages, voies ferrées, rivières et côtes s'assemblent tuile par tuile dans un univers 3D low-poly temps réel.
 >
 > 🇬🇧 Hexistenz is a hex tile-placement game playable **directly in your browser** — nothing to install, nothing to download. Inspired by **Dorfromantik** and the spirit of **The Settlers (Blue Byte, 1993)**, it invites you to patiently build a coherent world: meadows, forests, fields, villages, railways, rivers and coastlines come together tile by tile in a real-time 3D low-poly universe.
+
+🇫🇷 Le jeu est **entièrement traduit en 6 langues** — 🇫🇷 français, 🇬🇧 anglais, 🇪🇸 espagnol, 🇮🇹 italien, 🇵🇹 portugais, et 🇨🇦 **canadien** (québécois, easter egg 100% jouable) — sélecteur de langue accessible à tout moment en jeu, sans recharger la page.
+🇬🇧 The game is **fully translated into 6 languages** — 🇫🇷 French, 🇬🇧 English, 🇪🇸 Spanish, 🇮🇹 Italian, 🇵🇹 Portuguese, and 🇨🇦 **Canadian** (Québécois, a fully playable easter egg) — with a language selector available at any time in-game, no page reload needed.
 
 ---
 
@@ -173,17 +177,26 @@ Every slider applies **instantly**, no reload or shader recompile needed — you
 
 ## ⌨️ Contrôles / Controls
 
+*(liste exhaustive, alignée sur le bandeau de raccourcis de la page d'accueil / full list, matching the homepage shortcut strip)*
+
 | Touche / Key | 🇫🇷 | 🇬🇧 |
 |---|---|---|
-| Clic gauche / Left click | Poser la tuile | Place the tile |
-| Clic droit / Right click | Faire pivoter | Rotate |
-| Molette / Scroll | Zoom | Zoom |
-| Clic milieu + drag | Panoramique | Pan |
-| `M` | Muet / Son | Mute / Unmute |
-| `I` | Mode immersif (masque HUD) | Immersive mode (hide HUD) |
-| `Shift+Espace` | Super-immersif (masque tout) | Super-immersive (hide everything) |
-| `E` | Éditeur de direction artistique (LUT / cinématique / environnement) | Art-direction editor (LUT / cinematic / environment) |
-| `T` | Effets cinématiques on/off | Cinematic effects on/off |
+| `Z` `Q` `S` `D` + flèches | Déplacer la caméra | Move camera |
+| Clic gauche | Déplacer la caméra | Move camera |
+| Clic droit | Rotation caméra | Rotate camera |
+| Molette | Zoom | Zoom |
+| `R` | Réinitialiser la caméra | Reset camera |
+| `+` `-` | Zoomer / dézoomer | Zoom in / out |
+| `Ctrl+Z` | Annuler | Undo |
+| `Shift` | Accélère déplacement/zoom | Speeds up movement/zoom |
+| `E` | Personnalisation (éditeur LUT / cinématique / environnement) | Customization (LUT / cinematic / environment editor) |
+| `F` | HUD performances | Performance HUD |
+| `C` | Capture d'écran | Screenshot |
+| `G` | Galerie des captures | Snapshot gallery |
+| `Espace` | Mode immersif | Immersive mode |
+| `Shift+Espace` | Mode super-immersif | Super-immersive mode |
+| `M` | Muet | Mute |
+| `H` / `ESC` | Aide | Help |
 
 ---
 

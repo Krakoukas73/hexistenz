@@ -524,7 +524,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
           const dog = placeAnimal('animal-dog', ds, pos, GROUND_CLEARANCE, false, GROUND_CLEARANCE);
           if (!dog) continue;
           dog.name = 'village-animal-dog-glb';
-          dog.scale.multiplyScalar(0.88 + hashUnit(`${ds}:scale`) * 0.25);
+          dog.scale.multiplyScalar(0.792 + hashUnit(`${ds}:scale`) * 0.225); // −10 % depuis [0.88, 1.13] (2026-07-13)
           group.add(dog);
         }
       }
@@ -538,7 +538,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
         const horse = placeAnimal('animal-horse', seedHorse, pos, GROUND_CLEARANCE, true);
         if (horse) {
           horse.name = 'village-animal-horse-glb';
-          horse.scale.multiplyScalar(0.88 + hashUnit(`${seedHorse}:scale`) * 0.24);
+          horse.scale.multiplyScalar(0.748 + hashUnit(`${seedHorse}:scale`) * 0.204); // −15 % depuis [0.88, 1.12] (2026-07-13)
           group.add(horse);
         }
       }
@@ -646,7 +646,7 @@ export function createRoadsideVillageProps(placedTiles, specialBuildingSafeZones
           const dog = placeRailAnimal('animal-dog', cs, pos, GROUND_CLEARANCE, false);
           if (dog) {
             dog.name = 'village-animal-dog-glb';
-            dog.scale.multiplyScalar(0.88 + hashUnit(`${cs}:scale`) * 0.25);
+            dog.scale.multiplyScalar(0.792 + hashUnit(`${cs}:scale`) * 0.225); // −10 % depuis [0.88, 1.13] (2026-07-13)
             group.add(dog);
           }
         }

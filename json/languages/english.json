@@ -5,7 +5,7 @@
       "biomes": "Biomes",
       "missions": "Missions",
       "gameplay": "Gameplay",
-      "gallery": "Moods",
+      "gallery": "Presets",
       "creatures": "Creatures",
       "audio": "Audio",
       "daynnight": "Environment",
@@ -54,7 +54,7 @@
     "title": "Six biomes to connect",
     "sub": "Each tile has six triangular sectors. Match identical biomes to form zones and maximize your score.",
     "grass": {
-      "name": "Grassland",
+      "name": "Meadow",
       "desc": "Grassy expanses where every blade trembles in the wind, dotted with wildflowers, rocks, deer and shrubs. Neutral ground between major networks.",
       "tag": "Neutral biome"
     },
@@ -158,6 +158,7 @@
       "comet": "Comet intercepted",
       "bonus": "Bonus cell covered"
     },
+    "kbd_title": "KEYBOARD CONTROLS",
     "kbd": {
       "camera_label": "camera",
       "left_click_kbd": "Left click",
@@ -165,12 +166,19 @@
       "right_click_kbd": "Right click",
       "right_click_desc": "rotate camera",
       "wheel_kbd": "Wheel",
+      "space_kbd": "Space",
       "wheel_desc": "zoom",
       "reset_cam": "reset camera",
+      "zoom": "zoom in / out",
+      "shift_kbd": "SHIFT",
+      "speed_up": "speeds up movement/zoom",
       "undo": "undo",
       "customization": "customization",
       "perf_hud": "performance HUD",
+      "snapshot": "Screenshot",
+      "gallery": "Snapshot gallery",
       "immersive": "immersive mode",
+      "super_immersive": "super-immersive mode",
       "mute": "mute",
       "help": "help"
     }
@@ -233,7 +241,7 @@
       "forests_label": "Forests",
       "fields_label": "Wheat fields",
       "water_label": "Water",
-      "meadows_label": "Grasslands",
+      "meadows_label": "Meadows",
       "tags": {
         "village_women": "Village women",
         "village_men": "Village men",
@@ -365,6 +373,8 @@
       "Real-time sync · PHP + JSON backend",
       "The map grows collaboratively, tile by tile"
     ],
+    "gallery_title": "SHARE YOUR SNAPSHOTS",
+    "gallery_promo": "Immortalize your best games: the 📷 button captures the world with no HUD, and the 🖼️ button opens the shared server gallery, visible to every player",
     "btn_create": "Create a game",
     "room_title": "Room code",
     "room_status": "Game in progress · 3 players",
@@ -387,22 +397,28 @@
     "largest_zone": "largest zone",
     "biome_labels": {
       "forest": {
-        "en": "Forest"
+        "s": "tree",
+        "p": "trees"
       },
       "water": {
-        "en": "Water"
+        "s": "water",
+        "p": "water"
       },
       "house": {
-        "en": "Village"
+        "s": "house",
+        "p": "houses"
       },
       "field": {
-        "en": "Wheat field"
+        "s": "wheat field",
+        "p": "wheat fields"
       },
       "grass": {
-        "en": "Meadow"
+        "s": "meadow",
+        "p": "meadows"
       },
       "rail": {
-        "en": "Rail"
+        "s": "railway",
+        "p": "railways"
       }
     }
   },
@@ -411,7 +427,253 @@
     "github": "On GitHub"
   },
   "game": {
+    "gallery": {
+      "title": "Screenshot gallery",
+      "empty": "No screenshots yet. Press 📷 in-game to take one.",
+      "close": "Close",
+      "loading": "Loading…",
+      "tilesCount": "Game with {n} tiles",
+      "modeBouliste": "Globe mode",
+      "modePlatiste": "Flat mode",
+      "captured": "Snapshot taken!"
+    },
+    "eda": {
+      "mainTitle": "Art direction editor",
+      "ambiances": "PRESETS",
+      "tabs": { "lut": "LUT", "cinematic": "Cinematic", "environment": "Environment" },
+      "headers": {
+        "lutFog": "1. Fog",
+        "lutSun": "2. Light source",
+        "lutGrading": "3. Grading",
+        "lutPalette": "4. Biome palette",
+        "cinema1": "1. CINEMATIC",
+        "godRays": "2. God Rays",
+        "tiltShift": "3. Tilt-shift",
+        "bloom": "4. Bloom",
+        "pixelisation": "5. PIXELIZATION",
+        "crt": "6. SCREEN CURVATURE",
+        "nuages": "3. CLOUDS",
+        "vent": "4. WIND",
+        "worldShape": "5. World shape",
+        "dayNight": "6. Day / Night",
+        "quality": "7. Quality / density",
+        "weather": "8. Weather",
+        "waterFoam": "1. Foam",
+        "waterWake": "2. Boat wake",
+        "windWheat": "4.1 Wheat blades",
+        "windGrass": "4.2 Grass blades",
+        "windTree": "4.3 Trees"
+      },
+      "toggleTitles": {
+        "lutGrading": "Enable / disable grading",
+        "lutPalette": "Enable / disable biome palette",
+        "cinema1": "Enable / disable cinematic effects",
+        "godRays": "Enable / disable god rays",
+        "tiltShift": "Enable / disable tilt-shift",
+        "bloom": "Enable / disable bloom",
+        "pixelisation": "Enable / disable pixelization",
+        "crt": "Enable / disable screen curvature",
+        "nuages": "Enable / disable clouds",
+        "vent": "Enable / disable all wind (wheat, grass, trees)",
+        "worldShape": "Switch between spherical (globe) and flat world",
+        "dayNight": "Switch between day and night",
+        "waterFoam": "Enable / disable foam",
+        "waterWake": "Enable / disable boat wake"
+      },
+      "modeActuel": "Current mode",
+      "preregalages": "Presets",
+      "presetNames": {
+        "default": "Default",
+        "mist": "Mist",
+        "autumn": "Autumn",
+        "summerVivid": "Vivid summer",
+        "winter": "Winter",
+        "sepia": "Sepia",
+        "nordic": "Nordic",
+        "desert": "Desert",
+        "pong": "Pong",
+        "appleII": "Apple II",
+        "cga": "CGA",
+        "ega": "EGA",
+        "amiga": "Amiga",
+        "psyche": "Psychedelic"
+      },
+      "modes": {
+        "bouliste": "Globe",
+        "platiste": "Flat",
+        "jour": "Day",
+        "nuit": "Night"
+      },
+      "quality": {
+        "faible": "Low",
+        "moyen": "Medium",
+        "eleve": "High",
+        "max": "Max"
+      },
+      "qualityTooltip": "{label} density ({value})",
+      "weatherStopAll": "⏹ Stop all",
+      "weatherStopAllTitle": "Stops all currently running environmental events",
+      "weatherGroups": {
+        "morningMist": "🌫️ Morning mist",
+        "fireflies": "✨ Fireflies",
+        "clouds": "☁️ Rain clouds",
+        "rain": "🌧️ Rain",
+        "storm": "⛈️ Storm",
+        "lightning": "⚡ Lightning",
+        "fire": "🔥 Fire",
+        "panic": "🐑 Animal panic"
+      },
+      "weatherRequires": "(requires {label})",
+      "weatherSwitchTitle": "Enable / disable",
+      "weatherCloudsSwitchTitle": "Enable / disable clouds",
+      "weatherResetTitle": "Reset",
+      "presetTooltipApply": "Apply the \"{name}\" preset",
+      "presetTooltipDefault": "Return to default values",
+      "footer": {
+        "copy": "📋 Copy",
+        "copyTitle": "Copy all current LUT + PIX + WATER + CINEMA + WIND + CLOUDS + World shape + Day/Night + Density + Weather settings as JSON (basis for a future ambiance preset with pre-configured weather effects)",
+        "copied": "✓ Copied!",
+        "undo": "↩ Undo",
+        "undoTitle": "Undo the last change",
+        "redo": "↪ Redo",
+        "redoTitle": "Redo the undone change",
+        "reset": "Reset",
+        "resetTitle": "Reset to default values",
+        "compare": "Compare",
+        "compareBack": "⟳ Back",
+        "compareTitle": "Toggle between current settings and the last applied preset",
+        "lastPresetTitle": "Last applied preset"
+      },
+      "labels": {
+        "environment": {
+          "fogDensity": "Expon. density",
+          "fogNear": "Start (linear)",
+          "fogFar": "End (linear)",
+          "skyColor": "Sky",
+          "fogColor": "Fog color",
+          "domeColorTop": "Dome top",
+          "domeColorBottom": "Dome bottom"
+        },
+        "renderer": { "toneMappingExposure": "Global exposure" },
+        "lights": {
+          "hemisphereIntensity": "Hemisphere intensity",
+          "sunIntensity": "Intensity",
+          "sunOrbitRadius": "Orbit radius",
+          "sunOrbitHeight": "Orbit height",
+          "sunOrbitSpeed": "Orbit speed",
+          "sunVisualScale": "Size",
+          "fillIntensity": "Fill light",
+          "hemisphereSkyColor": "Hemisphere sky",
+          "hemisphereGroundColor": "Hemisphere ground",
+          "sunColor": "Sun",
+          "fillColor": "Fill"
+        },
+        "grading": {
+          "brightness": "Brightness",
+          "contrast": "Contrast",
+          "saturation": "Saturation",
+          "vibrance": "Vibrance",
+          "hue": "Hue shift",
+          "gamma": "Gamma",
+          "blackLevel": "Black levels",
+          "whiteLevel": "White levels",
+          "red": "Red channel",
+          "green": "Green channel",
+          "blue": "Blue channel",
+          "redCurve": "Red curve",
+          "greenCurve": "Green curve",
+          "blueCurve": "Blue curve"
+        },
+        "palette": {
+          "strength": "Palette strength",
+          "saturation": "Saturation",
+          "contrast": "Contrast",
+          "warmShift": "Warm / cool",
+          "targets": {
+            "field": "Fields",
+            "forest": "Forests",
+            "grass": "Meadows",
+            "house": "Villages",
+            "rail": "Railways",
+            "water": "Water"
+          }
+        },
+        "water": {
+          "foamWidth": "Reach",
+          "foamScale": "Fineness",
+          "foamDensity": "Shore density",
+          "foamAmbient": "Surface",
+          "foamSharp": "Sharpness",
+          "foamSpeed": "Speed",
+          "deepDistance": "Gradient — reach",
+          "opacity": "Water — opacity"
+        },
+        "wake": {
+          "armWidth": "Branch width",
+          "spread": "V spread",
+          "length": "Length",
+          "scale": "Fineness",
+          "density": "Density",
+          "opacity": "Opacity"
+        },
+        "wind": {
+          "wheat": { "strength": "Amplitude", "speed": "Speed" },
+          "grass": { "strength": "Amplitude", "speed": "Speed", "sway": "Sway" },
+          "tree": {
+            "strength": "Amplitude",
+            "speed": "Speed",
+            "frequency": "Frequency",
+            "turbulence": "Turbulence",
+            "gustStrength": "Gusts",
+            "detailStrength": "Detail"
+          }
+        },
+        "cloud": { "coverage": "Coverage", "scale": "Pattern scale", "speed": "Drift speed" },
+        "quality": { "density": "Density" },
+        "cin": {
+          "vignette": "Vignette",
+          "grain": "Film grain",
+          "chromatic": "Chromatic aberration",
+          "halation": "Halation",
+          "barrel": "Barrel distortion",
+          "scanLines": "Scan lines",
+          "scanLinesIntensity": "Scanline intensity",
+          "godRays": "Intensity",
+          "godRaysLength": "Length",
+          "godRaysDiffusion": "Diffusion",
+          "godRaysThreshold": "Brightness threshold",
+          "godRaysLayers": "Layering",
+          "tilt": "Intensity",
+          "focusCenter": "Focus center",
+          "focusBand": "Sharp zone",
+          "bloomIntensity": "Intensity",
+          "bloomThreshold": "Threshold",
+          "bloomRadius": "Radius",
+          "bloomSoftness": "Softness",
+          "crtCurvature": "Screen curvature",
+          "crtMask": "Black edges",
+          "crtCornerDark": "CRT corner darkening"
+        },
+        "pix": {
+          "pixelSize": "Radius (pixels)",
+          "normalEdge": "Relief outline",
+          "depthEdge": "Depth outline"
+        },
+        "vfx": {
+          "mist": { "densite": "Density", "compacite": "Compactness", "elevation": "Elevation" },
+          "fireflies": { "densite": "Density", "taille": "Size", "vagabondage": "Wandering", "scintillement": "Flicker" },
+          "rain": { "densite": "Density", "tailleGoutte": "Drop size", "impactSol": "Ground impact" },
+          "cloud": { "densite": "Density", "altitude": "Altitude", "epaisseur": "Thickness" },
+          "storm": { "frequenceEclairs": "Lightning frequency", "luminositeEclair": "Lightning brightness", "intensitePluie": "Rain intensity" }
+        }
+      }
+    },
     "help": {
+      "topbar.fps": "Show/hide the advanced performance HUD",
+      "topbar.eda": "Open or close the rendering panel",
+      "topbar.snapshot": "Screenshot (no HUD), saved on the server",
+      "topbar.gallery": "Screenshot gallery",
+      "topbar.lang": "Language",
       "renderer.toneMappingExposure": "Global renderer exposure (ACESFilmic). Controls how much light reaches the \"sensor\" before any grading.\nValues < 1 darken the whole scene, > 2 can blow out highlights.\nTypical: 1.2–1.8 for a natural look.",
       "environment.fogDensity": "Density of the exponential fog (FogExp2). Only active when \"Linear Far\" is at 0.\nVisibility drops off very quickly: at 0.07 the scene is almost opaque.\nFor a controlled visual range, prefer linear mode via \"Near\" and \"Far\".",
       "environment.fogNear": "Distance in 3D units where linear fog begins.\nAs soon as \"Far\" > 0, automatically switches from FogExp2 to THREE.Fog(near, far).\nAt 0: fog starts right in the foreground. At 5: nearby objects stay sharp.",
@@ -738,7 +1000,14 @@
           "wheelZoomRotate": "Zoom or rotate if available",
           "rightClick": "Rotate the camera",
           "perfHud": "Show / hide the FPS HUD",
-          "eda": "Show / hide the EDA HUD"
+          "eda": "Show / hide the EDA HUD",
+          "snapshot": "Take a screenshot",
+          "gallery": "Open the snapshot gallery",
+          "wheelKbd": "Wheel",
+          "leftClickKbd": "Left click",
+          "rightClickKbd": "Right click",
+          "spaceKbd": "SPACE",
+          "shiftSpaceKbd": "SHIFT+SPACE"
         }
       }
     },

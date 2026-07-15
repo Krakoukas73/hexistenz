@@ -4,17 +4,9 @@
 // 'hexistenz_pres_lang'). Repli FR en dur à chaque site d'appel : ce sont des
 // messages affichés pendant l'enregistrement du score (chemin critique), on
 // évite un texte vide si le fetch échoue.
-function getGameLang() {
-  try {
-    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
-  } catch {
-    return 'fr';
-  }
-}
+import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
 
-const _langFile = getGameLang() === 'en' ? 'english' : 'french';
-
-import { registerLangRefresh } from './gameLangReactive.js';
+const _langFile = getLangFile();
 
 // `const` volontairement conservé, objet muté en place au changement de langue
 // en jeu (cf. gameLangReactive.js / CONTEXT.md §21) : ces messages sont lus à

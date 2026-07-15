@@ -13,7 +13,13 @@ import { getContentDensity, setContentDensity, MIN_DENSITY, MAX_DENSITY } from '
 import { ENVIRONMENT_EVENTS, onEnvironmentChange, triggerEnvironmentEvent, stopEnvironmentEvent, stopAllEnvironmentEvents, isEnvironmentEventActive } from './environmentDirector.js';
 import { getVfxSettings, setVfxSetting, resetVfxSettings, onVfxSettingsChange, isVfxGroupExpanded, setVfxGroupExpanded } from './vfxSettings.js';
 import { escapeHtml } from './domUtils.js';
-import { registerLangRefresh } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { applyCurrentLang } from './gameHudI18n.js';
+
+// Panneau EDA traduit le 2026-07-14 (signalé non connecté par l'utilisateur) : tout
+// le panneau (rubriques, libellés de sliders, boutons, tooltips) était en français
+// en dur depuis toujours. Passage au même mécanisme générique que game.php
+// (gameHudI18n.js) : data-i18n / data-i18n-title, sous la clé JSON game.eda.
 
 // ─── edaPanelWiring.js (ex-hud_eda.js, renommé le 2026-07-11) — extrait de debugLightUi.js
 // (2026-07-02, façade elle-même renommée edaPanelHost.js le 2026-07-11) ───
@@ -276,6 +282,7 @@ function loadLutConfig() {
 // ─── Sections LUT — sliders + couleurs regroupés par thème ─────────────────
 const LUT_SECTIONS = [
   {
+    key: 'lutFog',
     label: '🌫️ 1. Brouillard',
     sliders: [
       ['environment.fogDensity', 'Densité expon.',  0.000, 0.500, 0.001],
@@ -290,6 +297,7 @@ const LUT_SECTIONS = [
     ]
   },
   {
+    key: 'lutSun',
     label: '💡 2. Astre lumineux',
     sliders: [
       ['renderer.toneMappingExposure', 'Exposition globale', 0.05, 6.00, 0.01],
@@ -309,6 +317,7 @@ const LUT_SECTIONS = [
     ]
   },
   {
+    key: 'lutGrading',
     label: '🎚️ 3. Étalonnage',
     toggleId: 'debugGradingEnabled',
     togglePath: 'grading.enabled',
@@ -330,6 +339,7 @@ const LUT_SECTIONS = [
     ]
   },
   {
+    key: 'lutPalette',
     label: '🎨 4. Palette biomes',
     toggleId: 'debugPaletteEnabled',
     togglePath: 'palette.enabled',
@@ -363,25 +373,29 @@ const VISUAL_PRESETS = await fetch('./json/ambiances.json')
 // Passage bilingue FR/EN le 2026-07-12 : mini-HUD clavier (bas d'écran), textes
 // sous json/languages/{french,english}.json (clé game.kbdHint), même mécanisme
 // que les autres modules (top-level await + localStorage 'hexistenz_pres_lang').
-function _getGameLang() {
-  try {
-    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
-  } catch {
-    return 'fr';
-  }
-}
-const _edaLangFile = _getGameLang() === 'en' ? 'english' : 'french';
+const _edaLangFile = getLangFile();
 // `let` (pas `const`) : ce texte est baké UNE FOIS dans le DOM du mini-HUD clavier
 // (kbdHint.innerHTML, plus bas) au lieu d'être relu à chaque frame — il faut donc
 // à la fois réassigner la variable ET repousser la nouvelle valeur dans le DOM déjà
 // créé quand la langue change en jeu (cf. registerLangRefresh ci-dessous).
-let _kbdHintText = await fetch(`./json/languages/${_edaLangFile}.json`)
-  .then(r => r.json())
-  .then(data => data?.game?.kbdHint ?? '')
-  .catch(err => {
-    console.error(`[edaPanelWiring] Impossible de charger ${_edaLangFile}.json`, err);
-    return '';
-  });
+let _kbdHintText = '';
+// Textes du panneau EDA nécessitant une substitution ({name}/{label}/{value}) ou un
+// état transitoire (bouton Comparer/⟳ Retour, confirmation "✓ Copié !") : le moteur
+// générique data-i18n (gameHudI18n.js) ne fait qu'un simple remplacement de texte, pas
+// de templating — ces quelques chaînes calculées à la volée restent donc lues ici,
+// dans un objet `const` muté en place (même convention que les autres modules).
+const _edaText = {};
+
+{
+  const _langData = await fetch(`./json/languages/${_edaLangFile}.json`)
+    .then(r => r.json())
+    .catch(err => {
+      console.error(`[edaPanelWiring] Impossible de charger ${_edaLangFile}.json`, err);
+      return {};
+    });
+  _kbdHintText = _langData?.game?.kbdHint ?? '';
+  Object.assign(_edaText, _langData?.game?.eda ?? {});
+}
 
 registerLangRefresh((data) => {
   _kbdHintText = data?.game?.kbdHint ?? '';
@@ -389,6 +403,8 @@ registerLangRefresh((data) => {
   if (kbdHintEl) {
     kbdHintEl.innerHTML = _kbdHintText || 'H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif';
   }
+  for (const k of Object.keys(_edaText)) delete _edaText[k];
+  Object.assign(_edaText, data?.game?.eda ?? {});
 });
 
 // ─── Markup — contenu de .debug-light-body, extrait du template racine ─────
@@ -396,19 +412,19 @@ registerLangRefresh((data) => {
 // edaPanelHost.js, qui assemble .debug-light-left-col + EDA_BODY_HTML dans le même root.)
 export const EDA_BODY_HTML = `
     <div class="debug-light-body">
-      <div class="debug-light-main-title">Éditeur de direction artistique</div>
+      <div class="debug-light-main-title" data-i18n="game.eda.mainTitle">Éditeur de direction artistique</div>
 
       <div class="debug-light-header">
-        <div class="debug-light-presets-label"><span class="rubrique-emoji">🎨</span> AMBIANCES</div>
+        <div class="debug-light-presets-label"><span class="rubrique-emoji">🎨</span> <span data-i18n="game.eda.ambiances">AMBIANCES</span></div>
         <div id="debugLightPresets" class="debug-light-presets"></div>
       </div><!-- /.debug-light-header -->
 
       <div class="debug-light-pix-sep"></div>
 
       <div class="debug-light-tabs" role="tablist">
-        <button type="button" class="debug-light-tab-btn" data-tab="1" role="tab">LUT</button>
-        <button type="button" class="debug-light-tab-btn" data-tab="2" role="tab">Cinématique</button>
-        <button type="button" class="debug-light-tab-btn" data-tab="3" role="tab">Environnement</button>
+        <button type="button" class="debug-light-tab-btn" data-tab="1" role="tab" data-i18n="game.eda.tabs.lut">LUT</button>
+        <button type="button" class="debug-light-tab-btn" data-tab="2" role="tab" data-i18n="game.eda.tabs.cinematic">Cinématique</button>
+        <button type="button" class="debug-light-tab-btn" data-tab="3" role="tab" data-i18n="game.eda.tabs.environment">Environnement</button>
       </div><!-- /.debug-light-tabs -->
 
       <div class="debug-light-tab-panels">
@@ -422,44 +438,44 @@ export const EDA_BODY_HTML = `
 
       <div class="debug-light-cinema-section">
         <div class="debug-light-pix-head">
-          <span><span class="rubrique-emoji">🎬</span> 1. CINÉMATIQUE</span>
-          <label class="pix-switch" title="Activer / désactiver les effets cinématiques">
+          <span><span class="rubrique-emoji">🎬</span> <span data-i18n="game.eda.headers.cinema1">1. CINÉMATIQUE</span></span>
+          <label class="pix-switch" data-i18n-title="game.eda.toggleTitles.cinema1" title="Activer / désactiver les effets cinématiques">
             <input id="cinEnabled" type="checkbox" />
             <span></span>
           </label>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.vignette">Vignette</span>
+          <span data-help="cin.vignette" data-i18n="game.eda.labels.cin.vignette">Vignette</span>
           <input id="cinVignette" type="range" min="0" max="2" step="0.01" />
           <output id="cinVignetteValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.grain">Grain film</span>
+          <span data-help="cin.grain" data-i18n="game.eda.labels.cin.grain">Grain film</span>
           <input id="cinGrain" type="range" min="0" max="1" step="0.01" />
           <output id="cinGrainValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.chromatic">Aberration chr.</span>
+          <span data-help="cin.chromatic" data-i18n="game.eda.labels.cin.chromatic">Aberration chr.</span>
           <input id="cinChromatic" type="range" min="0" max="1" step="0.01" />
           <output id="cinChromaticValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.halation">Halation</span>
+          <span data-help="cin.halation" data-i18n="game.eda.labels.cin.halation">Halation</span>
           <input id="cinHalation" type="range" min="0" max="1" step="0.01" />
           <output id="cinHalationValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.barrel">Distorsion barillet</span>
+          <span data-help="cin.barrel" data-i18n="game.eda.labels.cin.barrel">Distorsion barillet</span>
           <input id="cinBarrel" type="range" min="0" max="1" step="0.01" />
           <output id="cinBarrelValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.scanLines">Scan lines</span>
+          <span data-help="cin.scanLines" data-i18n="game.eda.labels.cin.scanLines">Scan lines</span>
           <input id="cinScanLines" type="range" min="0" max="6" step="1" />
           <output id="cinScanLinesValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.scanLinesIntensity">Intensité scanlines</span>
+          <span data-help="cin.scanLinesIntensity" data-i18n="game.eda.labels.cin.scanLinesIntensity">Intensité scanlines</span>
           <input id="cinScanLinesIntensity" type="range" min="0" max="1" step="0.01" />
           <output id="cinScanLinesIntensityValue"></output>
         </div>
@@ -467,35 +483,35 @@ export const EDA_BODY_HTML = `
 
       <div class="debug-light-cinema-section">
         <div class="debug-light-pix-head">
-          <span>${_emojiHeadHtml('🌅 2. God Rays')}</span>
-          <label class="pix-switch" title="Activer / désactiver les god rays">
+          <span>${_emojiHeadHtml('🌅 2. God Rays', 'game.eda.headers.godRays')}</span>
+          <label class="pix-switch" data-i18n-title="game.eda.toggleTitles.godRays" title="Activer / désactiver les god rays">
             <input id="godRaysEnabled" type="checkbox" />
             <span></span>
           </label>
         </div>
         <div class="debug-light-subgroup" id="godRaysRows">
         <div class="debug-light-row">
-          <span data-help="cin.godRays">Intensité</span>
+          <span data-help="cin.godRays" data-i18n="game.eda.labels.cin.godRays">Intensité</span>
           <input id="cinGodRays" type="range" min="0" max="1" step="0.01" />
           <output id="cinGodRaysValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.godRaysLength">Longueur</span>
+          <span data-help="cin.godRaysLength" data-i18n="game.eda.labels.cin.godRaysLength">Longueur</span>
           <input id="cinGodRaysLength" type="range" min="0" max="1" step="0.01" />
           <output id="cinGodRaysLengthValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.godRaysDiffusion">Diffusion</span>
+          <span data-help="cin.godRaysDiffusion" data-i18n="game.eda.labels.cin.godRaysDiffusion">Diffusion</span>
           <input id="cinGodRaysDiffusion" type="range" min="0" max="1" step="0.01" />
           <output id="cinGodRaysDiffusionValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.godRaysThreshold">Seuil luminosité</span>
+          <span data-help="cin.godRaysThreshold" data-i18n="game.eda.labels.cin.godRaysThreshold">Seuil luminosité</span>
           <input id="cinGodRaysThreshold" type="range" min="0" max="1" step="0.01" />
           <output id="cinGodRaysThresholdValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.godRaysLayers">Feuilletage</span>
+          <span data-help="cin.godRaysLayers" data-i18n="game.eda.labels.cin.godRaysLayers">Feuilletage</span>
           <input id="cinGodRaysLayers" type="range" min="0" max="1" step="0.01" />
           <output id="cinGodRaysLayersValue"></output>
         </div>
@@ -504,25 +520,25 @@ export const EDA_BODY_HTML = `
 
       <div class="debug-light-cinema-section">
         <div class="debug-light-pix-head">
-          <span>${_emojiHeadHtml('🎞️ 3. Tilt-shift')}</span>
-          <label class="pix-switch" title="Activer / désactiver le tilt-shift">
+          <span>${_emojiHeadHtml('🎞️ 3. Tilt-shift', 'game.eda.headers.tiltShift')}</span>
+          <label class="pix-switch" data-i18n-title="game.eda.toggleTitles.tiltShift" title="Activer / désactiver le tilt-shift">
             <input id="tiltShiftEnabled" type="checkbox" />
             <span></span>
           </label>
         </div>
         <div class="debug-light-subgroup" id="tiltShiftRows">
         <div class="debug-light-row">
-          <span data-help="cin.tilt">Intensité</span>
+          <span data-help="cin.tilt" data-i18n="game.eda.labels.cin.tilt">Intensité</span>
           <input id="cinTilt" type="range" min="0" max="1" step="0.01" />
           <output id="cinTiltValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.focusCenter">Centre focus</span>
+          <span data-help="cin.focusCenter" data-i18n="game.eda.labels.cin.focusCenter">Centre focus</span>
           <input id="cinFocusCenter" type="range" min="0" max="1" step="0.01" />
           <output id="cinFocusCenterValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.focusBand">Zone nette</span>
+          <span data-help="cin.focusBand" data-i18n="game.eda.labels.cin.focusBand">Zone nette</span>
           <input id="cinFocusBand" type="range" min="0" max="1" step="0.01" />
           <output id="cinFocusBandValue"></output>
         </div>
@@ -531,30 +547,30 @@ export const EDA_BODY_HTML = `
 
       <div class="debug-light-cinema-section">
         <div class="debug-light-pix-head">
-          <span>${_emojiHeadHtml('✨ 4. Bloom')}</span>
-          <label class="pix-switch" title="Activer / désactiver le bloom">
+          <span>${_emojiHeadHtml('✨ 4. Bloom', 'game.eda.headers.bloom')}</span>
+          <label class="pix-switch" data-i18n-title="game.eda.toggleTitles.bloom" title="Activer / désactiver le bloom">
             <input id="bloomEnabled" type="checkbox" />
             <span></span>
           </label>
         </div>
         <div class="debug-light-subgroup" id="bloomRows">
         <div class="debug-light-row">
-          <span data-help="cin.bloomIntensity">Intensité</span>
+          <span data-help="cin.bloomIntensity" data-i18n="game.eda.labels.cin.bloomIntensity">Intensité</span>
           <input id="cinBloomIntensity" type="range" min="0" max="2" step="0.01" />
           <output id="cinBloomIntensityValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.bloomThreshold">Seuil</span>
+          <span data-help="cin.bloomThreshold" data-i18n="game.eda.labels.cin.bloomThreshold">Seuil</span>
           <input id="cinBloomThreshold" type="range" min="0" max="1" step="0.01" />
           <output id="cinBloomThresholdValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.bloomRadius">Rayon</span>
+          <span data-help="cin.bloomRadius" data-i18n="game.eda.labels.cin.bloomRadius">Rayon</span>
           <input id="cinBloomRadius" type="range" min="0" max="8" step="0.1" />
           <output id="cinBloomRadiusValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.bloomSoftness">Douceur</span>
+          <span data-help="cin.bloomSoftness" data-i18n="game.eda.labels.cin.bloomSoftness">Douceur</span>
           <input id="cinBloomSoftness" type="range" min="0" max="1" step="0.01" />
           <output id="cinBloomSoftnessValue"></output>
         </div>
@@ -563,24 +579,24 @@ export const EDA_BODY_HTML = `
 
       <div class="debug-light-pix-section">
         <div class="debug-light-pix-head">
-          <span><span class="rubrique-emoji">👾</span> 5. PIXELISATION</span>
-          <label class="pix-switch" title="Activer / désactiver la pixelisation">
+          <span><span class="rubrique-emoji">👾</span> <span data-i18n="game.eda.headers.pixelisation">5. PIXELISATION</span></span>
+          <label class="pix-switch" data-i18n-title="game.eda.toggleTitles.pixelisation" title="Activer / désactiver la pixelisation">
             <input id="pixEnabled" type="checkbox" />
             <span></span>
           </label>
         </div>
         <div class="debug-light-row">
-          <span data-help="pix.pixelSize">Rayon (pixels)</span>
+          <span data-help="pix.pixelSize" data-i18n="game.eda.labels.pix.pixelSize">Rayon (pixels)</span>
           <input id="pixPixelSize" type="range" min="1" max="50" step="1" />
           <output id="pixPixelSizeValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="pix.normalEdge">Contour relief</span>
+          <span data-help="pix.normalEdge" data-i18n="game.eda.labels.pix.normalEdge">Contour relief</span>
           <input id="pixNormalEdge" type="range" min="0" max="1" step="0.01" />
           <output id="pixNormalEdgeValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="pix.depthEdge">Contour profondeur</span>
+          <span data-help="pix.depthEdge" data-i18n="game.eda.labels.pix.depthEdge">Contour profondeur</span>
           <input id="pixDepthEdge" type="range" min="0" max="1" step="0.01" />
           <output id="pixDepthEdgeValue"></output>
         </div>
@@ -588,24 +604,24 @@ export const EDA_BODY_HTML = `
 
       <div class="debug-light-crt-section">
         <div class="debug-light-pix-head">
-          <span><span class="rubrique-emoji">📺</span> 6. COURBURE ÉCRAN</span>
-          <label class="pix-switch" title="Activer / désactiver la courbure écran">
+          <span><span class="rubrique-emoji">📺</span> <span data-i18n="game.eda.headers.crt">6. COURBURE ÉCRAN</span></span>
+          <label class="pix-switch" data-i18n-title="game.eda.toggleTitles.crt" title="Activer / désactiver la courbure écran">
             <input id="crtEnabled" type="checkbox" />
             <span></span>
           </label>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.crtCurvature">Courbure écran</span>
+          <span data-help="cin.crtCurvature" data-i18n="game.eda.labels.cin.crtCurvature">Courbure écran</span>
           <input id="cinCrtCurvature" type="range" min="0" max="1" step="0.01" />
           <output id="cinCrtCurvatureValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.crtMask">Bords noirs</span>
+          <span data-help="cin.crtMask" data-i18n="game.eda.labels.cin.crtMask">Bords noirs</span>
           <input id="cinCrtMask" type="range" min="0" max="1" step="0.01" />
           <output id="cinCrtMaskValue"></output>
         </div>
         <div class="debug-light-row">
-          <span data-help="cin.crtCornerDark">Assombr. coins CRT</span>
+          <span data-help="cin.crtCornerDark" data-i18n="game.eda.labels.cin.crtCornerDark">Assombr. coins CRT</span>
           <input id="cinCrtCornerDark" type="range" min="0" max="1" step="0.01" />
           <output id="cinCrtCornerDarkValue"></output>
         </div>
@@ -623,8 +639,8 @@ export const EDA_BODY_HTML = `
 
       <div class="debug-light-cloud-section">
         <div class="debug-light-pix-head">
-          <span><span class="rubrique-emoji">☁️</span> 3. NUAGES</span>
-          <label class="pix-switch" title="Activer / désactiver les nuages">
+          <span><span class="rubrique-emoji">☁️</span> <span data-i18n="game.eda.headers.nuages">3. NUAGES</span></span>
+          <label class="pix-switch" data-i18n-title="game.eda.toggleTitles.nuages" title="Activer / désactiver les nuages">
             <input id="cloudEnabled" type="checkbox" />
             <span></span>
           </label>
@@ -634,8 +650,8 @@ export const EDA_BODY_HTML = `
 
       <div class="debug-light-wind-section">
         <div class="debug-light-pix-head">
-          <span><span class="rubrique-emoji">🌬️</span> 4. VENT</span>
-          <label class="pix-switch" title="Activer / désactiver tous les vents (blé, prairie, arbres)">
+          <span><span class="rubrique-emoji">🌬️</span> <span data-i18n="game.eda.headers.vent">4. VENT</span></span>
+          <label class="pix-switch" data-i18n-title="game.eda.toggleTitles.vent" title="Activer / désactiver tous les vents (blé, prairie, arbres)">
             <input id="windEnabled" type="checkbox" />
             <span></span>
           </label>
@@ -645,44 +661,44 @@ export const EDA_BODY_HTML = `
 
       <div class="debug-light-worldshape-section">
         <div class="debug-light-pix-head">
-          <span><span class="rubrique-emoji">🌐</span> 5. Forme du monde</span>
-          <label class="pix-switch" title="Basculer entre monde bouliste (sphère) et platiste (plat)">
+          <span><span class="rubrique-emoji">🌐</span> <span data-i18n="game.eda.headers.worldShape">5. Forme du monde</span></span>
+          <label class="pix-switch" data-i18n-title="game.eda.toggleTitles.worldShape" title="Basculer entre monde bouliste (sphère) et platiste (plat)">
             <input id="worldShapeToggle" type="checkbox" />
             <span></span>
           </label>
         </div>
         <div class="debug-light-row">
-          <span data-help="pix.worldShape">Mode actuel</span>
+          <span data-help="pix.worldShape" data-i18n="game.eda.modeActuel">Mode actuel</span>
           <output id="worldShapeModeLabel" style="grid-column: 3;"></output>
         </div>
       </div>
 
       <div class="debug-light-daynight-section">
         <div class="debug-light-pix-head">
-          <span><span class="rubrique-emoji">🌓</span> 6. Jour / Nuit</span>
-          <label class="pix-switch" title="Basculer entre jour et nuit">
+          <span><span class="rubrique-emoji">🌓</span> <span data-i18n="game.eda.headers.dayNight">6. Jour / Nuit</span></span>
+          <label class="pix-switch" data-i18n-title="game.eda.toggleTitles.dayNight" title="Basculer entre jour et nuit">
             <input id="dayNightToggle" type="checkbox" />
             <span></span>
           </label>
         </div>
         <div class="debug-light-row">
-          <span data-help="env.dayNight">Mode actuel</span>
+          <span data-help="env.dayNight" data-i18n="game.eda.modeActuel">Mode actuel</span>
           <output id="dayNightModeLabel" style="grid-column: 3;"></output>
         </div>
       </div>
 
       <div class="debug-light-quality-section">
         <div class="debug-light-pix-head">
-          <span><span class="rubrique-emoji">🎚️</span> 7. Qualité / densité</span>
+          <span><span class="rubrique-emoji">🎚️</span> <span data-i18n="game.eda.headers.quality">7. Qualité / densité</span></span>
         </div>
-        <div class="debug-light-presets-label" style="margin-top:10px;">Préréglages</div>
+        <div class="debug-light-presets-label" style="margin-top:10px;" data-i18n="game.eda.preregalages">Préréglages</div>
         <div id="debugLightQualityPresets" class="debug-light-presets"></div>
         <div id="debugLightQualityControls"></div>
       </div>
 
       <div class="debug-light-weather-section">
         <div class="debug-light-pix-head">
-          <span><span class="rubrique-emoji">🌦️</span> 8. Météo</span>
+          <span><span class="rubrique-emoji">🌦️</span> <span data-i18n="game.eda.headers.weather">8. Météo</span></span>
         </div>
         <!-- Refonte 2026-07-12 (livraison Cyril « nuages metaball + pluie + impacts ») :
              UN seul host pour tous les items VFX + évènements (brume, lucioles, nuages,
@@ -690,7 +706,7 @@ export const EDA_BODY_HTML = `
              (si applicable) ses sliders — cf. wireEdaPanel::vfxGroups. Le bouton
              "⏹ Tout arrêter" reste en fin de rubrique pour couper tous les évènements. -->
         <div id="debugLightVfxControls"></div>
-        <button type="button" id="debugLightWeatherStopAll" class="debug-light-weather-stopall" title="Arrête tous les évènements environnementaux en cours">⏹ Tout arrêter</button>
+        <button type="button" id="debugLightWeatherStopAll" class="debug-light-weather-stopall" data-i18n="game.eda.weatherStopAll" data-i18n-title="game.eda.weatherStopAllTitle" title="Arrête tous les évènements environnementaux en cours">⏹ Tout arrêter</button>
       </div>
 
       </div><!-- /.debug-light-columns -->
@@ -703,14 +719,14 @@ export const EDA_BODY_HTML = `
       <div class="debug-light-footer">
         <div class="debug-light-export">
           <div class="debug-light-export-row">
-            <button id="debugLightCopy" type="button" title="Copier tous les paramètres LUT + PIX + EAU + CINÉMA + VENT + NUAGES + Forme du monde + Jour/Nuit + Densité + Météo courants en JSON (base pour un futur preset d'ambiance intégrant des effets météo pré-configurés)">📋 Copier</button>
-            <button id="debugLightUndo" type="button" disabled title="Annuler la dernière modification (Undo)">↩ Undo</button>
-            <button id="debugLightRedo" type="button" disabled title="Rétablir la modification annulée (Redo)">↪ Redo</button>
-            <button id="debugLightReset" type="button" title="Réinitialiser aux valeurs par défaut">Reset</button>
+            <button id="debugLightCopy" type="button" data-i18n="game.eda.footer.copy" data-i18n-title="game.eda.footer.copyTitle" title="Copier tous les paramètres LUT + PIX + EAU + CINÉMA + VENT + NUAGES + Forme du monde + Jour/Nuit + Densité + Météo courants en JSON (base pour un futur preset d'ambiance intégrant des effets météo pré-configurés)">📋 Copier</button>
+            <button id="debugLightUndo" type="button" disabled data-i18n="game.eda.footer.undo" data-i18n-title="game.eda.footer.undoTitle" title="Annuler la dernière modification (Undo)">↩ Undo</button>
+            <button id="debugLightRedo" type="button" disabled data-i18n="game.eda.footer.redo" data-i18n-title="game.eda.footer.redoTitle" title="Rétablir la modification annulée (Redo)">↪ Redo</button>
+            <button id="debugLightReset" type="button" data-i18n="game.eda.footer.reset" data-i18n-title="game.eda.footer.resetTitle" title="Réinitialiser aux valeurs par défaut">Reset</button>
           </div>
           <div class="debug-light-export-row">
-            <button id="debugLightCompare" type="button" disabled title="Basculer entre paramètres courants et dernière ambiance">Comparer</button>
-            <span id="debugLightLastPreset" class="debug-light-last-preset" title="Dernière ambiance appliquée">—</span>
+            <button id="debugLightCompare" type="button" disabled data-i18n="game.eda.footer.compare" data-i18n-title="game.eda.footer.compareTitle" title="Basculer entre paramètres courants et dernière ambiance">Comparer</button>
+            <span id="debugLightLastPreset" class="debug-light-last-preset" data-i18n-title="game.eda.footer.lastPresetTitle" title="Dernière ambiance appliquée">—</span>
           </div>
         </div>
       </div><!-- /.debug-light-footer -->
@@ -759,6 +775,15 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   let lastPresetWind         = null;  // vent associé au dernier preset
   let lastPresetCloud        = null;  // nuages associés au dernier preset
   let lastPresetWater        = null;  // eau (écume/sillage) associée au dernier preset
+  let _lastAppliedPreset     = null;  // référence au preset appliqué → re-traduire son nom au changement de langue
+  registerLangRefresh(() => {
+    if (_lastAppliedPreset) {
+      const m = _lastAppliedPreset.name.match(/^([\p{Emoji_Presentation}\p{Extended_Pictographic}]+)\s*/u);
+      const raw = m ? _lastAppliedPreset.name.slice(m[0].length) : _lastAppliedPreset.name;
+      const label = _lastAppliedPreset.key ? (_edaText.presetNames?.[_lastAppliedPreset.key] ?? raw) : raw;
+      lastPresetEl.textContent = m ? `${m[1]} ${label}` : label;
+    }
+  });
   let _comparing             = false;
   let _stateBeforeCompare    = null;  // snapshot state au moment du clic "Comparer" → restauré par "⟳ Retour"
   let _pixelBeforeCompare    = null;  // pixelisation en cours avant entrée en mode comparer
@@ -781,12 +806,12 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     if (section.togglePath) {
       hd.classList.add('lut-section-head--with-toggle');
       hd.innerHTML =
-        `<span>${_emojiHeadHtml(section.label)}</span>` +
-        `<label class="pix-switch" title="Activer / désactiver ${section.label.replace(/^\S+\s+[\d.]+\s*/, '').toLowerCase()}">` +
+        `<span>${_emojiHeadHtml(section.label, `game.eda.headers.${section.key}`)}</span>` +
+        `<label class="pix-switch" data-i18n-title="game.eda.toggleTitles.${section.key}" title="Activer / désactiver ${section.label.replace(/^\S+\s+[\d.]+\s*/, '').toLowerCase()}">` +
           `<input id="${section.toggleId}" type="checkbox" /><span></span>` +
         `</label>`;
     } else {
-      hd.innerHTML = `<span>${_emojiHeadHtml(section.label)}</span>`;
+      hd.innerHTML = `<span>${_emojiHeadHtml(section.label, `game.eda.headers.${section.key}`)}</span>`;
     }
     sectionEl.appendChild(hd);
 
@@ -832,15 +857,22 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'debug-light-preset-btn';
+    // Nom traduisible : preset.key sert de clé stable vers game.eda.presetNames
+    // (indépendante de l'emoji/nom FR d'origine), avec repli sur preset.name si absent.
     const _emojiMatch = preset.name.match(/^([\p{Emoji_Presentation}\p{Extended_Pictographic}]+)\s*/u);
+    const _rawLabel = _emojiMatch ? preset.name.slice(_emojiMatch[0].length) : preset.name;
+    const _label = preset.key ? (_edaText.presetNames?.[preset.key] ?? _rawLabel) : _rawLabel;
+    const _i18nAttr = preset.key ? ` data-i18n="game.eda.presetNames.${preset.key}"` : '';
     if (_emojiMatch) {
       const _emoji = _emojiMatch[1];
-      const _label = preset.name.slice(_emojiMatch[0].length);
-      btn.innerHTML = `<span class="preset-emoji">${_emoji}</span>${_label ? `<span class="preset-label">${_label}</span>` : ''}`;
+      btn.innerHTML = `<span class="preset-emoji">${_emoji}</span>${_rawLabel ? `<span class="preset-label"${_i18nAttr}>${_label}</span>` : ''}`;
     } else {
-      btn.textContent = preset.name;
+      btn.innerHTML = `<span${_i18nAttr}>${_label}</span>`;
     }
-    btn.title = preset.delta ? `Appliquer l'ambiance "${preset.name}"` : 'Retour aux valeurs par défaut';
+    const _displayName = _emojiMatch ? `${_emojiMatch[1]} ${_label}` : _label;
+    btn.title = preset.delta
+      ? (_edaText.presetTooltipApply ?? `Appliquer l'ambiance « {name} »`).replace('{name}', _displayName)
+      : (_edaText.presetTooltipDefault ?? 'Retour aux valeurs par défaut');
     btn.addEventListener('click', () => {
       pushUndo(); // capture avant le changement → annulable
       const fresh = cloneVisualConfig(DEFAULT_VISUAL_ENVIRONMENT_CONFIG);
@@ -886,7 +918,8 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
       lastPresetWind         = wind;
       lastPresetCloud        = cloud;
       lastPresetWater        = water;
-      lastPresetEl.textContent = preset.name;
+      _lastAppliedPreset = preset;
+      lastPresetEl.textContent = _displayName;
       compareBtn.disabled   = false;
       _comparing            = false;
       _updateCompareBtn();
@@ -950,7 +983,9 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     pixDepthEl.value         = String(_pixCurrent.depthEdgeStrength);
     pixDepthValEl.textContent  = _pixCurrent.depthEdgeStrength.toFixed(2);
     worldShapeToggleEl.checked        = _pixCurrent.worldShapeMode === 'bouliste';
-    worldShapeModeLabelEl.innerHTML = _emojiHeadHtml(_pixCurrent.worldShapeMode === 'bouliste' ? '🌍 Bouliste' : '📐 Platiste');
+    worldShapeModeLabelEl.innerHTML = _pixCurrent.worldShapeMode === 'bouliste'
+      ? _emojiHeadHtml('🌍 Bouliste', 'game.eda.modes.bouliste')
+      : _emojiHeadHtml('📐 Platiste', 'game.eda.modes.platiste');
     root.querySelector('.debug-light-pix-section').classList.toggle('pix-section--disabled', !_pixCurrent.enabled);
   }
 
@@ -988,7 +1023,9 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   let _dayNightCurrent = localStorage.getItem('hexistenz_daynightmode') === 'lune' ? 'lune' : 'soleil';
   function _renderDayNightControls() {
     dayNightToggleEl.checked        = _dayNightCurrent === 'soleil';
-    dayNightModeLabelEl.innerHTML = _emojiHeadHtml(_dayNightCurrent === 'soleil' ? '☀️ Jour' : '🌙 Nuit');
+    dayNightModeLabelEl.innerHTML = _dayNightCurrent === 'soleil'
+      ? _emojiHeadHtml('☀️ Jour', 'game.eda.modes.jour')
+      : _emojiHeadHtml('🌙 Nuit', 'game.eda.modes.nuit');
   }
   _renderDayNightControls();
   dayNightToggleEl.addEventListener('change', () => {
@@ -1065,8 +1102,8 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   const waterFoamHead = document.createElement('div');
   waterFoamHead.className = 'lut-section-head lut-section-head--with-toggle';
   waterFoamHead.innerHTML =
-    `<span>${_emojiHeadHtml('🫧 1. Écume')}</span>` +
-    `<label class="pix-switch" title="Activer / désactiver l'écume">` +
+    `<span>${_emojiHeadHtml('🫧 1. Écume', 'game.eda.headers.waterFoam')}</span>` +
+    `<label class="pix-switch" data-i18n-title="game.eda.toggleTitles.waterFoam" title="Activer / désactiver l'écume">` +
       `<input id="waterFoamEnabled" type="checkbox" /><span></span>` +
     `</label>`;
   waterControlsHost.appendChild(waterFoamHead);
@@ -1088,8 +1125,8 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   const waterWakeHead = document.createElement('div');
   waterWakeHead.className = 'lut-section-head lut-section-head--with-toggle';
   waterWakeHead.innerHTML =
-    `<span>${_emojiHeadHtml('🚤 2. Sillage bateau')}</span>` +
-    `<label class="pix-switch" title="Activer / désactiver le sillage bateau">` +
+    `<span>${_emojiHeadHtml('🚤 2. Sillage bateau', 'game.eda.headers.waterWake')}</span>` +
+    `<label class="pix-switch" data-i18n-title="game.eda.toggleTitles.waterWake" title="Activer / désactiver le sillage bateau">` +
       `<input id="waterWakeEnabled" type="checkbox" /><span></span>` +
     `</label>`;
   waterControlsHost.appendChild(waterWakeHead);
@@ -1341,7 +1378,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
 
   const windWheatHead = document.createElement('div');
   windWheatHead.className = 'lut-section-head lut-section-head--nested lut-subhead-first';
-  windWheatHead.innerHTML = `<span>${_emojiHeadHtml('🌾 4.1 Brins de blés')}</span>`;
+  windWheatHead.innerHTML = `<span>${_emojiHeadHtml('🌾 4.1 Brins de blés', 'game.eda.headers.windWheat')}</span>`;
   windControlsHost.appendChild(windWheatHead);
   for (const s of WIND_WHEAT_SLIDERS) {
     const { row, input, output } = createRawSlider(s.label, s.min, s.max, s.step, _windCurrent.wheat[s.key],
@@ -1352,7 +1389,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
 
   const windGrassHead = document.createElement('div');
   windGrassHead.className = 'lut-section-head lut-section-head--nested';
-  windGrassHead.innerHTML = `<span>${_emojiHeadHtml('🌿 4.2 Brins d\'herbes')}</span>`;
+  windGrassHead.innerHTML = `<span>${_emojiHeadHtml('🌿 4.2 Brins d\'herbes', 'game.eda.headers.windGrass')}</span>`;
   windControlsHost.appendChild(windGrassHead);
   for (const s of WIND_GRASS_SLIDERS) {
     const { row, input, output } = createRawSlider(s.label, s.min, s.max, s.step, _windCurrent.grass[s.key],
@@ -1363,7 +1400,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
 
   const windTreeHead = document.createElement('div');
   windTreeHead.className = 'lut-section-head lut-section-head--nested';
-  windTreeHead.innerHTML = `<span>${_emojiHeadHtml('🌳 4.3 Arbres')}</span>`;
+  windTreeHead.innerHTML = `<span>${_emojiHeadHtml('🌳 4.3 Arbres', 'game.eda.headers.windTree')}</span>`;
   windControlsHost.appendChild(windTreeHead);
   for (const s of WIND_TREE_SLIDERS) {
     const { row, input, output } = createRawSlider(s.label, s.min, s.max, s.step, _windCurrent.tree[s.key],
@@ -1489,7 +1526,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     await copyToClipboard(text).catch(err => console.warn('[debugLightUI] copie impossible', err));
     const btn = this;
     const orig = btn.textContent;
-    btn.textContent = '✓ Copié !';
+    btn.textContent = _edaText.footer?.copied ?? '✓ Copié !';
     setTimeout(() => { btn.textContent = orig; }, 1600);
   });
   root.querySelector('#debugLightReset').addEventListener('click', () => {
@@ -1542,10 +1579,10 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   // sens à partager entre joueurs (dépend de la machine de chacun). Persistance
   // propre à contentDensity.js (localStorage 'hexistenz_content_density').
   const QUALITY_PRESETS = [
-    { emoji: '🐌', label: 'Faible', value: 0.30 },
-    { emoji: '🚶', label: 'Moyen',  value: 0.55 },
-    { emoji: '🏃', label: 'Élevé',  value: 0.80 },
-    { emoji: '🚀', label: 'Max',    value: 1.00 },
+    { emoji: '🐌', label: 'Faible', key: 'faible', value: 0.30 },
+    { emoji: '🚶', label: 'Moyen',  key: 'moyen',  value: 0.55 },
+    { emoji: '🏃', label: 'Élevé',  key: 'eleve',  value: 0.80 },
+    { emoji: '🚀', label: 'Max',    key: 'max',    value: 1.00 },
   ];
   const qualityPresetsContainer = root.querySelector('#debugLightQualityPresets');
   const qualityControlsHost     = root.querySelector('#debugLightQualityControls');
@@ -1564,8 +1601,11 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'debug-light-preset-btn';
-    btn.innerHTML = `<span class="preset-emoji">${preset.emoji}</span><span class="preset-label">${preset.label}</span>`;
-    btn.title = `Densité ${preset.label.toLowerCase()} (${preset.value.toFixed(2)})`;
+    btn.innerHTML = `<span class="preset-emoji">${preset.emoji}</span><span class="preset-label" data-i18n="game.eda.quality.${preset.key}">${preset.label}</span>`;
+    const _qLabel = _edaText.quality?.[preset.key] ?? preset.label;
+    btn.title = (_edaText.qualityTooltip ?? 'Densité {label} ({value})')
+      .replace('{label}', _qLabel.toLowerCase())
+      .replace('{value}', preset.value.toFixed(2));
     btn.addEventListener('click', () => {
       if (_qualityDensitySlider) {
         _qualityDensitySlider.input.value = String(preset.value);
@@ -1594,15 +1634,18 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   if (environmentDirector) {
     const vfxHost = root.querySelector('#debugLightVfxControls');
     const weatherStopAll = root.querySelector('#debugLightWeatherStopAll');
+    // i18nKey : clé game.eda.weatherGroups.<i18nKey> pour le titre de la carte.
+    // labelNs : espace de nommage game.eda.labels.vfx.<labelNs>.<sliderKey> pour les
+    // sliders (distinct de `effect`, qui reste le nom interne côté vfxSettings.js).
     const vfxGroups = [
-      { effect: 'groundMist', eventId: 'morningMist', title: '🌫️ Brume matinale', sliders: VFX_MIST_SLIDERS },
-      { effect: 'fireflies',  eventId: 'fireflies',   title: '✨ Lucioles',        sliders: VFX_FIREFLY_SLIDERS },
-      { effect: 'clouds',     eventId: null,          title: '☁️ Nuages de pluie', sliders: VFX_CLOUD_SLIDERS },
-      { effect: 'rain',       eventId: 'rain',        title: '🌧️ Pluie',          sliders: VFX_RAIN_SLIDERS },
-      { effect: 'storm',      eventId: 'storm',       title: '⛈️ Orage',          sliders: VFX_STORM_SLIDERS },
-      { effect: null,         eventId: 'lightning',   title: '⚡ Éclair',          sliders: null },
-      { effect: null,         eventId: 'fire',        title: '🔥 Feu',            sliders: null },
-      { effect: null,         eventId: 'panic',       title: '🐑 Panique animale', sliders: null }
+      { effect: 'groundMist', eventId: 'morningMist', title: '🌫️ Brume matinale', sliders: VFX_MIST_SLIDERS,    i18nKey: 'morningMist', labelNs: 'mist' },
+      { effect: 'fireflies',  eventId: 'fireflies',   title: '✨ Lucioles',        sliders: VFX_FIREFLY_SLIDERS, i18nKey: 'fireflies',   labelNs: 'fireflies' },
+      { effect: 'clouds',     eventId: null,          title: '☁️ Nuages de pluie', sliders: VFX_CLOUD_SLIDERS,   i18nKey: 'clouds',      labelNs: 'cloud' },
+      { effect: 'rain',       eventId: 'rain',        title: '🌧️ Pluie',          sliders: VFX_RAIN_SLIDERS,    i18nKey: 'rain',        labelNs: 'rain' },
+      { effect: 'storm',      eventId: 'storm',       title: '⛈️ Orage',          sliders: VFX_STORM_SLIDERS,   i18nKey: 'storm',       labelNs: 'storm' },
+      { effect: null,         eventId: 'lightning',   title: '⚡ Éclair',          sliders: null,                i18nKey: 'lightning',   labelNs: null },
+      { effect: null,         eventId: 'fire',        title: '🔥 Feu',            sliders: null,                i18nKey: 'fire',        labelNs: null },
+      { effect: null,         eventId: 'panic',       title: '🐑 Panique animale', sliders: null,               i18nKey: 'panic',       labelNs: null }
     ];
     const _weatherRefreshers = [];
     let _forceCloudsOn = null;         // rempli quand la carte 'clouds' est construite
@@ -1610,16 +1653,21 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
 
     for (const group of vfxGroups) {
       const def = group.eventId ? ENVIRONMENT_EVENTS[group.eventId] : null;
+      // Le texte "(nécessite X)" référence le label INTERNE de l'évènement requis
+      // (ENVIRONMENT_EVENTS) — pas de substitution {label} supportée par le moteur
+      // data-i18n générique (simple lookup, pas de templating) : laissé en FR en dur,
+      // cas marginal (ne s'affiche que si un effet dépend d'un autre non actif).
       const requiresLabel = def?.requires ? ` <em class="weather-requires">(nécessite ${ENVIRONMENT_EVENTS[def.requires].label})</em>` : '';
+      const switchTitleKey = group.eventId ? 'game.eda.weatherSwitchTitle' : 'game.eda.weatherCloudsSwitchTitle';
       const switchTitle = group.eventId ? 'Activer / désactiver' : 'Activer / désactiver les nuages';
 
       const head = document.createElement('div');
       head.className = 'lut-section-head lut-section-head--with-toggle weather-merged-head';
       head.innerHTML =
-        `<span class="weather-label">${group.title}${requiresLabel}</span>` +
+        `<span class="weather-label" data-i18n="game.eda.weatherGroups.${group.i18nKey}">${group.title}</span>${requiresLabel}` +
         `<span class="weather-head-controls">` +
-          (group.sliders ? `<button type="button" class="debug-light-weather-btn debug-light-vfx-reset" title="Réinitialiser" style="width:auto;padding:2px 8px;">↺</button>` : '') +
-          `<label class="pix-switch" title="${switchTitle}"><input type="checkbox" class="weather-merged-switch" /><span></span></label>` +
+          (group.sliders ? `<button type="button" class="debug-light-weather-btn debug-light-vfx-reset" data-i18n-title="game.eda.weatherResetTitle" title="Réinitialiser" style="width:auto;padding:2px 8px;">↺</button>` : '') +
+          `<label class="pix-switch" data-i18n-title="${switchTitleKey}" title="${switchTitle}"><input type="checkbox" class="weather-merged-switch" /><span></span></label>` +
         `</span>`;
       vfxHost.appendChild(head);
 
@@ -1699,7 +1747,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
         const initial = getVfxSettings(group.effect);
         for (const s of group.sliders) {
           const { row, input, output } = createRawSlider(s.label, s.min, s.max, s.step, initial[s.key],
-            v => setVfxSetting(group.effect, s.key, v), pushUndo, null);
+            v => setVfxSetting(group.effect, s.key, v), pushUndo, null, group.labelNs ? `vfx.${group.labelNs}.${s.key}` : null);
           sliderEls.push({ s, input, output });
           rows.appendChild(row);
         }
@@ -1725,6 +1773,12 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   kbdHint.id = 'kbdHintHud';
   kbdHint.innerHTML = _kbdHintText || 'H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif';
   document.body.appendChild(kbdHint);
+
+  // Le panneau vient d'être entièrement construit (sliders EAU/VENT/NUAGES/VFX,
+  // rubriques LUT...) : si la langue sauvegardée n'est pas FR, gameHudI18n.js a déjà
+  // fait une passe de traduction au chargement du script, AVANT que ce DOM n'existe.
+  // On rejoue la traduction maintenant pour ce DOM fraîchement créé.
+  applyCurrentLang();
 
   applyAll();
 
@@ -1776,7 +1830,9 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   }
 
   function _updateCompareBtn() {
-    compareBtn.textContent = _comparing ? '⟳ Retour' : 'Comparer';
+    compareBtn.textContent = _comparing
+      ? (_edaText.footer?.compareBack ?? '⟳ Retour')
+      : (_edaText.footer?.compare ?? 'Comparer');
     compareBtn.classList.toggle('debug-light-compare-btn--active', _comparing);
   }
 }
@@ -1787,7 +1843,7 @@ function createSlider(state, path, label, min, max, step, onChange, onBeforeChan
 
   const value = Number(getPath(state, path));
   row.innerHTML = `
-    <span>${label}</span>
+    <span data-i18n="game.eda.labels.${path}">${label}</span>
     <input data-path="${path}" type="range" min="${min}" max="${max}" step="${step}" value="${value}">
     <output>${formatNumber(value)}</output>
   `;
@@ -1815,11 +1871,15 @@ function createSlider(state, path, label, min, max, step, onChange, onBeforeChan
 // Slider « brut » : mêmes visuel/comportement que createSlider, mais sans passer par un chemin
 // dans `state` — utilisé pour les réglages EAU (getters/setters dédiés dans realisticWater.js /
 // waterBoatOverlay.js plutôt que dans le config LUT).
-function createRawSlider(label, min, max, step, value, onChange, onBeforeChange, helpKey) {
+// labelKey (ajouté 2026-07-14, défaut = helpKey) : clé de traduction du libellé visible
+// (game.eda.labels.<labelKey>), distincte de helpKey (tooltip LUT_HELP au survol) pour ne
+// pas forcer une tooltip vide sur les sliders qui n'en ont pas (ex. VFX météo).
+function createRawSlider(label, min, max, step, value, onChange, onBeforeChange, helpKey, labelKey = helpKey) {
   const row = document.createElement('label');
   row.className = 'debug-light-row';
+  const labelAttr = labelKey ? ` data-i18n="game.eda.labels.${labelKey}"` : '';
   row.innerHTML = `
-    <span>${label}</span>
+    <span${labelAttr}>${label}</span>
     <input type="range" min="${min}" max="${max}" step="${step}" value="${value}">
     <output>${formatNumber(value)}</output>
   `;
@@ -1848,7 +1908,7 @@ function createColorPicker(state, path, label, onChange, onBeforeChange) {
   const help = getHelpText(path);
   row.title = help;
   row.innerHTML = `
-    <span title="${escapeHtml(help)}">${label}</span>
+    <span data-i18n="game.eda.labels.${path}" title="${escapeHtml(help)}">${label}</span>
     <input data-path="${path}" type="color" value="${value}" title="${escapeHtml(help)}">
     <output title="Valeur actuelle">${value}</output>
   `;
@@ -1891,10 +1951,19 @@ function getHelpText(path) {
 
 // Enveloppe l'emoji de tête d'un label "🔆 1.1 Rendu" dans un span dédié (.rubrique-emoji)
 // pour pouvoir l'agrandir en CSS sans changer la taille du texte de la (sous-)rubrique.
-function _emojiHeadHtml(label) {
-  const m = /^(\S+)(\s[\s\S]*)$/.exec(label);
+// i18nPath (ajouté 2026-07-14) : chemin complet game.eda.xxx.yyy — si fourni, le texte
+// (hors emoji) est enveloppé dans un span data-i18n="<i18nPath>". L'emoji reste hors
+// traduction (universel), et gameHudI18n.js (moteur déjà utilisé pour tout le HUD) ne
+// réécrit QUE ce sous-span, donc l'emoji n'est jamais écrasé lors d'un changement de langue.
+function _emojiHeadHtml(label, i18nPath) {
+  const m = /^(\S+)\s+([\s\S]*)$/.exec(label);
   if (!m) return escapeHtml(label);
-  return `<span class="rubrique-emoji">${m[1]}</span>${escapeHtml(m[2])}`;
+  // L'espace après l'emoji est ajouté ICI en dur (pas capturé dans le texte) : les
+  // valeurs JSON de game.eda.headers/modes n'ont donc pas besoin d'espace de tête.
+  const emojiHtml = `<span class="rubrique-emoji">${m[1]}</span> `;
+  const text = escapeHtml(m[2]);
+  const textHtml = i18nPath ? `<span data-i18n="${i18nPath}">${text}</span>` : text;
+  return emojiHtml + textHtml;
 }
 
 function getPath(source, path) {

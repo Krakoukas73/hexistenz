@@ -98,16 +98,19 @@ nav {
   margin-left: 10px;
   vertical-align: baseline;
 }
+/* Refonte i18n scalable du 2026-07-14 (cf. CONTEXT.md §21) : #lang-toggle
+   contenait 2 <button> FR/EN codés en dur, remplacés par un <select> dont les
+   <option> sont générées par PHP depuis $LANGS — ajouter une langue future ne
+   demande aucun changement ici. */
 #lang-toggle {
   display: flex;
-  gap: 2px;
   background: rgba(255,255,255,0.05);
   border: 1px solid var(--border);
   border-radius: 7px;
   padding: 3px;
   flex-shrink: 0;
 }
-#lang-toggle button {
+#lang-toggle select {
   font-family: var(--font-body);
   font-size: 10px;
   letter-spacing: 0.14em;
@@ -116,10 +119,16 @@ nav {
   border-radius: 5px;
   cursor: pointer;
   background: transparent;
-  color: var(--text-dim);
+  color: var(--blue);
   transition: all 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
 }
-#lang-toggle button.active { background: var(--blue-mid); color: var(--blue); }
+#lang-toggle select:hover { background: var(--blue-mid); }
+#lang-toggle select option {
+  background: #10151c;
+  color: var(--text-dim);
+}
 .nav-links {
   display: flex;
   flex-wrap: wrap;
@@ -627,23 +636,62 @@ nav {
 .score-pill-pts { font-family: var(--font-title); font-size: 26px; letter-spacing: 0.04em; color: var(--gold); line-height: 1; }
 .score-pill-label { font-size: 11px; color: var(--text-dim); letter-spacing: 0.08em; }
 
-/* ─── KBD STRIP (raccourcis, discret) ───────────────────────────── */
+/* ─── KBD STRIP (raccourcis) ─────────────────────────────────────
+   2026-07-15 : passage d'une ligne flex dense (wrap serré, aucune séparation
+   visuelle entre raccourcis) à une grille de "cartes" — chaque raccourci reçoit
+   son propre fond/liseré/padding, avec un espacement généreux entre elles.
+   Liste complétée à la même occasion (zoom +/-, SHIFT accélération, SHIFT+ESPACE
+   super-immersif, ESC ajouté à côté de H) pour rester exhaustive vis-à-vis des
+   raccourcis réellement actifs (cf. scene.js::keydown). */
 .kbd-strip {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 22px;
-  margin-top: 40px;
-  padding-top: 22px;
-  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px 16px;
+  margin-top: 20px;
+  /* Pas de max-width propre : occupe toute la largeur de .container, comme
+     .score-pills juste au-dessus — largeur cohérente entre les deux rubriques
+     (signalé 2026-07-15, la valeur précédente de 920px créait un écart visible).
+     border-top/padding-top retirés (2026-07-15) : la séparation visuelle est
+     désormais portée par le titre "CONTRÔLES CLAVIER" (.section-title) placé
+     juste au-dessus, qui porte lui-même ce border-top. */
 }
 .kbd-strip-item {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 7px;
-  font-size: 10.5px;
+  gap: 6px 9px;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 11.5px;
   color: var(--text-dim);
   letter-spacing: 0.04em;
+}
+/* Les <kbd> d'un même raccourci (ex. Z Q S D + flèches, ou SHIFT+ESPACE) restent
+   groupés sur leur propre ligne si besoin, jamais mélangés avec le texte. */
+.kbd-strip-item .kbd-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+/* Variante empilée (ZQSD + flèches) : deux lignes de 4 touches au lieu d'un
+   seul groupe qui wrappe de façon imprévisible selon la largeur disponible. */
+.kbd-strip-item .kbd-group--stacked {
+  flex-direction: column;
+  gap: 4px;
+}
+.kbd-strip-item .kbd-row {
+  display: inline-flex;
+  gap: 6px;
+}
+/* Fix débordement/texte tronqué (signalé 2026-07-15, ex. "Z Q S D telecame…") :
+   par défaut un enfant flex ne peut pas rétrécir sous la largeur de son contenu
+   (min-width:auto implicite), donc le texte débordait au lieu de passer à la
+   ligne quand le groupe de <kbd> voisin prenait déjà beaucoup de place. */
+.kbd-strip-item span:not(.kbd-group) {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 /* ─── POPULATION STRIP (variété des personnages, créatures) ────── */
 .population-strip {
@@ -1152,10 +1200,6 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   margin-left: 6px;
 }
 .footer-cta:hover { background: rgba(120,180,255,0.40); }
-
-/* ─── I18N ───────────────────────────────────────────────────── */
-[data-lang="fr"] [data-en] { display: none !important; }
-[data-lang="en"] [data-fr] { display: none !important; }
 
 /* ─── RESPONSIVE ─────────────────────────────────────────────── */
 /* Nav mobile — dropdown + hamburger, seuil volontairement bas (téléphone/petite

@@ -22,15 +22,9 @@ import { LUT_HELP } from './help.js';
 // (clé game.startupMenu), même mécanisme que les autres modules (top-level
 // await + localStorage 'hexistenz_pres_lang'). Repli FR en dur à chaque site
 // d'appel : ce sont les tout premiers écrans vus par le joueur.
-function getGameLang() {
-  try {
-    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
-  } catch {
-    return 'fr';
-  }
-}
+import { getLangFile } from './gameLangReactive.js';
 
-const _langFile = getGameLang() === 'en' ? 'english' : 'french';
+const _langFile = getLangFile();
 
 const _menuData = await fetch(`./json/languages/${_langFile}.json`)
   .then(r => r.json())

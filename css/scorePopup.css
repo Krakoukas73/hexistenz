@@ -17,6 +17,19 @@
   padding: 0;
   opacity: 0;
 
+  /* width:max-content — indispensable depuis l'ajout du message "Capture faite !"
+     (2026-07-15, cf. scorePopup.js::showCenterMessage) : un <div> fixed avec
+     seulement `left` (pas `right`) calcule sinon une largeur "shrink-to-fit" basée
+     sur l'espace DISPONIBLE à droite de l'ancre, pas sur le contenu réel — ok pour
+     un court "+N" mais pour un texte plus long ça provoquait un retour à la ligne
+     ET un centrage faussé (translate(-50%) porte sur cette largeur asymétrique).
+     max-content force la boîte à coller exactement à la largeur du texte, quelle
+     que soit sa longueur, donc le centrage reste toujours exact et sur une ligne. */
+  width: max-content;
+  max-width: none;
+  white-space: nowrap;
+  text-align: center;
+
   pointer-events: none;
   user-select: none;
 
@@ -35,4 +48,12 @@
   #scorePopup {
     font-size: 132px;
   }
+}
+
+/* Messages textuels (ex. "Capture faite !", cf. showCenterMessage) — taille dédiée,
+   plus petite que les "+N" numériques : 208px conviendrait à "+25" mais ferait
+   déborder de l'écran un texte de plusieurs mots. Classe posée/retirée par
+   scorePopup.js selon l'appel (showScorePopup vs showCenterMessage). */
+#scorePopup.scorePopup--message {
+  font-size: clamp(38px, 8.1vw, 97px);
 }

@@ -1,0 +1,64 @@
+/* ─── snapshotGalleryOverlay.css — chrome de l'overlay in-game (snapshotGallery.js) ────
+   Même famille visuelle que help.css (.help-overlay/.help-panel) : voile sombre +
+   backdrop-blur, panneau centré avec dégradé + bordure bleutée, croix de fermeture.
+   Le contenu réel (mosaïque, visionneuse) vit dans l'<iframe> → snapshots.php +
+   css/snapshots.css, ce fichier ne stylise que le cadre autour. */
+
+.snapshot-gallery-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: rgba(3, 6, 10, 0.68);
+  backdrop-filter: blur(6px);
+}
+
+.snapshot-gallery-overlay.hidden {
+  display: none;
+}
+
+.snapshot-gallery-panel {
+  position: relative;
+  width: min(1560px, calc(100vw - 48px));
+  height: calc(100vh - 48px);
+  box-sizing: border-box;
+  background:
+    linear-gradient(135deg, rgba(22, 31, 45, 0.96), rgba(7, 11, 18, 0.96)),
+    radial-gradient(circle at top left, rgba(58, 125, 255, 0.18), transparent 45%);
+  border: 1px solid rgba(120, 180, 255, 0.42);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+}
+
+.snapshot-gallery-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: transparent;
+}
+
+.snapshot-gallery-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  background: rgba(10, 14, 20, 0.72);
+  color: white;
+  cursor: pointer;
+  font: 700 28px/1 system-ui, sans-serif;
+}
+
+.snapshot-gallery-close:hover {
+  background: rgba(255, 59, 59, 0.75);
+  border-color: rgba(255, 95, 95, 0.95);
+}

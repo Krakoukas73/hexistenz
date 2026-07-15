@@ -11,19 +11,32 @@
 // HUD in-game (edaPanelHost.js) : il écrit localStorage + dataset.lang, PUIS notifie
 // tous les callbacks, donc la mise à jour est toujours synchrone et complète.
 const _refreshCallbacks = [];
-const _jsonCache = {}; // { fr: {...}, en: {...} } — évite de re-fetcher au aller-retour
+const _jsonCache = {}; // { fr: {...}, en: {...}, es: {...} } — évite de re-fetcher au aller-retour
+
+// Ajouté le 2026-07-14 : passage à N langues (ES) — auparavant getGameLang()/_loadLangJson
+// utilisaient un ternaire binaire (`=== 'en' ? 'en' : 'fr'`) qui aurait silencieusement
+// réduit toute 3e langue à 'fr'. Centralisé ici : LANG_FILES est la SEULE source de vérité
+// pour la liste des langues supportées et leur fichier JSON associé. Ajouter une langue =
+// une ligne ici (+ une <option> dans le <select> du HUD), rien d'autre à toucher.
+export const LANG_FILES = { fr: 'french', en: 'english', es: 'spanish', it: 'italian', pt: 'portuguese', 'fr-CA': 'fr-CA' };
 
 export function getGameLang() {
   try {
-    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
+    const stored = localStorage.getItem('hexistenz_pres_lang');
+    return Object.prototype.hasOwnProperty.call(LANG_FILES, stored) ? stored : 'fr';
   } catch {
     return 'fr';
   }
 }
 
+/** Résout le nom de fichier JSON pour une langue donnée (par défaut la langue courante). */
+export function getLangFile(lang = getGameLang()) {
+  return LANG_FILES[lang] ?? LANG_FILES.fr;
+}
+
 async function _loadLangJson(lang) {
   if (_jsonCache[lang]) return _jsonCache[lang];
-  const file = lang === 'en' ? 'english' : 'french';
+  const file = getLangFile(lang);
   const data = await fetch(`./json/languages/${file}.json`)
     .then(r => r.json())
     .catch(err => {
@@ -41,6 +54,7 @@ export function registerLangRefresh(cb) {
 
 /** Point d'entrée unique pour basculer la langue en jeu (appelé par le sélecteur du HUD). */
 export async function setGameLang(lang) {
+  if (!Object.prototype.hasOwnProperty.call(LANG_FILES, lang)) lang = 'fr';
   if (getGameLang() === lang) return;
   try { localStorage.setItem('hexistenz_pres_lang', lang); } catch {}
   document.documentElement.dataset.lang = lang;

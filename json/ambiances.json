@@ -1,6 +1,7 @@
 [
   {
     "name": "⭐ Défaut",
+    "key": "default",
     "bg": "linear-gradient(135deg,#ffd36d,#b58239)",
     "pixelization": { "enabled": false, "pixelSize": 1 },
     "delta": { "grading": { "whiteLevel": 0.90 } },
@@ -8,6 +9,7 @@
   },
   {
     "name": "🌫️ Brume",
+    "key": "mist",
     "bg": "linear-gradient(135deg,#90c8d8,#2860a0)",
     "delta": {
       "renderer": { "toneMappingExposure": 1.28 },
@@ -19,6 +21,7 @@
   },
   {
     "name": "🍂 Automne",
+    "key": "autumn",
     "bg": "linear-gradient(135deg,#e85820,#7a2808)",
     "delta": {
       "renderer": { "toneMappingExposure": 1.42 },
@@ -30,6 +33,7 @@
   },
   {
     "name": "☀️ Été vif",
+    "key": "summerVivid",
     "bg": "linear-gradient(135deg,#60d040,#187840)",
     "delta": {
       "renderer": { "toneMappingExposure": 1.56 },
@@ -41,6 +45,7 @@
   },
   {
     "name": "❄️ Hiver",
+    "key": "winter",
     "bg": "linear-gradient(135deg,#a0b8d0,#0a1828)",
     "delta": {
       "renderer": { "toneMappingExposure": 2.30 },
@@ -102,6 +107,7 @@
   },
   {
     "name": "📜 Sépia",
+    "key": "sepia",
     "bg": "linear-gradient(135deg,#c09040,#6a4010)",
     "delta": {
       "renderer": { "toneMappingExposure": 1.50 },
@@ -113,6 +119,7 @@
   },
   {
     "name": "🌲 Nordique",
+    "key": "nordic",
     "bg": "linear-gradient(135deg,#4890a8,#0a2838)",
     "delta": {
       "renderer": { "toneMappingExposure": 1.72 },
@@ -125,6 +132,7 @@
   },
   {
     "name": "🏜️ Désert",
+    "key": "desert",
     "bg": "linear-gradient(135deg,#f0b840,#a86010)",
     "delta": {
       "renderer": { "toneMappingExposure": 1.72 },
@@ -137,6 +145,7 @@
   },
   {
     "name": "🏓 Pong",
+    "key": "pong",
     "bg": "linear-gradient(135deg,#999999,#111111)",
     "pixelization": { "pixelSize": 15, "enabled": true, "normalEdgeStrength": 0, "depthEdgeStrength": 0, "worldShapeMode": "platiste" },
     "delta": {
@@ -172,6 +181,7 @@
   },
   {
     "name": "🖥️ Apple II",
+    "key": "appleII",
     "bg": "linear-gradient(135deg,#00cc44,#003311)",
     "pixelization": { "pixelSize": 3, "enabled": true, "normalEdgeStrength": 0, "depthEdgeStrength": 0 },
     "delta": {
@@ -192,6 +202,7 @@
   },
   {
     "name": "CGA",
+    "key": "cga",
     "bg": "linear-gradient(135deg,#55ffff,#ff55ff)",
     "pixelization": { "pixelSize": 3, "enabled": true, "normalEdgeStrength": 0, "depthEdgeStrength": 0 },
     "delta": {
@@ -214,6 +225,7 @@
   },
   {
     "name": "EGA",
+    "key": "ega",
     "bg": "linear-gradient(135deg,#55ffff,#aa0000)",
     "pixelization": { "pixelSize": 3, "enabled": true, "normalEdgeStrength": 0, "depthEdgeStrength": 0 },
     "delta": {
@@ -245,6 +257,7 @@
   },
   {
     "name": "Amiga",
+    "key": "amiga",
     "bg": "linear-gradient(135deg,#0066bb,#ff8800)",
     "pixelization": { "pixelSize": 2, "enabled": true, "normalEdgeStrength": 0, "depthEdgeStrength": 0 },
     "delta": {
@@ -279,6 +292,7 @@
   },
   {
     "name": "🌈 Psyché-LSD",
+    "key": "psyche",
     "bg": "linear-gradient(135deg,#ff00ff,#8800ff,#0088ff)",
     "pixelization": { "enabled": false, "pixelSize": 1, "normalEdgeStrength": 0, "depthEdgeStrength": 0, "worldShapeMode": "platiste" },
     "delta": {

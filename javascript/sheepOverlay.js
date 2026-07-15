@@ -34,8 +34,8 @@ import { registerPropHitbox, tryResolve } from './propHitboxRegistry.js';
 // ─── Paramètres (calibrables) ──────────────────────────────────────────────────
 const SHEEP_GLB_PATH    = './glb/animaux/sheep-2.glb';
 const TILES_PER_SHEEP    = 0.292; // 1 mouton par N tuiles prairie connexes (+15 % depuis 0.336)
-const SHEEP_TARGET_LEN   = 0.054; // longueur cible en unités monde (−12 % depuis 0.061)
-const SHEEP_WALK_SPEED   = 0.0568; // unités monde/seconde (marcheur) — −17 % depuis 0.0684
+const SHEEP_TARGET_LEN   = 0.044712; // longueur cible en unités monde (−12 % depuis 0.061, puis −10 % depuis 0.054, puis −8 % depuis 0.0486, 2026-07-13)
+const SHEEP_WALK_SPEED   = 0.034425; // unités monde/seconde (marcheur) — −17 % depuis 0.0684, puis −15 % depuis 0.0568, puis −12 % depuis 0.0483, puis −10 % depuis 0.0425, puis −10 % depuis 0.03825 (2026-07-13)
 const SHEEP_HITBOX_R     = 0.034; // rayon hitbox mouton (≈ demi-longueur + marge)
 const STATIC_CLUSTER_R   = HEX_SIZE * 0.28; // rayon du troupeau de statiques par zone
 const SHEEP_ARRIVE_DIST = 0.07;  // seuil d'arrivée à destination (marcheur)

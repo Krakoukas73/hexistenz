@@ -92,7 +92,7 @@
 
 .mode-logo {
   display: block;
-  width: min(520px, 78vw);
+  width: min(364px, 54.6vw);
   max-height: none;
   margin: 0;
   position: absolute;
@@ -111,7 +111,7 @@
     padding-top: clamp(220px, 28vh, 300px);
   }
   .mode-logo {
-    width: min(380px, 60vw);
+    width: min(266px, 42vw);
     top: clamp(-190px, -20vh, -120px);
   }
 }
@@ -123,7 +123,7 @@
   }
 
   .mode-logo {
-    width: min(440px, 74vw);
+    width: min(308px, 51.8vw);
     top: -150px;
   }
 }

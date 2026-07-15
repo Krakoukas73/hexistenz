@@ -18,17 +18,9 @@
 //     règle de suffixe générique — robuste à n'importe quelle langue/mot.
 import { EDGE_TYPES } from './config.js';
 import { MISSION_TYPE_LABEL } from './missions.js';
-import { registerLangRefresh } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
 
-function getGameLang() {
-  try {
-    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
-  } catch {
-    return 'fr';
-  }
-}
-
-const _langFile = getGameLang() === 'en' ? 'english' : 'french';
+const _langFile = getLangFile();
 
 const _langData = await fetch(`./json/languages/${_langFile}.json`)
   .then(r => r.json())

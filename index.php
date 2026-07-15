@@ -11,15 +11,33 @@ if (file_exists($varsFile)) {
 $cssFile = __DIR__ . '/css/presentation.css';
 $cssVersion = file_exists($cssFile) ? filemtime($cssFile) : time();
 
-// Textes bilingues de la prez — json/languages/{french,english}.json (2026-07-12).
-// $t['fr']/$t['en'] sont les 2 tableaux ; toutes les paires data-fr/data-en du
-// markup ci-dessous lisent leur contenu ici plutôt que du texte codé en dur.
+// Refonte i18n scalable du 2026-07-14 (cf. CONTEXT.md §21) : l'ancien mécanisme
+// dupliquait CHAQUE texte en autant de paires data-fr/data-en qu'il y avait de
+// langues (bascule via CSS [data-lang]), ce qui ne passait pas à l'échelle : ajouter
+// une langue demandait de tripler (ou plus) le markup dans tout le fichier. Remplacé
+// par UN SEUL attribut data-i18n="chemin.pointé" par élément (PHP rend le repli FR
+// par défaut), un JSON contenant TOUTES les langues embarqué dans la page, et un
+// petit moteur JS générique (applyI18n/setLang plus bas) qui réécrit tous les
+// [data-i18n] à la volée. Ajouter une langue future = une ligne dans $LANG_FILES,
+// rien d'autre à toucher (ni le <select>, ni le JS, ni le HTML).
 $langDir = __DIR__ . '/json/languages/';
-$t = [
-    'fr' => json_decode(@file_get_contents($langDir . 'french.json'), true) ?: [],
-    'en' => json_decode(@file_get_contents($langDir . 'english.json'), true) ?: [],
+$LANG_FILES = [
+    'fr' => 'french',
+    'en' => 'english',
+    'es' => 'spanish',
+    'it' => 'italian',
+    'pt' => 'portuguese',
+    'fr-CA' => 'fr-CA',
 ];
-// Accesseur sûr : $tr('fr','hero.tagline') — évite les notices sur clé manquante.
+$t = [];
+foreach ($LANG_FILES as $code => $file) {
+    $t[$code] = json_decode(@file_get_contents($langDir . $file . '.json'), true) ?: [];
+}
+$LANGS = array_keys($LANG_FILES);
+
+// Accesseur sûr côté PHP : tr($t,'fr','hero.tagline') — évite les notices sur clé
+// manquante. Sert uniquement à rendre le repli FR ; la traduction réactive passe
+// par le JSON embarqué + le moteur JS (cf. <script id="i18n-data"> plus bas).
 function tr($t, $lang, $path) {
     $node = $t[$lang] ?? [];
     foreach (explode('.', $path) as $part) {
@@ -88,6 +106,7 @@ function fmt_date($iso) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/presentation.css?v=<?= $cssVersion ?>" />
+  <script id="i18n-data" type="application/json"><?= json_encode($t, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?></script>
 </head>
 <body>
 
@@ -101,24 +120,26 @@ function fmt_date($iso) {
     <span></span><span></span><span></span>
   </button>
   <ul class="nav-links" id="navLinks">
-    <li><a href="#factions" data-fr><?= tr($t,'fr','nav.links.factions') ?></a>    <a href="#factions" data-en><?= tr($t,'en','nav.links.factions') ?></a></li>
-    <li><a href="#biomes"   data-fr><?= tr($t,'fr','nav.links.biomes') ?></a>      <a href="#biomes"   data-en><?= tr($t,'en','nav.links.biomes') ?></a></li>
-    <li><a href="#missions" data-fr><?= tr($t,'fr','nav.links.missions') ?></a>    <a href="#missions" data-en><?= tr($t,'en','nav.links.missions') ?></a></li>
-    <li><a href="#gameplay" data-fr><?= tr($t,'fr','nav.links.gameplay') ?></a>    <a href="#gameplay" data-en><?= tr($t,'en','nav.links.gameplay') ?></a></li>
-    <li><a href="#gallery"  data-fr><?= tr($t,'fr','nav.links.gallery') ?></a>   <a href="#gallery"  data-en><?= tr($t,'en','nav.links.gallery') ?></a></li>
-    <li><a href="#creatures" data-fr><?= tr($t,'fr','nav.links.creatures') ?></a>  <a href="#creatures" data-en><?= tr($t,'en','nav.links.creatures') ?></a></li>
-    <li><a href="#audio"    data-fr><?= tr($t,'fr','nav.links.audio') ?></a>       <a href="#audio"    data-en><?= tr($t,'en','nav.links.audio') ?></a></li>
-    <li><a href="#daynnight" data-fr><?= tr($t,'fr','nav.links.daynnight') ?></a> <a href="#daynnight" data-en><?= tr($t,'en','nav.links.daynnight') ?></a></li>
-    <li><a href="#eda"      data-fr><?= tr($t,'fr','nav.links.eda') ?></a> <a href="#eda" data-en><?= tr($t,'en','nav.links.eda') ?></a></li>
-    <li><a href="#multi"    data-fr><?= tr($t,'fr','nav.links.multi') ?></a> <a href="#multi"    data-en><?= tr($t,'en','nav.links.multi') ?></a></li>
-    <li><a href="#scores"   data-fr><?= tr($t,'fr','nav.links.scores') ?></a>  <a href="#scores"   data-en><?= tr($t,'en','nav.links.scores') ?></a></li>
+    <li><a href="#factions"  data-i18n="nav.links.factions"><?= tr($t,'fr','nav.links.factions') ?></a></li>
+    <li><a href="#biomes"    data-i18n="nav.links.biomes"><?= tr($t,'fr','nav.links.biomes') ?></a></li>
+    <li><a href="#missions"  data-i18n="nav.links.missions"><?= tr($t,'fr','nav.links.missions') ?></a></li>
+    <li><a href="#gameplay"  data-i18n="nav.links.gameplay"><?= tr($t,'fr','nav.links.gameplay') ?></a></li>
+    <li><a href="#gallery"   data-i18n="nav.links.gallery"><?= tr($t,'fr','nav.links.gallery') ?></a></li>
+    <li><a href="#creatures" data-i18n="nav.links.creatures"><?= tr($t,'fr','nav.links.creatures') ?></a></li>
+    <li><a href="#audio"     data-i18n="nav.links.audio"><?= tr($t,'fr','nav.links.audio') ?></a></li>
+    <li><a href="#daynnight" data-i18n="nav.links.daynnight"><?= tr($t,'fr','nav.links.daynnight') ?></a></li>
+    <li><a href="#eda"       data-i18n="nav.links.eda"><?= tr($t,'fr','nav.links.eda') ?></a></li>
+    <li><a href="#multi"     data-i18n="nav.links.multi"><?= tr($t,'fr','nav.links.multi') ?></a></li>
+    <li><a href="#scores"    data-i18n="nav.links.scores"><?= tr($t,'fr','nav.links.scores') ?></a></li>
   </ul>
   <div id="lang-toggle">
-    <button onclick="setLang('fr')" id="btn-fr" class="active">FR</button>
-    <button onclick="setLang('en')" id="btn-en">EN</button>
+    <select id="langSelect" onchange="setLang(this.value)">
+<?php foreach ($LANGS as $code): ?>
+      <option value="<?= $code ?>"><?= strtoupper($code) ?></option>
+<?php endforeach; ?>
+    </select>
   </div>
-  <a href="game.php" class="nav-cta" data-fr><?= tr($t,'fr','nav.play') ?></a>
-  <a href="game.php" class="nav-cta" data-en><?= tr($t,'en','nav.play') ?></a>
+  <a href="game.php" class="nav-cta" data-i18n="nav.play"><?= tr($t,'fr','nav.play') ?></a>
 </nav>
 
 <!-- ═══════════ HERO ═══════════ -->
@@ -129,17 +150,9 @@ function fmt_date($iso) {
     <div class="hero-inner">
       <div class="hero-text">
         <h1 class="hero-title">⬡ HEXISTENZ</h1>
-        <p class="hero-subtitle">
-          <span data-fr><?= tr($t,'fr','hero.subtitle') ?></span>
-          <span data-en><?= tr($t,'en','hero.subtitle') ?></span>
-        </p>
+        <p class="hero-subtitle" data-i18n="hero.subtitle"><?= tr($t,'fr','hero.subtitle') ?></p>
 
-        <p class="hero-inspi" data-fr>
-          <?= tr($t,'fr','hero.inspi_text') ?>
-        </p>
-        <p class="hero-inspi" data-en>
-          <?= tr($t,'en','hero.inspi_text') ?>
-        </p>
+        <p class="hero-inspi" data-i18n="hero.inspi_text"><?= tr($t,'fr','hero.inspi_text') ?></p>
 
         <div class="hero-inspi-grid">
           <div class="hero-inspi-col">
@@ -149,7 +162,7 @@ function fmt_date($iso) {
                 <div class="hero-inspi-name">Dorfromantik</div>
               </div>
             </div>
-            <a class="hero-inspi-buy" href="https://store.steampowered.com/app/1455840/Dorfromantik/" target="_blank" rel="noopener">🎮 <span data-fr><?= tr($t,'fr','hero.inspi_buy.dorfromantik') ?></span><span data-en><?= tr($t,'en','hero.inspi_buy.dorfromantik') ?></span></a>
+            <a class="hero-inspi-buy" href="https://store.steampowered.com/app/1455840/Dorfromantik/" target="_blank" rel="noopener">🎮 <span data-i18n="hero.inspi_buy.dorfromantik"><?= tr($t,'fr','hero.inspi_buy.dorfromantik') ?></span></a>
           </div>
           <div class="hero-inspi-col">
             <div class="hero-inspi-card">
@@ -158,7 +171,7 @@ function fmt_date($iso) {
                 <div class="hero-inspi-name">The Settlers</div>
               </div>
             </div>
-            <a class="hero-inspi-buy" href="https://www.ubisoft.com/en-gb/games/the-settlers-history-edition" target="_blank" rel="noopener">🎮 <span data-fr><?= tr($t,'fr','hero.inspi_buy.settlers') ?></span><span data-en><?= tr($t,'en','hero.inspi_buy.settlers') ?></span></a>
+            <a class="hero-inspi-buy" href="https://www.ubisoft.com/en-gb/games/the-settlers-history-edition" target="_blank" rel="noopener">🎮 <span data-i18n="hero.inspi_buy.settlers"><?= tr($t,'fr','hero.inspi_buy.settlers') ?></span></a>
           </div>
           <div class="hero-inspi-col">
             <div class="hero-inspi-card">
@@ -167,26 +180,19 @@ function fmt_date($iso) {
                 <div class="hero-inspi-name">Heroes of Might &amp; Magic</div>
               </div>
             </div>
-            <a class="hero-inspi-buy" href="https://www.gog.com/en/game/heroes_of_might_and_magic_3_complete_edition" target="_blank" rel="noopener">🎮 <span data-fr><?= tr($t,'fr','hero.inspi_buy.heroes3') ?></span><span data-en><?= tr($t,'en','hero.inspi_buy.heroes3') ?></span></a>
+            <a class="hero-inspi-buy" href="https://www.gog.com/en/game/heroes_of_might_and_magic_3_complete_edition" target="_blank" rel="noopener">🎮 <span data-i18n="hero.inspi_buy.heroes3"><?= tr($t,'fr','hero.inspi_buy.heroes3') ?></span></a>
           </div>
         </div>
 
-        <p class="hero-tagline" data-fr>
-          <?= tr($t,'fr','hero.tagline') ?>
-        </p>
-        <p class="hero-tagline" data-en>
-          <?= tr($t,'en','hero.tagline') ?>
-        </p>
+        <p class="hero-tagline" data-i18n="hero.tagline"><?= tr($t,'fr','hero.tagline') ?></p>
         <div class="hero-buttons">
-          <a href="game.php" class="btn-primary" data-fr><?= tr($t,'fr','hero.btn_play') ?></a>
-          <a href="game.php" class="btn-primary" data-en><?= tr($t,'en','hero.btn_play') ?></a>
-          <a href="#gameplay" class="btn-secondary" data-fr><?= tr($t,'fr','hero.btn_how') ?></a>
-          <a href="#gameplay" class="btn-secondary" data-en><?= tr($t,'en','hero.btn_how') ?></a>
+          <a href="game.php" class="btn-primary" data-i18n="hero.btn_play"><?= tr($t,'fr','hero.btn_play') ?></a>
+          <a href="#gameplay" class="btn-secondary" data-i18n="hero.btn_how"><?= tr($t,'fr','hero.btn_how') ?></a>
         </div>
         <div class="stats-bar">
-          <div class="stat-item"><div class="stat-num">6</div><div class="stat-label" data-fr><?= tr($t,'fr','hero.stats.biomes_label') ?></div><div class="stat-label" data-en><?= tr($t,'en','hero.stats.biomes_label') ?></div></div>
-          <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label" data-fr><?= tr($t,'fr','hero.stats.games_label') ?></div><div class="stat-label" data-en><?= tr($t,'en','hero.stats.games_label') ?></div></div>
-          <div class="stat-item"><div class="stat-num">2</div><div class="stat-label" data-fr><?= tr($t,'fr','hero.stats.factions_label') ?></div><div class="stat-label" data-en><?= tr($t,'en','hero.stats.factions_label') ?></div></div>
+          <div class="stat-item"><div class="stat-num">6</div><div class="stat-label" data-i18n="hero.stats.biomes_label"><?= tr($t,'fr','hero.stats.biomes_label') ?></div></div>
+          <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label" data-i18n="hero.stats.games_label"><?= tr($t,'fr','hero.stats.games_label') ?></div></div>
+          <div class="stat-item"><div class="stat-num">2</div><div class="stat-label" data-i18n="hero.stats.factions_label"><?= tr($t,'fr','hero.stats.factions_label') ?></div></div>
         </div>
       </div>
 
@@ -198,18 +204,10 @@ function fmt_date($iso) {
 <!-- ═══════════ FACTIONS ═══════════ -->
 <section id="factions">
   <div class="container">
-    <p class="section-label" data-fr><?= tr($t,'fr','factions.label') ?></p>
-    <p class="section-label" data-en><?= tr($t,'en','factions.label') ?></p>
-    <h2 class="section-title" data-fr><?= tr($t,'fr','factions.title1') ?></h2>
-    <h2 class="section-title" data-en><?= tr($t,'en','factions.title1') ?></h2>
-    <h2 class="section-title" data-fr><?= tr($t,'fr','factions.title2') ?></h2>
-    <h2 class="section-title" data-en><?= tr($t,'en','factions.title2') ?></h2>
-    <p class="section-sub" data-fr>
-      <?= tr($t,'fr','factions.sub') ?>
-    </p>
-    <p class="section-sub" data-en>
-      <?= tr($t,'en','factions.sub') ?>
-    </p>
+    <p class="section-label" data-i18n="factions.label"><?= tr($t,'fr','factions.label') ?></p>
+    <h2 class="section-title" data-i18n="factions.title1"><?= tr($t,'fr','factions.title1') ?></h2>
+    <h2 class="section-title" data-i18n="factions.title2"><?= tr($t,'fr','factions.title2') ?></h2>
+    <p class="section-sub" data-i18n="factions.sub"><?= tr($t,'fr','factions.sub') ?></p>
 
     <div class="factions-grid">
       <div class="faction-card platiste">
@@ -217,16 +215,9 @@ function fmt_date($iso) {
           <img src="images/platiste.jpg" alt="Mode Platiste" style="width:100%;height:100%;object-fit:cover;display:block;">
         </div>
         <div class="faction-body">
-          <span class="faction-tag" data-fr><?= tr($t,'fr','factions.flat.tag') ?></span>
-          <span class="faction-tag" data-en><?= tr($t,'en','factions.flat.tag') ?></span>
-          <div class="faction-name" data-fr><?= tr($t,'fr','factions.flat.name') ?></div>
-          <div class="faction-name" data-en><?= tr($t,'en','factions.flat.name') ?></div>
-          <p class="faction-desc" data-fr>
-            <?= tr($t,'fr','factions.flat.desc') ?>
-          </p>
-          <p class="faction-desc" data-en>
-            <?= tr($t,'en','factions.flat.desc') ?>
-          </p>
+          <span class="faction-tag" data-i18n="factions.flat.tag"><?= tr($t,'fr','factions.flat.tag') ?></span>
+          <div class="faction-name" data-i18n="factions.flat.name"><?= tr($t,'fr','factions.flat.name') ?></div>
+          <p class="faction-desc" data-i18n="factions.flat.desc"><?= tr($t,'fr','factions.flat.desc') ?></p>
         </div>
       </div>
 
@@ -235,34 +226,23 @@ function fmt_date($iso) {
           <img src="images/bouliste-transparent.png" alt="Mode Bouliste" style="width:100%;height:100%;object-fit:cover;display:block;">
         </div>
         <div class="faction-body">
-          <span class="faction-tag" data-fr><?= tr($t,'fr','factions.globe.tag') ?></span>
-          <span class="faction-tag" data-en><?= tr($t,'en','factions.globe.tag') ?></span>
-          <div class="faction-name" data-fr><?= tr($t,'fr','factions.globe.name') ?></div>
-          <div class="faction-name" data-en><?= tr($t,'en','factions.globe.name') ?></div>
-          <p class="faction-desc" data-fr>
-            <?= tr($t,'fr','factions.globe.desc') ?>
-          </p>
-          <p class="faction-desc" data-en>
-            <?= tr($t,'en','factions.globe.desc') ?>
-          </p>
+          <span class="faction-tag" data-i18n="factions.globe.tag"><?= tr($t,'fr','factions.globe.tag') ?></span>
+          <div class="faction-name" data-i18n="factions.globe.name"><?= tr($t,'fr','factions.globe.name') ?></div>
+          <p class="faction-desc" data-i18n="factions.globe.desc"><?= tr($t,'fr','factions.globe.desc') ?></p>
         </div>
       </div>
     </div>
 
-    <div class="faction-vs" data-fr><?= tr($t,'fr','factions.vs') ?></div>
-    <div class="faction-vs" data-en><?= tr($t,'en','factions.vs') ?></div>
+    <div class="faction-vs" data-i18n="factions.vs"><?= tr($t,'fr','factions.vs') ?></div>
   </div>
 </section>
 
 <!-- ═══════════ BIOMES ═══════════ -->
 <section id="biomes">
   <div class="container">
-    <p class="section-label" data-fr><?= tr($t,'fr','biomes.label') ?></p>
-    <p class="section-label" data-en><?= tr($t,'en','biomes.label') ?></p>
-    <h2 class="section-title" data-fr><?= tr($t,'fr','biomes.title') ?></h2>
-    <h2 class="section-title" data-en><?= tr($t,'en','biomes.title') ?></h2>
-    <p class="section-sub" data-fr><?= tr($t,'fr','biomes.sub') ?></p>
-    <p class="section-sub" data-en><?= tr($t,'en','biomes.sub') ?></p>
+    <p class="section-label" data-i18n="biomes.label"><?= tr($t,'fr','biomes.label') ?></p>
+    <h2 class="section-title" data-i18n="biomes.title"><?= tr($t,'fr','biomes.title') ?></h2>
+    <p class="section-sub" data-i18n="biomes.sub"><?= tr($t,'fr','biomes.sub') ?></p>
 
     <div class="biomes-grid">
       <?php
@@ -279,13 +259,12 @@ function fmt_date($iso) {
         <div class="biome-banner">
           <img src="<?= $bc['img'] ?>" alt="<?= htmlspecialchars($bc['alt']) ?>" class="biome-banner-img">
           <div class="biome-banner-overlay">
-            <div class="biome-name" data-fr><?= tr($t,'fr',"biomes.$k.name") ?></div><div class="biome-name" data-en><?= tr($t,'en',"biomes.$k.name") ?></div>
+            <div class="biome-name" data-i18n="biomes.<?= $k ?>.name"><?= tr($t,'fr',"biomes.$k.name") ?></div>
           </div>
         </div>
         <div class="biome-body">
-          <div class="biome-desc" data-fr><?= tr($t,'fr',"biomes.$k.desc") ?></div>
-          <div class="biome-desc" data-en><?= tr($t,'en',"biomes.$k.desc") ?></div>
-          <span class="biome-tag" data-fr><?= tr($t,'fr',"biomes.$k.tag") ?></span><span class="biome-tag" data-en><?= tr($t,'en',"biomes.$k.tag") ?></span>
+          <div class="biome-desc" data-i18n="biomes.<?= $k ?>.desc"><?= tr($t,'fr',"biomes.$k.desc") ?></div>
+          <span class="biome-tag" data-i18n="biomes.<?= $k ?>.tag"><?= tr($t,'fr',"biomes.$k.tag") ?></span>
         </div>
       </div>
       <?php endforeach; ?>
@@ -296,12 +275,9 @@ function fmt_date($iso) {
 <!-- ═══════════ MISSIONS ═══════════ -->
 <section id="missions">
   <div class="container">
-    <p class="section-label" data-fr><?= tr($t,'fr','missions.label') ?></p>
-    <p class="section-label" data-en><?= tr($t,'en','missions.label') ?></p>
-    <h2 class="section-title" data-fr><?= tr($t,'fr','missions.title') ?></h2>
-    <h2 class="section-title" data-en><?= tr($t,'en','missions.title') ?></h2>
-    <p class="section-sub" data-fr><?= tr($t,'fr','missions.sub') ?></p>
-    <p class="section-sub" data-en><?= tr($t,'en','missions.sub') ?></p>
+    <p class="section-label" data-i18n="missions.label"><?= tr($t,'fr','missions.label') ?></p>
+    <h2 class="section-title" data-i18n="missions.title"><?= tr($t,'fr','missions.title') ?></h2>
+    <p class="section-sub" data-i18n="missions.sub"><?= tr($t,'fr','missions.sub') ?></p>
 
     <div class="missions-grid">
       <?php
@@ -320,10 +296,8 @@ function fmt_date($iso) {
       <div class="mission-card">
         <div class="mission-icon"><?= $mc['icon'] ?></div>
         <div>
-          <div class="mission-name" data-fr><?= tr($t,'fr',"missions.$k.name") ?></div>
-          <div class="mission-name" data-en><?= tr($t,'en',"missions.$k.name") ?></div>
-          <div class="mission-desc" data-fr><?= tr($t,'fr',"missions.$k.desc") ?></div>
-          <div class="mission-desc" data-en><?= tr($t,'en',"missions.$k.desc") ?></div>
+          <div class="mission-name" data-i18n="missions.<?= $k ?>.name"><?= tr($t,'fr',"missions.$k.name") ?></div>
+          <div class="mission-desc" data-i18n="missions.<?= $k ?>.desc"><?= tr($t,'fr',"missions.$k.desc") ?></div>
         </div>
       </div>
       <?php endforeach; ?>
@@ -334,17 +308,13 @@ function fmt_date($iso) {
 <!-- ═══════════ GAMEPLAY ═══════════ -->
 <section id="gameplay">
   <div class="container">
-    <p class="section-label" data-fr><?= tr($t,'fr','gameplay.label') ?></p>
-    <p class="section-label" data-en><?= tr($t,'en','gameplay.label') ?></p>
-    <h2 class="section-title" data-fr><?= tr($t,'fr','gameplay.title') ?></h2>
-    <h2 class="section-title" data-en><?= tr($t,'en','gameplay.title') ?></h2>
-    <p class="section-sub" data-fr><?= tr($t,'fr','gameplay.sub') ?></p>
-    <p class="section-sub" data-en><?= tr($t,'en','gameplay.sub') ?></p>
+    <p class="section-label" data-i18n="gameplay.label"><?= tr($t,'fr','gameplay.label') ?></p>
+    <h2 class="section-title" data-i18n="gameplay.title"><?= tr($t,'fr','gameplay.title') ?></h2>
+    <p class="section-sub" data-i18n="gameplay.sub"><?= tr($t,'fr','gameplay.sub') ?></p>
 
     <div class="gameplay-ui-preview">
       <img src="./images/tuiles.png" alt="Interface tuiles — tuile courante, suivante et restantes" loading="lazy">
-      <p class="gameplay-ui-caption" data-fr><?= tr($t,'fr','gameplay.ui_caption') ?></p>
-      <p class="gameplay-ui-caption" data-en><?= tr($t,'en','gameplay.ui_caption') ?></p>
+      <p class="gameplay-ui-caption" data-i18n="gameplay.ui_caption"><?= tr($t,'fr','gameplay.ui_caption') ?></p>
     </div>
 
     <div class="steps-grid">
@@ -358,16 +328,14 @@ function fmt_date($iso) {
       foreach ($steps as $sc): $k = $sc['key']; ?>
       <div class="step-card">
         <div class="step-icon"><?= $sc['icon'] ?></div>
-        <div class="step-title" data-fr><?= tr($t,'fr',"gameplay.steps.$k.title") ?></div><div class="step-title" data-en><?= tr($t,'en',"gameplay.steps.$k.title") ?></div>
-        <div class="step-desc" data-fr><?= tr($t,'fr',"gameplay.steps.$k.desc") ?></div>
-        <div class="step-desc" data-en><?= tr($t,'en',"gameplay.steps.$k.desc") ?></div>
+        <div class="step-title" data-i18n="gameplay.steps.<?= $k ?>.title"><?= tr($t,'fr',"gameplay.steps.$k.title") ?></div>
+        <div class="step-desc" data-i18n="gameplay.steps.<?= $k ?>.desc"><?= tr($t,'fr',"gameplay.steps.$k.desc") ?></div>
       </div>
       <?php endforeach; ?>
     </div>
 
     <div style="margin-top:52px;">
-      <p class="section-label" data-fr><?= tr($t,'fr','gameplay.score_label') ?></p>
-      <p class="section-label" data-en><?= tr($t,'en','gameplay.score_label') ?></p>
+      <p class="section-label" data-i18n="gameplay.score_label"><?= tr($t,'fr','gameplay.score_label') ?></p>
       <div class="score-pills">
         <?php
         $pills = [
@@ -380,23 +348,30 @@ function fmt_date($iso) {
           ['key' => 'bonus',    'pts' => '+1500'],
         ];
         foreach ($pills as $pc): $k = $pc['key']; ?>
-        <div class="score-pill"><div class="score-pill-pts"><?= $pc['pts'] ?></div><div class="score-pill-label" data-fr><?= tr($t,'fr',"gameplay.pills.$k") ?></div><div class="score-pill-label" data-en><?= tr($t,'en',"gameplay.pills.$k") ?></div></div>
+        <div class="score-pill"><div class="score-pill-pts"><?= $pc['pts'] ?></div><div class="score-pill-label" data-i18n="gameplay.pills.<?= $k ?>"><?= tr($t,'fr',"gameplay.pills.$k") ?></div></div>
         <?php endforeach; ?>
       </div>
     </div>
 
+    <h2 class="section-title" style="margin-top:40px;padding-top:26px;border-top:1px solid var(--border);" data-i18n="gameplay.kbd_title"><?= tr($t,'fr','gameplay.kbd_title') ?></h2>
+
     <div class="kbd-strip">
-      <div class="kbd-strip-item"><kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.camera_label') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.camera_label') ?></span></div>
-      <div class="kbd-strip-item"><kbd data-fr><?= tr($t,'fr','gameplay.kbd.left_click_kbd') ?></kbd><kbd data-en><?= tr($t,'en','gameplay.kbd.left_click_kbd') ?></kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.left_click_desc') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.left_click_desc') ?></span></div>
-      <div class="kbd-strip-item"><kbd data-fr><?= tr($t,'fr','gameplay.kbd.right_click_kbd') ?></kbd><kbd data-en><?= tr($t,'en','gameplay.kbd.right_click_kbd') ?></kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.right_click_desc') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.right_click_desc') ?></span></div>
-      <div class="kbd-strip-item"><kbd data-fr><?= tr($t,'fr','gameplay.kbd.wheel_kbd') ?></kbd><kbd data-en><?= tr($t,'en','gameplay.kbd.wheel_kbd') ?></kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.wheel_desc') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.wheel_desc') ?></span></div>
-      <div class="kbd-strip-item"><kbd>R</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.reset_cam') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.reset_cam') ?></span></div>
-      <div class="kbd-strip-item"><kbd>Ctrl</kbd><kbd>Z</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.undo') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.undo') ?></span></div>
-      <div class="kbd-strip-item"><kbd>E</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.customization') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.customization') ?></span></div>
-      <div class="kbd-strip-item"><kbd>F</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.perf_hud') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.perf_hud') ?></span></div>
-      <div class="kbd-strip-item"><kbd>Espace</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.immersive') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.immersive') ?></span></div>
-      <div class="kbd-strip-item"><kbd>M</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.mute') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.mute') ?></span></div>
-      <div class="kbd-strip-item"><kbd>H</kbd><span data-fr><?= tr($t,'fr','gameplay.kbd.help') ?></span><span data-en><?= tr($t,'en','gameplay.kbd.help') ?></span></div>
+      <div class="kbd-strip-item"><span class="kbd-group kbd-group--stacked"><span class="kbd-row"><kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd></span><span class="kbd-row"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span></span><span data-i18n="gameplay.kbd.camera_label"><?= tr($t,'fr','gameplay.kbd.camera_label') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.left_click_kbd"><?= tr($t,'fr','gameplay.kbd.left_click_kbd') ?></kbd><span data-i18n="gameplay.kbd.left_click_desc"><?= tr($t,'fr','gameplay.kbd.left_click_desc') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.right_click_kbd"><?= tr($t,'fr','gameplay.kbd.right_click_kbd') ?></kbd><span data-i18n="gameplay.kbd.right_click_desc"><?= tr($t,'fr','gameplay.kbd.right_click_desc') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.wheel_kbd"><?= tr($t,'fr','gameplay.kbd.wheel_kbd') ?></kbd><span data-i18n="gameplay.kbd.wheel_desc"><?= tr($t,'fr','gameplay.kbd.wheel_desc') ?></span></div>
+      <div class="kbd-strip-item"><kbd>R</kbd><span data-i18n="gameplay.kbd.reset_cam"><?= tr($t,'fr','gameplay.kbd.reset_cam') ?></span></div>
+      <div class="kbd-strip-item"><kbd>+</kbd><kbd>-</kbd><span data-i18n="gameplay.kbd.zoom"><?= tr($t,'fr','gameplay.kbd.zoom') ?></span></div>
+      <div class="kbd-strip-item"><kbd>Ctrl</kbd><kbd>Z</kbd><span data-i18n="gameplay.kbd.undo"><?= tr($t,'fr','gameplay.kbd.undo') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.shift_kbd"><?= tr($t,'fr','gameplay.kbd.shift_kbd') ?></kbd><span data-i18n="gameplay.kbd.speed_up"><?= tr($t,'fr','gameplay.kbd.speed_up') ?></span></div>
+      <div class="kbd-strip-item"><kbd>E</kbd><span data-i18n="gameplay.kbd.customization"><?= tr($t,'fr','gameplay.kbd.customization') ?></span></div>
+      <div class="kbd-strip-item"><kbd>F</kbd><span data-i18n="gameplay.kbd.perf_hud"><?= tr($t,'fr','gameplay.kbd.perf_hud') ?></span></div>
+      <div class="kbd-strip-item"><kbd>C</kbd><span data-i18n="gameplay.kbd.snapshot"><?= tr($t,'fr','gameplay.kbd.snapshot') ?></span></div>
+      <div class="kbd-strip-item"><kbd>G</kbd><span data-i18n="gameplay.kbd.gallery"><?= tr($t,'fr','gameplay.kbd.gallery') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.space_kbd"><?= tr($t,'fr','gameplay.kbd.space_kbd') ?></kbd><span data-i18n="gameplay.kbd.immersive"><?= tr($t,'fr','gameplay.kbd.immersive') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.shift_kbd"><?= tr($t,'fr','gameplay.kbd.shift_kbd') ?></kbd><kbd data-i18n="gameplay.kbd.space_kbd"><?= tr($t,'fr','gameplay.kbd.space_kbd') ?></kbd><span data-i18n="gameplay.kbd.super_immersive"><?= tr($t,'fr','gameplay.kbd.super_immersive') ?></span></div>
+      <div class="kbd-strip-item"><kbd>M</kbd><span data-i18n="gameplay.kbd.mute"><?= tr($t,'fr','gameplay.kbd.mute') ?></span></div>
+      <div class="kbd-strip-item"><kbd>H</kbd><kbd>ESC</kbd><span data-i18n="gameplay.kbd.help"><?= tr($t,'fr','gameplay.kbd.help') ?></span></div>
     </div>
   </div>
 </section>
@@ -404,14 +379,10 @@ function fmt_date($iso) {
 <!-- ═══════════ GALLERY ═══════════ -->
 <section id="gallery">
   <div class="container">
-    <p class="section-label" data-fr><?= tr($t,'fr','gallery.label') ?></p>
-    <p class="section-label" data-en><?= tr($t,'en','gallery.label') ?></p>
-    <h2 class="section-title" data-fr><?= tr($t,'fr','gallery.title1') ?></h2>
-    <h2 class="section-title" data-fr><?= tr($t,'fr','gallery.title2') ?></h2>
-    <h2 class="section-title" data-en><?= tr($t,'en','gallery.title1') ?></h2>
-    <h2 class="section-title" data-en><?= tr($t,'en','gallery.title2') ?></h2>
-    <p class="section-sub" data-fr><?= tr($t,'fr','gallery.sub') ?></p>
-    <p class="section-sub" data-en><?= tr($t,'en','gallery.sub') ?></p>
+    <p class="section-label" data-i18n="gallery.label"><?= tr($t,'fr','gallery.label') ?></p>
+    <h2 class="section-title" data-i18n="gallery.title1"><?= tr($t,'fr','gallery.title1') ?></h2>
+    <h2 class="section-title" data-i18n="gallery.title2"><?= tr($t,'fr','gallery.title2') ?></h2>
+    <p class="section-sub" data-i18n="gallery.sub"><?= tr($t,'fr','gallery.sub') ?></p>
 
     <div class="gallery-grid">
       <?php
@@ -432,7 +403,7 @@ function fmt_date($iso) {
       ?>
       <div class="<?= $cls ?>"<?= $style ?>>
         <img src="<?= $pc['img'] ?>" alt="<?= htmlspecialchars($pc['alt']) ?>" class="gallery-img">
-        <div class="gallery-overlay"><div class="gallery-label"><span data-fr><?= tr($t,'fr','gallery.preset_word') ?></span><span data-en><?= tr($t,'en','gallery.preset_word') ?></span><span data-fr><?= tr($t,'fr',"gallery.presets.$k") ?></span><span data-en><?= tr($t,'en',"gallery.presets.$k") ?></span></div></div>
+        <div class="gallery-overlay"><div class="gallery-label"><span data-i18n="gallery.preset_word"><?= tr($t,'fr','gallery.preset_word') ?></span> <span data-i18n="gallery.presets.<?= $k ?>"><?= tr($t,'fr',"gallery.presets.$k") ?></span></div></div>
       </div>
       <?php endforeach; ?>
     </div>
@@ -442,12 +413,9 @@ function fmt_date($iso) {
 <!-- ═══════════ CREATURES ═══════════ -->
 <section id="creatures">
   <div class="container">
-    <p class="section-label" data-fr><?= tr($t,'fr','creatures.label') ?></p>
-    <p class="section-label" data-en><?= tr($t,'en','creatures.label') ?></p>
-    <h2 class="section-title" data-fr><?= tr($t,'fr','creatures.title') ?></h2>
-    <h2 class="section-title" data-en><?= tr($t,'en','creatures.title') ?></h2>
-    <p class="section-sub" data-fr><?= tr($t,'fr','creatures.sub') ?></p>
-    <p class="section-sub" data-en><?= tr($t,'en','creatures.sub') ?></p>
+    <p class="section-label" data-i18n="creatures.label"><?= tr($t,'fr','creatures.label') ?></p>
+    <h2 class="section-title" data-i18n="creatures.title"><?= tr($t,'fr','creatures.title') ?></h2>
+    <p class="section-sub" data-i18n="creatures.sub"><?= tr($t,'fr','creatures.sub') ?></p>
 
     <div class="creatures-grid">
       <?php
@@ -466,12 +434,11 @@ function fmt_date($iso) {
         <div class="creature-banner">
           <img src="<?= $cc['img'] ?>" alt="<?= htmlspecialchars($cc['alt']) ?>" class="creature-banner-img">
           <div class="creature-banner-overlay">
-            <div class="creature-name" data-fr><?= tr($t,'fr',"creatures.$k.name") ?></div><div class="creature-name" data-en><?= tr($t,'en',"creatures.$k.name") ?></div>
+            <div class="creature-name" data-i18n="creatures.<?= $k ?>.name"><?= tr($t,'fr',"creatures.$k.name") ?></div>
           </div>
         </div>
         <div class="creature-body">
-          <div class="creature-desc" data-fr><?= tr($t,'fr',"creatures.$k.desc") ?></div>
-          <div class="creature-desc" data-en><?= tr($t,'en',"creatures.$k.desc") ?></div>
+          <div class="creature-desc" data-i18n="creatures.<?= $k ?>.desc"><?= tr($t,'fr',"creatures.$k.desc") ?></div>
         </div>
       </div>
       <?php endforeach; ?>
@@ -479,72 +446,63 @@ function fmt_date($iso) {
 
     <div class="population-strip">
       <div class="population-group">
-        <div class="population-group-label" data-fr><?= tr($t,'fr','creatures.population.villages_label') ?></div>
-        <div class="population-group-label" data-en><?= tr($t,'en','creatures.population.villages_label') ?></div>
+        <div class="population-group-label" data-i18n="creatures.population.villages_label"><?= tr($t,'fr','creatures.population.villages_label') ?></div>
         <div class="population-tags">
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.village_women') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.village_women') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.village_men') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.village_men') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.farmer') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.farmer') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.blacksmith') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.blacksmith') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.merchant') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.merchant') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.innkeeper') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.innkeeper') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.guard') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.guard') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.soldier') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.soldier') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.knight') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.knight') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.village_women"><?= tr($t,'fr','creatures.population.tags.village_women') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.village_men"><?= tr($t,'fr','creatures.population.tags.village_men') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.farmer"><?= tr($t,'fr','creatures.population.tags.farmer') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.blacksmith"><?= tr($t,'fr','creatures.population.tags.blacksmith') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.merchant"><?= tr($t,'fr','creatures.population.tags.merchant') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.innkeeper"><?= tr($t,'fr','creatures.population.tags.innkeeper') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.guard"><?= tr($t,'fr','creatures.population.tags.guard') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.soldier"><?= tr($t,'fr','creatures.population.tags.soldier') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.knight"><?= tr($t,'fr','creatures.population.tags.knight') ?></span>
         </div>
       </div>
       <div class="population-group">
-        <div class="population-group-label" data-fr><?= tr($t,'fr','creatures.population.forests_label') ?></div>
-        <div class="population-group-label" data-en><?= tr($t,'en','creatures.population.forests_label') ?></div>
+        <div class="population-group-label" data-i18n="creatures.population.forests_label"><?= tr($t,'fr','creatures.population.forests_label') ?></div>
         <div class="population-tags">
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.archer') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.archer') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.warriors') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.warriors') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.mage') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.mage') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.monk') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.monk') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.witch') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.witch') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.archer"><?= tr($t,'fr','creatures.population.tags.archer') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.warriors"><?= tr($t,'fr','creatures.population.tags.warriors') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.mage"><?= tr($t,'fr','creatures.population.tags.mage') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.monk"><?= tr($t,'fr','creatures.population.tags.monk') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.witch"><?= tr($t,'fr','creatures.population.tags.witch') ?></span>
         </div>
       </div>
       <div class="population-group">
-        <div class="population-group-label" data-fr><?= tr($t,'fr','creatures.population.fields_label') ?></div>
-        <div class="population-group-label" data-en><?= tr($t,'en','creatures.population.fields_label') ?></div>
+        <div class="population-group-label" data-i18n="creatures.population.fields_label"><?= tr($t,'fr','creatures.population.fields_label') ?></div>
         <div class="population-tags">
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.crows') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.crows') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.windmill') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.windmill') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.scarecrow') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.scarecrow') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.crows"><?= tr($t,'fr','creatures.population.tags.crows') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.windmill"><?= tr($t,'fr','creatures.population.tags.windmill') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.scarecrow"><?= tr($t,'fr','creatures.population.tags.scarecrow') ?></span>
         </div>
       </div>
       <div class="population-group">
-        <div class="population-group-label" data-fr><?= tr($t,'fr','creatures.population.water_label') ?></div>
-        <div class="population-group-label" data-en><?= tr($t,'en','creatures.population.water_label') ?></div>
+        <div class="population-group-label" data-i18n="creatures.population.water_label"><?= tr($t,'fr','creatures.population.water_label') ?></div>
         <div class="population-tags">
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.boat') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.boat') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.rowboats') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.rowboats') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.seagulls') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.seagulls') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.boat"><?= tr($t,'fr','creatures.population.tags.boat') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.rowboats"><?= tr($t,'fr','creatures.population.tags.rowboats') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.seagulls"><?= tr($t,'fr','creatures.population.tags.seagulls') ?></span>
         </div>
       </div>
       <div class="population-group">
-        <div class="population-group-label" data-fr><?= tr($t,'fr','creatures.population.meadows_label') ?></div>
-        <div class="population-group-label" data-en><?= tr($t,'en','creatures.population.meadows_label') ?></div>
+        <div class="population-group-label" data-i18n="creatures.population.meadows_label"><?= tr($t,'fr','creatures.population.meadows_label') ?></div>
         <div class="population-tags">
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.deer') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.deer') ?></span>
-          <span class="population-tag" data-fr><?= tr($t,'fr','creatures.population.tags.wildflowers') ?></span><span class="population-tag" data-en><?= tr($t,'en','creatures.population.tags.wildflowers') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.deer"><?= tr($t,'fr','creatures.population.tags.deer') ?></span>
+          <span class="population-tag" data-i18n="creatures.population.tags.wildflowers"><?= tr($t,'fr','creatures.population.tags.wildflowers') ?></span>
         </div>
       </div>
     </div>
-    <p class="population-note" data-fr><?= tr($t,'fr','creatures.note') ?></p>
-    <p class="population-note" data-en><?= tr($t,'en','creatures.note') ?></p>
+    <p class="population-note" data-i18n="creatures.note"><?= tr($t,'fr','creatures.note') ?></p>
   </div>
 </section>
 
 <!-- ═══════════ AUDIO ═══════════ -->
 <section id="audio">
   <div class="container">
-    <p class="section-label" data-fr><?= tr($t,'fr','audio.label') ?></p>
-    <p class="section-label" data-en><?= tr($t,'en','audio.label') ?></p>
-    <h2 class="section-title" data-fr><?= tr($t,'fr','audio.title') ?></h2>
-    <h2 class="section-title" data-en><?= tr($t,'en','audio.title') ?></h2>
-    <p class="section-sub" data-fr><?= tr($t,'fr','audio.sub') ?></p>
-    <p class="section-sub" data-en><?= tr($t,'en','audio.sub') ?></p>
+    <p class="section-label" data-i18n="audio.label"><?= tr($t,'fr','audio.label') ?></p>
+    <h2 class="section-title" data-i18n="audio.title"><?= tr($t,'fr','audio.title') ?></h2>
+    <p class="section-sub" data-i18n="audio.sub"><?= tr($t,'fr','audio.sub') ?></p>
 
     <div class="audio-grid">
       <?php
@@ -558,10 +516,8 @@ function fmt_date($iso) {
       <div class="audio-card">
         <div class="audio-icon"><?= $ac['icon'] ?></div>
         <div>
-          <div class="audio-name" data-fr><?= tr($t,'fr',"audio.$k.name") ?></div>
-          <div class="audio-name" data-en><?= tr($t,'en',"audio.$k.name") ?></div>
-          <div class="audio-desc" data-fr><?= tr($t,'fr',"audio.$k.desc") ?></div>
-          <div class="audio-desc" data-en><?= tr($t,'en',"audio.$k.desc") ?></div>
+          <div class="audio-name" data-i18n="audio.<?= $k ?>.name"><?= tr($t,'fr',"audio.$k.name") ?></div>
+          <div class="audio-desc" data-i18n="audio.<?= $k ?>.desc"><?= tr($t,'fr',"audio.$k.desc") ?></div>
         </div>
       </div>
       <?php endforeach; ?>
@@ -572,12 +528,9 @@ function fmt_date($iso) {
 <!-- ═══════════ JOUR / NUIT ═══════════ -->
 <section id="daynnight">
   <div class="container">
-    <p class="section-label" data-fr><?= tr($t,'fr','daynnight.label') ?></p>
-    <p class="section-label" data-en><?= tr($t,'en','daynnight.label') ?></p>
-    <h2 class="section-title" data-fr><?= tr($t,'fr','daynnight.title') ?></h2>
-    <h2 class="section-title" data-en><?= tr($t,'en','daynnight.title') ?></h2>
-    <p class="section-sub" data-fr><?= tr($t,'fr','daynnight.sub') ?></p>
-    <p class="section-sub" data-en><?= tr($t,'en','daynnight.sub') ?></p>
+    <p class="section-label" data-i18n="daynnight.label"><?= tr($t,'fr','daynnight.label') ?></p>
+    <h2 class="section-title" data-i18n="daynnight.title"><?= tr($t,'fr','daynnight.title') ?></h2>
+    <p class="section-sub" data-i18n="daynnight.sub"><?= tr($t,'fr','daynnight.sub') ?></p>
 
     <div class="daynight-grid">
       <?php
@@ -600,13 +553,11 @@ function fmt_date($iso) {
         <div class="daynight-body">
         <div class="daynight-head">
           <div class="daynight-icon"><?= $dc['icon'] ?></div>
-          <div class="daynight-name" data-fr><?= tr($t,'fr',"daynnight.$k.name") ?></div>
-          <div class="daynight-name" data-en><?= tr($t,'en',"daynnight.$k.name") ?></div>
+          <div class="daynight-name" data-i18n="daynnight.<?= $k ?>.name"><?= tr($t,'fr',"daynnight.$k.name") ?></div>
         </div>
         <ul class="daynight-list">
           <?php for ($i = 0; $i < $count; $i++): ?>
-          <li data-fr><?= tr($t,'fr',"daynnight.$k.list.$i") ?></li>
-          <li data-en><?= tr($t,'en',"daynnight.$k.list.$i") ?></li>
+          <li data-i18n="daynnight.<?= $k ?>.list.<?= $i ?>"><?= tr($t,'fr',"daynnight.$k.list.$i") ?></li>
           <?php endfor; ?>
         </ul>
         </div>
@@ -619,12 +570,9 @@ function fmt_date($iso) {
 <!-- ═══════════ PERSONNALISATION EXTRÊME (EDA) ═══════════ -->
 <section id="eda">
   <div class="container">
-    <p class="section-label" data-fr><?= tr($t,'fr','eda.label') ?></p>
-    <p class="section-label" data-en><?= tr($t,'en','eda.label') ?></p>
-    <h2 class="section-title" data-fr><?= tr($t,'fr','eda.title') ?></h2>
-    <h2 class="section-title" data-en><?= tr($t,'en','eda.title') ?></h2>
-    <p class="section-sub" data-fr><?= tr($t,'fr','eda.sub') ?></p>
-    <p class="section-sub" data-en><?= tr($t,'en','eda.sub') ?></p>
+    <p class="section-label" data-i18n="eda.label"><?= tr($t,'fr','eda.label') ?></p>
+    <h2 class="section-title" data-i18n="eda.title"><?= tr($t,'fr','eda.title') ?></h2>
+    <p class="section-sub" data-i18n="eda.sub"><?= tr($t,'fr','eda.sub') ?></p>
 
     <div class="eda-showcase-grid">
       <?php
@@ -637,10 +585,8 @@ function fmt_date($iso) {
       <div class="eda-showcase-card">
         <img src="<?= $ec['img'] ?>" alt="<?= htmlspecialchars($ec['alt']) ?>" class="eda-showcase-img">
         <div class="eda-showcase-body">
-          <div class="eda-showcase-label" data-fr><?= tr($t,'fr',"eda.$k.label") ?></div>
-          <div class="eda-showcase-label" data-en><?= tr($t,'en',"eda.$k.label") ?></div>
-          <p class="eda-showcase-desc" data-fr><?= tr($t,'fr',"eda.$k.desc") ?></p>
-          <p class="eda-showcase-desc" data-en><?= tr($t,'en',"eda.$k.desc") ?></p>
+          <div class="eda-showcase-label" data-i18n="eda.<?= $k ?>.label"><?= tr($t,'fr',"eda.$k.label") ?></div>
+          <p class="eda-showcase-desc" data-i18n="eda.<?= $k ?>.desc"><?= tr($t,'fr',"eda.$k.desc") ?></p>
         </div>
       </div>
       <?php endforeach; ?>
@@ -653,30 +599,25 @@ function fmt_date($iso) {
   <div class="container">
     <div class="multi-inner">
       <div>
-        <h2 class="section-title" data-fr><?= tr($t,'fr','multi.title1') ?></h2>
-        <h2 class="section-title" data-fr><?= tr($t,'fr','multi.title2') ?></h2>
-        <h2 class="section-title" data-en><?= tr($t,'en','multi.title1') ?></h2>
-        <h2 class="section-title" data-en><?= tr($t,'en','multi.title2') ?></h2>
-        <p class="section-sub" data-fr><?= tr($t,'fr','multi.sub') ?></p>
-        <p class="section-sub" data-en><?= tr($t,'en','multi.sub') ?></p>
+        <h2 class="section-title" data-i18n="multi.title1"><?= tr($t,'fr','multi.title1') ?></h2>
+        <h2 class="section-title" data-i18n="multi.title2"><?= tr($t,'fr','multi.title2') ?></h2>
+        <p class="section-sub" data-i18n="multi.sub"><?= tr($t,'fr','multi.sub') ?></p>
         <ul class="multi-feature-list">
           <?php $features = tr($t,'fr','multi.features'); $fCount = is_array($features) ? count($features) : 0; ?>
           <?php for ($i = 0; $i < $fCount; $i++): ?>
-          <li data-fr><?= tr($t,'fr',"multi.features.$i") ?></li>
-          <li data-en><?= tr($t,'en',"multi.features.$i") ?></li>
+          <li data-i18n="multi.features.<?= $i ?>"><?= tr($t,'fr',"multi.features.$i") ?></li>
           <?php endfor; ?>
         </ul>
+        <h2 class="section-title" style="margin-top:32px;" data-i18n="multi.gallery_title"><?= tr($t,'fr','multi.gallery_title') ?></h2>
+        <p class="section-sub" data-i18n="multi.gallery_promo"><?= tr($t,'fr','multi.gallery_promo') ?></p>
         <div style="margin-top:28px;">
-          <a href="game.php" class="btn-primary" data-fr><?= tr($t,'fr','multi.btn_create') ?></a>
-          <a href="game.php" class="btn-primary" data-en><?= tr($t,'en','multi.btn_create') ?></a>
+          <a href="game.php" class="btn-primary" data-i18n="multi.btn_create"><?= tr($t,'fr','multi.btn_create') ?></a>
         </div>
       </div>
       <div class="room-demo">
-        <div class="room-demo-title" data-fr><?= tr($t,'fr','multi.room_title') ?></div>
-        <div class="room-demo-title" data-en><?= tr($t,'en','multi.room_title') ?></div>
+        <div class="room-demo-title" data-i18n="multi.room_title"><?= tr($t,'fr','multi.room_title') ?></div>
         <div class="room-code">HEXGRP</div>
-        <div style="font-size:10px;letter-spacing:0.14em;color:var(--text-dim);text-align:center;margin-top:4px;" data-fr><?= tr($t,'fr','multi.room_status') ?></div>
-        <div style="font-size:10px;letter-spacing:0.14em;color:var(--text-dim);text-align:center;margin-top:4px;" data-en><?= tr($t,'en','multi.room_status') ?></div>
+        <div style="font-size:10px;letter-spacing:0.14em;color:var(--text-dim);text-align:center;margin-top:4px;" data-i18n="multi.room_status"><?= tr($t,'fr','multi.room_status') ?></div>
         <div class="room-players">
           <div class="player-dot active">🧑</div>
           <div class="player-dot active">👩</div>
@@ -684,8 +625,7 @@ function fmt_date($iso) {
           <div class="player-dot">…</div>
         </div>
         <div class="room-scores">
-          <div style="font-size:9px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;" data-fr><?= tr($t,'fr','multi.tiles_placed_label') ?></div>
-          <div style="font-size:9px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;" data-en><?= tr($t,'en','multi.tiles_placed_label') ?></div>
+          <div style="font-size:9px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;" data-i18n="multi.tiles_placed_label"><?= tr($t,'fr','multi.tiles_placed_label') ?></div>
           <div class="room-score-row">
             <span class="room-score-name">Piregwan</span>
             <span class="room-score-pts" style="color:var(--gold);">47</span>
@@ -707,16 +647,13 @@ function fmt_date($iso) {
 <!-- ═══════════ HIGHSCORES ═══════════ -->
 <section id="scores">
   <div class="container">
-    <p class="section-label" data-fr><?= tr($t,'fr','scores.label') ?></p>
-    <p class="section-label" data-en><?= tr($t,'en','scores.label') ?></p>
-    <h2 class="section-title" data-fr><?= tr($t,'fr','scores.title') ?></h2>
-    <h2 class="section-title" data-en><?= tr($t,'en','scores.title') ?></h2>
+    <p class="section-label" data-i18n="scores.label"><?= tr($t,'fr','scores.label') ?></p>
+    <h2 class="section-title" data-i18n="scores.title"><?= tr($t,'fr','scores.title') ?></h2>
 
     <?php if (empty($highscores)): ?>
       <div class="hs-empty">
         <div style="font-size:32px;margin-bottom:12px;">🏆</div>
-        <div data-fr><?= tr($t,'fr','scores.empty') ?></div>
-        <div data-en><?= tr($t,'en','scores.empty') ?></div>
+        <div data-i18n="scores.empty"><?= tr($t,'fr','scores.empty') ?></div>
       </div>
     <?php else: ?>
     <div class="hs-list">
@@ -733,55 +670,46 @@ function fmt_date($iso) {
           <div class="hs-name"><?= htmlspecialchars($hs['name']) ?></div>
           <?php if ($dateStr): ?><div class="hs-date"><?= $dateStr ?></div><?php endif; ?>
           <?php if ($hs['tiles'] > 0): ?>
-          <div class="hs-headline-stat"><span class="icon">⬡</span><?= number_format($hs['tiles']) ?> <span data-fr><?= tr($t,'fr','scores.headline_stat') ?></span><span data-en><?= tr($t,'en','scores.headline_stat') ?></span></div>
+          <div class="hs-headline-stat"><span class="icon">⬡</span><?= number_format($hs['tiles']) ?> <span data-i18n="scores.headline_stat"><?= tr($t,'fr','scores.headline_stat') ?></span></div>
           <?php endif; ?>
           <?php
             // TOUTES les petites stats (lignes/bateaux/comètes + détail biomes) dans
-            // UN SEUL flux .hs-meta — pas deux blocs séparés qui se retrouvent sur des
+            // UN SEUL flux .hs-meta — pas de blocs séparés qui se retrouvent sur des
             // lignes différentes. Même style partout (cf. .hs-meta-item en CSS).
-            // Mots FR/EN (locomotive(s), bateau(x)/boat(s)…) lus depuis json/languages/*.json.
+            // Un seul data-i18n par mot (singulier/pluriel choisi ici, uniforme sur
+            // les 3 langues depuis la refonte du 2026-07-14 : toutes ont .s/.p).
             $smallStats = '';
             if ($hs['trains'] > 0) {
-              $wFr = $hs['trains'] > 1 ? tr($t,'fr','scores.trains_p') : tr($t,'fr','scores.trains_s');
-              $wEn = $hs['trains'] > 1 ? tr($t,'en','scores.trains_p') : tr($t,'en','scores.trains_s');
+              $key = $hs['trains'] > 1 ? 'scores.trains_p' : 'scores.trains_s';
               $smallStats .= '<span class="hs-meta-item"><span class="icon">🚂</span><span class="hs-stat-num">' . $hs['trains'] . '</span>'
-                . ' <span data-fr>' . htmlspecialchars($wFr) . '</span>'
-                . '<span data-en>' . htmlspecialchars($wEn) . '</span></span>';
+                . ' <span data-i18n="' . $key . '">' . htmlspecialchars(tr($t,'fr',$key)) . '</span></span>';
             }
             if ($hs['boats'] > 0) {
-              $wFr = $hs['boats'] > 1 ? tr($t,'fr','scores.boats_p') : tr($t,'fr','scores.boats_s');
-              $wEn = $hs['boats'] > 1 ? tr($t,'en','scores.boats_p') : tr($t,'en','scores.boats_s');
+              $key = $hs['boats'] > 1 ? 'scores.boats_p' : 'scores.boats_s';
               $smallStats .= '<span class="hs-meta-item"><span class="icon">⛵</span><span class="hs-stat-num">' . $hs['boats'] . '</span>'
-                . ' <span data-fr>' . htmlspecialchars($wFr) . '</span>'
-                . '<span data-en>' . htmlspecialchars($wEn) . '</span></span>';
+                . ' <span data-i18n="' . $key . '">' . htmlspecialchars(tr($t,'fr',$key)) . '</span></span>';
             }
             if ($hs['mills'] > 0) {
-              $wFr = $hs['mills'] > 1 ? tr($t,'fr','scores.mills_p') : tr($t,'fr','scores.mills_s');
-              $wEn = $hs['mills'] > 1 ? tr($t,'en','scores.mills_p') : tr($t,'en','scores.mills_s');
+              $key = $hs['mills'] > 1 ? 'scores.mills_p' : 'scores.mills_s';
               $smallStats .= '<span class="hs-meta-item"><span class="icon">⚙️</span><span class="hs-stat-num">' . $hs['mills'] . '</span>'
-                . ' <span data-fr>' . htmlspecialchars($wFr) . '</span>'
-                . '<span data-en>' . htmlspecialchars($wEn) . '</span></span>';
+                . ' <span data-i18n="' . $key . '">' . htmlspecialchars(tr($t,'fr',$key)) . '</span></span>';
             }
             if ($hs['comets'] > 0) {
-              $wFr = $hs['comets'] > 1 ? tr($t,'fr','scores.comets_p') : tr($t,'fr','scores.comets_s');
-              $wEn = $hs['comets'] > 1 ? tr($t,'en','scores.comets_p') : tr($t,'en','scores.comets_s');
+              $key = $hs['comets'] > 1 ? 'scores.comets_p' : 'scores.comets_s';
               $smallStats .= '<span class="hs-meta-item"><span class="icon">☄️</span><span class="hs-stat-num">' . $hs['comets'] . '</span>'
-                . ' <span data-fr>' . htmlspecialchars($wFr) . '</span>'
-                . '<span data-en>' . htmlspecialchars($wEn) . '</span></span>';
+                . ' <span data-i18n="' . $key . '">' . htmlspecialchars(tr($t,'fr',$key)) . '</span></span>';
             }
             foreach ($biomeIcons as $bt => $icon) {
               $tot = $hs['totals'][$bt] ?? 0;
               $max = $hs['largest'][$bt] ?? 0;
               if ($tot > 0 || $max > 0) {
-                $lFr = $tot == 1 ? tr($t,'fr',"scores.biome_labels.$bt.s") : tr($t,'fr',"scores.biome_labels.$bt.p");
-                $lEn = tr($t,'en',"scores.biome_labels.$bt.en");
+                $key = ($tot == 1) ? "scores.biome_labels.$bt.s" : "scores.biome_labels.$bt.p";
                 $smallStats .= '<span class="hs-meta-item hs-biome-chip">'
                   . '<span class="icon">' . $icon . '</span>'
                   . '<span class="hs-biome-total">' . number_format($tot) . '</span>'
-                  . '<span class="hs-biome-label" data-fr>' . htmlspecialchars($lFr) . '</span>'
-                  . '<span class="hs-biome-label" data-en>' . htmlspecialchars($lEn) . '</span>'
+                  . '<span class="hs-biome-label" data-i18n="' . $key . '">' . htmlspecialchars(tr($t,'fr',$key)) . '</span>'
                   . '<span class="hs-biome-note">'
-                    . '<span data-fr>' . htmlspecialchars(tr($t,'fr','scores.largest_zone')) . '</span><span data-en>' . htmlspecialchars(tr($t,'en','scores.largest_zone')) . '</span>'
+                    . '<span data-i18n="scores.largest_zone">' . htmlspecialchars(tr($t,'fr','scores.largest_zone')) . '</span>'
                     . '&nbsp;: <span class="hs-biome-max">' . $max . '</span>'
                   . '</span>'
                   . '</span>';
@@ -800,8 +728,7 @@ function fmt_date($iso) {
     <?php endif; ?>
 
     <div style="text-align:center;margin-top:40px;">
-      <a href="game.php" class="btn-primary" data-fr><?= tr($t,'fr','scores.try_luck') ?></a>
-      <a href="game.php" class="btn-primary" data-en><?= tr($t,'en','scores.try_luck') ?></a>
+      <a href="game.php" class="btn-primary" data-i18n="scores.try_luck"><?= tr($t,'fr','scores.try_luck') ?></a>
     </div>
   </div>
 </section>
@@ -811,15 +738,13 @@ function fmt_date($iso) {
   <div class="container">
     <div class="footer-inner">
       <div class="footer-logo">⬡ HEXISTENZ</div>
-      <div class="footer-copy" data-fr><?= tr($t,'fr','footer.copy') ?></div>
-          <div class="footer-copy" data-en><?= tr($t,'en','footer.copy') ?></div>
+      <div class="footer-copy" data-i18n="footer.copy"><?= tr($t,'fr','footer.copy') ?></div>
       <div class="footer-links-group">
         <a href="https://krakoukas.com" class="footer-link" target="_blank" rel="noopener">Krakoukas</a>
         <span class="footer-sep">·</span>
         <a href="https://www.wildlabs.fr" class="footer-link" target="_blank" rel="noopener">Wildlabs</a>
         <span class="footer-sep">·</span>
-        <a href="https://github.com/Krakoukas73/hexistenz" class="footer-link" target="_blank" rel="noopener" data-fr><?= tr($t,'fr','footer.github') ?></a>
-        <a href="https://github.com/Krakoukas73/hexistenz" class="footer-link" target="_blank" rel="noopener" data-en><?= tr($t,'en','footer.github') ?></a>
+        <a href="https://github.com/Krakoukas73/hexistenz" class="footer-link" target="_blank" rel="noopener" data-i18n="footer.github"><?= tr($t,'fr','footer.github') ?></a>
       </div>
     </div>
   </div>
@@ -829,14 +754,38 @@ function fmt_date($iso) {
 </footer>
 
 <script>
-  function setLang(l) {
-    document.documentElement.dataset.lang = l;
-    document.getElementById('btn-fr').classList.toggle('active', l === 'fr');
-    document.getElementById('btn-en').classList.toggle('active', l === 'en');
-    localStorage.setItem('hexistenz_pres_lang', l);
+  // ─── Moteur i18n générique (refonte du 2026-07-14) ─────────────────────────
+  // Remplace l'ancien setLang() qui ne faisait que toggle 2 classes + une bascule
+  // CSS [data-lang] sur un markup dupliqué. Ici tout le JSON (toutes les langues)
+  // est déjà dans la page (cf. <script id="i18n-data"> dans le <head>) ; changer
+  // de langue = relire ce JSON et réécrire le texte de chaque [data-i18n].
+  const I18N = JSON.parse(document.getElementById('i18n-data').textContent);
+  const LANGS = Object.keys(I18N);
+
+  function resolveI18n(lang, path) {
+    return path.split('.').reduce((node, key) => (node && typeof node === 'object') ? node[key] : undefined, I18N[lang]);
   }
+
+  function applyI18n(lang) {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const path = el.getAttribute('data-i18n');
+      const value = resolveI18n(lang, path) ?? resolveI18n('fr', path);
+      if (value != null) el.innerHTML = value;
+    });
+  }
+
+  function setLang(l) {
+    if (!LANGS.includes(l)) l = 'fr';
+    document.documentElement.lang = l;
+    document.documentElement.dataset.lang = l;
+    localStorage.setItem('hexistenz_pres_lang', l);
+    const sel = document.getElementById('langSelect');
+    if (sel) sel.value = l;
+    applyI18n(l);
+  }
+
   const saved = localStorage.getItem('hexistenz_pres_lang');
-  if (saved === 'en') setLang('en');
+  setLang(LANGS.includes(saved) ? saved : 'fr');
 
   const navToggle = document.getElementById('navToggle');
   const navLinks  = document.getElementById('navLinks');
@@ -860,8 +809,8 @@ function fmt_date($iso) {
   // ── Scroll spy : souligne dans la nav la rubrique actuellement visible ──────
   // Réutilise la classe .active déjà stylée en CSS (identique au hover, cf.
   // .nav-links a.active dans presentation.css) — pas de nouveau style à écrire.
-  // Chaque rubrique a DEUX <a> (data-fr/data-en, même href) : on active les deux
-  // pour rester cohérent quelle que soit la langue affichée.
+  // Simplifié le 2026-07-14 : un seul <a> par rubrique désormais (au lieu de la
+  // paire data-fr/data-en), plus besoin d'activer 2 éléments par section.
   (function initScrollSpy() {
     const navEl = document.querySelector('nav');
     const sections = Array.from(document.querySelectorAll('section[id]'))

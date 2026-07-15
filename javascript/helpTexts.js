@@ -17,17 +17,9 @@
 // code, donc LUT_HELP est garanti pleinement peuplé pour ui.js,
 // startupMenu.js, multiplayerRooms.js, edaPanelWiring.js et hud_fps.js.
 
-import { registerLangRefresh } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
 
-function getGameLang() {
-  try {
-    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
-  } catch {
-    return 'fr';
-  }
-}
-
-const _langFile = getGameLang() === 'en' ? 'english' : 'french';
+const _langFile = getLangFile();
 
 // ─── Aide contextuelle des sliders et couleurs du panneau LUT ───────────────
 // `const` volontairement conservé : l'objet est MUTÉ EN PLACE (jamais réassigné)

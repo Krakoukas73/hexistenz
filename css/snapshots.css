@@ -1,0 +1,194 @@
+/* ─── snapshots.css — galerie des captures d'écran (snapshots.php) ────────────────────
+   Page autonome (URL directe) OU chargée en <iframe> par snapshotGallery.js (overlay
+   in-game). Fond sombre volontairement identique au reste du jeu (mêmes rgba que
+   help.css/base.css), pas de cadres lourds — mosaïque en colonnes CSS (pas de lib JS). */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: radial-gradient(circle at center, #121a24 0%, #070a0f 70%, #04060a 100%);
+  color: rgba(233, 244, 255, 0.92);
+  font: 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.gallery-root {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+
+.gallery-header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(120, 180, 255, 0.24);
+}
+
+.gallery-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgba(247, 239, 225, 0.92);
+}
+
+.gallery-count {
+  font-size: 12px;
+  color: rgba(233, 244, 255, 0.5);
+}
+
+.gallery-empty {
+  margin-top: 60px;
+  text-align: center;
+  color: rgba(233, 244, 255, 0.5);
+  font-size: 14px;
+}
+
+/* Mosaïque : colonnes CSS façon Pinterest, aucune lib de masonry nécessaire.
+   Miniatures larges (colonnes ~280px), sans cadre lourd (juste un radius léger). */
+.gallery-grid {
+  columns: 280px;
+  column-gap: 14px;
+}
+
+.gallery-item {
+  position: relative;
+  display: block;
+  break-inside: avoid;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(120, 180, 255, 0.30);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.2s ease;
+}
+
+.gallery-item:hover {
+  border-color: rgba(120, 180, 255, 0.55);
+}
+
+.gallery-item img {
+  display: block;
+  width: 100%;
+  height: auto;
+  opacity: 0;
+  transform: scale(1);
+  transition: opacity 0.35s ease, transform 0.3s ease;
+}
+
+.gallery-item img.loaded {
+  opacity: 1;
+}
+
+.gallery-item:hover img {
+  transform: scale(1.045);
+}
+
+/* Légende discrète : masquée par défaut, révélée en dégradé bas au survol —
+   jamais de nom de fichier technique, uniquement date + résumé de partie. */
+.gallery-caption {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 22px 12px 10px;
+  background: linear-gradient(to top, rgba(3, 6, 10, 0.88), transparent);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.gallery-item:hover .gallery-caption {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.gallery-caption-date {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(247, 239, 225, 0.95);
+}
+
+.gallery-caption-meta {
+  margin-top: 2px;
+  font-size: 11px;
+  color: rgba(233, 244, 255, 0.72);
+}
+
+.gallery-scroll-sentinel {
+  height: 1px;
+}
+
+/* ─── Visionneuse plein écran ─────────────────────────────────────────────────── */
+.gallery-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 6, 10, 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.gallery-viewer[hidden] { display: none; }
+
+.gallery-viewer-img {
+  max-width: 92vw;
+  max-height: 88vh;
+  border-radius: 6px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+}
+
+.gallery-viewer-caption {
+  position: absolute;
+  left: 0; right: 0; bottom: 22px;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(233, 244, 255, 0.82);
+}
+
+.gallery-viewer-caption .gallery-caption-date {
+  font-size: 13px;
+  display: block;
+}
+
+/* Pas de croix de fermeture (retirée le 2026-07-15) — cliquer sur l'image agrandie ou
+   n'importe où ailleurs dans la visionneuse ferme (cf. snapshotsPage.js), seuls les
+   boutons ‹/› de navigation ci-dessous échappent à cette règle. */
+.gallery-viewer-nav {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  cursor: pointer;
+  font: 700 22px/1 system-ui, sans-serif;
+}
+
+.gallery-viewer-nav:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.gallery-viewer-nav {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 64px;
+  font-size: 32px;
+}
+
+.gallery-viewer-prev { left: 18px; }
+.gallery-viewer-next { right: 18px; }
+
+@media (max-width: 640px) {
+  .gallery-root { padding: 18px 14px 48px; }
+  .gallery-grid { columns: 160px; column-gap: 10px; }
+  .gallery-viewer-nav { width: 40px; height: 52px; font-size: 24px; }
+}

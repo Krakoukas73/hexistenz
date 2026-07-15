@@ -2,17 +2,9 @@
 // viennent de json/languages/{french,english}.json (clé game.multiplayerClient),
 // même mécanisme que les autres modules (top-level await + localStorage
 // 'hexistenz_pres_lang'). Repli FR en dur (chemin d'erreur réseau).
-function getGameLang() {
-  try {
-    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
-  } catch {
-    return 'fr';
-  }
-}
+import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
 
-const _langFile = getGameLang() === 'en' ? 'english' : 'french';
-
-import { registerLangRefresh } from './gameLangReactive.js';
+const _langFile = getLangFile();
 
 const _mcText = await fetch(`./json/languages/${_langFile}.json`)
   .then(r => r.json())

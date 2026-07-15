@@ -42,22 +42,15 @@ function _buildKeyframes(reduced) {
   ];
 }
 
-/**
- * Affiche "+N" au centre de l'écran pour un score de pose strictement positif.
- * N'affiche rien pour un score nul, négatif, ou non numérique. Si un nouveau
- * score arrive pendant qu'une animation est en cours, l'active est annulée
- * proprement (`cancel()`) et remplacée immédiatement par la nouvelle valeur.
- *
- * @param {number} score - valeur du dernier coup (ex. placedTile.score)
- */
-export function showScorePopup(score) {
-  const value = Number(score);
-  if (!Number.isFinite(value) || value <= 0) return;
-
+// Coeur partagé du popup : pose le texte, (re)lance l'anim, annule proprement
+// une éventuelle animation encore en cours (cf. showScorePopup ci-dessous pour
+// le détail du comportement d'annulation/remplacement).
+function _showCenterPopup(text, { isMessage = false } = {}) {
   const el = document.getElementById('scorePopup');
   if (!el) return; // #scorePopup absent du DOM (page sans jeu) — no-op silencieux
 
-  el.textContent = `+${Math.round(value)}`;
+  el.textContent = text;
+  el.classList.toggle('scorePopup--message', isMessage);
 
   if (_activeAnimation) {
     _activeAnimation.cancel();
@@ -75,4 +68,31 @@ export function showScorePopup(score) {
   _activeAnimation.onfinish = () => { _activeAnimation = null; };
   // Rien à nettoyer sur cancel() : l'appel qui annule relance toujours immédiatement
   // une nouvelle animation dans la foulée (cf. ci-dessus).
+}
+
+/**
+ * Affiche "+N" au centre de l'écran pour un score de pose strictement positif.
+ * N'affiche rien pour un score nul, négatif, ou non numérique. Si un nouveau
+ * score arrive pendant qu'une animation est en cours, l'active est annulée
+ * proprement (`cancel()`) et remplacée immédiatement par la nouvelle valeur.
+ *
+ * @param {number} score - valeur du dernier coup (ex. placedTile.score)
+ */
+export function showScorePopup(score) {
+  const value = Number(score);
+  if (!Number.isFinite(value) || value <= 0) return;
+  _showCenterPopup(`+${Math.round(value)}`);
+}
+
+/**
+ * Affiche un texte arbitraire (déjà traduit par l'appelant) au centre de
+ * l'écran, avec la même animation que showScorePopup — ajouté le 2026-07-15
+ * pour le message "Capture faite !" du bouton 📷 (cf. scene.js). Même règle
+ * d'annulation/remplacement qu'un score qui arriverait entre-temps.
+ *
+ * @param {string} text - texte déjà résolu dans la langue courante
+ */
+export function showCenterMessage(text) {
+  if (!text) return;
+  _showCenterPopup(String(text), { isMessage: true });
 }

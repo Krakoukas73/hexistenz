@@ -1,0 +1,1105 @@
+{
+  "nav": {
+    "links": {
+      "factions": "Facciones",
+      "biomes": "Biomas",
+      "missions": "Misiones",
+      "gameplay": "Jugabilidad",
+      "gallery": "Ambientes",
+      "creatures": "Criaturas",
+      "audio": "Audio",
+      "daynnight": "Entorno",
+      "eda": "Personalización",
+      "multi": "Multijugador",
+      "scores": "Clasificación"
+    },
+    "play": "Jugar"
+  },
+  "hero": {
+    "subtitle": "Juego hexagonal contemplativo hecho con nostalgia y amor ❤️ Three.js y muchas losetas",
+    "inspi_text": "Inspirado en <em>Dorfromantik</em>, el alma pastoral de <em>The Settlers</em> (Blue Byte, 1993)\n          y los mundos maravillosos de <em>Heroes of Might and Magic</em> (3DO).",
+    "inspi_buy": {
+      "dorfromantik": "Dorfromantik en Steam",
+      "settlers": "The Settlers en Ubisoft",
+      "heroes3": "Heroes III en GOG"
+    },
+    "tagline": "Coloca losetas hexagonales. Haz crecer vastos bosques de abetos y abedules, ondulantes campos de trigo\n          con sus molinos, aldeas medievales de tejados humeantes, extensas redes ferroviarias\n          y anchos ríos donde navegan tus barcos. Completa misiones, intercepta cometas,\n          rodea tus losetas. Construye un mundo vivo, loseta a loseta.",
+    "btn_play": "Jugar ahora",
+    "btn_how": "¿Cómo jugar?",
+    "stats": {
+      "biomes_label": "Biomas",
+      "games_label": "Partidas",
+      "factions_label": "Facciones"
+    }
+  },
+  "factions": {
+    "label": "Dos formas de ver el mundo",
+    "title1": "Planistas y globistas",
+    "title2": "Dos facciones irreconciliables",
+    "sub": "Hexistenz divide a sus constructores en dos facciones irreconciliables. Una opción visual,\n      un compromiso filosófico. ¿De qué lado estás?",
+    "flat": {
+      "tag": "Modo Planista",
+      "name": "🪨 El Mundo Plano",
+      "desc": "La cuadrícula se extiende en horizontal, pura y ordenada. Cada loseta colocada se une\n            a una meseta perfectamente plana, tal como los antiguos siempre lo supieron.\n            Para quienes confían en sus ojos."
+    },
+    "globe": {
+      "tag": "Modo Globista",
+      "name": "🌍 El Mundo Esférico",
+      "desc": "La curvatura del mundo se revela a medida que la cuadrícula crece — las losetas\n            lejanas se curvan hacia el horizonte. Un efecto GPU en tiempo real que aporta\n            una profundidad vertiginosa a cada partida."
+    },
+    "vs": "El debate no está cerrado."
+  },
+  "biomes": {
+    "label": "Los biomas",
+    "title": "Seis biomas por conectar",
+    "sub": "Cada loseta está compuesta por seis sectores triangulares. Combina biomas idénticos para formar zonas y maximizar tu puntuación.",
+    "grass": {
+      "name": "Pradera",
+      "desc": "Extensiones herbosas donde cada brizna tiembla con el viento, salpicadas de flores silvestres, rocas, ciervos y arbustos. Terreno neutral entre las grandes redes.",
+      "tag": "Bioma neutral"
+    },
+    "field": {
+      "name": "Campo",
+      "desc": "Trigo mecido por el viento, molinos procedurales y balas de heno. El chi-mai suena cuando la cámara roza las espigas.",
+      "tag": "Red agrícola"
+    },
+    "forest": {
+      "name": "Bosque",
+      "desc": "Abetos, abedules, álamos en InstancedMesh, cuyas copas ondulan con el viento hasta el sotobosque. Setas, pilas de leña, ciervos — hasta 22 millones de triángulos.",
+      "tag": "Bosque denso"
+    },
+    "house": {
+      "name": "Aldea",
+      "desc": "Casas medievales con humo volumétrico, torres de vigilancia, fuentes, carretas, perros y caballos animados.",
+      "tag": "Hábitat humano"
+    },
+    "water": {
+      "name": "Agua",
+      "desc": "Lámina continua de orilla orgánica, olas y espuma animadas al estilo acuarela. Barcos animados con estela, playas procedurales y halos de zona.",
+      "tag": "Red fluvial ⛵"
+    },
+    "rail": {
+      "name": "Vía férrea",
+      "desc": "Raíles procedurales, traviesas y balasto. Trenes con vagones, estaciones terminales y humo de las locomotoras.",
+      "tag": "Red ferroviaria 🚂"
+    }
+  },
+  "missions": {
+    "label": "Objetivos",
+    "title": "Las misiones",
+    "sub": "Cada partida genera objetivos automáticos ligados a los biomas y las redes. Cumplirlos otorga 100 puntos y, sobre todo, 3 losetas nuevas en la pila — lo que garantiza en teoría partidas infinitas.",
+    "zone": {
+      "name": "Zona de bioma",
+      "desc": "Alcanzar una superficie mínima en un bioma dado: <em>«Bosque de 8 sectores»</em>, <em>«Pradera de 12 sectores»</em>…"
+    },
+    "rail": {
+      "name": "Vía férrea",
+      "desc": "Colocar un número determinado de sectores de vía férrea. Cada triángulo de vía férrea colocado hace avanzar esta misión."
+    },
+    "trains": {
+      "name": "Trenes",
+      "desc": "Formar un número de líneas de tren activas — cada línea conecta dos estaciones mediante raíles continuos sin interrupción."
+    },
+    "water": {
+      "name": "Vía de agua",
+      "desc": "Formar una extensión de agua de una superficie mínima. Cada triángulo de agua colocado hace avanzar esta misión."
+    },
+    "boats": {
+      "name": "Barcos",
+      "desc": "Hacer aparecer un número de barcos en la cuadrícula. Un barco nace automáticamente en cada lago cerrado por losetas terrestres."
+    },
+    "comets": {
+      "name": "Cometas",
+      "desc": "Cometas cruzan el cielo en tiempo real. Haz clic en ellos para hacerlos estallar y sumar puntos — se requieren reflejos y vigilancia."
+    },
+    "village": {
+      "name": "Aldea próspera",
+      "desc": "Formar una aldea densa: agrupar suficientes sectores de vivienda adyacentes para alcanzar el umbral fijado."
+    },
+    "fields": {
+      "name": "Tierras cultivadas",
+      "desc": "Extender los campos en zonas continuas. Los molinos solo aparecen cuando la zona es lo bastante amplia para acogerlos."
+    },
+    "mills": {
+      "name": "Molinos de viento",
+      "desc": "Construir grandes zonas de campos de trigo para que aparezcan molinos. Un molino nace automáticamente en el centro de cada zona amplia de campo."
+    }
+  },
+  "gameplay": {
+    "label": "Mecánica de juego",
+    "title": "Cómo jugar",
+    "sub": "Un bucle simple, una profundidad infinita. Cada loseta colocada transforma el mundo.",
+    "ui_caption": "Loseta actual · Loseta siguiente · Losetas restantes",
+    "steps": {
+      "draw": {
+        "title": "Roba",
+        "desc": "Aparece una loseta hexagonal — seis sectores triangulares, cada uno de un bioma. Observa la siguiente para anticiparte."
+      },
+      "orient": {
+        "title": "Orienta",
+        "desc": "Gira la loseta para alinear sus bordes. Agua y vía férrea exigen continuidad — una mala colocación bloquea la red."
+      },
+      "place": {
+        "title": "Coloca",
+        "desc": "Elige el lugar en la cuadrícula axial. Rodear una loseta con seis vecinas otorga una gran bonificación inmediata."
+      },
+      "score": {
+        "title": "Puntúa",
+        "desc": "Completa misiones y zonas, intercepta cometas, envía tu mejor puntuación a la clasificación mundial."
+      }
+    },
+    "score_label": "Sistema de puntuación",
+    "pills": {
+      "place": "Loseta colocada",
+      "edge": "Borde compatible",
+      "network": "Red conectada",
+      "surround": "Loseta rodeada",
+      "mission": "Misión cumplida",
+      "comet": "Cometa interceptada",
+      "bonus": "Casilla bonus cubierta"
+    },
+    "kbd_title": "CONTROLES DE TECLADO",
+    "kbd": {
+      "camera_label": "cámara",
+      "left_click_kbd": "Clic izquierdo",
+      "left_click_desc": "mover la cámara",
+      "right_click_kbd": "Clic derecho",
+      "right_click_desc": "rotar la cámara",
+      "wheel_kbd": "Rueda",
+      "space_kbd": "Espacio",
+      "wheel_desc": "zoom",
+      "reset_cam": "reiniciar la cámara",
+      "zoom": "acercar / alejar zoom",
+      "shift_kbd": "SHIFT",
+      "speed_up": "acelera movimiento/zoom",
+      "undo": "deshacer",
+      "customization": "personalización",
+      "perf_hud": "HUD de rendimiento",
+      "snapshot": "Captura de pantalla",
+      "gallery": "Galería de capturas",
+      "immersive": "modo inmersivo",
+      "super_immersive": "modo súper inmersivo",
+      "mute": "silenciar",
+      "help": "ayuda"
+    }
+  },
+  "gallery": {
+    "label": "Ambientes visuales",
+    "title1": "Varias atmósferas",
+    "title2": "Una infinidad de personalizaciones",
+    "sub": "Numerosos presets visuales listos para usar — pero cada uno es una base: LUT colorimétrico, efectos cinematográficos (aberración cromática, grano de película, tilt-shift), pixelado retro, ambientes EGA y Amiga, humo volumétrico, cielo procedural… Cientos de combinaciones para transformar el mundo entero a tu gusto. Cada personalización se exporta con un clic y puede compartirse con otros jugadores.",
+    "preset_word": "Preset",
+    "presets": {
+      "autumn": "Otoño",
+      "summer": "Verano vivo",
+      "nordic": "Nórdico",
+      "amiga": "Amiga",
+      "ega": "EGA 16 colores",
+      "cga": "CGA 320×200 4 colores",
+      "apple2": "Apple II",
+      "psyche": "Psyché-LSD"
+    }
+  },
+  "creatures": {
+    "label": "La vida del mundo",
+    "title": "Un mundo de criaturas",
+    "sub": "El mundo no se contenta con existir: respira. Animales, aves y habitantes animan cada bioma a lo largo de las estaciones.",
+    "sheep": {
+      "name": "Ovejas",
+      "desc": "Rebaños pastan tranquilamente en las praderas, desplazándose al ritmo de las hierbas que ondulan con el viento."
+    },
+    "crows": {
+      "name": "Cuervos",
+      "desc": "Bandadas de cuervos sobrevuelan los campos de trigo, vigilando cualquier parcela desatendida."
+    },
+    "farmer": {
+      "name": "Granjero",
+      "desc": "Horca en mano, el granjero cuida su trigo y va y viene al ritmo de las estaciones agrícolas."
+    },
+    "druid": {
+      "name": "Druida",
+      "desc": "Una silueta solitaria vaga entre los árboles, guardiana discreta de los bosques y sus secretos."
+    },
+    "witch": {
+      "name": "Bruja",
+      "desc": "En ciertos bosques, al caer la noche, se dice que brujas merodean entre los árboles, atraídas por el silencio y el resplandor de hogueras olvidadas. Pocos llegan a verlas — más pocos aún se atreven a seguirlas."
+    },
+    "moon": {
+      "name": "Luna de Méliès",
+      "desc": "En modo noche, la luna luce el rostro emblemático de El viaje a la Luna de Méliès — un guiño al cine mudo alojado en el corazón del cielo estrellado."
+    },
+    "seagulls": {
+      "name": "Gaviotas",
+      "desc": "Pequeños grupos de gaviotas sobrevuelan las mayores extensiones de agua, y algunos individuos a veces se apartan del resto del grupo."
+    },
+    "fireflies": {
+      "name": "Luciérnagas",
+      "desc": "Al caer la noche, nubes de luciérnagas centelleantes vagan al ras del suelo, dibujando puntos de luz cálida que derivan suavemente alrededor de la cámara."
+    },
+    "population": {
+      "villages_label": "Aldeas",
+      "forests_label": "Bosques",
+      "fields_label": "Campos de trigo",
+      "water_label": "Agua",
+      "meadows_label": "Praderas",
+      "tags": {
+        "village_women": "Aldeanas",
+        "village_men": "Aldeanos",
+        "farmer": "Granjero",
+        "blacksmith": "Herrero",
+        "merchant": "Mercader",
+        "innkeeper": "Tabernero",
+        "guard": "Guardia",
+        "soldier": "Soldado",
+        "knight": "Caballero",
+        "archer": "Arquero",
+        "warriors": "Guerreros",
+        "mage": "Mago",
+        "monk": "Monje",
+        "witch": "Bruja",
+        "crows": "Cuervos",
+        "windmill": "Molino",
+        "scarecrow": "Espantapájaros",
+        "boat": "Barco",
+        "rowboats": "Botes",
+        "seagulls": "Gaviotas",
+        "deer": "Ciervos",
+        "wildflowers": "Flores silvestres"
+      }
+    },
+    "note": "22 rostros diferentes pueblan aldeas y bosques, cada uno con su silueta, su vestimenta, su papel. Sin figurantes copiados y pegados: una población real, loseta a loseta."
+  },
+  "audio": {
+    "label": "Ambiente sonoro",
+    "title": "Un mundo que se escucha",
+    "sub": "El sonido sigue a la cámara en tiempo real — cada bioma, cada tren, cada barco tiene su propia voz, que sube y se desvanece con la distancia.",
+    "spatial": {
+      "name": "Sonido espacial 3D",
+      "desc": "Ambientes de aldea, cantos de aves de bosque y pradera, cuervos sobre los campos, oleaje de las playas, trenes y barcos — cada fuente varía en volumen según su distancia y dirección reales."
+    },
+    "chimai": {
+      "name": "Chi Mai, el tema oculto",
+      "desc": "Baja la cámara al ras de un campo de trigo y se activa un tema melódico secreto — la música y los demás sonidos se desvanecen suavemente para dejarle todo el protagonismo."
+    },
+    "adaptive": {
+      "name": "Música adaptativa",
+      "desc": "Pistas de introducción, juego y final que se encadenan con un fundido suave, extraídas de varias variantes para no sonar nunca igual de una partida a otra."
+    },
+    "silence": {
+      "name": "Silencio a demanda",
+      "desc": "La tecla M corta y restablece al instante toda la banda sonora, música incluida — útil para una partida tranquila en una reunión o videollamada."
+    }
+  },
+  "daynnight": {
+    "label": "Ambiente del mundo",
+    "title": "Entorno",
+    "sub": "Un solo interruptor lo cambia todo. El sol, las nubes y el cielo azul dan paso a las estrellas, la luna y los cometas.",
+    "day": {
+      "name": "Modo Día",
+      "list": [
+        "🌤 Sol en órbita sobre su propia capa de renderizado",
+        "⛅ Cielo volumétrico procedural con nubes FBM animadas",
+        "🔵 Degradado cenit/horizonte en tonos azules cálidos",
+        "🚫 Cometas ocultos — demasiada claridad para ellos"
+      ]
+    },
+    "night": {
+      "name": "Modo Noche",
+      "list": [
+        "🌙 Luna, degradado cenit/horizonte nocturno profundo",
+        "✨ Estrellas centelleantes sobre una esfera dedicada",
+        "☄️ Cometas que surcan el cielo — haz clic para hacerlos estallar",
+        "🌑 Atmósfera oscura, humo de las aldeas más visible"
+      ]
+    },
+    "smoke": {
+      "name": "Humo",
+      "list": [
+        "🏠 Hasta 48 columnas de humo simultáneas, renderizadas por ray-marching en tiempo real sobre las chimeneas y las locomotoras",
+        "🌬️ Turbulencia de 4 octavas que deriva con la altura — cada columna es única",
+        "🎲 Solo una de cada tres casas humea, elegida al azar al generar la loseta",
+        "🌙 Aún más misteriosa al caer la noche"
+      ]
+    },
+    "godrays": {
+      "name": "God Rays",
+      "list": [
+        "☀️ Rayos de luz volumétricos que emergen del sol o de la luna",
+        "🌲 Atraviesan copas, torres y nubes para una iluminación cinematográfica",
+        "🎚️ Longitud, difusión y umbral ajustables desde el editor de dirección artística"
+      ]
+    },
+    "rain": {
+      "name": "Lluvia",
+      "list": [
+        "💧 Chubasco dinámico activable al instante desde el HUD Meteorología",
+        "⛈️ Se encadena de forma natural con la tormenta y los relámpagos",
+        "🎬 Ambiente reforzado por el viñeteado y el grano de película de la cinemática"
+      ]
+    },
+    "mist": {
+      "name": "Bruma matutina",
+      "list": [
+        "🌫️ Velo bajo que amortigua las distancias y suaviza las siluetas",
+        "☀️ Se disipa progresivamente con el paso de los minutos",
+        "🎚️ Densidad y color de la niebla controlables en el editor de dirección artística"
+      ]
+    }
+  },
+  "eda": {
+    "label": "Editor de dirección artística (EDA)",
+    "title": "Personalización extrema",
+    "sub": "Más allá de los numerosos presets, el EDA abre decenas de parámetros ajustables en tiempo real, repartidos en 3 pestañas — LUT, Cinemática, Entorno. Cada control responde al instante, sin recarga, y el conjunto se copia/exporta en JSON para poder reproducirse o compartirse.",
+    "lut": {
+      "label": "LUT",
+      "desc": "Niebla, astro luminoso, calibración colorimétrica completa (curvas RGB, gamma, niveles) y paleta por bioma."
+    },
+    "cinematic": {
+      "label": "Cinemática",
+      "desc": "God rays, tilt-shift, bloom, pixelado retro y curvatura de pantalla — para filmar el mundo en lugar de solo mirarlo."
+    },
+    "environment": {
+      "label": "Entorno",
+      "desc": "Nubes y cobertura nubosa, viento (trigo, hierba, árboles), clima dinámico (bruma, luciérnagas, lluvia), forma del mundo (globista/planista), cambio Día/Noche y presets de calidad/densidad."
+    }
+  },
+  "multi": {
+    "title1": "Multijugador",
+    "title2": "Construid juntos",
+    "sub": "Únete o crea una sala con un código de 6 letras. La cuadrícula se comparte en tiempo real — cada jugador coloca sus losetas y ve las colocaciones de los demás en directo.",
+    "features": [
+      "Todas las partidas se guardan — reanuda o vuelve a jugar en cualquier momento",
+      "Salas a las que unirse en cualquier momento, incluso en plena partida",
+      "Sincronización en tiempo real · PHP + JSON",
+      "El mapa se construye de forma colaborativa, loseta a loseta"
+    ],
+    "gallery_title": "COMPARTE TUS CAPTURAS",
+    "gallery_promo": "Inmortaliza tus mejores partidas: el botón 📷 captura el mundo sin HUD, y el botón 🖼️ abre la galería del servidor compartida con todos los jugadores",
+    "btn_create": "Crear una partida",
+    "room_title": "Código de sala",
+    "room_status": "Partida en curso · 3 jugadores",
+    "tiles_placed_label": "Losetas colocadas"
+  },
+  "scores": {
+    "label": "Clasificación mundial",
+    "title": "Los mejores constructores",
+    "empty": "Ninguna puntuación registrada — sé el primero en colocar tu loseta.",
+    "try_luck": "Prueba tu suerte →",
+    "headline_stat": "losetas colocadas",
+    "trains_s": "locomotora",
+    "trains_p": "locomotoras",
+    "boats_s": "barco",
+    "boats_p": "barcos",
+    "mills_s": "molino",
+    "mills_p": "molinos",
+    "comets_s": "cometa",
+    "comets_p": "cometas",
+    "largest_zone": "zona más grande",
+    "biome_labels": {
+      "forest": {
+        "s": "árbol",
+        "p": "árboles"
+      },
+      "water": {
+        "s": "agua",
+        "p": "agua"
+      },
+      "house": {
+        "s": "casa",
+        "p": "casas"
+      },
+      "field": {
+        "s": "campo de trigo",
+        "p": "campos de trigo"
+      },
+      "grass": {
+        "s": "pradera",
+        "p": "praderas"
+      },
+      "rail": {
+        "s": "vía férrea",
+        "p": "vías férreas"
+      }
+    }
+  },
+  "footer": {
+    "copy": "Juego hexagonal contemplativo hecho con nostalgia y amor ❤️ Three.js y muchas losetas · 2025–2026",
+    "github": "En GitHub"
+  },
+  "game": {
+    "gallery": {
+      "title": "Galería de capturas",
+      "empty": "Todavía no hay capturas. Pulsa 📷 en el juego para crear una.",
+      "close": "Cerrar",
+      "loading": "Cargando…",
+      "tilesCount": "Partida de {n} losetas",
+      "modeBouliste": "Modo Globo",
+      "modePlatiste": "Modo Plano",
+      "captured": "¡Captura hecha!"
+    },
+    "eda": {
+      "mainTitle": "Editor de dirección artística",
+      "ambiances": "AMBIENTES",
+      "tabs": { "lut": "LUT", "cinematic": "Cinemática", "environment": "Entorno" },
+      "headers": {
+        "lutFog": "1. Niebla",
+        "lutSun": "2. Astro luminoso",
+        "lutGrading": "3. Calibración",
+        "lutPalette": "4. Paleta de biomas",
+        "cinema1": "1. CINEMÁTICA",
+        "godRays": "2. God Rays",
+        "tiltShift": "3. Tilt-shift",
+        "bloom": "4. Bloom",
+        "pixelisation": "5. PIXELADO",
+        "crt": "6. CURVATURA DE PANTALLA",
+        "nuages": "3. NUBES",
+        "vent": "4. VIENTO",
+        "worldShape": "5. Forma del mundo",
+        "dayNight": "6. Día / Noche",
+        "quality": "7. Calidad / densidad",
+        "weather": "8. Clima",
+        "waterFoam": "1. Espuma",
+        "waterWake": "2. Estela de barco",
+        "windWheat": "4.1 Espigas de trigo",
+        "windGrass": "4.2 Briznas de hierba",
+        "windTree": "4.3 Árboles"
+      },
+      "toggleTitles": {
+        "lutGrading": "Activar / desactivar la calibración",
+        "lutPalette": "Activar / desactivar la paleta de biomas",
+        "cinema1": "Activar / desactivar los efectos cinemáticos",
+        "godRays": "Activar / desactivar los god rays",
+        "tiltShift": "Activar / desactivar el tilt-shift",
+        "bloom": "Activar / desactivar el bloom",
+        "pixelisation": "Activar / desactivar el pixelado",
+        "crt": "Activar / desactivar la curvatura de pantalla",
+        "nuages": "Activar / desactivar las nubes",
+        "vent": "Activar / desactivar todos los vientos (trigo, pradera, árboles)",
+        "worldShape": "Alternar entre mundo esférico (globo) y plano",
+        "dayNight": "Alternar entre día y noche",
+        "waterFoam": "Activar / desactivar la espuma",
+        "waterWake": "Activar / desactivar la estela de barco"
+      },
+      "modeActuel": "Modo actual",
+      "preregalages": "Preajustes",
+      "presetNames": {
+        "default": "Predeterminado",
+        "mist": "Niebla",
+        "autumn": "Otoño",
+        "summerVivid": "Verano vívido",
+        "winter": "Invierno",
+        "sepia": "Sepia",
+        "nordic": "Nórdico",
+        "desert": "Desierto",
+        "pong": "Pong",
+        "appleII": "Apple II",
+        "cga": "CGA",
+        "ega": "EGA",
+        "amiga": "Amiga",
+        "psyche": "Psicodélico"
+      },
+      "modes": {
+        "bouliste": "Globo",
+        "platiste": "Plano",
+        "jour": "Día",
+        "nuit": "Noche"
+      },
+      "quality": {
+        "faible": "Baja",
+        "moyen": "Media",
+        "eleve": "Alta",
+        "max": "Máx"
+      },
+      "qualityTooltip": "Densidad {label} ({value})",
+      "weatherStopAll": "⏹ Detener todo",
+      "weatherStopAllTitle": "Detiene todos los eventos ambientales en curso",
+      "weatherGroups": {
+        "morningMist": "🌫️ Neblina matutina",
+        "fireflies": "✨ Luciérnagas",
+        "clouds": "☁️ Nubes de lluvia",
+        "rain": "🌧️ Lluvia",
+        "storm": "⛈️ Tormenta",
+        "lightning": "⚡ Rayo",
+        "fire": "🔥 Fuego",
+        "panic": "🐑 Pánico animal"
+      },
+      "weatherRequires": "(requiere {label})",
+      "weatherSwitchTitle": "Activar / desactivar",
+      "weatherCloudsSwitchTitle": "Activar / desactivar las nubes",
+      "weatherResetTitle": "Restablecer",
+      "presetTooltipApply": "Aplicar el ambiente «{name}»",
+      "presetTooltipDefault": "Volver a los valores predeterminados",
+      "footer": {
+        "copy": "📋 Copiar",
+        "copyTitle": "Copiar todos los parámetros LUT + PIX + AGUA + CINE + VIENTO + NUBES + Forma del mundo + Día/Noche + Densidad + Clima actuales en JSON (base para un futuro ambiente con efectos climáticos preconfigurados)",
+        "copied": "✓ ¡Copiado!",
+        "undo": "↩ Deshacer",
+        "undoTitle": "Deshacer el último cambio",
+        "redo": "↪ Rehacer",
+        "redoTitle": "Rehacer el cambio deshecho",
+        "reset": "Restablecer",
+        "resetTitle": "Restablecer a los valores predeterminados",
+        "compare": "Comparar",
+        "compareBack": "⟳ Volver",
+        "compareTitle": "Alternar entre los parámetros actuales y el último ambiente aplicado",
+        "lastPresetTitle": "Último ambiente aplicado"
+      },
+      "labels": {
+        "environment": {
+          "fogDensity": "Densidad expon.",
+          "fogNear": "Inicio (lineal)",
+          "fogFar": "Fin (lineal)",
+          "skyColor": "Cielo",
+          "fogColor": "Color niebla",
+          "domeColorTop": "Cúpula superior",
+          "domeColorBottom": "Cúpula inferior"
+        },
+        "renderer": { "toneMappingExposure": "Exposición global" },
+        "lights": {
+          "hemisphereIntensity": "Intensidad hemisferio",
+          "sunIntensity": "Intensidad",
+          "sunOrbitRadius": "Radio órbita",
+          "sunOrbitHeight": "Altura órbita",
+          "sunOrbitSpeed": "Velocidad órbita",
+          "sunVisualScale": "Tamaño",
+          "fillIntensity": "Luz de relleno",
+          "hemisphereSkyColor": "Hemisferio cielo",
+          "hemisphereGroundColor": "Hemisferio suelo",
+          "sunColor": "Sol",
+          "fillColor": "Relleno"
+        },
+        "grading": {
+          "brightness": "Luminosidad",
+          "contrast": "Contraste",
+          "saturation": "Saturación",
+          "vibrance": "Viveza",
+          "hue": "Desplaz. de tono",
+          "gamma": "Gamma",
+          "blackLevel": "Niveles negros",
+          "whiteLevel": "Niveles blancos",
+          "red": "Canal rojo",
+          "green": "Canal verde",
+          "blue": "Canal azul",
+          "redCurve": "Curva roja",
+          "greenCurve": "Curva verde",
+          "blueCurve": "Curva azul"
+        },
+        "palette": {
+          "strength": "Fuerza paleta",
+          "saturation": "Saturación",
+          "contrast": "Contraste",
+          "warmShift": "Cálido / frío",
+          "targets": {
+            "field": "Campos",
+            "forest": "Bosques",
+            "grass": "Praderas",
+            "house": "Aldeas",
+            "rail": "Vías férreas",
+            "water": "Agua"
+          }
+        },
+        "water": {
+          "foamWidth": "Alcance",
+          "foamScale": "Finura",
+          "foamDensity": "Densidad orilla",
+          "foamAmbient": "Superficie",
+          "foamSharp": "Nitidez",
+          "foamSpeed": "Velocidad",
+          "deepDistance": "Degradado — alcance",
+          "opacity": "Agua — opacidad"
+        },
+        "wake": {
+          "armWidth": "Ancho de rama",
+          "spread": "Divergencia V",
+          "length": "Longitud",
+          "scale": "Finura",
+          "density": "Densidad",
+          "opacity": "Opacidad"
+        },
+        "wind": {
+          "wheat": { "strength": "Amplitud", "speed": "Velocidad" },
+          "grass": { "strength": "Amplitud", "speed": "Velocidad", "sway": "Balanceo" },
+          "tree": {
+            "strength": "Amplitud",
+            "speed": "Velocidad",
+            "frequency": "Frecuencia",
+            "turbulence": "Turbulencia",
+            "gustStrength": "Ráfagas",
+            "detailStrength": "Detalle"
+          }
+        },
+        "cloud": { "coverage": "Cobertura", "scale": "Escala del patrón", "speed": "Velocidad deriva" },
+        "quality": { "density": "Densidad" },
+        "cin": {
+          "vignette": "Viñeta",
+          "grain": "Grano de película",
+          "chromatic": "Aberración cromática",
+          "halation": "Halación",
+          "barrel": "Distorsión de barril",
+          "scanLines": "Líneas de escaneo",
+          "scanLinesIntensity": "Intensidad de líneas",
+          "godRays": "Intensidad",
+          "godRaysLength": "Longitud",
+          "godRaysDiffusion": "Difusión",
+          "godRaysThreshold": "Umbral de brillo",
+          "godRaysLayers": "Capas",
+          "tilt": "Intensidad",
+          "focusCenter": "Centro de enfoque",
+          "focusBand": "Zona nítida",
+          "bloomIntensity": "Intensidad",
+          "bloomThreshold": "Umbral",
+          "bloomRadius": "Radio",
+          "bloomSoftness": "Suavidad",
+          "crtCurvature": "Curvatura de pantalla",
+          "crtMask": "Bordes negros",
+          "crtCornerDark": "Oscurec. esquinas CRT"
+        },
+        "pix": {
+          "pixelSize": "Radio (píxeles)",
+          "normalEdge": "Contorno relieve",
+          "depthEdge": "Contorno profundidad"
+        },
+        "vfx": {
+          "mist": { "densite": "Densidad", "compacite": "Compacidad", "elevation": "Elevación" },
+          "fireflies": { "densite": "Densidad", "taille": "Tamaño", "vagabondage": "Vagabundeo", "scintillement": "Centelleo" },
+          "rain": { "densite": "Densidad", "tailleGoutte": "Tamaño de gota", "impactSol": "Impacto en el suelo" },
+          "cloud": { "densite": "Densidad", "altitude": "Altitud", "epaisseur": "Espesor" },
+          "storm": { "frequenceEclairs": "Frecuencia de rayos", "luminositeEclair": "Brillo del rayo", "intensitePluie": "Intensidad de lluvia" }
+        }
+      }
+    },
+    "help": {
+      "topbar.fps": "Mostrar/ocultar el HUD de rendimiento avanzado",
+      "topbar.eda": "Abrir o cerrar el panel de renderizado",
+      "topbar.snapshot": "Captura de pantalla (sin HUD), guardada en el servidor",
+      "topbar.gallery": "Galería de capturas",
+      "topbar.lang": "Idioma",
+      "renderer.toneMappingExposure": "Exposición global del renderer (ACESFilmic). Controla la cantidad de luz que alcanza el \"sensor\" antes de cualquier calibración.\nValores < 1 oscurecen el conjunto, > 2 pueden saturar las altas luces.\nTípico: 1.2–1.8 para un aspecto natural.",
+      "environment.fogDensity": "Densidad de la niebla exponencial (FogExp2). Activa solo cuando \"Fin lineal\" está en 0.\nLa visibilidad cae muy rápido: a 0.07 la escena es casi opaca.\nPara un campo visual controlado, preferir el modo lineal mediante \"Inicio\" y \"Fin\".",
+      "environment.fogNear": "Distancia en unidades 3D donde comienza la niebla lineal.\nEn cuanto \"Fin\" > 0, cambia automáticamente de FogExp2 a THREE.Fog(near, far).\nEn 0: niebla desde el primer plano. En 5: los objetos cercanos permanecen nítidos.",
+      "environment.fogFar": "Distancia donde la niebla lineal es completamente opaca.\nPonlo en 0 para volver al modo exponencial.\nEjemplo: Inicio = 3, Fin = 18 → campo visual de 15 unidades — inmersivo sin ahogarlo todo.",
+      "lights.hemisphereIntensity": "Intensidad de la luz hemisférica (cielo + suelo).\nIlumina las caras no expuestas directamente al sol.\nDemasiado alta: aplana las sombras y elimina el relieve. Demasiado baja: caras traseras en negro total.",
+      "lights.sunIntensity": "Potencia de la luz direccional (sol).\nDetermina la dureza de las sombras y el contraste del relieve.\nValores > 5 pueden quemar las superficies claras si la exposición global también es alta.",
+      "lights.sunOrbitRadius": "Radio de la órbita circular del sol alrededor del centro de la escena.\nUn radio pequeño (< 5) da una luz muy inclinada desde el centro; grande (> 20): luz más rasante desde los bordes.",
+      "lights.sunOrbitHeight": "Altura vertical del sol sobre el plano de la escena.\nAlto = sombras cortas, luz cenital. Bajo = sombras largas y rasantes (hora dorada o atardecer).",
+      "lights.sunOrbitSpeed": "Velocidad angular del sol en radianes/segundo.\nA 0.06, una vuelta completa dura ≈ 100 segundos. En 0: sol fijo. En 1: sombras que giran rápidamente.",
+      "lights.sunVisualScale": "Tamaño aparente del disco solar en el cielo.\nPuramente visual — no afecta ni a la potencia lumínica ni a las sombras.",
+      "lights.fillIntensity": "Intensidad de una luz de relleno suave (fill light), opuesta al sol.\nAbre las zonas de sombra dura. Útil para evitar zonas totalmente negras bajo salientes o en la cara oculta de las colinas.",
+      "grading.brightness": "Desplazamiento de brillo adicional aplicado después del renderizado.\nAñade un valor constante a todos los canales.\nDifiere de la exposición: no amplifica las altas luces, no cambia el tonemapping.",
+      "grading.contrast": "Contraste global mediante pivote alrededor del 50% gris.\n> 1: separa los oscuros y los claros (aspecto cinematográfico). < 1: comprime (aspecto plano/deslavado).\nEn los extremos → negro o blanco plano.",
+      "grading.saturation": "Saturación global. Mezcla la versión gris (luma) con el color original.\n0 = escala de grises. 1 = normal. > 1 = hipersaturado.\nEn valores muy altos (3+), los colores se desbordan y pueden invertirse.",
+      "grading.vibrance": "Viveza inteligente: refuerza los colores apagados sin tocar los tonos ya saturados.\nMás suave que la saturación bruta para los verdes naturales.\nNegativo: atenúa primero los colores vivos.",
+      "grading.hue": "Rotación global de todos los tonos en el círculo cromático.\n±0.5 = media vuelta (rojo ↔ cian). Sutil en valores bajos.\nÚtil para corregir una dominante de color o crear una paleta desplazada.",
+      "grading.gamma": "Corrección gamma aplicada a los tonos medios.\n< 1 = tonos medios más claros; > 1 = más oscuros.\nNo actúa linealmente en los extremos (negros/blancos puros).",
+      "grading.blackLevel": "Nivel del punto negro. Sube los negros puros hacia el gris.\nCrea un aspecto \"fílmico deslavado\" o \"lifted blacks\".\nDemasiado alto = pérdida de profundidad y densidad en las sombras.",
+      "grading.whiteLevel": "Nivel del punto blanco. Comprime las altas luces por debajo de 1.0.\nA 0.871: los blancos puros se vuelven crema, ninguna zona se quema.\nÚtil para un aspecto suave, una sutil \"curva en S\".",
+      "grading.red": "Ganancia multiplicativa del canal rojo tras la calibración.\n> 1 calienta la escena (tinte anaranjado/ambarino). < 1 la enfría.\nCombinado con verde y azul, permite una corrección fina del balance de blancos.",
+      "grading.green": "Ganancia multiplicativa del canal verde.\nEl verde domina la luminancia percibida (≈ 59%).\nBajar este canal da un efecto violáceo/magenta; subirlo verdea y aclara perceptualmente la imagen.",
+      "grading.blue": "Ganancia multiplicativa del canal azul.\nAumentar da un ambiente frío/nocturno. Reducir seca los azules para un aspecto cálido o sepia.",
+      "grading.redCurve": "Curva tonal del rojo: aplica una potencia sobre el canal.\n< 1 = curva convexa (realza los tonos medios rojos). > 1 = hunde los tonos medios.\nActúa después de la ganancia roja.",
+      "grading.greenCurve": "Curva tonal del verde. Modela la respuesta del canal verde en los tonos medios.\nÚtil para afinar el contraste percibido sin tocar los extremos.",
+      "grading.blueCurve": "Curva tonal del azul. Permite modelar el ambiente en los tonos intermedios.\nCurva < 1 = azules más densos en las luces. > 1 = azules hundidos (aspecto cálido en los medios).",
+      "palette.strength": "Fuerza global de la armonización de paleta sobre las texturas objetivo.\n0: sin efecto. 1: las texturas se recolorean por completo hacia su color objetivo.\nFunciona por coincidencia de nombre de material GLB.",
+      "palette.saturation": "Saturación aplicada tras la armonización de paleta.\n< 1: calma las texturas recoloreadas. > 1: las intensifica.\nPermite ajustar sin retocar los colores objetivo.",
+      "palette.contrast": "Contraste aplicado a los colores tras la armonización.\nUn ligero aumento (1.05–1.2) refuerza la legibilidad de las texturas recoloreadas.",
+      "palette.warmShift": "Desplazamiento cálido/frío global aplicado a toda la paleta de biomas.\nNegativo → tonos más fríos/azulados. Positivo → tonos más cálidos/dorados.",
+      "environment.skyColor": "Color de fondo del renderer, visible más allá de la cúpula y los objetos.\nGeneralmente oscuro para no traslucirse detrás de los decorados.",
+      "environment.fogColor": "Color de la niebla, exponencial o lineal.\nEs hacia este tono que los objetos se funden con la distancia.\nDebe coincidir con el color del cielo para un horizonte coherente.",
+      "environment.domeColorTop": "Color de la cima de la cúpula atmosférica esférica.\nVisible en el cielo por encima de los objetos (si domeOpacity > 0).",
+      "environment.domeColorBottom": "Color de la base de la cúpula atmosférica.\nSimula el horizonte o una bruma baja a nivel del suelo.",
+      "lights.hemisphereSkyColor": "Tinte del componente \"cielo\" de la luz hemisférica.\nColorea las caras orientadas hacia arriba (tejados, superficies planas).",
+      "lights.hemisphereGroundColor": "Tinte del componente \"suelo\" de la luz hemisférica.\nColorea las caras orientadas hacia abajo (parte inferior de los puentes, vientre de las casas).",
+      "lights.sunColor": "Color de la luz direccional del sol.\nAnaranjada al atardecer, blanca de día, azulada con un cielo cubierto.\nInfluye fuertemente en el color de las sombras proyectadas.",
+      "lights.fillColor": "Color de la luz de relleno (fill light).\nGeneralmente complementaria al sol para equilibrar las sombras.",
+      "palette.targets.field": "Color objetivo para la armonización de las texturas de campos cultivados.",
+      "palette.targets.forest": "Color objetivo para las texturas de bosques y árboles.",
+      "palette.targets.grass": "Color objetivo para las praderas y céspedes.",
+      "palette.targets.house": "Color objetivo para las casas y edificios de aldea.",
+      "palette.targets.rail": "Color objetivo para los raíles e infraestructuras ferroviarias.",
+      "palette.targets.water": "Color objetivo para el agua (lagos, ríos, mar).",
+      "pix.pixelSize": "Tamaño de un píxel en unidades de pantalla. En 1: resolución nativa. En 8: renderizado muy pixelado estilo 8-bit.\nValores altos reducen la carga GPU (menos fragmentos que calcular) y refuerzan el aspecto retro.\nCombinado con los contornos, da un estilo lowpoly + outline.",
+      "pix.normalEdge": "Intensidad de los contornos basados en las normales de superficie.\nDetecta los bordes entre planos de dirección diferente (p. ej., el borde de un tejado, la esquina de un muro).\n0 = sin contorno de normal. 1 = contornos fuertes en todas las transiciones geométricas.",
+      "pix.depthEdge": "Intensidad de los contornos basados en la profundidad (z-buffer).\nTraza siluetas entre objetos a distancias diferentes.\nComplementario al contorno de normal: juntos dan un aspecto de dibujos animados o cómic.",
+      "pix.worldShape": "Elige la curvatura aparente del mundo.\n\"Globista\": la tierra es una esfera, el horizonte está curvado — efecto mini-planeta.\n\"Planista\": sin curvatura, vista plana tradicional — aspecto isométrico clásico.",
+      "env.dayNight": "Alterna entre el día y la noche.\nCambia el astro visible (sol/luna), el cielo, los colores ambientales y hace aparecer los cometas de noche.",
+      "quality.density": "Multiplicador global de densidad de contenido (0.15 a 1.0).\nReduce el número de props naturales, briznas de hierba y ovejas para aligerar el recorrido del grafo y apuntar a 60 FPS en máquinas más débiles.\nNo afecta al terreno, al agua, a los edificios ni a los personajes (jugabilidad y sistemas ya optimizados por separado). Reconstruye el contenido en cada cambio.",
+      "cin.tilt": "Intensidad del efecto tilt-shift: desenfoque progresivo en la parte superior e inferior del encuadre.\nSimula una óptica basculante que reduce la profundidad de campo en el centro.\nDa la ilusión de una maqueta en miniatura — muy fuerte a 1.",
+      "cin.focusCenter": "Posición vertical del centro de nitidez del tilt-shift.\n0 = arriba del encuadre, 0.5 = centro, 1 = abajo.\nMover hacia abajo pone la nitidez en los elementos del suelo.",
+      "cin.focusBand": "Anchura de la banda nítida del tilt-shift (en fracción de la altura).\n0.1 = banda muy fina, 0.5 = mitad de la imagen nítida, 1 = todo nítido (efecto desactivado).",
+      "cin.vignette": "Oscurecimiento de los bordes y esquinas del encuadre.\nSimula la caída de luz en los extremos de un objetivo gran angular.\nRefuerza la sensación de profundidad y guía la mirada hacia el centro.\nLlega hasta 2: más allá de 1, los bordes se vuelven casi totalmente negros.",
+      "cin.grain": "Cantidad de grano fílmico añadido sobre el renderizado.\nSimula las imperfecciones de una película de plata o un sensor sensible.\nDiscreto a 0.2, omnipresente a 1.",
+      "cin.chromatic": "Aberración cromática: desplazamiento lateral de los canales de color hacia los bordes.\nSimula los defectos de un objetivo imperfecto que no enfoca todas las longitudes de onda en el mismo punto.\nSutil a 0.2, psicodélico más allá de 0.7.",
+      "cin.halation": "Halo luminoso alrededor de las zonas muy claras, típico de la película de plata.\nLa luz fuerte \"sangra\" ligeramente sobre las zonas oscuras vecinas.\nAñade calidez y organicidad — bonito en las puestas de sol.",
+      "cin.barrel": "Distorsión de barril: los bordes de la imagen se empujan hacia el exterior.\nSimula los objetivos ojo de pez o gran angular. Refuerza el aspecto \"cámara de vigilancia\" o lo-fi.\nA 1, la imagen está fuertemente abombada.",
+      "cin.scanLines": "Líneas horizontales oscuras entrelazadas, imitando un monitor CRT o una vieja tele.\n0 = sin scanlines. 6 = líneas muy marcadas, aspecto retro-TV.\nPotente combinado con una paleta CGA/EGA para la estética vintage.",
+      "cin.scanLinesIntensity": "Profundidad del negro de las scanlines. 0 = transparente (sin oscurecimiento, aunque\nlas scanlines estén activas). 1 = negro total. Sin efecto si Scan lines está en 0.",
+      "cin.godRays": "Intensidad de los rayos crepusculares (god rays) que emanan de la posición en pantalla del sol.\nEfecto screen-space ligero, sin pasada de renderizado adicional — especialmente visible\ncerca del horizonte o cuando el sol está parcialmente oculto por un árbol o una torre.\n0 = desactivado (coste GPU cero).",
+      "cin.godRaysLength": "Alcance de los rayos, en fracción de la pantalla, entre el píxel mostrado y el sol.\nBajo = rayos cortos y localizados alrededor del sol. Alto = rayos que atraviesan\nuna gran parte del encuadre.",
+      "cin.godRaysDiffusion": "Atenuación de los rayos a lo largo de su recorrido hacia el sol.\nBajo = rayos cortos y nítidos. Alto = rayos largos y suaves que se extienden\nlejos de la fuente luminosa.",
+      "cin.godRaysThreshold": "Umbral de luminosidad por encima del cual un píxel se considera una fuente luminosa\n(cielo, sol) y contribuye a los rayos. Bajo = más zonas contribuyen (rayos más\npresentes). Alto = solo las zonas más luminosas (el sol mismo) los generan.",
+      "cin.godRaysLayers": "Rompe el degradado suave de los rayos en capas de densidad superpuestas — efecto de\nvelos/láminas translúcidas apiladas (milhojas) en lugar de un halo continuo.\n0 = degradado suave clásico. 1 = estratificación marcada, rayos visiblemente estratificados.",
+      "cin.bloomIntensity": "Intensidad del bloom: halo luminoso ligero alrededor de las altas luces (sol, luna,\nestrellas, ventanas iluminadas, elementos del HUD). Solo afecta a los píxeles por encima del\numbral ajustado más abajo — nunca difumina toda la imagen.\n0 = desactivado (coste GPU cero).",
+      "cin.bloomThreshold": "Umbral de luminosidad por encima del cual un píxel contribuye al bloom.\nBajo = más zonas (incluso moderadamente luminosas) generan halo.\nAlto = solo las fuentes más intensas (sol, lámparas) lo generan.",
+      "cin.bloomRadius": "Radio del desenfoque aplicado alrededor de los píxeles fuente del bloom, en píxeles de pantalla.\nBajo = halo ajustado y nítido. Alto = halo más amplio y difuso.",
+      "cin.bloomSoftness": "Suavidad de la transición en el umbral del bloom.\nBajo = corte neto entre \"contribuye\" y \"no contribuye\".\nAlto = transición progresiva, halo más suave en el borde de las fuentes.",
+      "cin.crtCurvature": "Curvatura de pantalla estilo tubo de rayos catódicos (CRT): deforma la imagen como si\nestuviera mostrada sobre una superficie curva. Parámetro independiente de la distorsión\nde barril (objetivo) de arriba. 0 = sin deformación (coste GPU cero).",
+      "cin.crtMask": "Enmascara las zonas que quedan fuera del encuadre una vez aplicada la curvatura de pantalla\n(bordes negros) en lugar de estirarlas. 0 = bordes estirados (sin máscara),\n1 = bordes fuera de pantalla totalmente enmascarados en negro. Sin efecto si la curvatura está en 0.",
+      "cin.crtCornerDark": "Oscurecimiento adicional de las esquinas de la pantalla, típico de un tubo de rayos catódicos.\n0 = sin oscurecimiento. Sin efecto si la curvatura de pantalla está en 0.",
+      "water.foamWidth": "Alcance de la franja de espuma cerca de la orilla (en metros).\n0 = sin espuma de orilla. Valores altos = amplia franja blanca a lo largo de las costas.",
+      "water.foamScale": "Escala de la textura de espuma. Cuanto más alto el valor, más finos y densos los patrones de espuma.\nBajo = manchas grandes, alto = grano fino tipo espuma.",
+      "water.foamDensity": "Umbral de activación de la espuma de orilla. Cuanto más alto el valor, más superficie cubre la espuma cerca del borde.",
+      "water.foamAmbient": "Umbral de espuma ambiental, visible en toda la superficie del agua (no solo en el borde).\n0 = superficie perfectamente lisa en alta mar. Valores altos = cabrillas/oleaje difuso por todas partes.",
+      "water.foamSharp": "Nitidez del borde de la espuma. Bajo = transición suave y difusa. Alto = contorno nítido y recortado.",
+      "water.foamSpeed": "Velocidad de animación de la espuma (desplazamiento del patrón en el tiempo). 0 = espuma congelada, inmóvil.",
+      "water.deepDistance": "Distancia orilla → mar abierto sobre la que se extiende el degradado de color poco profundo/profundo.\nBajo = transición ajustada cerca del borde. Alto = degradado extendido sobre una gran zona.",
+      "water.opacity": "Opacidad base de la lámina de agua. Bajo = agua translúcida que deja ver el fondo. Alto = agua opaca.",
+      "wake.armWidth": "Semianchura de cada brazo de la estela en V detrás del barco.",
+      "wake.spread": "Divergencia de la V: a qué velocidad los dos brazos se separan uno del otro alejándose del barco.",
+      "wake.length": "Longitud sobre la que la estela se desvanece detrás del barco antes de desaparecer.",
+      "wake.scale": "Escala del patrón de espuma de la estela. Cuanto más alto el valor, más fino el grano.",
+      "wake.density": "Cobertura de espuma de la estela. Bajo = estela discreta, alto = rastro de espuma denso.",
+      "wake.opacity": "Opacidad máxima de la estela, más fuerte justo detrás del barco y luego atenuada por la longitud.",
+      "wind.wheat.strength": "Amplitud del balanceo de las espigas de trigo. 0 = inmóvil.",
+      "wind.wheat.speed": "Velocidad de oscilación del trigo con el viento.",
+      "wind.grass.strength": "Amplitud del balanceo de las briznas de pradera.",
+      "wind.grass.speed": "Velocidad de oscilación de la pradera con el viento.",
+      "wind.grass.sway": "Balanceo sinusoidal adicional de cada brizna, independiente del ruido de viento.",
+      "wind.tree.strength": "Amplitud del balanceo de las copas de los árboles. Modificar este ajuste recompila los shaders de los árboles ya plantados (posible tirón breve).",
+      "wind.tree.speed": "Velocidad de oscilación de los árboles con el viento.",
+      "wind.tree.frequency": "Frecuencia espacial de la onda de viento principal a lo largo del tronco/follaje.",
+      "wind.tree.turbulence": "Intensidad de las ráfagas y detalles secundarios añadidos a la onda de viento principal.",
+      "wind.tree.gustStrength": "Peso de las ráfagas (variación más lenta y amplia) en el movimiento global.",
+      "wind.tree.detailStrength": "Peso del detalle fino (ondulación rápida) en el movimiento global.",
+      "cloud.coverage": "Cobertura nubosa en el horizonte. 0 = cielo despejado, 1 = cielo cubierto.",
+      "cloud.scale": "Escala del patrón de nubes. Valor alto = nubes más pequeñas y finas; valor bajo = grandes masas.",
+      "cloud.speed": "Velocidad de deriva de las nubes en el horizonte.",
+      "stats.drawCalls": "Número total de llamadas de renderizado (draw calls) emitidas por Three.js en este frame.\nCada objeto visible cuesta al menos 1 draw call — las sombras añaden más.\n> 200 dc: cuidado con el rendimiento en GPUs móviles.",
+      "stats.trackedDc": "Draw calls atribuidas a las categorías de objetos rastreados (losetas, árboles, raíles…).\nLa diferencia con el total = draw calls no categorizadas (UI, helpers, skybox…).",
+      "stats.shadows": "Draw calls estimadas usadas para el renderizado de sombras (shadow map).\nCada objeto que \"proyecta\" una sombra vuelve a renderizar la escena desde la perspectiva del sol.\nReduce el shadowMapSize o el número de emisores de sombra para disminuir este coste.",
+      "stats.triangles": "Número total de triángulos renderizados en este frame.\nIndicador de complejidad geométrica — las sombras duplican esta cifra.\nLas mallas LOD (nivel de detalle) reducen este número a distancia.",
+      "stats.objects": "Número total de objetos 3D (Mesh, Group…) rastreados en la escena.\nNo corresponde exactamente a los draw calls: un objeto puede generar varias pasadas.",
+      "stats.textures": "Número de texturas activas en memoria GPU.\nUna textura no liberada permanece en VRAM. Vigilar tras cargar nuevas losetas.",
+      "stats.shaders": "Número de programas shader (GLSL) compilados y activos.\nCada combinación de material + defines = un shader. Demasiadas variantes = tirón en el primer frame.",
+      "game.tiles": "Número total de losetas colocadas en el tablero desde el inicio de la partida.\nCada loseta puede pertenecer a uno o varios biomas según su composición.",
+      "game.mills": "Número de molinos presentes en la cuadrícula.\nUn molino aparece automáticamente en el centro de cada gran zona de campo de trigo.",
+      "game.trains": "Líneas de tren formadas: una línea = dos estaciones conectadas por raíles continuos.\nCuanto más larga la línea, más puntos de puntuación.",
+      "game.boats": "Barcos activos: un barco aparece en cada extensión de agua rodeada de tierra.\nCada barco genera puntos mientras permanezca \"a flote\".",
+      "game.comets": "Cometas interceptadas: eventos aleatorios que cruzan el tablero.\nColocar una loseta en el lugar previsto en el momento justo permite interceptarlos.",
+      "game.grass": "Losetas de pradera totales colocadas.\nSuperficie máx. = zona de pradera contigua más grande (losetas adyacentes del mismo bioma).",
+      "game.largestGrass": "Zona de pradera contigua más grande (en número de losetas conectadas).\nUna gran zona contigua otorga más puntos al final de la partida.",
+      "game.field": "Losetas de campo de trigo totales colocadas.\nLos campos adyacentes a aldeas o ríos dan bonificaciones.",
+      "game.largestField": "Zona de campo contigua más grande. Determina la bonificación de cosecha final.",
+      "game.forest": "Losetas de bosque totales colocadas.\nLos bosques densos (zonas grandes) son refugios de fauna y otorgan más puntos.",
+      "game.largestForest": "Bosque contiguo más grande. Los bosques > 7 losetas a veces desencadenan eventos especiales.",
+      "game.house": "Losetas de aldea totales colocadas.\nLas casas aisladas valen poco; una aldea densa y bien conectada a la red ferroviaria rinde mucho.",
+      "game.largestHouse": "Aldea contigua más grande. Una aldea = casas adyacentes.\nAldeas numerosas y densas maximizan la bonificación urbana.",
+      "game.water": "Losetas de agua totales colocadas (lagos, ríos, mar).\nEl agua que bordea otros biomas crea zonas costeras valoradas.",
+      "game.largestWater": "Extensión de agua contigua más grande. Un lago > 5 losetas puede acoger barcos adicionales.",
+      "game.rail": "Losetas de vía férrea totales colocadas.\nLos raíles solos no rinden nada — es la conexión entre dos estaciones lo que crea una línea.",
+      "game.largestRail": "Vía férrea contigua más larga (en losetas). Indicador del alcance máximo de la red.",
+      "game.activeTile": "La loseta que vas a colocar en la próxima jugada.\nMueve el cursor con Z/Q/S/D, gira con R, y coloca con ESPACIO.\nCada cara de la loseta corresponde a un bioma — ¡planifica tus conexiones!",
+      "game.nextTile": "La próxima loseta que entrará en juego después de que coloques la actual.\nAnticipa su forma para preparar el mejor lugar de acogida.",
+      "game.deckRemaining": "Número de losetas restantes en la pila.\nLa partida termina cuando la pila está vacía — ¡optimiza cada colocación!",
+      "hs.summary": "Resumen de la partida: losetas colocadas, líneas de tren, barcos, cometas interceptadas.",
+      "hs.grass": "Pradera — losetas totales / zona contigua más grande.",
+      "hs.field": "Campo de trigo — losetas totales / zona contigua más grande.",
+      "hs.forest": "Bosque — losetas totales / zona contigua más grande.",
+      "hs.house": "Aldea — losetas totales / zona contigua más grande.",
+      "hs.water": "Agua — losetas totales / extensión contigua más grande.",
+      "hs.rail": "Vía férrea — losetas totales / vía contigua más larga.",
+      "fps.fps": "Imágenes por segundo renderizadas por el motor Three.js.\n60 FPS = renderizado fluido y presupuesto de frame respetado. < 30 FPS = ralentizaciones perceptibles.\nEl valor se vuelve rojo cuando el presupuesto de frame (16.7 ms) se supera sistemáticamente.",
+      "fps.adj": "Evaluación cualitativa de la fluidez actual.\nVerde (Excelente / Fluido): todo va bien. Naranja (Aceptable / Correcto): aceptable pero vigila.\nRojo (Ajustado / Jadeante / Al límite): el motor está bajo presión — busca el cuello de botella.",
+      "fps.cpu": "Porcentaje del presupuesto de frame (16.7 ms) consumido por el hilo JavaScript.\nIncluye la lógica de juego, las actualizaciones de overlays, las animaciones y las pausas del GC.\n> 80 %: la CPU es el cuello de botella — reduce la frecuencia de actualizaciones o el número de overlays activos.",
+      "fps.gpu": "Porcentaje del presupuesto de frame consumido por el renderizado GPU.\nMedido mediante una consulta de temporización GPU real (EXT_disjoint_timer_query_webgl2), asíncrona —\nel valor mostrado puede tener 1 o varios frames de retraso. Si la extensión no está disponible en este\ndriver/navegador, recurre a un cronómetro CPU de envío (prefijado \"≈\", menos fiable).\n> 80 %: la GPU está saturada — reduce los triángulos/fragmentos (vegetación, postprocesado), los draw calls o las sombras.",
+      "menu.solo": "Modo solo — juega solo, a tu ritmo.\nTus puntuaciones se envían a la clasificación global una vez terminada la partida.",
+      "menu.multi": "Modo multijugador — juega en tiempo real con otros jugadores.\nCrea una sala y comparte el código, o únete a una partida existente.",
+      "menu.platiste": "Geometría plana — la cuadrícula descansa sobre un plano horizontal.\nMejor legibilidad y comportamiento predecible: recomendado para empezar.",
+      "menu.bouliste": "Geometría esférica — las losetas siguen la curvatura de un planeta.\nVista más inmersiva, pero la cuadrícula curva puede desorientar al principio.",
+      "menu.confirm": "Confirmar y pasar al siguiente paso.",
+      "menu.create": "Crear una nueva sala multijugador.\nSe genera automáticamente un código único — compártelo con los demás jugadores para que se unan a ti.",
+      "menu.join": "Unirse a una sala existente con el código indicado arriba.",
+      "menu.back": "Volver a la pantalla de inicio.",
+      "game.gridPercent": "Número de losetas colocadas en la cuadrícula desde el inicio de la partida.\nCada colocación aumenta este contador, incluso en modo multijugador.",
+      "game.lastScore": "Puntos ganados en la última colocación.\nIncluye la bonificación de zona si la loseta amplió o cerró una zona contigua, y las posibles bonificaciones de misión.",
+      "game.newGame": "Iniciar una nueva partida.\nLa partida en curso permanece activa y jugable — puedes volver a ella en cualquier momento desde el menú.",
+      "game.abandonGame": "Abandonar la partida en curso.\nLa partida quedará cerrada definitivamente: no podrás volver a jugarla ni enviar una nueva puntuación."
+    },
+    "missionHelp": {
+      "forest": "Coloca losetas con sectores de bosque 🌲.\nCada triángulo de bosque colocado en el tablero hace avanzar esta misión.\nLas zonas densas rinden más puntos al final de la partida.",
+      "house": "Coloca losetas con sectores de aldea 🛖.\nCada triángulo de casa colocado hace avanzar esta misión.\nLas aldeas conectadas a la red ferroviaria son especialmente rentables.",
+      "rail": "Coloca losetas con raíles 🛤️.\nCada triángulo de vía férrea colocado hace avanzar esta misión.\nLos raíles solos no rinden nada sin una estación en cada extremo.",
+      "water": "Coloca losetas con sectores de agua 💧.\nCada triángulo de agua colocado hace avanzar esta misión.\nLas grandes extensiones de agua pueden acoger barcos.",
+      "grass": "Coloca losetas con sectores de pradera 🌿.\nCada triángulo de pradera colocado hace avanzar esta misión.\nLas grandes zonas contiguas de pradera otorgan una bonificación de superficie.",
+      "field": "Coloca losetas con sectores de campo de trigo 🌾.\nCada triángulo de campo colocado hace avanzar esta misión.\nLos campos cercanos a aldeas o ríos dan bonificaciones.",
+      "train": "Conecta dos estaciones con raíles continuos 🚂.\nCada nueva línea de tren completada hace avanzar esta misión.\nCuanto más larga la línea, mayor la puntuación.",
+      "boat": "Crea extensiones de agua rodeadas de tierra ⛵.\nUn barco aparece automáticamente en cada lago cerrado por losetas terrestres.\nCada nuevo barco hace avanzar esta misión.",
+      "mill": "Construye grandes zonas de campos de trigo ⚙️.\nUn molino aparece automáticamente en el centro de cada zona de campo suficientemente grande.\nCada nuevo molino hace avanzar esta misión."
+    },
+    "missionTitles": {
+      "forest": {
+        "one": "Desarrollar un bosque de {target} árboles",
+        "other": "Desarrollar un bosque de {target} árboles"
+      },
+      "house": {
+        "one": "Construir una aldea de {target} casas",
+        "other": "Construir una aldea de {target} casas"
+      },
+      "rail": {
+        "one": "Extender una vía férrea de {target} raíles",
+        "other": "Extender una vía férrea de {target} raíles"
+      },
+      "water": {
+        "one": "Conectar una vía de agua de {target} casillas",
+        "other": "Conectar una vía de agua de {target} casillas"
+      },
+      "grass": {
+        "one": "Extender una pradera de {target} casillas",
+        "other": "Extender una pradera de {target} casillas"
+      },
+      "field": {
+        "one": "Cultivar {target} casillas de campos de trigo",
+        "other": "Cultivar {target} casillas de campos de trigo"
+      },
+      "train": {
+        "one": "Hacer circular {target} tren",
+        "other": "Hacer circular {target} trenes"
+      },
+      "boat": {
+        "one": "Hacer aparecer {target} barco",
+        "other": "Hacer aparecer {target} barcos"
+      },
+      "mill": {
+        "one": "Hacer girar {target} molino",
+        "other": "Hacer girar {target} molinos"
+      }
+    },
+    "ui": {
+      "modals": {
+        "scoreEnd": {
+          "kicker": "Partida terminada — puntuación final",
+          "save": "Guardar"
+        },
+        "abandon": {
+          "kicker": "¿Abandonar la partida?",
+          "sub": "Esta partida no podrá reanudarse después.",
+          "cancel": "CANCELAR",
+          "confirm": "ABANDONAR"
+        }
+      },
+      "hud": {
+        "player": "JUGADOR",
+        "room": "PARTIDA",
+        "abandon": "ABANDONAR",
+        "newGame": "NUEVA PARTIDA",
+        "statsTitle": "ESTADÍSTICAS DE LA PARTIDA",
+        "mills": "Molinos",
+        "trains": "Trenes",
+        "boats": "Barcos",
+        "comets": "Cometas",
+        "total": "Total",
+        "surfaceMax": "Superficie máx.",
+        "railMax": "Vía máx.",
+        "biomes": {
+          "grass": "Pradera",
+          "field": "Campo de trigo",
+          "forest": "Bosque",
+          "house": "Aldea",
+          "water": "Agua",
+          "rail": "Vía férrea"
+        },
+        "activeTileTitle": "LOSETA ACTUAL",
+        "nextTileTitle": "LOSETA SIGUIENTE",
+        "deckRemaining": "RESTANTES",
+        "tilesPlaced": "COLOCADAS",
+        "missionsTitle": "MISIONES EN CURSO",
+        "noMission": "Ninguna misión"
+      },
+      "help": {
+        "title": "Ayuda",
+        "closeAria": "Cerrar la ayuda",
+        "objective": {
+          "title": "Reglas básicas",
+          "text": "Coloca las losetas hexagonales, conecta las texturas idénticas y termina las misiones. Cada borde bien alineado paga; agua y raíles pagan más.",
+          "points": {
+            "tile": "por loseta colocada",
+            "edge": "por borde idéntico contra una loseta vecina",
+            "waterRail": "por conexión agua/agua o vía/vía",
+            "surround": "bonificación cuando una loseta está rodeada por sus 6 lados",
+            "mission": "por misión terminada",
+            "bonus": "si colocas una loseta en una casilla bonus"
+          }
+        },
+        "placement": {
+          "title": "Colocación",
+          "items": [
+            "Inicio de partida con 50 losetas.",
+            "La colocación de la primera es libre; las siguientes deberán tocar una loseta colocada.",
+            "El juego termina cuando la pila está vacía.",
+            "Con cada colocación, la zona jugable se expande."
+          ]
+        },
+        "waterRail": {
+          "title": "Aguas y raíles",
+          "text": "El agua y el raíl son redes estrictas y más difíciles de colocar. A cambio, cada conexión correcta rinde más puntos.",
+          "water": "se conecta solo con agua: +25",
+          "rail": "se conecta solo con raíl: +25"
+        },
+        "bonusCells": {
+          "title": "Casillas bonus",
+          "text": "Entre 1 y 4 casillas bonus se generan en la cuadrícula. No cambian ninguna regla de colocación: si consigues colocar una loseta encima, desaparecen y otorgan de inmediato +1500 puntos.",
+          "label": "objetivo opcional, puntuación pura, sin riesgo"
+        },
+        "blackCells": {
+          "title": "Celdas negras",
+          "text": "Las celdas negras son losetas especiales ya presentes en la cuadrícula. Actúan como comodines: sustituyen lo que falta a su alrededor y aceptan conexiones con cualquier textura adyacente.",
+          "label": "cuenta como compatible con cualquier borde vecino"
+        },
+        "textures": {
+          "title": "Texturas y valores",
+          "field": {
+            "label": "Campo de trigo",
+            "code": "1-2 trigos"
+          },
+          "forest": {
+            "label": "Bosque",
+            "code": "1-6 árboles"
+          },
+          "grass": {
+            "label": "Pradera",
+            "code": "1"
+          },
+          "house": {
+            "label": "Aldea",
+            "code": "1-4 casas"
+          },
+          "water": {
+            "label": "Agua",
+            "code": "1"
+          },
+          "rail": {
+            "label": "Raíl",
+            "code": "1"
+          }
+        },
+        "missions": {
+          "title": "Misiones",
+          "text1": "En cada nueva loseta actual, un 20% de probabilidad de añadir una misión. Puede pedir bosque, aldea, vía férrea, vía de agua, pradera, campo de trigo, trenes visibles, barcos o molinos.",
+          "text2": "Recompensa: +100 puntos y +3 losetas. Los objetivos progresan por tipo, una misión terminada permanece visible 5 turnos. Cuentan los valores reales: pradera/agua/raíl = 1; campo de trigo = 1-2; casa = 1-4; bosque = 1-6 árboles. Los molinos ⚙️ cuentan el número de grandes zonas de campo activas."
+        },
+        "controls": {
+          "title": "Controles",
+          "moveCamera": "Mover la cámara",
+          "resetCamera": "Reiniciar la cámara",
+          "zoom": "Acercar / alejar la cámara",
+          "undo": "Deshacer el último movimiento",
+          "toggleHelp": "Mostrar / ocultar esta ayuda",
+          "muteSound": "Silenciar / activar todos los sonidos",
+          "immersive": "Modo inmersivo",
+          "superImmersive": "Modo super-inmersivo",
+          "speedUp": "Acelera los desplazamientos y el zoom",
+          "wheelZoomRotate": "Zoom o rotación si está disponible",
+          "rightClick": "Rotación de la cámara",
+          "perfHud": "Mostrar / ocultar el HUD FPS",
+          "eda": "Mostrar / ocultar el HUD EDA",
+          "snapshot": "Tomar una captura de pantalla",
+          "gallery": "Abrir la galería de capturas",
+          "wheelKbd": "Rueda",
+          "leftClickKbd": "Clic izquierdo",
+          "rightClickKbd": "Clic derecho",
+          "spaceKbd": "ESPACIO",
+          "shiftSpaceKbd": "SHIFT+ESPACIO"
+        }
+      }
+    },
+    "highscore": {
+      "saving": "Guardando...",
+      "saved": "¡Puntuación guardada! Volviendo al menú...",
+      "error": "Error de puntuación.",
+      "defaultName": "Jugador"
+    },
+    "multiplayerRooms": {
+      "modeCopy": "Crea una partida o únete a una existente con un código.",
+      "nameLabel": "Apodo",
+      "namePlaceholder": "Tu apodo",
+      "codeLabel": "Código de partida",
+      "codePlaceholder": "Ej.: 377EA7",
+      "availableRoomsLabel": "Partidas disponibles / copias de seguridad",
+      "loadingRooms": "Cargando partidas...",
+      "btnCreate": "Crear",
+      "btnJoin": "Unirse",
+      "btnBack": "Volver",
+      "selectExisting": "Seleccionar una partida existente",
+      "noRoomsFound": "No se encontró ninguna partida en /json/games",
+      "listUnavailable": "Lista no disponible - servidor PHP mudo",
+      "roomsCount": {
+        "one": "{count} partida disponible / copias de seguridad",
+        "other": "{count} partidas disponibles / copias de seguridad"
+      },
+      "unknownDate": "fecha desconocida",
+      "playerWord": {
+        "one": "jugador",
+        "other": "jugadores"
+      },
+      "tileWord": {
+        "one": "loseta",
+        "other": "losetas"
+      },
+      "creatingRoom": "Creando la partida {code}...",
+      "missingCode": "Falta el código de partida.",
+      "joiningRoom": "Conectando a la partida {code}...",
+      "roomNotFound": "Partida {code} encontrada, pero sin instantánea. JSON corrupto rechazado.",
+      "defaultNamePrefix": "Jugador"
+    },
+    "startupMenu": {
+      "nameChoice": {
+        "title": "¿Cómo te llamas?",
+        "label": "Tu nombre (o apodo)",
+        "placeholder": "Ej.: Alex",
+        "confirm": "CONTINUAR →"
+      },
+      "home": {
+        "title": "Elige el modo de juego: solo o multijugador.",
+        "solo": "SOLO",
+        "multi": "MULTI"
+      },
+      "worldShape": {
+        "title": "Elige la geometría de tu planeta:",
+        "flat": "PLANISTA",
+        "globe": "GLOBISTA",
+        "note": "Te recomendamos \"<i>planista</i>\" para empezar. Podrás cambiar de facción en cualquier momento durante la partida, porque hasta los planetas tienen derecho a una crisis de identidad."
+      }
+    },
+    "preloader": {
+      "loading": "Cargando…",
+      "loadingPct": "Cargando… {pct} %"
+    },
+    "placementOverlay": {
+      "ok": "OK",
+      "outOfGrid": "FUERA DE CUADRÍCULA",
+      "forbidden": "PROHIBIDO",
+      "incompatibleNetwork": "RED INCOMPATIBLE",
+      "edgeTypes": {
+        "field": "campo",
+        "forest": "bosque",
+        "water": "agua",
+        "rail": "raíl",
+        "house": "casa",
+        "grass": "pradera"
+      }
+    },
+    "multiplayerClient": {
+      "unreadableResponse": "Respuesta del servidor ilegible ({status}): {text}",
+      "serverError": "Error del servidor {status}"
+    },
+    "kbdHint": "H o ESC&nbsp;→ ayuda &nbsp;|&nbsp; M&nbsp;→ silenciar &nbsp;|&nbsp; ESPACIO&nbsp;→ inmersivo &nbsp;|&nbsp; MAYÚS+ESPACIO&nbsp;→ super-inmersivo",
+    "superImmersifExitHint": "ESPACIO para salir del modo super-inmersivo",
+    "fpsAdjectives": {
+      "disastrous": "Desastroso",
+      "bad": "Malo",
+      "mediocre": "Mediocre",
+      "passable": "Aceptable",
+      "good": "Bueno",
+      "splendid": "Espléndido"
+    }
+  }
+}

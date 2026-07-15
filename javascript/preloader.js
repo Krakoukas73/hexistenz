@@ -155,15 +155,9 @@ const ASSETS_OGG = [
 // json/languages/{french,english}.json (clé game.preloader), même mécanisme
 // que les autres modules (top-level await + localStorage 'hexistenz_pres_lang').
 // Repli FR en dur : c'est le tout premier écran affiché, avant même le fetch.
-function getGameLang() {
-  try {
-    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
-  } catch {
-    return 'fr';
-  }
-}
+import { getLangFile } from './gameLangReactive.js';
 
-const _langFile = getGameLang() === 'en' ? 'english' : 'french';
+const _langFile = getLangFile();
 
 const _plText = await fetch(`./json/languages/${_langFile}.json`)
   .then(r => r.json())

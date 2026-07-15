@@ -204,7 +204,9 @@
 
 .score-strip strong {
   color: #f2d16b;
-  font-size: 24px;
+  font-family: 'BebasNeue', system-ui, sans-serif;
+  font-size: 44px;
+  line-height: 1;
 }
 
 .score-strip span {
@@ -379,7 +381,7 @@ kbd {
 }
 
 .score-strip strong {
-  font-size: 18px;
+  font-size: 33px;
 }
 
 .score-strip span,

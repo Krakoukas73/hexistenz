@@ -4,55 +4,55 @@
       "factions": "Factions",
       "biomes": "Biomes",
       "missions": "Missions",
-      "gameplay": "Gameplay",
+      "gameplay": "Façon de jouer",
       "gallery": "Ambiances",
       "creatures": "Créatures",
       "audio": "Audio",
       "daynnight": "Environnement",
       "eda": "Personnalisation",
       "multi": "Multijoueur",
-      "scores": "Classement"
+      "scores": "Palmarès"
     },
     "play": "Jouer"
   },
   "hero": {
-    "subtitle": "Jeu hexagonal contemplatif fait avec nostalgie et amour ❤️ Three.js et beaucoup de tuiles",
+    "subtitle": "Jeu hexagonal contemplatif fait avec nostalgie, amour ❤️, Three.js pis une quantité pas raisonnable de tuiles",
     "inspi_text": "Inspiré de <em>Dorfromantik</em>, de l'âme pastorale de <em>The Settlers</em> (Blue Byte, 1993)\n          et des mondes merveilleux de <em>Heroes of Might and Magic</em> (3DO).",
     "inspi_buy": {
       "dorfromantik": "Dorfromantik sur Steam",
       "settlers": "The Settlers sur Ubisoft",
       "heroes3": "Heroes III sur GOG"
     },
-    "tagline": "Posez des tuiles hexagonales. Développez de vastes forêts de sapins et de bouleaux, des champs de blé\n          ondoyants avec leurs moulins, des villages médiévaux aux toits fumants, des réseaux de voies ferrées\n          et de larges rivières où voguent vos bateaux. Remplissez des missions, interceptez des comètes,\n          entourez vos tuiles. Bâtissez un monde vivant, tuile après tuile.",
-    "btn_play": "Jouer maintenant",
-    "btn_how": "Comment jouer ?",
+    "tagline": "Pose des tuiles hexagonales. Fais pousser de vastes forêts de sapins et de bouleaux, des champs de blé\n          qui brassent dans le vent avec leurs moulins, des villages médiévaux aux toits fumants, des voies ferrées\n          pis de grandes rivières où naviguent tes bateaux. Remplis des missions, intercepte des comètes,\n          entoure tes tuiles. Monte-toi un monde vivant, une tuile à la fois.",
+    "btn_play": "Partir la game",
+    "btn_how": "Comment ça marche ?",
     "stats": {
       "biomes_label": "Biomes",
-      "games_label": "Parties",
+      "games_label": "Games",
       "factions_label": "Factions"
     }
   },
   "factions": {
-    "label": "Deux façons de voir le monde",
-    "title1": "Platistes et boulistes",
-    "title2": "Deux factions irréconciliables",
-    "sub": "Hexistenz divise les bâtisseurs en deux factions irréconciliables. Une option visuelle,\n      un engagement philosophique. De quel côté êtes-vous&nbsp;?",
+    "label": "Deux façons ben différentes de voir le monde",
+    "title1": "Platistes pis boulistes",
+    "title2": "Deux gangs qui s'entendront jamais",
+    "sub": "Hexistenz divise les bâtisseurs en deux factions irréconciliables. Une option visuelle,\n      un engagement philosophique. De quel côté es-tu&nbsp;?",
     "flat": {
       "tag": "Mode Platiste",
-      "name": "🪨 Le Monde Plat",
-      "desc": "La grille s'étend à l'horizontale, pure et ordonnée. Chaque tuile posée rejoint\n            un plateau parfaitement plan, comme les anciens l'ont toujours su.\n            Pour ceux qui font confiance à leurs yeux."
+      "name": "🪨 Le monde ben droit",
+      "desc": "La grille s'étend à l'horizontale, propre et bien droite. Chaque tuile rejoint\n            un plateau parfaitement plat, comme les anciens le savaient déjà.\n            Pour ceux qui font confiance à leurs yeux pis pas aux supposées preuves scientifiques."
     },
     "globe": {
       "tag": "Mode Bouliste",
-      "name": "🌍 Le Monde Sphérique",
-      "desc": "La courbure du monde se révèle à mesure que la grille grandit — les tuiles\n            lointaines s'incurvent vers l'horizon. Un effet GPU en temps réel qui donne\n            une profondeur vertigineuse à chaque partie."
+      "name": "🌍 La grosse boule",
+      "desc": "La courbure du monde apparaît à mesure que la grille grandit. Les tuiles\n            éloignées descendent vers l'horizon dans un effet GPU en temps réel qui donne\n            une profondeur pas pire pantoute."
     },
-    "vs": "Le débat n'est pas clos."
+    "vs": "Le débat est pas réglé, pis il le sera probablement jamais."
   },
   "biomes": {
     "label": "Les biomes",
     "title": "Six biomes à connecter",
-    "sub": "Chaque tuile est composée de six secteurs triangulaires. Assemblez les biomes identiques pour former des zones et maximiser votre score.",
+    "sub": "Chaque tuile est composée de six secteurs triangulaires. Assemble les biomes identiques pour former des zones et maximiser ton pointage.",
     "grass": {
       "name": "Prairie",
       "desc": "Étendues herbeuses où chaque brin frémit sous le vent, parsemées de fleurs sauvages, rochers, cerfs et buissons. Terrain neutre entre les grands réseaux.",
@@ -60,12 +60,12 @@
     },
     "field": {
       "name": "Champ",
-      "desc": "Blé soumis au vent, moulins procéduraux et bottes de foin. Le chi-maï résonne quand la caméra effleure les épis.",
+      "desc": "Du blé qui brasse dans le vent, des moulins procéduraux pis des balles de foin. Le chi-maï part quand la caméra descend proche des épis.",
       "tag": "Réseau agricole"
     },
     "forest": {
       "name": "Forêt",
-      "desc": "Sapins, bouleaux, peupliers en InstancedMesh, dont les frondaisons ondulent au vent jusque dans le sous-bois. Champignons, piles de bois, cerfs — jusqu'à 22 millions de triangles.",
+      "desc": "Sapins, bouleaux pis peupliers en InstancedMesh, avec des branches qui brassent jusque dans le sous-bois. Champignons, piles de bois, cerfs — jusqu'à 22 millions de triangles, parce que pourquoi faire simple.",
       "tag": "Forêt dense"
     },
     "house": {
@@ -76,18 +76,18 @@
     "water": {
       "name": "Eau",
       "desc": "Nappe continue au rivage organique, vagues et écume animées façon aquarelle. Bateaux animés à sillage, plages procédurales et halos de zone.",
-      "tag": "Réseau fluvial ⛵"
+      "tag": "Réseau d'eau ⛵"
     },
     "rail": {
       "name": "Voie ferrée",
       "desc": "Rails procéduraux, traverses et ballast. Trains avec wagons, gares terminus et fumée des locomotives.",
-      "tag": "Réseau ferroviaire 🚂"
+      "tag": "Chemin de fer 🚂"
     }
   },
   "missions": {
     "label": "Objectifs",
     "title": "Les missions",
-    "sub": "Chaque partie génère des objectifs automatiques liés aux biomes et aux réseaux. Les accomplir rapporte 100 points et surtout 3 nouvelles tuiles dans la pioche — ce qui garantit théoriquement des parties infinies.",
+    "sub": "Chaque game génère des objectifs liés aux biomes pis aux réseaux. Une mission réglée donne 100 points et surtout 3 nouvelles tuiles dans la pile — assez pour étirer la game pas mal longtemps.",
     "zone": {
       "name": "Zone biome",
       "desc": "Atteindre une surface minimale dans un biome donné : <em>«&nbsp;Forêt de 8 secteurs&nbsp;»</em>, <em>«&nbsp;Prairie de 12 secteurs&nbsp;»</em>…"
@@ -110,7 +110,7 @@
     },
     "comets": {
       "name": "Comètes",
-      "desc": "Des comètes traversent le ciel en temps réel. Cliquez dessus pour les faire exploser et engranger des points — réflexes et vigilance requis."
+      "desc": "Des comètes traversent le ciel en temps réel. Clique dessus pour les faire exploser et engranger des points — réflexes et vigilance requis."
     },
     "village": {
       "name": "Village prospère",
@@ -126,39 +126,39 @@
     }
   },
   "gameplay": {
-    "label": "Mécanique de jeu",
+    "label": "Comment ça se joue",
     "title": "Comment jouer",
-    "sub": "Une boucle simple, une profondeur infinie. Chaque tuile posée transforme le monde.",
+    "sub": "Une boucle simple, une profondeur sans fin. Chaque tuile posée change le monde, tranquillement pas vite.",
     "ui_caption": "Tuile courante · Tuile suivante · Tuiles restantes",
     "steps": {
       "draw": {
-        "title": "Piochez",
-        "desc": "Une tuile hexagonale apparaît — six secteurs triangulaires, chacun d'un biome. Observez la suivante pour anticiper."
+        "title": "Pige",
+        "desc": "Une tuile hexagonale apparaît avec six secteurs triangulaires. Regarde la prochaine avant de faire n'importe quoi."
       },
       "orient": {
-        "title": "Orientez",
-        "desc": "Pivotez la tuile pour aligner ses arêtes. Eau et rail imposent la continuité — une mauvaise pose bloque le réseau."
+        "title": "Tourne-la",
+        "desc": "Tourne la tuile pour aligner ses bords. L'eau pis le rail doivent continuer correctement — une mauvaise pose peut tout mettre croche."
       },
       "place": {
-        "title": "Posez",
-        "desc": "Choisissez l'emplacement sur la grille axiale. Entourer une tuile de six voisins rapporte un gros bonus immédiat."
+        "title": "Pose-la",
+        "desc": "Choisis une place sur la grille. Entourer complètement une tuile donne un gros bonus drette là."
       },
       "score": {
-        "title": "Scorez",
-        "desc": "Complétez missions et zones, interceptez des comètes, soumettez votre meilleur score au classement mondial."
+        "title": "Ramasse les points",
+        "desc": "Complète des missions, agrandis tes zones, intercepte des comètes pis envoie ton meilleur pointage au palmarès mondial."
       }
     },
-    "score_label": "Système de score",
+    "score_label": "Calcul du pointage",
     "pills": {
-      "place": "Pose de tuile",
-      "edge": "Arête compatible",
+      "place": "Tuile posée",
+      "edge": "Bord compatible",
       "network": "Réseau connecté",
-      "surround": "Tuile entourée",
-      "mission": "Mission accomplie",
-      "comet": "Comète interceptée",
+      "surround": "Tuile encerclée",
+      "mission": "Mission réglée",
+      "comet": "Comète pognée",
       "bonus": "Case bonus recouverte"
     },
-    "kbd_title": "CONTRÔLES CLAVIER",
+    "kbd_title": "CONTRÔLES AU CLAVIER",
     "kbd": {
       "camera_label": "caméra",
       "left_click_kbd": "Clic gauche",
@@ -168,18 +168,18 @@
       "wheel_kbd": "Molette",
       "wheel_desc": "zoom",
       "space_kbd": "Espace",
-      "reset_cam": "réinitialiser la caméra",
+      "reset_cam": "remettre la caméra comme avant",
       "zoom": "zoomer / dézoomer",
       "shift_kbd": "SHIFT",
-      "speed_up": "accélère déplacement/zoom",
-      "undo": "annuler",
+      "speed_up": "accélère le déplacement pis le zoom",
+      "undo": "défaire",
       "customization": "personnalisation",
       "perf_hud": "HUD performances",
-      "snapshot": "Capture d'écran",
-      "gallery": "Galerie des captures",
+      "snapshot": "prendre une photo",
+      "gallery": "album des captures",
       "immersive": "mode immersif",
       "super_immersive": "mode super-immersif",
-      "mute": "muet",
+      "mute": "couper le son",
       "help": "aide"
     }
   },
@@ -187,7 +187,7 @@
     "label": "Ambiances visuelles",
     "title1": "Plusieurs atmosphères",
     "title2": "Une infinité de personnalisations",
-    "sub": "De nombreux presets visuels prêts à l'emploi — mais chacun est une base : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… Des centaines de combinaisons pour transformer le monde entier à votre goût. Chaque personnalisation s'exporte en un clic et peut être partagée avec d'autres joueurs.",
+    "sub": "De nombreux presets visuels prêts à l'emploi — mais chacun est une base : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… Des centaines de combinaisons pour transformer le monde entier à ton goût. Chaque personnalisation s'exporte en un clic et peut être partagée avec d'autres joueurs.",
     "preset_word": "Preset",
     "presets": {
       "autumn": "Automne",
@@ -202,8 +202,8 @@
   },
   "creatures": {
     "label": "La vie du monde",
-    "title": "Un monde de créatures",
-    "sub": "Le monde ne se contente pas d'exister : il respire. Animaux, oiseaux et habitants animent chaque biome au fil des saisons.",
+    "title": "Un monde plein de monde",
+    "sub": "Le monde fait pas juste exister : il respire. Animaux, oiseaux pis habitants font vivre chaque biome au fil des saisons.",
     "sheep": {
       "name": "Moutons",
       "desc": "Des troupeaux paissent tranquillement dans les prairies, se déplaçant au gré des herbes qui ondulent sous le vent."
@@ -267,33 +267,33 @@
         "wildflowers": "Fleurs sauvages"
       }
     },
-    "note": "22 visages différents peuplent villages et forêts, chacun avec sa silhouette, son costume, son rôle. Pas de figurants copiés-collés : une vraie population, tuile après tuile."
+    "note": "22 visages différents peuplent les villages pis les forêts, chacun avec sa silhouette, son costume pis son rôle. Pas de figurants copiés-collés comme des cônes orange : une vraie population, tuile après tuile."
   },
   "audio": {
     "label": "Ambiance sonore",
-    "title": "Un monde qui s'entend",
-    "sub": "Le son suit la caméra en temps réel — chaque biome, chaque train, chaque bateau a sa propre voix, qui monte et s'efface avec la distance.",
+    "title": "Un monde qui fait du bruit",
+    "sub": "Le son suit la caméra en temps réel. Chaque biome, chaque train pis chaque bateau a sa propre voix, qui monte ou disparaît selon la distance.",
     "spatial": {
       "name": "Son spatial 3D",
       "desc": "Ambiances de village, chants d'oiseaux de forêt et de prairie, corbeaux au-dessus des champs, ressac des plages, trains et bateaux — chaque source varie en volume selon sa distance et sa direction réelles."
     },
     "chimai": {
       "name": "Chi Mai, le thème caché",
-      "desc": "Descendez la caméra au ras d'un champ de blé et un thème mélodique secret se déclenche — la musique et les autres sons s'effacent doucement pour lui laisser toute la place."
+      "desc": "Descends la caméra au ras d'un champ de blé et un thème mélodique secret se déclenche — la musique et les autres sons s'effacent doucement pour lui laisser toute la place."
     },
     "adaptive": {
       "name": "Musique adaptative",
       "desc": "Pistes d'intro, de jeu et de fin qui s'enchaînent en fondu doux, piochées dans plusieurs variantes pour ne jamais sonner deux fois pareil d'une partie à l'autre."
     },
     "silence": {
-      "name": "Silence à la demande",
-      "desc": "La touche M coupe et rétablit instantanément toute la bande-son, musique comprise — utile pour une partie tranquille en réunion ou en visio."
+      "name": "Silence quand ça te tente",
+      "desc": "La touche M coupe ou remet toute la bande-son drette là, musique comprise — pratique pour jouer en cachette pendant une réunion."
     }
   },
   "daynnight": {
     "label": "Ambiance du monde",
     "title": "Environnement",
-    "sub": "Un seul interrupteur change tout. Le soleil, les nuages et le ciel bleu laissent place aux étoiles, à la lune et aux comètes.",
+    "sub": "Un seul interrupteur change toute la patente. Le soleil, les nuages pis le ciel bleu laissent leur place aux étoiles, à la lune et aux comètes.",
     "day": {
       "name": "Mode Jour",
       "list": [
@@ -364,27 +364,27 @@
     }
   },
   "multi": {
-    "title1": "Multiplayer",
-    "title2": "Bâtissez ensemble",
-    "sub": "Rejoignez ou créez une salle avec un code à 6 lettres. La grille est partagée en temps réel — chaque joueur pose ses tuiles et voit les placements des autres au fur et à mesure.",
+    "title1": "Multijoueur",
+    "title2": "Bâtissez ça ensemble",
+    "sub": "Rejoins ou crée une salle avec un code de 6 lettres. La grille est partagée en temps réel : chaque joueur pose ses tuiles pis voit les placements des autres à mesure.",
     "features": [
-      "Toutes les parties sont sauvegardées — reprenez ou rejouez à tout moment",
-      "Salles rejoignables à tout moment, même en cours de partie",
+      "Toutes les games sont sauvegardées — reprends ou rejoue à tout moment",
+      "Salles rejoignables à tout moment, même en cours de game",
       "Synchronisation temps réel · PHP + JSON",
       "La carte se construit collaborativement, tuile après tuile"
     ],
-    "gallery_title": "PARTAGEZ VOS CAPTURES",
-    "gallery_promo": "Immortalisez vos plus belles parties : le bouton 📷 capture le monde sans HUD, et le bouton 🖼️ ouvre la galerie serveur partagée avec tous les joueurs",
-    "btn_create": "Créer une partie",
-    "room_title": "Code de salle",
-    "room_status": "Partie en cours · 3 joueurs",
+    "gallery_title": "PARTAGE TES PHOTOS",
+    "gallery_promo": "Immortalise tes plus belles games : le bouton 📷 prend une photo sans HUD, pis le bouton 🖼️ ouvre l'album partagé du serveur.",
+    "btn_create": "Créer une game",
+    "room_title": "Code de la salle",
+    "room_status": "Game en cours · 3 joueurs",
     "tiles_placed_label": "Tuiles posées"
   },
   "scores": {
-    "label": "Classement mondial",
+    "label": "Palmarès mondial",
     "title": "Les meilleurs bâtisseurs",
-    "empty": "Aucun score enregistré — soyez le premier à poser votre tuile.",
-    "try_luck": "Tenter votre chance →",
+    "empty": "Y'a encore aucun pointage — sois le premier à poser une tuile.",
+    "try_luck": "Tente ta chance →",
     "headline_stat": "tuiles posées",
     "trains_s": "locomotive",
     "trains_p": "locomotives",
@@ -394,7 +394,7 @@
     "mills_p": "moulins",
     "comets_s": "comète",
     "comets_p": "comètes",
-    "largest_zone": "plus grande zone",
+    "largest_zone": "plus grosse zone",
     "biome_labels": {
       "forest": {
         "s": "arbre",
@@ -423,19 +423,19 @@
     }
   },
   "footer": {
-    "copy": "Jeu hexagonal contemplatif fait avec nostalgie et amour ❤️ Three.js et beaucoup de tuiles · 2025–2026",
+    "copy": "Jeu hexagonal contemplatif fait avec nostalgie, amour ❤️, Three.js pis beaucoup trop de tuiles · 2025–2026",
     "github": "Sur GitHub"
   },
   "game": {
     "gallery": {
-      "title": "Galerie de captures",
-      "empty": "Aucune capture pour l'instant. Appuie sur 📷 en jeu pour en créer une.",
+      "title": "Album des captures",
+      "empty": "Y'a aucune capture pour l'instant. Pèse sur 📷 dans la game pour en faire une.",
       "close": "Fermer",
-      "loading": "Chargement…",
-      "tilesCount": "Partie de {n} tuiles",
-      "modeBouliste": "Mode bouliste",
-      "modePlatiste": "Mode platiste",
-      "captured": "Capture faite !"
+      "loading": "Ça charge…",
+      "tilesCount": "Game de {n} tuiles",
+      "modeBouliste": "Mode grosse boule",
+      "modePlatiste": "Mode ben droit",
+      "captured": "Photo pognée !"
     },
     "eda": {
       "mainTitle": "Éditeur de direction artistique",
@@ -480,8 +480,8 @@
         "waterFoam": "Activer / désactiver l'écume",
         "waterWake": "Activer / désactiver le sillage bateau"
       },
-      "modeActuel": "Mode actuel",
-      "preregalages": "Préréglages",
+      "modeActuel": "Mode en cours",
+      "preregalages": "Réglages prêts à servir",
       "presetNames": {
         "default": "Défaut",
         "mist": "Brume",
@@ -511,17 +511,17 @@
         "max": "Max"
       },
       "qualityTooltip": "Densité {label} ({value})",
-      "weatherStopAll": "⏹ Tout arrêter",
+      "weatherStopAll": "⏹ Arrêter tout ça",
       "weatherStopAllTitle": "Arrête tous les évènements environnementaux en cours",
       "weatherGroups": {
-        "morningMist": "🌫️ Brume matinale",
+        "morningMist": "🌫️ Petite brume du matin",
         "fireflies": "✨ Lucioles",
-        "clouds": "☁️ Nuages de pluie",
+        "clouds": "☁️ Gros nuages de pluie",
         "rain": "🌧️ Pluie",
-        "storm": "⛈️ Orage",
+        "storm": "⛈️ Gros orage",
         "lightning": "⚡ Éclair",
         "fire": "🔥 Feu",
-        "panic": "🐑 Panique animale"
+        "panic": "🐑 Panique dans les animaux"
       },
       "weatherRequires": "(nécessite {label})",
       "weatherSwitchTitle": "Activer / désactiver",
@@ -532,15 +532,15 @@
       "footer": {
         "copy": "📋 Copier",
         "copyTitle": "Copier tous les paramètres LUT + PIX + EAU + CINÉMA + VENT + NUAGES + Forme du monde + Jour/Nuit + Densité + Météo courants en JSON (base pour un futur preset d'ambiance intégrant des effets météo pré-configurés)",
-        "copied": "✓ Copié !",
-        "undo": "↩ Undo",
+        "copied": "✓ Copié, mon chum !",
+        "undo": "↩ Défaire",
         "undoTitle": "Annuler la dernière modification (Undo)",
-        "redo": "↪ Redo",
+        "redo": "↪ Refaire",
         "redoTitle": "Rétablir la modification annulée (Redo)",
-        "reset": "Reset",
-        "resetTitle": "Réinitialiser aux valeurs par défaut",
+        "reset": "Remettre à zéro",
+        "resetTitle": "Remet tous les réglages comme au départ",
         "compare": "Comparer",
-        "compareBack": "⟳ Retour",
+        "compareBack": "⟳ Revenir",
         "compareTitle": "Basculer entre paramètres courants et dernière ambiance",
         "lastPresetTitle": "Dernière ambiance appliquée"
       },
@@ -876,22 +876,22 @@
     "ui": {
       "modals": {
         "scoreEnd": {
-          "kicker": "Partie terminée — score final",
+          "kicker": "La game est finie — score final",
           "save": "Enregistrer"
         },
         "abandon": {
-          "kicker": "Abandonner la partie ?",
-          "sub": "Cette partie ne pourra plus être reprise ensuite.",
+          "kicker": "Câline, tu veux vraiment sacrer ton camp de la game ?",
+          "sub": "Une fois que c'est fait, ta game est partie pour de bon.",
           "cancel": "ANNULER",
-          "confirm": "ABANDONNER"
+          "confirm": "SACRER SON CAMP"
         }
       },
       "hud": {
         "player": "JOUEUR",
-        "room": "PARTIE",
-        "abandon": "ABANDONNER",
-        "newGame": "NOUVELLE PARTIE",
-        "statsTitle": "STATISTIQUES DE LA PARTIE",
+        "room": "GAME",
+        "abandon": "SACRER SON CAMP",
+        "newGame": "NOUVELLE GAME",
+        "statsTitle": "STATISTIQUES DE LA GAME",
         "mills": "Moulins",
         "trains": "Trains",
         "boats": "Bateaux",
@@ -912,7 +912,7 @@
         "deckRemaining": "RESTANTES",
         "tilesPlaced": "POSÉES",
         "missionsTitle": "MISSIONS EN COURS",
-        "noMission": "Aucune mission"
+        "noMission": "Y'a pas de mission"
       },
       "help": {
         "title": "Aide",
@@ -989,20 +989,20 @@
         "controls": {
           "title": "Contrôles",
           "moveCamera": "Déplacer la caméra",
-          "resetCamera": "Réinitialiser la caméra",
+          "resetCamera": "Remettre la caméra comme avant",
           "zoom": "Zoomer / dézoomer la caméra",
-          "undo": "Annuler le dernier mouvement",
+          "undo": "Défaire le dernier mouvement",
           "toggleHelp": "Afficher / masquer cette aide",
           "muteSound": "Couper / activer tous les sons",
           "immersive": "Mode immersif",
           "superImmersive": "Mode super-immersif",
-          "speedUp": "Accélère les déplacements et le zoom",
+          "speedUp": "Accélère les déplacements pis le zoom",
           "wheelZoomRotate": "Zoom ou rotation si disponible",
           "rightClick": "Rotation de la caméra",
           "perfHud": "Afficher / masquer le HUD FPS",
           "eda": "Afficher / masquer le HUD EDA",
-          "snapshot": "Prendre une capture d'écran",
-          "gallery": "Ouvrir la galerie des captures",
+          "snapshot": "Prendre une photo",
+          "gallery": "Ouvrir l'album des captures",
           "wheelKbd": "Molette",
           "leftClickKbd": "Clic gauche",
           "rightClickKbd": "Clic droit",
@@ -1012,28 +1012,28 @@
       }
     },
     "highscore": {
-      "saving": "Enregistrement...",
-      "saved": "Score enregistré ! Retour au menu...",
-      "error": "Erreur highscore.",
+      "saving": "Ça s'enregistre...",
+      "saved": "Pointage enregistré, tabarnak ! Retour au menu...",
+      "error": "Oups, maudite erreur de pointage.",
       "defaultName": "Joueur"
     },
     "multiplayerRooms": {
-      "modeCopy": "Créer une partie ou rejoindre une partie existante avec un code.",
+      "modeCopy": "Crée une game ou embarque dans une game existante avec un code.",
       "nameLabel": "Pseudo",
       "namePlaceholder": "Ton pseudo",
-      "codeLabel": "Code partie",
+      "codeLabel": "Code de la salle",
       "codePlaceholder": "Ex : 377EA7",
-      "availableRoomsLabel": "Parties disponibles / backups",
-      "loadingRooms": "Chargement des parties...",
+      "availableRoomsLabel": "Games disponibles / copies de secours",
+      "loadingRooms": "Ça charge les games...",
       "btnCreate": "Créer",
-      "btnJoin": "Rejoindre",
+      "btnJoin": "Embarquer",
       "btnBack": "Retour",
-      "selectExisting": "Sélectionner une partie existante",
-      "noRoomsFound": "Aucune partie trouvée dans /json/games",
+      "selectExisting": "Choisis une game existante",
+      "noRoomsFound": "Y'a pas de game trouvée dans /json/games",
       "listUnavailable": "Liste indisponible - serveur PHP muet",
       "roomsCount": {
-        "one": "{count} partie disponible / backups",
-        "other": "{count} parties disponibles / backups"
+        "one": "{count} game disponible / copie de secours",
+        "other": "{count} games disponibles / copies de secours"
       },
       "unknownDate": "date inconnue",
       "playerWord": {
@@ -1044,10 +1044,10 @@
         "one": "tuile",
         "other": "tuiles"
       },
-      "creatingRoom": "Création de la partie {code}...",
-      "missingCode": "Code partie manquant.",
-      "joiningRoom": "Connexion à la partie {code}...",
-      "roomNotFound": "Partie {code} trouvée, mais snapshot absent. JSON moisi refusé.",
+      "creatingRoom": "Création de la game {code}...",
+      "missingCode": "Code de game manquant.",
+      "joiningRoom": "Connexion à la game {code}...",
+      "roomNotFound": "Game {code} trouvée, mais y'a pas de snapshot. JSON moisi refusé, mon chum.",
       "defaultNamePrefix": "Joueur"
     },
     "startupMenu": {
@@ -1066,12 +1066,12 @@
         "title": "Choisis la géométrie de ta planète :",
         "flat": "PLATISTE",
         "globe": "BOULISTE",
-        "note": "On te conseille \"<i>platiste</i>\" pour débuter. Tu pourras changer de faction à n'importe quel moment en jeu, parce que même les planètes ont droit à une crise identitaire."
+        "note": "On te conseille \"<i>platiste</i>\" pour débuter. Tu pourras changer de faction à n'importe quel moment en jeu, parce que même les planètes ont droit à une petite crise identitaire, câline."
       }
     },
     "preloader": {
-      "loading": "Chargement…",
-      "loadingPct": "Chargement… {pct} %"
+      "loading": "Ça charge…",
+      "loadingPct": "Ça charge… {pct} %"
     },
     "placementOverlay": {
       "ok": "OK",
@@ -1092,14 +1092,14 @@
       "serverError": "Erreur serveur {status}"
     },
     "kbdHint": "H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif",
-    "superImmersifExitHint": "ESPACE pour sortir du monde super immersif",
+    "superImmersifExitHint": "ESPACE pour sortir du super-immersif, mon chum",
     "fpsAdjectives": {
-      "disastrous": "Désastreux",
-      "bad": "Mauvais",
-      "mediocre": "Médiocre",
-      "passable": "Passable",
+      "disastrous": "Un désastre",
+      "bad": "Poche",
+      "mediocre": "Ordinaire",
+      "passable": "Correct",
       "good": "Bon",
-      "splendid": "Splendide"
+      "splendid": "Solide en maudit"
     }
   }
 }

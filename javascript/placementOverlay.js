@@ -1,19 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { registerLangRefresh } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
 
-// Passage bilingue FR/EN le 2026-07-12 : le label de validité de placement
-// (affiché en continu pendant le jeu) vient de json/languages/{french,english}.json
-// (clé game.placementOverlay), même mécanisme que les autres modules
-// (top-level await + localStorage 'hexistenz_pres_lang').
-function getGameLang() {
-  try {
-    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
-  } catch {
-    return 'fr';
-  }
-}
-
-const _langFile = getGameLang() === 'en' ? 'english' : 'french';
+const _langFile = getLangFile();
 
 const _poText = await fetch(`./json/languages/${_langFile}.json`)
   .then(r => r.json())

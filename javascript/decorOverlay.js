@@ -155,9 +155,9 @@ export const PROP_MODEL_DEFS = [
   { key: 'field-flag-3', url: './glb/batiments/medieval/moulin-1.glb', target: FIELD_FLAG_3_TARGET_HEIGHT * 1.70, mode: 'height', noSkeletonPose: true },
   { key: 'hay-bale',       url: './glb/decor/botte-foin.glb',        target: HAY_BALE_TARGET_WIDTH,          mode: 'length', kind: 'hay-bale' },
   { key: 'pile-de-bois-1', url: './glb/decor/pile-de-bois-1.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 1.23 * 0.90, mode: 'length', kind: 'pile-de-bois' }, // +23% −10%
-  { key: 'pile-de-bois-2', url: './glb/decor/pile-de-bois-2.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 1.13 * 0.88, mode: 'length', kind: 'pile-de-bois' }, // +13% −12%
-  { key: 'pile-de-bois-3', url: './glb/decor/pile-de-bois-3.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 0.83,        mode: 'length', kind: 'pile-de-bois' }, // −17%
-  { key: 'pile-de-bois-4', url: './glb/decor/pile-de-bois-4.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 0.83,        mode: 'length', kind: 'pile-de-bois' }, // −17%
+  { key: 'pile-de-bois-2', url: './glb/decor/pile-de-bois-2.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 1.13 * 0.88 * 0.90, mode: 'length', kind: 'pile-de-bois' }, // +13% −12% −10%
+  { key: 'pile-de-bois-3', url: './glb/decor/pile-de-bois-3.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 0.83 * 0.85,        mode: 'length', kind: 'pile-de-bois' }, // −17% −15%
+  { key: 'pile-de-bois-4', url: './glb/decor/pile-de-bois-4.glb',  target: PILE_DE_BOIS_TARGET_LENGTH * 0.83 * 0.85,        mode: 'length', kind: 'pile-de-bois' }, // −17% −15%
   { key: 'fountain-1',   url: './glb/decor/fontaine-1.glb',  target: FOUNTAIN_1_TARGET_WIDTH, mode: 'length', bypassBboxCheck: true, groundOffsetDelta: -0.017 },
   { key: 'fountain-2',   url: './glb/decor/fontaine-2.glb',  target: FOUNTAIN_2_TARGET_WIDTH, mode: 'length', groundOffsetDelta: -0.004 },
   { key: 'fountain-3',   url: './glb/decor/fontaine-3.glb',  target: FOUNTAIN_1_TARGET_WIDTH, mode: 'length', bypassBboxCheck: true, groundOffsetDelta: 0 }, // corrigé : −0.017 (copié de fountain-1) l'enfonçait sous le sol — retiré

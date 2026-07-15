@@ -188,7 +188,7 @@ function accumulateCharacterInstance(accumulator, key, seed, pos, placedTile, ch
   // n'affecte aucune coordonnée Y (rotation pure autour de Y), donc sans effet sur le calage sol.
   const baseYawJitter  = (hashUnit(`${seed}:base-yaw`) - 0.5) * 0.16;
   const surfaceY       = getTerrainSurfaceY(local, type, hashNumber(seed) % 97, { edgeLockStart: 0.98, edgeLockEnd: 1.0 });
-  const scaleJitter    = 0.90 + hashUnit(`${seed}:scale`) * 0.20;
+  const scaleJitter    = 0.99 + hashUnit(`${seed}:scale`) * 0.22; // +10 % depuis [0.90, 1.10] (2026-07-13)
   const bottomOffset   = getCharacterBottomOffset(key);
   const posY           = surfaceY + GROUND_CLEARANCE - scaleJitter * bottomOffset;
 

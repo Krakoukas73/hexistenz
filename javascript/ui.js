@@ -201,14 +201,6 @@ export function updateMissionUI(ui, missions, formatter, progressByType = new Ma
     return;
   }
 
-  // Nombre maximal de graduations affichées : au-delà, une mission à gros objectif
-  // (ex. forêt jusqu'à 200 arbres) rendrait chaque graduation illisible dans une barre
-  // de ~150px. En dessous de ce plafond, 1 graduation = 1 unité exacte à accomplir
-  // (demande explicite : "9/15 rails -> 6 graduations (15-9)" — ici 6 = total = target-
-  // baseline, PAS target-current ; l'exemple correspondait à une mission tout juste
-  // générée où gained valait encore 0, current==baseline).
-  const MAX_TICKS = 24;
-
   ui.missionList.innerHTML = missions.map(mission => {
     const completed = mission.completed;
     const baseline  = mission.baseline ?? 0;
@@ -222,16 +214,11 @@ export function updateMissionUI(ui, missions, formatter, progressByType = new Ma
     else if (ratio >= 0.75) tierClass = 'bar-near';
     else if (ratio >= 0.5)  tierClass = 'bar-mid';
 
-    // Au-delà de MAX_TICKS, chaque graduation représente plusieurs unités (arrondi
-    // proportionnel) — sous le plafond, correspondance exacte 1 graduation = 1 unité.
-    const tickCount   = Math.min(total, MAX_TICKS);
-    const filledTicks = total <= MAX_TICKS
-      ? gained
-      : Math.round((gained / total) * tickCount);
-    const ticksHtml = Array.from({ length: tickCount }, (_, i) => {
-      const filled = i < filledTicks;
-      return `<span class="mission-bar-seg${filled ? ' seg-filled ' + tierClass : ''}"></span>`;
-    }).join('');
+    // Barre continue glossy (2026-07-15, remplace l'ancien système à graduations
+    // discrètes) : un seul fill dont la largeur suit le ratio de progression,
+    // même palette par palier (bar-mid/near/close) qu'avant.
+    const fillPct  = Math.round(ratio * 100);
+    const fillHtml = `<div class="mission-bar-fill${tierClass ? ' ' + tierClass : ''}" style="width:${fillPct}%"></div>`;
 
     const typeIcon = MISSION_TYPE_ICON[mission.type] ?? '';
     const typeClass = `mission-type-${mission.type}`;
@@ -242,7 +229,7 @@ export function updateMissionUI(ui, missions, formatter, progressByType = new Ma
     return `<li class="${liClasses}" data-mission-tip="${mission.type}">` +
       (title ? `<div class="mission-title">${title}</div>` : '') +
       `<div class="mission-row">` +
-        `<div class="mission-bar">${ticksHtml}</div>` +
+        `<div class="mission-bar">${fillHtml}</div>` +
         `<span class="mission-numbers"><span class="mission-cur">${current}</span><span class="mission-sep">/</span><span class="mission-goal">${mission.target}</span></span>` +
         `<span class="mission-type-icon">${typeIcon}</span>` +
       `</div>` +

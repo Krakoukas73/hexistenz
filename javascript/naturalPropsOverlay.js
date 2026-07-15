@@ -466,7 +466,7 @@ function getNaturalPropScaleJitter(kind, seed, index) {
     }
     return ROCK_DENSITY.normalScaleMin + roll * ROCK_DENSITY.normalScaleRange;
   }
-  if (kind === 'deer')     return 0.80 + roll * 0.40;
+  if (kind === 'deer')     return 0.68 + roll * 0.34; // −15 % depuis [0.80, 1.20] (2026-07-13)
   if (kind === 'mushroom') return 0.72 + roll * 0.58;
   if (kind === 'hay-bale')     return 0.85 + roll * 0.30;
   if (kind === 'pile-de-bois') return 0.80 + roll * 0.35;

@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { registerLangRefresh } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
 import { DECK_SIZE, GRID_RADIUS, COMET_HIT_SCORE, LOD_RAIL_TRACK_CULL_DISTANCE, LOD_PAVED_ROAD_CULL_DISTANCE } from './config.js';
 import { EDGE_TYPES } from './variables.js';
 import { WORLD_CURVATURE, setWorldCurvatureEnabled, getWorldCurvatureEnabled } from './worldCurvature.js';
@@ -36,6 +36,8 @@ import { createCloudSky, updateCloudSky, getCloudUserEnabled, getCloudSkyParams 
 import { updateGlobalWind } from './globalWind.js';
 import { resetPropHitboxRegistry } from './propHitboxRegistry.js';
 import { createDebugLightUI, tickFps } from './edaPanelHost.js';
+import { captureSnapshot } from './snapshotCapture.js';
+import { openSnapshotGallery } from './snapshotGallery.js';
 import { createEnvironmentDirector, updateEnvironmentDirector } from './environmentDirector.js';
 import { createMorningMistOverlay, updateMorningMist } from '../shaders/morningMistOverlay.js';
 import { createWeatherVfxOverlay, updateWeatherVfxOverlay } from './weatherVfxOverlay.js';
@@ -51,7 +53,7 @@ import { getBonusTilesAwarded, normalizeRotation } from './gameRules.js';
 import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, clonePlain, consumeCompletedMissions, createMissionManager, getCompletedMissions, getGameStats, getMissionProgressByType, maybeGenerateMissionForTile, removeMissionById, restoreMissionSnapshots, restoreMissions, serializeMissionManager, setMissionTurn } from './missions.js';
 import { formatMissionTitle } from './missionLabels.js';
 import { pollRoom, updateCursor, updateRoomState } from './multiplayerClient.js';
-import { showScorePopup } from './scorePopup.js';
+import { showScorePopup, showCenterMessage } from './scorePopup.js';
 
 // 2026-07-05 — marqueur de chargement, au niveau module (s'exécute à l'évaluation du fichier,
 // AVANT tout appel de fonction) : preuve absolue que CE scene.js (avec le fix shader précompile)
@@ -63,14 +65,7 @@ console.warn('[SCENE-JS-BUILD] scene.js chargé — build shader-precompile 2026
 // texte sous json/languages/{french,english}.json (clé game.superImmersifExitHint),
 // même mécanisme que les autres modules (top-level await + localStorage
 // 'hexistenz_pres_lang').
-function _getGameLang() {
-  try {
-    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
-  } catch {
-    return 'fr';
-  }
-}
-const _sceneLangFile = _getGameLang() === 'en' ? 'english' : 'french';
+const _sceneLangFile = getLangFile();
 // `let` (pas `const`) : réassigné par le callback ci-dessous quand la langue change
 // en jeu. Contrairement au kbdHint (edaPanelWiring.js), pas besoin de repousser dans
 // un DOM déjà créé : _showSuperImmersifExitHint() recrée l'élément à chaque appel
@@ -85,6 +80,21 @@ let _superImmersifExitHintText = await fetch(`./json/languages/${_sceneLangFile}
 
 registerLangRefresh((data) => {
   _superImmersifExitHintText = data?.game?.superImmersifExitHint ?? '';
+});
+
+// Texte du popup central "Capture faite !" après un clic réussi sur 📷 (2026-07-15,
+// même mécanisme réactif que le hint ci-dessus). Clé game.gallery.captured — regroupée
+// avec les autres textes liés aux captures/galerie plutôt qu'une section dédiée.
+let _snapshotCapturedText = await fetch(`./json/languages/${_sceneLangFile}.json`)
+  .then(r => r.json())
+  .then(data => data?.game?.gallery?.captured ?? '')
+  .catch(err => {
+    console.error(`[scene] Impossible de charger ${_sceneLangFile}.json`, err);
+    return '';
+  });
+
+registerLangRefresh((data) => {
+  _snapshotCapturedText = data?.game?.gallery?.captured ?? '';
 });
 
 export function initScene(options = {}) {
@@ -214,6 +224,40 @@ export function initScene(options = {}) {
   // Créé ici (et non plus juste après createCamera) : le panel VENT/NUAGES a besoin
   // des références forestOverlay (arbres GPU-wind) et cloudSky (nuages horizon jour).
   createDebugLightUI({ visualEnvironment, postprocess, forestOverlay, cloudSky, environmentDirector });
+
+  // Bouton 📷 (edaPanelHost.js, ligne du bandeau FPS/EDA/langue) — capture serveur,
+  // cf. CONTEXT.md §21 (2026-07-14). Le canvas ne contient que le rendu 3D (monde +
+  // sprites texte + post-processing) : le HUD DOM n'a jamais besoin d'être masqué pour
+  // une capture propre (cf. snapshotCapture.js). Seul hoverZoneOverlay (contour de
+  // survol) est un objet Three.js visible dans le rendu — masqué le temps de la capture.
+  document.getElementById('snapshotBtn')?.addEventListener('click', async (event) => {
+    const btn = event.currentTarget;
+    if (btn.disabled) return;
+    btn.disabled = true;
+    const prevHoverVisible = hoverZoneOverlay.visible;
+    hoverZoneOverlay.visible = false;
+    // Laisse au moins une frame se dessiner sans le contour de survol avant de capturer.
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    try {
+      const tilesText = document.getElementById('tilesPlaced')?.textContent;
+      const tiles = tilesText != null ? parseInt(tilesText, 10) : null;
+      const mode = getWorldCurvatureEnabled() ? 'bouliste' : 'platiste';
+      await captureSnapshot(canvas, { tiles: Number.isFinite(tiles) ? tiles : null, mode });
+      btn.textContent = '✓';
+      showCenterMessage(_snapshotCapturedText);
+    } catch (err) {
+      console.error('[scene] Échec capture snapshot', err);
+      btn.textContent = '✕';
+    } finally {
+      hoverZoneOverlay.visible = prevHoverVisible;
+      setTimeout(() => { btn.textContent = '📷'; btn.disabled = false; }, 1200);
+    }
+  });
+
+  // Bouton 🖼️ (edaPanelHost.js, même bandeau) — ouvre la galerie de captures en overlay
+  // par-dessus le jeu (iframe vers snapshots.php), sans quitter la partie en cours.
+  // cf. snapshotGallery.js pour la logique d'ouverture/fermeture.
+  document.getElementById('galleryBtn')?.addEventListener('click', () => openSnapshotGallery());
 
   // Réglage de densité de contenu (qualité/FPS) : intégré au panel EDA depuis le
   // 2026-07-08 (onglet Environnement, rubrique 7) — cf. edaPanelWiring.js. Plus de bouton
@@ -436,6 +480,27 @@ export function initScene(options = {}) {
       event.preventDefault();
       if (gridOnlyMode) toggleGridOnlyMode(false);
       toggleHelp();
+      return;
+    }
+
+    // Touche C — raccourci clavier pour le bouton 📷 (2026-07-15). Simple relais vers
+    // le .click() du bouton plutôt qu'une duplication de sa logique (désactivation le
+    // temps de la capture, masquage hoverZoneOverlay, popup "Capture faite !"…, cf.
+    // handler #snapshotBtn plus haut dans ce fichier) — no-op silencieux si le bouton
+    // est absent ou déjà désactivé (capture en cours).
+    if (key === 'c') {
+      event.preventDefault();
+      document.getElementById('snapshotBtn')?.click();
+      return;
+    }
+
+    // Touche G — raccourci clavier pour le bouton 🖼️ (2026-07-15), même principe que
+    // C ci-dessus : relais vers le .click() du bouton plutôt qu'un appel direct à
+    // openSnapshotGallery() (le bouton pourrait un jour porter un état désactivé, ex.
+    // capture en cours, cf. #snapshotBtn — passer par .click() garde ce garde-fou gratuit).
+    if (key === 'g') {
+      event.preventDefault();
+      document.getElementById('galleryBtn')?.click();
       return;
     }
 

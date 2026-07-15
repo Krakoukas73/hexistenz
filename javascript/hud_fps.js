@@ -1,19 +1,8 @@
 import { LUT_HELP, delegateHelpTooltip } from './help.js';
 import { scanScene, GROUP_ORDER, GROUP_ICONS, ITEM_GROUP, CATEGORY_ICONS } from './sceneProfiler.js';
-import { registerLangRefresh } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
 
-// Passage bilingue FR/EN le 2026-07-12 : les 6 adjectifs de qualité FPS viennent
-// de json/languages/{french,english}.json (clé game.fpsAdjectives), même
-// mécanisme que les autres modules (top-level await + localStorage
-// 'hexistenz_pres_lang').
-function _getGameLang() {
-  try {
-    return localStorage.getItem('hexistenz_pres_lang') === 'en' ? 'en' : 'fr';
-  } catch {
-    return 'fr';
-  }
-}
-const _fpsLangFile = _getGameLang() === 'en' ? 'english' : 'french';
+const _fpsLangFile = getLangFile();
 // `const` volontairement conservé, objet muté en place au changement de langue
 // en jeu (cf. gameLangReactive.js) : lu à chaque tick FPS, donc auto-rafraîchi.
 const _fpsAdjText = await fetch(`./json/languages/${_fpsLangFile}.json`)

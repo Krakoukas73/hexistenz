@@ -13,7 +13,7 @@
 // ----------------------------------------------------------------------------
 // VERSION
 // ----------------------------------------------------------------------------
-export const HEXISTENZ_VERSION = 'v0.9.2.5.7';
+export const HEXISTENZ_VERSION = 'v0.9.2.6.5';
 
 // ----------------------------------------------------------------------------
 // GRILLE / DECK
@@ -478,14 +478,14 @@ export const TREE_WIND = {
 // Un seul ShaderMaterial partagé pour toute la grille, uTime = globalWind.
 // Modifier librement ces valeurs pour ajuster le rendu.
 export const WHEAT_BLADE_COUNT    = 1065;   // −18% (2026-07-04, perf triangles — était 1299) — −12% (était 1476) — −12% (était 1677) — −14% (était 1950) — −16% (était 2321) — +9% (était 2129)
-export const WHEAT_BLADE_WIDTH    = 0.00187; // demi-largeur du brin (HEX_SIZE=1) — −65% −25% +60% −10% −63% −22%
+export const WHEAT_BLADE_WIDTH    = 0.00131648; // demi-largeur du brin (HEX_SIZE=1) — −65% −25% +60% −10% −63% −22% −20% −12% (2026-07-14, était 0.001496)
 export const WHEAT_BLADE_SEGMENTS = 4;      // segments verticaux (qualité du bend)
 export const WHEAT_INNER_RATIO    = 0.20;   // bord intérieur du trapèze (0=centre, 1=bord)
 export const WHEAT_HEIGHT_MIN     = 0.505;  // hauteur min (scale local brin) — +20% (était 0.421)
 export const WHEAT_HEIGHT_MAX     = 0.977;  // hauteur max (scale local brin) — +20% (était 0.814)
 export const WHEAT_WIDTH_MIN      = 0.204;  // largeur min (scale local brin) — −22 % (était 0.261)
 export const WHEAT_WIDTH_MAX      = 0.441;  // largeur max (scale local brin) — −22 % (était 0.566)
-export const WHEAT_GLOBAL_HEIGHT  = 0.0536; // scale global Y — −15% (était 0.0630)
+export const WHEAT_GLOBAL_HEIGHT  = 0.0377344; // scale global Y — −15% (était 0.0630), −20% (2026-07-13, était 0.0536), −12% (2026-07-14, était 0.04288)
 export const WHEAT_WIND_STRENGTH  = 0.0255; // amplitude balancement (0=immobile, 0.32=fort) — −15%
 export const WHEAT_WIND_SPEED     = 1.65;   // vitesse animation (multiplicateur temps)
 export const WHEAT_BOTTOM_COLOR   = 0x8f7a20; // couleur base de tige
@@ -539,10 +539,10 @@ export const ROCK_DENSITY = {
   chanceForest:      0.58,  // +10 % (était 0.53)
   footprint:         0.038, // réduit (était 0.055) : rochers plus serrés → monticules
   bigRockThreshold:  0.92,  // ~8 % de gros rochers (exceptionnels)
-  bigRockScaleMin:   1.10,
-  bigRockScaleRange: 0.78,  // → [1.10, 1.88]  (max +12 %)
-  normalScaleMin:    0.55,
-  normalScaleRange:  0.40   // → [0.55, 0.95]  (petits plus petits, médiane ≈ 0.75)
+  bigRockScaleMin:   0.99,  // −10 % depuis 1.10 (2026-07-13)
+  bigRockScaleRange: 0.702, // −10 % depuis 0.78 → [0.99, 1.692]
+  normalScaleMin:    0.495, // −10 % depuis 0.55
+  normalScaleRange:  0.36   // −10 % depuis 0.40 → [0.495, 0.855]
 };
 
 // ----------------------------------------------------------------------------
