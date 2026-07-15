@@ -8,7 +8,7 @@ Jeu web contemplatif de pose de tuiles hexagonales, inspiré de Dorfromantik / T
 
 Stack : JavaScript ES Modules natifs, sans bundler. Three.js r160 (CDN). PHP pour highscores/multiplayer. JSON stockage. Pas de framework, pas de SQL.
 
-**Le jeu est entièrement quintilingue : FR/EN/ES/IT/PT**, plus une 6ᵉ langue easter egg **`fr-CA` (québécois, sélecteur "QC")** (prez `index.php`, jeu `game.php`, panneau EDA compris), via l'architecture i18n scalable `LANG_FILES`/`data-i18n` (cf. §21, entrées 2026-07-14/15/16). Sélecteur de langue accessible en jeu à tout moment, sans rechargement — contenu traduit dans `json/languages/*.json`.
+**Le jeu est entièrement traduit en 6 langues : FR/EN/ES/IT/PT + `fr-CA`** (québécois, easter egg, sélecteur "QC") (prez `index.php`, jeu `game.php`, panneau EDA compris), via l'architecture i18n scalable `LANG_FILES`/`data-i18n` (cf. §21, entrées 2026-07-14/15/16). Sélecteur de langue accessible en jeu à tout moment, sans rechargement — contenu traduit dans `json/languages/*.json`.
 
 ### Arborescence web (racine)
 
