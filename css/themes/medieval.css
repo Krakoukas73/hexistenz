@@ -1,0 +1,577 @@
+/* ─── medieval.css — thème graphique "Médiéval" (fichier renommé 2 fois le
+   2026-07-17 : theme-ancien.css → theme-medieval.css → medieval.css — valeur
+   interne du thème INCHANGÉE dans les 3 cas : reste "ancien" partout,
+   data-theme="ancien", THEMES de themeManager.js — seul le nom du fichier CSS
+   change, pour coller au libellé "Médiéval" affiché à l'utilisateur et à la
+   convention courte du dossier css/themes/ ; parchemin, 9-slice) ──────────
+   Reproduction STRICTE de l'effet validé dans parchemin.html (border-image
+   9-slice sur images/manuscrit.png, testé OK par l'utilisateur). Scope de ce
+   fichier : uniquement les cartes/sections de la prez (index.php) — .mission-card,
+   .biome-card, .faction-card, .creature-card, .audio-card, .daynight-card,
+   .hs-card, .hero-inspi-card, .stats-bar, .step-card, .kbd-strip, .gallery-card,
+   .eda-showcase-card, .room-demo. Le reste du HUD in-game (score/missions/aide/
+   FPS/EDA/deck/galerie snapshot/replay/menus pre-game) est aussi entièrement
+   thémé, mais directement via des blocs [data-theme="ancien"] dans base.css/
+   eda.css/help.css/missions.css/highscore.css/deck.css/snapshots.css/
+   multiplayerUi.css/startupMenu.css/snapshotGalleryOverlay.css — pas dans ce
+   fichier. Chantier considéré clos (~100% de l'UI convertie), cf. CONTEXT.md §32.
+   Déplacé de css/ vers css/themes/ le 2026-07-17 (rangement organisationnel :
+   seuls les 2 fichiers spécifiques aux thèmes vivent dans ce sous-dossier, tout
+   le reste de css/ reste où il est), puis renommé 2 fois le même jour :
+   theme-ancien.css → theme-medieval.css → medieval.css (nom de fichier seul à
+   chaque fois — cf. en-tête) — références <link> et commentaires croisés mis
+   à jour partout à chaque renommage.
+
+   Chargement conditionnel : ce fichier n'est utile que si data-theme="ancien"
+   est posé sur <html> (cf. javascript/themeManager.js) — toutes les règles sont
+   donc scopées sous ce sélecteur, jamais actives en thème "bleu" par défaut.
+
+   IMPORTANT : images/manuscrit.png n'existe toujours pas dans le dossier (à
+   ajouter par l'utilisateur) — tant qu'il est absent, border-image ne peut pas
+   se peindre et border-image-source retombe sur le fallback
+   `border: 50px solid transparent` (donc invisible), sans casser la mise en
+   page (padding déjà prévu). À vérifier une fois l'image ajoutée. */
+
+[data-theme="ancien"] .mission-card {
+  /* Repris à l'identique de .parchment dans parchemin.html : découpage virtuel
+     de l'image à 50px (coins/bords/centre), répété plutôt qu'étiré, le contenu
+     se place dans la zone centrale après les 50px de bordure. */
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+
+  /* Remplace le fond/bordure/rayon du thème bleu (background/border/border-radius
+     de .mission-card, css/presentation.css) — le parchemin fait office de fond. */
+  background: none;
+  border-radius: 0;
+
+  /* 2026-07-17 (suite) — retour utilisateur : la cellule centrale du 9-slice
+     (zone de contenu, entre les 50px de bordure) ne doit avoir AUCUN padding —
+     texte collé au plus près des bords de cette cellule, pas d'espace en trop
+     entre le texte et le motif du parchemin. */
+  padding: 0;
+  overflow-wrap: anywhere;
+
+  /* Légère profondeur, comme dans la démo. */
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+
+  /* 2026-07-18 — le thème bleu met display:flex directement sur .mission-card
+     (icône + texte côte à côte, cf. css/presentation.css). Le wrapper unique
+     .internal-parchment devient alors le SEUL enfant direct du conteneur flex,
+     ce qui casse la mise en page (icône et texte s'empilent au lieu d'être côte
+     à côte). Fix : .mission-card repasse en display:block, et .internal-parchment
+     reprend le display:flex à sa place (cf. règle juste en dessous). */
+  display: block;
+}
+[data-theme="ancien"] .mission-card > .internal-parchment {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+/* Lisibilité du texte sur fond parchemin clair — le thème bleu utilise des
+   couleurs claires (var(--text-dim), etc.) pensées pour un fond sombre, donc
+   illisibles ici. Encre sombre + police serif, comme la démo. */
+[data-theme="ancien"] .mission-card,
+[data-theme="ancien"] .mission-name,
+[data-theme="ancien"] .mission-desc {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #332415;
+}
+[data-theme="ancien"] .mission-desc {
+  color: #4a3623;
+}
+
+/* ─── .biome-card (rubrique "Six biomes à connecter") — même effet 9-slice ─── */
+[data-theme="ancien"] .biome-card {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+
+  background: none;
+  border-radius: 0;
+
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+
+  /* 2026-07-18 — CORRECTION : .biome-card garde overflow:hidden du thème bleu
+     (utile là-bas pour arrondir l'image avec border-radius). En thème ancien,
+     border-radius passe à 0 et ce overflow:hidden n'a plus d'utilité — pire, il
+     tronque la marge négative de .internal-parchment (qui doit légèrement
+     déborder dans la zone de bordure du 9-slice). Repassé en visible ici. */
+  overflow: visible;
+}
+
+/* .biome-name reste lisible tel quel (superposé à l'image bannière, sur un
+   dégradé sombre .biome-banner-overlay indépendant du fond de carte) — seule
+   la zone .biome-body (fond uni auparavant var(--bg-card), désormais parchemin
+   via border-image fill) a besoin de l'encre sombre + police serif. */
+[data-theme="ancien"] .biome-body,
+[data-theme="ancien"] .biome-desc {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #4a3623;
+}
+/* Même règle que .mission-card ci-dessus : aucun padding dans la cellule
+   centrale (.biome-body hérite de 18px 20px 20px en thème bleu, css/presentation.css). */
+[data-theme="ancien"] .biome-body {
+  padding: 0;
+}
+/* 2026-07-17 (suite) — retour utilisateur : ma 1ère tentative (padding-bottom sur
+   .biome-banner-overlay) était fausse — ça n'ajoute que du padding AUTOUR DU TEXTE
+   à l'intérieur de l'image, pas d'espace entre l'IMAGE et le paragraphe qui suit
+   (annulée). Le vrai problème : .biome-body à 0 padding (ci-dessus) fait que
+   l'image touche directement .biome-desc en dessous. Fix correct : marge sous
+   l'image elle-même. */
+[data-theme="ancien"] .biome-banner {
+  margin-bottom: 16px;
+}
+
+/* 2026-07-17 (suite) — retour utilisateur : les .biome-tag du thème bleu (fond
+   translucide + texte pastel clair, ex. #88e070 sur rgba(82,160,64,0.28)) sont
+   pensés pour un fond sombre et deviennent illisibles sur le parchemin clair.
+   Inversion du principe pour "ancien" : pastille à fond SATURÉ et SOMBRE (plus
+   foncé, plus opaque) + texte clair — effet "cachet de cire", contraste garanti
+   quel que soit le fond derrière. Mêmes teintes d'identité par biome, assombries. */
+[data-theme="ancien"] .biome-card.grass  .biome-tag { background: #355c22; color: #eef7e2; }
+[data-theme="ancien"] .biome-card.field  .biome-tag { background: #7a5a12; color: #fbead0; }
+[data-theme="ancien"] .biome-card.forest .biome-tag { background: #1f3d22; color: #d9f0d6; }
+[data-theme="ancien"] .biome-card.house  .biome-tag { background: #5c4326; color: #f0ddc0; }
+[data-theme="ancien"] .biome-card.water  .biome-tag { background: #1d3f5c; color: #d8ecfb; }
+[data-theme="ancien"] .biome-card.rail   .biome-tag { background: #423a52; color: #e6dff0; }
+
+/* ─── .faction-card (rubrique "Platistes et boulistes") — même effet 9-slice ─── */
+[data-theme="ancien"] .faction-card {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+
+  background: none;
+  border-radius: 0;
+
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+
+  /* cf. note .biome-card ci-dessus — même correction overflow (2026-07-18). */
+  overflow: visible;
+}
+/* .faction-img (bandeau photo, bordure basse bleutée en thème bleu) n'a plus
+   besoin de séparation nette : le parchemin fait déjà la transition. */
+[data-theme="ancien"] .faction-img {
+  border-bottom: none;
+}
+/* Cellule centrale sans padding, cf. .mission-card/.biome-body ci-dessus. */
+[data-theme="ancien"] .faction-body {
+  padding: 0;
+}
+[data-theme="ancien"] .faction-name,
+[data-theme="ancien"] .faction-desc {
+  font-family: Georgia, "Times New Roman", serif;
+}
+[data-theme="ancien"] .faction-desc { color: #4a3623; }
+/* Même traitement "cachet de cire" que .biome-tag : fond saturé sombre + texte
+   clair, identité de couleur par faction assombrie pour rester lisible sur le
+   parchemin (le thème bleu utilisait un fond translucide clair + texte pastel). */
+[data-theme="ancien"] .faction-card.platiste .faction-tag  { background: #6b4e10; color: #f5e3b0; border: none; }
+[data-theme="ancien"] .faction-card.bouliste  .faction-tag { background: #1d3f5c; color: #d8ecfb; border: none; }
+[data-theme="ancien"] .faction-card.platiste .faction-name { color: #4a3623; }
+[data-theme="ancien"] .faction-card.bouliste  .faction-name { color: #1d3f5c; }
+
+/* ─── .creature-card (rubrique "Un monde de créatures") — même effet 9-slice ─── */
+[data-theme="ancien"] .creature-card {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+
+  background: none;
+  border-radius: 0;
+
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+
+  /* cf. note .biome-card ci-dessus — même correction overflow (2026-07-18). */
+  overflow: visible;
+}
+[data-theme="ancien"] .creature-body { padding: 0; }
+[data-theme="ancien"] .creature-desc {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #4a3623;
+}
+/* Même fix que .biome-banner ci-dessus : marge sous l'image pour ne pas coller
+   directement à .creature-desc (qui n'a plus de padding-top, cf. ci-dessus). */
+[data-theme="ancien"] .creature-banner { margin-bottom: 16px; }
+
+/* ─── .audio-card (rubrique "Un monde qui s'entend") — même effet 9-slice ─── */
+[data-theme="ancien"] .audio-card {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  overflow-wrap: anywhere;
+
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+
+  /* cf. note .mission-card ci-dessus — même correction display (2026-07-18) :
+     .audio-card est display:flex en thème bleu, cassé par le wrapper unique. */
+  display: block;
+}
+[data-theme="ancien"] .audio-card > .internal-parchment {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+[data-theme="ancien"] .audio-card,
+[data-theme="ancien"] .audio-name,
+[data-theme="ancien"] .audio-desc {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #332415;
+}
+[data-theme="ancien"] .audio-desc { color: #4a3623; }
+
+/* ─── .daynight-card (rubrique "Environnement") — même effet 9-slice ─── */
+[data-theme="ancien"] .daynight-card {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+
+  background: none;
+  border-radius: 0;
+
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+
+  /* cf. note .biome-card ci-dessus — même correction overflow (2026-07-18). */
+  overflow: visible;
+}
+[data-theme="ancien"] .daynight-body { padding: 0; }
+/* Marge sous l'image, même fix que .biome-banner/.creature-banner ci-dessus —
+   ici .daynight-img EST l'image (pas un conteneur), donc la marge se pose
+   directement dessus. */
+[data-theme="ancien"] .daynight-img { margin-bottom: 16px; }
+[data-theme="ancien"] .daynight-name,
+[data-theme="ancien"] .daynight-list li {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #4a3623;
+}
+/* Une seule teinte d'encre pour les 3 variantes (jour/nuit/fumée) — le thème
+   bleu distinguait chaque carte par une couleur d'accent (or/bleu/violet),
+   mais sur parchemin l'encre reste uniformément sombre, comme les autres cartes. */
+[data-theme="ancien"] .daynight-name { color: #332415; }
+
+/* ─── .hs-card (rubrique "Les meilleurs bâtisseurs") — même effet 9-slice ─── */
+[data-theme="ancien"] .hs-card {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+
+  background: none;
+  border-radius: 0;
+  padding: 0;
+
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+
+  /* cf. note .mission-card plus haut — même correction display (2026-07-18) :
+     .hs-card est display:grid (88px 1fr auto) en thème bleu, cassé par le
+     wrapper unique .internal-parchment (devenait le seul item de la grille). */
+  display: block;
+}
+[data-theme="ancien"] .hs-card > .internal-parchment {
+  display: grid;
+  grid-template-columns: 88px 1fr auto;
+  gap: 0 20px;
+  align-items: center;
+}
+@media (max-width: 600px) {
+  [data-theme="ancien"] .hs-card > .internal-parchment { grid-template-columns: 60px 1fr auto; }
+}
+[data-theme="ancien"] .hs-card,
+[data-theme="ancien"] .hs-name,
+[data-theme="ancien"] .hs-date,
+[data-theme="ancien"] .hs-headline-stat,
+[data-theme="ancien"] .hs-meta-item,
+[data-theme="ancien"] .hs-biome-label,
+[data-theme="ancien"] .hs-biome-note {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #332415;
+}
+/* Rang et score : traitement "cachet de cire" comme .biome-tag/.faction-tag —
+   fond saturé sombre + texte clair, plus lisible qu'une simple couleur de texte
+   pour les 2 informations les plus importantes de la carte. */
+[data-theme="ancien"] .hs-rank {
+  background: #4a3623;
+  color: #f0e6d0;
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+}
+[data-theme="ancien"] .hs-card.gold-1 .hs-rank { background: #7a5a12; color: #fbead0; }
+[data-theme="ancien"] .hs-card.gold-2 .hs-rank { background: #5c4326; color: #f0ddc0; }
+[data-theme="ancien"] .hs-card.gold-3 .hs-rank { background: #4a3623; color: #e6d8c0; }
+[data-theme="ancien"] .hs-stat-num,
+[data-theme="ancien"] .hs-biome-total,
+[data-theme="ancien"] .hs-biome-max {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #6b4e10;
+}
+[data-theme="ancien"] .hs-meta-item .icon {
+  border: 2px solid #6b4e10;
+  background: #f0e6d0;
+}
+[data-theme="ancien"] .hs-score {
+  color: #6b4e10;
+  text-shadow: none;
+}
+[data-theme="ancien"] .hs-card.gold-1 .hs-score { color: #a5780f; }
+[data-theme="ancien"] .hs-empty {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #4a3623;
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  border-radius: 0;
+}
+
+/* ─── .hero-inspi-card (3 images d'inspiration en intro) — même effet 9-slice ─── */
+[data-theme="ancien"] .hero-inspi-card {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  border-radius: 0;
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+
+  /* cf. note .biome-card plus haut — même correction overflow (2026-07-18). */
+  overflow: visible;
+}
+/* 2026-07-18 — .hero-inspi-caption est en position:absolute (bottom/left/right:0,
+   cf. css/presentation.css), calée à l'origine sur .hero-inspi-card (seul ancêtre
+   positionné). Comme .internal-parchment n'a pas de position, la légende restait
+   calée sur les dimensions D'AVANT la marge négative au lieu de suivre l'image
+   qui, elle, s'agrandit normalement (flux block). Fix : .internal-parchment
+   devient le nouvel ancêtre positionné pour cette carte. */
+[data-theme="ancien"] .hero-inspi-card > .internal-parchment {
+  position: relative;
+}
+
+/* ─── .stats-bar — UNE SEULE boîte parchemin pour toute la barre (pas une par
+   .stat-item), séparateurs internes en encre sombre. ─── */
+[data-theme="ancien"] .stats-bar {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  border-radius: 0;
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+
+  /* cf. note .mission-card/.biome-card plus haut — double correction
+     (2026-07-18) : .stats-bar est display:flex ET overflow:hidden en thème
+     bleu. Le flex passe sur .internal-parchment ci-dessous, et overflow
+     repasse en visible pour laisser respirer sa marge négative. */
+  display: block;
+  overflow: visible;
+}
+[data-theme="ancien"] .stats-bar > .internal-parchment {
+  display: flex;
+}
+[data-theme="ancien"] .stat-item { border-right: 1px solid rgba(74,54,35,0.35); }
+[data-theme="ancien"] .stat-item:last-child { border-right: none; }
+[data-theme="ancien"] .stat-num,
+[data-theme="ancien"] .stat-label {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #332415;
+}
+[data-theme="ancien"] .stat-label { color: #4a3623; }
+
+/* ─── .step-card (rubrique "Comment jouer", 4) — même effet 9-slice ─── */
+[data-theme="ancien"] .step-card {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+}
+[data-theme="ancien"] .step-card::before { color: rgba(74,54,35,0.25); }
+[data-theme="ancien"] .step-title,
+[data-theme="ancien"] .step-desc {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #332415;
+}
+[data-theme="ancien"] .step-desc { color: #4a3623; }
+
+/* ─── .kbd-strip (rubrique "Contrôles clavier") — UN SEUL parchemin englobant
+   les 17 raccourcis, retour utilisateur explicite : pas 17 parchemins séparés.
+   Les .kbd-strip-item perdent leur fond/bordure individuels (transparents, posés
+   directement sur le parchemin commun) ; les <kbd> (touches) gardent un badge
+   "cachet de cire" pour rester repérables au milieu du texte. ─── */
+[data-theme="ancien"] .kbd-strip {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  border-radius: 0;
+  padding: 0;
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+
+  /* cf. note .mission-card plus haut — même correction display (2026-07-18) :
+     .kbd-strip est display:grid (auto-fit) en thème bleu avec 17 items directs,
+     cassé par le wrapper unique .internal-parchment qui les regroupait tous. */
+  display: block;
+}
+[data-theme="ancien"] .kbd-strip > .internal-parchment {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px 16px;
+}
+[data-theme="ancien"] .kbd-strip-item {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #4a3623;
+}
+[data-theme="ancien"] .kbd-strip kbd {
+  background: #4a3623;
+  color: #f0e6d0;
+  border: none;
+}
+
+/* ─── .gallery-card (rubrique "Plusieurs atmosphères — Une infinité de
+   personnalisations", 8) — même effet 9-slice ─── */
+[data-theme="ancien"] .gallery-card {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  border-radius: 0;
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+
+  /* cf. note .biome-card plus haut — même correction overflow (2026-07-18). */
+  overflow: visible;
+}
+/* 2026-07-18 — même souci que .hero-inspi-card ci-dessus : .gallery-img et
+   .gallery-overlay sont en position:absolute + inset:0 (cf. presentation.css),
+   calés sur .gallery-card (seul ancêtre positionné) au lieu de suivre
+   l'agrandissement de .internal-parchment. Fix identique. */
+[data-theme="ancien"] .gallery-card > .internal-parchment {
+  position: relative;
+}
+/* 2026-07-18 (suite, retour utilisateur) — plutôt que de forcer les presets
+   "cover" (automne/été vif/nordique/amiga/psyché-LSD) à remplir toute la
+   hauteur du grid-auto-rows en position:absolute (mise en page différente des
+   presets "contain" EGA/CGA/Apple II, décalage visible), on aligne TOUS les
+   presets sur le traitement "contain" en thème ancien : image en flux normal
+   (position:static), carte auto-dimensionnée sur son contenu. Même rendu pour
+   les 8 vignettes. */
+[data-theme="ancien"] .gallery-card {
+  align-self: start;
+  height: auto;
+}
+[data-theme="ancien"] .gallery-img {
+  position: static;
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  background: #05070c;
+}
+[data-theme="ancien"] .gallery-label span { color: #e6d8c0; }
+
+/* ─── .eda-showcase-card (rubrique "Personnalisation extrême", 3) — même
+   effet 9-slice ─── */
+[data-theme="ancien"] .eda-showcase-card {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  background: none;
+  border-radius: 0;
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+
+  /* cf. note .biome-card plus haut — même correction overflow (2026-07-18). */
+  overflow: visible;
+}
+[data-theme="ancien"] .eda-showcase-body { padding: 0; }
+[data-theme="ancien"] .eda-showcase-tab,
+[data-theme="ancien"] .eda-showcase-label,
+[data-theme="ancien"] .eda-showcase-desc {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #332415;
+}
+[data-theme="ancien"] .eda-showcase-desc { color: #4a3623; }
+/* Marge sous l'image, même fix que .biome-banner/.creature-banner/.daynight-img
+   ci-dessus — ici encore .eda-showcase-body n'a plus de padding-top. */
+[data-theme="ancien"] .eda-showcase-img { margin-bottom: 16px; }
+
+/* ─── .room-demo (rubrique "Multiplayer — Bâtissez ensemble") — même effet
+   9-slice sur le panneau de démo (le seul bloc encadré du texte de cette
+   rubrique). ─── */
+[data-theme="ancien"] .room-demo {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  border-radius: 0;
+  padding: 0;
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+}
+[data-theme="ancien"] .room-demo-title,
+[data-theme="ancien"] .room-status,
+[data-theme="ancien"] .room-scores-label,
+[data-theme="ancien"] .room-code,
+[data-theme="ancien"] .room-score-name,
+[data-theme="ancien"] .room-score-pts {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #332415;
+}
+[data-theme="ancien"] .room-status,
+[data-theme="ancien"] .room-scores-label,
+[data-theme="ancien"] .room-score-name.dim { color: #4a3623; }
+[data-theme="ancien"] .room-score-pts.gold { color: #7a5a12; }
+[data-theme="ancien"] .player-dot { border-color: rgba(74,54,35,0.35); }
+[data-theme="ancien"] .player-dot.active { border-color: #6b4e10; background: #f0e6d0; }
+[data-theme="ancien"] .room-scores { border-top: 1px solid rgba(74,54,35,0.25); }
+
+/* Stats-bar mobile (≤600px, cf. presentation.css) : bordures internes 2×2. */
+@media (max-width: 600px) {
+  [data-theme="ancien"] .stat-item { border-bottom: 1px solid rgba(74,54,35,0.35); }
+  [data-theme="ancien"] .stat-item:nth-child(odd) { border-right: 1px solid rgba(74,54,35,0.35); }
+}
+
+/* ─── .internal-parchment (2026-07-18) — wrapper interne ajouté dans les 14
+   types de cartes parchemin d'index.php (<div class="parchment/xxx-card">
+   <div class="internal-parchment">...contenu...</div></div>). Compense la
+   bordure 9-slice de 50px des blocs ci-dessus : sans cette marge négative, le
+   contenu se retrouvait avec un espacement interne doublé (padding de la
+   carte + les 50px de border-image). Scopé sous [data-theme="ancien"]
+   uniquement — le thème "bleu" n'a pas cette bordure et n'a donc pas besoin
+   de compensation ; ne pas appliquer cette règle sans le scope, sous peine de
+   casser la mise en page du thème bleu. */
+[data-theme="ancien"] .internal-parchment { margin: -20px -25px -20px -25px; }
+
+/* 2026-07-18 — retour utilisateur : l'ascenseur (scrollbar) des panneaux
+   parchemin scrollables (#scorePanel/.fps-counter/.help-panel/
+   .debug-light-body, tous scrollent via .internal-parchment) restait bleu
+   cyan en thème médiéval. La propriété standard `scrollbar-color` était déjà
+   posée par thème sur chaque panneau concerné (ex. #scorePanel), et hérite
+   normalement — mais Chrome donne PRIORITÉ aux règles ::-webkit-scrollbar-*
+   dès qu'elles existent quelque part pour un sélecteur qui matche, même sans
+   scrollbar-color explicite dessus ; seul .fps-hud-body avait ce traitement
+   webkit (eda.css), pas .internal-parchment lui-même. Règle générique ici
+   (même sélecteur que le margin ci-dessus) pour couvrir tous les panneaux
+   parchemin d'un coup, cohérente avec la teinte brun/parchemin partout. */
+[data-theme="ancien"] .internal-parchment::-webkit-scrollbar { width: 4px; }
+[data-theme="ancien"] .internal-parchment::-webkit-scrollbar-thumb {
+  background: rgba(74, 54, 35, 0.4);
+  border-radius: 2px;
+}
+[data-theme="ancien"] .internal-parchment::-webkit-scrollbar-track { background: transparent; }

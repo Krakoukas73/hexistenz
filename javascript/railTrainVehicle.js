@@ -18,6 +18,7 @@ import {
   TRAIN_CURVE_SLOW_DISTANCE,
   TRAIN_TERMINUS_SLOW_DISTANCE
 } from './railTrainConstants.js';
+import { DEBUG_FLAGS } from './variables.js';
 
 // ── train.glb — loco + wagon1 (ravitaillement) + wagon2 (voyageur) ──
 const WOODEN_TRAIN_URL = './glb/trains/train.glb';
@@ -58,7 +59,7 @@ export function ensureWoodenTrainGlb(group) {
     woodenTrainLib    = extractTrainParts(gltf.scene);
     woodenTrainReady  = true;
     woodenTrainLoading = false;
-    console.debug('[wooden-train] GLB chargé :', Object.keys(woodenTrainLib).join(', '));
+    if (DEBUG_FLAGS.assets) console.debug('[wooden-train] GLB chargé :', Object.keys(woodenTrainLib).join(', '));
     if (group?.userData?.lastPlacedTiles) group.userData.pendingModelRebuild = true;
   }, undefined, err => {
     console.warn('[wooden-train] Erreur chargement GLB', err);
@@ -82,7 +83,7 @@ function extractTrainParts(scene) {
   if (!found.wagon1 && topLevel.length >= 2) found.wagon1 = topLevel[1];
   if (!found.wagon2 && topLevel.length >= 3) found.wagon2 = topLevel[2];
 
-  console.debug('[wooden-train] Parts :', Object.entries(found).map(([k, v]) => `${k}="${v?.name ?? 'null'}"`).join(' | '));
+  if (DEBUG_FLAGS.assets) console.debug('[wooden-train] Parts :', Object.entries(found).map(([k, v]) => `${k}="${v?.name ?? 'null'}"`).join(' | '));
 
   const result = {};
   for (const [key, src] of Object.entries(found)) {
@@ -143,7 +144,7 @@ function normalizeTrainUnit(source, unitName) {
     mats.forEach(m => { if (m) m.userData.glbPrototype = true; });
   });
 
-  console.log(`[wooden-train] ${unitName}: bbox(xyz)=(${size.x.toFixed(4)},${size.y.toFixed(4)},${size.z.toFixed(4)}) isZLonger=${isZLonger} rawLength=${rawLength.toFixed(4)} targetLength=${targetLength.toFixed(4)} scale=${scale.toFixed(4)}`);
+  if (DEBUG_FLAGS.assets) console.log(`[wooden-train] ${unitName}: bbox(xyz)=(${size.x.toFixed(4)},${size.y.toFixed(4)},${size.z.toFixed(4)}) isZLonger=${isZLonger} rawLength=${rawLength.toFixed(4)} targetLength=${targetLength.toFixed(4)} scale=${scale.toFixed(4)}`);
   return wrapper;
 }
 

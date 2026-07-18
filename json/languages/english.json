@@ -15,6 +15,10 @@
     },
     "play": "Play Now"
   },
+  "theme": {
+    "bleu": "Blue",
+    "ancien": "Medieval"
+  },
   "hero": {
     "subtitle": "A contemplative hexagonal game made with love ❤️ Three.js and a lot of tiles",
     "inspi_text": "Inspired by <em>Dorfromantik</em>, the pastoral soul of <em>The Settlers</em> (Blue Byte, 1993)\n          and the wondrous worlds of <em>Heroes of Might and Magic</em> (3DO).",
@@ -177,6 +181,7 @@
       "perf_hud": "performance HUD",
       "snapshot": "Screenshot",
       "gallery": "Snapshot gallery",
+      "replay": "Game replay",
       "immersive": "immersive mode",
       "super_immersive": "super-immersive mode",
       "mute": "mute",
@@ -374,7 +379,9 @@
       "The map grows collaboratively, tile by tile"
     ],
     "gallery_title": "SHARE YOUR SNAPSHOTS",
-    "gallery_promo": "Immortalize your best games: the 📷 button captures the world with no HUD, and the 🖼️ button opens the shared server gallery, visible to every player",
+    "gallery_promo": "Immortalize your best games: the 📷 button captures the world with no HUD, and the 🖼️ button opens the shared gallery, visible to every player",
+    "replay_title": "Record your games as video",
+    "replay_promo": "The 🎬 button (or the V key) replays your game at accelerated speed, tile by tile, with playback speeds from ×1 to ×8. During playback, a dedicated button captures the screen and automatically downloads a WebM video — straight from your browser, no software or third-party service required.",
     "btn_create": "Create a game",
     "room_title": "Room code",
     "room_status": "Game in progress · 3 players",
@@ -423,7 +430,7 @@
     }
   },
   "footer": {
-    "copy": "A contemplative hexagonal game made with love ❤️ Three.js and a lot of tiles · 2025–2026",
+    "copy": "A contemplative hexagonal game made with love ❤️ Three.js and a lot of tiles",
     "github": "On GitHub"
   },
   "game": {
@@ -436,6 +443,11 @@
       "modeBouliste": "Globe mode",
       "modePlatiste": "Flat mode",
       "captured": "Snapshot taken!"
+    },
+    "replay": {
+      "restart": "Back to start",
+      "playPause": "Play / Pause",
+      "close": "Close replay"
     },
     "eda": {
       "mainTitle": "Art direction editor",
@@ -497,6 +509,10 @@
         "ega": "EGA",
         "amiga": "Amiga",
         "psyche": "Psychedelic"
+      },
+      "themeNames": {
+        "bleu": "Blue",
+        "ancien": "Medieval"
       },
       "modes": {
         "bouliste": "Globe",
@@ -671,9 +687,11 @@
     "help": {
       "topbar.fps": "Show/hide the advanced performance HUD",
       "topbar.eda": "Open or close the rendering panel",
-      "topbar.snapshot": "Screenshot (no HUD), saved on the server",
+      "topbar.snapshot": "Screenshot (no HUD)",
       "topbar.gallery": "Screenshot gallery",
+      "topbar.replay": "Game replay",
       "topbar.lang": "Language",
+      "topbar.theme": "Graphic theme (Blue / Vintage)",
       "renderer.toneMappingExposure": "Global renderer exposure (ACESFilmic). Controls how much light reaches the \"sensor\" before any grading.\nValues < 1 darken the whole scene, > 2 can blow out highlights.\nTypical: 1.2–1.8 for a natural look.",
       "environment.fogDensity": "Density of the exponential fog (FogExp2). Only active when \"Linear Far\" is at 0.\nVisibility drops off very quickly: at 0.07 the scene is almost opaque.\nFor a controlled visual range, prefer linear mode via \"Near\" and \"Far\".",
       "environment.fogNear": "Distance in 3D units where linear fog begins.\nAs soon as \"Far\" > 0, automatically switches from FogExp2 to THREE.Fog(near, far).\nAt 0: fog starts right in the foreground. At 5: nearby objects stay sharp.",
@@ -797,7 +815,7 @@
       "game.largestWater": "Largest contiguous body of water. A lake > 5 tiles can host extra boats.",
       "game.rail": "Total rail tiles placed.\nRails alone earn nothing — it's the connection between two stations that creates a line.",
       "game.largestRail": "Longest contiguous railway (in tiles). An indicator of the network's maximum reach.",
-      "game.activeTile": "The tile you're about to place next.\nMove the cursor with Z/Q/S/D, rotate with R, and place with SPACE.\nEach face of the tile corresponds to a biome — plan your connections!",
+      "game.activeTile": "The tile you're about to place next.\nMove the cursor with Z/Q/S/D, rotate with the mouse wheel, and place with SPACE.\nEach face of the tile corresponds to a biome — plan your connections!",
       "game.nextTile": "The next tile that will come into play after you place the current one.\nAnticipate its shape to prepare the best spot for it.",
       "game.deckRemaining": "Number of tiles remaining in the draw pile.\nThe game ends when the pile is empty — make every placement count!",
       "hs.summary": "Game summary: tiles placed, train lines, boats, comets intercepted.",
@@ -1003,6 +1021,7 @@
           "eda": "Show / hide the EDA HUD",
           "snapshot": "Take a screenshot",
           "gallery": "Open the snapshot gallery",
+          "replay": "Show / hide the game replay HUD",
           "wheelKbd": "Wheel",
           "leftClickKbd": "Left click",
           "rightClickKbd": "Right click",
@@ -1093,6 +1112,7 @@
     },
     "kbdHint": "H or ESC&nbsp;→ help &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; SPACE&nbsp;→ immersive &nbsp;|&nbsp; SHIFT+SPACE&nbsp;→ super-immersive",
     "superImmersifExitHint": "SPACE to exit super-immersive mode",
+    "langName": "English",
     "fpsAdjectives": {
       "disastrous": "Disastrous",
       "bad": "Bad",

@@ -9,51 +9,7 @@
             "lastSeen": 1783897739
         }
     },
-    "cursors": {
-        "p_19f58822640_c52b77b3": {
-            "type": "cursor",
-            "visible": true,
-            "q": 0,
-            "r": 1,
-            "rotation": 0,
-            "tile": {
-                "id": "tile_1783896794539_67fb8f3c72cfa",
-                "edges": {
-                    "n": {
-                        "type": "house",
-                        "value": 3
-                    },
-                    "ne": {
-                        "type": "water",
-                        "value": 1
-                    },
-                    "se": {
-                        "type": "forest",
-                        "value": 6
-                    },
-                    "s": {
-                        "type": "house",
-                        "value": 1
-                    },
-                    "sw": {
-                        "type": "water",
-                        "value": 1
-                    },
-                    "nw": {
-                        "type": "forest",
-                        "value": 5
-                    }
-                },
-                "center": "water",
-                "rotation": 0
-            },
-            "valid": true,
-            "playerName": "Piregwan",
-            "roomCode": "PCNPYY",
-            "playerId": "p_19f58822640_c52b77b3",
-            "updatedAt": 1783897739888
-        }
-    },
+    "cursors": [],
     "state": {
         "schemaVersion": 1,
         "roomCode": "PCNPYY",
@@ -1677,51 +1633,7 @@
                 "lastSeen": 1783897739888
             }
         },
-        "cursors": {
-            "p_19f58822640_c52b77b3": {
-                "type": "cursor",
-                "visible": true,
-                "q": 0,
-                "r": 1,
-                "rotation": 0,
-                "tile": {
-                    "id": "tile_1783896794539_67fb8f3c72cfa",
-                    "edges": {
-                        "n": {
-                            "type": "house",
-                            "value": 3
-                        },
-                        "ne": {
-                            "type": "water",
-                            "value": 1
-                        },
-                        "se": {
-                            "type": "forest",
-                            "value": 6
-                        },
-                        "s": {
-                            "type": "house",
-                            "value": 1
-                        },
-                        "sw": {
-                            "type": "water",
-                            "value": 1
-                        },
-                        "nw": {
-                            "type": "forest",
-                            "value": 5
-                        }
-                    },
-                    "center": "water",
-                    "rotation": 0
-                },
-                "valid": true,
-                "playerName": "Piregwan",
-                "roomCode": "PCNPYY",
-                "playerId": "p_19f58822640_c52b77b3",
-                "updatedAt": 1783897739888
-            }
-        }
+        "cursors": []
     },
     "schemaVersion": 1,
     "stateVersion": 1,

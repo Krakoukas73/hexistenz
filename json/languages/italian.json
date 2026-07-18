@@ -15,6 +15,10 @@
     },
     "play": "Gioca"
   },
+  "theme": {
+    "bleu": "Blu",
+    "ancien": "Medievale"
+  },
   "hero": {
     "subtitle": "Gioco esagonale contemplativo fatto con nostalgia e amore ❤️ Three.js e tante tessere",
     "inspi_text": "Ispirato a <em>Dorfromantik</em>, all'anima pastorale di <em>The Settlers</em> (Blue Byte, 1993)\n          e ai mondi meravigliosi di <em>Heroes of Might and Magic</em> (3DO).",
@@ -177,6 +181,7 @@
       "perf_hud": "HUD prestazioni",
       "snapshot": "Cattura schermo",
       "gallery": "Galleria delle catture",
+      "replay": "Replay della partita",
       "immersive": "modalità immersiva",
       "super_immersive": "modalità super-immersiva",
       "mute": "muto",
@@ -374,7 +379,9 @@
       "La mappa si costruisce collaborativamente, tessera dopo tessera"
     ],
     "gallery_title": "CONDIVIDI LE TUE CATTURE",
-    "gallery_promo": "Immortala le tue partite migliori: il pulsante 📷 cattura il mondo senza HUD, e il pulsante 🖼️ apre la galleria del server condivisa con tutti i giocatori",
+    "gallery_promo": "Immortala le tue partite migliori: il pulsante 📷 cattura il mondo senza HUD, e il pulsante 🖼️ apre la galleria condivisa con tutti i giocatori",
+    "replay_title": "Registra le tue partite in video",
+    "replay_promo": "Il pulsante 🎬 (o il tasto V) rilancia la tua partita in accelerato, tessera dopo tessera, con velocità di riproduzione da ×1 a ×8. Durante la riproduzione, un pulsante dedicato cattura lo schermo e scarica automaticamente un video in formato WebM — direttamente dal tuo browser, senza software o servizi esterni.",
     "btn_create": "Crea una partita",
     "room_title": "Codice stanza",
     "room_status": "Partita in corso · 3 giocatori",
@@ -423,7 +430,7 @@
     }
   },
   "footer": {
-    "copy": "Gioco esagonale contemplativo fatto con nostalgia e amore ❤️ Three.js e tante tessere · 2025–2026",
+    "copy": "Gioco esagonale contemplativo fatto con nostalgia e amore ❤️ Three.js e tante tessere",
     "github": "Su GitHub"
   },
   "game": {
@@ -436,6 +443,11 @@
       "modeBouliste": "Modalità Globo",
       "modePlatiste": "Modalità Piatto",
       "captured": "Cattura effettuata!"
+    },
+    "replay": {
+      "restart": "Torna all'inizio",
+      "playPause": "Riproduci / Pausa",
+      "close": "Chiudi il replay"
     },
     "eda": {
       "mainTitle": "Editor di direzione artistica",
@@ -497,6 +509,10 @@
         "ega": "EGA",
         "amiga": "Amiga",
         "psyche": "Psichedelico"
+      },
+      "themeNames": {
+        "bleu": "Blu",
+        "ancien": "Medievale"
       },
       "modes": {
         "bouliste": "Globo",
@@ -671,9 +687,11 @@
     "help": {
       "topbar.fps": "Mostra/nascondi l'HUD prestazioni avanzato",
       "topbar.eda": "Apri o chiudi il pannello di rendering",
-      "topbar.snapshot": "Cattura schermo (senza HUD), salvata sul server",
+      "topbar.snapshot": "Cattura schermo (senza HUD)",
       "topbar.gallery": "Galleria delle catture",
+      "topbar.replay": "Replay della partita",
       "topbar.lang": "Lingua",
+      "topbar.theme": "Tema grafico (Blu / Medievale)",
       "renderer.toneMappingExposure": "Esposizione globale del renderer (ACESFilmic). Controlla la quantità di luce che raggiunge il \"sensore\" prima di qualsiasi calibrazione.\nValori < 1 scuriscono l'insieme, > 2 possono saturare le alte luci.\nTipico: 1.2–1.8 per una resa naturale.",
       "environment.fogDensity": "Densità della nebbia esponenziale (FogExp2). Attiva solo quando \"Fine lineare\" è a 0.\nLa visibilità cala molto rapidamente: a 0.07 la scena è quasi opaca.\nPer un campo visivo controllato, preferire la modalità lineare tramite \"Inizio\" e \"Fine\".",
       "environment.fogNear": "Distanza in unità 3D dove inizia la nebbia lineare.\nAppena \"Fine\" > 0, passa automaticamente da FogExp2 a THREE.Fog(near, far).\nA 0: nebbia fin dal primo piano. A 5: gli oggetti vicini restano nitidi.",
@@ -797,7 +815,7 @@
       "game.largestWater": "Distesa d'acqua contigua più grande. Un lago > 5 tessere può accogliere barche aggiuntive.",
       "game.rail": "Tessere di ferrovia totali posate.\nI binari da soli non fruttano nulla — è la connessione tra due stazioni che crea una linea.",
       "game.largestRail": "Ferrovia contigua più lunga (in tessere). Indicatore della portata massima della rete.",
-      "game.activeTile": "La tessera che posizionerai alla prossima mossa.\nSposta il cursore con Z/Q/S/D, ruota con R, e posiziona con SPAZIO.\nOgni faccia della tessera corrisponde a un bioma — pianifica le tue connessioni!",
+      "game.activeTile": "La tessera che posizionerai alla prossima mossa.\nSposta il cursore con Z/Q/S/D, ruota con la rotellina del mouse, e posiziona con SPAZIO.\nOgni faccia della tessera corrisponde a un bioma — pianifica le tue connessioni!",
       "game.nextTile": "La prossima tessera che entrerà in gioco dopo che avrai posato la tessera corrente.\nAnticipa la sua forma per preparare la casella d'accoglienza migliore.",
       "game.deckRemaining": "Numero di tessere rimanenti nel mazzo.\nLa partita finisce quando il mazzo è vuoto — ottimizza ogni posizionamento!",
       "hs.summary": "Riepilogo della partita: tessere posate, linee ferroviarie, barche, comete intercettate.",
@@ -1003,6 +1021,7 @@
           "eda": "Mostra / nascondi l'HUD EDA",
           "snapshot": "Scatta una schermata",
           "gallery": "Apri la galleria delle catture",
+          "replay": "Mostra / nascondi l'HUD replay della partita",
           "wheelKbd": "Rotellina",
           "leftClickKbd": "Clic sinistro",
           "rightClickKbd": "Clic destro",
@@ -1093,6 +1112,7 @@
     },
     "kbdHint": "H o ESC&nbsp;→ aiuto &nbsp;|&nbsp; M&nbsp;→ muto &nbsp;|&nbsp; SPAZIO&nbsp;→ immersivo &nbsp;|&nbsp; MAIUSC+SPAZIO&nbsp;→ super immersivo",
     "superImmersifExitHint": "SPAZIO per uscire dal mondo super immersivo",
+    "langName": "Italiano",
     "fpsAdjectives": {
       "disastrous": "Disastroso",
       "bad": "Cattivo",

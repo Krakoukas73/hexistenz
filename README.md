@@ -13,7 +13,7 @@ No install · No login · Just play
 [![Three.js](https://img.shields.io/badge/Three.js-r160-black?style=flat-square&logo=threedotjs)](https://threejs.org)
 [![WebGL](https://img.shields.io/badge/WebGL-2.0-red?style=flat-square)](https://www.khronos.org/webgl/)
 [![No bundler](https://img.shields.io/badge/no%20bundler-ES%20Modules-blue?style=flat-square)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)
-[![Languages](https://img.shields.io/badge/🌐-FR%20·%20EN%20·%20ES%20·%20IT%20·%20PT-informational?style=flat-square)](#)
+[![Languages](https://img.shields.io/badge/🌐-FR%20·%20EN%20·%20ES%20·%20IT%20·%20PT%20·%20🇨🇦%20QC-informational?style=flat-square)](#)
 
 </div>
 
@@ -34,8 +34,11 @@ No install · No login · Just play
 >
 > 🇬🇧 Hexistenz is a hex tile-placement game playable **directly in your browser** — nothing to install, nothing to download. Inspired by **Dorfromantik** and the spirit of **The Settlers (Blue Byte, 1993)**, it invites you to patiently build a coherent world: meadows, forests, fields, villages, railways, rivers and coastlines come together tile by tile in a real-time 3D low-poly universe.
 
-🇫🇷 Le jeu est **entièrement traduit en 6 langues** — 🇫🇷 français, 🇬🇧 anglais, 🇪🇸 espagnol, 🇮🇹 italien, 🇵🇹 portugais, et 🇨🇦 **canadien** (québécois, easter egg 100% jouable) — sélecteur de langue accessible à tout moment en jeu, sans recharger la page.
-🇬🇧 The game is **fully translated into 6 languages** — 🇫🇷 French, 🇬🇧 English, 🇪🇸 Spanish, 🇮🇹 Italian, 🇵🇹 Portuguese, and 🇨🇦 **Canadian** (Québécois, a fully playable easter egg) — with a language selector available at any time in-game, no page reload needed.
+🇫🇷 Le jeu est **entièrement traduit en 6 langues** — 🇫🇷 français, 🇬🇧 anglais, 🇪🇸 espagnol, 🇮🇹 italien, 🇵🇹 portugais, et 🇨🇦 **canadien** (québécois, easter egg 100% jouable, glissé là surtout pour troller les Français) — sélecteur de langue accessible à tout moment en jeu, sans recharger la page.
+🇬🇧 The game is **fully translated into 6 languages** — 🇫🇷 French, 🇬🇧 English, 🇪🇸 Spanish, 🇮🇹 Italian, 🇵🇹 Portuguese, and 🇨🇦 **Canadian** (Québécois, a fully playable easter egg, mostly there to troll the French) — with a language selector available at any time in-game, no page reload needed.
+
+🇫🇷 **Deux thèmes graphiques** habillent l'intégralité de l'interface — **Bleu classique** (l'identité visuelle d'origine, fonds sombres et liserés lumineux) et **Médiéval** (habillage parchemin, texture 9-slice, encre sombre et typographie serif) — sélecteur de thème accessible depuis la présentation comme en jeu, sans recharger la page.
+🇬🇧 **Two graphic themes** dress the entire interface — **Classic Blue** (the original look, dark backgrounds and glowing edges) and **Medieval** (a parchment skin, 9-slice texture, dark ink and serif typography) — theme selector available from the landing page and in-game, no page reload needed.
 
 ---
 
@@ -175,6 +178,22 @@ Every slider applies **instantly**, no reload or shader recompile needed — you
 
 ---
 
+## 📸 Captures & Replay / Screenshots & Replay
+
+🇫🇷 Capturez et revivez vos parties sans jamais quitter le jeu :
+- **Capture d'écran** (touche `C`) — un clic (ou une touche) fige l'état actuel du monde en image, sans interrompre la partie.
+- **Galerie des captures** (touche `G`) — toutes vos captures rassemblées dans une mosaïque consultable en surimpression, avec visionneuse plein écran ; un second appui sur `G` referme la galerie.
+- **Replay de la partie** (touche `V`) — relecture accélérée de la partie en cours : le monde se reconstruit tuile par tuile depuis zéro, avec contrôles play/pause, redémarrage, et vitesse ajustable de **×1 à ×8**.
+- **Enregistrement vidéo** — pendant un replay, un bouton dédié capture la relecture directement dans le navigateur et télécharge automatiquement une vidéo **WebM**, aucune installation ni service tiers requis.
+
+🇬🇧 Capture and relive your games without ever leaving play:
+- **Screenshot** (press `C`) — one click (or key press) freezes the current state of the world as an image, without interrupting the game.
+- **Snapshot gallery** (press `G`) — every capture gathered in a browsable mosaic overlay, with a fullscreen viewer; pressing `G` again closes the gallery.
+- **Game replay** (press `V`) — an accelerated playback of the current game: the world rebuilds tile by tile from scratch, with play/pause, restart, and adjustable speed from **×1 to ×8**.
+- **Video recording** — during a replay, a dedicated button records the playback directly in the browser and automatically downloads a **WebM** video, no install or third-party service needed.
+
+---
+
 ## ⌨️ Contrôles / Controls
 
 *(liste exhaustive, alignée sur le bandeau de raccourcis de la page d'accueil / full list, matching the homepage shortcut strip)*
@@ -193,6 +212,7 @@ Every slider applies **instantly**, no reload or shader recompile needed — you
 | `F` | HUD performances | Performance HUD |
 | `C` | Capture d'écran | Screenshot |
 | `G` | Galerie des captures | Snapshot gallery |
+| `V` | HUD replay de la partie | Game replay HUD |
 | `Espace` | Mode immersif | Immersive mode |
 | `Shift+Espace` | Mode super-immersif | Super-immersive mode |
 | `M` | Muet | Mute |

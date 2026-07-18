@@ -8,8 +8,20 @@ if (file_exists($varsFile)) {
         $version = $m[1];
     }
 }
-$cssFile = __DIR__ . '/css/presentation.css';
-$cssVersion = file_exists($cssFile) ? filemtime($cssFile) : time();
+// Cache-busting CSS — 2026-07-18 : auparavant basé UNIQUEMENT sur le mtime de
+// presentation.css, ce qui laissait les navigateurs servir une version en cache
+// de css/themes/bleu.css ou medieval.css dès que SEULS ces fichiers changeaient
+// (le ?v= restait identique). Corrigé en prenant le mtime le PLUS RÉCENT parmi
+// les 3 fichiers CSS liés avec ?v= plus bas, pour que toute édition d'un thème
+// invalide bien le cache navigateur.
+$cssFiles = [
+    __DIR__ . '/css/presentation.css',
+    __DIR__ . '/css/themes/bleu.css',
+    __DIR__ . '/css/themes/medieval.css',
+];
+$cssVersion = time();
+$mtimes = array_filter(array_map(function ($f) { return file_exists($f) ? filemtime($f) : 0; }, $cssFiles));
+if ($mtimes) { $cssVersion = max($mtimes); }
 
 // Refonte i18n scalable du 2026-07-14 (cf. CONTEXT.md §21) : l'ancien mécanisme
 // dupliquait CHAQUE texte en autant de paires data-fr/data-en qu'il y avait de
@@ -96,7 +108,7 @@ function fmt_date($iso) {
 }
 ?>
 <!doctype html>
-<html lang="fr" data-lang="fr">
+<html lang="fr" data-lang="fr" data-theme="ancien">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -106,6 +118,13 @@ function fmt_date($iso) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/presentation.css?v=<?= $cssVersion ?>" />
+  <!-- 2026-07-17 — CSS de thèmes, cf. CONTEXT.md §32. presentation.css ne garde que
+       le layout partagé ; tout ce qui est intrinsèque à un thème (fond, bordure,
+       coins, couleurs) vit dans l'un de ces 2 fichiers, chacun scopé sous son
+       [data-theme="..."] — chargés tous les deux, sans effet si le thème
+       correspondant n'est pas sélectionné. -->
+  <link rel="stylesheet" href="css/themes/bleu.css?v=<?= $cssVersion ?>" />
+  <link rel="stylesheet" href="css/themes/medieval.css?v=<?= $cssVersion ?>" />
   <script id="i18n-data" type="application/json"><?= json_encode($t, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?></script>
 </head>
 <body>
@@ -132,6 +151,16 @@ function fmt_date($iso) {
     <li><a href="#multi"     data-i18n="nav.links.multi"><?= tr($t,'fr','nav.links.multi') ?></a></li>
     <li><a href="#scores"    data-i18n="nav.links.scores"><?= tr($t,'fr','nav.links.scores') ?></a></li>
   </ul>
+  <!-- 2026-07-17 — sélecteur de thème graphique (Bleu / Médiéval), demande explicite
+       utilisateur : placé juste avant le sélecteur de langue. "ancien" (parchemin,
+       9-slice, cf. CONTEXT.md §32) est le thème PAR DÉFAUT depuis 2026-07-17,
+       persisté via localStorage hexistenz_theme (même clé que javascript/themeManager.js). -->
+  <div id="theme-toggle">
+    <select id="themeSelect" onchange="setTheme(this.value)">
+      <option value="bleu" data-i18n="theme.bleu"><?= tr($t,'fr','theme.bleu') ?></option>
+      <option value="ancien" data-i18n="theme.ancien"><?= tr($t,'fr','theme.ancien') ?></option>
+    </select>
+  </div>
   <div id="lang-toggle">
     <select id="langSelect" onchange="setLang(this.value)">
 <?php foreach ($LANGS as $code): ?>
@@ -156,30 +185,30 @@ function fmt_date($iso) {
 
         <div class="hero-inspi-grid">
           <div class="hero-inspi-col">
-            <div class="hero-inspi-card">
+            <div class="hero-inspi-card"><div class="internal-parchment">
               <img src="./images/dorfromantik.jpg" alt="Dorfromantik" class="hero-inspi-img" loading="lazy">
               <div class="hero-inspi-caption">
                 <div class="hero-inspi-name">Dorfromantik</div>
               </div>
-            </div>
+            </div></div>
             <a class="hero-inspi-buy" href="https://store.steampowered.com/app/1455840/Dorfromantik/" target="_blank" rel="noopener">🎮 <span data-i18n="hero.inspi_buy.dorfromantik"><?= tr($t,'fr','hero.inspi_buy.dorfromantik') ?></span></a>
           </div>
           <div class="hero-inspi-col">
-            <div class="hero-inspi-card">
+            <div class="hero-inspi-card"><div class="internal-parchment">
               <img src="./images/settlers.jpg" alt="The Settlers" class="hero-inspi-img" loading="lazy">
               <div class="hero-inspi-caption">
                 <div class="hero-inspi-name">The Settlers</div>
               </div>
-            </div>
+            </div></div>
             <a class="hero-inspi-buy" href="https://www.ubisoft.com/en-gb/games/the-settlers-history-edition" target="_blank" rel="noopener">🎮 <span data-i18n="hero.inspi_buy.settlers"><?= tr($t,'fr','hero.inspi_buy.settlers') ?></span></a>
           </div>
           <div class="hero-inspi-col">
-            <div class="hero-inspi-card">
+            <div class="hero-inspi-card"><div class="internal-parchment">
               <img src="./images/heroes.jpg" alt="Heroes of Might and Magic" class="hero-inspi-img" loading="lazy">
               <div class="hero-inspi-caption">
                 <div class="hero-inspi-name">Heroes of Might &amp; Magic</div>
               </div>
-            </div>
+            </div></div>
             <a class="hero-inspi-buy" href="https://www.gog.com/en/game/heroes_of_might_and_magic_3_complete_edition" target="_blank" rel="noopener">🎮 <span data-i18n="hero.inspi_buy.heroes3"><?= tr($t,'fr','hero.inspi_buy.heroes3') ?></span></a>
           </div>
         </div>
@@ -189,11 +218,11 @@ function fmt_date($iso) {
           <a href="game.php" class="btn-primary" data-i18n="hero.btn_play"><?= tr($t,'fr','hero.btn_play') ?></a>
           <a href="#gameplay" class="btn-secondary" data-i18n="hero.btn_how"><?= tr($t,'fr','hero.btn_how') ?></a>
         </div>
-        <div class="stats-bar">
+        <div class="stats-bar"><div class="internal-parchment">
           <div class="stat-item"><div class="stat-num">6</div><div class="stat-label" data-i18n="hero.stats.biomes_label"><?= tr($t,'fr','hero.stats.biomes_label') ?></div></div>
           <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label" data-i18n="hero.stats.games_label"><?= tr($t,'fr','hero.stats.games_label') ?></div></div>
           <div class="stat-item"><div class="stat-num">2</div><div class="stat-label" data-i18n="hero.stats.factions_label"><?= tr($t,'fr','hero.stats.factions_label') ?></div></div>
-        </div>
+        </div></div>
       </div>
 
     </div>
@@ -210,7 +239,7 @@ function fmt_date($iso) {
     <p class="section-sub" data-i18n="factions.sub"><?= tr($t,'fr','factions.sub') ?></p>
 
     <div class="factions-grid">
-      <div class="faction-card platiste">
+      <div class="faction-card platiste"><div class="internal-parchment">
         <div class="faction-img" style="display:block;padding:0;">
           <img src="images/platiste.jpg" alt="Mode Platiste" style="width:100%;height:100%;object-fit:cover;display:block;">
         </div>
@@ -219,9 +248,9 @@ function fmt_date($iso) {
           <div class="faction-name" data-i18n="factions.flat.name"><?= tr($t,'fr','factions.flat.name') ?></div>
           <p class="faction-desc" data-i18n="factions.flat.desc"><?= tr($t,'fr','factions.flat.desc') ?></p>
         </div>
-      </div>
+      </div></div>
 
-      <div class="faction-card bouliste">
+      <div class="faction-card bouliste"><div class="internal-parchment">
         <div class="faction-img" style="display:block;padding:0;">
           <img src="images/bouliste-transparent.png" alt="Mode Bouliste" style="width:100%;height:100%;object-fit:cover;display:block;">
         </div>
@@ -230,7 +259,7 @@ function fmt_date($iso) {
           <div class="faction-name" data-i18n="factions.globe.name"><?= tr($t,'fr','factions.globe.name') ?></div>
           <p class="faction-desc" data-i18n="factions.globe.desc"><?= tr($t,'fr','factions.globe.desc') ?></p>
         </div>
-      </div>
+      </div></div>
     </div>
 
     <div class="faction-vs" data-i18n="factions.vs"><?= tr($t,'fr','factions.vs') ?></div>
@@ -255,7 +284,7 @@ function fmt_date($iso) {
         ['key' => 'rail',   'img' => 'images/biome-train.jpg',   'alt' => 'Voie ferrée','cls' => 'rail'],
       ];
       foreach ($biomeCards as $bc): $k = $bc['key']; ?>
-      <div class="biome-card <?= $bc['cls'] ?>">
+      <div class="biome-card <?= $bc['cls'] ?>"><div class="internal-parchment">
         <div class="biome-banner">
           <img src="<?= $bc['img'] ?>" alt="<?= htmlspecialchars($bc['alt']) ?>" class="biome-banner-img">
           <div class="biome-banner-overlay">
@@ -266,7 +295,7 @@ function fmt_date($iso) {
           <div class="biome-desc" data-i18n="biomes.<?= $k ?>.desc"><?= tr($t,'fr',"biomes.$k.desc") ?></div>
           <span class="biome-tag" data-i18n="biomes.<?= $k ?>.tag"><?= tr($t,'fr',"biomes.$k.tag") ?></span>
         </div>
-      </div>
+      </div></div>
       <?php endforeach; ?>
     </div>
   </div>
@@ -293,13 +322,13 @@ function fmt_date($iso) {
         ['key' => 'mills',   'icon' => '⚙️'],
       ];
       foreach ($missionCards as $mc): $k = $mc['key']; ?>
-      <div class="mission-card">
+      <div class="mission-card"><div class="internal-parchment">
         <div class="mission-icon"><?= $mc['icon'] ?></div>
         <div>
           <div class="mission-name" data-i18n="missions.<?= $k ?>.name"><?= tr($t,'fr',"missions.$k.name") ?></div>
           <div class="mission-desc" data-i18n="missions.<?= $k ?>.desc"><?= tr($t,'fr',"missions.$k.desc") ?></div>
         </div>
-      </div>
+      </div></div>
       <?php endforeach; ?>
     </div>
   </div>
@@ -326,11 +355,11 @@ function fmt_date($iso) {
         ['key' => 'score',  'icon' => '🏆'],
       ];
       foreach ($steps as $sc): $k = $sc['key']; ?>
-      <div class="step-card">
+      <div class="step-card"><div class="internal-parchment">
         <div class="step-icon"><?= $sc['icon'] ?></div>
         <div class="step-title" data-i18n="gameplay.steps.<?= $k ?>.title"><?= tr($t,'fr',"gameplay.steps.$k.title") ?></div>
         <div class="step-desc" data-i18n="gameplay.steps.<?= $k ?>.desc"><?= tr($t,'fr',"gameplay.steps.$k.desc") ?></div>
-      </div>
+      </div></div>
       <?php endforeach; ?>
     </div>
 
@@ -356,6 +385,7 @@ function fmt_date($iso) {
     <h2 class="section-title" style="margin-top:40px;padding-top:26px;border-top:1px solid var(--border);" data-i18n="gameplay.kbd_title"><?= tr($t,'fr','gameplay.kbd_title') ?></h2>
 
     <div class="kbd-strip">
+      <div class="internal-parchment">
       <div class="kbd-strip-item"><span class="kbd-group kbd-group--stacked"><span class="kbd-row"><kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd></span><span class="kbd-row"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span></span><span data-i18n="gameplay.kbd.camera_label"><?= tr($t,'fr','gameplay.kbd.camera_label') ?></span></div>
       <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.left_click_kbd"><?= tr($t,'fr','gameplay.kbd.left_click_kbd') ?></kbd><span data-i18n="gameplay.kbd.left_click_desc"><?= tr($t,'fr','gameplay.kbd.left_click_desc') ?></span></div>
       <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.right_click_kbd"><?= tr($t,'fr','gameplay.kbd.right_click_kbd') ?></kbd><span data-i18n="gameplay.kbd.right_click_desc"><?= tr($t,'fr','gameplay.kbd.right_click_desc') ?></span></div>
@@ -368,10 +398,12 @@ function fmt_date($iso) {
       <div class="kbd-strip-item"><kbd>F</kbd><span data-i18n="gameplay.kbd.perf_hud"><?= tr($t,'fr','gameplay.kbd.perf_hud') ?></span></div>
       <div class="kbd-strip-item"><kbd>C</kbd><span data-i18n="gameplay.kbd.snapshot"><?= tr($t,'fr','gameplay.kbd.snapshot') ?></span></div>
       <div class="kbd-strip-item"><kbd>G</kbd><span data-i18n="gameplay.kbd.gallery"><?= tr($t,'fr','gameplay.kbd.gallery') ?></span></div>
+      <div class="kbd-strip-item"><kbd>V</kbd><span data-i18n="gameplay.kbd.replay"><?= tr($t,'fr','gameplay.kbd.replay') ?></span></div>
       <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.space_kbd"><?= tr($t,'fr','gameplay.kbd.space_kbd') ?></kbd><span data-i18n="gameplay.kbd.immersive"><?= tr($t,'fr','gameplay.kbd.immersive') ?></span></div>
       <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.shift_kbd"><?= tr($t,'fr','gameplay.kbd.shift_kbd') ?></kbd><kbd data-i18n="gameplay.kbd.space_kbd"><?= tr($t,'fr','gameplay.kbd.space_kbd') ?></kbd><span data-i18n="gameplay.kbd.super_immersive"><?= tr($t,'fr','gameplay.kbd.super_immersive') ?></span></div>
       <div class="kbd-strip-item"><kbd>M</kbd><span data-i18n="gameplay.kbd.mute"><?= tr($t,'fr','gameplay.kbd.mute') ?></span></div>
       <div class="kbd-strip-item"><kbd>H</kbd><kbd>ESC</kbd><span data-i18n="gameplay.kbd.help"><?= tr($t,'fr','gameplay.kbd.help') ?></span></div>
+      </div>
     </div>
   </div>
 </section>
@@ -402,8 +434,10 @@ function fmt_date($iso) {
         $style = $pc['span'] ? ' style="grid-column:span ' . $pc['span'] . ';"' : '';
       ?>
       <div class="<?= $cls ?>"<?= $style ?>>
+        <div class="internal-parchment">
         <img src="<?= $pc['img'] ?>" alt="<?= htmlspecialchars($pc['alt']) ?>" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-i18n="gallery.preset_word"><?= tr($t,'fr','gallery.preset_word') ?></span> <span data-i18n="gallery.presets.<?= $k ?>"><?= tr($t,'fr',"gallery.presets.$k") ?></span></div></div>
+        </div>
       </div>
       <?php endforeach; ?>
     </div>
@@ -430,7 +464,7 @@ function fmt_date($iso) {
         ['key' => 'fireflies', 'img' => 'images/lucioles.jpg', 'alt' => 'Lucioles'],
       ];
       foreach ($creatures as $cc): $k = $cc['key']; ?>
-      <div class="creature-card">
+      <div class="creature-card"><div class="internal-parchment">
         <div class="creature-banner">
           <img src="<?= $cc['img'] ?>" alt="<?= htmlspecialchars($cc['alt']) ?>" class="creature-banner-img">
           <div class="creature-banner-overlay">
@@ -440,7 +474,7 @@ function fmt_date($iso) {
         <div class="creature-body">
           <div class="creature-desc" data-i18n="creatures.<?= $k ?>.desc"><?= tr($t,'fr',"creatures.$k.desc") ?></div>
         </div>
-      </div>
+      </div></div>
       <?php endforeach; ?>
     </div>
 
@@ -513,13 +547,13 @@ function fmt_date($iso) {
         ['key' => 'silence',  'icon' => '🔇'],
       ];
       foreach ($audioCards as $ac): $k = $ac['key']; ?>
-      <div class="audio-card">
+      <div class="audio-card"><div class="internal-parchment">
         <div class="audio-icon"><?= $ac['icon'] ?></div>
         <div>
           <div class="audio-name" data-i18n="audio.<?= $k ?>.name"><?= tr($t,'fr',"audio.$k.name") ?></div>
           <div class="audio-desc" data-i18n="audio.<?= $k ?>.desc"><?= tr($t,'fr',"audio.$k.desc") ?></div>
         </div>
-      </div>
+      </div></div>
       <?php endforeach; ?>
     </div>
   </div>
@@ -548,7 +582,7 @@ function fmt_date($iso) {
         $list  = tr($t,'fr',"daynnight.$k.list");
         $count = is_array($list) ? count($list) : 0;
       ?>
-      <div class="<?= $dc['cls'] ?>"<?= $style ?>>
+      <div class="<?= $dc['cls'] ?>"<?= $style ?>><div class="internal-parchment">
         <img src="<?= $dc['img'] ?>" alt="<?= htmlspecialchars($dc['alt']) ?>" class="daynight-img">
         <div class="daynight-body">
         <div class="daynight-head">
@@ -561,7 +595,7 @@ function fmt_date($iso) {
           <?php endfor; ?>
         </ul>
         </div>
-      </div>
+      </div></div>
       <?php endforeach; ?>
     </div>
   </div>
@@ -583,10 +617,12 @@ function fmt_date($iso) {
       ];
       foreach ($edaCards as $ec): $k = $ec['key']; ?>
       <div class="eda-showcase-card">
+        <div class="internal-parchment">
         <img src="<?= $ec['img'] ?>" alt="<?= htmlspecialchars($ec['alt']) ?>" class="eda-showcase-img">
         <div class="eda-showcase-body">
           <div class="eda-showcase-label" data-i18n="eda.<?= $k ?>.label"><?= tr($t,'fr',"eda.$k.label") ?></div>
           <p class="eda-showcase-desc" data-i18n="eda.<?= $k ?>.desc"><?= tr($t,'fr',"eda.$k.desc") ?></p>
+        </div>
         </div>
       </div>
       <?php endforeach; ?>
@@ -610,14 +646,17 @@ function fmt_date($iso) {
         </ul>
         <h2 class="section-title" style="margin-top:32px;" data-i18n="multi.gallery_title"><?= tr($t,'fr','multi.gallery_title') ?></h2>
         <p class="section-sub" data-i18n="multi.gallery_promo"><?= tr($t,'fr','multi.gallery_promo') ?></p>
+        <h2 class="section-title" style="margin-top:32px;" data-i18n="multi.replay_title"><?= tr($t,'fr','multi.replay_title') ?></h2>
+        <p class="section-sub" data-i18n="multi.replay_promo"><?= tr($t,'fr','multi.replay_promo') ?></p>
         <div style="margin-top:28px;">
           <a href="game.php" class="btn-primary" data-i18n="multi.btn_create"><?= tr($t,'fr','multi.btn_create') ?></a>
         </div>
       </div>
       <div class="room-demo">
+        <div class="internal-parchment">
         <div class="room-demo-title" data-i18n="multi.room_title"><?= tr($t,'fr','multi.room_title') ?></div>
         <div class="room-code">HEXGRP</div>
-        <div style="font-size:10px;letter-spacing:0.14em;color:var(--text-dim);text-align:center;margin-top:4px;" data-i18n="multi.room_status"><?= tr($t,'fr','multi.room_status') ?></div>
+        <div class="room-status" data-i18n="multi.room_status"><?= tr($t,'fr','multi.room_status') ?></div>
         <div class="room-players">
           <div class="player-dot active">🧑</div>
           <div class="player-dot active">👩</div>
@@ -625,18 +664,18 @@ function fmt_date($iso) {
           <div class="player-dot">…</div>
         </div>
         <div class="room-scores">
-          <div style="font-size:9px;letter-spacing:0.22em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;" data-i18n="multi.tiles_placed_label"><?= tr($t,'fr','multi.tiles_placed_label') ?></div>
+          <div class="room-scores-label" data-i18n="multi.tiles_placed_label"><?= tr($t,'fr','multi.tiles_placed_label') ?></div>
           <div class="room-score-row">
             <span class="room-score-name">Piregwan</span>
-            <span class="room-score-pts" style="color:var(--gold);">47</span>
+            <span class="room-score-pts gold">47</span>
           </div>
           <div class="room-score-row">
-            <span class="room-score-name" style="color:var(--text-dim);">Emil</span>
-            <span class="room-score-pts" style="color:var(--blue);">31</span>
+            <span class="room-score-name dim">Emil</span>
+            <span class="room-score-pts">31</span>
           </div>
           <div class="room-score-row">
-            <span class="room-score-name" style="color:var(--text-dim);">Josef</span>
-            <span class="room-score-pts" style="color:var(--blue);">28</span>
+            <span class="room-score-name dim">Josef</span>
+            <span class="room-score-pts">28</span>
           </div>
         </div>
       </div>
@@ -663,6 +702,7 @@ function fmt_date($iso) {
         $biomeIcons = ['forest'=>'🌲','water'=>'💧','house'=>'🛖','field'=>'🌾','grass'=>'🌿','rail'=>'🛤️'];
       ?>
       <div class="hs-card <?= $goldClass ?>">
+        <div class="internal-parchment">
         <div class="hs-rank-col">
           <div class="hs-rank"><?= $i + 1 ?></div>
         </div>
@@ -721,6 +761,7 @@ function fmt_date($iso) {
         </div>
         <div class="hs-score-col">
           <div class="hs-score"><?= number_format($hs['score']) ?></div>
+        </div>
         </div>
       </div>
       <?php endforeach; ?>
@@ -786,6 +827,21 @@ function fmt_date($iso) {
 
   const saved = localStorage.getItem('hexistenz_pres_lang');
   setLang(LANGS.includes(saved) ? saved : 'fr');
+
+  // ─── Sélecteur de thème graphique (2026-07-17) ─────────────────────────────
+  // Même clé localStorage que javascript/themeManager.js (utilisé côté jeu) :
+  // le choix fait ici est partagé avec game.php. Thème par défaut "ancien"
+  // (Médiéval) depuis 2026-07-17, cf. CONTEXT.md §32.
+  const THEMES = ['bleu', 'ancien'];
+  function setTheme(th) {
+    if (!THEMES.includes(th)) th = 'ancien';
+    document.documentElement.dataset.theme = th;
+    localStorage.setItem('hexistenz_theme', th);
+    const sel = document.getElementById('themeSelect');
+    if (sel) sel.value = th;
+  }
+  const savedTheme = localStorage.getItem('hexistenz_theme');
+  setTheme(THEMES.includes(savedTheme) ? savedTheme : 'ancien');
 
   const navToggle = document.getElementById('navToggle');
   const navLinks  = document.getElementById('navLinks');

@@ -1,7 +1,9 @@
 /* ─── snapshots.css — galerie des captures d'écran (snapshots.php) ────────────────────
    Page autonome (URL directe) OU chargée en <iframe> par snapshotGallery.js (overlay
-   in-game). Fond sombre volontairement identique au reste du jeu (mêmes rgba que
-   help.css/base.css), pas de cadres lourds — mosaïque en colonnes CSS (pas de lib JS). */
+   in-game). Mosaïque en colonnes CSS (pas de lib JS).
+   Thèmes Bleu/Médiéval (2026-07-17) : cette page vivait dans un <iframe> jamais
+   raccordé à [data-theme] — fond et textes réécrits en blocs partagé/bleu/ancien,
+   cf. snapshots.php pour le script de restauration localStorage. */
 
 * { box-sizing: border-box; }
 
@@ -9,9 +11,23 @@ html, body {
   margin: 0;
   padding: 0;
   min-height: 100%;
+  font: 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html[data-theme="bleu"] {
   background: radial-gradient(circle at center, #121a24 0%, #070a0f 70%, #04060a 100%);
   color: rgba(233, 244, 255, 0.92);
-  font: 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html[data-theme="ancien"] {
+  background: #ece0c0;
+  color: #332415;
+}
+
+body {
+  background: inherit;
+  color: inherit;
+  min-height: 100%;
 }
 
 .gallery-root {
@@ -26,28 +42,36 @@ html, body {
   gap: 14px;
   margin-bottom: 22px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(120, 180, 255, 0.24);
 }
+
+html[data-theme="bleu"] .gallery-header { border-bottom: 1px solid rgba(120, 180, 255, 0.24); }
+html[data-theme="ancien"] .gallery-header { border-bottom: 1px solid rgba(74, 54, 35, 0.35); }
 
 .gallery-title {
   margin: 0;
   font-size: 20px;
   font-weight: 800;
   letter-spacing: 0.02em;
-  color: rgba(247, 239, 225, 0.92);
 }
+
+html[data-theme="bleu"] .gallery-title { color: rgba(247, 239, 225, 0.92); }
+html[data-theme="ancien"] .gallery-title { color: #332415; font-family: Georgia, "Times New Roman", serif; }
 
 .gallery-count {
   font-size: 12px;
-  color: rgba(233, 244, 255, 0.5);
 }
+
+html[data-theme="bleu"] .gallery-count { color: rgba(233, 244, 255, 0.5); }
+html[data-theme="ancien"] .gallery-count { color: rgba(51, 36, 21, 0.6); }
 
 .gallery-empty {
   margin-top: 60px;
   text-align: center;
-  color: rgba(233, 244, 255, 0.5);
   font-size: 14px;
 }
+
+html[data-theme="bleu"] .gallery-empty { color: rgba(233, 244, 255, 0.5); }
+html[data-theme="ancien"] .gallery-empty { color: rgba(51, 36, 21, 0.6); }
 
 /* Mosaïque : colonnes CSS façon Pinterest, aucune lib de masonry nécessaire.
    Miniatures larges (colonnes ~280px), sans cadre lourd (juste un radius léger). */
@@ -64,14 +88,27 @@ html, body {
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(120, 180, 255, 0.30);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
   transition: border-color 0.2s ease;
 }
 
-.gallery-item:hover {
+html[data-theme="bleu"] .gallery-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(120, 180, 255, 0.30);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="bleu"] .gallery-item:hover {
   border-color: rgba(120, 180, 255, 0.55);
+}
+
+html[data-theme="ancien"] .gallery-item {
+  background: rgba(51, 36, 21, 0.04);
+  border: 1px solid rgba(74, 54, 35, 0.35);
+  box-shadow: 0 6px 16px rgba(51, 36, 21, 0.20);
+}
+
+html[data-theme="ancien"] .gallery-item:hover {
+  border-color: rgba(74, 54, 35, 0.65);
 }
 
 .gallery-item img {
@@ -97,11 +134,18 @@ html, body {
   position: absolute;
   left: 0; right: 0; bottom: 0;
   padding: 22px 12px 10px;
-  background: linear-gradient(to top, rgba(3, 6, 10, 0.88), transparent);
   opacity: 0;
   transform: translateY(4px);
   transition: opacity 0.2s ease, transform 0.2s ease;
   pointer-events: none;
+}
+
+html[data-theme="bleu"] .gallery-caption {
+  background: linear-gradient(to top, rgba(3, 6, 10, 0.88), transparent);
+}
+
+html[data-theme="ancien"] .gallery-caption {
+  background: linear-gradient(to top, rgba(236, 224, 192, 0.94), transparent);
 }
 
 .gallery-item:hover .gallery-caption {
@@ -112,14 +156,18 @@ html, body {
 .gallery-caption-date {
   font-size: 12px;
   font-weight: 700;
-  color: rgba(247, 239, 225, 0.95);
 }
+
+html[data-theme="bleu"] .gallery-caption-date { color: rgba(247, 239, 225, 0.95); }
+html[data-theme="ancien"] .gallery-caption-date { color: #332415; }
 
 .gallery-caption-meta {
   margin-top: 2px;
   font-size: 11px;
-  color: rgba(233, 244, 255, 0.72);
 }
+
+html[data-theme="bleu"] .gallery-caption-meta { color: rgba(233, 244, 255, 0.72); }
+html[data-theme="ancien"] .gallery-caption-meta { color: rgba(51, 36, 21, 0.72); }
 
 .gallery-scroll-sentinel {
   height: 1px;
@@ -151,6 +199,8 @@ html, body {
   left: 0; right: 0; bottom: 22px;
   text-align: center;
   font-size: 13px;
+  /* Fond de la visionneuse volontairement sombre dans les deux thèmes (mise en
+     valeur de la photo, convention lightbox classique) -> texte clair partagé. */
   color: rgba(233, 244, 255, 0.82);
 }
 

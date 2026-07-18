@@ -15,6 +15,10 @@
     },
     "play": "Jogar"
   },
+  "theme": {
+    "bleu": "Azul",
+    "ancien": "Medieval"
+  },
   "hero": {
     "subtitle": "Jogo hexagonal contemplativo feito com nostalgia e amor ❤️ Three.js e muitas peças",
     "inspi_text": "Inspirado em <em>Dorfromantik</em>, na alma pastoral de <em>The Settlers</em> (Blue Byte, 1993)\n          e nos mundos maravilhosos de <em>Heroes of Might and Magic</em> (3DO).",
@@ -177,6 +181,7 @@
       "perf_hud": "HUD de desempenho",
       "snapshot": "Captura de ecrã",
       "gallery": "Galeria de capturas",
+      "replay": "Replay da partida",
       "immersive": "modo imersivo",
       "super_immersive": "modo super-imersivo",
       "mute": "mudo",
@@ -374,7 +379,9 @@
       "O mapa constrói-se colaborativamente, peça após peça"
     ],
     "gallery_title": "PARTILHA AS TUAS CAPTURAS",
-    "gallery_promo": "Imortaliza as tuas melhores partidas: o botão 📷 captura o mundo sem HUD, e o botão 🖼️ abre a galeria do servidor partilhada com todos os jogadores",
+    "gallery_promo": "Imortaliza as tuas melhores partidas: o botão 📷 captura o mundo sem HUD, e o botão 🖼️ abre a galeria partilhada com todos os jogadores",
+    "replay_title": "Grava as tuas partidas em vídeo",
+    "replay_promo": "O botão 🎬 (ou a tecla V) reproduz a tua partida acelerada, peça a peça, com velocidades de reprodução de ×1 a ×8. Durante a reprodução, um botão dedicado captura o ecrã e descarrega automaticamente um vídeo em formato WebM — diretamente do teu navegador, sem software nem serviços externos.",
     "btn_create": "Criar uma partida",
     "room_title": "Código da sala",
     "room_status": "Partida em curso · 3 jogadores",
@@ -423,7 +430,7 @@
     }
   },
   "footer": {
-    "copy": "Jogo hexagonal contemplativo feito com nostalgia e amor ❤️ Three.js e muitas peças · 2025–2026",
+    "copy": "Jogo hexagonal contemplativo feito com nostalgia e amor ❤️ Three.js e muitas peças",
     "github": "No GitHub"
   },
   "game": {
@@ -436,6 +443,11 @@
       "modeBouliste": "Modo Globo",
       "modePlatiste": "Modo Plano",
       "captured": "Captura feita!"
+    },
+    "replay": {
+      "restart": "Voltar ao início",
+      "playPause": "Reproduzir / Pausa",
+      "close": "Fechar o replay"
     },
     "eda": {
       "mainTitle": "Editor de direção artística",
@@ -497,6 +509,10 @@
         "ega": "EGA",
         "amiga": "Amiga",
         "psyche": "Psicadélico"
+      },
+      "themeNames": {
+        "bleu": "Azul",
+        "ancien": "Medieval"
       },
       "modes": {
         "bouliste": "Globo",
@@ -671,9 +687,11 @@
     "help": {
       "topbar.fps": "Mostrar/ocultar o HUD de desempenho avançado",
       "topbar.eda": "Abrir ou fechar o painel de renderização",
-      "topbar.snapshot": "Captura de ecrã (sem HUD), guardada no servidor",
+      "topbar.snapshot": "Captura de ecrã (sem HUD)",
       "topbar.gallery": "Galeria das capturas de ecrã",
+      "topbar.replay": "Reprise da partida",
       "topbar.lang": "Idioma",
+      "topbar.theme": "Tema gráfico (Azul / Medieval)",
       "renderer.toneMappingExposure": "Exposição global do renderer (ACESFilmic). Controla a quantidade de luz que atinge o \"sensor\" antes de qualquer calibração.\nValores < 1 escurecem o conjunto, > 2 podem saturar as altas luzes.\nTípico: 1.2–1.8 para uma imagem natural.",
       "environment.fogDensity": "Densidade da névoa exponencial (FogExp2). Ativa apenas quando \"Fim linear\" está a 0.\nA visibilidade cai muito rapidamente: a 0.07 a cena está quase opaca.\nPara um campo visual controlado, preferir o modo linear via \"Início\" e \"Fim\".",
       "environment.fogNear": "Distância em unidades 3D onde a névoa linear começa.\nAssim que \"Fim\" > 0, muda automaticamente de FogExp2 para THREE.Fog(near, far).\nA 0: névoa desde o primeiro plano. A 5: os objetos próximos permanecem nítidos.",
@@ -797,7 +815,7 @@
       "game.largestWater": "Maior extensão de água contígua. Um lago > 5 peças pode acolher barcos suplementares.",
       "game.rail": "Peças de via férrea totais colocadas.\nOs carris sozinhos não rendem nada — é a conexão entre duas estações que cria uma linha.",
       "game.largestRail": "Via férrea mais longa contígua (em peças). Indicador do alcance máximo da rede.",
-      "game.activeTile": "A peça que vais colocar na próxima jogada.\nMove o cursor com Z/Q/S/D, roda com R, e coloca com ESPAÇO.\nCada face da peça corresponde a um bioma — planeia as tuas conexões!",
+      "game.activeTile": "A peça que vais colocar na próxima jogada.\nMove o cursor com Z/Q/S/D, roda com a roda do rato, e coloca com ESPAÇO.\nCada face da peça corresponde a um bioma — planeia as tuas conexões!",
       "game.nextTile": "A próxima peça que entrará em jogo depois de colocares a peça atual.\nAntecipa a sua forma para preparar o melhor local de acolhimento.",
       "game.deckRemaining": "Número de peças restantes no baralho.\nA partida termina quando o baralho fica vazio — otimiza cada colocação!",
       "hs.summary": "Resumo da partida: peças colocadas, linhas de comboio, barcos, cometas interceptados.",
@@ -1003,6 +1021,7 @@
           "eda": "Mostrar / ocultar o HUD EDA",
           "snapshot": "Tirar uma captura de ecrã",
           "gallery": "Abrir a galeria de capturas",
+          "replay": "Mostrar / ocultar o HUD de replay da partida",
           "wheelKbd": "Roda do rato",
           "leftClickKbd": "Clique esquerdo",
           "rightClickKbd": "Clique direito",
@@ -1093,6 +1112,7 @@
     },
     "kbdHint": "H ou ESC&nbsp;→ ajuda &nbsp;|&nbsp; M&nbsp;→ mudo &nbsp;|&nbsp; ESPAÇO&nbsp;→ imersivo &nbsp;|&nbsp; MAJ+ESPAÇO&nbsp;→ super-imersivo",
     "superImmersifExitHint": "ESPAÇO para sair do modo super imersivo",
+    "langName": "Português",
     "fpsAdjectives": {
       "disastrous": "Desastroso",
       "bad": "Mau",

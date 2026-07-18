@@ -58,14 +58,18 @@
   display: block;
 }
 
+/* 2026-07-17 — layout partagé uniquement ; fond/bordure/ombre déportés dans
+   [data-theme="bleu"]/[data-theme="ancien"] (css/multiplayerUi.css, cf.
+   CONTEXT.md §32) — .mode-panel étant thémé là-bas, seule la géométrie
+   (position, marges) reste ici. */
 .mode-screen--with-background .mode-panel {
   position: relative;
   overflow: visible !important;
   z-index: 4;
   margin-top: clamp(120px, 18vh, 180px);
+}
 
-  padding-top: clamp(320px, 41vh, 410px);
-
+[data-theme="bleu"] .mode-screen--with-background .mode-panel {
   background:
     linear-gradient(160deg, rgba(8, 16, 26, 0.46), rgba(4, 8, 14, 0.28)),
     rgba(5, 10, 18, 0.24);
@@ -78,7 +82,7 @@
   -webkit-backdrop-filter: blur(10px) saturate(1.12);
 }
 
-.mode-screen--with-background .mode-panel::before {
+[data-theme="bleu"] .mode-screen--with-background .mode-panel::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -90,16 +94,24 @@
   pointer-events: none;
 }
 
+/* Ancien : pas de glow décoratif façon verre dépoli sur le parchemin — le
+   ::before (thème bleu) n'est pas repris ici, la texture de manuscrit.png
+   (css/multiplayerUi.css) suffit à porter l'identité visuelle. */
+
+/* 2026-07-17 — 2e fix : le passage en `top` positif laissait le logo en
+   `position:absolute` bien contenu dans .mode-panel, mais toujours SORTI du
+   flux normal — il se superposait donc au texte suivant (.mode-copy) au lieu
+   de le pousser vers le bas, quel que soit le `top` choisi. Simplifié : le
+   logo redevient un enfant normal du flux (plus de position/top/left/
+   transform/z-index, plus de réservation d'espace via padding-top sur
+   .mode-panel) — il prend sa place naturelle en haut de la carte et pousse
+   .mode-copy en dessous via `margin-bottom`, comme n'importe quelle image de
+   contenu. Taille réduite de 25% (demande explicite). */
 .mode-logo {
   display: block;
-  width: min(364px, 54.6vw);
+  width: min(273px, 41vw);
   max-height: none;
-  margin: 0;
-  position: absolute;
-  top: clamp(-230px, -26vh, -150px);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 8;
+  margin: 0 auto 14px;
   object-fit: contain;
   user-select: none;
   pointer-events: none;
@@ -107,29 +119,23 @@
 }
 
 @media (max-height: 1080px) {
-  .mode-screen--with-background .mode-panel {
-    padding-top: clamp(220px, 28vh, 300px);
-  }
   .mode-logo {
-    width: min(266px, 42vw);
-    top: clamp(-190px, -20vh, -120px);
+    width: min(200px, 31.5vw);
   }
 }
 
 @media (max-height: 760px) {
   .mode-screen--with-background .mode-panel {
     margin-top: 112px;
-    padding-top: 250px;
   }
 
   .mode-logo {
-    width: min(308px, 51.8vw);
-    top: -150px;
+    width: min(231px, 38.9vw);
   }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .mode-screen--with-background .mode-panel {
+  [data-theme="bleu"] .mode-screen--with-background .mode-panel {
     background: rgba(5, 10, 18, 0.62);
   }
 }

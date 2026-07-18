@@ -175,13 +175,24 @@ function _buildHud(fps, info) {
   const cpuLoad  = jsMs     > 0 ? Math.min(100, jsMs     / 16.67 * 100) : 0;
   const gpu      = _gpuDisplayInfo(); // { ms, load, real } — real=false si EXT_disjoint_timer_query indisponible
   const gpuLoad  = gpu.load;
-  const gpuColor = gpuLoad  <= 30 ? '#4ade80' : gpuLoad  <= 65 ? '#fbbf24' : gpuLoad  <= 85 ? '#fb923c' : '#f87171';
-  const cpuColor = cpuLoad  <= 30 ? '#4ade80' : cpuLoad  <= 65 ? '#fbbf24' : cpuLoad  <= 85 ? '#fb923c' : '#f87171';
+  // Couleurs pilotées par variables CSS thémées (eda.css, --fps-c-*) plutôt que hex figés —
+  // signalé 2026-07-17 : le vert restait pâle/illisible sur le fond parchemin du thème
+  // "médiéval", cf. .fps-adj-green pour le même mécanisme sur l'adjectif FPS.
+  const gpuColor = gpuLoad  <= 30 ? 'var(--fps-c-green)' : gpuLoad  <= 65 ? 'var(--fps-c-amber)' : gpuLoad  <= 85 ? 'var(--fps-c-orange)' : 'var(--fps-c-red)';
+  const cpuColor = cpuLoad  <= 30 ? 'var(--fps-c-green)' : cpuLoad  <= 65 ? 'var(--fps-c-amber)' : cpuLoad  <= 85 ? 'var(--fps-c-orange)' : 'var(--fps-c-red)';
+
+  // Croix de fermeture (2026-07-17, demande explicite) — n'a de sens que le panneau
+  // déployé (le badge fermé lui-même n'a rien à fermer davantage) ; ferme via le même
+  // chemin que la touche F/le bouton du bandeau (_toggleFpsHud), pas de nouvel état.
+  const closeBtnHtml = _fpsHudExpanded
+    ? `<button class="fps-hud-close" type="button" title="Fermer">×</button>`
+    : '';
 
   const header =
     `<div class="fps-hud-header">` +
       `<div class="fps-hud-fps" data-stat-help="fps.fps">${fps} <span>FPS</span> <span class="fps-adj ${adj.cls}" data-stat-help="fps.adj">${adj.text}</span></div>` +
       `<button class="fps-hud-copy" type="button" title="Copier le HUD">${_hudCopied ? '✓' : '⧉'}</button>` +
+      closeBtnHtml +
     `</div>` +
     `<div class="fps-hud-eff-row">` +
       `<div class="fps-hud-eff-item">` +
@@ -194,11 +205,11 @@ function _buildHud(fps, info) {
       `</div>` +
     `</div>`;
 
-  if (!_fpsHudExpanded) return header;
+  if (!_fpsHudExpanded) return `<div class="internal-parchment">${header}</div>`;
 
   const gpuLabel = gpu.real ? 'GPU réel' : 'GPU≈ (soumission CPU seule, EXT indisponible)';
   const msHint = gpu.ms > 0
-    ? `<div style="font-size:10px;color:rgba(180,215,255,0.50);margin-top:2px">${gpuLabel} ${gpu.ms.toFixed(1)}ms · CPU ${jsMs.toFixed(1)}ms · budget 16.7ms</div>`
+    ? `<div style="font-size:10px;color:var(--fps-c-muted);margin-top:2px">${gpuLabel} ${gpu.ms.toFixed(1)}ms · CPU ${jsMs.toFixed(1)}ms · budget 16.7ms</div>`
     : '';
 
   // Tout le contenu détaillé est dans un div scrollable pour ne jamais dépasser la hauteur écran
@@ -228,7 +239,7 @@ function _buildHud(fps, info) {
     const hdrCols = COL_DEFS.map(({ key, label }) => {
       const active = _hudSortKey === key;
       const arrow  = active ? (_hudSortDir < 0 ? '↓' : '↑') : '';
-      const st     = active ? 'color:rgba(255,215,100,0.95);font-weight:800' : 'color:rgba(180,215,255,0.55)';
+      const st     = active ? 'color:var(--fps-c-amber);font-weight:800' : 'color:var(--fps-c-muted)';
       return `<span class="fps-hud-col-header" data-sort="${key}" style="${st};cursor:pointer;user-select:none">${label}${arrow}</span>`;
     });
     detailRows.push(
@@ -283,7 +294,7 @@ function _buildHud(fps, info) {
     );
   }
 
-  return header + `<div class="fps-hud-body">` + detailRows.join('') + `</div>`;
+  return `<div class="internal-parchment">` + header + `<div class="fps-hud-body">` + detailRows.join('') + `</div>` + `</div>`;
 }
 
 function _row(label, value, helpKey = '') {
@@ -301,7 +312,7 @@ function _rowCat(label, count, draws, tris, shadows, isHeavy = false, totalTris 
   let ratioStr = '';
   if (count > 0 && draws > count) {
     const ratio = draws / count;
-    const col = ratio >= 10 ? '#f87171' : ratio >= 5 ? '#fb923c' : ratio >= 3 ? '#fbbf24' : 'rgba(180,215,255,0.42)';
+    const col = ratio >= 10 ? 'var(--fps-c-red)' : ratio >= 5 ? 'var(--fps-c-orange)' : ratio >= 3 ? 'var(--fps-c-amber)' : 'var(--fps-c-muted)';
     const rFmt = ratio >= 10 ? Math.round(ratio) : ratio.toFixed(1);
     ratioStr = `<span style="font-size:9px;color:${col};margin-left:2px" title="${rFmt} DC par objet">×${rFmt}</span>`;
   }
@@ -371,6 +382,7 @@ export function initFpsHud(root) {
   // Délégation de clic sur le conteneur HUD → bouton copier (innerHTML est recréé à chaque frame)
   _fpsEl.addEventListener('click', e => {
     if (e.target.closest('.fps-hud-copy'))  { _copyHud(); return; }
+    if (e.target.closest('.fps-hud-close')) { _toggleFpsHud(); return; }
     const sortEl = e.target.closest('[data-sort]');
     if (sortEl) {
       const key = sortEl.dataset.sort;
@@ -416,6 +428,11 @@ export function initFpsHud(root) {
     if (e.key === 'f' || e.key === 'F') {
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      // 2026-07-17 — même fix que la touche E (edaPanelWiring.js) : en super-immersif
+      // (body.huds-force-hidden) le bouton FPS est désactivé/masqué mais ce listener
+      // global continuait de basculer _fpsHudExpanded en interne (invisible via CSS
+      // !important) — désync signalée par l'utilisateur. Ignoré tant que ce mode est actif.
+      if (document.body.classList.contains('huds-force-hidden')) return;
       e.preventDefault();
       _toggleFpsHud();
     }

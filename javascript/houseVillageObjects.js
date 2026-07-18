@@ -3,6 +3,7 @@ import { createGLTFLoader } from './glbLoader.js';
 import { HEX_SIZE, TILE_VISUAL, SECTOR_DEFS } from './config.js';
 import { hashUnit100k as hashUnit } from './hashUtils.js';
 import { getGravelSvgMaterial, getHouseMaterial } from './houseVillageMaterials.js';
+import { DEBUG_FLAGS } from './variables.js';
 
 /**
  * Chargement GLB et création des objets 3D du village :
@@ -84,7 +85,7 @@ export function ensureHouseGlbModels(group, onReady) {
     createGLTFLoader().load(
       def.url,
       gltf => {
-        console.log(`[tours] "${def.key}" GLB chargé ✓`);
+        if (DEBUG_FLAGS.assets) console.log(`[tours] "${def.key}" GLB chargé ✓`);
         watchtowerGlbLibrary.set(def.key, prepareHouseGlbPrototype(gltf.scene, def, { skipPalette: false }));
         finishOne();
       },

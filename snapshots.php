@@ -10,11 +10,20 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 header('Cache-Control: no-store');
 
+require_once __DIR__ . '/snapshotThumb.php';
+
 $snapDir = __DIR__ . DIRECTORY_SEPARATOR . 'snapshots';
 $items = array();
 
 if (is_dir($snapDir)) {
-    $files = glob($snapDir . DIRECTORY_SEPARATOR . '*.jpg');
+    $allJpgs = glob($snapDir . DIRECTORY_SEPARATOR . '*.jpg');
+    // Les miniatures vivent dans le même dossier, suffixées "_thumb.jpg" (simplifié
+    // le 2026-07-15 : plus de sous-dossier /thumbs) — à exclure de la liste des
+    // captures elles-mêmes, sous peine de les afficher comme fausses entrées galerie.
+    $files = $allJpgs ? array_values(array_filter($allJpgs, function ($p) {
+        return substr($p, -10) !== '_thumb.jpg';
+    })) : array();
+
     if ($files) {
         // Tri du plus récent au plus ancien (mtime — le nom de fichier est déjà
         // chronologique mais mtime reste la source de vérité, cf. multiplayer.php).
@@ -39,23 +48,51 @@ if (is_dir($snapDir)) {
                 $meta['date'] = gmdate('c', filemtime($filePath));
             }
 
+            // Miniature (2026-07-15) — backfill à la volée pour les captures antérieures
+            // au système de miniatures (pas de script de migration séparé : la première
+            // ouverture de la galerie régénère et met en cache sur disque). Écrite
+            // directement dans /snapshots, suffixe "_thumb" avant l'extension.
+            $thumbBasename = preg_replace('/\.jpg$/', '_thumb.jpg', $basename);
+            $thumbPath     = $snapDir . DIRECTORY_SEPARATOR . $thumbBasename;
+            if (!is_file($thumbPath)) {
+                hexistenz_generate_thumbnail($filePath, $thumbPath, 480, 72);
+            }
+            $thumbUrl = is_file($thumbPath)
+                ? 'snapshots/' . rawurlencode($thumbBasename)
+                : 'snapshots/' . rawurlencode($basename); // repli GD/Imagick/binaire indisponibles
+
             $items[] = array(
-                'url'   => 'snapshots/' . rawurlencode($basename),
-                'date'  => $meta['date'],
-                'tiles' => $meta['tiles'],
-                'mode'  => $meta['mode'],
+                'url'      => 'snapshots/' . rawurlencode($basename),
+                'thumbUrl' => $thumbUrl,
+                'date'     => $meta['date'],
+                'tiles'    => $meta['tiles'],
+                'mode'     => $meta['mode'],
             );
         }
     }
 }
 ?><!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="ancien">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow" />
 <title>Hexistenz — Galerie de captures</title>
 <link rel="stylesheet" href="css/snapshots.css" />
+<!-- Thèmes graphiques Bleu/Médiéval (cf. CONTEXT.md §32) — page chargée soit en URL
+     directe, soit dans l'<iframe> de snapshotGallery.js (game.php) : même origine,
+     donc même localStorage['hexistenz_theme'] que le reste du jeu. Bug signalé
+     2026-07-17 : la mosaïque restait sombre (thème bleu figé) même quand le cadre
+     de l'overlay parent passait en parchemin — cette page n'avait aucune plomberie
+     de thème. Même pattern précoce que game.php/index.php pour éviter le flash. -->
+<link rel="stylesheet" href="css/themes/bleu.css" />
+<link rel="stylesheet" href="css/themes/medieval.css" />
+<script>
+  (function() {
+    var th = localStorage.getItem('hexistenz_theme');
+    document.documentElement.dataset.theme = (th === 'bleu') ? 'bleu' : 'ancien';
+  })();
+</script>
 </head>
 <body>
   <div id="galleryRoot" class="gallery-root">
@@ -76,6 +113,6 @@ if (is_dir($snapDir)) {
   </div>
 
   <script type="application/json" id="snap-data"><?= json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
-  <script type="module" src="javascript/snapshotsPage.js"></script>
+  <script type="module" src="javascript/snapshotsPage.js?v=<?= file_exists(__DIR__ . '/javascript/snapshotsPage.js') ? filemtime(__DIR__ . '/javascript/snapshotsPage.js') : time() ?>"></script>
 </body>
 </html>

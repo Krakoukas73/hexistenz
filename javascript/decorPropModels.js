@@ -15,6 +15,7 @@ import { createGLTFLoader } from './glbLoader.js';
 import { clone as cloneSkeleton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js';
 import { hashUnit10k as hashUnit } from './hashUtils.js';
 import { PROP_MODEL_DEFS, maybeRebuildWhenReady } from './decorOverlay.js';
+import { DEBUG_FLAGS } from './variables.js';
 
 // Map variantKey → prototype Group (normalisé + mis à l'échelle)
 export const propGlbLibrary = new Map();
@@ -144,13 +145,15 @@ function preparePropPrototype(model, def) {
   //   → indispensable quand le GLB a une rotation GLTF initiale qui fausse les += .
   // correctionX/Z : delta ajouté APRÈS reset (ou à la rotation existante si pas de reset).
   // absoluteX/Z  : valeur absolue directement appliquée (après reset si combiné).
-  console.log(`[prop] "${def.key}" rotation initiale — x:${source.rotation.x.toFixed(4)} y:${source.rotation.y.toFixed(4)} z:${source.rotation.z.toFixed(4)}`);
+  // Gaté sous DEBUG_FLAGS.assets (2026-07-16, phase 4) — pur diagnostic, n'affecte que le
+  // chargement d'un prop (une fois par session), pas d'effet de bord au-delà du log.
+  if (DEBUG_FLAGS.assets) console.log(`[prop] "${def.key}" rotation initiale — x:${source.rotation.x.toFixed(4)} y:${source.rotation.y.toFixed(4)} z:${source.rotation.z.toFixed(4)}`);
   if (def.resetRotation) source.rotation.set(0, 0, 0);
   if (def.correctionX)   source.rotation.x += def.correctionX;
   if (def.correctionZ)   source.rotation.z += def.correctionZ;
   if (def.absoluteX != null) source.rotation.x = def.absoluteX;
   if (def.absoluteZ != null) source.rotation.z = def.absoluteZ;
-  console.log(`[prop] "${def.key}" rotation finale  — x:${source.rotation.x.toFixed(4)} y:${source.rotation.y.toFixed(4)} z:${source.rotation.z.toFixed(4)}`);
+  if (DEBUG_FLAGS.assets) console.log(`[prop] "${def.key}" rotation finale  — x:${source.rotation.x.toFixed(4)} y:${source.rotation.y.toFixed(4)} z:${source.rotation.z.toFixed(4)}`);
   source.updateMatrixWorld(true);
 
   const box    = new THREE.Box3().setFromObject(source);
@@ -167,7 +170,10 @@ function preparePropPrototype(model, def) {
   // Fix permanent : Apply All Transforms dans Blender avant export GLTF.
   const MAX_BBOX_UNITS = 20; // les plus gros props (tours, moulins) font < 10 u
   if (def.bypassBboxCheck) {
-    console.warn(
+    // Gaté sous DEBUG_FLAGS.assets (2026-07-16) — override intentionnel connu (props volontairement
+    // hors gabarit, cf. bypassBboxCheck dans PROP_MODEL_DEFS), pas une anomalie. La branche
+    // console.error ci-dessous (vraie bbox aberrante non attendue) reste TOUJOURS active.
+    if (DEBUG_FLAGS.assets) console.warn(
       `[prop] ⚠️ "${def.key}" — bbox forcée (bypassBboxCheck) : ${size.x.toFixed(1)}×${size.y.toFixed(1)}×${size.z.toFixed(1)} u. ` +
       `scale wrapper = ${(def.target / (Math.max(size.x, size.z) || 1)).toExponential(3)}.`
     );
@@ -208,8 +214,12 @@ function preparePropPrototype(model, def) {
   // ── Diagnostic matériaux blancs ────────────────────────────────────────────
   // Affiché uniquement pour les props à risque (bypassBboxCheck ou animaux).
   // À supprimer une fois le bug blanc résolu.
+  // 2026-07-16 (phase 4) : ajout de DEBUG_FLAGS.assets EN PLUS du filtre DEBUG_KEYS
+  // existant — comportement identique quand le flag est actif (toujours limité aux 2
+  // mêmes clés), simplement muet par défaut désormais (avant : toujours actif pour
+  // ces 2 clés, flag ou pas).
   const DEBUG_KEYS = new Set(['fountain-1', 'animal-dog']);
-  if (DEBUG_KEYS.has(def.key)) {
+  if (DEBUG_FLAGS.assets && DEBUG_KEYS.has(def.key)) {
     let mi = 0;
     wrapper.traverse(o => {
       if (!o.isMesh) return;

@@ -18,17 +18,51 @@ function tr($t, $lang, $path) {
     }
     return $node;
 }
+
+// 2026-07-18 — cache-busting CSS (même bug/fix que index.php, cf. CONTEXT.md) :
+// aucun <link rel="stylesheet"> de cette page n'avait de query param de version,
+// donc le navigateur pouvait servir indéfiniment une version en cache de
+// css/style.css (et de tout ce qu'il @import : base.css, eda.css, help.css,
+// deck.css, missions.css...) même après modification des fichiers sur disque —
+// cause probable des multiples retours "aucun effet"/"exactement pareil" sur
+// les HUD parchemin. $cssVersion = mtime le plus récent parmi TOUS les fichiers
+// CSS touchés par cette page (y compris ceux @import'és par style.css, qui ne
+// portent pas leur propre query param sinon).
+$cssFilesGame = [
+    __DIR__ . '/css/style.css',
+    __DIR__ . '/css/base.css',
+    __DIR__ . '/css/deck.css',
+    __DIR__ . '/css/help.css',
+    __DIR__ . '/css/highscore.css',
+    __DIR__ . '/css/missions.css',
+    __DIR__ . '/css/eda.css',
+    __DIR__ . '/css/startupMenu.css',
+    __DIR__ . '/css/snapshotGalleryOverlay.css',
+    __DIR__ . '/css/preloader.css',
+    __DIR__ . '/css/multiplayerUi.css',
+    __DIR__ . '/css/scorePopup.css',
+    __DIR__ . '/css/themes/bleu.css',
+    __DIR__ . '/css/themes/medieval.css',
+];
+$cssVersion = time();
+$mtimesGame = array_filter(array_map(function ($f) { return file_exists($f) ? filemtime($f) : 0; }, $cssFilesGame));
+if ($mtimesGame) { $cssVersion = max($mtimesGame); }
 ?>
 <!doctype html>
-<html lang="fr" data-lang="fr">
+<html lang="fr" data-lang="fr" data-theme="ancien">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hexistenz</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/multiplayerUi.css" />
-  <link rel="stylesheet" href="css/scorePopup.css" />
+  <link rel="stylesheet" href="css/style.css?v=<?= $cssVersion ?>" />
+  <link rel="stylesheet" href="css/multiplayerUi.css?v=<?= $cssVersion ?>" />
+  <link rel="stylesheet" href="css/scorePopup.css?v=<?= $cssVersion ?>" />
+  <!-- Thèmes graphiques Bleu/Médiéval (cf. CONTEXT.md §32) — chargés ici pour que
+       #scorePanel et .missionsBox réagissent à [data-theme="ancien"], comme
+       .mode-panel (css/multiplayerUi.css) depuis le chantier précédent. -->
+  <link rel="stylesheet" href="css/themes/bleu.css?v=<?= $cssVersion ?>" />
+  <link rel="stylesheet" href="css/themes/medieval.css?v=<?= $cssVersion ?>" />
   <style>
     /* Harmonisation HUD/aide : village = nouvelles couleurs brun/gris terre battue + gravier. */
     .swatch.house {
@@ -54,6 +88,14 @@ function tr($t, $lang, $path) {
     (function() {
       var l = localStorage.getItem('hexistenz_pres_lang') || 'fr';
       document.documentElement.dataset.lang = l;
+    })();
+    // 2026-07-17 — restaure le thème graphique choisi dans la prez (même clé
+    // localStorage que javascript/themeManager.js). Le HUD in-game réagit
+    // progressivement à [data-theme="ancien"] : .mode-panel (menus pre-game),
+    // #scorePanel + .missionsBox (HUD in-partie) — cf. CONTEXT.md §32.
+    (function() {
+      var th = localStorage.getItem('hexistenz_theme');
+      document.documentElement.dataset.theme = (th === 'bleu') ? 'bleu' : 'ancien';
     })();
   </script>
 </head>
@@ -90,6 +132,7 @@ function tr($t, $lang, $path) {
   <div id="arcadeScore"><span id="dbgScore">0</span><span class="arcade-suffix">pts <span id="dbgLastScore"></span></span></div>
 
   <aside id="scorePanel">
+    <div class="internal-parchment">
     <div id="multiplayerInfo" hidden class="multiplayer-info">
       <div class="multiplayer-info-block">
         <div class="score-title" data-i18n="game.ui.hud.player"><?= tr($t,'fr','game.ui.hud.player') ?></div>
@@ -143,42 +186,50 @@ function tr($t, $lang, $path) {
         </div>
       </div>
     </div>
+    </div>
   </aside>
 
 
   <aside id="tileUI">
-    <div class="tilePreviewRow">
-      <div class="tileBox">
-        <div class="title" data-i18n="game.ui.hud.activeTileTitle"><?= tr($t,'fr','game.ui.hud.activeTileTitle') ?></div>
-        <div id="activeTile"></div>
+    <div class="tileDeckBox">
+      <div class="internal-parchment">
+      <div class="tilePreviewRow">
+        <div class="tileBox">
+          <div class="title" data-i18n="game.ui.hud.activeTileTitle"><?= tr($t,'fr','game.ui.hud.activeTileTitle') ?></div>
+          <div id="activeTile"></div>
+        </div>
+        <div class="tileBox">
+          <div class="title" data-i18n="game.ui.hud.nextTileTitle"><?= tr($t,'fr','game.ui.hud.nextTileTitle') ?></div>
+          <div id="nextTile"></div>
+        </div>
       </div>
-      <div class="tileBox">
-        <div class="title" data-i18n="game.ui.hud.nextTileTitle"><?= tr($t,'fr','game.ui.hud.nextTileTitle') ?></div>
-        <div id="nextTile"></div>
-      </div>
-    </div>
 
-    <div class="tileCountRow">
-      <div class="deckRemainingBox">
-        <div class="title" data-i18n="game.ui.hud.deckRemaining"><?= tr($t,'fr','game.ui.hud.deckRemaining') ?></div>
-        <div id="deckRemaining">50</div>
+      <div class="tileCountRow">
+        <div class="deckRemainingBox">
+          <div class="title" data-i18n="game.ui.hud.deckRemaining"><?= tr($t,'fr','game.ui.hud.deckRemaining') ?></div>
+          <div id="deckRemaining">50</div>
+        </div>
+        <div class="deckRemainingBox">
+          <div class="title" data-i18n="game.ui.hud.tilesPlaced"><?= tr($t,'fr','game.ui.hud.tilesPlaced') ?></div>
+          <div id="tilesPlaced">0</div>
+        </div>
       </div>
-      <div class="deckRemainingBox">
-        <div class="title" data-i18n="game.ui.hud.tilesPlaced"><?= tr($t,'fr','game.ui.hud.tilesPlaced') ?></div>
-        <div id="tilesPlaced">0</div>
       </div>
     </div>
 
     <div class="missionsBox">
+      <div class="internal-parchment">
       <div class="title" data-i18n="game.ui.hud.missionsTitle"><?= tr($t,'fr','game.ui.hud.missionsTitle') ?></div>
       <ul id="missionList" class="missionList">
         <li class="mission-empty" data-i18n="game.ui.hud.noMission"><?= tr($t,'fr','game.ui.hud.noMission') ?></li>
       </ul>
+      </div>
     </div>
   </aside>
 
   <section id="helpOverlay" class="help-overlay hidden" aria-hidden="true">
     <div class="help-panel" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="internal-parchment">
       <header class="help-header">
         <div>
           <h1 id="helpTitle" data-i18n="game.ui.help.title"><?= tr($t,'fr','game.ui.help.title') ?></h1>
@@ -273,6 +324,7 @@ function tr($t, $lang, $path) {
             <div><kbd>E</kbd><span data-i18n="game.ui.help.controls.eda"><?= tr($t,'fr','game.ui.help.controls.eda') ?></span></div>
             <div><kbd>C</kbd><span data-i18n="game.ui.help.controls.snapshot"><?= tr($t,'fr','game.ui.help.controls.snapshot') ?></span></div>
             <div><kbd>G</kbd><span data-i18n="game.ui.help.controls.gallery"><?= tr($t,'fr','game.ui.help.controls.gallery') ?></span></div>
+            <div><kbd>V</kbd><span data-i18n="game.ui.help.controls.replay"><?= tr($t,'fr','game.ui.help.controls.replay') ?></span></div>
           </div>
         </article>
        </div>
@@ -282,6 +334,7 @@ function tr($t, $lang, $path) {
           <p data-i18n="game.ui.help.missions.text1"><?= tr($t,'fr','game.ui.help.missions.text1') ?></p>
           <p data-i18n="game.ui.help.missions.text2"><?= tr($t,'fr','game.ui.help.missions.text2') ?></p>
         </article>
+      </div>
       </div>
     </div>
   </section>

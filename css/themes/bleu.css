@@ -1,0 +1,215 @@
+/* ─── bleu.css — thème graphique "Bleu" (actuel, par défaut) ─────────────
+   2026-07-17 — extraction depuis css/presentation.css (cf. CONTEXT.md §32) :
+   tout ce qui est intrinsèque à l'identité visuelle du thème bleu (fonds légèrement
+   transparents et bleutés, liseré bleu lumineux au survol, coins arrondis) part ici,
+   symétrique de css/themes/medieval.css. Ce qui reste dans presentation.css est le
+   layout partagé entre les deux thèmes (grid, flex, tailles, structure des images).
+   Fichier déplacé dans css/themes/ le 2026-07-17 puis renommé theme-bleu.css →
+   bleu.css le même jour (nom de fichier seul, mêmes dépendances).
+
+   Scope de ce fichier : uniquement les cartes/sections de la prez (index.php) —
+   .mission-card, .biome-card, .faction-card, .creature-card, .audio-card,
+   .daynight-card, .hs-card, .hero-inspi-card, .stats-bar, .step-card,
+   .kbd-strip, .gallery-card, .eda-showcase-card et .room-demo — même périmètre
+   que medieval.css (même dossier css/themes/). Le reste du HUD in-game (score/missions/aide/FPS/EDA/
+   deck/galerie snapshot/replay/menus pre-game) est aussi entièrement thémé,
+   mais directement via des blocs [data-theme="..."] dans base.css/eda.css/
+   help.css/missions.css/highscore.css/deck.css/snapshots.css/multiplayerUi.css/
+   startupMenu.css/snapshotGalleryOverlay.css — pas dans ce fichier. cf. CONTEXT.md §32.
+
+   Toutes les règles sont scopées sous [data-theme="bleu"] — actif par défaut
+   (<html data-theme="bleu">, cf. index.php/game.php/javascript/themeManager.js). */
+
+[data-theme="bleu"] .mission-card {
+  padding: 22px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+[data-theme="bleu"] .mission-desc {
+  color: var(--text-dim);
+}
+
+[data-theme="bleu"] .biome-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+/* 2026-07-19 — hover border-color retiré sur demande explicite (plus aucun effet
+   de survol souris sur les images de "Six biomes à connecter"). */
+[data-theme="bleu"] .biome-desc { color: var(--text-dim); }
+[data-theme="bleu"] .biome-card.grass  .biome-tag { background: rgba(82,160,64,0.28);  color: #88e070; }
+[data-theme="bleu"] .biome-card.field  .biome-tag { background: rgba(212,184,64,0.28); color: #f0d060; }
+[data-theme="bleu"] .biome-card.forest .biome-tag { background: rgba(36,104,48,0.38);  color: #60df78; }
+[data-theme="bleu"] .biome-card.house  .biome-tag { background: rgba(176,136,96,0.28); color: #d8b080; }
+[data-theme="bleu"] .biome-card.water  .biome-tag { background: rgba(32,104,160,0.35); color: #70c0f8; }
+[data-theme="bleu"] .biome-card.rail   .biome-tag { background: rgba(112,104,128,0.35);color: #c0b8d8; }
+
+[data-theme="bleu"] .faction-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+[data-theme="bleu"] .faction-card.platiste { border-color: rgba(200,180,100,0.30); }
+[data-theme="bleu"] .faction-card.platiste:hover { border-color: rgba(220,200,100,0.60); }
+[data-theme="bleu"] .faction-card.bouliste  { border-color: rgba(80,160,220,0.30); }
+[data-theme="bleu"] .faction-card.bouliste:hover  { border-color: rgba(80,180,255,0.60); }
+[data-theme="bleu"] .faction-img {
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+}
+[data-theme="bleu"] .faction-card.platiste .faction-img { background: linear-gradient(160deg, rgba(60,40,10,0.5) 0%, rgba(20,15,5,0.8) 100%); }
+[data-theme="bleu"] .faction-card.bouliste  .faction-img { background: linear-gradient(160deg, rgba(10,30,60,0.5) 0%, rgba(5,12,28,0.8) 100%); }
+[data-theme="bleu"] .faction-body { padding: 24px 24px 26px; }
+[data-theme="bleu"] .faction-card.platiste .faction-tag { background: rgba(200,170,80,0.20); color: #d4b860; border: 1px solid rgba(200,170,80,0.30); }
+[data-theme="bleu"] .faction-card.bouliste  .faction-tag { background: rgba(80,160,240,0.18); color: #78c0ff; border: 1px solid rgba(80,160,240,0.30); }
+[data-theme="bleu"] .faction-card.platiste .faction-name { color: #e8d080; }
+[data-theme="bleu"] .faction-card.bouliste  .faction-name { color: #88c8ff; }
+[data-theme="bleu"] .faction-desc { color: var(--text-dim); }
+
+[data-theme="bleu"] .creature-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+[data-theme="bleu"] .creature-card:hover { border-color: var(--c-grass); }
+[data-theme="bleu"] .creature-body { padding: 18px 20px 20px; }
+[data-theme="bleu"] .creature-desc { color: var(--text-dim); }
+
+[data-theme="bleu"] .audio-card {
+  padding: 22px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+[data-theme="bleu"] .audio-desc { color: var(--text-dim); }
+
+[data-theme="bleu"] .daynight-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+[data-theme="bleu"] .daynight-img { border-bottom: 1px solid var(--border); }
+[data-theme="bleu"] .daynight-body { padding: 24px 26px 26px; }
+[data-theme="bleu"] .daynight-card.day  { border-color: rgba(255,210,80,0.28); }
+[data-theme="bleu"] .daynight-card.day:hover  { border-color: rgba(255,220,100,0.55); }
+[data-theme="bleu"] .daynight-card.night { border-color: rgba(120,160,255,0.28); }
+[data-theme="bleu"] .daynight-card.night:hover { border-color: rgba(120,180,255,0.55); }
+[data-theme="bleu"] .daynight-card.smoke:hover { border-color: rgba(180,140,255,0.55); }
+[data-theme="bleu"] .daynight-card.day  .daynight-name { color: #f0d060; }
+[data-theme="bleu"] .daynight-card.night .daynight-name { color: #90b8ff; }
+[data-theme="bleu"] .daynight-card.smoke .daynight-name { color: #c8a8ff; }
+[data-theme="bleu"] .daynight-list li { color: var(--text-dim); }
+
+[data-theme="bleu"] .hs-card {
+  padding: 20px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+[data-theme="bleu"] .hs-card:hover { border-color: rgba(120,180,255,0.55); background: rgba(20,35,65,0.95); }
+[data-theme="bleu"] .hs-card.gold-1 { border-color: rgba(240,208,80,0.40); }
+[data-theme="bleu"] .hs-card.gold-2 { border-color: rgba(200,180,140,0.30); }
+[data-theme="bleu"] .hs-card.gold-3 { border-color: rgba(160,140,100,0.25); }
+[data-theme="bleu"] .hs-rank { color: var(--text-dim); }
+[data-theme="bleu"] .hs-card.gold-1 .hs-rank { color: var(--gold); }
+[data-theme="bleu"] .hs-card.gold-2 .hs-rank { color: #d8c8a0; }
+[data-theme="bleu"] .hs-card.gold-3 .hs-rank { color: #c0a878; }
+[data-theme="bleu"] .hs-name { color: var(--text); }
+[data-theme="bleu"] .hs-date { color: var(--blue); }
+[data-theme="bleu"] .hs-headline-stat { color: var(--text); }
+[data-theme="bleu"] .hs-meta-item { color: var(--text); }
+[data-theme="bleu"] .hs-meta-item .icon { border: 2px solid var(--blue); background: var(--blue-mid); }
+[data-theme="bleu"] .hs-biome-label { color: var(--text); }
+[data-theme="bleu"] .hs-stat-num, [data-theme="bleu"] .hs-biome-total, [data-theme="bleu"] .hs-biome-max { color: var(--blue); }
+[data-theme="bleu"] .hs-biome-note { color: var(--text-dim); }
+[data-theme="bleu"] .hs-score { color: var(--blue); text-shadow: 0 0 50px rgba(120,180,255,0.5); }
+[data-theme="bleu"] .hs-card.gold-1 .hs-score { color: var(--gold); }
+[data-theme="bleu"] .hs-empty { color: var(--text-dim); border: 1px solid var(--border); border-radius: 12px; }
+
+[data-theme="bleu"] .hero-inspi-card {
+  border: 1px solid rgba(120,180,255,0.18);
+  border-radius: 10px;
+  background: rgba(14,24,44,0.70);
+}
+/* 2026-07-19 — hover border-color retiré sur demande explicite (plus aucun effet
+   de survol souris sur les 3 images de l'intro .hero-inspi-grid). */
+
+[data-theme="bleu"] .stats-bar {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+[data-theme="bleu"] .stat-item { border-right: 1px solid var(--border); }
+[data-theme="bleu"] .stat-item:last-child { border-right: none; }
+[data-theme="bleu"] .stat-num { color: var(--blue); }
+[data-theme="bleu"] .stat-label { color: var(--text-dim); }
+
+[data-theme="bleu"] .step-card {
+  padding: 26px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+[data-theme="bleu"] .step-card::before {
+  content: counter(steps, decimal-leading-zero);
+  font-family: var(--font-title);
+  font-size: 54px;
+  color: rgba(120,180,255,0.14);
+  position: absolute;
+  top: 10px; right: 14px;
+  line-height: 1;
+}
+[data-theme="bleu"] .step-desc { color: var(--text-dim); }
+
+/* Le sélecteur de langue existant montre déjà le pattern "1 seule boîte" —
+   ici les 17 .kbd-strip-item gardent leur fond/bordure individuels en thème
+   bleu (inchangé, style "cartes" existant depuis 2026-07-15). */
+[data-theme="bleu"] .kbd-strip-item {
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-dim);
+}
+[data-theme="bleu"] .kbd-strip kbd {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-style: solid;
+  color: var(--text);
+}
+
+[data-theme="bleu"] .gallery-card { border: 1px solid var(--border); border-radius: 12px; }
+[data-theme="bleu"] .gallery-card:hover { border-color: rgba(120,180,255,0.55); }
+[data-theme="bleu"] .gallery-label span { color: var(--text-dim); }
+
+[data-theme="bleu"] .eda-showcase-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+[data-theme="bleu"] .eda-showcase-card:hover { border-color: rgba(120,180,255,0.55); box-shadow: 0 12px 36px rgba(0,0,0,0.45); }
+[data-theme="bleu"] .eda-showcase-img { border-bottom: 1px solid var(--border); }
+[data-theme="bleu"] .eda-showcase-body { padding: 18px 20px 22px; }
+[data-theme="bleu"] .eda-showcase-tab { color: var(--gold); }
+[data-theme="bleu"] .eda-showcase-desc { color: var(--text-dim); }
+
+[data-theme="bleu"] .room-demo { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; }
+[data-theme="bleu"] .room-demo-title,
+[data-theme="bleu"] .room-status,
+[data-theme="bleu"] .room-scores-label,
+[data-theme="bleu"] .room-score-name.dim { color: var(--text-dim); }
+[data-theme="bleu"] .room-code { color: var(--blue); text-shadow: 0 0 50px rgba(120,180,255,0.5); }
+[data-theme="bleu"] .player-dot { border-color: var(--border); }
+[data-theme="bleu"] .player-dot.active { border-color: var(--blue); background: var(--blue-mid); }
+[data-theme="bleu"] .room-scores { border-top: 1px solid var(--border); }
+[data-theme="bleu"] .room-score-pts { color: var(--blue); }
+[data-theme="bleu"] .room-score-pts.gold { color: var(--gold); }
+
+/* Stats-bar mobile (≤600px, cf. presentation.css) : bordures internes 2×2. */
+@media (max-width: 600px) {
+  [data-theme="bleu"] .stat-item { border-bottom: 1px solid var(--border); }
+  [data-theme="bleu"] .stat-item:nth-child(odd) { border-right: 1px solid var(--border); }
+}

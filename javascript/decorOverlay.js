@@ -64,7 +64,8 @@ import {
   LOD_FOUNTAIN_CULL_DISTANCE,
   LOD_CROW_CULL_DISTANCE,
   LOD_SEAGULL_CULL_DISTANCE,
-  LOD_MILL_CULL_DISTANCE
+  LOD_MILL_CULL_DISTANCE,
+  DEBUG_FLAGS
 } from './variables.js';
 import { getTileEdgeType, clearGroup } from './tileUtils.js';
 import { getHexVertex, normalize2 } from './hexGeometry.js';
@@ -425,7 +426,7 @@ function _refreshDecorAnimRegistry(overlay) {
   overlay.traverse(obj => {
     if (obj.userData.effectKind || obj.userData.mixer) _decorAnimRegistry.add(obj);
   });
-  console.log(`[DECOR-ANIM] registry: ${_decorAnimRegistry.size} animated objects`);
+  if (DEBUG_FLAGS.overlays) console.log(`[DECOR-ANIM] registry: ${_decorAnimRegistry.size} animated objects`);
 }
 
 export function rebuildDecorOverlay(overlay, placedTiles) {

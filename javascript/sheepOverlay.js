@@ -28,12 +28,13 @@ import { collectZone, getFullTextureNeighbors } from './zoneUtils.js';
 import { createGLTFLoader } from './glbLoader.js';
 import { hashUnit10k as hashUnit } from './hashUtils.js';
 import { scaledCountMin } from './contentDensity.js';
+import { DEBUG_FLAGS } from './variables.js';
 import { getSectorWorldCenter, GROUND_CLEARANCE } from './propPlacement.js';
 import { registerPropHitbox, tryResolve } from './propHitboxRegistry.js';
 
 // ─── Paramètres (calibrables) ──────────────────────────────────────────────────
 const SHEEP_GLB_PATH    = './glb/animaux/sheep-2.glb';
-const TILES_PER_SHEEP    = 0.292; // 1 mouton par N tuiles prairie connexes (+15 % depuis 0.336)
+const TILES_PER_SHEEP    = 0.243333; // 1 mouton par N tuiles prairie connexes (+20 % depuis 0.292, +15 % depuis 0.336)
 const SHEEP_TARGET_LEN   = 0.044712; // longueur cible en unités monde (−12 % depuis 0.061, puis −10 % depuis 0.054, puis −8 % depuis 0.0486, 2026-07-13)
 const SHEEP_WALK_SPEED   = 0.034425; // unités monde/seconde (marcheur) — −17 % depuis 0.0684, puis −15 % depuis 0.0568, puis −12 % depuis 0.0483, puis −10 % depuis 0.0425, puis −10 % depuis 0.03825 (2026-07-13)
 const SHEEP_HITBOX_R     = 0.034; // rayon hitbox mouton (≈ demi-longueur + marge)
@@ -79,19 +80,23 @@ function _loadSheepGlb(onReady) {
   createGLTFLoader().load(SHEEP_GLB_PATH, (gltf) => {
     const clip = gltf.animations[0]; // "Animation" — 54 channels, 3 moutons
 
-    // Debug hiérarchie
-    console.log('[sheepOverlay] GLB chargé — hiérarchie :');
-    gltf.scene.traverse(o => console.log('  '.repeat(_depth(o)) + `"${o.name}" [${o.type}]`));
-    console.log('[sheepOverlay] Tracks animation :', clip.tracks.map(t => t.name));
+    // Debug hiérarchie — gaté sous DEBUG_FLAGS.assets (2026-07-16, phase 4), une seule
+    // fois au chargement du GLB (pas par frame), pur diagnostic sans effet de bord.
+    if (DEBUG_FLAGS.assets) {
+      console.log('[sheepOverlay] GLB chargé — hiérarchie :');
+      gltf.scene.traverse(o => console.log('  '.repeat(_depth(o)) + `"${o.name}" [${o.type}]`));
+      console.log('[sheepOverlay] Tracks animation :', clip.tracks.map(t => t.name));
+    }
 
     // Récupère les 3 armatures via leur position dans la hiérarchie
     // gltf.scene > Sketchfab_model > root > GLTF_SceneRootNode > [walker, grazer, static]
     const sceneRoot = _findSceneRoot(gltf.scene);
     const [walker, grazer, stat] = sceneRoot?.children ?? [];
 
-    console.log('[sheepOverlay] Protos trouvés :', walker?.name, '|', grazer?.name, '|', stat?.name);
+    if (DEBUG_FLAGS.assets) console.log('[sheepOverlay] Protos trouvés :', walker?.name, '|', grazer?.name, '|', stat?.name);
 
     if (!walker || !grazer || !stat) {
+      // Laissé TOUJOURS actif (pas gaté) : signale un échec réel de chargement, pas un diagnostic.
       console.error('[sheepOverlay] Armatures manquantes — vérifie la hiérarchie ci-dessus.');
       _glbLoading = false;
       return;
@@ -119,13 +124,13 @@ function _loadSheepGlb(onReady) {
     // On garde rotation et scale, on supprime uniquement le canal position.
     const grazerTracks = _filterClipForArmature(grazer, 'grazer-anim').tracks.filter(t => t.name !== 'Baze_19.position');
     const grazerClip   = new THREE.AnimationClip('grazer-anim', clip.duration, grazerTracks);
-    console.log('[sheepOverlay] Tracks brouteur conservées :', grazerTracks.map(t => t.name));
+    if (DEBUG_FLAGS.assets) console.log('[sheepOverlay] Tracks brouteur conservées :', grazerTracks.map(t => t.name));
 
     // Mesure de la longueur réelle pour calibrer l'échelle
     const box    = new THREE.Box3().setFromObject(walker);
     const rawLen = Math.max(box.max.z - box.min.z, box.max.x - box.min.x, 0.01);
     const scale  = SHEEP_TARGET_LEN / rawLen;
-    console.log('[sheepOverlay] Scale calculée :', scale.toFixed(4), '(rawLen =', rawLen.toFixed(3) + ')');
+    if (DEBUG_FLAGS.assets) console.log('[sheepOverlay] Scale calculée :', scale.toFixed(4), '(rawLen =', rawLen.toFixed(3) + ')');
 
     // Pied réel de chaque armature (box.min.y, en unités NON scalées) — corrige le pivot
     // GLB tel qu'exporté au lieu de supposer qu'il est déjà au niveau des pattes.
@@ -231,10 +236,11 @@ function _cloneSheep(proto, scale, clip) {
 }
 
 // ─── Peuplement d'une zone ─────────────────────────────────────────────────────
-// Distribution par tirage déterministe pour chaque mouton :
-//   r < 0.30 → marcheur  (30 %)
-//   r < 0.80 → brouteur  (50 %)
-//   r ≥ 0.80 → immobile  (20 %)
+// Distribution par tirage déterministe pour chaque mouton (marcheur +25 % relatif
+// depuis 30 %, prélevé sur le pool brouteur ; immobile inchangé) :
+//   r < 0.375 → marcheur  (37.5 %)
+//   r < 0.80  → brouteur  (42.5 %)
+//   r ≥ 0.80  → immobile  (20 %)
 function _populateZone(group, zone, protos, prevWalkersByZone, nextWalkersByZone) {
   const { sectors, uniqueTiles, center } = zone;
   // Densité de contenu (qualité/FPS) : moins de moutons à basse densité (min 1 par zone prairie).
@@ -263,7 +269,7 @@ function _populateZone(group, zone, protos, prevWalkersByZone, nextWalkersByZone
   for (let i = 0; i < sheepCount; i++) {
     const r = hashUnit(zKey + `type${i}`);
 
-    if (r < 0.30) {
+    if (r < 0.375) {
       // ── Marcheur ────────────────────────────────────────────────────────────
       const { object: walkerObj, mixer: walkerMixer } = _cloneSheep(protoWalker, scale, walkerClip);
       walkerObj.name = 'animal-sheep-glb-walker'; // classification HUD FPS (sceneProfiler.js → "Moutons")

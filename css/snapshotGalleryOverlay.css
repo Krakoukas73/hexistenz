@@ -26,12 +26,6 @@
   width: min(1560px, calc(100vw - 48px));
   height: calc(100vh - 48px);
   box-sizing: border-box;
-  background:
-    linear-gradient(135deg, rgba(22, 31, 45, 0.96), rgba(7, 11, 18, 0.96)),
-    radial-gradient(circle at top left, rgba(58, 125, 255, 0.18), transparent 45%);
-  border: 1px solid rgba(120, 180, 255, 0.42);
-  border-radius: 18px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
   overflow: hidden;
 }
 
@@ -50,15 +44,47 @@
   z-index: 1;
   width: 44px;
   height: 44px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 12px;
-  background: rgba(10, 14, 20, 0.72);
-  color: white;
   cursor: pointer;
   font: 700 28px/1 system-ui, sans-serif;
 }
 
-.snapshot-gallery-close:hover {
+/* ─── [data-theme="bleu"] — apparence actuelle par défaut ─────────────────── */
+[data-theme="bleu"] .snapshot-gallery-panel {
+  background:
+    linear-gradient(135deg, rgba(22, 31, 45, 0.96), rgba(7, 11, 18, 0.96)),
+    radial-gradient(circle at top left, rgba(58, 125, 255, 0.18), transparent 45%);
+  border: 1px solid rgba(120, 180, 255, 0.42);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+}
+[data-theme="bleu"] .snapshot-gallery-close {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(10, 14, 20, 0.72);
+  color: white;
+}
+[data-theme="bleu"] .snapshot-gallery-close:hover {
   background: rgba(255, 59, 59, 0.75);
   border-color: rgba(255, 95, 95, 0.95);
 }
+
+/* ─── [data-theme="ancien"] — parchemin 9-slice sur le cadre de l'overlay,
+   même technique que .help-panel (§32). Le contenu réel (mosaïque) vit dans
+   une <iframe> séparée (snapshots.php/css/snapshots.css, document indépendant
+   sans accès à [data-theme]) : non couvert par ce chantier, seul le cadre
+   visible immédiatement à l'ouverture du popup est thémé ici. ─── */
+[data-theme="ancien"] .snapshot-gallery-panel {
+  border: 50px solid transparent;
+  border-image-source: url("../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+[data-theme="ancien"] .snapshot-gallery-close {
+  border: none;
+  background: #4a3623;
+  color: #f0e6d0;
+}
+[data-theme="ancien"] .snapshot-gallery-close:hover { background: #6b2018; }

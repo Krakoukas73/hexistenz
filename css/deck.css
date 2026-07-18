@@ -9,6 +9,19 @@
   max-height: calc(100vh - 40px);
 }
 
+/* 2026-07-17 — wrapper autour de .tilePreviewRow + .tileCountRow (demande
+   explicite) : en thème bleu, layout pur (aucun changement visuel — le gap
+   vertical entre les 2 rangées, auparavant fourni par le gap:8px de #tileUI
+   directement sur ses enfants, est repris ici puisque les 2 rangées ne sont
+   plus des enfants directs de #tileUI). En thème ancien, cf. plus bas :
+   parchemin 9-slice appliqué sur .tileDeckBox uniquement — .tileBox/
+   .deckRemainingBox gardent leur propre carte sombre opaque inchangée. */
+.tileDeckBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .tilePreviewRow,
 .tileCountRow {
   display: flex;
@@ -195,4 +208,67 @@
   background-image:
     repeating-linear-gradient(90deg, rgba(70, 70, 70, 0.26) 0 2px, transparent 2px 12px),
     linear-gradient(180deg, rgba(255,255,255,0.30), rgba(0,0,0,0.12));
+}
+
+/* ─── [data-theme="ancien"] uniquement — demande explicite : aucun changement
+   en thème bleu (.tileDeckBox reste un simple conteneur de layout dans ce
+   thème). Parchemin 9-slice sur le wrapper, même technique que #scorePanel/
+   .missionsBox (§32) ; .tileBox/.deckRemainingBox gardent leur propre carte
+   sombre opaque inchangée par-dessus — pas de changement de texte/couleur là,
+   uniquement le fond de la nouvelle div. ─── */
+[data-theme="ancien"] .tileDeckBox {
+  border: 50px solid transparent;
+  border-image-source: url("../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  border-radius: 0;
+  padding: 0;
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+  /* 2026-07-18 — retour utilisateur : les titres des 4 cellules (TUILE COURANTE/
+     SUIVANTE/RESTANTES/POSÉES) doivent utiliser la même typo que "MISSIONS EN
+     COURS" (.missionsBox, base.css/missions.css) une fois en thème médiéval.
+     Même mécanisme : .missionsBox pose font-family:Georgia sur le conteneur,
+     .title (classe partagée, pas de font-family propre) en hérite. Ici
+     .tileDeckBox n'avait jamais reçu cette police — .title y restait donc dans
+     la police système/monospace ambiante au lieu du serif parchemin. */
+  font-family: Georgia, "Times New Roman", serif;
+
+  /* 2026-07-18 — .tileDeckBox est display:flex + flex-direction:column + gap:8px
+     directement sur lui-même (thème bleu, pour espacer .tilePreviewRow/
+     .tileCountRow) : cassé par le wrapper unique .internal-parchment (devenait
+     le seul enfant du conteneur flex). Transfert du flex+gap sur le wrapper.
+     Pas d'overflow ni de scroll ici (contrairement à #scorePanel/.fps-counter/
+     .help-panel/.debug-light-body) — marge négative appliquée normalement,
+     sans piège. */
+  display: block;
+}
+[data-theme="ancien"] .tileDeckBox > .internal-parchment {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: -20px -25px -20px -25px;
+}
+
+/* 2026-07-18 — retour utilisateur : revient sur la décision du 2026-07-17
+   ci-dessus ("gardent leur propre carte sombre opaque inchangée"). Les 4
+   cellules (tuile courante/tuile suivante/restantes/posées) doivent elles
+   aussi passer dans le thème médiéval — plus de fond sombre ni de typo cyan,
+   même principe que .stats-summary-card/.stats-card (#scorePanel, base.css) :
+   translucide noir léger sur le parchemin clair, texte brun foncé. */
+[data-theme="ancien"] .tileBox,
+[data-theme="ancien"] .deckRemainingBox {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(74, 54, 35, 0.20);
+  box-shadow: none;
+}
+[data-theme="ancien"] #deckRemaining,
+[data-theme="ancien"] #tilesPlaced {
+  color: #332415;
+  text-shadow: none;
+}
+[data-theme="ancien"] .title {
+  color: #4a3623;
+}
+[data-theme="ancien"] .mini-hex-tile {
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35));
 }

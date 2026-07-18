@@ -30,9 +30,17 @@ function ensureOverlay() {
   overlayEl.querySelector('#snapshotGalleryClose').addEventListener('click', closeSnapshotGallery);
   // Clic sur le voile (en dehors du panneau) : ferme, comme les autres overlays du jeu.
   overlayEl.addEventListener('click', (e) => { if (e.target === overlayEl) closeSnapshotGallery(); });
+  // Capture=true + stopImmediatePropagation() : sans ça, ESC fermait la galerie MAIS
+  // déclenchait aussi le handler global 'h'/Escape de scene.js (toggleHelp()), les deux
+  // écoutant 'keydown' sur le même document — même fix que replayEngine.js (2026-07-16,
+  // cf. son commentaire), signalé ici par l'utilisateur le 2026-07-17.
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !overlayEl.classList.contains('hidden')) closeSnapshotGallery();
-  });
+    if (e.key === 'Escape' && overlayEl && !overlayEl.classList.contains('hidden')) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      closeSnapshotGallery();
+    }
+  }, true);
   // 2e ESC dans la visionneuse plein écran (snapshots.php) : un keydown dans l'<iframe>
   // ne bulle jamais vers ce document parent (documents distincts), donc la page interne
   // le signale explicitement par postMessage une fois sa propre visionneuse déjà fermée.
@@ -56,4 +64,11 @@ export function closeSnapshotGallery() {
   overlayEl.classList.add('hidden');
   overlayEl.setAttribute('aria-hidden', 'true');
   frameEl.src = 'about:blank'; // libère l'iframe, force un rechargement frais à la prochaine ouverture
+}
+
+// 2026-07-16 — permet à la touche G (scene.js) de basculer ouvert/fermé plutôt que de
+// seulement relayer un .click() vers #galleryBtn (qui n'ouvre que la galerie, aucun effet
+// de fermeture) — même besoin que replayController.isOpen() pour la touche V du replay.
+export function isSnapshotGalleryOpen() {
+  return !!overlayEl && !overlayEl.classList.contains('hidden');
 }

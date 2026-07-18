@@ -166,10 +166,12 @@ function prepareChestPrototype(model) {
   wrapper.scale.setScalar(CHEST_TARGET_WIDTH / maxFootprint);
   wrapper.add(source);
 
+  // Ombres désactivées (2026-07-16, demande explicite) — le coffre (gold.glb) ne
+  // projette/reçoit plus d'ombre.
   wrapper.traverse(o => {
     if (!o.isMesh) return;
-    o.castShadow    = true;
-    o.receiveShadow = true;
+    o.castShadow    = false;
+    o.receiveShadow = false;
   });
 
   return wrapper;

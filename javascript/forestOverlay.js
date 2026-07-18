@@ -18,7 +18,8 @@ import {
   TREE_WIND,
   FOREST_CHUNK_SIZE,
   LOD_TREE_CULL_DISTANCE,
-  HITBOX_R
+  HITBOX_R,
+  DEBUG_FLAGS
 } from './variables.js';
 import { registerPropHitbox } from './propHitboxRegistry.js';
 import { getCurvatureTiltQuaternion } from './worldCurvature.js';
@@ -144,7 +145,9 @@ export function rebuildForestOverlay(group, placedTiles, changedTile = null) {
 
     buildTreeInstancedMeshes(group, accumulator);
     const _t4 = performance.now();
-    console.log(`[FOREST-INCR chunk=${chunkKey}] remove=${(_t1-_t0).toFixed(1)}ms | safeZ=${(_t2-_t1).toFixed(1)}ms | collect=${(_t3-_t2).toFixed(1)}ms | build=${(_t4-_t3).toFixed(1)}ms | TOTAL=${(_t4-_t0).toFixed(1)}ms`);
+    // Gaté sous DEBUG_FLAGS.overlays (2026-07-16, phase 3) — pur diagnostic de timing,
+    // n'affecte que le rebuild incrémental (pas d'appel par frame).
+    if (DEBUG_FLAGS.overlays) console.log(`[FOREST-INCR chunk=${chunkKey}] remove=${(_t1-_t0).toFixed(1)}ms | safeZ=${(_t2-_t1).toFixed(1)}ms | collect=${(_t3-_t2).toFixed(1)}ms | build=${(_t4-_t3).toFixed(1)}ms | TOTAL=${(_t4-_t0).toFixed(1)}ms`);
     return;
   }
 
@@ -169,7 +172,9 @@ export function rebuildForestOverlay(group, placedTiles, changedTile = null) {
 
   buildTreeInstancedMeshes(group, accumulator);
   const _rfT4 = performance.now();
-  console.log(`[FREEZE-DIAG forest-phases] dispose=${(_rfT1-_rfT0).toFixed(0)}ms | safeZones=${(_rfT2-_rfT1).toFixed(0)}ms | collect=${(_rfT3-_rfT2).toFixed(0)}ms | build=${(_rfT4-_rfT3).toFixed(0)}ms | TOTAL=${(_rfT4-_rfT0).toFixed(0)}ms`);
+  // Gaté sous DEBUG_FLAGS.overlays (2026-07-16, phase 3) — pur diagnostic de timing,
+  // n'affecte que le rebuild complet (pas d'appel par frame).
+  if (DEBUG_FLAGS.overlays) console.log(`[FREEZE-DIAG forest-phases] dispose=${(_rfT1-_rfT0).toFixed(0)}ms | safeZones=${(_rfT2-_rfT1).toFixed(0)}ms | collect=${(_rfT3-_rfT2).toFixed(0)}ms | build=${(_rfT4-_rfT3).toFixed(0)}ms | TOTAL=${(_rfT4-_rfT0).toFixed(0)}ms`);
 }
 
 function ensureTreeModels(group) {
@@ -398,7 +403,8 @@ function buildTreeInstancedMeshes(group, accumulator) {
     for (const { bakedGeo } of _bakedSubMeshes) bakedGeo.dispose();
   }
 
-  console.log(`[FREEZE-DIAG forest-build] ${_imCount} IMs | ${_subCount} sous-mesh pré-cuits | ${(performance.now()-_t2a).toFixed(0)}ms`);
+  // Gaté sous DEBUG_FLAGS.overlays (2026-07-16, phase 3) — pur diagnostic de timing.
+  if (DEBUG_FLAGS.overlays) console.log(`[FREEZE-DIAG forest-build] ${_imCount} IMs | ${_subCount} sous-mesh pré-cuits | ${(performance.now()-_t2a).toFixed(0)}ms`);
 }
 
 // Met à jour la visibilité de chaque InstancedMesh d'arbres selon le frustum caméra.

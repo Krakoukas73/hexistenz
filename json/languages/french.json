@@ -15,6 +15,10 @@
     },
     "play": "Jouer"
   },
+  "theme": {
+    "bleu": "Bleu",
+    "ancien": "Médiéval"
+  },
   "hero": {
     "subtitle": "Jeu hexagonal contemplatif fait avec nostalgie et amour ❤️ Three.js et beaucoup de tuiles",
     "inspi_text": "Inspiré de <em>Dorfromantik</em>, de l'âme pastorale de <em>The Settlers</em> (Blue Byte, 1993)\n          et des mondes merveilleux de <em>Heroes of Might and Magic</em> (3DO).",
@@ -177,6 +181,7 @@
       "perf_hud": "HUD performances",
       "snapshot": "Capture d'écran",
       "gallery": "Galerie des captures",
+      "replay": "Replay de la partie",
       "immersive": "mode immersif",
       "super_immersive": "mode super-immersif",
       "mute": "muet",
@@ -374,7 +379,9 @@
       "La carte se construit collaborativement, tuile après tuile"
     ],
     "gallery_title": "PARTAGEZ VOS CAPTURES",
-    "gallery_promo": "Immortalisez vos plus belles parties : le bouton 📷 capture le monde sans HUD, et le bouton 🖼️ ouvre la galerie serveur partagée avec tous les joueurs",
+    "gallery_promo": "Immortalisez vos plus belles parties : le bouton 📷 capture le monde sans HUD, et le bouton 🖼️ ouvre la galerie partagée avec tous les joueurs",
+    "replay_title": "Enregistrez vos parties en vidéo",
+    "replay_promo": "Le bouton 🎬 (ou la touche V) relance votre partie en accéléré, tuile par tuile, avec des vitesses de lecture allant de ×1 à ×8. Pendant la relecture, un bouton dédié capture l'écran et télécharge automatiquement une vidéo au format WebM — directement depuis votre navigateur, sans aucun logiciel ni service externe.",
     "btn_create": "Créer une partie",
     "room_title": "Code de salle",
     "room_status": "Partie en cours · 3 joueurs",
@@ -423,7 +430,7 @@
     }
   },
   "footer": {
-    "copy": "Jeu hexagonal contemplatif fait avec nostalgie et amour ❤️ Three.js et beaucoup de tuiles · 2025–2026",
+    "copy": "Jeu hexagonal contemplatif fait avec nostalgie et amour ❤️ Three.js et beaucoup de tuiles",
     "github": "Sur GitHub"
   },
   "game": {
@@ -436,6 +443,11 @@
       "modeBouliste": "Mode bouliste",
       "modePlatiste": "Mode platiste",
       "captured": "Capture faite !"
+    },
+    "replay": {
+      "restart": "Revenir au début",
+      "playPause": "Lecture / Pause",
+      "close": "Fermer le replay"
     },
     "eda": {
       "mainTitle": "Éditeur de direction artistique",
@@ -497,6 +509,10 @@
         "ega": "EGA",
         "amiga": "Amiga",
         "psyche": "Psyché-LSD"
+      },
+      "themeNames": {
+        "bleu": "Bleu",
+        "ancien": "Médiéval"
       },
       "modes": {
         "bouliste": "Bouliste",
@@ -671,9 +687,11 @@
     "help": {
       "topbar.fps": "Afficher/masquer le HUD performances avancé",
       "topbar.eda": "Ouvrir ou fermer le panneau de rendu",
-      "topbar.snapshot": "Capture d'écran (sans HUD), enregistrée sur le serveur",
+      "topbar.snapshot": "Capture d'écran (sans HUD)",
       "topbar.gallery": "Galerie des captures d'écran",
+      "topbar.replay": "Relecture de la partie",
       "topbar.lang": "Langue",
+      "topbar.theme": "Thème graphique (Bleu / Médiéval)",
       "renderer.toneMappingExposure": "Exposition globale du renderer (ACESFilmic). Contrôle la quantité de lumière atteignant le \"capteur\" avant tout étalonnage.\nValeurs < 1 assombrissent l'ensemble, > 2 peuvent saturer les hautes lumières.\nTypique : 1.2–1.8 pour un rendu naturel.",
       "environment.fogDensity": "Densité du brouillard exponentiel (FogExp2). Actif uniquement quand \"Fin linéaire\" est à 0.\nLa visibilité chute très rapidement : à 0.07 la scène est quasi-opaque.\nPour un champ visuel contrôlé, préférer le mode linéaire via \"Début\" et \"Fin\".",
       "environment.fogNear": "Distance en unités 3D où le brouillard linéaire commence.\nDès que \"Fin\" > 0, bascule automatiquement de FogExp2 vers THREE.Fog(near, far).\nÀ 0 : brouillard dès le premier plan. À 5 : les objets proches restent nets.",
@@ -797,7 +815,7 @@
       "game.largestWater": "Plus grande étendue d'eau contiguë. Un lac > 5 tuiles peut accueillir des bateaux supplémentaires.",
       "game.rail": "Tuiles de voie ferrée totales posées.\nLes rails seuls ne rapportent rien — c'est la connexion entre deux gares qui crée une ligne.",
       "game.largestRail": "Voie ferrée la plus longue contiguë (en tuiles). Indicateur de la portée maximale du réseau.",
-      "game.activeTile": "La tuile que tu vas poser au prochain coup.\nDéplace le curseur avec Z/Q/S/D, tourne avec R, et pose avec ESPACE.\nChaque face de la tuile correspond à un biome — planifie tes connexions !",
+      "game.activeTile": "La tuile que tu vas poser au prochain coup.\nDéplace le curseur avec Z/Q/S/D, tourne avec la molette, et pose avec ESPACE.\nChaque face de la tuile correspond à un biome — planifie tes connexions !",
       "game.nextTile": "La prochaine tuile qui entrera en jeu après que tu auras posé la tuile courante.\nAnticipe sa forme pour préparer la meilleure case d'accueil.",
       "game.deckRemaining": "Nombre de tuiles restantes dans la pioche.\nLa partie se termine quand la pioche est vide — optimise chaque placement !",
       "hs.summary": "Résumé de la partie : tuiles posées, lignes de train, bateaux, comètes interceptées.",
@@ -1003,6 +1021,7 @@
           "eda": "Afficher / masquer le HUD EDA",
           "snapshot": "Prendre une capture d'écran",
           "gallery": "Ouvrir la galerie des captures",
+          "replay": "Afficher / masquer le HUD replay de la partie",
           "wheelKbd": "Molette",
           "leftClickKbd": "Clic gauche",
           "rightClickKbd": "Clic droit",
@@ -1093,6 +1112,7 @@
     },
     "kbdHint": "H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif",
     "superImmersifExitHint": "ESPACE pour sortir du monde super immersif",
+    "langName": "Français",
     "fpsAdjectives": {
       "disastrous": "Désastreux",
       "bad": "Mauvais",

@@ -13,7 +13,30 @@
 // ----------------------------------------------------------------------------
 // VERSION
 // ----------------------------------------------------------------------------
-export const HEXISTENZ_VERSION = 'v0.9.2.6.5';
+export const HEXISTENZ_VERSION = 'v0.9.3.8';
+
+// ----------------------------------------------------------------------------
+// DEBUG — diagnostics de production (2026-07-16)
+// ----------------------------------------------------------------------------
+// Beaucoup de code de diagnostic (scans périodiques de scène, watchers de
+// programmes shader, mesures de freeze/mémoire...) tournait en permanence dans
+// scene.js et d'autres overlays, même quand personne ne regarde la console.
+// Le coût n'est pas le console.log lui-même : c'est le CALCUL fait pour le
+// nourrir (scene.traverse() complets, Set de cacheKey shader, etc.).
+// Ces flags encadrent CE calcul + le log associé — jamais un effet de bord
+// fonctionnel (ex. renderer.compile()/warmUpAllPrograms() restent toujours
+// exécutés, seul leur console.warn de diagnostic est gaté). Object.freeze
+// pour signaler que ce sont des constantes de dev, pas un réglage runtime —
+// pas de toggle en jeu prévu pour l'instant (cf. ROADMAP-debug-flags.md).
+export const DEBUG_FLAGS = Object.freeze({
+  performance: false,  // RAF-STALL, FLASH-DIAG, GEO-DELTA, GPU-SPIKE-WATCH, HEAP-DIAG,
+                        // PERF-TIMING, SCENE-DIAG, HOVER-DIAG, GEO-CENSUS, checkProgramChurn
+  shaders: false,       // checkBiomeMaterialFlicker, findTransparentBiomeUsers,
+                        // debugBiomeMaterialSnapshot, warnings de warmUpAllPrograms/renderer.compile
+  assets: false,        // logs de chargement GLB/son (forestOverlay, railTrainOverlay, decorPropModels)
+  multiplayer: false,   // logs de synchronisation multijoueur (audit dédié requis avant usage, cf. roadmap)
+  overlays: false,      // FREEZE-DIAG forest-phases/forest-build/rail-phases, [FOREST-INCR], [track-glb]
+});
 
 // ----------------------------------------------------------------------------
 // GRILLE / DECK

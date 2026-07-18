@@ -10,7 +10,12 @@ import { LUT_HELP } from './helpTexts.js';
 const _TOOLTIP_CSS = `
 #lutHelpTooltip {
   position: fixed;
-  z-index: 9999;
+  /* 2026-07-16 — retour utilisateur : tooltips des boutons du HUD replay
+     s'affichaient sous le panneau replay lui-même (.replay-overlay,
+     z-index:10500). z-index relevé au-dessus du plus haut overlay du jeu
+     (snapshots.css utilise 20000) pour que le tooltip soit toujours au-dessus,
+     quel que soit l'overlay actif. */
+  z-index: 20500;
   max-width: 240px;
   padding: 8px 11px;
   border-radius: 9px;

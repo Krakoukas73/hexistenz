@@ -15,7 +15,9 @@
 import { ensureHelpTooltip, attachHelpTooltip, LUT_HELP } from './help.js';
 import { tickFps, initFpsHud } from './hud_fps.js';
 import { EDA_BODY_HTML, wireEdaPanel } from './edaPanelWiring.js';
-import { getGameLang, setGameLang } from './gameLangReactive.js';
+import { getGameLang, setGameLang, registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { getTheme, setTheme } from './themeManager.js';
+import { showCenterMessage } from './scorePopup.js';
 
 export { tickFps };
 
@@ -30,19 +32,30 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
   root.innerHTML = `
     <div class="debug-light-left-col">
       <div id="fps-counter" class="fps-counter">-- FPS</div>
-      <div class="debug-light-btn-row">
-        <button id="fpsHudToggle" class="debug-light-toggle debug-light-toggle--fps" type="button" tabindex="-1"><mark class="btn-key">F</mark>PS</button>
-        <button id="debugLightToggle" class="debug-light-toggle" type="button" tabindex="-1"><mark class="btn-key">E</mark>DA</button>
-        <button id="snapshotBtn" class="debug-light-toggle" type="button" tabindex="-1">📷</button>
-        <button id="galleryBtn" class="debug-light-toggle" type="button" tabindex="-1">🖼️</button>
-        <select id="gameLangSelect" class="debug-light-toggle debug-light-lang-select" tabindex="-1">
-          <option value="fr">FR</option>
-          <option value="en">EN</option>
-          <option value="es">ES</option>
-          <option value="it">IT</option>
-          <option value="pt">PT</option>
-          <option value="fr-CA">QC</option>
-        </select>
+      <div class="debug-light-btn-rows">
+        <div class="debug-light-btn-row">
+          <button id="snapshotBtn" class="debug-light-toggle" type="button" tabindex="-1"><span class="snapshot-emoji">📷</span></button>
+          <button id="galleryBtn" class="debug-light-toggle" type="button" tabindex="-1"><span class="gallery-emoji">🖼️</span></button>
+          <button id="replayBtn" class="debug-light-toggle" type="button" tabindex="-1"><span class="replay-emoji">🎬</span></button>
+        </div>
+        <div class="debug-light-btn-row">
+          <select id="gameLangSelect" class="debug-light-toggle debug-light-lang-select" tabindex="-1">
+            <option value="fr">FR</option>
+            <option value="en">EN</option>
+            <option value="es">ES</option>
+            <option value="it">IT</option>
+            <option value="pt">PT</option>
+            <option value="fr-CA">QC</option>
+          </select>
+          <select id="gameThemeSelect" class="debug-light-toggle debug-light-lang-select" tabindex="-1">
+            <option value="bleu">BLEU</option>
+            <option value="ancien">MÉDIÉVAL</option>
+          </select>
+        </div>
+        <div class="debug-light-btn-row">
+          <button id="fpsHudToggle" class="debug-light-toggle debug-light-toggle--fps" type="button" tabindex="-1"><mark class="btn-key">F</mark>PS</button>
+          <button id="debugLightToggle" class="debug-light-toggle" type="button" tabindex="-1"><mark class="btn-key">E</mark>DA</button>
+        </div>
       </div>
     </div>
     ${EDA_BODY_HTML}
@@ -60,7 +73,9 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
   attachHelpTooltip(root.querySelector('#debugLightToggle'), () => LUT_HELP['topbar.eda'] ?? '');
   attachHelpTooltip(root.querySelector('#snapshotBtn'),     () => LUT_HELP['topbar.snapshot'] ?? '');
   attachHelpTooltip(root.querySelector('#galleryBtn'),      () => LUT_HELP['topbar.gallery'] ?? '');
+  attachHelpTooltip(root.querySelector('#replayBtn'),       () => LUT_HELP['topbar.replay'] ?? '');
   attachHelpTooltip(root.querySelector('#gameLangSelect'),  () => LUT_HELP['topbar.lang'] ?? '');
+  attachHelpTooltip(root.querySelector('#gameThemeSelect'), () => LUT_HELP['topbar.theme'] ?? '');
 
   // Sélecteur de langue en jeu (2026-07-13, v2 — v1 avec 2 boutons FR/EN rejetée :
   // pas scalable si d'autres langues arrivent un jour). Un unique <select> qui
@@ -77,6 +92,43 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
   const langSelect = root.querySelector('#gameLangSelect');
   langSelect.value = getGameLang();
   langSelect.addEventListener('change', () => setGameLang(langSelect.value));
+
+  // Sélecteur de thème graphique en jeu (2026-07-17, demande explicite) — juste après
+  // le sélecteur de langue dans le même bandeau. Même composant themeManager.js déjà
+  // utilisé par la prez (index.php) et par le script inline précoce de game.php : pas
+  // de nouvelle plomberie, setTheme() écrit data-theme + localStorage['hexistenz_theme'],
+  // consommé immédiatement par les CSS [data-theme="bleu"]/[data-theme="ancien"] déjà
+  // en place sur tout le HUD (cf. CONTEXT.md §32). Pas de rechargement de page.
+  // Libellés des options (BLEU/MÉDIÉVAL) retraduits en direct au changement de langue —
+  // même mécanisme que #gameLangSelect ci-dessus, via game.eda.themeNames (json/languages)
+  // et registerLangRefresh (gameLangReactive.js). Bug signalé 2026-07-17 : le texte des
+  // options était codé en dur, donc jamais retraduit contrairement à la prez (qui utilise
+  // le data-i18n générique sur theme.bleu/theme.ancien) — celui-ci reste un <select> peuplé
+  // en JS pur, il lui faut sa propre logique de retraduction, comme les noms de préréglages
+  // dans edaPanelWiring.js. `_themeNames` est aussi réutilisé par le handler de changement
+  // ci-dessous pour le popup central de confirmation (2026-07-17, même mécanisme que
+  // #gameLangSelect via scorePopup.js/showCenterMessage) : toujours la traduction la plus
+  // fraîche, pas de re-fetch au clic.
+  const themeSelect = root.querySelector('#gameThemeSelect');
+  themeSelect.value = getTheme();
+  let _themeNames = null;
+  function applyThemeOptionLabels(themeNames) {
+    _themeNames = themeNames;
+    const optBleu = themeSelect.querySelector('option[value="bleu"]');
+    const optAncien = themeSelect.querySelector('option[value="ancien"]');
+    if (optBleu) optBleu.textContent = (themeNames?.bleu ?? 'Bleu').toUpperCase();
+    if (optAncien) optAncien.textContent = (themeNames?.ancien ?? 'Médiéval').toUpperCase();
+  }
+  fetch(`./json/languages/${getLangFile()}.json`)
+    .then(r => r.json())
+    .then(data => applyThemeOptionLabels(data?.game?.eda?.themeNames))
+    .catch(err => console.error('[edaPanelHost] Impossible de charger les libellés de thème', err));
+  registerLangRefresh((data) => applyThemeOptionLabels(data?.game?.eda?.themeNames));
+
+  themeSelect.addEventListener('change', () => {
+    const theme = setTheme(themeSelect.value);
+    showCenterMessage(_themeNames?.[theme] ?? theme);
+  });
 
   const fpsApi = initFpsHud(root);
   return wireEdaPanel(root, { visualEnvironment, postprocess, forestOverlay, cloudSky, environmentDirector, fpsApi });

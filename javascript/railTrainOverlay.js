@@ -24,6 +24,7 @@ import {
 import { ensureTrackGlb, addTrackGLBToGroup, isTrackGlbReady } from './railTrackGlb.js';
 import { TRAIN_SPEED } from './railTrainConstants.js';
 import { HEX_SIZE } from './config.js';
+import { DEBUG_FLAGS } from './variables.js';
 
 export { getTrainLocoPositions };
 
@@ -100,11 +101,13 @@ export function rebuildRailTrainOverlay(group, placedTiles) {
       totalRailInstances += addTrackGLBToGroup(railGroup, pts, false);
     }
     group.add(railGroup);
-    console.debug(`[track-glb] ${totalRailInstances} instances (smooth path)`);
+    // Gaté sous DEBUG_FLAGS.overlays (2026-07-16, phase 3) — pur diagnostic, n'affecte
+    // que le rebuild (pas d'appel par frame).
+    if (DEBUG_FLAGS.overlays) console.debug(`[track-glb] ${totalRailInstances} instances (smooth path)`);
   }
 
   const _rT5 = performance.now();
-  console.log(`[FREEZE-DIAG rail-phases] clear=${(_rT1-_rT0).toFixed(0)}ms | graph=${(_rT2-_rT1).toFixed(0)}ms | components=${(_rT3-_rT2).toFixed(0)}ms | trains=${(_rT4-_rT3).toFixed(0)}ms | rails-glb=${(_rT5-_rT4).toFixed(0)}ms | TOTAL=${(_rT5-_rT0).toFixed(0)}ms`);
+  if (DEBUG_FLAGS.overlays) console.log(`[FREEZE-DIAG rail-phases] clear=${(_rT1-_rT0).toFixed(0)}ms | graph=${(_rT2-_rT1).toFixed(0)}ms | components=${(_rT3-_rT2).toFixed(0)}ms | trains=${(_rT4-_rT3).toFixed(0)}ms | rails-glb=${(_rT5-_rT4).toFixed(0)}ms | TOTAL=${(_rT5-_rT0).toFixed(0)}ms`);
 }
 
 export function updateRailTrainOverlay(group, timeSeconds = 0) {

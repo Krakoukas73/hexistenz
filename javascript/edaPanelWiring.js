@@ -401,7 +401,7 @@ registerLangRefresh((data) => {
   _kbdHintText = data?.game?.kbdHint ?? '';
   const kbdHintEl = document.getElementById('kbdHintHud');
   if (kbdHintEl) {
-    kbdHintEl.innerHTML = _kbdHintText || 'H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif';
+    kbdHintEl.innerHTML = '<div class="internal-parchment">' + (_kbdHintText || 'H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif') + '</div>';
   }
   for (const k of Object.keys(_edaText)) delete _edaText[k];
   Object.assign(_edaText, data?.game?.eda ?? {});
@@ -412,6 +412,8 @@ registerLangRefresh((data) => {
 // edaPanelHost.js, qui assemble .debug-light-left-col + EDA_BODY_HTML dans le même root.)
 export const EDA_BODY_HTML = `
     <div class="debug-light-body">
+      <button type="button" class="debug-light-close" title="Fermer" aria-label="Fermer">×</button>
+      <div class="internal-parchment">
       <div class="debug-light-main-title" data-i18n="game.eda.mainTitle">Éditeur de direction artistique</div>
 
       <div class="debug-light-header">
@@ -730,6 +732,7 @@ export const EDA_BODY_HTML = `
           </div>
         </div>
       </div><!-- /.debug-light-footer -->
+      </div>
     </div>
 `;
 
@@ -944,11 +947,20 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   lutToggleBtn.addEventListener('click', () => {
     _setLutOpen(root.classList.contains('collapsed')); // collapsed → ouvrir, sinon fermer
   });
+  // Croix de fermeture en haut à droite du panneau (2026-07-17, demande explicite,
+  // même besoin que .fps-hud-close côté HUD FPS) — simple relais vers _setLutOpen(false).
+  root.querySelector('.debug-light-close')?.addEventListener('click', () => _setLutOpen(false));
   // Touche E : ouvrir/fermer le panel EDA
   document.addEventListener('keydown', e => {
     if (e.key === 'e' || e.key === 'E') {
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      // 2026-07-17 — en super-immersif (SHIFT+ESPACE, body.huds-force-hidden), le
+      // bouton EDA est désactivé/masqué (cf. scene.js) mais ce listener global
+      // continuait de basculer l'état interne (root non-collapsed, invisible via
+      // CSS !important) — désync signalé par l'utilisateur comme "E fait quitter
+      // le super-immersif". Ignoré tant que ce mode est actif, comme le bouton lui-même.
+      if (document.body.classList.contains('huds-force-hidden')) return;
       _setLutOpen(root.classList.contains('collapsed'));
     }
   });
@@ -1771,7 +1783,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   // ─── Mini HUD clavier (bottom-right, toujours visible) ─────────────────────
   const kbdHint = document.createElement('div');
   kbdHint.id = 'kbdHintHud';
-  kbdHint.innerHTML = _kbdHintText || 'H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif';
+  kbdHint.innerHTML = '<div class="internal-parchment">' + (_kbdHintText || 'H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif') + '</div>';
   document.body.appendChild(kbdHint);
 
   // Le panneau vient d'être entièrement construit (sliders EAU/VENT/NUAGES/VFX,

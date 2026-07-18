@@ -6,6 +6,7 @@ import { RenderPixelatedPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/
 import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/postprocessing/OutputPass.js';
 import { GRID_RADIUS, HEX_SIZE, MAX_PIXEL_RATIO } from './config.js';
+import { DEBUG_FLAGS } from './variables.js';
 import { COLOR_GRADING_SHADER } from './visualEnvironment.js';
 // cinematicPass.js supprimé le 2026-07-11 (round 4, découpage sans risque, cf. CONTEXT.md §21) :
 // n'était qu'un ré-export de compatibilité vers ce même chemin, seul importateur (ici).
@@ -179,10 +180,20 @@ export function updateSunShadowOrbit(scene, timeSeconds, focusPoint = null, came
     sun.target = sunTarget;
   }
   if (sunVisual) {
+    // 2026-07-16 — fix "l'astre suit la caméra" : le mesh VISIBLE (sunVisual) ne doit
+    // pas partager le focus de la lumière d'ombre (`focus`, qui suit `controls.target`
+    // pour garder un frustum d'ombre étroit — perf shadow-map). Cette lumière et son
+    // mesh visible avaient jusqu'ici le même centre d'orbite, donc chaque pan clavier/
+    // souris décalait toute la trajectoire de l'astre à l'écran. On ancre désormais
+    // sunVisual sur un point FIXE du monde (centre de la grille) : la direction de la
+    // lumière (sun.position - sunTarget.position, utilisée pour les ombres et sunDir
+    // du ciel) reste inchangée — c'est un vecteur d'offset (x, orbit.height, z),
+    // invariant par translation du focus — donc ce fix ne touche ni ombres ni éclairage.
+    const visualFocus = getSunShadowFocusPoint(null); // toujours (0, courbure(0,0), 0)
     sunVisual.position.set(
-      focus.x + x * orbit.visualScale,
-      focus.y + orbit.height * orbit.visualScale,
-      focus.z + z * orbit.visualScale
+      visualFocus.x + x * orbit.visualScale,
+      visualFocus.y + orbit.height * orbit.visualScale,
+      visualFocus.z + z * orbit.visualScale
     );
     // Rotation des astres sur eux-mêmes — proportionnelle à la vitesse d'orbite réglée
     // dans l'EDA (sunOrbitSpeed) : à vitesse orbite = 0, la rotation propre s'arrête aussi.
@@ -231,8 +242,10 @@ function createVisibleSunObject() {
   const group = new THREE.Group();
   group.name = 'visible-sky-sun';
   // Rendu dans la passe monde normale (WORLD_LAYER) avec depth test/write activés :
-  // l'astre orbite à une distance modérée du point focal caméra (cf. updateSunShadowOrbit,
-  // rayon ~10-12u — pas "à l'infini") et DOIT donc pouvoir passer derrière un arbre ou une
+  // l'astre orbite à une distance modérée du CENTRE FIXE de la grille (cf.
+  // updateSunShadowOrbit, rayon ~10-12u par défaut — pas "à l'infini", et depuis
+  // le 2026-07-16 plus indexé sur la position caméra, cf. commentaire dans
+  // updateSunShadowOrbit) et DOIT donc pouvoir passer derrière un arbre ou une
   // tour quand il se trouve géométriquement derrière, comme n'importe quel autre objet 3D.
   // NOTE : ceci laisse l'astre occasionnellement recouvert par un label hexagonal quand
   // la caméra est haute (les labels sont rendus dans une passe ultérieure, indépendante
@@ -341,7 +354,7 @@ function createVisibleSunObject() {
         // Appliquer le mode courant dès que le GLB est disponible
         const isSoleil = group.userData.isSoleil ?? true;
         _applyAstreVisibility(group, isSoleil);
-        console.log('[astre] GLB chargé :', glbName, '| isSoleil=', isSoleil);
+        if (DEBUG_FLAGS.assets) console.log('[astre] GLB chargé :', glbName, '| isSoleil=', isSoleil);
       },
       undefined,
       err => console.warn('[astre] GLB introuvable ou erreur :', url, err?.message ?? err)

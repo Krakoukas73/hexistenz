@@ -25,12 +25,6 @@
   flex-direction: column;
   padding: 18px;
   box-sizing: border-box;
-  background:
-    linear-gradient(135deg, rgba(22, 31, 45, 0.96), rgba(7, 11, 18, 0.96)),
-    radial-gradient(circle at top left, rgba(58, 125, 255, 0.18), transparent 45%);
-  border: 1px solid rgba(120, 180, 255, 0.42);
-  border-radius: 18px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
 }
 
 .help-grid {
@@ -52,7 +46,6 @@
 
 .help-kicker {
   margin-bottom: 2px;
-  color: rgba(220, 240, 255, 0.58);
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -69,17 +62,9 @@
   width: 44px;
   height: 44px;
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
   cursor: pointer;
   font: 700 30px/1 monospace;
-}
-
-.help-close:hover {
-  background: rgba(255, 59, 59, 0.75);
-  border-color: rgba(255, 95, 95, 0.95);
 }
 
 /* Refonte complète (grid → flexbox imbriqué) : les deux tentatives précédentes
@@ -131,8 +116,6 @@
   min-width: 0;
   padding: 14px;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.30);
-  border: 1px solid rgba(120, 180, 255, 0.20);
   border-radius: 14px;
 }
 
@@ -164,14 +147,12 @@
 
 .help-card h2 {
   margin: 0 0 9px;
-  color: #ffffff;
   font-size: 16px;
 }
 
 .help-card p,
 .help-card li {
   margin: 0;
-  color: rgba(232, 244, 255, 0.83);
   font-size: 13px;
   line-height: 1.38;
 }
@@ -198,19 +179,15 @@
   gap: 10px;
   padding: 10px;
   border-radius: 12px;
-  background: rgba(242, 209, 107, 0.10);
-  border: 1px solid rgba(242, 209, 107, 0.25);
 }
 
 .score-strip strong {
-  color: #f2d16b;
   font-family: 'BebasNeue', system-ui, sans-serif;
   font-size: 44px;
   line-height: 1;
 }
 
 .score-strip span {
-  color: rgba(232, 244, 255, 0.78);
   font-size: 12px;
   line-height: 1.2;
 }
@@ -228,11 +205,9 @@
   margin-top: 9px;
   padding: 8px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
 }
 
 .rule-line span:last-child {
-  color: rgba(232, 244, 255, 0.76);
   font-size: 12px;
 }
 
@@ -263,17 +238,14 @@
 .legend-grid div {
   padding: 8px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
 }
 
 .legend-grid span:not(.swatch) {
   flex: 1 1 auto;
-  color: rgba(232, 244, 255, 0.86);
   font-size: 12px;
 }
 
 .legend-grid code {
-  color: rgba(232, 244, 255, 0.58);
   font-size: 10px;
 }
 
@@ -283,26 +255,31 @@
   gap: 8px;
 }
 
+/* Contrôles clavier ("aide", touche H) — CSS aligné à l'identique sur
+   .kbd-strip/.kbd-strip-item/kbd de la prez (rubrique "CONTRÔLES CLAVIER",
+   css/themes/bleu.css + css/themes/medieval.css §32). Mêmes valeurs littérales
+   (game.php n'a pas accès aux variables CSS --bg-card/--border/--text-dim,
+   définies uniquement dans le :root de presentation.css/index.php) : couleurs
+   recopiées telles quelles pour un rendu strictement identique entre les
+   deux pages. Layout (grille 3 colonnes) conservé tel quel — seule
+   l'apparence (padding/couleurs des items + touches) est partagée. */
 .control-map > div {
-  padding: 8px;
+  padding: 10px 14px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
 }
 
 kbd {
-  min-width: 34px;
-  padding: 6px 8px;
-  border: 1px solid #4b5874;
-  border-radius: 8px;
-  background: #151a24;
-  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  font: 700 10px/1 monospace;
   text-align: center;
-  font: 700 12px/1 monospace;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.45);
 }
 
 .control-map span {
-  color: rgba(232, 244, 255, 0.82);
   font-size: 12px;
   line-height: 1.2;
 }
@@ -424,6 +401,162 @@ kbd {
   padding: 0;
   background: none;
   border-radius: 0;
-  border-top: 1px solid rgba(120, 180, 255, 0.20);
   margin: 2px 0;
+}
+
+/* ─── [data-theme="bleu"] — apparence actuelle par défaut (menu aide, touche H) ─── */
+[data-theme="bleu"] .help-overlay { color: #e9f4ff; }
+[data-theme="bleu"] .help-panel {
+  background:
+    linear-gradient(135deg, rgba(22, 31, 45, 0.96), rgba(7, 11, 18, 0.96)),
+    radial-gradient(circle at top left, rgba(58, 125, 255, 0.18), transparent 45%);
+  border: 1px solid rgba(120, 180, 255, 0.42);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+}
+[data-theme="bleu"] .help-header { border-bottom: 1px solid rgba(120, 180, 255, 0.24); }
+[data-theme="bleu"] .help-kicker { color: rgba(220, 240, 255, 0.58); }
+[data-theme="bleu"] .help-close {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+[data-theme="bleu"] .help-close:hover {
+  background: rgba(255, 59, 59, 0.75);
+  border-color: rgba(255, 95, 95, 0.95);
+}
+[data-theme="bleu"] .help-card {
+  background: rgba(0, 0, 0, 0.30);
+  border: 1px solid rgba(120, 180, 255, 0.20);
+}
+[data-theme="bleu"] .help-card h2 { color: #ffffff; }
+[data-theme="bleu"] .help-card p,
+[data-theme="bleu"] .help-card li { color: rgba(232, 244, 255, 0.83); }
+[data-theme="bleu"] .score-strip div {
+  background: rgba(242, 209, 107, 0.10);
+  border: 1px solid rgba(242, 209, 107, 0.25);
+}
+[data-theme="bleu"] .score-strip strong { color: #f2d16b; }
+[data-theme="bleu"] .score-strip span { color: rgba(232, 244, 255, 0.78); }
+[data-theme="bleu"] .rule-line { background: rgba(255, 255, 255, 0.05); }
+[data-theme="bleu"] .rule-line span:last-child { color: rgba(232, 244, 255, 0.76); }
+[data-theme="bleu"] .legend-grid div { background: rgba(255, 255, 255, 0.05); }
+[data-theme="bleu"] .legend-grid span:not(.swatch) { color: rgba(232, 244, 255, 0.86); }
+[data-theme="bleu"] .legend-grid code { color: rgba(232, 244, 255, 0.58); }
+/* Contrôles clavier — valeurs strictement identiques à [data-theme="bleu"]
+   .kbd-strip-item / .kbd-strip kbd (css/themes/bleu.css §32), recopiées en
+   littéral (pas de var(--bg-card) etc. disponible dans game.php). */
+[data-theme="bleu"] .control-map > div {
+  background: rgba(14,24,44,0.94);
+  border: 1px solid rgba(120,180,255,0.30);
+  color: rgba(190,220,255,0.72);
+}
+[data-theme="bleu"] .control-map > .control-sep { border-top: 1px solid rgba(120, 180, 255, 0.20); }
+[data-theme="bleu"] kbd {
+  background: rgba(14,24,44,0.94);
+  border: 1px solid rgba(120,180,255,0.30);
+  border-bottom-width: 2px;
+  color: #eaf4ff;
+}
+
+/* ─── [data-theme="ancien"] — parchemin 9-slice sur .help-panel, même technique
+   que #scorePanel/.mode-panel (§32). Le voile plein écran (.help-overlay)
+   reste inchangé dans les 2 thèmes (comme .highscore-modal/.mode-screen) —
+   seule la "carte" convertit. Les cartes internes (.help-card, .score-strip
+   div, .rule-line, .legend-grid div, .control-map > div) passent en fond
+   translucide sombre pour rester lisibles sur le parchemin clair. ─── */
+[data-theme="ancien"] .help-panel {
+  border: 50px solid transparent;
+  border-image-source: url("../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+  color: #332415;
+  font-family: Georgia, "Times New Roman", serif;
+
+  /* 2026-07-18 — CORRECTIF v2 (bug signalé : bords tronqués, image ET texte).
+     La v1 (garder display/max-height/overflow de la règle non thémée
+     inchangés, .internal-parchment en flex:1 1 auto) évitait le double-
+     comptage de bordure, mais .help-panel reste box-sizing:border-box +
+     width/max-height fixes prévus pour une bordure fine (1px, thème bleu) —
+     passer à 50px (×2=100px) sans agrandir la boîte grignote 100px de
+     contenu utile en trop (en plus du padding déjà réduit ci-dessous),
+     écrasant .help-grid jusqu'à troncature.
+     Fix définitif : box-sizing:content-box UNIQUEMENT ici — `width`/
+     `max-height` ci-dessous ne portent plus que sur le contenu (mêmes
+     valeurs utiles qu'en thème bleu), la bordure de 50px s'ajoute PAR-DESSUS
+     automatiquement. Panneau centré par .help-overlay (flex) : la boîte
+     grandit symétriquement, jamais hors écran.
+
+     2026-07-18 — CORRECTIF v3 (demande explicite : la marge négative doit
+     avoir un effet visible) : overflow passe à visible ici — le clamp +
+     clip du contenu est désormais porté par .internal-parchment lui-même
+     (cf. règle suivante), qui peut donc recevoir une marge négative de
+     bleed sans être tronquée par SON PROPRE overflow. */
+  box-sizing: content-box;
+  padding: 0;
+  width: min(1300px, calc(100vw - 150px));
+  max-height: calc(100vh - 150px);
+  overflow: visible;
+}
+[data-theme="ancien"] .help-panel > .internal-parchment {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  /* 2026-07-18 — même bug que .fps-counter/.debug-light-body (css/eda.css) :
+     la règle générale `[data-theme="ancien"] .internal-parchment { margin:
+     -20px -25px -20px -25px; }` (css/themes/medieval.css) s'appliquait quand
+     même faute de redéclaration explicite ici (cascade CSS par PROPRIÉTÉ, pas
+     par bloc) — tronqué par cet overflow:hidden fonctionnel (clamp + scroll
+     2026-07-18 — CORRECTIF v3 : .help-panel passe en overflow:visible
+     ci-dessus, c'est CET élément (.internal-parchment) qui porte maintenant
+     le clip (overflow:hidden ici) — sa propre marge négative n'est jamais
+     coupée par son propre overflow. Le bleed s'applique donc enfin
+     normalement. */
+  margin: -20px -25px -20px -25px;
+}
+[data-theme="ancien"] .help-header { border-bottom: 1px solid rgba(74, 54, 35, 0.24); }
+[data-theme="ancien"] .help-kicker { color: #4a3623; }
+[data-theme="ancien"] .help-close {
+  border: none;
+  background: #4a3623;
+  color: #f0e6d0;
+}
+[data-theme="ancien"] .help-close:hover { background: #6b2018; }
+[data-theme="ancien"] .help-card {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(74, 54, 35, 0.20);
+}
+[data-theme="ancien"] .help-card h2 { color: #332415; }
+[data-theme="ancien"] .help-card p,
+[data-theme="ancien"] .help-card li { color: #4a3623; }
+[data-theme="ancien"] .score-strip div {
+  background: rgba(107, 78, 16, 0.12);
+  border: 1px solid rgba(107, 78, 16, 0.30);
+}
+[data-theme="ancien"] .score-strip strong { color: #6b4e10; }
+[data-theme="ancien"] .score-strip span { color: #4a3623; }
+[data-theme="ancien"] .rule-line { background: rgba(0, 0, 0, 0.05); }
+[data-theme="ancien"] .rule-line span:last-child { color: #4a3623; }
+[data-theme="ancien"] .legend-grid div { background: rgba(0, 0, 0, 0.05); }
+[data-theme="ancien"] .legend-grid span:not(.swatch) { color: #332415; }
+[data-theme="ancien"] .legend-grid code { color: #4a3623; }
+/* Contrôles clavier — valeurs strictement identiques à [data-theme="ancien"]
+   .kbd-strip-item / .kbd-strip kbd (css/themes/medieval.css §32) : items
+   transparents posés sur le parchemin, touches en "cachet de cire". */
+[data-theme="ancien"] .control-map > div {
+  background: none;
+  border: none;
+  color: #4a3623;
+  font-family: Georgia, "Times New Roman", serif;
+}
+[data-theme="ancien"] .control-map > .control-sep { border-top: 1px solid rgba(74, 54, 35, 0.20); }
+[data-theme="ancien"] kbd {
+  background: #4a3623;
+  color: #f0e6d0;
+  border: none;
 }

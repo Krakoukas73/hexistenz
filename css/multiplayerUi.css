@@ -10,13 +10,16 @@
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* 2026-07-17 — 1er chantier "HUD in-game" du thème Ancien (cf. CONTEXT.md §32) :
+   ces 2 écrans pre-game (choix géométrie de la planète, choix/création de partie)
+   partagent le même .mode-panel (startupMenu.js/multiplayerRooms.js écrivent
+   toutes deux dans .mode-copy/.mode-content du même conteneur), donc thémer
+   .mode-panel une fois couvre les deux. Fond/bordure/rayon/couleurs déportés
+   dans [data-theme="bleu"]/[data-theme="ancien"] ci-dessous — ce qui reste ici
+   est le layout partagé (tailles, structure flex/grid, typographie non colorée). */
 .mode-panel {
   width: min(560px, calc(100vw - 32px));
   padding: 28px;
-  border: 1px solid rgba(244, 239, 215, 0.22);
-  border-radius: 18px;
-  background: rgba(10, 18, 21, 0.82);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
 }
 
 .mode-panel h1 {
@@ -27,7 +30,6 @@
 
 .mode-panel p {
   margin: 0 0 18px;
-  color: rgba(244, 239, 215, 0.72);
   line-height: 1.45;
 }
 
@@ -41,17 +43,10 @@
 
 .mode-panel button {
   cursor: pointer;
-  border: 1px solid rgba(244, 239, 215, 0.26);
   border-radius: 12px;
   padding: 12px 18px;
-  background: rgba(91, 143, 114, 0.92);
-  color: #fff9df;
   font-weight: 800;
   letter-spacing: 0.04em;
-}
-
-.mode-panel button.secondary {
-  background: rgba(40, 54, 58, 0.95);
 }
 
 .mode-panel input,
@@ -61,9 +56,6 @@
   margin: 7px 0 12px;
   padding: 11px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(244, 239, 215, 0.24);
-  background: rgba(255, 255, 255, 0.08);
-  color: #f4efd7;
   font: inherit;
 }
 
@@ -71,10 +63,8 @@
   color: #111;
 }
 
-
 .mode-panel label {
   display: block;
-  color: rgba(244, 239, 215, 0.78);
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -83,6 +73,82 @@
 .multi-status {
   margin-top: 14px;
   min-height: 22px;
-  color: #ffd76f;
   white-space: pre-wrap;
 }
+
+/* ─── [data-theme="bleu"] — apparence actuelle par défaut ─────────────────── */
+[data-theme="bleu"] .mode-panel {
+  border: 1px solid rgba(244, 239, 215, 0.22);
+  border-radius: 18px;
+  background: rgba(10, 18, 21, 0.82);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+[data-theme="bleu"] .mode-panel p { color: rgba(244, 239, 215, 0.72); }
+[data-theme="bleu"] .mode-panel button {
+  border: 1px solid rgba(244, 239, 215, 0.26);
+  background: rgba(91, 143, 114, 0.92);
+  color: #fff9df;
+}
+[data-theme="bleu"] .mode-panel button.secondary { background: rgba(40, 54, 58, 0.95); }
+[data-theme="bleu"] .mode-panel input,
+[data-theme="bleu"] .mode-panel select {
+  border: 1px solid rgba(244, 239, 215, 0.24);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4efd7;
+}
+[data-theme="bleu"] .mode-panel label { color: rgba(244, 239, 215, 0.78); }
+[data-theme="bleu"] .multi-status { color: #ffd76f; }
+
+/* ─── [data-theme="ancien"] — parchemin 9-slice, même technique que la prez
+   (border-image sur images/manuscrit.png, cf. css/themes/medieval.css §32).
+   2026-07-17 : le logo (.mode-logo) est repassé en flux normal (plus de
+   réservation d'espace via padding-top, cf. css/startupMenu.css) — le padding
+   est donc retiré sur les 4 côtés comme les autres parchemins (règle "cellule
+   centrale sans padding"), plus de cas particulier ici. ─── */
+[data-theme="ancien"] .mode-panel {
+  border: 50px solid transparent;
+  border-image-source: url("../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+  font-family: Georgia, "Times New Roman", serif;
+}
+[data-theme="ancien"] .mode-panel h1,
+[data-theme="ancien"] .mode-panel p,
+[data-theme="ancien"] .mode-panel label {
+  color: #332415;
+}
+[data-theme="ancien"] .mode-panel p { color: #4a3623; }
+[data-theme="ancien"] .mode-panel label { color: #4a3623; }
+/* Boutons/champs : même principe "cachet de cire" que les chips de la prez
+   (.biome-tag/.faction-tag) — fond saturé sombre + texte clair, lisible sur
+   parchemin quelle que soit la couleur d'accent d'origine. */
+[data-theme="ancien"] .mode-panel button {
+  border: none;
+  background: #4a3623;
+  color: #f0e6d0;
+}
+[data-theme="ancien"] .mode-panel button.secondary { background: #6b4e10; color: #f5e3b0; }
+[data-theme="ancien"] .mode-panel input,
+[data-theme="ancien"] .mode-panel select {
+  border: 1px solid rgba(74, 54, 35, 0.4);
+  background: rgba(255, 255, 255, 0.35);
+  color: #332415;
+}
+[data-theme="ancien"] .multi-status { color: #6b4e10; }
+
+/* ─── .internal-parchment (2026-07-18) — même wrapper/marge négative que la
+   prez (cf. css/themes/medieval.css), appliqué ici au menu pre-game unique
+   (.mode-panel, javascript/startupMenu.js). Contrairement aux 5 cartes prez
+   qui ont dû être corrigées (display:flex/grid direct sur la carte, ou
+   overflow:hidden hérité) : .mode-panel n'est ni flex ni grid lui-même (ses
+   enfants directs sont en flux normal, cf. .mode-logo repassé en flux le
+   2026-07-17), et il est déjà en overflow:visible !important (cf.
+   css/startupMenu.css) — donc AUCUNE des 2 corrections nécessaires plus haut
+   ne s'applique ici. Wrapper simple, sans piège. */
+[data-theme="ancien"] .mode-panel > .internal-parchment { margin: -20px -25px -20px -25px; }

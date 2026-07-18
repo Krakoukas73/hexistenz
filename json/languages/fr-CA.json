@@ -15,6 +15,10 @@
     },
     "play": "Jouer"
   },
+  "theme": {
+    "bleu": "Bleu",
+    "ancien": "Médiéval"
+  },
   "hero": {
     "subtitle": "Jeu hexagonal contemplatif fait avec nostalgie, amour ❤️, Three.js pis une quantité pas raisonnable de tuiles",
     "inspi_text": "Inspiré de <em>Dorfromantik</em>, de l'âme pastorale de <em>The Settlers</em> (Blue Byte, 1993)\n          et des mondes merveilleux de <em>Heroes of Might and Magic</em> (3DO).",
@@ -23,7 +27,7 @@
       "settlers": "The Settlers sur Ubisoft",
       "heroes3": "Heroes III sur GOG"
     },
-    "tagline": "Pose des tuiles hexagonales. Fais pousser de vastes forêts de sapins et de bouleaux, des champs de blé\n          qui brassent dans le vent avec leurs moulins, des villages médiévaux aux toits fumants, des voies ferrées\n          pis de grandes rivières où naviguent tes bateaux. Remplis des missions, intercepte des comètes,\n          entoure tes tuiles. Monte-toi un monde vivant, une tuile à la fois.",
+    "tagline": "Pose des tuiles hexagonales. Fais pousser de vastes forêts de sapins et de bouleaux, des champs de blé\n          qui brassent dans le vent avec leurs moulins, des villages médiévaux aux toits fumants, des voies ferrées\n          pis de grandes rivières où naviguent tes bateaux. Remplis des missions, intercepte des comètes,\n          entoure tes tuiles. Bâtis-toi tout un monde vivant, une tuile à la fois.",
     "btn_play": "Partir la game",
     "btn_how": "Comment ça marche ?",
     "stats": {
@@ -36,7 +40,7 @@
     "label": "Deux façons ben différentes de voir le monde",
     "title1": "Platistes pis boulistes",
     "title2": "Deux gangs qui s'entendront jamais",
-    "sub": "Hexistenz divise les bâtisseurs en deux factions irréconciliables. Une option visuelle,\n      un engagement philosophique. De quel côté es-tu&nbsp;?",
+    "sub": "Hexistenz divise le monde en deux gangs qui s'entendront jamais. Un choix visuel,\n      pis un vrai engagement philosophique. T'es de quel bord, toi&nbsp;?",
     "flat": {
       "tag": "Mode Platiste",
       "name": "🪨 Le monde ben droit",
@@ -47,7 +51,7 @@
       "name": "🌍 La grosse boule",
       "desc": "La courbure du monde apparaît à mesure que la grille grandit. Les tuiles\n            éloignées descendent vers l'horizon dans un effet GPU en temps réel qui donne\n            une profondeur pas pire pantoute."
     },
-    "vs": "Le débat est pas réglé, pis il le sera probablement jamais."
+    "vs": "Le débat est pas réglé, pis de valeur, il le sera probablement jamais."
   },
   "biomes": {
     "label": "Les biomes",
@@ -55,7 +59,7 @@
     "sub": "Chaque tuile est composée de six secteurs triangulaires. Assemble les biomes identiques pour former des zones et maximiser ton pointage.",
     "grass": {
       "name": "Prairie",
-      "desc": "Étendues herbeuses où chaque brin frémit sous le vent, parsemées de fleurs sauvages, rochers, cerfs et buissons. Terrain neutre entre les grands réseaux.",
+      "desc": "De grandes étendues d'herbe qui bougent au vent, pleines de fleurs sauvages, de roches, de cerfs pis de buissons. Le terrain neutre entre les grands réseaux — le genre de place où tu poses n'importe quoi pis ça marche pareil.",
       "tag": "Biome neutre"
     },
     "field": {
@@ -70,17 +74,17 @@
     },
     "house": {
       "name": "Village",
-      "desc": "Maisons médiévales avec fumée volumétrique, tours de guet, fontaines, charrettes, chiens et chevaux animés.",
+      "desc": "Des maisons médiévales avec de la fumée qui sort des cheminées, des tours de guet, des fontaines, des charrettes, pis des chiens et des chevaux qui bougent comme du vrai monde.",
       "tag": "Habitat humain"
     },
     "water": {
       "name": "Eau",
-      "desc": "Nappe continue au rivage organique, vagues et écume animées façon aquarelle. Bateaux animés à sillage, plages procédurales et halos de zone.",
+      "desc": "Une nappe d'eau avec un rivage tout en courbes naturelles, des vagues pis de l'écume qui bougent comme à l'aquarelle. Des bateaux qui laissent un sillage, des plages générées automatiquement pis des halos de zone.",
       "tag": "Réseau d'eau ⛵"
     },
     "rail": {
       "name": "Voie ferrée",
-      "desc": "Rails procéduraux, traverses et ballast. Trains avec wagons, gares terminus et fumée des locomotives.",
+      "desc": "Des rails générés automatiquement, avec traverses pis ballast. Des trains avec leurs wagons, des gares en bout de ligne pis la fumée des locomotives qui sort comme il faut.",
       "tag": "Chemin de fer 🚂"
     }
   },
@@ -94,35 +98,35 @@
     },
     "rail": {
       "name": "Voie ferrée",
-      "desc": "Poser un nombre imposé de secteurs rail. Chaque triangle de voie ferrée posé fait progresser cette mission."
+      "desc": "Poser un nombre donné de secteurs rail. Chaque bout de voie ferrée que tu poses fait avancer la mission, tranquillement pas vite."
     },
     "trains": {
       "name": "Trains",
-      "desc": "Constituer un nombre de lignes de train actives — chaque ligne relie deux gares via des rails continus sans interruption."
+      "desc": "Monter un nombre de lignes de train actives — chaque ligne relie deux gares avec des rails continus, sans coupure nulle part."
     },
     "water": {
       "name": "Voie d'eau",
-      "desc": "Former une étendue d'eau d'une surface minimale. Chaque triangle d'eau posé fait progresser cette mission."
+      "desc": "Former une étendue d'eau assez grande. Chaque bout d'eau que tu poses fait avancer la mission."
     },
     "boats": {
       "name": "Bateaux",
-      "desc": "Faire apparaître un nombre de bateaux sur la grille. Un bateau naît automatiquement sur chaque lac fermé par des tuiles terrestres."
+      "desc": "Faire apparaître un nombre de bateaux sur la grille. Un bateau se pointe tout seul sur chaque lac fermé par des tuiles de terre."
     },
     "comets": {
       "name": "Comètes",
-      "desc": "Des comètes traversent le ciel en temps réel. Clique dessus pour les faire exploser et engranger des points — réflexes et vigilance requis."
+      "desc": "Des comètes traversent le ciel en temps réel. Pèse dessus pour les faire sauter pis ramasser des points — faut avoir des bons réflexes pis watcher comme du monde."
     },
     "village": {
       "name": "Village prospère",
-      "desc": "Constituer un village dense : regrouper suffisamment de secteurs habitation adjacents pour atteindre le seuil fixé."
+      "desc": "Monter un village ben tassé : regrouper assez de secteurs habitation collés ensemble pour atteindre le seuil demandé."
     },
     "fields": {
       "name": "Terres cultivées",
-      "desc": "Étendre les champs en zones continues. Les moulins n'apparaissent que lorsque la zone est assez vaste pour les accueillir."
+      "desc": "Étendre les champs en zones continues. Les moulins se pointent juste quand la zone est assez grande pour les accueillir."
     },
     "mills": {
       "name": "Moulins à vent",
-      "desc": "Construire de grandes zones de champs de blé pour y faire apparaître des moulins. Un moulin naît automatiquement au centre de chaque vaste zone de champ."
+      "desc": "Bâtir de grandes zones de champs de blé pour faire pousser des moulins. Un moulin apparaît tout seul au milieu de chaque grande zone de champ."
     }
   },
   "gameplay": {
@@ -133,7 +137,7 @@
     "steps": {
       "draw": {
         "title": "Pige",
-        "desc": "Une tuile hexagonale apparaît avec six secteurs triangulaires. Regarde la prochaine avant de faire n'importe quoi."
+        "desc": "Une tuile hexagonale se pointe avec six secteurs triangulaires. Checke la prochaine avant de faire n'importe quoi."
       },
       "orient": {
         "title": "Tourne-la",
@@ -141,18 +145,18 @@
       },
       "place": {
         "title": "Pose-la",
-        "desc": "Choisis une place sur la grille. Entourer complètement une tuile donne un gros bonus drette là."
+        "desc": "Choisis une place sur la grille. Entourer une tuile au complet donne un gros bonus drette là."
       },
       "score": {
         "title": "Ramasse les points",
         "desc": "Complète des missions, agrandis tes zones, intercepte des comètes pis envoie ton meilleur pointage au palmarès mondial."
       }
     },
-    "score_label": "Calcul du pointage",
+    "score_label": "Comment ça compte les points",
     "pills": {
       "place": "Tuile posée",
       "edge": "Bord compatible",
-      "network": "Réseau connecté",
+      "network": "Réseau branché",
       "surround": "Tuile encerclée",
       "mission": "Mission réglée",
       "comet": "Comète pognée",
@@ -164,19 +168,20 @@
       "left_click_kbd": "Clic gauche",
       "left_click_desc": "déplacer la caméra",
       "right_click_kbd": "Clic droit",
-      "right_click_desc": "rotation caméra",
+      "right_click_desc": "fais virer la caméra",
       "wheel_kbd": "Molette",
       "wheel_desc": "zoom",
       "space_kbd": "Espace",
       "reset_cam": "remettre la caméra comme avant",
-      "zoom": "zoomer / dézoomer",
+      "zoom": "approche / éloigne",
       "shift_kbd": "SHIFT",
       "speed_up": "accélère le déplacement pis le zoom",
       "undo": "défaire",
-      "customization": "personnalisation",
+      "customization": "gossage",
       "perf_hud": "HUD performances",
-      "snapshot": "prendre une photo",
+      "snapshot": "pogner une photo",
       "gallery": "album des captures",
+      "replay": "Replay de la partie",
       "immersive": "mode immersif",
       "super_immersive": "mode super-immersif",
       "mute": "couper le son",
@@ -187,7 +192,7 @@
     "label": "Ambiances visuelles",
     "title1": "Plusieurs atmosphères",
     "title2": "Une infinité de personnalisations",
-    "sub": "De nombreux presets visuels prêts à l'emploi — mais chacun est une base : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… Des centaines de combinaisons pour transformer le monde entier à ton goût. Chaque personnalisation s'exporte en un clic et peut être partagée avec d'autres joueurs.",
+    "sub": "Ben des presets visuels prêts à l'emploi — mais chacun est juste un point de départ : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… Des centaines de combinaisons pour retaper le monde au complet à ton goût. Chaque réglage s'exporte en un clic pis peut être partagé avec d'autres joueurs.",
     "preset_word": "Preset",
     "presets": {
       "autumn": "Automne",
@@ -206,35 +211,35 @@
     "sub": "Le monde fait pas juste exister : il respire. Animaux, oiseaux pis habitants font vivre chaque biome au fil des saisons.",
     "sheep": {
       "name": "Moutons",
-      "desc": "Des troupeaux paissent tranquillement dans les prairies, se déplaçant au gré des herbes qui ondulent sous le vent."
+      "desc": "Des troupeaux broutent tranquillement dans les prairies, se promenant au gré des herbes qui ondulent dans le vent."
     },
     "crows": {
       "name": "Corbeaux",
-      "desc": "Des vols de corbeaux tournoient au-dessus des champs de blé, guettant la moindre parcelle laissée sans surveillance."
+      "desc": "Des volées de corbeaux tournent au-dessus des champs de blé, à guetter la moindre parcelle qu'on a oublié de surveiller."
     },
     "farmer": {
       "name": "Fermier",
-      "desc": "Fourche à la main, le fermier veille sur ses blés et va et vient au rythme des saisons agricoles."
+      "desc": "Fourche à la main, le fermier veille sur son blé pis se promène au rythme des saisons — un ouvrage jamais fini, celui-là."
     },
     "druid": {
       "name": "Druide",
-      "desc": "Une silhouette solitaire erre entre les arbres, gardienne discrète des forêts et de leurs secrets."
+      "desc": "Une silhouette toute seule erre entre les arbres, gardienne ben discrète des forêts pis de leurs secrets."
     },
     "witch": {
       "name": "Sorcière",
-      "desc": "Dans certaines forêts, à la tombée de la nuit, on raconte que des sorcières rôdent entre les arbres, attirées par le silence et la lueur des feux de camp oubliés. Rares sont ceux qui les aperçoivent — plus rares encore ceux qui osent les suivre."
+      "desc": "Dans certaines forêts, à la tombée de la nuit, y paraît que des sorcières rôdent entre les arbres, attirées par le silence pis la lueur des feux de camp oubliés. Rares sont ceux qui les aperçoivent — encore plus rares ceux qui osent les suivre."
     },
     "moon": {
       "name": "Lune de Méliès",
-      "desc": "En mode nuit, la lune arbore le visage emblématique du Voyage dans la Lune de Méliès — un clin d'œil au cinéma muet niché au cœur du ciel étoilé."
+      "desc": "En mode nuit, la lune se pavane avec le visage emblématique du Voyage dans la Lune de Méliès — un clin d'œil au cinéma muet, planté en plein cœur du ciel étoilé."
     },
     "seagulls": {
       "name": "Mouettes",
-      "desc": "De petits groupes de mouettes tournoient au-dessus des plus grandes étendues d'eau, quelques individus s'écartant parfois du reste de la troupe."
+      "desc": "De petites gangs de mouettes tournent au-dessus des plus grandes étendues d'eau, avec quelques-unes qui s'écartent de temps en temps du reste de la gang."
     },
     "fireflies": {
       "name": "Lucioles",
-      "desc": "À la tombée de la nuit, des nuées de lucioles scintillantes vagabondent au ras du sol, dessinant des points de lumière chaude qui dérivent doucement autour de la caméra."
+      "desc": "À la tombée de la nuit, des nuées de lucioles qui scintillent se promènent au ras du sol, dessinant des points de lumière chaude qui dérivent tranquillement autour de la caméra."
     },
     "population": {
       "villages_label": "Villages",
@@ -267,7 +272,7 @@
         "wildflowers": "Fleurs sauvages"
       }
     },
-    "note": "22 visages différents peuplent les villages pis les forêts, chacun avec sa silhouette, son costume pis son rôle. Pas de figurants copiés-collés comme des cônes orange : une vraie population, tuile après tuile."
+    "note": "22 visages différents peuplent les villages pis les forêts, chacun avec sa silhouette, son costume pis son rôle. Pas de figurants copiés-collés comme des cônes orange de même : une vraie population, tuile après tuile."
   },
   "audio": {
     "label": "Ambiance sonore",
@@ -275,19 +280,19 @@
     "sub": "Le son suit la caméra en temps réel. Chaque biome, chaque train pis chaque bateau a sa propre voix, qui monte ou disparaît selon la distance.",
     "spatial": {
       "name": "Son spatial 3D",
-      "desc": "Ambiances de village, chants d'oiseaux de forêt et de prairie, corbeaux au-dessus des champs, ressac des plages, trains et bateaux — chaque source varie en volume selon sa distance et sa direction réelles."
+      "desc": "Le brouhaha du village, les oiseaux qui chantent en forêt pis en prairie, les corbeaux au-dessus des champs, le ressac des plages, les trains pis les bateaux — chaque son varie en volume selon sa vraie distance pis sa vraie direction."
     },
     "chimai": {
       "name": "Chi Mai, le thème caché",
-      "desc": "Descends la caméra au ras d'un champ de blé et un thème mélodique secret se déclenche — la musique et les autres sons s'effacent doucement pour lui laisser toute la place."
+      "desc": "Descends la caméra au ras d'un champ de blé pis un thème caché se déclenche — la musique pis les autres sons s'effacent tranquillement pour lui laisser toute la place."
     },
     "adaptive": {
       "name": "Musique adaptative",
-      "desc": "Pistes d'intro, de jeu et de fin qui s'enchaînent en fondu doux, piochées dans plusieurs variantes pour ne jamais sonner deux fois pareil d'une partie à l'autre."
+      "desc": "Des pistes d'intro, de jeu pis de fin qui s'enchaînent tout en douceur, pigées parmi plusieurs versions pour jamais sonner pareil d'une game à l'autre."
     },
     "silence": {
       "name": "Silence quand ça te tente",
-      "desc": "La touche M coupe ou remet toute la bande-son drette là, musique comprise — pratique pour jouer en cachette pendant une réunion."
+      "desc": "La touche M coupe ou remet toute la bande-son drette là, musique comprise — pratique pour jouer en cachette pendant une réunion, quand t'es tanné du bruit."
     }
   },
   "daynnight": {
@@ -349,14 +354,14 @@
   "eda": {
     "label": "Éditeur de direction artistique (EDA)",
     "title": "Personnalisation extrême",
-    "sub": "Au-delà des nombreux presets, l'EDA ouvre des dizaines de metrics ajustables en temps réel, réparties en 3 onglets — LUT, Cinématique, Environnement. Chaque curseur répond instantanément, sans rechargement, et l'ensemble se copie/exporte en JSON pour être rejoué ou partagé.",
+    "sub": "En plus des ben des presets, l'EDA ouvre des dizaines de réglages ajustables en temps réel, répartis en 3 onglets — LUT, Cinématique, Environnement. Chaque curseur répond tu-suite, sans recharger la page, pis le tout se copie/exporte en JSON pour être rejoué ou partagé.",
     "lut": {
       "label": "LUT",
       "desc": "Brouillard, astre lumineux, étalonnage colorimétrique complet (courbes RVB, gamma, niveaux) et palette par biome."
     },
     "cinematic": {
       "label": "Cinématique",
-      "desc": "God rays, tilt-shift, bloom, pixelisation rétro et courbure d'écran — pour filmer le monde plutôt que le regarder."
+      "desc": "God rays, tilt-shift, bloom, pixelisation rétro et courbure d'écran — pour filmer le monde au lieu de juste le regarder."
     },
     "environment": {
       "label": "Environnement",
@@ -366,15 +371,17 @@
   "multi": {
     "title1": "Multijoueur",
     "title2": "Bâtissez ça ensemble",
-    "sub": "Rejoins ou crée une salle avec un code de 6 lettres. La grille est partagée en temps réel : chaque joueur pose ses tuiles pis voit les placements des autres à mesure.",
+    "sub": "Embarque ou crée une salle avec un code de 6 lettres. La grille est partagée en temps réel : chaque joueur pose ses tuiles pis voit les autres placer les leurs, right-là.",
     "features": [
-      "Toutes les games sont sauvegardées — reprends ou rejoue à tout moment",
-      "Salles rejoignables à tout moment, même en cours de game",
+      "Toutes les games sont sauvegardées — repars-la ou rejoue-la quand ça te tente",
+      "Tu peux embarquer dans une salle à n'importe quel moment, même en pleine game",
       "Synchronisation temps réel · PHP + JSON",
-      "La carte se construit collaborativement, tuile après tuile"
+      "La carte se bâtit ensemble, une tuile à la fois"
     ],
     "gallery_title": "PARTAGE TES PHOTOS",
-    "gallery_promo": "Immortalise tes plus belles games : le bouton 📷 prend une photo sans HUD, pis le bouton 🖼️ ouvre l'album partagé du serveur.",
+    "gallery_promo": "Immortalise tes plus belles games : le bouton 📷 prend une photo sans HUD, pis le bouton 🖼️ ouvre l'album partagé avec tout le monde.",
+    "replay_title": "Enregistre tes games en vidéo",
+    "replay_promo": "Le bouton 🎬 (ou la touche V) relance ta game en accéléré, tuile par tuile, avec des vitesses de lecture de ×1 à ×8. Pendant le replay, un bouton dédié capture l'écran pis télécharge automatiquement une vidéo en format WebM — direct depuis ton navigateur, pas besoin de logiciel ni de service externe.",
     "btn_create": "Créer une game",
     "room_title": "Code de la salle",
     "room_status": "Game en cours · 3 joueurs",
@@ -383,8 +390,8 @@
   "scores": {
     "label": "Palmarès mondial",
     "title": "Les meilleurs bâtisseurs",
-    "empty": "Y'a encore aucun pointage — sois le premier à poser une tuile.",
-    "try_luck": "Tente ta chance →",
+    "empty": "Y'a encore rien pantoute au palmarès — sois le premier à poser une tuile.",
+    "try_luck": "Envoye, tente ta chance →",
     "headline_stat": "tuiles posées",
     "trains_s": "locomotive",
     "trains_p": "locomotives",
@@ -423,19 +430,24 @@
     }
   },
   "footer": {
-    "copy": "Jeu hexagonal contemplatif fait avec nostalgie, amour ❤️, Three.js pis beaucoup trop de tuiles · 2025–2026",
+    "copy": "Jeu hexagonal contemplatif fait avec nostalgie, amour ❤️, Three.js pis beaucoup trop de tuiles",
     "github": "Sur GitHub"
   },
   "game": {
     "gallery": {
       "title": "Album des captures",
-      "empty": "Y'a aucune capture pour l'instant. Pèse sur 📷 dans la game pour en faire une.",
+      "empty": "Y'a rien pantoute comme capture pour l'instant, câline. Pèse sur 📷 dans la game pour en faire une.",
       "close": "Fermer",
       "loading": "Ça charge…",
       "tilesCount": "Game de {n} tuiles",
       "modeBouliste": "Mode grosse boule",
       "modePlatiste": "Mode ben droit",
       "captured": "Photo pognée !"
+    },
+    "replay": {
+      "restart": "Retourne au début",
+      "playPause": "Joue / Pause",
+      "close": "Ferme le replay"
     },
     "eda": {
       "mainTitle": "Éditeur de direction artistique",
@@ -497,6 +509,10 @@
         "ega": "EGA",
         "amiga": "Amiga",
         "psyche": "Psyché-LSD"
+      },
+      "themeNames": {
+        "bleu": "Bleu",
+        "ancien": "Médiéval"
       },
       "modes": {
         "bouliste": "Bouliste",
@@ -671,9 +687,11 @@
     "help": {
       "topbar.fps": "Afficher/masquer le HUD performances avancé",
       "topbar.eda": "Ouvrir ou fermer le panneau de rendu",
-      "topbar.snapshot": "Capture d'écran (sans HUD), enregistrée sur le serveur",
+      "topbar.snapshot": "Capture d'écran (sans HUD)",
       "topbar.gallery": "Galerie des captures d'écran",
+      "topbar.replay": "Reregarde la partie",
       "topbar.lang": "Langue",
+      "topbar.theme": "Thème graphique (Bleu / Médiéval)",
       "renderer.toneMappingExposure": "Exposition globale du renderer (ACESFilmic). Contrôle la quantité de lumière atteignant le \"capteur\" avant tout étalonnage.\nValeurs < 1 assombrissent l'ensemble, > 2 peuvent saturer les hautes lumières.\nTypique : 1.2–1.8 pour un rendu naturel.",
       "environment.fogDensity": "Densité du brouillard exponentiel (FogExp2). Actif uniquement quand \"Fin linéaire\" est à 0.\nLa visibilité chute très rapidement : à 0.07 la scène est quasi-opaque.\nPour un champ visuel contrôlé, préférer le mode linéaire via \"Début\" et \"Fin\".",
       "environment.fogNear": "Distance en unités 3D où le brouillard linéaire commence.\nDès que \"Fin\" > 0, bascule automatiquement de FogExp2 vers THREE.Fog(near, far).\nÀ 0 : brouillard dès le premier plan. À 5 : les objets proches restent nets.",
@@ -797,7 +815,7 @@
       "game.largestWater": "Plus grande étendue d'eau contiguë. Un lac > 5 tuiles peut accueillir des bateaux supplémentaires.",
       "game.rail": "Tuiles de voie ferrée totales posées.\nLes rails seuls ne rapportent rien — c'est la connexion entre deux gares qui crée une ligne.",
       "game.largestRail": "Voie ferrée la plus longue contiguë (en tuiles). Indicateur de la portée maximale du réseau.",
-      "game.activeTile": "La tuile que tu vas poser au prochain coup.\nDéplace le curseur avec Z/Q/S/D, tourne avec R, et pose avec ESPACE.\nChaque face de la tuile correspond à un biome — planifie tes connexions !",
+      "game.activeTile": "La tuile que tu vas poser au prochain coup.\nDéplace le curseur avec Z/Q/S/D, tourne avec la molette, et pose avec ESPACE.\nChaque face de la tuile correspond à un biome — planifie tes connexions !",
       "game.nextTile": "La prochaine tuile qui entrera en jeu après que tu auras posé la tuile courante.\nAnticipe sa forme pour préparer la meilleure case d'accueil.",
       "game.deckRemaining": "Nombre de tuiles restantes dans la pioche.\nLa partie se termine quand la pioche est vide — optimise chaque placement !",
       "hs.summary": "Résumé de la partie : tuiles posées, lignes de train, bateaux, comètes interceptées.",
@@ -877,12 +895,12 @@
       "modals": {
         "scoreEnd": {
           "kicker": "La game est finie — score final",
-          "save": "Enregistrer"
+          "save": "Garde ça"
         },
         "abandon": {
           "kicker": "Câline, tu veux vraiment sacrer ton camp de la game ?",
           "sub": "Une fois que c'est fait, ta game est partie pour de bon.",
-          "cancel": "ANNULER",
+          "cancel": "LAISSE FAIRE",
           "confirm": "SACRER SON CAMP"
         }
       },
@@ -890,7 +908,7 @@
         "player": "JOUEUR",
         "room": "GAME",
         "abandon": "SACRER SON CAMP",
-        "newGame": "NOUVELLE GAME",
+        "newGame": "ON REPART ÇA !",
         "statsTitle": "STATISTIQUES DE LA GAME",
         "mills": "Moulins",
         "trains": "Trains",
@@ -912,14 +930,14 @@
         "deckRemaining": "RESTANTES",
         "tilesPlaced": "POSÉES",
         "missionsTitle": "MISSIONS EN COURS",
-        "noMission": "Y'a pas de mission"
+        "noMission": "Y'a pas de mission, faque relaxe"
       },
       "help": {
         "title": "Aide",
         "closeAria": "Fermer l'aide",
         "objective": {
           "title": "Règles de base",
-          "text": "Pose les tuiles hexagonales, connecte les textures identiques et termine les missions. Chaque bord bien aligné paie ; eau et rails paient davantage.",
+          "text": "Pose tes tuiles hexagonales, connecte les mêmes textures pis règle les missions. Chaque bord ben aligné paie ; l'eau pis les rails paient encore plus.",
           "points": {
             "tile": "par tuile posée",
             "edge": "par bord identique contre une tuile voisine",
@@ -932,26 +950,26 @@
         "placement": {
           "title": "Placement",
           "items": [
-            "Début de partie avec 50 tuiles.",
-            "Le placement de la première est libre ; les suivantes devront toucher une tuile posée.",
-            "Le jeu prend fin quand la pioche est vide.",
-            "À chaque pose, la zone jouable s'étend."
+            "Tu pars la game avec 50 tuiles.",
+            "La première tuile, tu la poses où tu veux ; les autres doivent toucher une tuile déjà posée.",
+            "La game finit quand la pioche est vide.",
+            "Chaque fois que tu poses une tuile, la zone jouable s'agrandit."
           ]
         },
         "waterRail": {
           "title": "Eaux et rails",
-          "text": "L'eau et le rail sont des réseaux stricts et plus difficiles à placer. En échange, chaque connexion correcte rapporte plus de points.",
+          "text": "L'eau pis le rail sont des réseaux stricts, plus difficiles à placer comme il faut. En échange, chaque bonne connexion rapporte plus de points.",
           "water": "se connecte uniquement à eau : +25",
           "rail": "se connecte uniquement à rail : +25"
         },
         "bonusCells": {
           "title": "Cases bonus",
-          "text": "Entre 1 et 4 cases bonus sont générées sur la grille. Elles ne changent aucune règle de placement : si tu arrives à poser une tuile dessus, elles disparaissent et rapportent immédiatement +1500 points.",
+          "text": "Entre 1 et 4 cases bonus se retrouvent sur la grille. Ça change aucune règle de placement : si tu réussis à poser une tuile dessus, ça disparaît pis ça rapporte tu-suite +1500 points.",
           "label": "objectif optionnel, pur score, zéro piège"
         },
         "blackCells": {
           "title": "Cellules noires",
-          "text": "Les cellules noires sont des tuiles spéciales déjà présentes sur la grille. Elles agissent comme des jokers : elles remplacent ce qui manque autour d'elles et acceptent les connexions avec toutes les textures adjacentes.",
+          "text": "Les cellules noires sont des tuiles spéciales déjà là sur la grille. Elles agissent comme des jokers : elles remplacent ce qui manque autour pis acceptent les connexions avec n'importe quelle texture voisine.",
           "label": "compte comme compatible avec tout bord voisin"
         },
         "textures": {
@@ -983,14 +1001,14 @@
         },
         "missions": {
           "title": "Missions",
-          "text1": "À chaque nouvelle tuile courante, 20% de chance d'ajouter une mission. Elle peut demander forêt, village, voie ferrée, voie d'eau, prairie, champ de blé, trains visibles, bateaux ou moulins.",
-          "text2": "Récompense : +100 points et +3 tuiles. Les objectifs progressent par type, une mission terminée reste visible 5 tours. Les valeurs réelles comptent : prairie/eau/rail = 1 ; champ de blé = 1-2 ; maison = 1-4 ; forêt = 1-6 arbres. Les moulins ⚙️ comptent le nombre de grandes zones de champ actives."
+          "text1": "À chaque nouvelle tuile courante, t'as 20% de chances qu'une mission s'ajoute. Ça peut demander forêt, village, voie ferrée, voie d'eau, prairie, champ de blé, trains visibles, bateaux ou moulins.",
+          "text2": "Récompense : +100 points pis +3 tuiles. Les objectifs avancent par type, une mission finie reste affichée 5 tours. Les vraies valeurs comptent : prairie/eau/rail = 1 ; champ de blé = 1-2 ; maison = 1-4 ; forêt = 1-6 arbres. Les moulins ⚙️ comptent le nombre de grandes zones de champ actives."
         },
         "controls": {
           "title": "Contrôles",
           "moveCamera": "Déplacer la caméra",
           "resetCamera": "Remettre la caméra comme avant",
-          "zoom": "Zoomer / dézoomer la caméra",
+          "zoom": "Approche / éloigne la caméra",
           "undo": "Défaire le dernier mouvement",
           "toggleHelp": "Afficher / masquer cette aide",
           "muteSound": "Couper / activer tous les sons",
@@ -998,11 +1016,12 @@
           "superImmersive": "Mode super-immersif",
           "speedUp": "Accélère les déplacements pis le zoom",
           "wheelZoomRotate": "Zoom ou rotation si disponible",
-          "rightClick": "Rotation de la caméra",
+          "rightClick": "Fais virer la caméra",
           "perfHud": "Afficher / masquer le HUD FPS",
           "eda": "Afficher / masquer le HUD EDA",
-          "snapshot": "Prendre une photo",
+          "snapshot": "Pogner une photo",
           "gallery": "Ouvrir l'album des captures",
+          "replay": "Afficher / masquer le HUD replay de la partie",
           "wheelKbd": "Molette",
           "leftClickKbd": "Clic gauche",
           "rightClickKbd": "Clic droit",
@@ -1014,7 +1033,7 @@
     "highscore": {
       "saving": "Ça s'enregistre...",
       "saved": "Pointage enregistré, tabarnak ! Retour au menu...",
-      "error": "Oups, maudite erreur de pointage.",
+      "error": "Oups, ostie d'erreur de pointage.",
       "defaultName": "Joueur"
     },
     "multiplayerRooms": {
@@ -1027,10 +1046,10 @@
       "loadingRooms": "Ça charge les games...",
       "btnCreate": "Créer",
       "btnJoin": "Embarquer",
-      "btnBack": "Retour",
+      "btnBack": "Reviens",
       "selectExisting": "Choisis une game existante",
-      "noRoomsFound": "Y'a pas de game trouvée dans /json/games",
-      "listUnavailable": "Liste indisponible - serveur PHP muet",
+      "noRoomsFound": "Câline, y'a pas de game trouvée dans /json/games",
+      "listUnavailable": "Liste pas prête - serveur PHP muet",
       "roomsCount": {
         "one": "{count} game disponible / copie de secours",
         "other": "{count} games disponibles / copies de secours"
@@ -1047,7 +1066,7 @@
       "creatingRoom": "Création de la game {code}...",
       "missingCode": "Code de game manquant.",
       "joiningRoom": "Connexion à la game {code}...",
-      "roomNotFound": "Game {code} trouvée, mais y'a pas de snapshot. JSON moisi refusé, mon chum.",
+      "roomNotFound": "Game {code} trouvée, mais y'a pas de snapshot. JSON moisi refusé, crisse.",
       "defaultNamePrefix": "Joueur"
     },
     "startupMenu": {
@@ -1055,29 +1074,29 @@
         "title": "Comment tu t'appelles ?",
         "label": "Ton prénom (ou pseudo)",
         "placeholder": "Ex : Rémi",
-        "confirm": "CONTINUER →"
+        "confirm": "CONTINUE DONC →"
       },
       "home": {
-        "title": "Choisis le mode de jeu : solo ou multijoueur.",
+        "title": "Choisis c'est quoi que tu veux jouer : solo ou multi.",
         "solo": "SOLO",
         "multi": "MULTI"
       },
       "worldShape": {
-        "title": "Choisis la géométrie de ta planète :",
+        "title": "Choisis c'est quoi la forme de ta planète, asteur :",
         "flat": "PLATISTE",
         "globe": "BOULISTE",
         "note": "On te conseille \"<i>platiste</i>\" pour débuter. Tu pourras changer de faction à n'importe quel moment en jeu, parce que même les planètes ont droit à une petite crise identitaire, câline."
       }
     },
     "preloader": {
-      "loading": "Ça charge…",
-      "loadingPct": "Ça charge… {pct} %"
+      "loading": "Ça s'en vient…",
+      "loadingPct": "Ça s'en vient… {pct} %"
     },
     "placementOverlay": {
-      "ok": "OK",
+      "ok": "C'EST BEAU",
       "outOfGrid": "HORS GRILLE",
       "forbidden": "INTERDIT",
-      "incompatibleNetwork": "RÉSEAU INCOMPATIBLE",
+      "incompatibleNetwork": "ÇA FITTE PAS",
       "edgeTypes": {
         "field": "champ",
         "forest": "forêt",
@@ -1093,13 +1112,14 @@
     },
     "kbdHint": "H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif",
     "superImmersifExitHint": "ESPACE pour sortir du super-immersif, mon chum",
+    "langName": "Québécois",
     "fpsAdjectives": {
-      "disastrous": "Un désastre",
+      "disastrous": "Un désastre en tabarnak",
       "bad": "Poche",
       "mediocre": "Ordinaire",
       "passable": "Correct",
-      "good": "Bon",
-      "splendid": "Solide en maudit"
+      "good": "Pas pire pantoute !",
+      "splendid": "C'est écoeurant !"
     }
   }
 }

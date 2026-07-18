@@ -32,11 +32,7 @@
   font-family: monospace;
   font-size: 12px;
   line-height: 1.4;
-  color: rgba(240,250,255,0.96);
-  background: rgba(0,0,0,0.68);
-  border: 1px solid rgba(120,180,255,0.38);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
   padding: 14px 16px;
   width: 432px; /* +20% (2026-07-04) — place pour le % de triangles par catégorie */
   max-width: calc(100vw - 28px);
@@ -92,11 +88,32 @@
   color: #ffffff;
 }
 
+/* Croix de fermeture HUD FPS (2026-07-17, demande explicite) — même rangée que le
+   bouton copier (juste après lui dans le markup, cf. hud_fps.js::_buildHud), poussée
+   au bord droit du header par le margin-left:auto déjà présent sur .fps-hud-copy.
+   N'apparaît que HUD déployé (rendue conditionnellement côté JS). Couleurs par thème
+   plus bas, avec .debug-light-close (même traitement visuel, panneau EDA). */
+.fps-hud-close {
+  margin-left: 6px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-family: monospace;
+  font-weight: 900;
+  line-height: 1;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
 .fps-hud-fps {
   font-size: 26px;
   font-weight: 900;
   letter-spacing: 0.04em;
-  color: rgba(240,250,255,0.96);
   font-family: 'BebasNeue', system-ui, sans-serif;
   line-height: 1;
   display: flex;
@@ -107,7 +124,6 @@
 .fps-hud-fps > span:first-child {
   font-size: 12px;
   font-weight: 700;
-  color: rgba(180,215,255,0.82);
   letter-spacing: 0.18em;
 }
 
@@ -117,15 +133,47 @@
   font-style: normal;
   letter-spacing: 0.04em;
 }
-.fps-adj-red        { color: #f87171; }
-.fps-adj-orange     { color: #fb923c; }
-.fps-adj-amber      { color: #fbbf24; }
-.fps-adj-yellow     { color: #fde047; }
-.fps-adj-lightgreen { color: #86efac; }
-.fps-adj-green      { color: #4ade80; }
+/* Palette FPS (adjectif + %CPU/%GPU) — variables thémées (2026-07-17). Bleu inchangé
+   (teintes claires pensées pour fond sombre) ; ancien assombri/saturé pour rester
+   lisible sur le parchemin clair, en particulier le vert qui devenait pâle/lavé.
+   Consommées ici (classes .fps-adj-*) ET en style inline par hud_fps.js (gpuColor/
+   cpuColor/ratio ×DC), var() hérite via [data-theme] posé sur <html>. */
+html[data-theme="bleu"] {
+  --fps-c-red: #f87171;
+  --fps-c-orange: #fb923c;
+  --fps-c-amber: #fbbf24;
+  --fps-c-yellow: #fde047;
+  --fps-c-lightgreen: #86efac;
+  --fps-c-green: #4ade80;
+  /* 2026-07-18 — texte "muet" (indices secondaires : ms GPU/CPU, en-têtes de
+     colonnes triables inactifs, badge ×N ratio faible) : bleu clair pensé pour
+     fond sombre. Utilisé via inline style dans hud_fps.js (msHint/col-header/
+     ratio bas) — cf. ancien ci-dessous pour la déclinaison lisible parchemin. */
+  --fps-c-muted: rgba(180,215,255,0.55);
+}
+html[data-theme="ancien"] {
+  --fps-c-red: #8b1a1a;
+  --fps-c-orange: #9a4a12;
+  --fps-c-amber: #8a6a10;
+  --fps-c-yellow: #6e5c0c;
+  --fps-c-lightgreen: #2f6b2f;
+  --fps-c-green: #1f5c1f;
+  /* 2026-07-18 — retour utilisateur : le bleu clair --fps-c-muted (pensé pour
+     fond sombre) restait illisible sur le parchemin clair, y compris après
+     assombrissement de .fps-hud-cat-*. Ces 3 usages passaient par du style
+     inline (pas de classe CSS ciblable), d'où l'oubli lors du 1er passage de
+     thématisation. Brun assourdi équivalent, même rôle "texte secondaire". */
+  --fps-c-muted: rgba(74,54,35,0.55);
+}
+
+.fps-adj-red        { color: var(--fps-c-red); }
+.fps-adj-orange     { color: var(--fps-c-orange); }
+.fps-adj-amber      { color: var(--fps-c-amber); }
+.fps-adj-yellow     { color: var(--fps-c-yellow); }
+.fps-adj-lightgreen { color: var(--fps-c-lightgreen); }
+.fps-adj-green      { color: var(--fps-c-green); }
 
 .fps-hud-sep {
-  border-top: 1px solid rgba(120,180,255,0.22);
   margin: 6px 0;
 }
 
@@ -137,13 +185,11 @@
   gap: 8px;
   font-size: 11px;
   line-height: 1.55;
-  color: rgba(180,215,255,0.82);
 }
 
 .fps-hud-row strong {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: rgba(240,250,255,0.96);
   flex-shrink: 0;
   text-align: right;
 }
@@ -159,17 +205,14 @@
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   line-height: 1.55;
-  color: rgba(180,215,255,0.82);
   border-radius: 4px;
   padding: 1px 2px;
 }
 
 .fps-hud-row-cat--heavy {
-  background: rgba(220, 40, 40, 0.20);
   border-left: 3px solid rgba(255,80,80,0.80);
   padding-left: 5px;
   border-radius: 4px;
-  color: rgba(255,220,220,0.90);
 }
 
 .fps-hud-cat-label {
@@ -190,32 +233,27 @@
 .fps-hud-cat-count {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: rgba(240,250,255,0.96);
   text-align: right;
 }
 
 .fps-hud-cat-dc {
   font-variant-numeric: tabular-nums;
-  color: rgba(255,210,100,0.90);
   text-align: right;
 }
 
 .fps-hud-cat-tri {
   font-variant-numeric: tabular-nums;
-  color: rgba(130,195,255,0.90);
   text-align: right;
 }
 
 .fps-hud-cat-tri-pct {
   font-size: 9px;
   font-weight: 600;
-  color: rgba(130,195,255,0.55);
   margin-left: 3px;
 }
 
 .fps-hud-cat-shadow {
   font-variant-numeric: tabular-nums;
-  color: rgba(180,140,255,0.90);
   text-align: right;
 }
 
@@ -238,7 +276,6 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: rgba(180,215,255,0.70);
 }
 
 .fps-hud-eff-value {
@@ -264,10 +301,8 @@
   font-weight: 900;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(212,236,255,0.92);
   margin-top: 5px;
   margin-bottom: 1px;
-  border-bottom: 1px solid rgba(120,180,255,0.12);
   padding-bottom: 1px;
 }
 
@@ -286,9 +321,19 @@
 
 /* Ligne totaux */
 .fps-hud-row-total {
-  background: rgba(120,180,255,0.08);
   border-radius: 4px;
   padding: 2px 4px;
+}
+
+/* Bandeau de boutons in-game sur 3 lignes (2026-07-17, demande explicite) :
+   1) photo / galerie / replay — 2) langue / thème — 3) FPS / EDA.
+   Wrapper colonne ajouté autour des 3 `.debug-light-btn-row`, qui restent
+   chacune une simple rangée horizontale (inchangée) de ses boutons/selects. */
+.debug-light-btn-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
 }
 
 .debug-light-btn-row {
@@ -334,9 +379,133 @@
 }
 
 /* Boutons capture 📷 et galerie 🖼️ (2026-07-15) : emoji seul (pas de texte comme
-   FPS/EDA), agrandi de 30% et centré verticalement (flex, plutôt que de compter sur
-   line-height — plus fiable entre navigateurs pour un unique glyphe emoji). */
+   FPS/EDA), agrandi et centré verticalement (flex, plutôt que de compter sur
+   line-height — plus fiable entre navigateurs pour un unique glyphe emoji).
+   #snapshotBtn : 2026-07-16, plusieurs passes (1.3em puis 1.8em toujours trop bas/petit).
+   Un `transform` posé sur le <button> lui-même déplaçait toute la boîte hors de
+   l'alignement avec FPS/EDA/QC (régression signalée) — corrigé en déplaçant le
+   glyphe dans un <span class="snapshot-emoji"> interne (cf. edaPanelHost.js) : le
+   translateY ne s'applique plus qu'au glyphe, la boîte du bouton reste alignée.
+   #galleryBtn agrandi à son tour le 2026-07-16 (même pattern span interne, par
+   précaution — évite de reproduire le problème d'alignement rencontré sur
+   #snapshotBtn si jamais un ajustement vertical est nécessaire plus tard). */
 #snapshotBtn,
+#galleryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#snapshotBtn .snapshot-emoji {
+  display: inline-block;
+  font-size: 2.3em;
+  line-height: 1;
+  transform: translateY(-6px);
+}
+#galleryBtn .gallery-emoji {
+  display: inline-block;
+  font-size: 1.6em;
+  line-height: 1;
+}
+
+/* Bouton replay 🎬 (2026-07-16) — même pattern span interne que #snapshotBtn/#galleryBtn. */
+#replayBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#replayBtn .replay-emoji {
+  display: inline-block;
+  font-size: 1.6em;
+  line-height: 1;
+}
+
+/* ─── Panneau replay (replayEngine.js, 2026-07-16) ────────────────────────────────
+   Bandeau flottant (PAS un voile plein écran) : la caméra doit rester manipulable
+   pendant le replay (demande explicite), donc pas de fond opaque bloquant le canvas
+   comme les autres overlays (galerie/aide) — juste un petit panneau de contrôle. */
+.replay-overlay {
+  position: fixed;
+  inset: 0;
+  /* 2026-07-16 — bug signalé : à bottom+z-index:500, le panneau se retrouvait sous le
+     bandeau FPS/EDA/📷/🖼️/🎬 (.debug-light-panel, bottom:14px, z-index:3000, pleine
+     largeur) → bouton fermer inatteignable au clic, cul-de-sac. z-index aligné sur les
+     autres overlays in-game (snapshotGalleryOverlay.css utilise 10500).
+     Rendu "modal" (2026-07-16, retour utilisateur "pas assez modal comme la galerie") :
+     vignette haut/bas en dégradé façon cinéma sur TOUT l'écran, via ::before ci-dessous —
+     mais `pointer-events: none` de bout en bout sauf sur .replay-panel : la caméra doit
+     rester manipulable pendant le replay (demande explicite), donc pas de vrai voile
+     bloquant comme la galerie (qui, elle, est une iframe séparée et peut se le permettre). */
+  z-index: 10500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 18px;
+  pointer-events: none;
+}
+.replay-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 12%, rgba(0,0,0,0) 88%, rgba(0,0,0,0.45) 100%);
+  pointer-events: none;
+}
+.replay-overlay.hidden { display: none; }
+.replay-panel {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+.replay-panel::before {
+  /* 2026-07-16 — retour utilisateur : emoji 🎬 remplacé par le texte "REPLAY". */
+  content: "REPLAY";
+  font-family: 'BebasNeue', system-ui, sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+}
+.replay-hud {
+  display: flex;
+  align-items: center;
+  min-width: 64px;
+}
+/* Compteur de tours (ex. "31/31") — 2026-07-16, retour utilisateur : score numérique
+   ("2357") retiré (inutile en replay), compteur agrandi + BebasNeue, même police que le
+   reste du HUD jeu (#arcadeScore/deck.css/eda.css §fps-hud-fps — cf. grep "Bebas" CONTEXT.md). */
+.replay-progress {
+  font-family: 'BebasNeue', system-ui, sans-serif;
+  font-size: 26px;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+/* Boutons du panneau replay : classe `.debug-light-toggle` réutilisée telle quelle
+   (2026-07-16, retour utilisateur "le HUD replay doit voir les mêmes CSS que les autres
+   HUD") — plus de style custom séparé ici, cf. règle .debug-light-toggle plus haut dans
+   ce fichier pour l'apparence des boutons, et .debug-light-toggle--lut-active pour l'état
+   actif du sélecteur de vitesse. `min-width` réduit ici (36px vs 48px par défaut) : les
+   boutons replay sont plus nombreux et plus étroits (glyphes seuls, pas de texte "FPS"). */
+.replay-controls { display: flex; align-items: center; gap: 6px; }
+.replay-controls .debug-light-toggle { min-width: 36px; }
+/* 2026-07-16 — retour utilisateur : emojis des boutons replay (🔁🔴⏹⏸▶✕) agrandis et
+   centrés verticalement, exactement comme #snapshotBtn/#galleryBtn (span interne
+   `.replay-btn-emoji` + flex centering sur le bouton). Ciblage par ID plutôt que
+   `:has()` (évite toute dépendance à une fonctionnalité CSS récente) — seuls les 4
+   boutons à glyphe (pas les boutons de vitesse ×1/×2/×4/×8, texte brut) sont concernés. */
+#replayRestartBtn,
+#replayRecordBtn,
+#replayPlayPause,
+#replayCloseBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.replay-btn-emoji {
+  display: inline-block;
+  font-size: 1.7em;
+  line-height: 1;
+}
 #galleryBtn {
   display: inline-flex;
   align-items: center;
@@ -425,8 +594,6 @@
   justify-content: space-between;
   padding: 6px 10px;
   border-radius: 6px;
-  background: rgba(0,0,0,0.45);
-  border-left: 3px solid rgba(145,205,255,0.32);
 }
 /* Texte du titre à l'intérieur de la barre sombre — mêmes valeurs que .lut-section-head
    (text-transform: uppercase inclus) pour que TOUS les titres de rubrique (peu importe
@@ -436,7 +603,6 @@
   font-size: 12px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(180,215,255,0.82);
 }
 
 /* Emoji de rubrique/sous-rubrique : +35% par rapport au texte qui l'entoure (em = relatif
@@ -605,11 +771,7 @@
   overflow: hidden;
   padding: 12px;
   font-family: monospace;
-  border: 1px solid rgba(120,180,255,0.38);
   border-radius: 12px;
-  /* Même charte graphique que #scorePanel : sans flou, cohérent avec les autres HUDs */
-  background: rgba(0,0,0,0.68);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
 
 /* ── Onglets EDA (sous le header ambiances) — regroupent les rubriques par thème,
@@ -625,10 +787,7 @@
 .debug-light-tab-btn {
   flex: 1;
   padding: 8px 9px;
-  border: 1px solid rgba(120,180,255,0.32);
   border-radius: 8px;
-  background: rgba(18,28,52,0.80);
-  color: rgba(210,230,255,0.70);
   font-family: monospace;
   font-size: 11px;
   font-weight: 900;
@@ -638,15 +797,6 @@
   cursor: pointer;
   outline: none;
   transition: background 0.12s, border-color 0.12s, color 0.12s;
-}
-.debug-light-tab-btn:hover {
-  border-color: rgba(140,200,255,0.50);
-  color: rgba(230,246,255,0.95);
-}
-.debug-light-tab-btn--active {
-  background: rgba(90,140,255,0.30);
-  border-color: rgba(145,205,255,0.65);
-  color: #ffffff;
 }
 
 /* Conteneur des panneaux d'onglet : un seul panneau visible (.debug-light-tab-panel--active),
@@ -716,6 +866,31 @@
 
 .debug-light-panel.collapsed .debug-light-body { display: none; }
 
+/* Croix de fermeture en haut à droite du panneau EDA (2026-07-17, demande explicite),
+   même besoin/traitement visuel que .fps-hud-close ci-dessus. Positionnement absolu
+   (.debug-light-body passe en position:relative pour l'ancrer) plutôt qu'un flex header
+   dédié — le titre principal est un simple bloc centré, pas une rangée flex adaptée
+   à y accrocher un bouton de coin. Couleurs par thème plus bas dans ce fichier. */
+.debug-light-body { position: relative; }
+.debug-light-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  border-radius: 50%;
+  cursor: pointer;
+  font-family: monospace;
+  font-weight: 900;
+  line-height: 1;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
 /* Titre principal du HUD EDA — au-dessus de tout (ambiances comprises) */
 .debug-light-main-title {
   flex-shrink: 0;
@@ -724,10 +899,8 @@
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(230,246,255,0.96);
   padding-bottom: 8px;
   margin-bottom: 6px;
-  border-bottom: 1px solid rgba(120,180,255,0.24);
 }
 
 /* Header plein largeur (ambiances) — au-dessus des 2 colonnes */
@@ -764,10 +937,7 @@
 .debug-light-export #debugLightCompare {
   margin-top: 0;
   padding: 8px 9px;
-  border: 1px solid rgba(145, 205, 255, 0.42);
   border-radius: 8px;
-  background: rgba(25, 56, 82, 0.78);
-  color: rgba(230, 246, 255, 0.96);
   font-family: monospace;
   font-size: 11px;
   font-weight: 900;
@@ -776,12 +946,6 @@
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.12s, border-color 0.12s;
-}
-.debug-light-export #debugLightCopy:hover:not(:disabled),
-.debug-light-export #debugLightRedo:hover:not(:disabled),
-.debug-light-export #debugLightCompare:hover:not(:disabled) {
-  background: rgba(38, 86, 124, 0.9);
-  color: #ffffff;
 }
 
 /* ── Modèle bouton rouge — CSS strictement identique à .abandon-button (HUD score) ──
@@ -790,10 +954,7 @@
 .debug-light-export #debugLightReset {
   margin-top: 0;
   padding: 8px 9px;
-  border: 1px solid rgba(255, 120, 120, 0.46);
   border-radius: 8px;
-  background: rgba(80, 16, 20, 0.78);
-  color: rgba(255, 235, 235, 0.96);
   font-family: monospace;
   font-size: 11px;
   font-weight: 900;
@@ -802,11 +963,6 @@
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.12s, border-color 0.12s;
-}
-.debug-light-export #debugLightUndo:hover:not(:disabled),
-.debug-light-export #debugLightReset:hover:not(:disabled) {
-  background: rgba(120, 24, 30, 0.9);
-  color: #ffffff;
 }
 
 #debugLightUndo:disabled,
@@ -867,12 +1023,9 @@
   justify-content: space-between;
   padding: 6px 10px;
   border-radius: 6px;
-  background: rgba(0,0,0,0.45);
-  border-left: 3px solid rgba(145,205,255,0.32);
   font-size: 12px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(180,215,255,0.82);
 }
 /* Sous-titre avec switch (Étalonnage / Palette biomes / God Rays / Tilt-shift / Bloom /
    Écume / Sillage bateau) : titre + interrupteur alignés — redondant avec la base
@@ -890,12 +1043,9 @@
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.16em;
-  color: rgba(212,236,255,0.92);
   /* Fond sombre plus léger que les rubriques principales pour marquer la subordination */
   padding: 5px 8px;
   border-radius: 5px;
-  background: rgba(0,0,0,0.30);
-  border-left: 2px solid rgba(145,205,255,0.22);
 }
 /* .lut-subhead-first — conservé sans effet, la classe reste posée par le JS pour compat */
 .lut-section-head--nested.lut-subhead-first { /* no-op depuis retrait du border-top */ }
@@ -913,7 +1063,6 @@
   gap: 5px;
   font-size: 11px;       /* même taille que les sliders */
   line-height: 1.55;
-  color: rgba(180,215,255,0.82);
 }
 .color-grid .debug-light-row span {
   grid-column: 2;
@@ -967,7 +1116,6 @@
   gap: 8px;
   font-size: 11px;
   line-height: 1.55;
-  color: rgba(180,215,255,0.82);
 }
 
 /* .debug-light-row input[type="range"] → style mutualisé avec .pix-control ci-dessus */
@@ -979,7 +1127,6 @@
 }
 
 .debug-light-row output {
-  color: rgba(240,250,255,0.96);
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -1003,7 +1150,6 @@
   gap: 8px;
   font-size: 11px;
   line-height: 1.55;
-  color: rgba(180,215,255,0.82);
 }
 .debug-light-weather-row .weather-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .debug-light-weather-row .weather-requires {
@@ -1025,10 +1171,7 @@
    pour un rendu HUD cohérent. */
 .debug-light-weather-btn {
   padding: 8px 9px;
-  border: 1px solid rgba(145,205,255,0.42);
   border-radius: 8px;
-  background: rgba(25,56,82,0.78);
-  color: rgba(230,246,255,0.96);
   font-family: monospace;
   font-size: 11px;
   font-weight: 900;
@@ -1039,8 +1182,6 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.30);
 }
 .debug-light-weather-btn:hover:not(:disabled) {
-  background: rgba(38,86,124,0.90);
-  color: #ffffff;
   transform: translateY(-1px);
 }
 .debug-light-weather-btn:active:not(:disabled) { transform: translateY(0); }
@@ -1064,10 +1205,7 @@
   width: 100%;
   padding: 7px 9px;
   margin-top: 4px;
-  border: 1px solid rgba(220,140,140,0.55);
   border-radius: 8px;
-  background: rgba(80,30,30,0.72);
-  color: rgba(255,225,225,0.95);
   font-family: monospace;
   font-size: 11px;
   font-weight: 900;
@@ -1131,7 +1269,6 @@
 .debug-light-presets-label {
   font-size: 12px;
   letter-spacing: 0.18em;
-  color: rgba(180,215,255,0.82);
   margin-bottom: 5px;
 }
 
@@ -1149,7 +1286,6 @@
   max-width: calc(33.33% - 4px);
   padding: 8px 9px;
   border-radius: 8px;
-  border: 1px solid rgba(145, 205, 255, 0.42);
   font-family: monospace;
   font-size: 11px;
   font-weight: 900;
@@ -1159,8 +1295,6 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  background: rgba(25, 56, 82, 0.78);
-  color: rgba(230, 246, 255, 0.96);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   transition: background 0.12s, border-color 0.12s, transform 0.10s;
@@ -1178,24 +1312,18 @@
   font-weight: 900;
   line-height: 1.2;
   letter-spacing: 0.02em;
-  color: rgba(230, 246, 255, 0.96);
 }
 
 .debug-light-preset-btn:hover {
-  background: rgba(38, 86, 124, 0.9);
-  border-color: rgba(145, 205, 255, 0.42);
-  color: #ffffff;
   transform: translateY(-1px);
-}
-.debug-light-preset-btn:hover .preset-label { color: #ffffff; }
-
-.debug-light-preset-btn:active {
-  background: rgba(20, 44, 66, 0.9);
-  transform: translateY(0);
 }
 
 
 /* ── Mini HUD clavier (bottom-right) ── */
+/* Masqué temporairement dans les 2 thèmes sur demande explicite de l'utilisateur
+   (2026-07-17) — le HUD reste en place dans le DOM/JS (edaPanelWiring.js) et
+   pourra être remontré plus tard en retirant simplement ce display:none ; ne
+   pas supprimer le markup/la logique tant que ce n'est pas explicitement demandé. */
 #kbdHintHud {
   position: fixed;
   bottom: 14px;
@@ -1205,19 +1333,21 @@
   font-family: monospace;
   font-size: 11px;
   line-height: 1.4;
-  color: rgba(240,250,255,0.96);
-  background: rgba(0,0,0,0.68);
-  border: 1px solid rgba(120,180,255,0.38);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
   padding: 8px 14px;
   pointer-events: none;
   white-space: nowrap;
+  display: none;
 }
 
 body.grid-only-mode #kbdHintHud { display: none; }
 /* EDA ouvert : masque le mini HUD clavier (redondant avec le panel, et le chevauche) */
 body.lut-panel-open #kbdHintHud { display: none; }
+
+/* Mode immersif (ESPACE) : masque aussi le badge FPS fermé (2026-07-17, demande
+   explicite — jusqu'ici seul le panneau déployé était refermé via fpsBtn.click()
+   dans scene.js::toggleGridOnlyMode(), le badge "-- FPS" restait visible). */
+body.grid-only-mode .fps-counter { display: none !important; }
 
 /* Super-immersif (SHIFT+ESPACE) : aucun HUD — mode capture d'écran */
 body.huds-force-hidden #debugLightPanel { display: none !important; }
@@ -1247,4 +1377,558 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
 .debug-light-panel.fps-hud-fullscreen .fps-counter {
   flex: 1 1 auto;
   max-height: none;
+}
+
+/* ─── [data-theme="bleu"] — apparence actuelle par défaut (HUD FPS + HUD EDA,
+   cf. CONTEXT.md §32). Les badges de rubrique (.debug-light-pix-head,
+   .lut-section-head, .lut-section-head--nested), les boutons chrome
+   (.debug-light-toggle, .debug-light-lang-select, .btn-key) et les accents
+   colorés par métrique (fps-hud-cat-dc/tri/tri-pct/shadow/heavy, kbd, switches,
+   sliders, tooltip LUT) restent COMMUNS aux deux thèmes — déjà sombres/lisibles
+   sur fond clair comme sur fond sombre, même principe que les liserés biome de
+   #scorePanel. Seuls les CONTENANTS (cartes) et le texte de base changent. ─── */
+[data-theme="bleu"] .fps-counter {
+  color: rgba(240,250,255,0.96);
+  background: rgba(0,0,0,0.68);
+  border: 1px solid rgba(120,180,255,0.38);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+[data-theme="bleu"] .fps-hud-fps { color: rgba(240,250,255,0.96); }
+[data-theme="bleu"] .fps-hud-fps > span:first-child { color: rgba(180,215,255,0.82); }
+[data-theme="bleu"] .fps-hud-sep { border-top: 1px solid rgba(120,180,255,0.22); }
+[data-theme="bleu"] .fps-hud-row,
+[data-theme="bleu"] .fps-hud-row-cat { color: rgba(180,215,255,0.82); }
+[data-theme="bleu"] .fps-hud-row strong,
+[data-theme="bleu"] .fps-hud-cat-count { color: rgba(240,250,255,0.96); }
+[data-theme="bleu"] .fps-hud-eff-label { color: rgba(180,215,255,0.70); }
+[data-theme="bleu"] .fps-hud-group-header {
+  color: rgba(212,236,255,0.92);
+  border-bottom: 1px solid rgba(120,180,255,0.12);
+}
+[data-theme="bleu"] .fps-hud-row-total { background: rgba(120,180,255,0.08); }
+[data-theme="bleu"] .fps-hud-row-cat--heavy { background: rgba(220, 40, 40, 0.20); color: rgba(255,220,220,0.90); }
+[data-theme="bleu"] .fps-hud-cat-dc { color: rgba(255,210,100,0.90); }
+[data-theme="bleu"] .fps-hud-cat-tri { color: rgba(130,195,255,0.90); }
+[data-theme="bleu"] .fps-hud-cat-tri-pct { color: rgba(130,195,255,0.55); }
+[data-theme="bleu"] .fps-hud-cat-shadow { color: rgba(180,140,255,0.90); }
+
+/* Croix de fermeture HUD FPS/EDA (2026-07-17) — même palette "cachet" que les
+   boutons d'export bleu (#debugLightCopy/Redo/Compare). */
+[data-theme="bleu"] .fps-hud-close,
+[data-theme="bleu"] .debug-light-close {
+  background: rgba(25, 56, 82, 0.78);
+  border: 1px solid rgba(145, 205, 255, 0.42);
+  color: rgba(230, 246, 255, 0.96);
+}
+[data-theme="bleu"] .fps-hud-close:hover,
+[data-theme="bleu"] .debug-light-close:hover {
+  background: rgba(38, 86, 124, 0.9);
+  color: #ffffff;
+}
+
+/* Mini HUD replay (.replay-panel) — apparence actuelle par défaut. */
+[data-theme="bleu"] .replay-panel {
+  background: rgba(20, 24, 32, 0.92);
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.55);
+  color: rgba(247,239,225,0.92);
+}
+[data-theme="bleu"] .replay-panel::before { color: rgba(220, 235, 255, 0.85); }
+[data-theme="bleu"] .replay-progress { color: #ffd15d; }
+[data-theme="bleu"] #kbdHintHud {
+  color: rgba(240,250,255,0.96);
+  background: rgba(0,0,0,0.68);
+  border: 1px solid rgba(120,180,255,0.38);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+[data-theme="bleu"] .debug-light-body {
+  border: 1px solid rgba(120,180,255,0.38);
+  background: rgba(0,0,0,0.68);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+[data-theme="bleu"] .debug-light-tab-btn {
+  border: 1px solid rgba(120,180,255,0.32);
+  background: rgba(18,28,52,0.80);
+  color: rgba(210,230,255,0.70);
+}
+[data-theme="bleu"] .debug-light-tab-btn:hover {
+  border-color: rgba(140,200,255,0.50);
+  color: rgba(230,246,255,0.95);
+}
+[data-theme="bleu"] .debug-light-tab-btn--active {
+  background: rgba(90,140,255,0.30);
+  border-color: rgba(145,205,255,0.65);
+  color: #ffffff;
+}
+[data-theme="bleu"] .debug-light-row,
+[data-theme="bleu"] .color-grid .debug-light-row,
+[data-theme="bleu"] .debug-light-weather-row { color: rgba(180,215,255,0.82); }
+[data-theme="bleu"] .debug-light-row output { color: rgba(240,250,255,0.96); }
+[data-theme="bleu"] .debug-light-export #debugLightCopy,
+[data-theme="bleu"] .debug-light-export #debugLightRedo,
+[data-theme="bleu"] .debug-light-export #debugLightCompare {
+  border: 1px solid rgba(145, 205, 255, 0.42);
+  background: rgba(25, 56, 82, 0.78);
+  color: rgba(230, 246, 255, 0.96);
+}
+[data-theme="bleu"] .debug-light-export #debugLightCopy:hover:not(:disabled),
+[data-theme="bleu"] .debug-light-export #debugLightRedo:hover:not(:disabled),
+[data-theme="bleu"] .debug-light-export #debugLightCompare:hover:not(:disabled) {
+  background: rgba(38, 86, 124, 0.9);
+  color: #ffffff;
+}
+[data-theme="bleu"] .debug-light-export #debugLightUndo,
+[data-theme="bleu"] .debug-light-export #debugLightReset {
+  border: 1px solid rgba(255, 120, 120, 0.46);
+  background: rgba(80, 16, 20, 0.78);
+  color: rgba(255, 235, 235, 0.96);
+}
+[data-theme="bleu"] .debug-light-export #debugLightUndo:hover:not(:disabled),
+[data-theme="bleu"] .debug-light-export #debugLightReset:hover:not(:disabled) {
+  background: rgba(120, 24, 30, 0.9);
+  color: #ffffff;
+}
+[data-theme="bleu"] .debug-light-weather-btn {
+  border: 1px solid rgba(145,205,255,0.42);
+  background: rgba(25,56,82,0.78);
+  color: rgba(230,246,255,0.96);
+}
+[data-theme="bleu"] .debug-light-weather-btn:hover:not(:disabled) {
+  background: rgba(38,86,124,0.90);
+  color: #ffffff;
+}
+[data-theme="bleu"] .debug-light-weather-stopall {
+  border: 1px solid rgba(220,140,140,0.55);
+  background: rgba(80,30,30,0.72);
+  color: rgba(255,225,225,0.95);
+}
+[data-theme="bleu"] .debug-light-preset-btn {
+  border: 1px solid rgba(145, 205, 255, 0.42);
+  background: rgba(25, 56, 82, 0.78);
+  color: rgba(230, 246, 255, 0.96);
+}
+[data-theme="bleu"] .debug-light-preset-btn .preset-label { color: rgba(230, 246, 255, 0.96); }
+[data-theme="bleu"] .debug-light-preset-btn:hover {
+  background: rgba(38, 86, 124, 0.9);
+  border-color: rgba(145, 205, 255, 0.42);
+  color: #ffffff;
+}
+[data-theme="bleu"] .debug-light-preset-btn:hover .preset-label { color: #ffffff; }
+[data-theme="bleu"] .debug-light-preset-btn:active { background: rgba(20, 44, 66, 0.9); }
+[data-theme="bleu"] .debug-light-presets-label { color: rgba(180,215,255,0.82); }
+[data-theme="bleu"] .debug-light-main-title {
+  color: rgba(230,246,255,0.96);
+  border-bottom: 1px solid rgba(120,180,255,0.24);
+}
+[data-theme="bleu"] .debug-light-pix-head,
+[data-theme="bleu"] .lut-section-head {
+  background: rgba(0,0,0,0.45);
+  border-left: 3px solid rgba(145,205,255,0.32);
+}
+[data-theme="bleu"] .debug-light-pix-head > span,
+[data-theme="bleu"] .lut-section-head { color: rgba(180,215,255,0.82); }
+[data-theme="bleu"] .lut-section-head--nested {
+  color: rgba(212,236,255,0.92);
+  background: rgba(0,0,0,0.30);
+  border-left: 2px solid rgba(145,205,255,0.22);
+}
+
+/* ─── [data-theme="ancien"] — parchemin 9-slice sur .fps-counter/.debug-light-body/
+   #kbdHintHud, même technique que #scorePanel/.missionsBox (§32). Padding
+   retiré sur les cartes principales (pas de logo à réserver ici). Les boutons
+   passent en "cachet de cire" (fond sombre uni + texte clair), même principe
+   que .abandon-button/.new-game-button (css/highscore.css). ─── */
+[data-theme="ancien"] .fps-counter {
+  border: 50px solid transparent;
+  border-image-source: url("../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  color: #332415;
+  font-family: Georgia, "Times New Roman", serif;
+
+  /* 2026-07-18 — CORRECTIF v2 (bug signalé : bords tronqués, image ET texte).
+     .fps-counter est box-sizing:border-box + width:432px fixe (règle non
+     thémée) — ce budget assumait une bordure fine (1px, thème bleu). En
+     ancien la bordure passe à 50px (×2 = 100px) SANS agrandir la boîte :
+     box-sizing:border-box grignote donc 100px de contenu en plus par rapport
+     au thème bleu (déjà privé du padding 16px×2 retiré ci-dessus), écrasant
+     les lignes du HUD FPS jusqu'à les faire déborder/tronquer via
+     l'overflow:hidden interne (.fps-hud-body).
+     Fix : box-sizing:content-box UNIQUEMENT ici — `width`/`max-width`/
+     `max-height` ne portent plus que sur le contenu (mêmes valeurs utiles
+     qu'en thème bleu), la bordure de 50px s'ajoute PAR-DESSUS automatiquement.
+     Coin haut-gauche inchangé (positionné par le flex parent, pas par
+     top/left) — la boîte grandit seulement vers l'extérieur.
+
+     2026-07-18 — CORRECTIF v3 (demande explicite : la marge négative doit
+     avoir un effet visible) : overflow passe à visible ici (au lieu de
+     hidden, hérité de la règle non thémée) — le clamp de hauteur + le clip
+     du contenu trop long sont désormais portés par .internal-parchment
+     lui-même (cf. règle suivante), qui peut donc recevoir une marge négative
+     de bleed sans être tronquée par SON PROPRE overflow (une boîte ne coupe
+     jamais sa propre bordure/marge).
+
+     2026-07-18 — CORRECTIF v4 (bug signalé : l'ascenseur du HUD FPS déployé a
+     disparu). Cause : en thème bleu, `.fps-counter` a `overflow:hidden` (règle
+     non thémée, ligne ~45) — cette propriété fait DOUBLE fonction en flexbox :
+     elle clippe visuellement, MAIS elle force aussi la "taille minimale
+     automatique" de l'élément (flex item) à 0 au lieu de la taille de son
+     contenu (spec CSS flexbox : min-size auto = 0 dès que overflow ≠ visible).
+     En repassant overflow:visible ci-dessus (CORRECTIF v3), .fps-counter a
+     RETROUVÉ son min-height:auto par défaut — en mode "FPS HUD plein hauteur"
+     (.fps-hud-fullscreen, max-height:none, flex:1 1 auto), l'élément refuse
+     alors de se réduire à la hauteur dispo de la colonne et grandit pour
+     accueillir tout son contenu (mesuré : 1543px, largement hors écran), donc
+     .fps-hud-body (le scroll interne) ne se retrouve jamais à l'étroit et n'a
+     jamais besoin de scroller → ascenseur invisible car inutile, tout le
+     contenu déborde silencieusement de l'écran à la place.
+     Fix : min-height:0 explicite ici, qui reproduit l'effet "taille mini
+     forcée à 0" de overflow:hidden SANS réintroduire le clip visuel (overflow
+     reste visible pour le bleed du bord). */
+  box-sizing: content-box;
+  width: 380px;
+  max-width: calc(100vw - 128px);
+  max-height: calc(100vh - 172px);
+  min-height: 0;
+  overflow: visible;
+}
+[data-theme="ancien"] .fps-counter > .internal-parchment {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  /* 2026-07-18 — BUG TROUVÉ (vrai responsable des "bords tronqués") : la règle
+     générale `[data-theme="ancien"] .internal-parchment { margin: -20px -25px
+     -20px -25px; }` (css/themes/medieval.css) s'applique à TOUT élément
+     .internal-parchment, y compris celui-ci — le simple fait de ne PAS
+     redéclarer `margin` ici ne "remet pas à 0" (la cascade CSS s'applique
+     PROPRIÉTÉ PAR PROPRIÉTÉ : une règle plus spécifique qui ne mentionne pas
+     `margin` ne bat pas une règle moins spécifique qui, elle, le déclare).
+     Résultat réel avant ce correctif : la marge négative de la règle générale
+     s'appliquait quand même, tronquée par cet overflow:hidden FONCTIONNEL
+     (clamp de hauteur + scroll interne de .fps-hud-body) — exactement le même
+     bug que la prez (marge négative + overflow:hidden = contenu coupé).
+     2026-07-18 — CORRECTIF v3 : .fps-counter passe en overflow:visible
+     ci-dessus, c'est CET élément (.internal-parchment) qui porte maintenant
+     le clip (overflow:hidden ici) — sa propre marge négative n'est jamais
+     coupée par son propre overflow (une boîte ne coupe jamais sa bordure/
+     marge, seulement le contenu débordant de ses enfants). Le bleed
+     s'applique donc enfin normalement, comme .mission-card/.missionsBox. */
+  margin: -20px -25px -20px -25px;
+}
+[data-theme="ancien"] .fps-hud-fps { color: #332415; }
+[data-theme="ancien"] .fps-hud-fps > span:first-child { color: #4a3623; }
+[data-theme="ancien"] .fps-hud-sep { border-top: 1px solid rgba(74, 54, 35, 0.22); }
+[data-theme="ancien"] .fps-hud-row,
+[data-theme="ancien"] .fps-hud-row-cat { color: #4a3623; }
+[data-theme="ancien"] .fps-hud-row strong,
+[data-theme="ancien"] .fps-hud-cat-count { color: #332415; }
+[data-theme="ancien"] .fps-hud-eff-label { color: #4a3623; }
+[data-theme="ancien"] .fps-hud-group-header {
+  color: #332415;
+  border-bottom: 1px solid rgba(74, 54, 35, 0.14);
+}
+[data-theme="ancien"] .fps-hud-row-total { background: rgba(0,0,0,0.06); }
+/* Accents par catégorie (Draw calls/Triangles/Ombres) — retour utilisateur : le
+   bleu clair pensé pour fond sombre (rgba(130,195,255,...)) devenait illisible
+   sur le parchemin clair, notamment en mode "déployé" (.fps-hud-fullscreen).
+   Teintes assombries/saturées équivalentes, même logique d'identité par
+   catégorie mais lisibles sur fond clair. */
+[data-theme="ancien"] .fps-hud-row-cat--heavy { background: rgba(139, 0, 0, 0.12); color: #6b2018; }
+[data-theme="ancien"] .fps-hud-cat-dc { color: #8a6a2a; }
+[data-theme="ancien"] .fps-hud-cat-tri { color: #1f4a6b; }
+[data-theme="ancien"] .fps-hud-cat-tri-pct { color: #4a3623; }
+[data-theme="ancien"] .fps-hud-cat-shadow { color: #5a3a7a; }
+
+/* Croix de fermeture HUD FPS/EDA (2026-07-17) — même "cachet de cire" que les
+   boutons d'export ancien (#debugLightCopy/Redo/Compare). */
+[data-theme="ancien"] .fps-hud-close,
+[data-theme="ancien"] .debug-light-close {
+  border: none;
+  background: #4a3623;
+  color: #f0e6d0;
+}
+[data-theme="ancien"] .fps-hud-close:hover,
+[data-theme="ancien"] .debug-light-close:hover {
+  background: #5c4530;
+}
+/* 2026-07-18 — retour utilisateur : le bouton "Copier" (⧉) du HUD FPS restait
+   bleu foncé (fond rgba(25,56,82,...) + bordure bleu clair, règle non thémée
+   ligne ~71) en médiéval, présent aussi bien plié que déplié (fait partie du
+   header, toujours rendu). Aucun override ancien n'existait pour lui,
+   contrairement à .fps-hud-close juste au-dessus. Même traitement "cachet de
+   cire" pour rester cohérent. */
+[data-theme="ancien"] .fps-hud-copy {
+  background: #4a3623;
+  border: none;
+  color: #f0e6d0;
+}
+[data-theme="ancien"] .fps-hud-copy:hover {
+  background: #5c4530;
+  color: #f0e6d0;
+}
+/* 2026-07-18 — retour utilisateur : l'ascenseur du HUD FPS restait bleu clair
+   en médiéval malgré le fix générique sur .internal-parchment (thème/medieval.css).
+   Cause : .fps-hud-body est un enfant DISTINCT de .internal-parchment (pas le
+   même élément) — c'est LUI qui scroll réellement (overflow-y:auto, règle non
+   thémée ligne ~49), pas .internal-parchment (qui ne fait que clipper/bleeder
+   ici). Le fix générique ne pouvait donc pas l'atteindre. Override dédié,
+   même teinte brun/parchemin que partout ailleurs en ancien. */
+[data-theme="ancien"] .fps-hud-body::-webkit-scrollbar-thumb { background: rgba(74, 54, 35, 0.4); }
+[data-theme="ancien"] .fps-hud-body { scrollbar-color: rgba(74, 54, 35, 0.4) transparent; }
+/* 2026-07-18 — retour utilisateur : la croix EDA (.debug-light-close) semblait
+   "trop basse". Cause : top:10px/right:10px (règle de base, ligne ~875) sont
+   ancrés sur .debug-light-body — qui est le CONTENU (à l'intérieur du bord de
+   50px ajouté en ancien), pas le bord visuel du parchemin. En thème bleu (bord
+   de 1px), 10px tombait quasiment au coin visuel du panneau ; en ancien, ce
+   même 10px tombe ~60px sous le bord extérieur réel, bien en-dessous du titre
+   "ÉDITEUR..." (qui, lui, bénéficie du bleed -20px de .internal-parchment).
+   Fix : décalage négatif pour ramener la croix au même niveau visuel que le
+   bleed du titre, dans la bande du bord plutôt qu'au milieu du contenu. */
+[data-theme="ancien"] .debug-light-close {
+  top: -20px;
+  right: -20px;
+}
+
+/* Mini HUD replay (.replay-panel) — parchemin 9-slice, même technique que
+   #kbdHintHud (§32). Jaune flash de .replay-progress assombri : illisible sur
+   fond clair (même famille de problème que les accents bleus FPS). */
+[data-theme="ancien"] .replay-panel {
+  border: 50px solid transparent;
+  border-image-source: url("../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  background: none;
+  box-shadow: none;
+  color: #332415;
+  font-family: Georgia, "Times New Roman", serif;
+
+  /* 2026-07-18 CORRECTIF #1 (bug signalé : marge négative sans effet visible) —
+     padding:10px 16px hérité de la règle non thémée n'avait jamais été remis
+     à 0 ici, contrairement à TOUS les autres parchemins (#scorePanel/
+     .fps-counter/.help-panel/.debug-light-body/.missionsBox/.mode-panel...).
+     La marge négative de .internal-parchment devait donc d'abord "manger" ce
+     padding avant de pouvoir bleeder dans la bordure — net effet ~10px au
+     lieu de 20-25px, quasi invisible.
+
+     2026-07-18 CORRECTIF #2 (le vrai bug, trouvé via mesures getBoundingClientRect
+     précises en live) — display:block ici cassait le calcul de hauteur auto du
+     parent : .internal-parchment (l'unique enfant) a une marge -20px en haut ET
+     en bas simultanément. En layout bloc normal, la hauteur auto du parent =
+     hauteur de la "margin box" de l'enfant, qui devient ici hauteur_reelle - 20 - 20,
+     donc quasi nulle/négative → le panneau se retrouve avec une hauteur de contenu
+     ridicule et l'enfant se retrouve décalé n'importe où (mesuré : 23px plus bas
+     que prévu au lieu de 20px plus haut). En display:flex (comme la règle non
+     thémée bleu, jamais retirée par erreur), un enfant flex avec marge négative
+     top/bottom est positionné et dimensionné correctement dans l'axe croisé —
+     c'est ce que #scorePanel/.fps-counter/etc utilisent déjà (flex-direction:column
+     + flex:1 1 auto). Donc : ne JAMAIS repasser .replay-panel en display:block.
+
+     2026-07-18 CORRECTIF #3 (mesures live précises après le #2 : bleed horizontal
+     parfait -25/-25px, mais bleed vertical seulement ~5.5px au lieu de 20px) —
+     cause : .replay-panel a DEUX enfants flex (le pseudo-élément ::before "REPLAY"
+     ET .internal-parchment), pas un seul. Avec align-items:center, la hauteur de
+     la ligne flex (23px) est dictée par ::before (texte, pas de marge négative),
+     et .internal-parchment (34px de haut, marge -20/-20) se retrouve centré dans
+     ces 23px. Preuve mathématique : avec des marges symétriques haut/bas, le
+     centrage flex est un no-op sur la marge — seul (hauteur_ligne - hauteur_propre)/2
+     compte, la marge négative n'a AUCUN effet sur la position finale en mode
+     center. Fix : align-items:stretch (au lieu de center) sur .replay-panel.
+     En stretch, un enfant à hauteur auto (.internal-parchment) est étiré pour
+     remplir (hauteur_ligne - marges), donc hauteur_utilisée = 23 - (-20) - (-20)
+     = 63px, positionné à content_top + marge_haute(-20) → bleed haut = -20 pile,
+     et bas = -20+63 = +43 par rapport à content_top, soit +20 au-delà de
+     content_bottom(23) → bleed bas = +20 pile. Symétrique et exact des deux
+     côtés, contrairement à center. Le pseudo ::before (déjà à sa propre hauteur
+     23 = hauteur de ligne) n'est pas affecté par le stretch.
+
+     2026-07-18 CORRECTIF #4 (retour utilisateur : "trop de marge en haut et en
+     bas" + chevauchement du texte "REPLAY" avec "N/5") — deux bugs distincts :
+     (a) bordure 50px + bleed ±20/±25 semblait disproportionné sur ce petit
+     bandeau (une seule rangée d'icônes ~34px) → tentative erronée : réduire la
+     bordure à 25px. REJETÉ par l'utilisateur (2026-07-18, 2e retour) : ça casse
+     l'harmonie du 9-slice avec le reste de l'UI (même texture manuscrit.png,
+     même échelle de bordure partout). Bordure remise à 50px, comme tous les
+     autres parchemins — la bonne solution est d'AUGMENTER encore la marge
+     négative (bleed plus profond dans la bordure), pas de réduire la bordure
+     elle-même (voir marge ci-dessous, ±35/±40 au lieu de ±20).
+     (b) chevauchement horizontal : la marge -25px à GAUCHE sur
+     .internal-parchment supposait (à tort) que c'est le premier/seul enfant du
+     bandeau collé au bord gauche. Mais .replay-panel a un enfant AVANT lui : le
+     pseudo ::before "REPLAY" (~47px de large). La marge négative gauche faisait
+     donc reculer .internal-parchment SOUS la fin du texte "REPLAY" au lieu de
+     bleeder dans une bordure (qui n'est pas là, à gauche il y a le label, pas
+     le bord du panneau). Fix (conservé, non concerné par le rejet ci-dessus) :
+     marge gauche redevient un espacement POSITIF normal (14px, même valeur que
+     le gap interne des icônes), seuls haut/droite/bas gardent une marge
+     négative (bleed réel vers la bordure, désormais plus profond). */
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+}
+[data-theme="ancien"] .replay-panel > .internal-parchment {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: -40px -25px -40px 14px;
+}
+[data-theme="ancien"] .replay-panel::before { color: #4a3623; }
+[data-theme="ancien"] .replay-progress { color: #8a6a2a; }
+[data-theme="ancien"] #kbdHintHud {
+  border: 50px solid transparent;
+  border-image-source: url("../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  background: none;
+  box-shadow: none;
+  padding: 0 6px;
+  color: #332415;
+  font-family: Georgia, "Times New Roman", serif;
+}
+/* #kbdHintHud n'est ni flex/grid ni overflow:hidden sur lui-même (simple texte) —
+   wrapper sans piège, cf. .missionsBox/.mode-panel. Actuellement masqué
+   (display:none, cf. css/eda.css plus haut) mais gardé cohérent pour un
+   éventuel retour futur. */
+[data-theme="ancien"] #kbdHintHud > .internal-parchment { margin: -20px -25px -20px -25px; }
+
+[data-theme="ancien"] .debug-light-body {
+  border: 50px solid transparent;
+  border-image-source: url("../images/manuscrit.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  color: #332415;
+  font-family: Georgia, "Times New Roman", serif;
+
+  /* 2026-07-18 — CORRECTIF v2 (bug signalé : panneau EDA tronqué sur les
+     4 bords). La v1 (retirer height/max-height/overflow de .debug-light-body
+     et les reporter tels quels sur .internal-parchment) empêchait le double-
+     comptage de bordure, mais ne réglait pas le vrai problème : .debug-light-
+     body reste box-sizing:border-box + width/height fixes (règle non
+     thémée) prévues pour une bordure fine (1px, thème bleu) — passer à 50px
+     (×2=100px) sans agrandir la boîte grignote 100px de contenu utile en
+     trop, écrasant les colonnes internes jusqu'à troncature (overflow:hidden
+     des colonnes/onglets).
+     Fix définitif : box-sizing:content-box UNIQUEMENT ici — `width`/`height`/
+     `max-height` ci-dessous ne portent plus que sur le contenu (mêmes valeurs
+     utiles qu'en thème bleu), la bordure de 50px s'ajoute PAR-DESSUS
+     automatiquement. Le panneau est ancré par le bas via le flex parent
+     (.debug-light-panel, align-items:flex-end) : la hauteur totale
+     (contenu + 100px de bordure) grandit vers le HAUT, jamais hors écran.
+
+     2026-07-18 — CORRECTIF v3 (demande explicite : la marge négative doit
+     avoir un effet visible) : overflow passe à visible ici — le clamp +
+     clip du contenu est désormais porté par .internal-parchment lui-même
+     (cf. règle suivante), qui peut donc recevoir une marge négative de
+     bleed sans être tronquée par SON PROPRE overflow. */
+  box-sizing: content-box;
+  width: min(560px, calc(100vw - 200px));
+  height: calc(100vh - 160px);
+  max-height: calc(100vh - 160px);
+  overflow: visible;
+}
+[data-theme="ancien"] .debug-light-body > .internal-parchment {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  /* 2026-07-18 — même bug que .fps-counter/.help-panel ci-dessus : la règle
+     générale `[data-theme="ancien"] .internal-parchment { margin: -20px -25px
+     -20px -25px; }` (css/themes/medieval.css) s'appliquait quand même faute
+     de redéclaration explicite ici (la cascade CSS est par PROPRIÉTÉ, pas par
+     bloc de règle) — tronqué par cet overflow:hidden fonctionnel (scroll
+     2026-07-18 — CORRECTIF v3 : .debug-light-body passe en overflow:visible
+     ci-dessus, c'est CET élément (.internal-parchment) qui porte maintenant
+     le clip (overflow:hidden ici) — sa propre marge négative n'est jamais
+     coupée par son propre overflow. Le bleed s'applique donc enfin
+     normalement. */
+  margin: -20px -25px -20px -25px;
+}
+[data-theme="ancien"] .debug-light-tab-btn {
+  border: none;
+  background: #4a3623;
+  color: #cbb896;
+}
+[data-theme="ancien"] .debug-light-tab-btn:hover {
+  color: #f0e6d0;
+}
+[data-theme="ancien"] .debug-light-tab-btn--active {
+  background: #6b4e10;
+  color: #f5e3b0;
+}
+[data-theme="ancien"] .debug-light-row,
+[data-theme="ancien"] .color-grid .debug-light-row,
+[data-theme="ancien"] .debug-light-weather-row { color: #4a3623; }
+[data-theme="ancien"] .debug-light-row output { color: #332415; }
+[data-theme="ancien"] .debug-light-export #debugLightCopy,
+[data-theme="ancien"] .debug-light-export #debugLightRedo,
+[data-theme="ancien"] .debug-light-export #debugLightCompare {
+  border: none;
+  background: #4a3623;
+  color: #f0e6d0;
+}
+[data-theme="ancien"] .debug-light-export #debugLightCopy:hover:not(:disabled),
+[data-theme="ancien"] .debug-light-export #debugLightRedo:hover:not(:disabled),
+[data-theme="ancien"] .debug-light-export #debugLightCompare:hover:not(:disabled) {
+  background: #5c4530;
+}
+[data-theme="ancien"] .debug-light-export #debugLightUndo,
+[data-theme="ancien"] .debug-light-export #debugLightReset {
+  border: none;
+  background: #6b2018;
+  color: #f5e0d8;
+}
+[data-theme="ancien"] .debug-light-export #debugLightUndo:hover:not(:disabled),
+[data-theme="ancien"] .debug-light-export #debugLightReset:hover:not(:disabled) {
+  background: #832a1f;
+}
+[data-theme="ancien"] .debug-light-weather-btn {
+  border: none;
+  background: #4a3623;
+  color: #f0e6d0;
+}
+[data-theme="ancien"] .debug-light-weather-btn:hover:not(:disabled) {
+  background: #5c4530;
+}
+[data-theme="ancien"] .debug-light-weather-stopall {
+  border: none;
+  background: #6b2018;
+  color: #f5e0d8;
+}
+[data-theme="ancien"] .debug-light-preset-btn {
+  border: none;
+  background: #4a3623;
+  color: #f0e6d0;
+}
+[data-theme="ancien"] .debug-light-preset-btn .preset-label { color: #f0e6d0; }
+[data-theme="ancien"] .debug-light-preset-btn:hover { background: #5c4530; }
+[data-theme="ancien"] .debug-light-preset-btn:active { background: #3a2b1c; }
+[data-theme="ancien"] .debug-light-presets-label { color: #4a3623; }
+[data-theme="ancien"] .debug-light-main-title {
+  color: #332415;
+  border-bottom: 1px solid rgba(74, 54, 35, 0.22);
+}
+/* Titres de rubrique (CINÉMA/PIX/EAU/VENT/etc.) — retour utilisateur : encore
+   bleutés en thème ancien malgré le fond sombre partagé. Le badge sombre reste
+   commun (déjà lisible sur parchemin), mais le texte/liseré passe en teinte
+   chaude cachet-de-cire au lieu du bleu glacé du thème bleu. */
+[data-theme="ancien"] .debug-light-pix-head,
+[data-theme="ancien"] .lut-section-head {
+  background: rgba(0,0,0,0.55);
+  border-left: 3px solid #8a6a2a;
+}
+[data-theme="ancien"] .debug-light-pix-head > span,
+[data-theme="ancien"] .lut-section-head { color: #f0e6d0; }
+[data-theme="ancien"] .lut-section-head--nested {
+  color: #e8dcc0;
+  background: rgba(0,0,0,0.40);
+  border-left: 2px solid #6b4e10;
 }

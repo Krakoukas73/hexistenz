@@ -10,6 +10,13 @@
 // setGameLang() est le SEUL point d'entrée qui doit être appelé par le sélecteur du
 // HUD in-game (edaPanelHost.js) : il écrit localStorage + dataset.lang, PUIS notifie
 // tous les callbacks, donc la mise à jour est toujours synchrone et complète.
+//
+// Ajouté le 2026-07-15 : confirmation visuelle du changement de langue via le popup
+// central "scorePopup" (même mécanisme que les "+N" de score et "Capture faite !") —
+// affiche le nom de la langue nouvellement sélectionnée, DANS cette langue (clé
+// game.langName du JSON qu'on vient de charger, présente dans les 6 langues).
+import { showCenterMessage } from './scorePopup.js';
+
 const _refreshCallbacks = [];
 const _jsonCache = {}; // { fr: {...}, en: {...}, es: {...} } — évite de re-fetcher au aller-retour
 
@@ -62,4 +69,5 @@ export async function setGameLang(lang) {
   for (const cb of _refreshCallbacks) {
     try { cb(data); } catch (e) { console.error('[gameLangReactive] callback de rafraîchissement en erreur', e); }
   }
+  showCenterMessage(data?.game?.langName ?? lang);
 }

@@ -95,4 +95,12 @@ if (file_put_contents($jsonTmpPath, json_encode($meta, JSON_UNESCAPED_UNICODE), 
     @rename($jsonTmpPath, $jsonPath);
 }
 
+// Miniature pour la galerie (2026-07-15) — best-effort, jamais fatal : la capture
+// pleine résolution est déjà enregistrée et servable même si la miniature échoue.
+// Écrite directement dans /snapshots (pas de sous-dossier /thumbs — simplifié le
+// 2026-07-15 sur demande explicite), suffixe "_thumb" avant l'extension.
+require_once __DIR__ . '/snapshotThumb.php';
+$thumbFilename = preg_replace('/\.jpg$/', '_thumb.jpg', $filename);
+hexistenz_generate_thumbnail($filePath, $snapDir . DIRECTORY_SEPARATOR . $thumbFilename, 480, 72);
+
 respond_snap(true, null, 200, array('filename' => $filename));

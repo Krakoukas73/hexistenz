@@ -8,14 +8,12 @@
 //   startupMenuShared.js          utilitaires purs partagés par les deux (évite import circulaire)
 // Le CSS du carrousel (ex-ensureMenuBackgroundStyles(), ~140 lignes) est désormais
 // statique dans css/startupMenu.css. Seul importateur externe : main.js (showStartupScreen).
-import { initScene } from './scene.js';
-import { startMenuMusic, startIngameMusic } from './soundDesign.js';
+import { startMenuMusic } from './soundDesign.js';
 import { getWorldShapeMode } from './worldCurvature.js';
 import { ensureHelpTooltip, attachHelpTooltip, hideHelpTooltip } from './help.js';
-import { escapeHtml } from './domUtils.js';
 import { setupMenuBackgroundCarousel } from './menuBackgroundCarousel.js';
 import { renderMulti } from './multiplayerRooms.js';
-import { setStatus, normalizeWorldShapeMode, normalizeCode, getPlayerNameFromCookie, savePlayerNameCookie } from './startupMenuShared.js';
+import { setStatus, normalizeWorldShapeMode, normalizeCode } from './startupMenuShared.js';
 import { LUT_HELP } from './help.js';
 
 // Passage bilingue FR/EN le 2026-07-12 : textes sous json/languages/{french,english}.json
@@ -33,35 +31,40 @@ const _menuData = await fetch(`./json/languages/${_langFile}.json`)
     return {};
   });
 const _menuText = _menuData?.game?.startupMenu ?? {};
-const _defaultName = _menuData?.game?.highscore?.defaultName ?? 'Joueur';
 
 export function showStartupScreen() {
   startMenuMusic();
   const urlRoomCode = new URLSearchParams(window.location.search).get('multi');
-  // Menu solo/multi retiré au démarrage : on saute directement à l'écran suivant
-  // (choix platiste/bouliste), comme si "MULTI" avait été cliqué.
-  renderShell('multi', normalizeCode(urlRoomCode ?? ''));
+  // Menu solo/multi retiré au démarrage (2026-07-11) : on saute directement à
+  // l'écran suivant (choix platiste/bouliste) comme si "MULTI" avait été cliqué.
+  // 2026-07-16 : renderHome()/renderNameChoice() (écran solo/multi + saisie prénom
+  // solo) supprimés — code mort, plus jamais atteignable depuis ce point d'entrée.
+  // Toute partie passe désormais par renderMulti() (multiplayerRooms.js), donc
+  // toute partie crée une room_*.json persistée dès le départ, y compris ce que
+  // le joueur perçoit comme une partie "solo".
+  renderShell(normalizeCode(urlRoomCode ?? ''));
 }
 
-function renderShell(screen = 'home', initialCode = '') {
+function renderShell(initialCode = '') {
   const overlay = document.createElement('div');
   overlay.className = 'mode-screen mode-screen--with-background';
   overlay.innerHTML = `
     <div class="mode-background-carousel" aria-hidden="true"></div>
     <section class="mode-panel">
+      <div class="internal-parchment">
       <img class="mode-logo" src="images/logo2.png" alt="Hexistenz" draggable="false" />
 
       <p class="mode-copy"></p>
       <div class="mode-content"></div>
       <div class="multi-status" aria-live="polite"></div>
+      </div>
     </section>
   `;
   document.body.appendChild(overlay);
   ensureHelpTooltip();
   setupMenuBackgroundCarousel(overlay);
 
-  if (screen === 'multi') goToMulti(overlay, initialCode);
-  else renderHome(overlay);
+  goToMulti(overlay, initialCode);
 }
 
 /** Enchaîne choix de la forme du monde → écran multi, avec un "Retour" qui revient ici. */
@@ -70,68 +73,6 @@ function goToMulti(overlay, initialCode = '') {
     renderMulti(overlay, initialCode, { onBack: () => goToMulti(overlay) });
   });
 }
-
-/**
- * Pose la question du prénom avant le choix platiste/bouliste.
- * Le nom est toujours demandé (pré-rempli avec la valeur cookie).
- */
-function renderNameChoice(overlay, onConfirmed) {
-  hideHelpTooltip();
-  const savedName = getPlayerNameFromCookie();
-  overlay.querySelector('.mode-copy').textContent = _menuText.nameChoice?.title ?? 'Comment tu t\'appelles ?';
-  overlay.querySelector('.mode-content').innerHTML = `
-    <label class="mode-label">${_menuText.nameChoice?.label ?? 'Ton prénom (ou pseudo)'}</label>
-    <input data-field="player-name" maxlength="24" value="${escapeHtml(savedName)}" placeholder="${escapeHtml(_menuText.nameChoice?.placeholder ?? 'Ex : Rémi')}" autocomplete="given-name" />
-    <div class="mode-actions">
-      <button data-action="confirm">${_menuText.nameChoice?.confirm ?? 'CONTINUER →'}</button>
-    </div>
-  `;
-  setStatus(overlay, '');
-
-  attachHelpTooltip(overlay.querySelector('[data-action="confirm"]'), LUT_HELP['menu.confirm']);
-  const input = overlay.querySelector('[data-field="player-name"]');
-  requestAnimationFrame(() => { input.focus(); input.select(); });
-
-  const confirm = () => {
-    const name = input.value.trim() || _defaultName;
-    savePlayerNameCookie(name);
-    onConfirmed(name);
-  };
-
-  overlay.querySelector('[data-action="confirm"]').addEventListener('click', confirm);
-  input.addEventListener('keydown', event => {
-    if (event.key === 'Enter') { event.preventDefault(); confirm(); }
-  });
-}
-
-function renderHome(overlay) {
-  hideHelpTooltip();
-  overlay.querySelector('.mode-copy').textContent = _menuText.home?.title ?? 'Choisis le mode de jeu : solo ou multijoueur.';
-  overlay.querySelector('.mode-content').innerHTML = `
-    <div class="mode-actions">
-      <button data-action="solo">${_menuText.home?.solo ?? 'SOLO'}</button>
-      <button data-action="multi" class="secondary">${_menuText.home?.multi ?? 'MULTI'}</button>
-    </div>
-  `;
-  attachHelpTooltip(overlay.querySelector('[data-action="solo"]'), LUT_HELP['menu.solo']);
-  attachHelpTooltip(overlay.querySelector('[data-action="multi"]'), LUT_HELP['menu.multi']);
-
-  overlay.querySelector('[data-action="solo"]').addEventListener('click', () => {
-    renderNameChoice(overlay, playerName => {
-      renderWorldShapeChoice(overlay, worldShapeMode => {
-        startIngameMusic();
-        hideHelpTooltip();
-        overlay.remove();
-        initScene({ mode: 'solo', worldShapeMode, playerName });
-      });
-    });
-  });
-
-  overlay.querySelector('[data-action="multi"]').addEventListener('click', () => {
-    goToMulti(overlay);
-  });
-}
-
 
 function renderWorldShapeChoice(overlay, onSelected) {
   hideHelpTooltip();

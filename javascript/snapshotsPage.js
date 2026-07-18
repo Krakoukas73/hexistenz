@@ -41,7 +41,9 @@ function buildItemEl(item, index, locale, texts, onOpen) {
   a.dataset.index = String(index);
 
   const img = document.createElement('img');
-  img.src = item.url;
+  // Miniature légère pour la grille (2026-07-15) — la pleine résolution (item.url)
+  // n'est chargée que dans la visionneuse plein écran, cf. initViewer ci-dessous.
+  img.src = item.thumbUrl ?? item.url;
   img.loading = 'lazy';
   img.alt = '';
   img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
