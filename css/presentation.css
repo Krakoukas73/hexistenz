@@ -69,34 +69,40 @@ section { padding: 96px 0; }
 section + section { border-top: 1px solid var(--border); }
 
 /* ─── NAV ────────────────────────────────────────────────────── */
+/* 2026-07-19 — homogénéisation : seul le layout partagé (position/z-index/
+   display/gap) reste ici. Le "look" (left/right, padding, fond, liseré, flou,
+   couleurs) diverge entre les 2 thèmes et est désormais dupliqué explicitement
+   dans themes/bleu.css et themes/medieval.css — même convention que les 14
+   cartes de la prez (.mission-card, .biome-card, etc.). */
 nav {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: 0;
   z-index: 90;
-  padding: 12px 28px;
   display: flex;
   align-items: center;
   gap: 20px;
-  background: rgba(7,12,20,0.82);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(14px);
 }
+/* 2026-07-20 — sur demande explicite : ne contient plus que le glyphe hexagone
+   (retiré : "HEXISTENZ" + le numéro de version .nav-version, déplacés à la
+   suite de .hero-title) — agrandi en conséquence (26px→40px→56px après un 2e
+   retour utilisateur, le glyphe seul ferait pauvre à une taille plus modeste
+   dans le bandeau). */
 .nav-logo {
   font-family: var(--font-title);
-  font-size: 26px;
+  font-size: 56px;
   letter-spacing: 0.08em;
-  color: var(--blue);
   text-decoration: none;
   flex-shrink: 0;
-}
-.nav-version {
-  font-family: var(--font-body);
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.10em;
-  color: rgba(160,210,255,0.90);
-  margin-left: 10px;
-  vertical-align: baseline;
+  line-height: 1;
+  /* 2026-07-20 — à 56px, la boîte du glyphe (centrée par align-items:center
+     du <nav>) déborde symétriquement du contenu 42px du bandeau (thème
+     médiéval, cf. themes/medieval.css) et se retrouve visuellement ~5px plus
+     haut que le centre des liens .nav-links (dont le padding-bottom:6px
+     décale leur propre boîte). Recalé ici par un léger décalage relatif —
+     ajuster cette valeur si la police du logo ou la hauteur du bandeau
+     changent à l'avenir. */
+  position: relative;
+  top: 5px;
 }
 /* Refonte i18n scalable du 2026-07-14 (cf. CONTEXT.md §21) : #lang-toggle
    contenait 2 <button> FR/EN codés en dur, remplacés par un <select> dont les
@@ -104,7 +110,6 @@ nav {
    demande aucun changement ici. */
 #lang-toggle {
   display: flex;
-  background: rgba(255,255,255,0.05);
   border: 1px solid var(--border);
   border-radius: 7px;
   padding: 3px;
@@ -119,15 +124,9 @@ nav {
   border-radius: 5px;
   cursor: pointer;
   background: transparent;
-  color: var(--blue);
   transition: all 0.2s;
   appearance: none;
   -webkit-appearance: none;
-}
-#lang-toggle select:hover { background: var(--blue-mid); }
-#lang-toggle select option {
-  background: #10151c;
-  color: var(--text-dim);
 }
 /* 2026-07-17 — sélecteur de thème graphique (Bleu / Ancien), même style que
    #lang-toggle, positionné juste avant lui. Plomberie uniquement pour l'instant :
@@ -135,7 +134,6 @@ nav {
    cf. themeManager.js — la valeur est stockée mais n'a pas d'effet sur le HUD. */
 #theme-toggle {
   display: flex;
-  background: rgba(255,255,255,0.05);
   border: 1px solid var(--border);
   border-radius: 7px;
   padding: 3px;
@@ -150,20 +148,13 @@ nav {
   border-radius: 5px;
   cursor: pointer;
   background: transparent;
-  color: var(--blue);
   transition: all 0.2s;
   appearance: none;
   -webkit-appearance: none;
 }
-#theme-toggle select:hover { background: var(--blue-mid); }
-#theme-toggle select option {
-  background: #10151c;
-  color: var(--text-dim);
-}
 .nav-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 20px;
   list-style: none;
   flex: 1;
 }
@@ -176,7 +167,6 @@ nav {
   font-size: 10px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--text-dim);
   text-decoration: none;
   transition: color 0.25s ease, text-shadow 0.25s ease;
 }
@@ -186,15 +176,9 @@ nav {
   left: 2px; right: 2px; bottom: 0;
   height: 2px;
   border-radius: 2px;
-  background: linear-gradient(90deg, transparent, var(--blue), transparent);
   transform: scaleX(0);
   opacity: 0;
   transition: transform 0.35s ease, opacity 0.35s ease;
-}
-.nav-links a:hover,
-.nav-links a.active {
-  color: var(--blue);
-  text-shadow: 0 0 12px rgba(120, 180, 255, 0.55);
 }
 .nav-links a:hover::after,
 .nav-links a.active::after {
@@ -207,15 +191,10 @@ nav {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   padding: 8px 20px;
-  background: var(--blue-mid);
-  border: 1px solid var(--blue);
-  border-radius: 6px;
-  color: var(--blue);
   text-decoration: none;
   transition: all 0.2s;
   flex-shrink: 0;
 }
-.nav-cta:hover { background: rgba(120,180,255,0.40); }
 .nav-toggle {
   display: none;
   flex-direction: column;
@@ -227,7 +206,6 @@ nav {
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 7px;
-  background: rgba(255,255,255,0.05);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -235,7 +213,6 @@ nav {
   display: block;
   width: 16px;
   height: 2px;
-  background: var(--text-dim);
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
@@ -359,7 +336,12 @@ nav {
 }
 .hero-title {
   font-family: var(--font-title);
-  font-size: clamp(68px, 9vw, 128px);
+  /* 2026-07-20 — agrandi sur demande explicite ("plus gros, sans occuper
+     toute la largeur") : plafond 128px→160px, plancher 68px→78px, 9vw→10vw.
+     Le texte "⬡ HEXISTENZ" (Bebas Neue très condensée) reste largement sous
+     la largeur du conteneur (.container max-width:1100px) même au plafond —
+     vérifié en direct (bounding box du h1 vs conteneur). */
+  font-size: clamp(78px, 10vw, 160px);
   letter-spacing: 0.06em;
   line-height: 0.92;
   margin-bottom: 12px;
@@ -368,6 +350,24 @@ nav {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   filter: drop-shadow(0 2px 14px rgba(0,0,0,0.95)) drop-shadow(0 0 30px rgba(0,0,0,0.7));
+}
+/* 2026-07-20 — numéro de version, déplacé ici depuis .nav-logo (bandeau) sur
+   demande explicite : "en tout petit", à la suite du titre. .hero-title
+   dessine son texte via background-clip:text (dégradé) — sans ce reset, le
+   span hériterait du même clip et deviendrait transparent lui aussi. Couleur
+   réelle fixée par thème ci-dessous (même pattern que l'ex-.nav-version). */
+.hero-version {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  margin-left: 16px;
+  vertical-align: baseline;
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  -webkit-text-fill-color: initial;
 }
 .hero-subtitle {
   font-size: 13px;
@@ -461,7 +461,12 @@ nav {
   font-size: 15px;
   color: var(--text-dim);
   line-height: 1.8;
-  max-width: 420px;
+  /* 2026-07-20 — 420px puis 720px ne couvraient encore qu'une fraction de
+     .container (1100px) ; le texte étant désormais plus volubile (plusieurs
+     paragraphes via <br><br>), on utilise toute la largeur disponible
+     (.hero-inner est en grid-template-columns: 1fr, donc pas de colonne voisine
+     à préserver). */
+  max-width: 100%;
   margin-bottom: 36px;
   text-shadow: 0 1px 6px rgba(0,0,0,0.8);
 }
@@ -605,14 +610,27 @@ nav {
   margin-top: 44px;
   counter-reset: steps;
 }
-/* 2026-07-17 — layout partagé uniquement, cf. note identique §MISSIONS. */
+/* 2026-07-17 — layout partagé uniquement, cf. note identique §MISSIONS.
+   2026-07-19 : passage en grid (icon+title sur la même ligne, desc en dessous
+   pleine largeur). Fonctionne pour les 2 thèmes : en bleu, .internal-parchment
+   est display:contents (cf. themes/bleu.css) donc step-icon/title/desc
+   deviennent des enfants grid directs de .step-card ; en ancien,
+   .internal-parchment est une vraie boîte (bordure manuscrit), donc le même
+   grid est redéclaré sur elle (cf. themes/medieval.css), .step-card restant
+   un simple conteneur single-cell. */
 .step-card {
   counter-increment: steps;
   position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "icon title" "desc desc";
+  column-gap: 10px;
+  row-gap: 8px;
+  align-items: center;
 }
-.step-icon  { font-size: 28px; margin-bottom: 14px; }
-.step-title { font-family: var(--font-title); font-size: 21px; letter-spacing: 0.06em; margin-bottom: 10px; }
-.step-desc  { font-size: 12px; line-height: 1.65; }
+.step-icon  { grid-area: icon; font-size: 28px; margin-bottom: 0; }
+.step-title { grid-area: title; font-family: var(--font-title); font-size: 21px; letter-spacing: 0.06em; margin-bottom: 0; }
+.step-desc  { grid-area: desc; font-size: 12px; line-height: 1.65; }
 
 /* ─── SCORE PILLS ────────────────────────────────────────────── */
 .score-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
@@ -620,13 +638,10 @@ nav {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 11px 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
   border-radius: 8px;
 }
-.score-pill-pts { font-family: var(--font-title); font-size: 26px; letter-spacing: 0.04em; color: var(--gold); line-height: 1; }
-.score-pill-label { font-size: 11px; color: var(--text-dim); letter-spacing: 0.08em; }
+.score-pill-pts { font-family: var(--font-title); font-size: 26px; letter-spacing: 0.04em; line-height: 1; }
+.score-pill-label { font-size: 11px; letter-spacing: 0.08em; }
 
 /* ─── KBD STRIP (raccourcis) ─────────────────────────────────────
    2026-07-15 : passage d'une ligne flex dense (wrap serré, aucune séparation
@@ -962,10 +977,27 @@ nav {
 .eda-showcase-desc { font-size: 11px; line-height: 1.55; }
 
 /* ─── MULTIPLAYER ────────────────────────────────────────────── */
-.multi-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+/* 2026-07-19 — align-items center→start : .multi-inner ne contient plus QUE
+   la 1ère sous-rubrique (titre "Bâtissez ensemble"/sub/features) + .room-demo,
+   les 2 sous-rubriques suivantes ont été sorties dans .multi-below (pleine
+   largeur, en dessous) pour que .room-demo reste calé EN FACE de la 1ère
+   sous-rubrique au lieu de "flotter" centré sur 3 sous-rubriques empilées. */
+.multi-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+/* 2026-07-19 — "Multiplayer" (title1, kicker) / "Bâtissez ensemble" (title2, vrai
+   titre) : la règle générale .section-title:has(+ .section-title) ne laisse que
+   4px entre les deux (pensée pour un bloc de titre 2 lignes soudé). Ici les 2
+   niveaux ont des rôles différents (titre au-dessus / sous-titre en dessous) et
+   ont besoin d'un vrai espacement — override scopé à #multi uniquement. */
+#multi .section-title:has(+ .section-title) { margin-bottom: 14px; }
 .multi-feature-list { list-style: none; margin-top: 28px; display: flex; flex-direction: column; gap: 12px; }
 .multi-feature-list li { display: flex; align-items: flex-start; gap: 12px; font-size: 13px; color: var(--text-dim); line-height: 1.55; }
 .multi-feature-list li::before { content: '◆'; color: var(--blue); font-size: 8px; flex-shrink: 0; margin-top: 5px; }
+/* 2026-07-19 — sous-rubriques "Partagez vos captures"/"Enregistrez vos parties"
+   + bouton, sorties de .multi-inner (cf. note ci-dessus) : d'abord contraintes
+   par erreur à la largeur de la colonne de texte (calc(50% - 30px)), corrigé
+   sur retour explicite ("pas en pleine largeur à l'instar de toute la page") —
+   .multi-below n'a plus de max-width, occupe toute la largeur du .container
+   comme le reste des rubriques de la prez. */
 /* 2026-07-17 — layout partagé uniquement, cf. note identique §BIOMES/§MISSIONS. */
 .room-demo { padding: 28px; }
 .room-demo-title { font-size: 9px; letter-spacing: 0.26em; text-transform: uppercase; margin-bottom: 12px; }
@@ -1057,17 +1089,57 @@ nav {
   font-family: 'Space Mono';
   font-weight: 400;
 }
-/* Icônes des petites stats : même badge rond bleu que .player-dot.active */
+/* Icônes des petites stats : badge hexagonal (thème du jeu), même bleu que .player-dot.active.
+   2026-07-19 — remplace le rond d'origine (border-radius:50%) sur demande explicite.
+   ⚠️ Historique des essais ratés sur ce badge (3 piièges vécus successivement, à ne
+   plus reproduire) :
+   1) clip-path hexagonal DIRECTEMENT sur .icon tronque l'emoji lui-même dès qu'il
+      déborde du pincement 25%/75% (la vraie proportion d'un hexagone).
+   2) adoucir le pincement (15%/85%) évite le rognage mais ne ressemble plus à un
+      hexagone (retour utilisateur).
+   3) fond hexagonal sur ::before + BORDURE CSS classique (`border: 2px solid`) :
+      la bordure calculée sur la boîte carrée d'origine se fait ensuite retailler EN
+      BIAIS par le clip-path sur les 4 côtés obliques de l'hexagone — son épaisseur
+      visuelle y devient incohérente (parfois quasi nulle, aspect "pointillé/cassé"
+      signalé par l'utilisateur), alors qu'elle reste correcte sur les 2 côtés plats.
+   Solution retenue : DEUX hexagones clippés superposés (classique en CSS pur, pas
+   de propriété `border`) — ::before = hexagone PLEIN à la couleur de bordure, un peu
+   plus grand ; ::after = hexagone PLEIN à la couleur de fond, inset de l'épaisseur de
+   bordure voulue. Le anneau visible entre les deux est alors une épaisseur ABSOLUE
+   uniforme sur les 6 côtés, contrairement à `border`+clip-path. `.icon` lui-même ne
+   porte plus rien (ni fond ni bordure) : seul le layout/l'emoji, jamais recadré. */
 .hs-meta-item .icon {
-  width: 34px;
+  position: relative;
+  z-index: 0; /* confine les z-index négatifs des pseudo-éléments à .icon (sinon ils
+                 s'échappent jusqu'au contexte d'empilement du .hs-card parent et se
+                 retrouvent peints sous le fond parchemin de la carte — invisibles). */
+  width: 40px; /* 2026-07-19 — élargi (34→40px, hauteur inchangée), même traitement
+                  que .hs-rank (52→62px) sur demande explicite, dans les 2 thèmes
+                  (règle non thémée, partagée). */
   height: 34px;
-  box-sizing: border-box;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 19px;
   flex-shrink: 0;
+}
+.hs-meta-item .icon::before,
+.hs-meta-item .icon::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+.hs-meta-item .icon::before {
+  inset: 0;
+  z-index: -2;
+  /* couche du BAS = "bordure" (couleur pleine, fixée par thème) */
+}
+.hs-meta-item .icon::after {
+  inset: 2px;
+  /* couche du DESSUS = "fond" (couleur pleine, fixée par thème), inset de 2px sur
+     les 6 côtés — l'anneau visible entre ::before et ::after fait 2px partout,
+     sans jamais dépendre d'une propriété `border` retaillée en biais. */
 }
 
 .hs-biome-label { font-weight: 400; }
@@ -1129,7 +1201,6 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
 /* Nav mobile — dropdown + hamburger, seuil volontairement bas (téléphone/petite
    tablette) pour ne jamais chevaucher la zone où les liens tiennent en 2 lignes. */
 @media (max-width: 860px) {
-  nav { padding: 12px 18px; }
   .nav-toggle { display: flex; order: 1; margin-left: auto; }
   .nav-links {
     display: none;
@@ -1140,9 +1211,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
     gap: 0;
     max-height: calc(100vh - 59px);
     overflow-y: auto;
-    background: rgba(7,12,20,0.97);
     border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(14px);
     padding: 6px 24px 18px;
   }
   .nav-links.open { display: flex; }
@@ -1151,7 +1220,6 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
     display: block;
     padding: 13px 2px;
     font-size: 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
   }
   #theme-toggle { order: 2; }
   #lang-toggle { order: 2; }
@@ -1161,7 +1229,6 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
 /* Nav compact forcée par JS (cf. script en bas de page) dès que la barre
    dépasserait 2 lignes — mesuré réellement (nombre de rangées de <li>),
    pas un seuil px deviné. Mêmes règles que le breakpoint 860px ci-dessus. */
-body.nav-compact nav { padding: 12px 18px; }
 body.nav-compact .nav-toggle { display: flex; order: 1; margin-left: auto; }
 body.nav-compact .nav-links {
   display: none;
@@ -1172,9 +1239,7 @@ body.nav-compact .nav-links {
   gap: 0;
   max-height: calc(100vh - 59px);
   overflow-y: auto;
-  background: rgba(7,12,20,0.97);
   border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(14px);
   padding: 6px 24px 18px;
 }
 body.nav-compact .nav-links.open { display: flex; }
@@ -1183,7 +1248,6 @@ body.nav-compact .nav-links a {
   display: block;
   padding: 13px 2px;
   font-size: 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 body.nav-compact #theme-toggle { order: 2; }
 body.nav-compact #lang-toggle { order: 2; }
@@ -1194,7 +1258,16 @@ body.nav-compact .hero-content { padding-top: 56px; }
   .biomes-grid, .missions-grid, .audio-grid, .hero-inspi-grid { grid-template-columns: repeat(2, 1fr); }
   .steps-grid  { grid-template-columns: repeat(2, 1fr); }
   .gallery-grid { grid-template-columns: 1fr; }
-  .gallery-card:nth-child(1) { grid-column: span 1; }
+  /* 2026-07-20 — fix cartes "psyché-LSD"/été/nordique minuscules et disproportionnées
+     en largeur réduite : 5 des 8 cartes (automne/amiga/ega/cga/apple2) portent un
+     style="grid-column:span 2" INLINE (index.php), qui bat toujours une règle de
+     classe sans !important — l'ancienne règle ci-dessous (:nth-child(1) seul, sans
+     !important) ne neutralisait donc RIEN en pratique. Avec 1 seule colonne explicite
+     déclarée mais des items réclamant un span 2, le navigateur crée une 2e colonne
+     IMPLICITE (auto, dimensionnée sur le contenu) : les cartes non spannées (été/
+     nordique/psyché-LSD) se retrouvent alors écrasées dans une colonne résiduelle
+     minuscule au lieu de la pleine largeur. Fix : !important sur TOUTES les cartes. */
+  .gallery-card { grid-column: span 1 !important; }
   .stats-bar { flex-wrap: wrap; }
   .stat-item { min-width: 50%; }
   .footer-inner { flex-direction: column; text-align: center; }
@@ -1224,7 +1297,7 @@ body.nav-compact .hero-content { padding-top: 56px; }
   .stat-item:nth-last-child(-n+2) { border-bottom: none; }
 
   nav { gap: 10px; padding: 10px 14px; }
-  .nav-logo { font-size: 20px; }
-  .nav-version { display: none; }
+  .nav-logo { font-size: 38px; }
+  .hero-version { display: none; }
   .nav-cta { padding: 8px 14px; font-size: 10px; }
 }

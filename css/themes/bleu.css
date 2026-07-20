@@ -20,6 +20,61 @@
    Toutes les règles sont scopées sous [data-theme="bleu"] — actif par défaut
    (<html data-theme="bleu">, cf. index.php/game.php/javascript/themeManager.js). */
 
+/* ─── NAV (2026-07-19) — homogénéisation : look du bandeau fixe, extrait de
+   presentation.css (qui ne garde que le layout partagé). Symétrique du bloc
+   nav de themes/medieval.css. ─── */
+[data-theme="bleu"] nav {
+  left: 0;
+  right: 0;
+  padding: 12px 28px;
+  background: rgba(7,12,20,0.82);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+}
+[data-theme="bleu"] .nav-logo { color: var(--blue); }
+[data-theme="bleu"] .hero-version { color: rgba(160,210,255,0.90); }
+[data-theme="bleu"] #lang-toggle,
+[data-theme="bleu"] #theme-toggle,
+[data-theme="bleu"] .nav-toggle { background: rgba(255,255,255,0.05); }
+[data-theme="bleu"] #lang-toggle select,
+[data-theme="bleu"] #theme-toggle select { color: var(--blue); }
+[data-theme="bleu"] #lang-toggle select:hover,
+[data-theme="bleu"] #theme-toggle select:hover { background: var(--blue-mid); }
+[data-theme="bleu"] #lang-toggle select option,
+[data-theme="bleu"] #theme-toggle select option { background: #10151c; color: var(--text-dim); }
+[data-theme="bleu"] .nav-links { gap: 0 20px; }
+[data-theme="bleu"] .nav-links a { color: var(--text-dim); }
+[data-theme="bleu"] .nav-links a::after { background: linear-gradient(90deg, transparent, var(--blue), transparent); }
+[data-theme="bleu"] .nav-links a:hover,
+[data-theme="bleu"] .nav-links a.active {
+  color: var(--blue);
+  text-shadow: 0 0 12px rgba(120, 180, 255, 0.55);
+}
+[data-theme="bleu"] .nav-cta {
+  background: var(--blue-mid);
+  border: 1px solid var(--blue);
+  border-radius: 6px;
+  color: var(--blue);
+}
+[data-theme="bleu"] .nav-cta:hover { background: rgba(120,180,255,0.40); }
+[data-theme="bleu"] .nav-toggle span { background: var(--text-dim); }
+@media (max-width: 860px) {
+  [data-theme="bleu"] .nav-links { background: rgba(7,12,20,0.97); backdrop-filter: blur(14px); }
+  [data-theme="bleu"] .nav-links a { border-bottom: 1px solid rgba(255,255,255,0.06); }
+}
+[data-theme="bleu"] body.nav-compact .nav-links { background: rgba(7,12,20,0.97); backdrop-filter: blur(14px); }
+[data-theme="bleu"] body.nav-compact .nav-links a { border-bottom: 1px solid rgba(255,255,255,0.06); }
+
+/* ─── SCORE PILLS (2026-07-19) — homogénéisation, symétrique de
+   themes/medieval.css. ─── */
+[data-theme="bleu"] .score-pill {
+  padding: 11px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+[data-theme="bleu"] .score-pill-pts { color: var(--gold); }
+[data-theme="bleu"] .score-pill-label { color: var(--text-dim); }
+
 [data-theme="bleu"] .mission-card {
   padding: 22px 20px;
   background: var(--bg-card);
@@ -120,7 +175,12 @@
 [data-theme="bleu"] .hs-date { color: var(--blue); }
 [data-theme="bleu"] .hs-headline-stat { color: var(--text); }
 [data-theme="bleu"] .hs-meta-item { color: var(--text); }
-[data-theme="bleu"] .hs-meta-item .icon { border: 2px solid var(--blue); background: var(--blue-mid); }
+/* 2026-07-19 — badge à 2 hexagones clippés superposés (cf. presentation.css) : .icon
+   lui-même ne porte plus ni fond ni bordure. `border`+clip-path donnait une épaisseur
+   incohérente sur les côtés obliques de l'hexagone — remplacé par 2 hexagones pleins
+   superposés (::before = bordure, ::after = fond inset 2px). */
+[data-theme="bleu"] .hs-meta-item .icon::before { background: var(--blue); }
+[data-theme="bleu"] .hs-meta-item .icon::after { background: var(--blue-mid); }
 [data-theme="bleu"] .hs-biome-label { color: var(--text); }
 [data-theme="bleu"] .hs-stat-num, [data-theme="bleu"] .hs-biome-total, [data-theme="bleu"] .hs-biome-max { color: var(--blue); }
 [data-theme="bleu"] .hs-biome-note { color: var(--text-dim); }
@@ -213,3 +273,21 @@
   [data-theme="bleu"] .stat-item { border-bottom: 1px solid var(--border); }
   [data-theme="bleu"] .stat-item:nth-child(odd) { border-right: 1px solid var(--border); }
 }
+
+/* ─── .internal-parchment en thème bleu (2026-07-19, régression corrigée) ───
+   Le wrapper `.internal-parchment` a été ajouté dans le HTML de TOUTES les
+   cartes parchemin le 2026-07-18 (cf. CONTEXT.md §32), mais uniquement pensé
+   pour le thème ancien (bleed négatif + scroll, cf. medieval.css) — ce fichier
+   n'a jamais été mis à jour en conséquence. Résultat : en thème bleu, ce DIV
+   supplémentaire s'intercale désormais entre `.stats-bar`/`.hs-card`/`.kbd-strip`
+   (et toute autre carte listée en tête de fichier) et leurs enfants directs
+   (`.stat-item`, `.hs-rank-col`/`.hs-main`/`.hs-score-col`, `.kbd-strip-item`…)
+   — cassant tout layout flex/grid qui comptait sur une relation parent-enfant
+   DIRECTE (`.stats-bar` empilé verticalement, `.hs-card` sans grille, etc.).
+   Fix générique : `display:contents` retire le DIV de la boîte de mise en page
+   (ses enfants deviennent des enfants directs du flex/grid parent, exactement
+   comme avant l'ajout du wrapper) sans le supprimer du DOM — safe ici car,
+   contrairement au thème ancien, aucun style bleu n'a jamais dépendu de
+   `.internal-parchment` comme boîte réelle (scroll de #scorePanel par ex. reste
+   porté par #scorePanel lui-même en bleu, cf. base.css ligne ~76). */
+[data-theme="bleu"] .internal-parchment { display: contents; }

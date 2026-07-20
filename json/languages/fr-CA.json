@@ -16,7 +16,7 @@
     "play": "Jouer"
   },
   "theme": {
-    "bleu": "Bleu",
+    "bleu": "Bleu sidéral",
     "ancien": "Médiéval"
   },
   "hero": {
@@ -27,7 +27,7 @@
       "settlers": "The Settlers sur Ubisoft",
       "heroes3": "Heroes III sur GOG"
     },
-    "tagline": "Pose des tuiles hexagonales. Fais pousser de vastes forêts de sapins et de bouleaux, des champs de blé\n          qui brassent dans le vent avec leurs moulins, des villages médiévaux aux toits fumants, des voies ferrées\n          pis de grandes rivières où naviguent tes bateaux. Remplis des missions, intercepte des comètes,\n          entoure tes tuiles. Bâtis-toi tout un monde vivant, une tuile à la fois.",
+    "tagline": "<strong>Hexistenz, c'est un jeu contemplatif</strong>, pensé pour ceux qui aiment prendre leur\n          temps pour observer un monde pis ses détails, sans se stresser avec l'horloge.<br><br><strong>Pose des\n          tuiles hexagonales</strong> pis regarde un territoire prendre forme sous tes yeux : de vastes forêts de\n          sapins et de bouleaux, des champs de blé qui brassent dans le vent avec leurs moulins, des villages\n          médiévaux aux toits fumants, des voies ferrées à n'en plus finir pis de grandes rivières où naviguent\n          tes bateaux.<br><br>Remplis des missions, intercepte des comètes, entoure tes tuiles, pis bâtis-toi\n          tranquillement tout un monde vivant, une tuile à la fois.<br><br><strong>Joue tout seul ou en\n          multijoueur</strong>, reprends une partie sauvegardée quand ça te tente, <strong>capture tes plus beaux\n          moments dans la galerie</strong>, pis revis tes parties en accéléré avec les replays en ligne téléchargeables.",
     "btn_play": "Partir la game",
     "btn_how": "Comment ça marche ?",
     "stats": {
@@ -381,7 +381,7 @@
     "gallery_title": "PARTAGE TES PHOTOS",
     "gallery_promo": "Immortalise tes plus belles games : le bouton 📷 prend une photo sans HUD, pis le bouton 🖼️ ouvre l'album partagé avec tout le monde.",
     "replay_title": "Enregistre tes games en vidéo",
-    "replay_promo": "Le bouton 🎬 (ou la touche V) relance ta game en accéléré, tuile par tuile, avec des vitesses de lecture de ×1 à ×8. Pendant le replay, un bouton dédié capture l'écran pis télécharge automatiquement une vidéo en format WebM — direct depuis ton navigateur, pas besoin de logiciel ni de service externe.",
+    "replay_promo": "En un clic, revis toute la game en accéléré pis télécharge-la en vidéo, direct depuis ton navigateur.",
     "btn_create": "Créer une game",
     "room_title": "Code de la salle",
     "room_status": "Game en cours · 3 joueurs",
@@ -443,6 +443,10 @@
       "modeBouliste": "Mode grosse boule",
       "modePlatiste": "Mode ben droit",
       "captured": "Photo pognée !"
+    },
+    "sound": {
+      "on": "Son activé",
+      "off": "Son désactivé"
     },
     "replay": {
       "restart": "Retourne au début",
@@ -511,7 +515,7 @@
         "psyche": "Psyché-LSD"
       },
       "themeNames": {
-        "bleu": "Bleu",
+        "bleu": "Bleu sidéral",
         "ancien": "Médiéval"
       },
       "modes": {
@@ -1044,9 +1048,9 @@
       "codePlaceholder": "Ex : 377EA7",
       "availableRoomsLabel": "Games disponibles / copies de secours",
       "loadingRooms": "Ça charge les games...",
-      "btnCreate": "Créer",
-      "btnJoin": "Embarquer",
-      "btnBack": "Reviens",
+      "btnCreate": "CRÉER",
+      "btnJoin": "EMBARQUER",
+      "btnBack": "REVIENS",
       "selectExisting": "Choisis une game existante",
       "noRoomsFound": "Câline, y'a pas de game trouvée dans /json/games",
       "listUnavailable": "Liste pas prête - serveur PHP muet",

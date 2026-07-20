@@ -110,6 +110,27 @@ registerLangRefresh((data) => {
   _snapshotCapturedText = data?.game?.gallery?.captured ?? '';
 });
 
+// Textes du popup central "Sons activés"/"Sons désactivés" sur la touche M
+// (2026-07-20, demande explicite : même mécanisme que le popup de thème/langue —
+// gros popup central via showCenterMessage). Clé game.sound.{on,off}, même
+// mécanisme réactif top-level await + registerLangRefresh que ci-dessus.
+let _soundOnText = await fetch(`./json/languages/${_sceneLangFile}.json`)
+  .then(r => r.json())
+  .then(data => data?.game?.sound?.on ?? '')
+  .catch(err => {
+    console.error(`[scene] Impossible de charger ${_sceneLangFile}.json`, err);
+    return '';
+  });
+let _soundOffText = await fetch(`./json/languages/${_sceneLangFile}.json`)
+  .then(r => r.json())
+  .then(data => data?.game?.sound?.off ?? '')
+  .catch(() => '');
+
+registerLangRefresh((data) => {
+  _soundOnText = data?.game?.sound?.on ?? '';
+  _soundOffText = data?.game?.sound?.off ?? '';
+});
+
 export function initScene(options = {}) {
   const canvas = document.getElementById('app');
   const renderer = createRenderer(canvas);
@@ -572,7 +593,10 @@ export function initScene(options = {}) {
 
     if (key === 'm') {
       event.preventDefault();
-      toggleMute(ambientSoundDesign);
+      // 2026-07-20, demande explicite : gros popup central (même mécanisme que le
+      // changement de thème/langue) confirmant l'état son après bascule.
+      const muted = toggleMute(ambientSoundDesign);
+      showCenterMessage(muted ? _soundOffText : _soundOnText);
       return;
     }
 

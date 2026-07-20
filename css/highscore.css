@@ -142,17 +142,30 @@
   color: #ffffff;
 }
 
-/* ─── [data-theme="ancien"] — "cachet de cire" (fond sombre + texte clair),
-   même principe que .mode-panel button (css/multiplayerUi.css §32). ─── */
+/* ─── [data-theme="ancien"] — 2026-07-19 (corrigé le 2026-07-19, image
+   remplacée le 2026-07-19) : border-image 3-slice sur images/button2.png
+   (160x42, cf. css/themes/medieval.css §32 et css/multiplayerUi.css). Une
+   seule image bouton rouge pour abandonner/nouvelle partie, pas de
+   distinction de couleur par rôle (cohérent avec .mode-panel button/
+   .btn-secondary). Cap 8px (mesure réelle du rayon de coin sur button2.png).
+   height: 42px FORCÉ (hauteur native de l'image, cf. css/themes/medieval.css
+   §32 pour l'explication complète) : écrase le padding 8px 9px d'origine
+   (pensé pour la version texte plate), assumé. ─── */
 [data-theme="ancien"] .abandon-button,
 [data-theme="ancien"] .new-game-button {
-  border: none;
-  background: #6b2018;
-  color: #f5e0d8;
+  background: none;
+  border-style: solid;
+  border-width: 0 8px;
+  border-image-source: url("../images/button2.png");
+  border-image-slice: 0 8 fill;
+  border-image-width: 0 8px;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  height: 42px;
+  box-sizing: border-box;
+  color: #f5e2b8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: filter 0.2s;
 }
-[data-theme="ancien"] .abandon-button:hover { background: #832a1f; }
-[data-theme="ancien"] .new-game-button {
-  background: #4a3623;
-  color: #f0e6d0;
-}
-[data-theme="ancien"] .new-game-button:hover { background: #5c4530; }
+[data-theme="ancien"] .abandon-button:hover,
+[data-theme="ancien"] .new-game-button:hover { filter: brightness(1.12); }

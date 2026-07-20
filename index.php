@@ -134,21 +134,25 @@ function fmt_date($iso) {
 
 <!-- ─── NAV ────────────────────────────────────────────────────── -->
 <nav>
-  <a class="nav-logo" href="#">⬡ HEXISTENZ<?php if ($version): ?><span class="nav-version"><?= htmlspecialchars($version) ?></span><?php endif; ?></a>
+  <!-- 2026-07-20 — sur demande explicite : ne garde que le glyphe hexagone
+       (agrandi, cf. .nav-logo dans presentation.css) comme lien "retour en
+       haut de page" ; "HEXISTENZ" et le numéro de version (jadis .nav-version)
+       ont été déplacés à la suite du titre .hero-title ci-dessous. -->
+  <a class="nav-logo" href="#">⬡</a>
   <button class="nav-toggle" id="navToggle" type="button" aria-label="Menu" aria-controls="navLinks" aria-expanded="false">
     <span></span><span></span><span></span>
   </button>
   <ul class="nav-links" id="navLinks">
     <li><a href="#factions"  data-i18n="nav.links.factions"><?= tr($t,'fr','nav.links.factions') ?></a></li>
     <li><a href="#biomes"    data-i18n="nav.links.biomes"><?= tr($t,'fr','nav.links.biomes') ?></a></li>
-    <li><a href="#missions"  data-i18n="nav.links.missions"><?= tr($t,'fr','nav.links.missions') ?></a></li>
     <li><a href="#gameplay"  data-i18n="nav.links.gameplay"><?= tr($t,'fr','nav.links.gameplay') ?></a></li>
+    <li><a href="#missions"  data-i18n="nav.links.missions"><?= tr($t,'fr','nav.links.missions') ?></a></li>
     <li><a href="#gallery"   data-i18n="nav.links.gallery"><?= tr($t,'fr','nav.links.gallery') ?></a></li>
     <li><a href="#creatures" data-i18n="nav.links.creatures"><?= tr($t,'fr','nav.links.creatures') ?></a></li>
     <li><a href="#audio"     data-i18n="nav.links.audio"><?= tr($t,'fr','nav.links.audio') ?></a></li>
     <li><a href="#daynnight" data-i18n="nav.links.daynnight"><?= tr($t,'fr','nav.links.daynnight') ?></a></li>
-    <li><a href="#eda"       data-i18n="nav.links.eda"><?= tr($t,'fr','nav.links.eda') ?></a></li>
     <li><a href="#multi"     data-i18n="nav.links.multi"><?= tr($t,'fr','nav.links.multi') ?></a></li>
+    <li><a href="#eda"       data-i18n="nav.links.eda"><?= tr($t,'fr','nav.links.eda') ?></a></li>
     <li><a href="#scores"    data-i18n="nav.links.scores"><?= tr($t,'fr','nav.links.scores') ?></a></li>
   </ul>
   <!-- 2026-07-17 — sélecteur de thème graphique (Bleu / Médiéval), demande explicite
@@ -178,7 +182,7 @@ function fmt_date($iso) {
   <div class="container">
     <div class="hero-inner">
       <div class="hero-text">
-        <h1 class="hero-title">⬡ HEXISTENZ</h1>
+        <h1 class="hero-title">⬡ HEXISTENZ<?php if ($version): ?><span class="hero-version"><?= htmlspecialchars($version) ?></span><?php endif; ?></h1>
         <p class="hero-subtitle" data-i18n="hero.subtitle"><?= tr($t,'fr','hero.subtitle') ?></p>
 
         <p class="hero-inspi" data-i18n="hero.inspi_text"><?= tr($t,'fr','hero.inspi_text') ?></p>
@@ -186,7 +190,9 @@ function fmt_date($iso) {
         <div class="hero-inspi-grid">
           <div class="hero-inspi-col">
             <div class="hero-inspi-card"><div class="internal-parchment">
+              <div class="parchment-picture parchment-picture--fill parchment-picture--v3">
               <img src="./images/dorfromantik.jpg" alt="Dorfromantik" class="hero-inspi-img" loading="lazy">
+              </div>
               <div class="hero-inspi-caption">
                 <div class="hero-inspi-name">Dorfromantik</div>
               </div>
@@ -195,7 +201,9 @@ function fmt_date($iso) {
           </div>
           <div class="hero-inspi-col">
             <div class="hero-inspi-card"><div class="internal-parchment">
+              <div class="parchment-picture parchment-picture--fill parchment-picture--v4">
               <img src="./images/settlers.jpg" alt="The Settlers" class="hero-inspi-img" loading="lazy">
+              </div>
               <div class="hero-inspi-caption">
                 <div class="hero-inspi-name">The Settlers</div>
               </div>
@@ -204,7 +212,9 @@ function fmt_date($iso) {
           </div>
           <div class="hero-inspi-col">
             <div class="hero-inspi-card"><div class="internal-parchment">
+              <div class="parchment-picture parchment-picture--fill parchment-picture--v5">
               <img src="./images/heroes.jpg" alt="Heroes of Might and Magic" class="hero-inspi-img" loading="lazy">
+              </div>
               <div class="hero-inspi-caption">
                 <div class="hero-inspi-name">Heroes of Might &amp; Magic</div>
               </div>
@@ -240,7 +250,7 @@ function fmt_date($iso) {
 
     <div class="factions-grid">
       <div class="faction-card platiste"><div class="internal-parchment">
-        <div class="faction-img" style="display:block;padding:0;">
+        <div class="faction-img parchment-picture parchment-picture--v1" style="display:block;padding:0;">
           <img src="images/platiste.jpg" alt="Mode Platiste" style="width:100%;height:100%;object-fit:cover;display:block;">
         </div>
         <div class="faction-body">
@@ -251,7 +261,7 @@ function fmt_date($iso) {
       </div></div>
 
       <div class="faction-card bouliste"><div class="internal-parchment">
-        <div class="faction-img" style="display:block;padding:0;">
+        <div class="faction-img parchment-picture parchment-picture--v2" style="display:block;padding:0;">
           <img src="images/bouliste-transparent.png" alt="Mode Bouliste" style="width:100%;height:100%;object-fit:cover;display:block;">
         </div>
         <div class="faction-body">
@@ -283,10 +293,12 @@ function fmt_date($iso) {
         ['key' => 'water',  'img' => 'images/biome-eau.jpg',     'alt' => 'Eau',        'cls' => 'water'],
         ['key' => 'rail',   'img' => 'images/biome-train.jpg',   'alt' => 'Voie ferrée','cls' => 'rail'],
       ];
-      foreach ($biomeCards as $bc): $k = $bc['key']; ?>
+      foreach ($biomeCards as $bi => $bc): $k = $bc['key']; $bv = ['v1','v2','v3','v4','v5'][$bi % 5]; ?>
       <div class="biome-card <?= $bc['cls'] ?>"><div class="internal-parchment">
-        <div class="biome-banner">
+        <div class="biome-banner parchment-picture parchment-picture--<?= $bv ?>">
+          <div class="parchment-picture--absolute">
           <img src="<?= $bc['img'] ?>" alt="<?= htmlspecialchars($bc['alt']) ?>" class="biome-banner-img">
+          </div>
           <div class="biome-banner-overlay">
             <div class="biome-name" data-i18n="biomes.<?= $k ?>.name"><?= tr($t,'fr',"biomes.$k.name") ?></div>
           </div>
@@ -302,6 +314,85 @@ function fmt_date($iso) {
 </section>
 
 <!-- ═══════════ MISSIONS ═══════════ -->
+<!-- ═══════════ GAMEPLAY ═══════════ -->
+<!-- 2026-07-19 — déplacée AVANT "missions" (demande explicite), cf. nav header
+     réordonnée en conséquence plus haut dans ce fichier. -->
+<section id="gameplay">
+  <div class="container">
+    <p class="section-label" data-i18n="gameplay.label"><?= tr($t,'fr','gameplay.label') ?></p>
+    <h2 class="section-title" data-i18n="gameplay.title"><?= tr($t,'fr','gameplay.title') ?></h2>
+    <p class="section-sub" data-i18n="gameplay.sub"><?= tr($t,'fr','gameplay.sub') ?></p>
+
+    <div class="gameplay-ui-preview">
+      <img src="./images/tuiles.png" alt="Interface tuiles — tuile courante, suivante et restantes" loading="lazy">
+      <p class="gameplay-ui-caption" data-i18n="gameplay.ui_caption"><?= tr($t,'fr','gameplay.ui_caption') ?></p>
+    </div>
+
+    <div class="steps-grid">
+      <?php
+      $steps = [
+        ['key' => 'draw',   'icon' => '🎴'],
+        ['key' => 'orient', 'icon' => '🔄'],
+        ['key' => 'place',  'icon' => '🗺️'],
+        ['key' => 'score',  'icon' => '🏆'],
+      ];
+      foreach ($steps as $sc): $k = $sc['key']; ?>
+      <div class="step-card"><div class="internal-parchment">
+        <div class="step-icon"><?= $sc['icon'] ?></div>
+        <div class="step-title" data-i18n="gameplay.steps.<?= $k ?>.title"><?= tr($t,'fr',"gameplay.steps.$k.title") ?></div>
+        <div class="step-desc" data-i18n="gameplay.steps.<?= $k ?>.desc"><?= tr($t,'fr',"gameplay.steps.$k.desc") ?></div>
+      </div></div>
+      <?php endforeach; ?>
+    </div>
+
+    <div style="margin-top:52px;">
+      <p class="section-label" data-i18n="gameplay.score_label"><?= tr($t,'fr','gameplay.score_label') ?></p>
+      <div class="score-pills"><div class="internal-parchment">
+        <?php
+        $pills = [
+          ['key' => 'place',    'pts' => '+2'],
+          ['key' => 'edge',     'pts' => '+10'],
+          ['key' => 'network',  'pts' => '+25'],
+          ['key' => 'surround', 'pts' => '+50'],
+          ['key' => 'mission',  'pts' => '+100'],
+          ['key' => 'comet',    'pts' => '+75'],
+          ['key' => 'bonus',    'pts' => '+1500'],
+        ];
+        foreach ($pills as $pc): $k = $pc['key']; ?>
+        <div class="score-pill"><div class="score-pill-pts"><?= $pc['pts'] ?></div><div class="score-pill-label" data-i18n="gameplay.pills.<?= $k ?>"><?= tr($t,'fr',"gameplay.pills.$k") ?></div></div>
+        <?php endforeach; ?>
+      </div></div>
+    </div>
+
+    <h2 class="section-title" style="margin-top:40px;padding-top:26px;border-top:1px solid var(--border);" data-i18n="gameplay.kbd_title"><?= tr($t,'fr','gameplay.kbd_title') ?></h2>
+
+    <div class="kbd-strip">
+      <div class="internal-parchment">
+      <div class="kbd-strip-item"><span class="kbd-group kbd-group--stacked"><span class="kbd-row"><kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd></span><span class="kbd-row"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span></span><span data-i18n="gameplay.kbd.camera_label"><?= tr($t,'fr','gameplay.kbd.camera_label') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.left_click_kbd"><?= tr($t,'fr','gameplay.kbd.left_click_kbd') ?></kbd><span data-i18n="gameplay.kbd.left_click_desc"><?= tr($t,'fr','gameplay.kbd.left_click_desc') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.right_click_kbd"><?= tr($t,'fr','gameplay.kbd.right_click_kbd') ?></kbd><span data-i18n="gameplay.kbd.right_click_desc"><?= tr($t,'fr','gameplay.kbd.right_click_desc') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.wheel_kbd"><?= tr($t,'fr','gameplay.kbd.wheel_kbd') ?></kbd><span data-i18n="gameplay.kbd.wheel_desc"><?= tr($t,'fr','gameplay.kbd.wheel_desc') ?></span></div>
+      <div class="kbd-strip-item"><kbd>R</kbd><span data-i18n="gameplay.kbd.reset_cam"><?= tr($t,'fr','gameplay.kbd.reset_cam') ?></span></div>
+      <div class="kbd-strip-item"><kbd>+</kbd><kbd>-</kbd><span data-i18n="gameplay.kbd.zoom"><?= tr($t,'fr','gameplay.kbd.zoom') ?></span></div>
+      <div class="kbd-strip-item"><kbd>Ctrl</kbd><kbd>Z</kbd><span data-i18n="gameplay.kbd.undo"><?= tr($t,'fr','gameplay.kbd.undo') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.shift_kbd"><?= tr($t,'fr','gameplay.kbd.shift_kbd') ?></kbd><span data-i18n="gameplay.kbd.speed_up"><?= tr($t,'fr','gameplay.kbd.speed_up') ?></span></div>
+      <div class="kbd-strip-item"><kbd>E</kbd><span data-i18n="gameplay.kbd.customization"><?= tr($t,'fr','gameplay.kbd.customization') ?></span></div>
+      <div class="kbd-strip-item"><kbd>F</kbd><span data-i18n="gameplay.kbd.perf_hud"><?= tr($t,'fr','gameplay.kbd.perf_hud') ?></span></div>
+      <div class="kbd-strip-item"><kbd>C</kbd><span data-i18n="gameplay.kbd.snapshot"><?= tr($t,'fr','gameplay.kbd.snapshot') ?></span></div>
+      <div class="kbd-strip-item"><kbd>G</kbd><span data-i18n="gameplay.kbd.gallery"><?= tr($t,'fr','gameplay.kbd.gallery') ?></span></div>
+      <div class="kbd-strip-item"><kbd>V</kbd><span data-i18n="gameplay.kbd.replay"><?= tr($t,'fr','gameplay.kbd.replay') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.space_kbd"><?= tr($t,'fr','gameplay.kbd.space_kbd') ?></kbd><span data-i18n="gameplay.kbd.immersive"><?= tr($t,'fr','gameplay.kbd.immersive') ?></span></div>
+      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.shift_kbd"><?= tr($t,'fr','gameplay.kbd.shift_kbd') ?></kbd><kbd data-i18n="gameplay.kbd.space_kbd"><?= tr($t,'fr','gameplay.kbd.space_kbd') ?></kbd><span data-i18n="gameplay.kbd.super_immersive"><?= tr($t,'fr','gameplay.kbd.super_immersive') ?></span></div>
+      <div class="kbd-strip-item"><kbd>M</kbd><span data-i18n="gameplay.kbd.mute"><?= tr($t,'fr','gameplay.kbd.mute') ?></span></div>
+      <div class="kbd-strip-item"><kbd>H</kbd><kbd>ESC</kbd><span data-i18n="gameplay.kbd.help"><?= tr($t,'fr','gameplay.kbd.help') ?></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ MISSIONS ═══════════ -->
+<!-- 2026-07-19 — déplacée APRÈS "gameplay" (demande explicite, inverse de
+     l'ordre d'origine), cf. nav header réordonnée en conséquence plus haut. -->
 <section id="missions">
   <div class="container">
     <p class="section-label" data-i18n="missions.label"><?= tr($t,'fr','missions.label') ?></p>
@@ -334,80 +425,6 @@ function fmt_date($iso) {
   </div>
 </section>
 
-<!-- ═══════════ GAMEPLAY ═══════════ -->
-<section id="gameplay">
-  <div class="container">
-    <p class="section-label" data-i18n="gameplay.label"><?= tr($t,'fr','gameplay.label') ?></p>
-    <h2 class="section-title" data-i18n="gameplay.title"><?= tr($t,'fr','gameplay.title') ?></h2>
-    <p class="section-sub" data-i18n="gameplay.sub"><?= tr($t,'fr','gameplay.sub') ?></p>
-
-    <div class="gameplay-ui-preview">
-      <img src="./images/tuiles.png" alt="Interface tuiles — tuile courante, suivante et restantes" loading="lazy">
-      <p class="gameplay-ui-caption" data-i18n="gameplay.ui_caption"><?= tr($t,'fr','gameplay.ui_caption') ?></p>
-    </div>
-
-    <div class="steps-grid">
-      <?php
-      $steps = [
-        ['key' => 'draw',   'icon' => '🎴'],
-        ['key' => 'orient', 'icon' => '🔄'],
-        ['key' => 'place',  'icon' => '🗺️'],
-        ['key' => 'score',  'icon' => '🏆'],
-      ];
-      foreach ($steps as $sc): $k = $sc['key']; ?>
-      <div class="step-card"><div class="internal-parchment">
-        <div class="step-icon"><?= $sc['icon'] ?></div>
-        <div class="step-title" data-i18n="gameplay.steps.<?= $k ?>.title"><?= tr($t,'fr',"gameplay.steps.$k.title") ?></div>
-        <div class="step-desc" data-i18n="gameplay.steps.<?= $k ?>.desc"><?= tr($t,'fr',"gameplay.steps.$k.desc") ?></div>
-      </div></div>
-      <?php endforeach; ?>
-    </div>
-
-    <div style="margin-top:52px;">
-      <p class="section-label" data-i18n="gameplay.score_label"><?= tr($t,'fr','gameplay.score_label') ?></p>
-      <div class="score-pills">
-        <?php
-        $pills = [
-          ['key' => 'place',    'pts' => '+2'],
-          ['key' => 'edge',     'pts' => '+10'],
-          ['key' => 'network',  'pts' => '+25'],
-          ['key' => 'surround', 'pts' => '+50'],
-          ['key' => 'mission',  'pts' => '+100'],
-          ['key' => 'comet',    'pts' => '+75'],
-          ['key' => 'bonus',    'pts' => '+1500'],
-        ];
-        foreach ($pills as $pc): $k = $pc['key']; ?>
-        <div class="score-pill"><div class="score-pill-pts"><?= $pc['pts'] ?></div><div class="score-pill-label" data-i18n="gameplay.pills.<?= $k ?>"><?= tr($t,'fr',"gameplay.pills.$k") ?></div></div>
-        <?php endforeach; ?>
-      </div>
-    </div>
-
-    <h2 class="section-title" style="margin-top:40px;padding-top:26px;border-top:1px solid var(--border);" data-i18n="gameplay.kbd_title"><?= tr($t,'fr','gameplay.kbd_title') ?></h2>
-
-    <div class="kbd-strip">
-      <div class="internal-parchment">
-      <div class="kbd-strip-item"><span class="kbd-group kbd-group--stacked"><span class="kbd-row"><kbd>Z</kbd><kbd>Q</kbd><kbd>S</kbd><kbd>D</kbd></span><span class="kbd-row"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span></span><span data-i18n="gameplay.kbd.camera_label"><?= tr($t,'fr','gameplay.kbd.camera_label') ?></span></div>
-      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.left_click_kbd"><?= tr($t,'fr','gameplay.kbd.left_click_kbd') ?></kbd><span data-i18n="gameplay.kbd.left_click_desc"><?= tr($t,'fr','gameplay.kbd.left_click_desc') ?></span></div>
-      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.right_click_kbd"><?= tr($t,'fr','gameplay.kbd.right_click_kbd') ?></kbd><span data-i18n="gameplay.kbd.right_click_desc"><?= tr($t,'fr','gameplay.kbd.right_click_desc') ?></span></div>
-      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.wheel_kbd"><?= tr($t,'fr','gameplay.kbd.wheel_kbd') ?></kbd><span data-i18n="gameplay.kbd.wheel_desc"><?= tr($t,'fr','gameplay.kbd.wheel_desc') ?></span></div>
-      <div class="kbd-strip-item"><kbd>R</kbd><span data-i18n="gameplay.kbd.reset_cam"><?= tr($t,'fr','gameplay.kbd.reset_cam') ?></span></div>
-      <div class="kbd-strip-item"><kbd>+</kbd><kbd>-</kbd><span data-i18n="gameplay.kbd.zoom"><?= tr($t,'fr','gameplay.kbd.zoom') ?></span></div>
-      <div class="kbd-strip-item"><kbd>Ctrl</kbd><kbd>Z</kbd><span data-i18n="gameplay.kbd.undo"><?= tr($t,'fr','gameplay.kbd.undo') ?></span></div>
-      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.shift_kbd"><?= tr($t,'fr','gameplay.kbd.shift_kbd') ?></kbd><span data-i18n="gameplay.kbd.speed_up"><?= tr($t,'fr','gameplay.kbd.speed_up') ?></span></div>
-      <div class="kbd-strip-item"><kbd>E</kbd><span data-i18n="gameplay.kbd.customization"><?= tr($t,'fr','gameplay.kbd.customization') ?></span></div>
-      <div class="kbd-strip-item"><kbd>F</kbd><span data-i18n="gameplay.kbd.perf_hud"><?= tr($t,'fr','gameplay.kbd.perf_hud') ?></span></div>
-      <div class="kbd-strip-item"><kbd>C</kbd><span data-i18n="gameplay.kbd.snapshot"><?= tr($t,'fr','gameplay.kbd.snapshot') ?></span></div>
-      <div class="kbd-strip-item"><kbd>G</kbd><span data-i18n="gameplay.kbd.gallery"><?= tr($t,'fr','gameplay.kbd.gallery') ?></span></div>
-      <div class="kbd-strip-item"><kbd>V</kbd><span data-i18n="gameplay.kbd.replay"><?= tr($t,'fr','gameplay.kbd.replay') ?></span></div>
-      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.space_kbd"><?= tr($t,'fr','gameplay.kbd.space_kbd') ?></kbd><span data-i18n="gameplay.kbd.immersive"><?= tr($t,'fr','gameplay.kbd.immersive') ?></span></div>
-      <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.shift_kbd"><?= tr($t,'fr','gameplay.kbd.shift_kbd') ?></kbd><kbd data-i18n="gameplay.kbd.space_kbd"><?= tr($t,'fr','gameplay.kbd.space_kbd') ?></kbd><span data-i18n="gameplay.kbd.super_immersive"><?= tr($t,'fr','gameplay.kbd.super_immersive') ?></span></div>
-      <div class="kbd-strip-item"><kbd>M</kbd><span data-i18n="gameplay.kbd.mute"><?= tr($t,'fr','gameplay.kbd.mute') ?></span></div>
-      <div class="kbd-strip-item"><kbd>H</kbd><kbd>ESC</kbd><span data-i18n="gameplay.kbd.help"><?= tr($t,'fr','gameplay.kbd.help') ?></span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ═══════════ GALLERY ═══════════ -->
 <section id="gallery">
   <div class="container">
@@ -428,15 +445,18 @@ function fmt_date($iso) {
         ['key' => 'apple2', 'img' => 'images/apple2.jpg',       'alt' => 'Preset Apple II',  'span' => 2, 'contain' => true],
         ['key' => 'psyche', 'img' => 'images/pysche-lsd.jpg',   'alt' => 'Preset Psyché-LSD','span' => 0, 'contain' => false],
       ];
-      foreach ($presets as $pc):
+      foreach ($presets as $pi => $pc):
         $k = $pc['key'];
+        $gv = ['v1','v2','v3','v4','v5'][$pi % 5];
         $cls = 'gallery-card' . ($pc['contain'] ? ' gallery-card--contain' : '');
         $style = $pc['span'] ? ' style="grid-column:span ' . $pc['span'] . ';"' : '';
       ?>
       <div class="<?= $cls ?>"<?= $style ?>>
         <div class="internal-parchment">
+        <div class="gallery-picture parchment-picture parchment-picture--<?= $gv ?>">
         <img src="<?= $pc['img'] ?>" alt="<?= htmlspecialchars($pc['alt']) ?>" class="gallery-img">
         <div class="gallery-overlay"><div class="gallery-label"><span data-i18n="gallery.preset_word"><?= tr($t,'fr','gallery.preset_word') ?></span> <span data-i18n="gallery.presets.<?= $k ?>"><?= tr($t,'fr',"gallery.presets.$k") ?></span></div></div>
+        </div>
         </div>
       </div>
       <?php endforeach; ?>
@@ -463,10 +483,12 @@ function fmt_date($iso) {
         ['key' => 'seagulls',  'img' => 'images/mouettes.jpg', 'alt' => 'Mouettes'],
         ['key' => 'fireflies', 'img' => 'images/lucioles.jpg', 'alt' => 'Lucioles'],
       ];
-      foreach ($creatures as $cc): $k = $cc['key']; ?>
+      foreach ($creatures as $ci => $cc): $k = $cc['key']; $cv = ['v1','v2','v3','v4','v5'][$ci % 5]; ?>
       <div class="creature-card"><div class="internal-parchment">
-        <div class="creature-banner">
+        <div class="creature-banner parchment-picture parchment-picture--<?= $cv ?>">
+          <div class="parchment-picture--absolute">
           <img src="<?= $cc['img'] ?>" alt="<?= htmlspecialchars($cc['alt']) ?>" class="creature-banner-img">
+          </div>
           <div class="creature-banner-overlay">
             <div class="creature-name" data-i18n="creatures.<?= $k ?>.name"><?= tr($t,'fr',"creatures.$k.name") ?></div>
           </div>
@@ -576,14 +598,17 @@ function fmt_date($iso) {
         ['key' => 'rain',    'img' => 'images/pluie.jpg',    'alt' => 'Pluie',         'icon' => '🌧️', 'cls' => 'daynight-card rain',  'span' => true],
         ['key' => 'mist',    'img' => 'images/brume.jpg',    'alt' => 'Brume matinale','icon' => '🌫️', 'cls' => 'daynight-card mist',  'span' => true],
       ];
-      foreach ($dnCards as $dc):
+      foreach ($dnCards as $di => $dc):
         $k = $dc['key'];
+        $dv = ['v1','v2','v3','v4','v5'][$di % 5];
         $style = $dc['span'] ? ' style="grid-column:span 2;"' : '';
         $list  = tr($t,'fr',"daynnight.$k.list");
         $count = is_array($list) ? count($list) : 0;
       ?>
       <div class="<?= $dc['cls'] ?>"<?= $style ?>><div class="internal-parchment">
+        <div class="parchment-picture parchment-picture--fill parchment-picture--<?= $dv ?>">
         <img src="<?= $dc['img'] ?>" alt="<?= htmlspecialchars($dc['alt']) ?>" class="daynight-img">
+        </div>
         <div class="daynight-body">
         <div class="daynight-head">
           <div class="daynight-icon"><?= $dc['icon'] ?></div>
@@ -601,36 +626,19 @@ function fmt_date($iso) {
   </div>
 </section>
 
-<!-- ═══════════ PERSONNALISATION EXTRÊME (EDA) ═══════════ -->
-<section id="eda">
-  <div class="container">
-    <p class="section-label" data-i18n="eda.label"><?= tr($t,'fr','eda.label') ?></p>
-    <h2 class="section-title" data-i18n="eda.title"><?= tr($t,'fr','eda.title') ?></h2>
-    <p class="section-sub" data-i18n="eda.sub"><?= tr($t,'fr','eda.sub') ?></p>
-
-    <div class="eda-showcase-grid">
-      <?php
-      $edaCards = [
-        ['key' => 'lut',         'img' => 'images/eda-1.png', 'alt' => 'EDA — onglet LUT'],
-        ['key' => 'cinematic',   'img' => 'images/eda-2.png', 'alt' => 'EDA — onglet Cinématique'],
-        ['key' => 'environment', 'img' => 'images/eda-3.png', 'alt' => 'EDA — onglet Environnement'],
-      ];
-      foreach ($edaCards as $ec): $k = $ec['key']; ?>
-      <div class="eda-showcase-card">
-        <div class="internal-parchment">
-        <img src="<?= $ec['img'] ?>" alt="<?= htmlspecialchars($ec['alt']) ?>" class="eda-showcase-img">
-        <div class="eda-showcase-body">
-          <div class="eda-showcase-label" data-i18n="eda.<?= $k ?>.label"><?= tr($t,'fr',"eda.$k.label") ?></div>
-          <p class="eda-showcase-desc" data-i18n="eda.<?= $k ?>.desc"><?= tr($t,'fr',"eda.$k.desc") ?></p>
-        </div>
-        </div>
-      </div>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
-
 <!-- ═══════════ MULTIPLAYER ═══════════ -->
+<!-- 2026-07-19 — déplacée AVANT "personnalisation" (eda) (demande explicite),
+     cf. nav header réordonnée en conséquence plus haut. Restructurée dans la
+     foulée : .room-demo était un enfant direct de .multi-inner (grid 2 col,
+     align-items:center) au même niveau que TOUTE la colonne de texte — qui
+     empile 3 sous-rubriques (Bâtissez ensemble / Partagez vos captures /
+     Enregistrez vos parties). align-items:center centrait donc .room-demo sur
+     la hauteur des 3 sous-rubriques cumulées, le faisant "flotter" entre elles
+     plutôt que se caler sur la 1ère. Fix : .multi-inner ne contient plus QUE la
+     1ère sous-rubrique (titre/sub/features) + .room-demo en grid 2 colonnes ;
+     les 2 sous-rubriques suivantes (galerie de captures, replay vidéo) + le
+     bouton "Créer une partie" sortent de .multi-inner, en pleine largeur
+     en-dessous, alignées sur la colonne de texte via .multi-below. -->
 <section id="multi">
   <div class="container">
     <div class="multi-inner">
@@ -644,13 +652,6 @@ function fmt_date($iso) {
           <li data-i18n="multi.features.<?= $i ?>"><?= tr($t,'fr',"multi.features.$i") ?></li>
           <?php endfor; ?>
         </ul>
-        <h2 class="section-title" style="margin-top:32px;" data-i18n="multi.gallery_title"><?= tr($t,'fr','multi.gallery_title') ?></h2>
-        <p class="section-sub" data-i18n="multi.gallery_promo"><?= tr($t,'fr','multi.gallery_promo') ?></p>
-        <h2 class="section-title" style="margin-top:32px;" data-i18n="multi.replay_title"><?= tr($t,'fr','multi.replay_title') ?></h2>
-        <p class="section-sub" data-i18n="multi.replay_promo"><?= tr($t,'fr','multi.replay_promo') ?></p>
-        <div style="margin-top:28px;">
-          <a href="game.php" class="btn-primary" data-i18n="multi.btn_create"><?= tr($t,'fr','multi.btn_create') ?></a>
-        </div>
       </div>
       <div class="room-demo">
         <div class="internal-parchment">
@@ -679,6 +680,50 @@ function fmt_date($iso) {
           </div>
         </div>
       </div>
+    </div>
+    </div>
+
+    <div class="multi-below">
+      <h2 class="section-title" style="margin-top:32px;" data-i18n="multi.gallery_title"><?= tr($t,'fr','multi.gallery_title') ?></h2>
+      <p class="section-sub" data-i18n="multi.gallery_promo"><?= tr($t,'fr','multi.gallery_promo') ?></p>
+      <h2 class="section-title" style="margin-top:32px;" data-i18n="multi.replay_title"><?= tr($t,'fr','multi.replay_title') ?></h2>
+      <p class="section-sub" data-i18n="multi.replay_promo"><?= tr($t,'fr','multi.replay_promo') ?></p>
+      <div style="margin-top:28px;">
+        <a href="game.php" class="btn-primary" data-i18n="multi.btn_create"><?= tr($t,'fr','multi.btn_create') ?></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ PERSONNALISATION EXTRÊME (EDA) ═══════════ -->
+<!-- 2026-07-19 — déplacée APRÈS "multiplayer" (demande explicite, inverse de
+     l'ordre d'origine), cf. nav header réordonnée en conséquence plus haut. -->
+<section id="eda">
+  <div class="container">
+    <p class="section-label" data-i18n="eda.label"><?= tr($t,'fr','eda.label') ?></p>
+    <h2 class="section-title" data-i18n="eda.title"><?= tr($t,'fr','eda.title') ?></h2>
+    <p class="section-sub" data-i18n="eda.sub"><?= tr($t,'fr','eda.sub') ?></p>
+
+    <div class="eda-showcase-grid">
+      <?php
+      $edaCards = [
+        ['key' => 'lut',         'img' => 'images/eda-1.png', 'alt' => 'EDA — onglet LUT'],
+        ['key' => 'cinematic',   'img' => 'images/eda-2.png', 'alt' => 'EDA — onglet Cinématique'],
+        ['key' => 'environment', 'img' => 'images/eda-3.png', 'alt' => 'EDA — onglet Environnement'],
+      ];
+      foreach ($edaCards as $ei => $ec): $k = $ec['key']; $ev = ['v1','v2','v3','v4','v5'][$ei % 5]; ?>
+      <div class="eda-showcase-card">
+        <div class="internal-parchment">
+        <div class="parchment-picture parchment-picture--auto parchment-picture--<?= $ev ?>">
+        <img src="<?= $ec['img'] ?>" alt="<?= htmlspecialchars($ec['alt']) ?>" class="eda-showcase-img">
+        </div>
+        <div class="eda-showcase-body">
+          <div class="eda-showcase-label" data-i18n="eda.<?= $k ?>.label"><?= tr($t,'fr',"eda.$k.label") ?></div>
+          <p class="eda-showcase-desc" data-i18n="eda.<?= $k ?>.desc"><?= tr($t,'fr',"eda.$k.desc") ?></p>
+        </div>
+        </div>
+      </div>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>
@@ -823,6 +868,7 @@ function fmt_date($iso) {
     const sel = document.getElementById('langSelect');
     if (sel) sel.value = l;
     applyI18n(l);
+    if (typeof updateNavCompact === 'function') updateNavCompact();
   }
 
   const saved = localStorage.getItem('hexistenz_pres_lang');
@@ -839,6 +885,11 @@ function fmt_date($iso) {
     localStorage.setItem('hexistenz_theme', th);
     const sel = document.getElementById('themeSelect');
     if (sel) sel.value = th;
+    // 2026-07-19 — particles.js est chargé plus bas dans la page (après ce
+    // script) : window.initParticles n'existe donc pas encore lors du tout
+    // premier appel (page load). Il existera pour tous les changements de
+    // thème ultérieurs via le sélecteur, d'où la garde ci-dessous.
+    if (window.initParticles) window.initParticles(th);
   }
   const savedTheme = localStorage.getItem('hexistenz_theme');
   setTheme(THEMES.includes(savedTheme) ? savedTheme : 'ancien');
@@ -860,6 +911,32 @@ function fmt_date($iso) {
   });
   window.addEventListener('resize', () => {
     if (window.innerWidth > 900) closeNav();
+  });
+
+  // ── Nav compact dynamique ───────────────────────────────────────────────
+  // Le CSS "body.nav-compact" (presentation.css ~L1214) existait déjà mais
+  // n'était jamais posé par du JS : seul le media query fixe (max-width:860px)
+  // déclenchait le mode sandwich, laissant une zone intermédiaire où les 11
+  // liens retombaient sur 3 lignes sans bascule. Ici on mesure réellement le
+  // nombre de rangées de <li> (via leur top réel) et on bascule dès que ça
+  // dépasse 2 lignes, quelle que soit la largeur exacte.
+  function updateNavCompact() {
+    if (window.innerWidth <= 860) return; // déjà géré par le media query
+    const list = document.getElementById('navLinks');
+    if (!list) return;
+    const wasCompact = document.body.classList.contains('nav-compact');
+    if (wasCompact) document.body.classList.remove('nav-compact');
+    const tops = new Set();
+    list.querySelectorAll('li').forEach(li => {
+      tops.add(Math.round(li.getBoundingClientRect().top));
+    });
+    document.body.classList.toggle('nav-compact', tops.size > 2);
+  }
+  updateNavCompact();
+  let navCompactTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(navCompactTimer);
+    navCompactTimer = setTimeout(updateNavCompact, 120);
   });
 
   // ── Scroll spy : souligne dans la nav la rubrique actuellement visible ──────
@@ -902,25 +979,143 @@ function fmt_date($iso) {
 
 <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 <script>
-particlesJS("particles-js", {
-  particles: {
-    number: { value: 105, density: { enable: true, value_area: 900 } },
-    color: { value: ["#4a9eff", "#a0c8ff", "#ffffff"] },
-    shape: { type: "circle" },
-    opacity: { value: 0.45, random: true, anim: { enable: true, speed: 0.4, opacity_min: 0.05, sync: false } },
-    size: { value: 2.3, random: true, anim: { enable: false } },
-    line_linked: { enable: false },
-    move: {
-      enable: true, speed: 1.44, direction: "none",
-      random: true, straight: false, out_mode: "out", bounce: false
+// ─── Champ de particules réactif au thème (2026-07-19) ──────────────────────
+// Thème "bleu classique" : champ d'étoiles bleu/blanc (config d'origine).
+// Thème "ancien" (Médiéval) : "lucioles" or/ambre/vert doux — remplace le
+// masquage pur (display:none) par une vraie recoloration, pour un cachet
+// mystique/magique cohérent avec le parchemin plutôt qu'un fond vide.
+// window.initParticles(theme) reconstruit entièrement l'instance (pJSDom +
+// canvas détruits puis reconstruits) pour supporter un changement de thème
+// live via le sélecteur, sans recharger la page.
+const PARTICLE_CONFIGS = {
+  bleu: {
+    particles: {
+      number: { value: 105, density: { enable: true, value_area: 900 } },
+      color: { value: ["#4a9eff", "#a0c8ff", "#ffffff"] },
+      shape: { type: "circle" },
+      opacity: { value: 0.45, random: true, anim: { enable: true, speed: 0.4, opacity_min: 0.05, sync: false } },
+      size: { value: 2.3, random: true, anim: { enable: false } },
+      line_linked: { enable: false },
+      move: {
+        enable: true, speed: 1.44, direction: "none",
+        random: true, straight: false, out_mode: "out", bounce: false
+      }
+    },
+    interactivity: {
+      detect_on: "window",
+      events: { onhover: { enable: false }, onclick: { enable: false }, resize: true }
+    },
+    retina_detect: true
+  },
+  ancien: {
+    // 2026-07-19 (v4) — v3 (palette désaturée sable/bronze/sauge) réglait le
+    // "s'intègre mal" mais restait trop clairsemée/lente/grosse pour lire
+    // comme des lucioles vivantes. Retour utilisateur : plus nombreuses, plus
+    // rapides, plus petites, plus opaques — garder la palette désaturée v3
+    // (c'est elle qui marche visuellement) mais pousser densité/vitesse/
+    // opacité et réduire la taille.
+    // 2026-07-19 (v5) — vitesse +25% et nombre +25% (demande explicite), palette
+    // v3 conservée. Le glow lumineux par particule vit désormais dans un canvas
+    // dédié dessiné en JS (#particles-glow, cf. window.startGlow() plus bas) —
+    // le filter:drop-shadow CSS mentionné ici a été abandonné (v6, insignifiant
+    // à l'échelle réelle) puis remplacé par ce canvas de halo.
+    // 🐛 v6d (opacité 0.55/0.15 + blur sur les points) — RÉGRESSION, revert.
+    // Le retour "plus diffus et moins d'opacité" du 2026-07-19 visait en réalité
+    // le HALO (#particles-glow), pas les particules elles-mêmes — clarifié
+    // après coup par l'utilisateur. Points redevenus 0.9/0.35 (valeurs v5,
+    // inchangées), blur retiré de #particles-js (cf. themes/medieval.css).
+    // Le réglage "plus diffus/moins d'opacité" vit désormais UNIQUEMENT dans
+    // les stops du gradient de startGlow() (index.php, plus bas).
+    particles: {
+      number: { value: 113, density: { enable: true, value_area: 900 } },
+      color: { value: ["#a68a5b", "#8f7a4a", "#9c8354", "#7d8f6a"] },
+      shape: { type: "circle" },
+      opacity: { value: 0.9, random: true, anim: { enable: true, speed: 1.2, opacity_min: 0.35, sync: false } },
+      size: { value: 2.2, random: true, anim: { enable: true, speed: 2, size_min: 1, sync: false } },
+      line_linked: { enable: false },
+      move: {
+        enable: true, speed: 2, direction: "none",
+        random: true, straight: false, out_mode: "out", bounce: false
+      }
+    },
+    interactivity: {
+      detect_on: "window",
+      events: { onhover: { enable: false }, onclick: { enable: false }, resize: true }
+    },
+    retina_detect: true
+  }
+};
+
+// 2026-07-19 — glow lumineux par particule (thème ancien) : ajouté (v6, canvas
+// dédié #particles-glow dessiné en JS après échec du filter:drop-shadow CSS),
+// puis affiné sur 8 itérations (v6b-v6h : décalage, couleur, taille, diffusion,
+// courbe du dégradé...), puis RETIRÉ intégralement sur demande explicite du
+// 2026-07-19 ("retire les halos sur les particules en theme médiéval"). Les
+// lucioles redeviennent de simples points (cf. PARTICLE_CONFIGS.ancien
+// ci-dessus), sans second canvas ni halo. Historique conservé ici pour
+// mémoire si le besoin revient.
+window.initParticles = function initParticles(theme) {
+  const cfg = PARTICLE_CONFIGS[theme] || PARTICLE_CONFIGS.ancien;
+  // Détruit l'instance précédente (pJSDom) avant reconstruction, sinon
+  // particles.js empile plusieurs animations sur le même canvas.
+  if (window.pJSDom && window.pJSDom.length) {
+    window.pJSDom.forEach(inst => inst.pJS?.fn?.vendors?.destroypJS?.());
+    window.pJSDom = [];
+  }
+  const holder = document.getElementById('particles-js');
+  if (holder) holder.innerHTML = '';
+  particlesJS('particles-js', cfg);
+};
+
+window.initParticles(document.documentElement.dataset.theme === 'bleu' ? 'bleu' : 'ancien');
+</script>
+
+<!-- 2026-07-20 — variation aléatoire manuscrit.png/manuscrit-2.png (thème Médiéval),
+     cf. javascript/parchmentVariant.js pour le détail. -->
+<script type="module" src="javascript/parchmentVariant.js"></script>
+
+<script>
+// ─── 2026-07-20 — musique de fond de la prez (aléatoire parmi les 2 pistes
+// ingame) ─────────────────────────────────────────────────────────────────
+// Réutilise les mêmes fichiers que le jeu (sounds/music-ingame-1/2.ogg, cf.
+// javascript/musicPlayer.js) mais en autonome (page statique, pas de moteur
+// de jeu chargé ici) : une seule piste tirée au sort au chargement, jouée en
+// boucle (`loop = true`, contrairement au jeu qui alterne les 2 pistes à
+// chaque fin de lecture). Fondu d'entrée doux + contournement de la politique
+// autoplay des navigateurs (lecture directe tentée, sinon armée sur le 1er
+// clic/touche, même pattern que musicState.installMusicUnlock côté jeu).
+(function initPrezMusic() {
+  const TRACKS = ['sounds/music-ingame-1.ogg', 'sounds/music-ingame-2.ogg'];
+  const TARGET_VOLUME = 0.070; // même palier que MUSIC_MAX_VOLUME (musicPlayer.js)
+  const FADE_MS = 2500;
+
+  const audio = new Audio(TRACKS[Math.floor(Math.random() * TRACKS.length)]);
+  audio.loop = true;
+  audio.preload = 'auto';
+  audio.volume = 0;
+
+  function fadeIn() {
+    const start = performance.now();
+    function step(now) {
+      const t = Math.min(1, (now - start) / FADE_MS);
+      audio.volume = TARGET_VOLUME * t;
+      if (t < 1) requestAnimationFrame(step);
     }
-  },
-  interactivity: {
-    detect_on: "window",
-    events: { onhover: { enable: false }, onclick: { enable: false }, resize: true }
-  },
-  retina_detect: true
-});
+    requestAnimationFrame(step);
+  }
+
+  function tryPlay() {
+    audio.play().then(fadeIn).catch(() => {
+      // Navigateur bloquant l'autoplay tant qu'aucune interaction réelle n'a eu
+      // lieu — armé une seule fois sur le 1er clic/touche.
+      const unlock = () => { audio.play().then(fadeIn).catch(() => {}); };
+      window.addEventListener('pointerdown', unlock, { once: true, passive: true });
+      window.addEventListener('keydown', unlock, { once: true, passive: true });
+    });
+  }
+
+  tryPlay();
+})();
 </script>
 </body>
 </html>

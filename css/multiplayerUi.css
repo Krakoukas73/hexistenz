@@ -100,14 +100,14 @@
 [data-theme="bleu"] .multi-status { color: #ffd76f; }
 
 /* ─── [data-theme="ancien"] — parchemin 9-slice, même technique que la prez
-   (border-image sur images/manuscrit.png, cf. css/themes/medieval.css §32).
+   (border-image sur images/manuscrit-1.png, cf. css/themes/medieval.css §32).
    2026-07-17 : le logo (.mode-logo) est repassé en flux normal (plus de
    réservation d'espace via padding-top, cf. css/startupMenu.css) — le padding
    est donc retiré sur les 4 côtés comme les autres parchemins (règle "cellule
    centrale sans padding"), plus de cas particulier ici. ─── */
 [data-theme="ancien"] .mode-panel {
   border: 50px solid transparent;
-  border-image-source: url("../images/manuscrit.png");
+  border-image-source: url("../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   border-radius: 0;
@@ -118,6 +118,7 @@
   padding: 0;
   font-family: Georgia, "Times New Roman", serif;
 }
+[data-theme="ancien"] .mode-panel[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
 [data-theme="ancien"] .mode-panel h1,
 [data-theme="ancien"] .mode-panel p,
 [data-theme="ancien"] .mode-panel label {
@@ -128,12 +129,45 @@
 /* Boutons/champs : même principe "cachet de cire" que les chips de la prez
    (.biome-tag/.faction-tag) — fond saturé sombre + texte clair, lisible sur
    parchemin quelle que soit la couleur d'accent d'origine. */
+/* 2026-07-19 (corrigé le 2026-07-19, image remplacée le 2026-07-19) — même
+   traitement border-image 3-slice que les boutons CTA de la prez
+   (images/button2.png, 160x42, cf. css/themes/medieval.css §32) : remplace le
+   fond "cachet de cire" plat par le bouton rouge, .secondary compris (une
+   seule image bouton, pas de distinction de couleur par rôle — cf. prez où
+   .btn-secondary reçoit aussi button2.png malgré son style bleu d'origine
+   différent). Cap 8px (mesure réelle du rayon de coin sur button2.png),
+   découpage horizontal uniquement. height: 42px FORCÉ (hauteur native de
+   l'image, cf. css/themes/medieval.css §32 pour l'explication complète —
+   toute autre hauteur déforme le bouton verticalement puisqu'il n'y a pas de
+   slice vertical). */
 [data-theme="ancien"] .mode-panel button {
-  border: none;
-  background: #4a3623;
-  color: #f0e6d0;
+  background: none;
+  border-style: solid;
+  border-width: 0 8px;
+  border-image-source: url("../images/button2.png");
+  border-image-slice: 0 8 fill;
+  border-image-width: 0 8px;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  height: 42px;
+  box-sizing: border-box;
+  color: #f5e2b8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: filter 0.2s;
+  /* 2026-07-20 — .mode-panel button (base, non scopée par thème) ne fixe ni
+     font-family ni font-size (fallback : hérite de .mode-panel qui passe en
+     Georgia serif ~16px pour le thème ancien juste au-dessus) et impose
+     font-weight:800/letter-spacing:0.04em — le plus divergent des boutons
+     médiévaux. Aligné ici sur la typo de référence des boutons "Abandonner"/
+     "Nouvelle partie" (css/highscore.css) pour uniformiser pre-game + in-game,
+     demandé explicitement. */
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
 }
-[data-theme="ancien"] .mode-panel button.secondary { background: #6b4e10; color: #f5e3b0; }
+[data-theme="ancien"] .mode-panel button:hover { filter: brightness(1.12); }
+[data-theme="ancien"] .mode-panel button.secondary { background: none; color: #f5e2b8; }
 [data-theme="ancien"] .mode-panel input,
 [data-theme="ancien"] .mode-panel select {
   border: 1px solid rgba(74, 54, 35, 0.4);

@@ -16,7 +16,7 @@
     "play": "Jouer"
   },
   "theme": {
-    "bleu": "Bleu",
+    "bleu": "Bleu sidéral",
     "ancien": "Médiéval"
   },
   "hero": {
@@ -27,7 +27,7 @@
       "settlers": "The Settlers sur Ubisoft",
       "heroes3": "Heroes III sur GOG"
     },
-    "tagline": "Posez des tuiles hexagonales. Développez de vastes forêts de sapins et de bouleaux, des champs de blé\n          ondoyants avec leurs moulins, des villages médiévaux aux toits fumants, des réseaux de voies ferrées\n          et de larges rivières où voguent vos bateaux. Remplissez des missions, interceptez des comètes,\n          entourez vos tuiles. Bâtissez un monde vivant, tuile après tuile.",
+    "tagline": "<strong>Hexistenz est un jeu contemplatif</strong>, pensé pour les joueurs qui aiment observer\n          longuement un monde et ses détails, sans se soucier du temps qui passe.<br><br><strong>Posez des tuiles\n          hexagonales</strong> et regardez un territoire prendre forme sous vos yeux : de vastes forêts de sapins\n          et de bouleaux, des champs de blé ondoyants ponctués de moulins, des villages médiévaux aux toits\n          fumants, de longs réseaux de voies ferrées et de larges rivières où voguent vos bateaux.<br><br>Remplissez\n          des missions, interceptez des comètes, entourez vos tuiles, et bâtissez peu à peu un monde vivant, tuile\n          après tuile.<br><br><strong>Jouez seul ou en multijoueur</strong>, reprenez une partie sauvegardée quand\n          l'envie vous prend, <strong>capturez vos plus beaux instants dans la galerie de captures</strong>, et\n          revivez vos parties en accéléré grâce aux replays en ligne téléchargeables.",
     "btn_play": "Jouer maintenant",
     "btn_how": "Comment jouer ?",
     "stats": {
@@ -381,7 +381,7 @@
     "gallery_title": "PARTAGEZ VOS CAPTURES",
     "gallery_promo": "Immortalisez vos plus belles parties : le bouton 📷 capture le monde sans HUD, et le bouton 🖼️ ouvre la galerie partagée avec tous les joueurs",
     "replay_title": "Enregistrez vos parties en vidéo",
-    "replay_promo": "Le bouton 🎬 (ou la touche V) relance votre partie en accéléré, tuile par tuile, avec des vitesses de lecture allant de ×1 à ×8. Pendant la relecture, un bouton dédié capture l'écran et télécharge automatiquement une vidéo au format WebM — directement depuis votre navigateur, sans aucun logiciel ni service externe.",
+    "replay_promo": "D'un clic, revivez toute la partie en accéléré et téléchargez-la en vidéo, directement depuis votre navigateur.",
     "btn_create": "Créer une partie",
     "room_title": "Code de salle",
     "room_status": "Partie en cours · 3 joueurs",
@@ -391,7 +391,7 @@
     "label": "Classement mondial",
     "title": "Les meilleurs bâtisseurs",
     "empty": "Aucun score enregistré — soyez le premier à poser votre tuile.",
-    "try_luck": "Tenter votre chance →",
+    "try_luck": "Tentez votre chance →",
     "headline_stat": "tuiles posées",
     "trains_s": "locomotive",
     "trains_p": "locomotives",
@@ -443,6 +443,10 @@
       "modeBouliste": "Mode bouliste",
       "modePlatiste": "Mode platiste",
       "captured": "Capture faite !"
+    },
+    "sound": {
+      "on": "Sons activés",
+      "off": "Sons désactivés"
     },
     "replay": {
       "restart": "Revenir au début",
@@ -511,7 +515,7 @@
         "psyche": "Psyché-LSD"
       },
       "themeNames": {
-        "bleu": "Bleu",
+        "bleu": "Bleu sidéral",
         "ancien": "Médiéval"
       },
       "modes": {
@@ -1044,9 +1048,9 @@
       "codePlaceholder": "Ex : 377EA7",
       "availableRoomsLabel": "Parties disponibles / backups",
       "loadingRooms": "Chargement des parties...",
-      "btnCreate": "Créer",
-      "btnJoin": "Rejoindre",
-      "btnBack": "Retour",
+      "btnCreate": "CRÉER",
+      "btnJoin": "REJOINDRE",
+      "btnBack": "RETOUR",
       "selectExisting": "Sélectionner une partie existante",
       "noRoomsFound": "Aucune partie trouvée dans /json/games",
       "listUnavailable": "Liste indisponible - serveur PHP muet",

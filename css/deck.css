@@ -218,7 +218,7 @@
    uniquement le fond de la nouvelle div. ─── */
 [data-theme="ancien"] .tileDeckBox {
   border: 50px solid transparent;
-  border-image-source: url("../images/manuscrit.png");
+  border-image-source: url("../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   border-radius: 0;
@@ -242,6 +242,7 @@
      sans piège. */
   display: block;
 }
+[data-theme="ancien"] .tileDeckBox[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
 [data-theme="ancien"] .tileDeckBox > .internal-parchment {
   display: flex;
   flex-direction: column;

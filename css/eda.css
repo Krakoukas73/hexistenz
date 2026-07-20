@@ -1541,7 +1541,7 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
    que .abandon-button/.new-game-button (css/highscore.css). ─── */
 [data-theme="ancien"] .fps-counter {
   border: 50px solid transparent;
-  border-image-source: url("../images/manuscrit.png");
+  border-image-source: url("../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   background: none;
@@ -1596,6 +1596,7 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
   min-height: 0;
   overflow: visible;
 }
+[data-theme="ancien"] .fps-counter[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
 [data-theme="ancien"] .fps-counter > .internal-parchment {
   display: flex;
   flex-direction: column;
@@ -1700,7 +1701,7 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
    fond clair (même famille de problème que les accents bleus FPS). */
 [data-theme="ancien"] .replay-panel {
   border: 50px solid transparent;
-  border-image-source: url("../images/manuscrit.png");
+  border-image-source: url("../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   background: none;
@@ -1752,7 +1753,7 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
      (a) bordure 50px + bleed ±20/±25 semblait disproportionné sur ce petit
      bandeau (une seule rangée d'icônes ~34px) → tentative erronée : réduire la
      bordure à 25px. REJETÉ par l'utilisateur (2026-07-18, 2e retour) : ça casse
-     l'harmonie du 9-slice avec le reste de l'UI (même texture manuscrit.png,
+     l'harmonie du 9-slice avec le reste de l'UI (même texture manuscrit-1.png,
      même échelle de bordure partout). Bordure remise à 50px, comme tous les
      autres parchemins — la bonne solution est d'AUGMENTER encore la marge
      négative (bleed plus profond dans la bordure), pas de réduire la bordure
@@ -1771,6 +1772,7 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
   display: flex;
   align-items: stretch;
 }
+[data-theme="ancien"] .replay-panel[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
 [data-theme="ancien"] .replay-panel > .internal-parchment {
   display: flex;
   align-items: center;
@@ -1781,7 +1783,7 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
 [data-theme="ancien"] .replay-progress { color: #8a6a2a; }
 [data-theme="ancien"] #kbdHintHud {
   border: 50px solid transparent;
-  border-image-source: url("../images/manuscrit.png");
+  border-image-source: url("../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   background: none;
@@ -1790,6 +1792,7 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
   color: #332415;
   font-family: Georgia, "Times New Roman", serif;
 }
+[data-theme="ancien"] #kbdHintHud[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
 /* #kbdHintHud n'est ni flex/grid ni overflow:hidden sur lui-même (simple texte) —
    wrapper sans piège, cf. .missionsBox/.mode-panel. Actuellement masqué
    (display:none, cf. css/eda.css plus haut) mais gardé cohérent pour un
@@ -1798,7 +1801,7 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
 
 [data-theme="ancien"] .debug-light-body {
   border: 50px solid transparent;
-  border-image-source: url("../images/manuscrit.png");
+  border-image-source: url("../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   background: none;
@@ -1834,6 +1837,7 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
   max-height: calc(100vh - 160px);
   overflow: visible;
 }
+[data-theme="ancien"] .debug-light-body[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
 [data-theme="ancien"] .debug-light-body > .internal-parchment {
   display: flex;
   flex-direction: column;
@@ -1852,65 +1856,181 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
      normalement. */
   margin: -20px -25px -20px -25px;
 }
-[data-theme="ancien"] .debug-light-tab-btn {
-  border: none;
-  background: #4a3623;
-  color: #cbb896;
+/* 2026-07-19 (corrigé le 2026-07-19, image remplacée le 2026-07-19) — boutons
+   du bandeau topbar 📷/🖼️/🎬/FPS/EDA (#snapshotBtn, #galleryBtn, #replayBtn,
+   #fpsHudToggle, #debugLightToggle) : même border-image 3-slice que les CTA
+   prez/menus pre-game/HUD score (images/button2.png, 160x42). Ciblage par id
+   plutôt que .debug-light-toggle générique : #gameLangSelect/#gameThemeSelect
+   partagent cette classe mais sont des <select>, hors périmètre de cette
+   demande (pas des boutons CTA). État actif (FPS/EDA activés, cf.
+   .debug-light-toggle--fps-active/--lut-active) rendu via filter: brightness
+   au lieu d'un changement de fond (le fond vient de l'image). Cap 8px (mesure
+   réelle du rayon de coin sur button2.png). height: 42px FORCÉ (hauteur
+   native de l'image, cf. css/themes/medieval.css §32). */
+[data-theme="ancien"] #snapshotBtn,
+[data-theme="ancien"] #galleryBtn,
+[data-theme="ancien"] #replayBtn,
+[data-theme="ancien"] #fpsHudToggle,
+[data-theme="ancien"] #debugLightToggle {
+  background: none;
+  border-style: solid;
+  border-width: 0 8px;
+  border-image-source: url("../images/button2.png");
+  border-image-slice: 0 8 fill;
+  border-image-width: 0 8px;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  height: 42px;
+  box-sizing: border-box;
+  color: #f5e2b8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: filter 0.2s;
+  /* 2026-07-20 — .debug-light-toggle (base, non scopée par thème) impose
+     font-weight:800/letter-spacing:0.08em et ne fixe ni font-family ni
+     font-size (fallback police système ~16px). Aligné ici, en thème médiéval
+     uniquement, sur la typo de référence des boutons "Abandonner"/"Nouvelle
+     partie" (.abandon-button/.new-game-button, css/highscore.css) : monospace
+     11px / 900 / 0.06em, demandé explicitement pour uniformiser tous les
+     boutons custom du thème médiéval (pre-game + in-game). */
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
 }
-[data-theme="ancien"] .debug-light-tab-btn:hover {
-  color: #f0e6d0;
+[data-theme="ancien"] #snapshotBtn:hover,
+[data-theme="ancien"] #galleryBtn:hover,
+[data-theme="ancien"] #replayBtn:hover,
+[data-theme="ancien"] #fpsHudToggle:hover,
+[data-theme="ancien"] #debugLightToggle:hover { filter: brightness(1.12); }
+[data-theme="ancien"] #fpsHudToggle.debug-light-toggle--fps-active,
+[data-theme="ancien"] #debugLightToggle.debug-light-toggle--lut-active { filter: brightness(1.25); }
+[data-theme="ancien"] #fpsHudToggle .btn-key,
+[data-theme="ancien"] #debugLightToggle .btn-key { color: inherit; }
+
+/* 2026-07-20 — #gameLangSelect/#gameThemeSelect étaient restés hors périmètre
+   du passage ci-dessus (commentaire du 2026-07-19 : "pas des boutons CTA"),
+   d'où le bug signalé : ces 2 <select> restaient figés en chrome bleu sidéral
+   (fond dégradé bleu-gris + flèche dorée sur fond bleu) même en thème
+   médiéval, alors qu'ils sont dans la même rangée que les boutons déjà
+   convertis. Même border-image 3-slice (button2.png) que les boutons voisins
+   ci-dessus, pour cohérence visuelle dans le bandeau. Spécificité : le
+   sélecteur générique .debug-light-lang-select pose déjà un background-image
+   à 2 couches (dégradé bleu + flèche SVG) — on le réécrit ici en 1 seule
+   couche (flèche seule, fond transparent, le parchemin vient du border-image
+   fill). Flèche retintée en marron foncé (#4a3623, même teinte que le texte
+   du thème ancien) pour rester lisible sur fond clair, au lieu du doré prévu
+   pour un fond bleu-gris sombre. */
+[data-theme="ancien"] #gameLangSelect,
+[data-theme="ancien"] #gameThemeSelect {
+  background-color: transparent;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 0 L5 6 L10 0 Z' fill='%234a3623'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 9px 6px;
+  border-style: solid;
+  border-width: 0 8px;
+  border-image-source: url("../images/button2.png");
+  border-image-slice: 0 8 fill;
+  border-image-width: 0 8px;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  height: 42px;
+  box-sizing: border-box;
+  color: #f5e2b8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: filter 0.2s;
+  /* 2026-07-20 — même normalisation typo que les boutons voisins ci-dessus
+     (référence .abandon-button/.new-game-button) : ces <select> héritent
+     sinon de .debug-light-toggle (800/0.08em, pas de font-family/size). */
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
 }
-[data-theme="ancien"] .debug-light-tab-btn--active {
-  background: #6b4e10;
-  color: #f5e3b0;
+[data-theme="ancien"] #gameLangSelect:hover,
+[data-theme="ancien"] #gameThemeSelect:hover { filter: brightness(1.12); }
+[data-theme="ancien"] #gameLangSelect option,
+[data-theme="ancien"] #gameThemeSelect option {
+  background: #e4cf98;
+  color: #332415;
+  font-weight: 700;
 }
+
+/* 2026-07-19 (image remplacée le 2026-07-19) — boutons internes du panneau
+   EDA (onglets LUT/Cinématique/Environnement, presets ambiances, boutons
+   météo, export Copier/Undo/Redo/Reset/Comparer) : manquaient au premier
+   passage (seul le bandeau topbar #snapshotBtn/#galleryBtn/#replayBtn/
+   #fpsHudToggle/#debugLightToggle avait été converti). Même traitement
+   border-image 3-slice que partout ailleurs (images/button2.png, 160x42, cap
+   8px, height 42px FORCÉ — cf. css/themes/medieval.css §32 pour l'explication
+   complète). Les couleurs de fond différenciées par rôle (brun standard vs
+   rouge pour reset/stopall) disparaissent forcément au profit d'une image
+   bouton unique, comme sur tous les autres boutons médiévaux déjà convertis —
+   l'état actif/hover reste rendu via filter. */
+[data-theme="ancien"] .debug-light-tab-btn,
+[data-theme="ancien"] .debug-light-export #debugLightCopy,
+[data-theme="ancien"] .debug-light-export #debugLightRedo,
+[data-theme="ancien"] .debug-light-export #debugLightCompare,
+[data-theme="ancien"] .debug-light-export #debugLightUndo,
+[data-theme="ancien"] .debug-light-export #debugLightReset,
+[data-theme="ancien"] .debug-light-weather-btn,
+[data-theme="ancien"] .debug-light-weather-stopall,
+[data-theme="ancien"] .debug-light-preset-btn {
+  background: none;
+  border-style: solid;
+  border-width: 0 8px;
+  border-image-source: url("../images/button2.png");
+  border-image-slice: 0 8 fill;
+  border-image-width: 0 8px;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  height: 42px;
+  box-sizing: border-box;
+  color: #f5e2b8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: filter 0.2s;
+}
+[data-theme="ancien"] .debug-light-tab-btn:hover,
+[data-theme="ancien"] .debug-light-export #debugLightCopy:hover:not(:disabled),
+[data-theme="ancien"] .debug-light-export #debugLightRedo:hover:not(:disabled),
+[data-theme="ancien"] .debug-light-export #debugLightCompare:hover:not(:disabled),
+[data-theme="ancien"] .debug-light-export #debugLightUndo:hover:not(:disabled),
+[data-theme="ancien"] .debug-light-export #debugLightReset:hover:not(:disabled),
+[data-theme="ancien"] .debug-light-weather-btn:hover:not(:disabled),
+[data-theme="ancien"] .debug-light-preset-btn:hover {
+  filter: brightness(1.12);
+}
+[data-theme="ancien"] .debug-light-tab-btn--active,
+[data-theme="ancien"] .debug-light-preset-btn:active {
+  filter: brightness(1.25);
+}
+/* Fix 2026-07-19 — .debug-light-preset-btn/.debug-light-weather-btn/
+   .debug-light-weather-stopall héritent globalement (lignes ~1182/~1216/~1301,
+   non scopées par thème) d'un box-shadow: 0 2px 6px rgba(0,0,0,0.30) et d'un
+   hover transform: translateY(-1px), pensés pour l'ancien fond plat "cachet
+   de cire". Avec border-image, ce box-shadow rectangulaire dépasse visiblement
+   des coins arrondis de l'image bouton (halo/fond clair aux 4 coins signalé
+   par l'utilisateur — même bug que les presets ambiances, reproduit ici sur
+   les 5 boutons "recharger" et le bouton "Tout arrêter" de la rubrique 8.
+   Météo), et le translateY décale le bouton par rapport à ses voisins.
+   Neutralisés ici, scopé au thème ancien uniquement — les autres boutons
+   médiévaux déjà convertis n'ont jamais eu ces 2 propriétés. */
+[data-theme="ancien"] .debug-light-preset-btn,
+[data-theme="ancien"] .debug-light-weather-btn,
+[data-theme="ancien"] .debug-light-weather-stopall { box-shadow: none; }
+/* 2026-07-20 — .debug-light-weather-stopall (base, non scopée) est le seul
+   bouton médiéval déjà en monospace/11px/900 à diverger encore d'un cran :
+   letter-spacing 0.08em au lieu de 0.06em (référence .abandon-button/
+   .new-game-button). Corrigé ici en thème médiéval uniquement. */
+[data-theme="ancien"] .debug-light-weather-stopall { letter-spacing: 0.06em; }
+[data-theme="ancien"] .debug-light-preset-btn:hover,
+[data-theme="ancien"] .debug-light-weather-btn:hover,
+[data-theme="ancien"] .debug-light-weather-stopall:hover { transform: none; }
+[data-theme="ancien"] .debug-light-preset-btn .preset-label { color: #f5e2b8; }
 [data-theme="ancien"] .debug-light-row,
 [data-theme="ancien"] .color-grid .debug-light-row,
 [data-theme="ancien"] .debug-light-weather-row { color: #4a3623; }
 [data-theme="ancien"] .debug-light-row output { color: #332415; }
-[data-theme="ancien"] .debug-light-export #debugLightCopy,
-[data-theme="ancien"] .debug-light-export #debugLightRedo,
-[data-theme="ancien"] .debug-light-export #debugLightCompare {
-  border: none;
-  background: #4a3623;
-  color: #f0e6d0;
-}
-[data-theme="ancien"] .debug-light-export #debugLightCopy:hover:not(:disabled),
-[data-theme="ancien"] .debug-light-export #debugLightRedo:hover:not(:disabled),
-[data-theme="ancien"] .debug-light-export #debugLightCompare:hover:not(:disabled) {
-  background: #5c4530;
-}
-[data-theme="ancien"] .debug-light-export #debugLightUndo,
-[data-theme="ancien"] .debug-light-export #debugLightReset {
-  border: none;
-  background: #6b2018;
-  color: #f5e0d8;
-}
-[data-theme="ancien"] .debug-light-export #debugLightUndo:hover:not(:disabled),
-[data-theme="ancien"] .debug-light-export #debugLightReset:hover:not(:disabled) {
-  background: #832a1f;
-}
-[data-theme="ancien"] .debug-light-weather-btn {
-  border: none;
-  background: #4a3623;
-  color: #f0e6d0;
-}
-[data-theme="ancien"] .debug-light-weather-btn:hover:not(:disabled) {
-  background: #5c4530;
-}
-[data-theme="ancien"] .debug-light-weather-stopall {
-  border: none;
-  background: #6b2018;
-  color: #f5e0d8;
-}
-[data-theme="ancien"] .debug-light-preset-btn {
-  border: none;
-  background: #4a3623;
-  color: #f0e6d0;
-}
-[data-theme="ancien"] .debug-light-preset-btn .preset-label { color: #f0e6d0; }
-[data-theme="ancien"] .debug-light-preset-btn:hover { background: #5c4530; }
-[data-theme="ancien"] .debug-light-preset-btn:active { background: #3a2b1c; }
 [data-theme="ancien"] .debug-light-presets-label { color: #4a3623; }
 [data-theme="ancien"] .debug-light-main-title {
   color: #332415;

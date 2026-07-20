@@ -566,7 +566,7 @@ body.grid-only-mode #tileUI .missionsBox {
    lisibles sur le parchemin clair — même principe que les chips prez. ─── */
 [data-theme="ancien"] #scorePanel {
   border: 50px solid transparent;
-  border-image-source: url("../images/manuscrit.png");
+  border-image-source: url("../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   border-radius: 0;
@@ -611,6 +611,7 @@ body.grid-only-mode #tileUI .missionsBox {
   display: flex;
   flex-direction: column;
 }
+[data-theme="ancien"] #scorePanel[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
 [data-theme="ancien"] .score-title { color: #4a3623; }
 [data-theme="ancien"] .multiplayer-info { border-bottom: 1px solid rgba(74, 54, 35, 0.24); }
 [data-theme="ancien"] .multiplayer-info-value {

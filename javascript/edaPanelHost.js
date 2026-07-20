@@ -48,7 +48,7 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
             <option value="fr-CA">QC</option>
           </select>
           <select id="gameThemeSelect" class="debug-light-toggle debug-light-lang-select" tabindex="-1">
-            <option value="bleu">BLEU</option>
+            <option value="bleu">BLEU SIDÉRAL</option>
             <option value="ancien">MÉDIÉVAL</option>
           </select>
         </div>
@@ -116,7 +116,7 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
     _themeNames = themeNames;
     const optBleu = themeSelect.querySelector('option[value="bleu"]');
     const optAncien = themeSelect.querySelector('option[value="ancien"]');
-    if (optBleu) optBleu.textContent = (themeNames?.bleu ?? 'Bleu').toUpperCase();
+    if (optBleu) optBleu.textContent = (themeNames?.bleu ?? 'Bleu sidéral').toUpperCase();
     if (optAncien) optAncien.textContent = (themeNames?.ancien ?? 'Médiéval').toUpperCase();
   }
   fetch(`./json/languages/${getLangFile()}.json`)

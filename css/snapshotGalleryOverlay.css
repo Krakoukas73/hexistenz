@@ -75,13 +75,14 @@
    visible immédiatement à l'ouverture du popup est thémé ici. ─── */
 [data-theme="ancien"] .snapshot-gallery-panel {
   border: 50px solid transparent;
-  border-image-source: url("../images/manuscrit.png");
+  border-image-source: url("../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   background: none;
   border-radius: 0;
   box-shadow: none;
 }
+[data-theme="ancien"] .snapshot-gallery-panel[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
 [data-theme="ancien"] .snapshot-gallery-close {
   border: none;
   background: #4a3623;

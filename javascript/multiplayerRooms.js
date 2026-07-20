@@ -123,13 +123,16 @@ function updateAvailableRoomsLabel(overlay, count) {
 
 function formatRoomOption(room) {
   const code = normalizeCode(room.code);
-  const players = Number(room.players || 0);
   const tiles = Number(room.tiles || 0);
-  const updatedAt = Number(room.updatedAt || 0);
-  const date = updatedAt > 0 ? new Date(updatedAt * 1000).toLocaleString() : (_mpText.unknownDate ?? 'date inconnue');
-  const playerWord = plural(_mpText.playerWord, players, 'joueur', 'joueurs');
   const tileWord = plural(_mpText.tileWord, tiles, 'tuile', 'tuiles');
-  return `${code} — ${players} ${playerWord}, ${tiles} ${tileWord}, ${date}`;
+  const updatedAt = Number(room.updatedAt || 0);
+  // 2026-07-19 — nombre de joueurs retiré du libellé sur demande explicite (bruit
+  // visuel jugé inutile), date remise juste après en format européen abrégé JJ/MM/AA
+  // (au lieu de toLocaleString() complet précédent).
+  const date = updatedAt > 0
+    ? new Date(updatedAt * 1000).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+    : (_mpText.unknownDate ?? 'date inconnue');
+  return `${code} — ${tiles} ${tileWord}, ${date}`;
 }
 
 async function handleCreate(overlay) {

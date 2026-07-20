@@ -16,7 +16,7 @@
     "play": "Play Now"
   },
   "theme": {
-    "bleu": "Blue",
+    "bleu": "Astral Blue",
     "ancien": "Medieval"
   },
   "hero": {
@@ -27,7 +27,7 @@
       "settlers": "The Settlers on Ubisoft",
       "heroes3": "Heroes III on GOG"
     },
-    "tagline": "Place hexagonal tiles. Grow vast forests of firs and birches, swaying wheat fields with their mills,\n          medieval villages with smoking rooftops, sprawling railway networks and wide rivers where your boats sail.\n          Complete missions, intercept comets, surround your tiles. Build a living world, one tile at a time.",
+    "tagline": "<strong>Hexistenz is a contemplative game</strong>, made for players who love watching a world\n          and its details unfold slowly, with no clock to race.<br><br><strong>Place hexagonal tiles</strong> and\n          watch a landscape take shape before your eyes: vast forests of firs and birches, swaying wheat fields\n          dotted with mills, medieval villages with smoking rooftops, sprawling railway networks, and wide rivers\n          where your boats sail.<br><br>Complete missions, intercept comets, surround your tiles, and gradually\n          build a living world, one tile at a time.<br><br><strong>Play solo or multiplayer</strong>, resume a\n          saved game whenever you like, <strong>capture your best moments in the gallery</strong>, and relive\n          your games sped up with downloadable online replays.",
     "btn_play": "Play Now",
     "btn_how": "How to play?",
     "stats": {
@@ -381,7 +381,7 @@
     "gallery_title": "SHARE YOUR SNAPSHOTS",
     "gallery_promo": "Immortalize your best games: the 📷 button captures the world with no HUD, and the 🖼️ button opens the shared gallery, visible to every player",
     "replay_title": "Record your games as video",
-    "replay_promo": "The 🎬 button (or the V key) replays your game at accelerated speed, tile by tile, with playback speeds from ×1 to ×8. During playback, a dedicated button captures the screen and automatically downloads a WebM video — straight from your browser, no software or third-party service required.",
+    "replay_promo": "In one click, replay your whole game at high speed and download it as a video, straight from your browser.",
     "btn_create": "Create a game",
     "room_title": "Room code",
     "room_status": "Game in progress · 3 players",
@@ -443,6 +443,10 @@
       "modeBouliste": "Globe mode",
       "modePlatiste": "Flat mode",
       "captured": "Snapshot taken!"
+    },
+    "sound": {
+      "on": "Sound on",
+      "off": "Sound off"
     },
     "replay": {
       "restart": "Back to start",
@@ -511,7 +515,7 @@
         "psyche": "Psychedelic"
       },
       "themeNames": {
-        "bleu": "Blue",
+        "bleu": "Astral Blue",
         "ancien": "Medieval"
       },
       "modes": {
@@ -1044,9 +1048,9 @@
       "codePlaceholder": "e.g. 377EA7",
       "availableRoomsLabel": "Available games / backups",
       "loadingRooms": "Loading games...",
-      "btnCreate": "Create",
-      "btnJoin": "Join",
-      "btnBack": "Back",
+      "btnCreate": "CREATE",
+      "btnJoin": "JOIN",
+      "btnBack": "BACK",
       "selectExisting": "Select an existing game",
       "noRoomsFound": "No games found in /json/games",
       "listUnavailable": "List unavailable - PHP server silent",

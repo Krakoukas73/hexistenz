@@ -16,7 +16,7 @@
     "play": "Jogar"
   },
   "theme": {
-    "bleu": "Azul",
+    "bleu": "Azul sideral",
     "ancien": "Medieval"
   },
   "hero": {
@@ -27,7 +27,7 @@
       "settlers": "The Settlers na Ubisoft",
       "heroes3": "Heroes III na GOG"
     },
-    "tagline": "Coloca peças hexagonais. Desenvolve vastas florestas de pinheiros e bétulas, campos de trigo\n          ondulantes com os seus moinhos, aldeias medievais de telhados fumegantes, redes ferroviárias\n          e largos rios onde navegam os teus barcos. Cumpre missões, intercepta cometas,\n          rodeia as tuas peças. Constrói um mundo vivo, peça após peça.",
+    "tagline": "<strong>Hexistenz é um jogo contemplativo</strong>, pensado para quem gosta de observar\n          demoradamente um mundo e os seus detalhes, sem se preocupar com o tempo.<br><br><strong>Coloca peças\n          hexagonais</strong> e vê um território a ganhar forma diante dos teus olhos: vastas florestas de\n          pinheiros e bétulas, campos de trigo ondulantes com os seus moinhos, aldeias medievais de telhados\n          fumegantes, redes ferroviárias e largos rios onde navegam os teus barcos.<br><br>Cumpre missões,\n          intercepta cometas, rodeia as tuas peças, e constrói pouco a pouco um mundo vivo, peça após\n          peça.<br><br><strong>Joga sozinho ou em multijogador</strong>, retoma uma partida guardada quando\n          quiseres, <strong>captura os teus melhores momentos na galeria de capturas</strong>, e revive as tuas\n          partidas aceleradas com os replays online descarregáveis.",
     "btn_play": "Jogar agora",
     "btn_how": "Como jogar?",
     "stats": {
@@ -381,7 +381,7 @@
     "gallery_title": "PARTILHA AS TUAS CAPTURAS",
     "gallery_promo": "Imortaliza as tuas melhores partidas: o botão 📷 captura o mundo sem HUD, e o botão 🖼️ abre a galeria partilhada com todos os jogadores",
     "replay_title": "Grava as tuas partidas em vídeo",
-    "replay_promo": "O botão 🎬 (ou a tecla V) reproduz a tua partida acelerada, peça a peça, com velocidades de reprodução de ×1 a ×8. Durante a reprodução, um botão dedicado captura o ecrã e descarrega automaticamente um vídeo em formato WebM — diretamente do teu navegador, sem software nem serviços externos.",
+    "replay_promo": "Com um clique, revive toda a partida acelerada e descarrega-a em vídeo, diretamente do teu navegador.",
     "btn_create": "Criar uma partida",
     "room_title": "Código da sala",
     "room_status": "Partida em curso · 3 jogadores",
@@ -443,6 +443,10 @@
       "modeBouliste": "Modo Globo",
       "modePlatiste": "Modo Plano",
       "captured": "Captura feita!"
+    },
+    "sound": {
+      "on": "Som ativado",
+      "off": "Som desativado"
     },
     "replay": {
       "restart": "Voltar ao início",
@@ -511,7 +515,7 @@
         "psyche": "Psicadélico"
       },
       "themeNames": {
-        "bleu": "Azul",
+        "bleu": "Azul sideral",
         "ancien": "Medieval"
       },
       "modes": {
@@ -1044,9 +1048,9 @@
       "codePlaceholder": "Ex: 377EA7",
       "availableRoomsLabel": "Partidas disponíveis / backups",
       "loadingRooms": "A carregar partidas...",
-      "btnCreate": "Criar",
-      "btnJoin": "Juntar-te",
-      "btnBack": "Voltar",
+      "btnCreate": "CRIAR",
+      "btnJoin": "JUNTAR-TE",
+      "btnBack": "VOLTAR",
       "selectExisting": "Selecionar uma partida existente",
       "noRoomsFound": "Nenhuma partida encontrada em /json/games",
       "listUnavailable": "Lista indisponível - servidor PHP mudo",

@@ -341,5 +341,8 @@ if ($mtimesGame) { $cssVersion = max($mtimesGame); }
 
   <script type="module" src="javascript/main.js"></script>
   <script type="module" src="javascript/gameHudI18n.js"></script>
+  <!-- 2026-07-20 — variation aléatoire manuscrit.png/manuscrit-2.png (thème
+       Médiéval), cf. javascript/parchmentVariant.js pour le détail. -->
+  <script type="module" src="javascript/parchmentVariant.js"></script>
 </body>
 </html>

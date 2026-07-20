@@ -467,7 +467,7 @@ kbd {
    translucide sombre pour rester lisibles sur le parchemin clair. ─── */
 [data-theme="ancien"] .help-panel {
   border: 50px solid transparent;
-  border-image-source: url("../images/manuscrit.png");
+  border-image-source: url("../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   background: none;
@@ -501,6 +501,7 @@ kbd {
   max-height: calc(100vh - 150px);
   overflow: visible;
 }
+[data-theme="ancien"] .help-panel[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
 [data-theme="ancien"] .help-panel > .internal-parchment {
   display: flex;
   flex-direction: column;

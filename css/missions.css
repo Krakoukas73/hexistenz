@@ -252,7 +252,7 @@
    sur le parchemin clair. ─── */
 [data-theme="ancien"] .missionsBox {
   border: 50px solid transparent;
-  border-image-source: url("../images/manuscrit.png");
+  border-image-source: url("../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   background: none;
@@ -262,6 +262,7 @@
   color: #332415;
   font-family: Georgia, "Times New Roman", serif;
 }
+[data-theme="ancien"] .missionsBox[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
 [data-theme="ancien"] .missionsBox .title { color: #4a3623; }
 /* 2026-07-18 — même wrapper/marge négative que la prez et .mode-panel (cf.
    css/themes/medieval.css §32) : .missionsBox n'est ni flex/grid ni

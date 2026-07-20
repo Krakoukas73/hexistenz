@@ -5,11 +5,16 @@
    change, pour coller au libellé "Médiéval" affiché à l'utilisateur et à la
    convention courte du dossier css/themes/ ; parchemin, 9-slice) ──────────
    Reproduction STRICTE de l'effet validé dans parchemin.html (border-image
-   9-slice sur images/manuscrit.png, testé OK par l'utilisateur). Scope de ce
+   9-slice sur images/manuscrit-1.png, testé OK par l'utilisateur). Scope de ce
    fichier : uniquement les cartes/sections de la prez (index.php) — .mission-card,
    .biome-card, .faction-card, .creature-card, .audio-card, .daynight-card,
    .hs-card, .hero-inspi-card, .stats-bar, .step-card, .kbd-strip, .gallery-card,
-   .eda-showcase-card, .room-demo. Le reste du HUD in-game (score/missions/aide/
+   .eda-showcase-card, .room-demo, .score-pills (parchemin unique, ajouté
+   2026-07-19), le bandeau fixe `nav` (parchemin partiel cellules 4/6/7/8/9,
+   ajouté 2026-07-19 — pas de pendant dans bleu.css : la version bleue de nav
+   reste le style par défaut non scopé de presentation.css), ainsi que les
+   boutons CTA .nav-cta/.btn-primary/.btn-secondary (border-image 3-slice sur
+   images/button2.png, ajouté 2026-07-19). Le reste du HUD in-game (score/missions/aide/
    FPS/EDA/deck/galerie snapshot/replay/menus pre-game) est aussi entièrement
    thémé, mais directement via des blocs [data-theme="ancien"] dans base.css/
    eda.css/help.css/missions.css/highscore.css/deck.css/snapshots.css/
@@ -26,18 +31,234 @@
    est posé sur <html> (cf. javascript/themeManager.js) — toutes les règles sont
    donc scopées sous ce sélecteur, jamais actives en thème "bleu" par défaut.
 
-   IMPORTANT : images/manuscrit.png n'existe toujours pas dans le dossier (à
-   ajouter par l'utilisateur) — tant qu'il est absent, border-image ne peut pas
-   se peindre et border-image-source retombe sur le fallback
-   `border: 50px solid transparent` (donc invisible), sans casser la mise en
-   page (padding déjà prévu). À vérifier une fois l'image ajoutée. */
+   images/manuscrit-1.png ajouté par l'utilisateur (2026-07-17), rendu vérifié en
+   direct depuis. Une 2e variante images/manuscrit-2.png ajoutée le 2026-07-20
+   ("éviter les effets de répétition de l'UI", plusieurs cartes identiques —
+   creature-card ×8, gallery-card ×8, etc. — partageant sinon la même texture
+   côte à côte) : chaque déclaration `border-image-source` de ce chantier reste
+   en dur sur manuscrit-1.png (fallback naturel) et est accompagnée d'une règle
+   jumelle `SELECTEUR[data-parchment-variant="2"] { border-image-source:
+   url(".../manuscrit-2.png"); }` juste après — javascript/parchmentVariant.js
+   pose cet attribut au hasard sur ~la moitié des éléments au chargement de la
+   page. (Une 1ère version utilisait une custom property CSS posée en style
+   inline — abandonnée, l'url() relative à l'intérieur ne se résolvait pas
+   correctement, cf. le commentaire d'en-tête de parchmentVariant.js.) */
+
+/* ─── FOND DE PAGE (images/carte.jpg) — remplace le champ d'étoiles ───
+   2026-07-19. #particles-js (starfield JS, particles.js) recoloré en thème
+   ancien (cf. plus bas dans ce fichier + le bloc JS d'index.php qui réinjecte
+   une config or/ambre à la place du bleu/blanc — "lucioles" mystiques plutôt
+   qu'un champ d'étoiles masqué) ; .bg-layer (déjà position:fixed/inset:0/
+   z-index:0, cf. presentation.css — c'est le calque de dégradés bleutés qui
+   vivait au-dessus du starfield) est réutilisé tel quel comme calque carte :
+   aucune balise supplémentaire nécessaire. cover + fixed + no-repeat comme
+   demandé (carte.jpg, 1536x1024, parchemin clair sable/sépia — remplacé le
+   2026-07-19, carte.png supprimé/renommé en .jpg côté utilisateur). */
+/* 2026-07-19 — séparateurs horizontaux entre sections (border-top: 1px solid
+   var(--border), var(--border) valant rgba(120,180,255,0.30) dans
+   presentation.css : bleu du thème classique) restaient bleutés et peu
+   lisibles sur la carte. Redéfinir la custom property --border ici (portée
+   par [data-theme="ancien"] sur <html>, plus spécifique que :root) suffit :
+   tout ce qui consomme var(--border) en cascade — y compris le style inline
+   du titre "CONTRÔLES CLAVIER" (index.php) — bascule automatiquement vers un
+   filet encre sombre cohérent avec le parchemin, sans toucher chaque
+   sélecteur un par un. */
+[data-theme="ancien"] { --border: rgba(74, 54, 35, 0.35); }
+
+/* 2026-07-19 (v3) — les lucioles restaient invisibles malgré la config JS
+   recolorée : #particles-js et .bg-layer partagent tous deux z-index:0 en
+   position:fixed (presentation.css), donc l'ordre du DOM tranche — .bg-layer
+   (carte.jpg + voile crème 0.62, quasi opaque) est injecté APRÈS #particles-js
+   dans index.php et le recouvre entièrement. En thème bleu ce n'était pas
+   gênant (fond bg-layer très translucide, alpha 0.20, les étoiles restaient
+   visibles au travers) mais la carte médiévale est trop opaque pour ça. On
+   repasse #particles-js au-dessus ici uniquement (scope [data-theme="ancien"],
+   n'affecte pas le rendu bleu). */
+[data-theme="ancien"] #particles-js { z-index: 1; }
+/* 2026-07-19 — glow lumineux par particule : tenté en filter:drop-shadow CSS
+   (insignifiant à l'échelle réelle), puis en second <canvas> dédié dessiné en
+   JS (#particles-glow, index.php) affiné sur plusieurs itérations (couleur,
+   taille, courbe du dégradé...), puis RETIRÉ intégralement sur demande
+   explicite ("retire les halos sur les particules en theme médiéval"). Les
+   lucioles sont redevenues de simples points, sans halo ni CSS dédié ici. */
+/* 2026-07-19 (v2) — la carte seule (dégradé de sépia + linework + vignette
+   sombre aux coins/reliefs/bateaux) fait varier le fond de très clair (centre)
+   à très sombre (coins, montagnes encrées), donc une couleur de texte fixe
+   devient illisible par endroits quel que soit le choix (clair OU sombre).
+   Fix : voile crème semi-opaque en 2e couche de fond, superposé à carte.jpg
+   (même cover/fixed/no-repeat qu'avant, juste une couche de plus) — écrase la
+   variance de luminosité du dessin en un ton crème quasi uniforme partout tout
+   en laissant la carte visible en filigrane. Texte sombre ci-dessous fiable
+   partout, la carte reste identifiable sans jamais dominer le texte. */
+[data-theme="ancien"] .bg-layer {
+  background-image:
+    linear-gradient(rgba(250, 240, 214, 0.62), rgba(250, 240, 214, 0.62)),
+    url("../../images/carte.jpg");
+  background-size: cover, cover;
+  background-position: center center, center center;
+  background-repeat: no-repeat, no-repeat;
+  background-attachment: fixed, fixed;
+}
+
+/* ─── TEXTES HORS PARCHEMIN — lisibilité sur fond carte clair ───
+   carte.jpg (voilée en crème ci-dessus) reste un fond sable/sépia clair. Les
+   couleurs claires var(--text)/var(--text-dim)/var(--blue) (pensées pour
+   l'ancien fond étoilé sombre) y sont peu ou pas contrastées. Passage à une
+   encre sombre pour tout texte posé DIRECTEMENT sur la carte (hors cartes
+   parchemin, déjà en encre sombre depuis le début, et hors barre de nav fixe
+   qui garde son propre fond sombre translucide rgba(7,12,20,0.82) — donc
+   inchangée). Mêmes tons que l'intérieur des parchemins : #2a1c0f/#332415
+   titres, #4a3623 corps, #6b4e10 accents/kickers. En plus de la couleur, un
+   léger outer-glow clair (text-shadow/filter drop-shadow) est ajouté à CHAQUE
+   règle ci-dessous : avec le voile crème, la variance résiduelle de la carte
+   est faible mais pas nulle (linework, ombres portées) — ce halo garantit la
+   lisibilité même sur les quelques zones encore un peu sombres. */
+[data-theme="ancien"] .hero-title {
+  background: none;
+  -webkit-text-fill-color: initial;
+  color: #2a1c0f;
+  filter: drop-shadow(0 0 4px rgba(255, 250, 235, 0.85)) drop-shadow(0 1px 2px rgba(255, 250, 235, 0.7));
+}
+[data-theme="ancien"] .hero-badge {
+  color: #6b4e10;
+  border-color: rgba(74, 54, 35, 0.4);
+  background: rgba(250, 240, 214, 0.55);
+}
+[data-theme="ancien"] .hero-subtitle { color: #4a3623; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8), 0 1px 2px rgba(255, 250, 235, 0.6); }
+[data-theme="ancien"] .section-label { color: #6b4e10; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8); }
+[data-theme="ancien"] .section-title { color: #2a1c0f; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8); }
+[data-theme="ancien"] .section-sub { color: #4a3623; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .section-sub--lead { color: #332415; opacity: 1; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .ambiance-subtitle { color: #2a1c0f; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8); }
+[data-theme="ancien"] .multi-feature-list li { color: #4a3623; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .multi-feature-list li::before { color: #6b4e10; }
+[data-theme="ancien"] .faction-vs { color: #4a3623; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8); }
+[data-theme="ancien"] .hero-inspi { color: #4a3623; text-shadow: none; border-left-color: rgba(74, 54, 35, 0.4); }
+[data-theme="ancien"] .hero-inspi em { color: #6b4e10; }
+[data-theme="ancien"] .hero-tagline { color: #4a3623; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .hero-inspi-buy { color: #4a3623; }
+[data-theme="ancien"] .hero-inspi-buy:hover { color: #2a1c0f; }
+[data-theme="ancien"] .population-group-label { color: #6b4e10; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .population-note { color: #4a3623; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .gameplay-ui-caption { color: #4a3623; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+
+/* ─── BANDEAU HEADER FIXE (nav) — parchemin, cellules 4/6/7/8/9 du 9-slice
+   manuscrit-1.png (historique complet : v1 cellules 5+8 seules, v2 4/6/7/8/9 en
+   16px "cassé", v3 remis à 50px/padding 12px 14px partout = ÉCHELLE DE
+   RÉFÉRENCE validée (identique aux autres parchemins de la prez), v4/v5
+   avaient réduit le bord à 28px puis 14px pour gagner en hauteur — jugé
+   "interdit" (rendu incohérent avec le reste), donc ANNULÉ : border-width
+   toujours à 50px depuis v3, jamais retouché ensuite. `fill` (cellule 5)
+   confirmé être le comportement voulu depuis le tout début — la "plaque plus
+   claire" signalée entre-temps venait en réalité d'un bug séparé sur
+   .nav-links, cf. plus bas. Rangée du HAUT (cellules 1/2/3) toujours absente.
+   left/right à 30px : détache le bandeau des bords de la fenêtre. Hauteur du
+   bandeau ensuite réduite en 2 passes (cf. padding ci-dessous) : la 1ère avait
+   réduit le padding haut ET bas à l'identique (2px/2px) — écrasait le haut du
+   bandeau alors que border-top:0 (rien d'autre ne le protège visuellement) ;
+   corrigé en 2e passe, seule décrite ci-dessous (état final). */
+[data-theme="ancien"] nav {
+  left: 30px;
+  right: 30px;
+  /* padding-top à 12px (valeur d'origine v3, jamais retouché) : c'est la SEULE
+     marge visible côté haut (border-top:0), la réduire écraserait le haut du
+     bandeau. Toute la réduction de hauteur demandée porte donc sur
+     padding-bottom, ramené à 0 (le bord-image 50px du bas contient déjà sa
+     propre marge visuelle via le grain du parchemin, cf. .score-pills qui
+     utilise le même padding:0). Total : 12(haut) + 42(contenu, = hauteur
+     .nav-cta, aucun rognage) + 0(bas) + 50(bord) = 104px (-28px vs 132px
+     d'origine). */
+  padding: 12px 14px 0;
+  height: 42px;
+  background: none;
+  border-style: solid;
+  border-width: 0 50px 50px 50px;
+  border-image-source: url("../../images/manuscrit-1.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  border-radius: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35));
+}
+[data-theme="ancien"] nav[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
+/* gap réduit (20px -> 8px) — nécessaire pour que les 11 liens tiennent sur
+   une seule ligne malgré l'espace pris par le cadre 50px + la marge 30px
+   (cf. v3, inchangé depuis). */
+[data-theme="ancien"] .nav-links { gap: 0 8px; }
+[data-theme="ancien"] .nav-logo { color: #2a1c0f; }
+[data-theme="ancien"] .hero-version { color: #6b4e10; }
+/* 2026-07-19 — fond clair rgba(74,54,35,0.08) retiré sur demande explicite
+   (créait une plaque plus claire visible par-dessus le fond parchemin déjà
+   clair du bandeau) : #lang-toggle/#theme-toggle/.nav-toggle restent
+   délimités par leur bordure seule, sans remplissage. Pas de border-color ici :
+   ces 3 sélecteurs utilisent `border: 1px solid var(--border)` (presentation.css),
+   déjà reteinté par la redéfinition de --border ci-dessus — un override
+   littéral ferait doublon. */
+[data-theme="ancien"] #lang-toggle,
+[data-theme="ancien"] #theme-toggle,
+[data-theme="ancien"] .nav-toggle {
+  background: none;
+}
+[data-theme="ancien"] #lang-toggle select,
+[data-theme="ancien"] #theme-toggle select { color: #6b4e10; }
+[data-theme="ancien"] #lang-toggle select:hover,
+[data-theme="ancien"] #theme-toggle select:hover { background: rgba(74, 54, 35, 0.15); }
+[data-theme="ancien"] #lang-toggle select option,
+[data-theme="ancien"] #theme-toggle select option { background: #f0e6d0; color: #332415; }
+[data-theme="ancien"] .nav-toggle span { background: #4a3623; }
+/* Liens + scroll-spy (.active posé par le JS de scroll-spy, cf. script en bas
+   d'index.php — même logique, seules les couleurs/le liseré changent). */
+[data-theme="ancien"] .nav-links a { color: #4a3623; }
+[data-theme="ancien"] .nav-links a::after { background: linear-gradient(90deg, transparent, #6b4e10, transparent); }
+[data-theme="ancien"] .nav-links a:hover,
+[data-theme="ancien"] .nav-links a.active {
+  color: #2a1c0f;
+  text-shadow: none;
+}
+/* 2026-07-19 (bug corrigé) — la règle "panneau déroulant mobile" ci-dessous
+   ciblait `[data-theme="ancien"] .nav-links` SANS la restreindre à l'état
+   mobile/compact : elle peignait donc un fond #ede2c3 derrière la liste
+   <ul id="navLinks"> EN PERMANENCE, y compris sur la barre desktop en 1 ligne
+   — exactement la "plaque plus claire derrière Factions/Biomes/Missions..."
+   signalée par l'utilisateur (rien à voir avec la cellule 5 du bandeau).
+   Fix : le fond n'est plus appliqué QUE dans les 2 contextes où .nav-links
+   devient réellement un panneau déroulant (media query <860px, ou
+   body.nav-compact) — la liste desktop repasse en display:flex transparent,
+   sans aucun fond propre. Pas de border-bottom-color sur .nav-links ici : le
+   `border-bottom: 1px solid var(--border)` (presentation.css) est déjà
+   reteinté par la redéfinition de --border tout en haut de ce fichier — un
+   override littéral ferait doublon. .nav-links a garde le sien (couleur
+   différente, 0.15 vs 0.35 d'alpha, pas dérivée de --border). */
+@media (max-width: 860px) {
+  [data-theme="ancien"] .nav-links { background: #ede2c3; }
+  [data-theme="ancien"] .nav-links a { border-bottom-color: rgba(74, 54, 35, 0.15); }
+}
+[data-theme="ancien"] body.nav-compact .nav-links { background: #ede2c3; }
+[data-theme="ancien"] body.nav-compact .nav-links a { border-bottom-color: rgba(74, 54, 35, 0.15); }
+
+/* ─── Ombres portées au survol souris — retirées sur les cartes-images ───
+   .creature-card/.faction-card/.daynight-card ajoutent un box-shadow
+   rectangulaire au survol (presentation.css, thème bleu). Avec le
+   border-image 9-slice (contour manuscrit non rectangulaire), ce rectangle
+   dépasse visiblement des 4 coins de l'image au survol — même bug de "coins
+   disgracieux" déjà rencontré et corrigé sur les boutons cette session. Simple
+   neutralisation ici, comme pour les boutons. */
+[data-theme="ancien"] .creature-card:hover,
+[data-theme="ancien"] .faction-card:hover,
+[data-theme="ancien"] .daynight-card:hover { box-shadow: none; }
+[data-theme="ancien"] .footer-logo { color: #6b4e10; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .footer-copy,
+[data-theme="ancien"] .footer-sep { color: #4a3623; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .footer-link { color: #6b4e10; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .footer-link:hover { color: #2a1c0f; }
 
 [data-theme="ancien"] .mission-card {
   /* Repris à l'identique de .parchment dans parchemin.html : découpage virtuel
      de l'image à 50px (coins/bords/centre), répété plutôt qu'étiré, le contenu
      se place dans la zone centrale après les 50px de bordure. */
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
 
@@ -64,6 +285,7 @@
      reprend le display:flex à sa place (cf. règle juste en dessous). */
   display: block;
 }
+[data-theme="ancien"] .mission-card[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 [data-theme="ancien"] .mission-card > .internal-parchment {
   display: flex;
   gap: 14px;
@@ -86,7 +308,7 @@
 /* ─── .biome-card (rubrique "Six biomes à connecter") — même effet 9-slice ─── */
 [data-theme="ancien"] .biome-card {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
 
@@ -102,6 +324,7 @@
      déborder dans la zone de bordure du 9-slice). Repassé en visible ici. */
   overflow: visible;
 }
+[data-theme="ancien"] .biome-card[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 
 /* .biome-name reste lisible tel quel (superposé à l'image bannière, sur un
    dégradé sombre .biome-banner-overlay indépendant du fond de carte) — seule
@@ -143,7 +366,7 @@
 /* ─── .faction-card (rubrique "Platistes et boulistes") — même effet 9-slice ─── */
 [data-theme="ancien"] .faction-card {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
 
@@ -155,6 +378,7 @@
   /* cf. note .biome-card ci-dessus — même correction overflow (2026-07-18). */
   overflow: visible;
 }
+[data-theme="ancien"] .faction-card[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 /* .faction-img (bandeau photo, bordure basse bleutée en thème bleu) n'a plus
    besoin de séparation nette : le parchemin fait déjà la transition. */
 [data-theme="ancien"] .faction-img {
@@ -180,7 +404,7 @@
 /* ─── .creature-card (rubrique "Un monde de créatures") — même effet 9-slice ─── */
 [data-theme="ancien"] .creature-card {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
 
@@ -192,6 +416,7 @@
   /* cf. note .biome-card ci-dessus — même correction overflow (2026-07-18). */
   overflow: visible;
 }
+[data-theme="ancien"] .creature-card[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 [data-theme="ancien"] .creature-body { padding: 0; }
 [data-theme="ancien"] .creature-desc {
   font-family: Georgia, "Times New Roman", serif;
@@ -204,7 +429,7 @@
 /* ─── .audio-card (rubrique "Un monde qui s'entend") — même effet 9-slice ─── */
 [data-theme="ancien"] .audio-card {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
 
@@ -219,6 +444,7 @@
      .audio-card est display:flex en thème bleu, cassé par le wrapper unique. */
   display: block;
 }
+[data-theme="ancien"] .audio-card[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 [data-theme="ancien"] .audio-card > .internal-parchment {
   display: flex;
   gap: 14px;
@@ -235,7 +461,7 @@
 /* ─── .daynight-card (rubrique "Environnement") — même effet 9-slice ─── */
 [data-theme="ancien"] .daynight-card {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
 
@@ -247,11 +473,17 @@
   /* cf. note .biome-card ci-dessus — même correction overflow (2026-07-18). */
   overflow: visible;
 }
+[data-theme="ancien"] .daynight-card[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 [data-theme="ancien"] .daynight-body { padding: 0; }
-/* Marge sous l'image, même fix que .biome-banner/.creature-banner ci-dessus —
-   ici .daynight-img EST l'image (pas un conteneur), donc la marge se pose
-   directement dessus. */
-[data-theme="ancien"] .daynight-img { margin-bottom: 16px; }
+/* Marge sous l'image — posée sur le WRAPPER .parchment-picture (et non sur
+   .daynight-img lui-même) : le wrapper a overflow:hidden (nouveau contexte de
+   formatage de bloc), qui empêche le margin-bottom d'un enfant de "collapse"
+   au-delà de sa boîte — si la marge restait sur l'<img>, le wrapper (hauteur
+   auto) l'absorbait et devenait 16px plus haut que l'image réelle, laissant
+   une bande droite non découpée sous l'image (clip-path invisible en bas).
+   Fix trouvé en comparant wrapper.height vs img.height en live (292px vs
+   276px) — corrigé le 2026-07-20. */
+[data-theme="ancien"] .daynight-card .parchment-picture { margin-bottom: 16px; }
 [data-theme="ancien"] .daynight-name,
 [data-theme="ancien"] .daynight-list li {
   font-family: Georgia, "Times New Roman", serif;
@@ -265,7 +497,7 @@
 /* ─── .hs-card (rubrique "Les meilleurs bâtisseurs") — même effet 9-slice ─── */
 [data-theme="ancien"] .hs-card {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
 
@@ -280,6 +512,7 @@
      wrapper unique .internal-parchment (devenait le seul item de la grille). */
   display: block;
 }
+[data-theme="ancien"] .hs-card[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 [data-theme="ancien"] .hs-card > .internal-parchment {
   display: grid;
   grid-template-columns: 88px 1fr auto;
@@ -301,30 +534,71 @@
 }
 /* Rang et score : traitement "cachet de cire" comme .biome-tag/.faction-tag —
    fond saturé sombre + texte clair, plus lisible qu'une simple couleur de texte
-   pour les 2 informations les plus importantes de la carte. */
+   pour les 2 informations les plus importantes de la carte.
+   2026-07-19 — badge de rang converti en hexagone (même technique éprouvée que
+   .hs-meta-item .icon, cf. presentation.css) : SURTOUT PAS de `border-radius:50%`
+   + clip-path direct (piège de la 1ère tentative sur les icônes : le clip-path direct
+   tronque tout contenu qui déborde) ni de `border` CSS + clip-path (piège de la 3e
+   tentative : épaisseur incohérente sur les côtés obliques). Ici le rang est un
+   simple chiffre, jamais assez large pour déborder du pincement 25%/75% — mais on
+   applique quand même le clip-path aux 2 pseudo-éléments (::before = bordure,
+   ::after = fond inset), jamais à .hs-rank lui-même, par cohérence et prudence. */
 [data-theme="ancien"] .hs-rank {
-  background: #4a3623;
+  position: relative;
+  z-index: 0; /* confine les z-index négatifs des pseudo-éléments à .hs-rank */
   color: #f0e6d0;
-  border-radius: 50%;
-  width: 52px;
+  width: 62px; /* 2026-07-19 — élargi (52→62px, hauteur inchangée) sur demande
+                  explicite ; se rapproche aussi du vrai ratio largeur/hauteur
+                  d'un hexagone "à plat" (~1.15), au lieu du carré d'origine. */
   height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 30px;
 }
-[data-theme="ancien"] .hs-card.gold-1 .hs-rank { background: #7a5a12; color: #fbead0; }
-[data-theme="ancien"] .hs-card.gold-2 .hs-rank { background: #5c4326; color: #f0ddc0; }
-[data-theme="ancien"] .hs-card.gold-3 .hs-rank { background: #4a3623; color: #e6d8c0; }
+[data-theme="ancien"] .hs-rank::before,
+[data-theme="ancien"] .hs-rank::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+[data-theme="ancien"] .hs-rank::before {
+  inset: 0;
+  z-index: -2;
+  background: #332415; /* bordure — constante quel que soit le rang */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+[data-theme="ancien"] .hs-rank::after {
+  inset: 3px;
+  background: #4a3623; /* fond — varie par rang via les règles gold-* ci-dessous */
+}
+[data-theme="ancien"] .hs-card.gold-1 .hs-rank::after { background: #7a5a12; }
+[data-theme="ancien"] .hs-card.gold-2 .hs-rank::after { background: #5c4326; }
+[data-theme="ancien"] .hs-card.gold-3 .hs-rank::after { background: #4a3623; }
+[data-theme="ancien"] .hs-card.gold-1 .hs-rank { color: #fbead0; }
+[data-theme="ancien"] .hs-card.gold-2 .hs-rank { color: #f0ddc0; }
+[data-theme="ancien"] .hs-card.gold-3 .hs-rank { color: #e6d8c0; }
 [data-theme="ancien"] .hs-stat-num,
 [data-theme="ancien"] .hs-biome-total,
 [data-theme="ancien"] .hs-biome-max {
   font-family: Georgia, "Times New Roman", serif;
   color: #6b4e10;
 }
-[data-theme="ancien"] .hs-meta-item .icon {
-  border: 2px solid #6b4e10;
-  background: #f0e6d0;
+/* 2026-07-19 — badge à 2 hexagones clippés superposés (cf. presentation.css) :
+   .icon lui-même ne porte plus ni fond ni bordure, pour ne jamais recadrer l'emoji.
+   Contraste relevé (2e passe, retour utilisateur "hexagone invisible") : l'ancien
+   fond #f0e6d0 était quasi identique à la couleur du parchemin environnant. Remplacé
+   par un fond saturé (même famille "cachet de cire" que .hs-rank ci-dessus). 3e passe
+   (retour utilisateur "bords affichés partiellement") : `border` + clip-path donnait
+   une épaisseur incohérente sur les côtés obliques de l'hexagone — remplacé par 2
+   hexagones pleins superposés (::before = bordure, ::after = fond inset 2px). */
+[data-theme="ancien"] .hs-meta-item .icon::before {
+  background: #4a3623;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+[data-theme="ancien"] .hs-meta-item .icon::after {
+  background: #c9a869;
 }
 [data-theme="ancien"] .hs-score {
   color: #6b4e10;
@@ -335,16 +609,17 @@
   font-family: Georgia, "Times New Roman", serif;
   color: #4a3623;
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   border-radius: 0;
 }
+[data-theme="ancien"] .hs-empty[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 
 /* ─── .hero-inspi-card (3 images d'inspiration en intro) — même effet 9-slice ─── */
 [data-theme="ancien"] .hero-inspi-card {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   border-radius: 0;
@@ -353,6 +628,7 @@
   /* cf. note .biome-card plus haut — même correction overflow (2026-07-18). */
   overflow: visible;
 }
+[data-theme="ancien"] .hero-inspi-card[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 /* 2026-07-18 — .hero-inspi-caption est en position:absolute (bottom/left/right:0,
    cf. css/presentation.css), calée à l'origine sur .hero-inspi-card (seul ancêtre
    positionné). Comme .internal-parchment n'a pas de position, la légende restait
@@ -367,7 +643,7 @@
    .stat-item), séparateurs internes en encre sombre. ─── */
 [data-theme="ancien"] .stats-bar {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   border-radius: 0;
@@ -380,6 +656,7 @@
   display: block;
   overflow: visible;
 }
+[data-theme="ancien"] .stats-bar[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 [data-theme="ancien"] .stats-bar > .internal-parchment {
   display: flex;
 }
@@ -395,7 +672,7 @@
 /* ─── .step-card (rubrique "Comment jouer", 4) — même effet 9-slice ─── */
 [data-theme="ancien"] .step-card {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   background: none;
@@ -403,6 +680,7 @@
   padding: 0;
   filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
 }
+[data-theme="ancien"] .step-card[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 [data-theme="ancien"] .step-card::before { color: rgba(74,54,35,0.25); }
 [data-theme="ancien"] .step-title,
 [data-theme="ancien"] .step-desc {
@@ -410,6 +688,17 @@
   color: #332415;
 }
 [data-theme="ancien"] .step-desc { color: #4a3623; }
+/* 2026-07-19 — .internal-parchment est une vraie boîte ici (pas display:contents
+   comme en bleu), donc le grid icon+titre/desc (cf. presentation.css) doit être
+   redéclaré sur elle, sinon icon/titre/desc restent empilés en flux block. */
+[data-theme="ancien"] .step-card > .internal-parchment {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "icon title" "desc desc";
+  column-gap: 10px;
+  row-gap: 8px;
+  align-items: center;
+}
 
 /* ─── .kbd-strip (rubrique "Contrôles clavier") — UN SEUL parchemin englobant
    les 17 raccourcis, retour utilisateur explicite : pas 17 parchemins séparés.
@@ -418,7 +707,7 @@
    "cachet de cire" pour rester repérables au milieu du texte. ─── */
 [data-theme="ancien"] .kbd-strip {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   border-radius: 0;
@@ -430,6 +719,7 @@
      cassé par le wrapper unique .internal-parchment qui les regroupait tous. */
   display: block;
 }
+[data-theme="ancien"] .kbd-strip[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 [data-theme="ancien"] .kbd-strip > .internal-parchment {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
@@ -445,11 +735,45 @@
   border: none;
 }
 
+/* ─── .score-pills (rubrique "Façon de jouer" > "Système de score", 7 pilules)
+   — même principe que .kbd-strip juste au-dessus : UN SEUL parchemin englobant
+   les 7 pilules plutôt que 7 parchemins séparés (celles-ci sont trop petites/
+   trop nombreuses en ligne pour un traitement 9-slice individuel, cf. retour
+   utilisateur "ne sont pas conformes au style médiéval"). Les .score-pill
+   perdent leur fond/bordure "carte classique" (var(--bg-card)/var(--border)),
+   posées directement sur le parchemin commun. */
+[data-theme="ancien"] .score-pills {
+  border: 50px solid transparent;
+  border-image-source: url("../../images/manuscrit-1.png");
+  border-image-slice: 50 fill;
+  border-image-repeat: repeat;
+  border-radius: 0;
+  padding: 0;
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
+  /* cf. note .mission-card/.kbd-strip plus haut — .score-pills est flex avec
+     les 7 .score-pill en enfants directs en thème bleu, cassé par le wrapper
+     unique .internal-parchment qui les regroupait tous. */
+  display: block;
+}
+[data-theme="ancien"] .score-pills[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
+[data-theme="ancien"] .score-pills > .internal-parchment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+[data-theme="ancien"] .score-pill {
+  background: none;
+  border: none;
+  padding: 4px 12px;
+}
+[data-theme="ancien"] .score-pill-pts { color: #7a5a12; }
+[data-theme="ancien"] .score-pill-label { color: #4a3623; }
+
 /* ─── .gallery-card (rubrique "Plusieurs atmosphères — Une infinité de
    personnalisations", 8) — même effet 9-slice ─── */
 [data-theme="ancien"] .gallery-card {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   border-radius: 0;
@@ -458,6 +782,7 @@
   /* cf. note .biome-card plus haut — même correction overflow (2026-07-18). */
   overflow: visible;
 }
+[data-theme="ancien"] .gallery-card[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 /* 2026-07-18 — même souci que .hero-inspi-card ci-dessus : .gallery-img et
    .gallery-overlay sont en position:absolute + inset:0 (cf. presentation.css),
    calés sur .gallery-card (seul ancêtre positionné) au lieu de suivre
@@ -490,7 +815,7 @@
    effet 9-slice ─── */
 [data-theme="ancien"] .eda-showcase-card {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   background: none;
@@ -500,6 +825,7 @@
   /* cf. note .biome-card plus haut — même correction overflow (2026-07-18). */
   overflow: visible;
 }
+[data-theme="ancien"] .eda-showcase-card[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 [data-theme="ancien"] .eda-showcase-body { padding: 0; }
 [data-theme="ancien"] .eda-showcase-tab,
 [data-theme="ancien"] .eda-showcase-label,
@@ -508,22 +834,25 @@
   color: #332415;
 }
 [data-theme="ancien"] .eda-showcase-desc { color: #4a3623; }
-/* Marge sous l'image, même fix que .biome-banner/.creature-banner/.daynight-img
-   ci-dessus — ici encore .eda-showcase-body n'a plus de padding-top. */
-[data-theme="ancien"] .eda-showcase-img { margin-bottom: 16px; }
+/* Marge sous l'image — même fix que .daynight-card ci-dessus : posée sur le
+   wrapper .parchment-picture, pas sur l'<img> lui-même (sinon absorbée dans
+   la hauteur auto du wrapper à cause d'overflow:hidden, laissant une bande
+   droite non découpée en bas de l'image, corrigé le 2026-07-20). */
+[data-theme="ancien"] .eda-showcase-card .parchment-picture { margin-bottom: 16px; }
 
 /* ─── .room-demo (rubrique "Multiplayer — Bâtissez ensemble") — même effet
    9-slice sur le panneau de démo (le seul bloc encadré du texte de cette
    rubrique). ─── */
 [data-theme="ancien"] .room-demo {
   border: 50px solid transparent;
-  border-image-source: url("../../images/manuscrit.png");
+  border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
   border-radius: 0;
   padding: 0;
   filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.45));
 }
+[data-theme="ancien"] .room-demo[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 [data-theme="ancien"] .room-demo-title,
 [data-theme="ancien"] .room-status,
 [data-theme="ancien"] .room-scores-label,
@@ -575,3 +904,423 @@
   border-radius: 2px;
 }
 [data-theme="ancien"] .internal-parchment::-webkit-scrollbar-track { background: transparent; }
+
+/* ─── Boutons CTA (2026-07-19, corrigé le 2026-07-19, image remplacée le
+   2026-07-19) — border-image 3-slice HORIZONTAL uniquement sur
+   images/button2.png (160x42, bouton rouge plus petit — remplace
+   button.png/211x56). Cap 8px de chaque côté (mesure réelle du rayon de coin
+   sur le nouveau PNG). height: 42px FORCÉ et non négociable : le bouton
+   source fait 42px de haut, et sans découpage vertical (slice top/bottom = 0)
+   l'image s'étire pour remplir toute la hauteur de la boîte — toute hauteur
+   ≠ 42px déforme donc le bouton verticalement. Ne jamais laisser le padding
+   d'origine du thème bleu dicter la hauteur ici. background:none +
+   border-radius:0 car la forme vient entièrement de l'image (elle a déjà ses
+   coins arrondis et sa bordure sombre intégrés). Cible : .nav-cta, .btn-primary,
+   .btn-secondary — .nav-toggle explicitement exclu (icône hamburger carrée,
+   pas un bouton texte). */
+[data-theme="ancien"] .nav-cta,
+[data-theme="ancien"] .btn-primary,
+[data-theme="ancien"] .btn-secondary {
+  background: none;
+  border-style: solid;
+  border-width: 0 8px;
+  border-image-source: url("../../images/button2.png");
+  border-image-slice: 0 8 fill;
+  border-image-width: 0 8px;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  height: 42px;
+  box-sizing: border-box;
+  /* 2026-07-19 — fix centrage vertical texte : ces boutons sont des <a> en
+     display:inline-block (base bleue, presentation.css) centrés uniquement
+     par symétrie du padding vertical d'origine (8px/14px selon le bouton).
+     Avec height:42px FORCÉ, ce padding d'origine ne correspond plus à la
+     hauteur réelle et décale le texte vers le bas/haut selon le bouton.
+     display:inline-flex + align-items/justify-content:center recentre le
+     texte indépendamment du padding — padding vertical mis à 0 (le centrage
+     flex s'en charge), padding horizontal conservé pour l'espacement latéral.
+     INLINE-flex et non flex (fix 2026-07-19) : display:flex rend l'élément
+     block-level et lui fait prendre 100% de la largeur de son conteneur —
+     invisible sur les boutons déjà dans un flex parent (nav/hero/actions
+     row), mais très visible sur le CTA "Tenter votre chance" seul dans un
+     <div style="text-align:center">, qui s'étirait sur toute la largeur de
+     la carte (disgracieux, signalé par l'utilisateur). inline-flex conserve
+     le comportement largeur-au-contenu d'un bouton normal tout en gardant
+     le centrage flex interne. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0;
+  padding-bottom: 0;
+  color: #f5e2b8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: filter 0.2s;
+}
+[data-theme="ancien"] .nav-cta:hover,
+[data-theme="ancien"] .btn-primary:hover,
+[data-theme="ancien"] .btn-secondary:hover {
+  filter: brightness(1.12);
+}
+
+/* ─── IMAGES DES PARCHEMINS — intégration papier (2026-07-19, v3 retravaillée)
+   ───
+   Casse le rectangle net des photos posées dans les cartes parchemin :
+   bord "grignoté" façon bruit (5 variantes .parchment-picture--v1..v5,
+   cyclées côté PHP via l'index de boucle, 84 points/côté) — généré par
+   bruit multi-octave (mulberry32 seedé, voir historique) pour un grain
+   irrégulier non-périodique plutôt qu'une onde lisse. Deux fausses pistes
+   avant cette version : v1→v2 (13→30 points, amplitude ≤1.5% puis 0.2-3%)
+   jugées trop sages/quasi invisibles ; une v3 intermédiaire a inversé
+   l'erreur en poussant l'AMPLITUDE (0-24%) plutôt que la densité de points
+   — résultat : zigzags façon éclair qui tranchaient le texte du bandeau
+   (biome-name/creature-name), jugé "vulgaire". Le bon axe n'est pas
+   l'amplitude mais le nombre de points : version retenue = beaucoup de
+   points (grain fin), amplitude réduite et contenue à 0.2-0.8% (jamais
+   plus), pour une érosion crédible du bord plutôt qu'une découpe à la hache.
+   Un fondu de transparence sur ce bord (mask-image) a été tenté ensuite sur
+   plusieurs passes (SVG puis PNG raster, mask-mode luminance) mais jamais
+   concluant en pratique malgré des vérifications rigoureuses — ANNULÉ à la
+   demande explicite de l'utilisateur (2026-07-19) : seul le clip-path net
+   ci-dessous reste actif, pas de mask-image, pas de --edge-mask.
+   Reste inchangé : vieillissement de teinte (filter), grain fin (::after).
+   Scope : toutes les images DANS un parchemin de la prez — hero-inspi,
+   biome-banner, creature-banner, faction-img, daynight-img, eda-showcase-img,
+   gallery-img (8 vignettes "Ambiances/Atmosphères", ajouté 2026-07-19 après
+   validation du reste — 3 essais avant la bonne structure) :
+   1) 1er essai : `--absolute` posé directement sur .gallery-card (comme
+      biome-banner) → hauteur 0 pour les 5 vignettes "cover". Cause : depuis
+      le 2026-07-18, .gallery-card force déjà TOUTES ses images en flux
+      natural (position:static, height:auto — décision antérieure pour
+      unifier cover/contain en thème ancien), donc un wrapper --absolute
+      (inset:0) n'a plus aucune hauteur de référence (chicken-and-egg).
+   2) 2e essai : suppression du wrapper, img directement dans
+      .internal-parchment, classe `parchment-picture` posée sur .gallery-card
+      lui-même (comme le fix overlay biome-banner/creature-banner) → clip-path
+      invisible. Cause différente cette fois : .gallery-card PORTE LUI-MÊME le
+      border-image 9-slice (contrairement à .biome-card où le 9-slice est sur
+      un ANCÊTRE différent de .biome-banner) — le clip-path posé sur
+      .gallery-card découpe alors la boîte ENTIÈRE bordure comprise (50px de
+      chaque côté), et l'érosion fine (1-2%) tombe dans la zone de bordure
+      transparente, invisible.
+   3) Version retenue : nouveau wrapper `.gallery-picture` (classe
+      `parchment-picture parchment-picture--vN`) inséré entre
+      `.internal-parchment` et `<img>`/`.gallery-overlay` — ni le border-image
+      (resté sur .gallery-card) ni le flux natural (image reste position:
+      static, contribue sa propre hauteur au wrapper) ne sont perturbés ;
+      `.gallery-overlay` (sibling de l'image, pas descendant) suit la même
+      découpe car il est DANS ce même wrapper désormais positionné
+      (position:relative hérité de la règle de base ci-dessous). */
+[data-theme="ancien"] {
+  --paper-color: #e4cf98;
+}
+/* 2026-07-19 — 2e refonte (demande explicite : "davantage de brisures/détails
+   (3 fois plus)" + "moins d'amplitude (sinon effet découpage d'enfant de
+   maternelle)") : 28 → 84 points/côté (x3), et amplitude max ramenée de ~2%
+   à ~0.8% (jitter indépendant par point conservé, mais plage resserrée pour
+   un bord finement dentelé plutôt qu'un découpage grossier). */
+[data-theme="ancien"] .parchment-picture {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  clip-path: polygon(
+    0% 0.16%, 1.19% 0.26%, 2.381% 0.3%, 3.571% 0.54%, 4.762% 0.16%, 5.952% 0.23%, 7.143% 0.18%, 8.333% 0.71%,
+    9.524% 0.21%, 10.714% 0.19%, 11.905% 0.17%, 13.095% 0.23%, 14.286% 0.35%, 15.476% 0.51%, 16.667% 0.16%, 17.857% 0.78%,
+    19.048% 0.09%, 20.238% 0.68%, 21.429% 0.4%, 22.619% 0.35%, 23.81% 0.26%, 25% 0.12%, 26.19% 0.34%, 27.381% 0.73%,
+    28.571% 0.79%, 29.762% 0.24%, 30.952% 0.43%, 32.143% 0.15%, 33.333% 0.41%, 34.524% 0.72%, 35.714% 0.33%, 36.905% 0.42%,
+    38.095% 0.43%, 39.286% 0.13%, 40.476% 0.35%, 41.667% 0.66%, 42.857% 0.5%, 44.048% 0.6%, 45.238% 0.11%, 46.429% 0.39%,
+    47.619% 0.34%, 48.81% 0.35%, 50% 0.43%, 51.19% 0.16%, 52.381% 0.56%, 53.571% 0.78%, 54.762% 0.75%, 55.952% 0.25%,
+    57.143% 0.54%, 58.333% 0.23%, 59.524% 0.12%, 60.714% 0.6%, 61.905% 0.15%, 63.095% 0.29%, 64.286% 0.19%, 65.476% 0.18%,
+    66.667% 0.22%, 67.857% 0.43%, 69.048% 0.67%, 70.238% 0.75%, 71.429% 0.29%, 72.619% 0.12%, 73.81% 0.08%, 75% 0.63%,
+    76.19% 0.33%, 77.381% 0.2%, 78.571% 0.3%, 79.762% 0.51%, 80.952% 0.51%, 82.143% 0.54%, 83.333% 0.3%, 84.524% 0.29%,
+    85.714% 0.4%, 86.905% 0.56%, 88.095% 0.5%, 89.286% 0.57%, 90.476% 0.15%, 91.667% 0.18%, 92.857% 0.17%, 94.048% 0.35%,
+    95.238% 0.4%, 96.429% 0.63%, 97.619% 0.77%, 98.81% 0.74%, 100% 0.36%, 99.61% 1.19%, 99.77% 2.381%, 99.59% 3.571%,
+    99.76% 4.762%, 99.64% 5.952%, 99.76% 7.143%, 99.58% 8.333%, 99.21% 9.524%, 99.44% 10.714%, 99.67% 11.905%, 99.42% 13.095%,
+    99.65% 14.286%, 99.75% 15.476%, 99.62% 16.667%, 99.69% 17.857%, 99.38% 19.048%, 99.69% 20.238%, 99.33% 21.429%, 99.72% 22.619%,
+    99.77% 23.81%, 99.52% 25%, 99.3% 26.19%, 99.68% 27.381%, 99.51% 28.571%, 99.9% 29.762%, 99.32% 30.952%, 99.37% 32.143%,
+    99.74% 33.333%, 99.74% 34.524%, 99.85% 35.714%, 99.84% 36.905%, 99.91% 38.095%, 99.45% 39.286%, 99.84% 40.476%, 99.81% 41.667%,
+    99.6% 42.857%, 99.85% 44.048%, 99.37% 45.238%, 99.51% 46.429%, 99.62% 47.619%, 99.59% 48.81%, 99.74% 50%, 99.78% 51.19%,
+    99.82% 52.381%, 99.7% 53.571%, 99.61% 54.762%, 99.74% 55.952%, 99.46% 57.143%, 99.32% 58.333%, 99.51% 59.524%, 99.68% 60.714%,
+    99.44% 61.905%, 99.67% 63.095%, 99.83% 64.286%, 99.31% 65.476%, 99.71% 66.667%, 99.32% 67.857%, 99.75% 69.048%, 99.86% 70.238%,
+    99.84% 71.429%, 99.21% 72.619%, 99.48% 73.81%, 99.85% 75%, 99.84% 76.19%, 99.43% 77.381%, 99.26% 78.571%, 99.7% 79.762%,
+    99.88% 80.952%, 99.81% 82.143%, 99.57% 83.333%, 99.62% 84.524%, 99.88% 85.714%, 99.69% 86.905%, 99.75% 88.095%, 99.32% 89.286%,
+    99.7% 90.476%, 99.29% 91.667%, 99.8% 92.857%, 99.38% 94.048%, 99.58% 95.238%, 99.92% 96.429%, 99.33% 97.619%, 99.69% 98.81%,
+    99.85% 100%, 98.81% 99.42%, 97.619% 99.29%, 96.429% 99.67%, 95.238% 99.67%, 94.048% 99.35%, 92.857% 99.84%, 91.667% 99.25%,
+    90.476% 99.51%, 89.286% 99.6%, 88.095% 99.78%, 86.905% 99.7%, 85.714% 99.79%, 84.524% 99.76%, 83.333% 99.2%, 82.143% 99.79%,
+    80.952% 99.85%, 79.762% 99.37%, 78.571% 99.39%, 77.381% 99.28%, 76.19% 99.62%, 75% 99.48%, 73.81% 99.7%, 72.619% 99.5%,
+    71.429% 99.57%, 70.238% 99.88%, 69.048% 99.65%, 67.857% 99.49%, 66.667% 99.91%, 65.476% 99.91%, 64.286% 99.81%, 63.095% 99.68%,
+    61.905% 99.67%, 60.714% 99.5%, 59.524% 99.91%, 58.333% 99.35%, 57.143% 99.88%, 55.952% 99.51%, 54.762% 99.86%, 53.571% 99.8%,
+    52.381% 99.22%, 51.19% 99.51%, 50% 99.9%, 48.81% 99.41%, 47.619% 99.23%, 46.429% 99.69%, 45.238% 99.69%, 44.048% 99.79%,
+    42.857% 99.66%, 41.667% 99.79%, 40.476% 99.71%, 39.286% 99.42%, 38.095% 99.36%, 36.905% 99.7%, 35.714% 99.9%, 34.524% 99.23%,
+    33.333% 99.61%, 32.143% 99.5%, 30.952% 99.43%, 29.762% 99.76%, 28.571% 99.25%, 27.381% 99.69%, 26.19% 99.2%, 25% 99.8%,
+    23.81% 99.59%, 22.619% 99.34%, 21.429% 99.81%, 20.238% 99.47%, 19.048% 99.21%, 17.857% 99.79%, 16.667% 99.81%, 15.476% 99.72%,
+    14.286% 99.23%, 13.095% 99.23%, 11.905% 99.69%, 10.714% 99.41%, 9.524% 99.59%, 8.333% 99.7%, 7.143% 99.88%, 5.952% 99.63%,
+    4.762% 99.89%, 3.571% 99.9%, 2.381% 99.3%, 1.19% 99.37%, 0% 99.63%, 0.36% 98.81%, 0.21% 97.619%, 0.18% 96.429%,
+    0.34% 95.238%, 0.57% 94.048%, 0.09% 92.857%, 0.09% 91.667%, 0.18% 90.476%, 0.14% 89.286%, 0.28% 88.095%, 0.37% 86.905%,
+    0.31% 85.714%, 0.3% 84.524%, 0.08% 83.333%, 0.74% 82.143%, 0.25% 80.952%, 0.39% 79.762%, 0.65% 78.571%, 0.59% 77.381%,
+    0.63% 76.19%, 0.29% 75%, 0.35% 73.81%, 0.51% 72.619%, 0.79% 71.429%, 0.34% 70.238%, 0.12% 69.048%, 0.34% 67.857%,
+    0.52% 66.667%, 0.31% 65.476%, 0.2% 64.286%, 0.29% 63.095%, 0.23% 61.905%, 0.35% 60.714%, 0.73% 59.524%, 0.26% 58.333%,
+    0.52% 57.143%, 0.51% 55.952%, 0.42% 54.762%, 0.16% 53.571%, 0.11% 52.381%, 0.22% 51.19%, 0.5% 50%, 0.2% 48.81%,
+    0.35% 47.619%, 0.66% 46.429%, 0.24% 45.238%, 0.19% 44.048%, 0.13% 42.857%, 0.12% 41.667%, 0.36% 40.476%, 0.75% 39.286%,
+    0.16% 38.095%, 0.48% 36.905%, 0.3% 35.714%, 0.5% 34.524%, 0.16% 33.333%, 0.34% 32.143%, 0.37% 30.952%, 0.32% 29.762%,
+    0.63% 28.571%, 0.36% 27.381%, 0.38% 26.19%, 0.77% 25%, 0.43% 23.81%, 0.39% 22.619%, 0.21% 21.429%, 0.09% 20.238%,
+    0.2% 19.048%, 0.71% 17.857%, 0.68% 16.667%, 0.44% 15.476%, 0.56% 14.286%, 0.62% 13.095%, 0.16% 11.905%, 0.78% 10.714%,
+    0.59% 9.524%, 0.13% 8.333%, 0.7% 7.143%, 0.73% 5.952%, 0.17% 4.762%, 0.74% 3.571%, 0.43% 2.381%, 0.52% 1.19%
+  );
+}
+
+[data-theme="ancien"] .parchment-picture--v2 {
+  clip-path: polygon(
+    0% 0.16%, 1.19% 0.49%, 2.381% 0.72%, 3.571% 0.11%, 4.762% 0.78%, 5.952% 0.64%, 7.143% 0.21%, 8.333% 0.59%,
+    9.524% 0.24%, 10.714% 0.4%, 11.905% 0.57%, 13.095% 0.64%, 14.286% 0.26%, 15.476% 0.58%, 16.667% 0.72%, 17.857% 0.3%,
+    19.048% 0.4%, 20.238% 0.15%, 21.429% 0.3%, 22.619% 0.21%, 23.81% 0.31%, 25% 0.11%, 26.19% 0.59%, 27.381% 0.49%,
+    28.571% 0.38%, 29.762% 0.23%, 30.952% 0.23%, 32.143% 0.58%, 33.333% 0.4%, 34.524% 0.22%, 35.714% 0.61%, 36.905% 0.21%,
+    38.095% 0.52%, 39.286% 0.09%, 40.476% 0.56%, 41.667% 0.54%, 42.857% 0.25%, 44.048% 0.75%, 45.238% 0.49%, 46.429% 0.72%,
+    47.619% 0.09%, 48.81% 0.26%, 50% 0.36%, 51.19% 0.64%, 52.381% 0.63%, 53.571% 0.12%, 54.762% 0.25%, 55.952% 0.28%,
+    57.143% 0.66%, 58.333% 0.27%, 59.524% 0.09%, 60.714% 0.65%, 61.905% 0.67%, 63.095% 0.62%, 64.286% 0.1%, 65.476% 0.69%,
+    66.667% 0.43%, 67.857% 0.68%, 69.048% 0.64%, 70.238% 0.33%, 71.429% 0.51%, 72.619% 0.43%, 73.81% 0.62%, 75% 0.13%,
+    76.19% 0.21%, 77.381% 0.18%, 78.571% 0.41%, 79.762% 0.22%, 80.952% 0.19%, 82.143% 0.33%, 83.333% 0.66%, 84.524% 0.41%,
+    85.714% 0.24%, 86.905% 0.16%, 88.095% 0.35%, 89.286% 0.39%, 90.476% 0.59%, 91.667% 0.75%, 92.857% 0.12%, 94.048% 0.34%,
+    95.238% 0.71%, 96.429% 0.22%, 97.619% 0.59%, 98.81% 0.2%, 100% 0.4%, 99.69% 1.19%, 99.65% 2.381%, 99.59% 3.571%,
+    99.64% 4.762%, 99.74% 5.952%, 99.74% 7.143%, 99.59% 8.333%, 99.57% 9.524%, 99.8% 10.714%, 99.63% 11.905%, 99.35% 13.095%,
+    99.61% 14.286%, 99.35% 15.476%, 99.76% 16.667%, 99.33% 17.857%, 99.64% 19.048%, 99.84% 20.238%, 99.89% 21.429%, 99.66% 22.619%,
+    99.7% 23.81%, 99.86% 25%, 99.22% 26.19%, 99.51% 27.381%, 99.72% 28.571%, 99.3% 29.762%, 99.3% 30.952%, 99.5% 32.143%,
+    99.66% 33.333%, 99.81% 34.524%, 99.27% 35.714%, 99.79% 36.905%, 99.35% 38.095%, 99.59% 39.286%, 99.51% 40.476%, 99.9% 41.667%,
+    99.63% 42.857%, 99.61% 44.048%, 99.37% 45.238%, 99.49% 46.429%, 99.28% 47.619%, 99.57% 48.81%, 99.86% 50%, 99.31% 51.19%,
+    99.41% 52.381%, 99.73% 53.571%, 99.7% 54.762%, 99.36% 55.952%, 99.35% 57.143%, 99.68% 58.333%, 99.64% 59.524%, 99.79% 60.714%,
+    99.72% 61.905%, 99.63% 63.095%, 99.84% 64.286%, 99.79% 65.476%, 99.77% 66.667%, 99.7% 67.857%, 99.84% 69.048%, 99.7% 70.238%,
+    99.6% 71.429%, 99.62% 72.619%, 99.65% 73.81%, 99.74% 75%, 99.77% 76.19%, 99.65% 77.381%, 99.63% 78.571%, 99.89% 79.762%,
+    99.49% 80.952%, 99.79% 82.143%, 99.22% 83.333%, 99.61% 84.524%, 99.48% 85.714%, 99.78% 86.905%, 99.39% 88.095%, 99.5% 89.286%,
+    99.33% 90.476%, 99.88% 91.667%, 99.72% 92.857%, 99.48% 94.048%, 99.85% 95.238%, 99.69% 96.429%, 99.57% 97.619%, 99.34% 98.81%,
+    99.72% 100%, 98.81% 99.22%, 97.619% 99.4%, 96.429% 99.76%, 95.238% 99.69%, 94.048% 99.31%, 92.857% 99.32%, 91.667% 99.88%,
+    90.476% 99.46%, 89.286% 99.74%, 88.095% 99.29%, 86.905% 99.66%, 85.714% 99.74%, 84.524% 99.91%, 83.333% 99.3%, 82.143% 99.75%,
+    80.952% 99.59%, 79.762% 99.29%, 78.571% 99.29%, 77.381% 99.35%, 76.19% 99.77%, 75% 99.87%, 73.81% 99.66%, 72.619% 99.85%,
+    71.429% 99.48%, 70.238% 99.78%, 69.048% 99.52%, 67.857% 99.75%, 66.667% 99.22%, 65.476% 99.58%, 64.286% 99.73%, 63.095% 99.31%,
+    61.905% 99.86%, 60.714% 99.28%, 59.524% 99.37%, 58.333% 99.62%, 57.143% 99.31%, 55.952% 99.63%, 54.762% 99.63%, 53.571% 99.71%,
+    52.381% 99.36%, 51.19% 99.61%, 50% 99.64%, 48.81% 99.88%, 47.619% 99.41%, 46.429% 99.26%, 45.238% 99.82%, 44.048% 99.66%,
+    42.857% 99.8%, 41.667% 99.44%, 40.476% 99.9%, 39.286% 99.39%, 38.095% 99.62%, 36.905% 99.86%, 35.714% 99.39%, 34.524% 99.69%,
+    33.333% 99.32%, 32.143% 99.57%, 30.952% 99.5%, 29.762% 99.4%, 28.571% 99.41%, 27.381% 99.5%, 26.19% 99.73%, 25% 99.28%,
+    23.81% 99.76%, 22.619% 99.71%, 21.429% 99.8%, 20.238% 99.88%, 19.048% 99.6%, 17.857% 99.62%, 16.667% 99.3%, 15.476% 99.79%,
+    14.286% 99.37%, 13.095% 99.24%, 11.905% 99.78%, 10.714% 99.86%, 9.524% 99.76%, 8.333% 99.7%, 7.143% 99.88%, 5.952% 99.5%,
+    4.762% 99.83%, 3.571% 99.88%, 2.381% 99.69%, 1.19% 99.25%, 0% 99.82%, 0.53% 98.81%, 0.27% 97.619%, 0.38% 96.429%,
+    0.59% 95.238%, 0.19% 94.048%, 0.12% 92.857%, 0.55% 91.667%, 0.2% 90.476%, 0.6% 89.286%, 0.78% 88.095%, 0.14% 86.905%,
+    0.08% 85.714%, 0.35% 84.524%, 0.29% 83.333%, 0.71% 82.143%, 0.19% 80.952%, 0.33% 79.762%, 0.38% 78.571%, 0.32% 77.381%,
+    0.19% 76.19%, 0.31% 75%, 0.33% 73.81%, 0.16% 72.619%, 0.22% 71.429%, 0.22% 70.238%, 0.23% 69.048%, 0.42% 67.857%,
+    0.42% 66.667%, 0.29% 65.476%, 0.65% 64.286%, 0.55% 63.095%, 0.56% 61.905%, 0.57% 60.714%, 0.43% 59.524%, 0.17% 58.333%,
+    0.35% 57.143%, 0.43% 55.952%, 0.15% 54.762%, 0.11% 53.571%, 0.2% 52.381%, 0.7% 51.19%, 0.17% 50%, 0.2% 48.81%,
+    0.3% 47.619%, 0.63% 46.429%, 0.76% 45.238%, 0.49% 44.048%, 0.41% 42.857%, 0.49% 41.667%, 0.65% 40.476%, 0.15% 39.286%,
+    0.16% 38.095%, 0.09% 36.905%, 0.5% 35.714%, 0.75% 34.524%, 0.1% 33.333%, 0.67% 32.143%, 0.26% 30.952%, 0.52% 29.762%,
+    0.69% 28.571%, 0.4% 27.381%, 0.43% 26.19%, 0.72% 25%, 0.33% 23.81%, 0.58% 22.619%, 0.28% 21.429%, 0.32% 20.238%,
+    0.32% 19.048%, 0.11% 17.857%, 0.31% 16.667%, 0.7% 15.476%, 0.41% 14.286%, 0.64% 13.095%, 0.25% 11.905%, 0.22% 10.714%,
+    0.13% 9.524%, 0.09% 8.333%, 0.65% 7.143%, 0.8% 5.952%, 0.35% 4.762%, 0.2% 3.571%, 0.35% 2.381%, 0.77% 1.19%
+  );
+  /* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient
+}
+
+[data-theme="ancien"] .parchment-picture--v3 {
+  clip-path: polygon(
+    0% 0.21%, 1.19% 0.11%, 2.381% 0.2%, 3.571% 0.79%, 4.762% 0.73%, 5.952% 0.11%, 7.143% 0.56%, 8.333% 0.25%,
+    9.524% 0.43%, 10.714% 0.63%, 11.905% 0.43%, 13.095% 0.54%, 14.286% 0.69%, 15.476% 0.09%, 16.667% 0.18%, 17.857% 0.41%,
+    19.048% 0.48%, 20.238% 0.6%, 21.429% 0.21%, 22.619% 0.1%, 23.81% 0.28%, 25% 0.1%, 26.19% 0.8%, 27.381% 0.35%,
+    28.571% 0.44%, 29.762% 0.28%, 30.952% 0.7%, 32.143% 0.67%, 33.333% 0.22%, 34.524% 0.3%, 35.714% 0.57%, 36.905% 0.74%,
+    38.095% 0.25%, 39.286% 0.8%, 40.476% 0.32%, 41.667% 0.51%, 42.857% 0.75%, 44.048% 0.43%, 45.238% 0.28%, 46.429% 0.69%,
+    47.619% 0.33%, 48.81% 0.26%, 50% 0.43%, 51.19% 0.31%, 52.381% 0.28%, 53.571% 0.36%, 54.762% 0.2%, 55.952% 0.58%,
+    57.143% 0.3%, 58.333% 0.53%, 59.524% 0.79%, 60.714% 0.2%, 61.905% 0.23%, 63.095% 0.29%, 64.286% 0.21%, 65.476% 0.24%,
+    66.667% 0.52%, 67.857% 0.77%, 69.048% 0.38%, 70.238% 0.65%, 71.429% 0.57%, 72.619% 0.42%, 73.81% 0.11%, 75% 0.16%,
+    76.19% 0.13%, 77.381% 0.43%, 78.571% 0.16%, 79.762% 0.1%, 80.952% 0.42%, 82.143% 0.39%, 83.333% 0.42%, 84.524% 0.67%,
+    85.714% 0.8%, 86.905% 0.2%, 88.095% 0.32%, 89.286% 0.52%, 90.476% 0.16%, 91.667% 0.08%, 92.857% 0.28%, 94.048% 0.41%,
+    95.238% 0.11%, 96.429% 0.1%, 97.619% 0.78%, 98.81% 0.12%, 100% 0.43%, 99.75% 1.19%, 99.47% 2.381%, 99.75% 3.571%,
+    99.89% 4.762%, 99.92% 5.952%, 99.84% 7.143%, 99.56% 8.333%, 99.4% 9.524%, 99.62% 10.714%, 99.78% 11.905%, 99.89% 13.095%,
+    99.91% 14.286%, 99.5% 15.476%, 99.64% 16.667%, 99.73% 17.857%, 99.88% 19.048%, 99.62% 20.238%, 99.46% 21.429%, 99.75% 22.619%,
+    99.71% 23.81%, 99.64% 25%, 99.3% 26.19%, 99.46% 27.381%, 99.25% 28.571%, 99.49% 29.762%, 99.23% 30.952%, 99.6% 32.143%,
+    99.74% 33.333%, 99.63% 34.524%, 99.83% 35.714%, 99.64% 36.905%, 99.4% 38.095%, 99.57% 39.286%, 99.9% 40.476%, 99.35% 41.667%,
+    99.43% 42.857%, 99.84% 44.048%, 99.69% 45.238%, 99.77% 46.429%, 99.49% 47.619%, 99.38% 48.81%, 99.61% 50%, 99.89% 51.19%,
+    99.72% 52.381%, 99.76% 53.571%, 99.62% 54.762%, 99.65% 55.952%, 99.79% 57.143%, 99.91% 58.333%, 99.77% 59.524%, 99.83% 60.714%,
+    99.71% 61.905%, 99.7% 63.095%, 99.27% 64.286%, 99.4% 65.476%, 99.23% 66.667%, 99.73% 67.857%, 99.75% 69.048%, 99.49% 70.238%,
+    99.7% 71.429%, 99.47% 72.619%, 99.75% 73.81%, 99.4% 75%, 99.69% 76.19%, 99.68% 77.381%, 99.21% 78.571%, 99.43% 79.762%,
+    99.39% 80.952%, 99.42% 82.143%, 99.73% 83.333%, 99.41% 84.524%, 99.48% 85.714%, 99.73% 86.905%, 99.81% 88.095%, 99.39% 89.286%,
+    99.4% 90.476%, 99.39% 91.667%, 99.71% 92.857%, 99.73% 94.048%, 99.49% 95.238%, 99.72% 96.429%, 99.49% 97.619%, 99.72% 98.81%,
+    99.61% 100%, 98.81% 99.71%, 97.619% 99.87%, 96.429% 99.7%, 95.238% 99.81%, 94.048% 99.61%, 92.857% 99.75%, 91.667% 99.39%,
+    90.476% 99.21%, 89.286% 99.68%, 88.095% 99.27%, 86.905% 99.38%, 85.714% 99.74%, 84.524% 99.72%, 83.333% 99.56%, 82.143% 99.29%,
+    80.952% 99.36%, 79.762% 99.77%, 78.571% 99.51%, 77.381% 99.43%, 76.19% 99.64%, 75% 99.8%, 73.81% 99.84%, 72.619% 99.52%,
+    71.429% 99.51%, 70.238% 99.78%, 69.048% 99.67%, 67.857% 99.5%, 66.667% 99.28%, 65.476% 99.47%, 64.286% 99.65%, 63.095% 99.6%,
+    61.905% 99.36%, 60.714% 99.87%, 59.524% 99.8%, 58.333% 99.65%, 57.143% 99.31%, 55.952% 99.61%, 54.762% 99.85%, 53.571% 99.41%,
+    52.381% 99.37%, 51.19% 99.27%, 50% 99.5%, 48.81% 99.36%, 47.619% 99.81%, 46.429% 99.23%, 45.238% 99.89%, 44.048% 99.76%,
+    42.857% 99.64%, 41.667% 99.62%, 40.476% 99.6%, 39.286% 99.81%, 38.095% 99.23%, 36.905% 99.46%, 35.714% 99.44%, 34.524% 99.37%,
+    33.333% 99.3%, 32.143% 99.34%, 30.952% 99.86%, 29.762% 99.35%, 28.571% 99.49%, 27.381% 99.87%, 26.19% 99.72%, 25% 99.24%,
+    23.81% 99.78%, 22.619% 99.33%, 21.429% 99.28%, 20.238% 99.22%, 19.048% 99.9%, 17.857% 99.49%, 16.667% 99.85%, 15.476% 99.58%,
+    14.286% 99.77%, 13.095% 99.29%, 11.905% 99.68%, 10.714% 99.24%, 9.524% 99.67%, 8.333% 99.28%, 7.143% 99.81%, 5.952% 99.25%,
+    4.762% 99.48%, 3.571% 99.85%, 2.381% 99.25%, 1.19% 99.74%, 0% 99.77%, 0.23% 98.81%, 0.13% 97.619%, 0.13% 96.429%,
+    0.08% 95.238%, 0.18% 94.048%, 0.72% 92.857%, 0.41% 91.667%, 0.11% 90.476%, 0.1% 89.286%, 0.18% 88.095%, 0.27% 86.905%,
+    0.39% 85.714%, 0.29% 84.524%, 0.52% 83.333%, 0.09% 82.143%, 0.3% 80.952%, 0.36% 79.762%, 0.44% 78.571%, 0.25% 77.381%,
+    0.27% 76.19%, 0.39% 75%, 0.37% 73.81%, 0.09% 72.619%, 0.13% 71.429%, 0.33% 70.238%, 0.33% 69.048%, 0.25% 67.857%,
+    0.38% 66.667%, 0.33% 65.476%, 0.26% 64.286%, 0.8% 63.095%, 0.52% 61.905%, 0.65% 60.714%, 0.53% 59.524%, 0.39% 58.333%,
+    0.6% 57.143%, 0.2% 55.952%, 0.26% 54.762%, 0.1% 53.571%, 0.52% 52.381%, 0.52% 51.19%, 0.39% 50%, 0.12% 48.81%,
+    0.48% 47.619%, 0.4% 46.429%, 0.27% 45.238%, 0.73% 44.048%, 0.59% 42.857%, 0.15% 41.667%, 0.31% 40.476%, 0.26% 39.286%,
+    0.13% 38.095%, 0.16% 36.905%, 0.61% 35.714%, 0.5% 34.524%, 0.49% 33.333%, 0.17% 32.143%, 0.22% 30.952%, 0.16% 29.762%,
+    0.74% 28.571%, 0.31% 27.381%, 0.18% 26.19%, 0.49% 25%, 0.31% 23.81%, 0.37% 22.619%, 0.15% 21.429%, 0.25% 20.238%,
+    0.17% 19.048%, 0.54% 17.857%, 0.58% 16.667%, 0.33% 15.476%, 0.17% 14.286%, 0.36% 13.095%, 0.59% 11.905%, 0.43% 10.714%,
+    0.33% 9.524%, 0.33% 8.333%, 0.37% 7.143%, 0.44% 5.952%, 0.27% 4.762%, 0.51% 3.571%, 0.27% 2.381%, 0.66% 1.19%
+  );
+  /* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient
+}
+
+[data-theme="ancien"] .parchment-picture--v4 {
+  clip-path: polygon(
+    0% 0.48%, 1.19% 0.39%, 2.381% 0.31%, 3.571% 0.19%, 4.762% 0.67%, 5.952% 0.64%, 7.143% 0.39%, 8.333% 0.52%,
+    9.524% 0.09%, 10.714% 0.35%, 11.905% 0.53%, 13.095% 0.5%, 14.286% 0.2%, 15.476% 0.22%, 16.667% 0.65%, 17.857% 0.4%,
+    19.048% 0.15%, 20.238% 0.34%, 21.429% 0.22%, 22.619% 0.5%, 23.81% 0.65%, 25% 0.55%, 26.19% 0.17%, 27.381% 0.1%,
+    28.571% 0.41%, 29.762% 0.57%, 30.952% 0.43%, 32.143% 0.11%, 33.333% 0.72%, 34.524% 0.7%, 35.714% 0.21%, 36.905% 0.12%,
+    38.095% 0.68%, 39.286% 0.29%, 40.476% 0.68%, 41.667% 0.57%, 42.857% 0.14%, 44.048% 0.33%, 45.238% 0.69%, 46.429% 0.16%,
+    47.619% 0.22%, 48.81% 0.69%, 50% 0.19%, 51.19% 0.21%, 52.381% 0.36%, 53.571% 0.26%, 54.762% 0.2%, 55.952% 0.55%,
+    57.143% 0.36%, 58.333% 0.5%, 59.524% 0.16%, 60.714% 0.75%, 61.905% 0.6%, 63.095% 0.21%, 64.286% 0.72%, 65.476% 0.67%,
+    66.667% 0.62%, 67.857% 0.1%, 69.048% 0.76%, 70.238% 0.09%, 71.429% 0.71%, 72.619% 0.15%, 73.81% 0.41%, 75% 0.29%,
+    76.19% 0.25%, 77.381% 0.44%, 78.571% 0.3%, 79.762% 0.72%, 80.952% 0.27%, 82.143% 0.38%, 83.333% 0.78%, 84.524% 0.12%,
+    85.714% 0.42%, 86.905% 0.42%, 88.095% 0.76%, 89.286% 0.43%, 90.476% 0.22%, 91.667% 0.63%, 92.857% 0.27%, 94.048% 0.36%,
+    95.238% 0.54%, 96.429% 0.74%, 97.619% 0.28%, 98.81% 0.48%, 100% 0.32%, 99.8% 1.19%, 99.71% 2.381%, 99.9% 3.571%,
+    99.73% 4.762%, 99.6% 5.952%, 99.81% 7.143%, 99.67% 8.333%, 99.81% 9.524%, 99.36% 10.714%, 99.72% 11.905%, 99.8% 13.095%,
+    99.47% 14.286%, 99.4% 15.476%, 99.48% 16.667%, 99.84% 17.857%, 99.59% 19.048%, 99.64% 20.238%, 99.7% 21.429%, 99.49% 22.619%,
+    99.62% 23.81%, 99.84% 25%, 99.87% 26.19%, 99.31% 27.381%, 99.24% 28.571%, 99.77% 29.762%, 99.76% 30.952%, 99.32% 32.143%,
+    99.42% 33.333%, 99.74% 34.524%, 99.5% 35.714%, 99.5% 36.905%, 99.58% 38.095%, 99.33% 39.286%, 99.26% 40.476%, 99.77% 41.667%,
+    99.57% 42.857%, 99.23% 44.048%, 99.9% 45.238%, 99.91% 46.429%, 99.35% 47.619%, 99.3% 48.81%, 99.69% 50%, 99.67% 51.19%,
+    99.25% 52.381%, 99.31% 53.571%, 99.84% 54.762%, 99.33% 55.952%, 99.66% 57.143%, 99.64% 58.333%, 99.65% 59.524%, 99.62% 60.714%,
+    99.77% 61.905%, 99.74% 63.095%, 99.68% 64.286%, 99.91% 65.476%, 99.29% 66.667%, 99.74% 67.857%, 99.87% 69.048%, 99.87% 70.238%,
+    99.59% 71.429%, 99.88% 72.619%, 99.43% 73.81%, 99.72% 75%, 99.78% 76.19%, 99.65% 77.381%, 99.8% 78.571%, 99.78% 79.762%,
+    99.64% 80.952%, 99.79% 82.143%, 99.68% 83.333%, 99.89% 84.524%, 99.83% 85.714%, 99.8% 86.905%, 99.67% 88.095%, 99.77% 89.286%,
+    99.73% 90.476%, 99.57% 91.667%, 99.84% 92.857%, 99.44% 94.048%, 99.24% 95.238%, 99.88% 96.429%, 99.5% 97.619%, 99.3% 98.81%,
+    99.74% 100%, 98.81% 99.76%, 97.619% 99.78%, 96.429% 99.43%, 95.238% 99.42%, 94.048% 99.51%, 92.857% 99.81%, 91.667% 99.82%,
+    90.476% 99.66%, 89.286% 99.48%, 88.095% 99.6%, 86.905% 99.78%, 85.714% 99.21%, 84.524% 99.57%, 83.333% 99.43%, 82.143% 99.91%,
+    80.952% 99.4%, 79.762% 99.72%, 78.571% 99.72%, 77.381% 99.84%, 76.19% 99.84%, 75% 99.92%, 73.81% 99.67%, 72.619% 99.83%,
+    71.429% 99.32%, 70.238% 99.48%, 69.048% 99.68%, 67.857% 99.28%, 66.667% 99.3%, 65.476% 99.63%, 64.286% 99.69%, 63.095% 99.87%,
+    61.905% 99.47%, 60.714% 99.71%, 59.524% 99.5%, 58.333% 99.33%, 57.143% 99.85%, 55.952% 99.85%, 54.762% 99.71%, 53.571% 99.92%,
+    52.381% 99.79%, 51.19% 99.91%, 50% 99.59%, 48.81% 99.24%, 47.619% 99.49%, 46.429% 99.72%, 45.238% 99.32%, 44.048% 99.6%,
+    42.857% 99.39%, 41.667% 99.2%, 40.476% 99.63%, 39.286% 99.44%, 38.095% 99.92%, 36.905% 99.68%, 35.714% 99.83%, 34.524% 99.7%,
+    33.333% 99.32%, 32.143% 99.33%, 30.952% 99.47%, 29.762% 99.41%, 28.571% 99.76%, 27.381% 99.7%, 26.19% 99.64%, 25% 99.67%,
+    23.81% 99.7%, 22.619% 99.46%, 21.429% 99.21%, 20.238% 99.75%, 19.048% 99.62%, 17.857% 99.67%, 16.667% 99.78%, 15.476% 99.71%,
+    14.286% 99.69%, 13.095% 99.74%, 11.905% 99.74%, 10.714% 99.31%, 9.524% 99.77%, 8.333% 99.86%, 7.143% 99.81%, 5.952% 99.72%,
+    4.762% 99.23%, 3.571% 99.35%, 2.381% 99.29%, 1.19% 99.21%, 0% 99.78%, 0.31% 98.81%, 0.78% 97.619%, 0.61% 96.429%,
+    0.15% 95.238%, 0.3% 94.048%, 0.52% 92.857%, 0.58% 91.667%, 0.13% 90.476%, 0.24% 89.286%, 0.34% 88.095%, 0.11% 86.905%,
+    0.09% 85.714%, 0.35% 84.524%, 0.35% 83.333%, 0.67% 82.143%, 0.75% 80.952%, 0.15% 79.762%, 0.74% 78.571%, 0.11% 77.381%,
+    0.21% 76.19%, 0.66% 75%, 0.71% 73.81%, 0.64% 72.619%, 0.21% 71.429%, 0.33% 70.238%, 0.26% 69.048%, 0.32% 67.857%,
+    0.1% 66.667%, 0.32% 65.476%, 0.31% 64.286%, 0.74% 63.095%, 0.15% 61.905%, 0.33% 60.714%, 0.12% 59.524%, 0.23% 58.333%,
+    0.64% 57.143%, 0.34% 55.952%, 0.35% 54.762%, 0.24% 53.571%, 0.09% 52.381%, 0.75% 51.19%, 0.73% 50%, 0.22% 48.81%,
+    0.33% 47.619%, 0.59% 46.429%, 0.66% 45.238%, 0.36% 44.048%, 0.65% 42.857%, 0.56% 41.667%, 0.16% 40.476%, 0.37% 39.286%,
+    0.74% 38.095%, 0.74% 36.905%, 0.2% 35.714%, 0.69% 34.524%, 0.5% 33.333%, 0.39% 32.143%, 0.11% 30.952%, 0.73% 29.762%,
+    0.36% 28.571%, 0.6% 27.381%, 0.43% 26.19%, 0.23% 25%, 0.76% 23.81%, 0.67% 22.619%, 0.38% 21.429%, 0.67% 20.238%,
+    0.14% 19.048%, 0.64% 17.857%, 0.12% 16.667%, 0.42% 15.476%, 0.6% 14.286%, 0.17% 13.095%, 0.09% 11.905%, 0.52% 10.714%,
+    0.73% 9.524%, 0.09% 8.333%, 0.69% 7.143%, 0.31% 5.952%, 0.28% 4.762%, 0.41% 3.571%, 0.31% 2.381%, 0.21% 1.19%
+  );
+  /* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient
+}
+
+[data-theme="ancien"] .parchment-picture--v5 {
+  clip-path: polygon(
+    0% 0.53%, 1.19% 0.41%, 2.381% 0.61%, 3.571% 0.35%, 4.762% 0.09%, 5.952% 0.49%, 7.143% 0.1%, 8.333% 0.12%,
+    9.524% 0.67%, 10.714% 0.23%, 11.905% 0.58%, 13.095% 0.31%, 14.286% 0.33%, 15.476% 0.69%, 16.667% 0.57%, 17.857% 0.71%,
+    19.048% 0.71%, 20.238% 0.19%, 21.429% 0.17%, 22.619% 0.15%, 23.81% 0.39%, 25% 0.18%, 26.19% 0.52%, 27.381% 0.65%,
+    28.571% 0.69%, 29.762% 0.36%, 30.952% 0.42%, 32.143% 0.3%, 33.333% 0.33%, 34.524% 0.31%, 35.714% 0.29%, 36.905% 0.76%,
+    38.095% 0.32%, 39.286% 0.24%, 40.476% 0.71%, 41.667% 0.19%, 42.857% 0.6%, 44.048% 0.59%, 45.238% 0.28%, 46.429% 0.17%,
+    47.619% 0.71%, 48.81% 0.08%, 50% 0.78%, 51.19% 0.78%, 52.381% 0.44%, 53.571% 0.74%, 54.762% 0.39%, 55.952% 0.69%,
+    57.143% 0.73%, 58.333% 0.23%, 59.524% 0.41%, 60.714% 0.35%, 61.905% 0.38%, 63.095% 0.3%, 64.286% 0.63%, 65.476% 0.74%,
+    66.667% 0.09%, 67.857% 0.15%, 69.048% 0.25%, 70.238% 0.42%, 71.429% 0.44%, 72.619% 0.18%, 73.81% 0.14%, 75% 0.74%,
+    76.19% 0.29%, 77.381% 0.28%, 78.571% 0.24%, 79.762% 0.26%, 80.952% 0.23%, 82.143% 0.33%, 83.333% 0.43%, 84.524% 0.35%,
+    85.714% 0.67%, 86.905% 0.43%, 88.095% 0.09%, 89.286% 0.38%, 90.476% 0.19%, 91.667% 0.67%, 92.857% 0.11%, 94.048% 0.14%,
+    95.238% 0.42%, 96.429% 0.38%, 97.619% 0.24%, 98.81% 0.19%, 100% 0.63%, 99.72% 1.19%, 99.64% 2.381%, 99.89% 3.571%,
+    99.58% 4.762%, 99.85% 5.952%, 99.61% 7.143%, 99.69% 8.333%, 99.64% 9.524%, 99.46% 10.714%, 99.31% 11.905%, 99.4% 13.095%,
+    99.43% 14.286%, 99.86% 15.476%, 99.68% 16.667%, 99.6% 17.857%, 99.73% 19.048%, 99.42% 20.238%, 99.78% 21.429%, 99.79% 22.619%,
+    99.86% 23.81%, 99.58% 25%, 99.74% 26.19%, 99.92% 27.381%, 99.7% 28.571%, 99.25% 29.762%, 99.81% 30.952%, 99.82% 32.143%,
+    99.8% 33.333%, 99.32% 34.524%, 99.87% 35.714%, 99.73% 36.905%, 99.75% 38.095%, 99.6% 39.286%, 99.92% 40.476%, 99.9% 41.667%,
+    99.77% 42.857%, 99.59% 44.048%, 99.5% 45.238%, 99.63% 46.429%, 99.21% 47.619%, 99.86% 48.81%, 99.91% 50%, 99.49% 51.19%,
+    99.52% 52.381%, 99.41% 53.571%, 99.64% 54.762%, 99.74% 55.952%, 99.74% 57.143%, 99.62% 58.333%, 99.6% 59.524%, 99.59% 60.714%,
+    99.62% 61.905%, 99.8% 63.095%, 99.89% 64.286%, 99.78% 65.476%, 99.9% 66.667%, 99.7% 67.857%, 99.22% 69.048%, 99.32% 70.238%,
+    99.3% 71.429%, 99.87% 72.619%, 99.85% 73.81%, 99.24% 75%, 99.23% 76.19%, 99.64% 77.381%, 99.29% 78.571%, 99.68% 79.762%,
+    99.49% 80.952%, 99.7% 82.143%, 99.88% 83.333%, 99.41% 84.524%, 99.52% 85.714%, 99.23% 86.905%, 99.7% 88.095%, 99.48% 89.286%,
+    99.57% 90.476%, 99.8% 91.667%, 99.42% 92.857%, 99.38% 94.048%, 99.72% 95.238%, 99.21% 96.429%, 99.81% 97.619%, 99.78% 98.81%,
+    99.24% 100%, 98.81% 99.86%, 97.619% 99.75%, 96.429% 99.64%, 95.238% 99.72%, 94.048% 99.26%, 92.857% 99.69%, 91.667% 99.84%,
+    90.476% 99.75%, 89.286% 99.89%, 88.095% 99.9%, 86.905% 99.78%, 85.714% 99.92%, 84.524% 99.9%, 83.333% 99.64%, 82.143% 99.48%,
+    80.952% 99.27%, 79.762% 99.58%, 78.571% 99.74%, 77.381% 99.67%, 76.19% 99.79%, 75% 99.91%, 73.81% 99.62%, 72.619% 99.82%,
+    71.429% 99.78%, 70.238% 99.89%, 69.048% 99.66%, 67.857% 99.4%, 66.667% 99.25%, 65.476% 99.2%, 64.286% 99.7%, 63.095% 99.62%,
+    61.905% 99.85%, 60.714% 99.91%, 59.524% 99.66%, 58.333% 99.25%, 57.143% 99.42%, 55.952% 99.63%, 54.762% 99.84%, 53.571% 99.63%,
+    52.381% 99.89%, 51.19% 99.71%, 50% 99.31%, 48.81% 99.64%, 47.619% 99.29%, 46.429% 99.27%, 45.238% 99.41%, 44.048% 99.63%,
+    42.857% 99.75%, 41.667% 99.63%, 40.476% 99.77%, 39.286% 99.69%, 38.095% 99.77%, 36.905% 99.63%, 35.714% 99.48%, 34.524% 99.5%,
+    33.333% 99.3%, 32.143% 99.33%, 30.952% 99.25%, 29.762% 99.77%, 28.571% 99.52%, 27.381% 99.79%, 26.19% 99.6%, 25% 99.59%,
+    23.81% 99.68%, 22.619% 99.44%, 21.429% 99.25%, 20.238% 99.32%, 19.048% 99.67%, 17.857% 99.78%, 16.667% 99.3%, 15.476% 99.47%,
+    14.286% 99.62%, 13.095% 99.4%, 11.905% 99.81%, 10.714% 99.85%, 9.524% 99.35%, 8.333% 99.42%, 7.143% 99.91%, 5.952% 99.62%,
+    4.762% 99.89%, 3.571% 99.31%, 2.381% 99.6%, 1.19% 99.84%, 0% 99.51%, 0.6% 98.81%, 0.23% 97.619%, 0.54% 96.429%,
+    0.36% 95.238%, 0.37% 94.048%, 0.21% 92.857%, 0.18% 91.667%, 0.39% 90.476%, 0.61% 89.286%, 0.3% 88.095%, 0.63% 86.905%,
+    0.37% 85.714%, 0.57% 84.524%, 0.39% 83.333%, 0.38% 82.143%, 0.13% 80.952%, 0.09% 79.762%, 0.15% 78.571%, 0.7% 77.381%,
+    0.22% 76.19%, 0.29% 75%, 0.28% 73.81%, 0.52% 72.619%, 0.41% 71.429%, 0.21% 70.238%, 0.39% 69.048%, 0.36% 67.857%,
+    0.73% 66.667%, 0.26% 65.476%, 0.5% 64.286%, 0.15% 63.095%, 0.68% 61.905%, 0.31% 60.714%, 0.1% 59.524%, 0.64% 58.333%,
+    0.61% 57.143%, 0.64% 55.952%, 0.21% 54.762%, 0.35% 53.571%, 0.63% 52.381%, 0.43% 51.19%, 0.77% 50%, 0.65% 48.81%,
+    0.72% 47.619%, 0.16% 46.429%, 0.74% 45.238%, 0.33% 44.048%, 0.52% 42.857%, 0.39% 41.667%, 0.19% 40.476%, 0.7% 39.286%,
+    0.28% 38.095%, 0.49% 36.905%, 0.56% 35.714%, 0.17% 34.524%, 0.34% 33.333%, 0.5% 32.143%, 0.5% 30.952%, 0.13% 29.762%,
+    0.57% 28.571%, 0.32% 27.381%, 0.67% 26.19%, 0.28% 25%, 0.24% 23.81%, 0.39% 22.619%, 0.43% 21.429%, 0.61% 20.238%,
+    0.39% 19.048%, 0.23% 17.857%, 0.78% 16.667%, 0.09% 15.476%, 0.26% 14.286%, 0.15% 13.095%, 0.17% 11.905%, 0.63% 10.714%,
+    0.71% 9.524%, 0.25% 8.333%, 0.67% 7.143%, 0.35% 5.952%, 0.27% 4.762%, 0.11% 3.571%, 0.74% 2.381%, 0.76% 1.19%
+  );
+  /* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient
+}
+
+/* Types dont l'<img> d'origine porte elle-même l'aspect-ratio (pas de boîte
+   parente dédiée) : le wrapper reprend ce ratio, l'image passe en 100%/100%. */
+[data-theme="ancien"] .parchment-picture--fill {
+  width: 100%;
+  aspect-ratio: 16/9;
+}
+/* Types où le wrapper remplace l'<img> à l'intérieur d'une boîte déjà
+   dimensionnée par le parent (banner déjà aspect-ratio + overflow:hidden,
+   légende en sibling — non affectée par le clip-path de ce wrapper). */
+[data-theme="ancien"] .parchment-picture--absolute {
+  position: absolute;
+  inset: 0;
+}
+/* 2026-07-19 — tentative de fondu de transparence sur les bords (mask-image
+   basé sur le polygone du clip-path, flouté) essayée sur plusieurs passes,
+   jamais concluante (5-6 demandes de correction sans résultat visible en
+   pratique) : ANNULÉE à la demande explicite de l'utilisateur. Reste
+   uniquement le clip-path (bord dentelé net) + le vieillissement de teinte
+   (filter) ci-dessous — pas de mask-image, pas de --edge-mask. */
+[data-theme="ancien"] .parchment-picture img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.88) sepia(0.08) contrast(0.96) brightness(1.01);
+}
+/* eda-showcase-img garde son ratio naturel d'origine (pas de recadrage,
+   height:auto) : le wrapper ne force ni ratio ni object-fit ici, seuls le
+   vieillissement/l'érosion des bords s'appliquent. Le masque SVG (polygone +
+   flou, en % dans les 2 dimensions) reste cohérent quel que soit l'aspect-
+   ratio de la boîte — plus besoin de variante dédiée ici (contrairement à
+   l'ancien radial, invisible sur les captures EDA quasi carrées). */
+[data-theme="ancien"] .parchment-picture--auto img {
+  width: 100%;
+  height: auto;
+  object-fit: initial;
+}
+/* .gallery-card--contain (3 vignettes pixel-art EGA/CGA/Apple II) : l'image
+   n'est pas dans un wrapper --absolute (cf. note plus haut), donc elle hérite
+   du object-fit:cover/width/height:100% de la règle générique ci-dessus —
+   il faut restaurer explicitement son propre comportement (contain, hauteur
+   naturelle, fond sombre pour le letterboxing). Spécificité 3 classes bat
+   la règle générique (attribut+classe+élément) sans !important. */
+[data-theme="ancien"] .gallery-card--contain .gallery-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  background: #05070c;
+}
+/* Grain fin + micro-rayures, sur toute l'image (pas de masque de bord —
+   tentative de concentration en frange annulée avec le reste du mask-image,
+   cf. commentaire ci-dessus). */
+[data-theme="ancien"] .parchment-picture::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0.4;
+  background:
+    repeating-radial-gradient(circle at 30% 20%, rgba(60,40,20,0.5) 0 0.6px, transparent 0.6px 3.2px),
+    repeating-linear-gradient(11deg, rgba(60,40,20,0.35) 0 0.5px, transparent 0.5px 7px),
+    repeating-linear-gradient(101deg, rgba(60,40,20,0.3) 0 0.5px, transparent 0.5px 9px);
+}
