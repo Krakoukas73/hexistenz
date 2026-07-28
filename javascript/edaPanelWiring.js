@@ -27,6 +27,46 @@ import { applyCurrentLang } from './gameHudI18n.js';
 // Environnement) à l'intérieur du `root` (#debugLightPanel) créé par la façade edaPanelHost.js,
 // qui héberge aussi le HUD FPS (hud_fps.js) dans le même élément DOM.
 
+// ─── Persistance localStorage des réglages du panel (2026-07-28) ─────────────
+// Les 5 groupes de réglages (CINÉMA / PIX / EAU / VENT / NUAGES) avaient chacun leur
+// paire _readXStored()/_storeXSettings() strictement identique au nom de clé près.
+// Factorisé ici en un seul `makeStore(key)`.
+//
+// ÉCRITURES DEBOUNCÉES (200 ms) : chaque slider commit à chaque évènement `input`,
+// soit ~60 fois par seconde pendant un drag. localStorage.setItem est SYNCHRONE et
+// sérialise tout l'objet à chaque appel → source de saccades bien réelle au drag.
+// La valeur en mémoire reste appliquée immédiatement (aucun retard visuel) ; seule
+// l'écriture disque est différée jusqu'à la fin du geste. Même logique que le
+// debounce déjà en place sur la densité de contenu (_qualityDebounceTimer).
+// `flush` sur pagehide : garantit qu'un réglage modifié puis fermeture immédiate de
+// l'onglet (< 200 ms) n'est pas perdu.
+const _pendingWrites = new Map();   // key -> valeur à écrire
+let _writeTimer = null;
+
+function _flushStoreWrites() {
+  if (_writeTimer !== null) { clearTimeout(_writeTimer); _writeTimer = null; }
+  for (const [key, value] of _pendingWrites) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) { /* quota / stockage indisponible */ }
+  }
+  _pendingWrites.clear();
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', _flushStoreWrites);
+}
+
+function makeStore(key) {
+  return {
+    read() {
+      try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch { return null; }
+    },
+    write(value) {
+      _pendingWrites.set(key, value);
+      if (_writeTimer === null) _writeTimer = setTimeout(_flushStoreWrites, 200);
+    },
+  };
+}
+
 // ─── PIX HUD constants (embedded inside CUSTOMISATION panel) ─────────────────
 const PIX_STORAGE_KEY = 'dorfoPixelPostprocessSettings.v4';
 // ─── CINEMA HUD constants ─────────────────────────────────────────────────────
@@ -75,8 +115,9 @@ function _normalizeCin(s) {
     crtEnabled:   s.crtEnabled   !== false,
   };
 }
-function _readCinStored()     { try { const r = localStorage.getItem(CIN_STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; } }
-function _storeCinSettings(s) { try { localStorage.setItem(CIN_STORAGE_KEY, JSON.stringify(s)); } catch {} }
+const _cinStore = makeStore(CIN_STORAGE_KEY);
+const _readCinStored     = () => _cinStore.read();
+const _storeCinSettings  = (s) => _cinStore.write(s);
 const PIX_DEFAULTS = Object.freeze({ enabled: false, pixelSize: 2, normalEdgeStrength: 0.20, depthEdgeStrength: 0.25, worldShapeMode: 'platiste' });
 function _normalizePix(s) {
   return {
@@ -87,8 +128,9 @@ function _normalizePix(s) {
     worldShapeMode: s.worldShapeMode === 'platiste' ? 'platiste' : 'bouliste'
   };
 }
-function _readPixStored() { try { const r = localStorage.getItem(PIX_STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; } }
-function _storePixSettings(s) { try { localStorage.setItem(PIX_STORAGE_KEY, JSON.stringify(s)); } catch {} }
+const _pixStore = makeStore(PIX_STORAGE_KEY);
+const _readPixStored     = () => _pixStore.read();
+const _storePixSettings  = (s) => _pixStore.write(s);
 
 // ─── EAU HUD constants (intégration Cyril — panneau flottant fusionné dans le HUD LUT) ─────
 const WATER_STORAGE_KEY = 'hexistenz_water_hud_v1';
@@ -195,8 +237,9 @@ function _applyWaterLive(cur) {
   setWaterFoamParams(foamEff);
   setWakeParams(wakeEff);
 }
-function _readWaterStored()     { try { const r = localStorage.getItem(WATER_STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; } }
-function _storeWaterSettings(s) { try { localStorage.setItem(WATER_STORAGE_KEY, JSON.stringify(s)); } catch {} }
+const _waterStore = makeStore(WATER_STORAGE_KEY);
+const _readWaterStored     = () => _waterStore.read();
+const _storeWaterSettings  = (s) => _waterStore.write(s);
 
 // ─── VENT HUD constants (ondulation blé / prairie / arbres) ────────────────
 const WIND_STORAGE_KEY = 'hexistenz_wind_hud_v1';
@@ -246,8 +289,9 @@ function _applyWindLive(cur, forestGroup) {
   setGrassWindParams(grassEff);
   setTreeWindParams(forestGroup, treeEff);
 }
-function _readWindStored()     { try { const r = localStorage.getItem(WIND_STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; } }
-function _storeWindSettings(s) { try { localStorage.setItem(WIND_STORAGE_KEY, JSON.stringify(s)); } catch {} }
+const _windStore = makeStore(WIND_STORAGE_KEY);
+const _readWindStored     = () => _windStore.read();
+const _storeWindSettings  = (s) => _windStore.write(s);
 
 // ─── NUAGES HUD constants (nuages à l'horizon, mode jour) ──────────────────
 const CLOUD_STORAGE_KEY = 'hexistenz_cloud_hud_v1';
@@ -263,13 +307,17 @@ function _normalizeCloud(s) {
   for (const { key, min, max } of CLOUD_SLIDERS) out[key] = clp(s?.[key], min, max, CLOUD_DEFAULTS[key]);
   return out;
 }
-function _readCloudStored()     { try { const r = localStorage.getItem(CLOUD_STORAGE_KEY); return r ? JSON.parse(r) : null; } catch { return null; } }
-function _storeCloudSettings(s) { try { localStorage.setItem(CLOUD_STORAGE_KEY, JSON.stringify(s)); } catch {} }
+const _cloudStore = makeStore(CLOUD_STORAGE_KEY);
+const _readCloudStored     = () => _cloudStore.read();
+const _storeCloudSettings  = (s) => _cloudStore.write(s);
 
 const LUT_STORAGE_KEY = 'hexistenz_lut_v1';
+const _lutStore = makeStore(LUT_STORAGE_KEY);
 
+// Appelé par applyAll(), donc à CHAQUE évènement `input` d'un slider LUT : c'est le
+// plus chaud des chemins de persistance du panel → debouncé comme les autres.
 function saveLutConfig(exportedConfig) {
-  try { localStorage.setItem(LUT_STORAGE_KEY, JSON.stringify(exportedConfig)); } catch (_) { /* quota */ }
+  _lutStore.write(exportedConfig);
 }
 
 function loadLutConfig() {

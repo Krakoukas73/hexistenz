@@ -1,7 +1,7 @@
 {
     "code": "REPLAY",
     "createdAt": 1784209019,
-    "updatedAt": 1784538970,
+    "updatedAt": 1785232311,
     "players": {
         "p_19f64f58f76_8ee40503": {
             "id": "p_19f64f58f76_8ee40503",
@@ -67,18 +67,27 @@
             "id": "p_19f7eca3598_2263948a",
             "name": "Piregwan",
             "lastSeen": 1784538970
+        },
+        "p_19fa808ff7e_bb91989a": {
+            "id": "p_19fa808ff7e_bb91989a",
+            "name": "Piregwan",
+            "lastSeen": 1785232311
         }
     },
     "cursors": {
-        "p_19f7eca3598_2263948a": {
+        "p_19fa808ff7e_bb91989a": {
             "type": "cursor",
             "visible": true,
             "q": 0,
-            "r": -2,
-            "rotation": 0,
+            "r": 0,
+            "rotation": 5,
             "tile": {
-                "id": "tile_1784538609049_c81635bbc620e",
+                "id": "tile_1785231643730_f075e935051628",
                 "edges": {
+                    "nw": {
+                        "type": "grass",
+                        "value": 1
+                    },
                     "n": {
                         "type": "house",
                         "value": 1
@@ -88,39 +97,35 @@
                         "value": 1
                     },
                     "se": {
-                        "type": "field",
+                        "type": "house",
                         "value": 2
                     },
                     "s": {
-                        "type": "field",
+                        "type": "house",
                         "value": 1
                     },
                     "sw": {
-                        "type": "forest",
-                        "value": 4
-                    },
-                    "nw": {
-                        "type": "field",
+                        "type": "grass",
                         "value": 1
                     }
                 },
-                "center": "field",
-                "rotation": 0
+                "center": "grass",
+                "rotation": 5
             },
             "valid": false,
             "playerName": "Piregwan",
             "roomCode": "REPLAY",
-            "playerId": "p_19f7eca3598_2263948a",
-            "updatedAt": 1784538970730
+            "playerId": "p_19fa808ff7e_bb91989a",
+            "updatedAt": 1785232311487
         }
     },
     "state": {
         "schemaVersion": 1,
         "roomCode": "REPLAY",
-        "updatedAt": 1784538600984,
-        "stateVersion": 67,
-        "totalScore": 517,
-        "lastScore": 27,
+        "updatedAt": 1785232067614,
+        "stateVersion": 73,
+        "totalScore": 2083,
+        "lastScore": 1502,
         "rotationIndex": 0,
         "gameOver": false,
         "placedTiles": [
@@ -1637,6 +1642,149 @@
                 "consumedSpecialCell": null,
                 "consumedBonusCell": null,
                 "playerId": "p_19f770b414c_f5ecf322"
+            },
+            {
+                "q": 1,
+                "r": -1,
+                "key": "1,-1",
+                "tile": {
+                    "id": "tile_1785231643730_0c0d31404e609",
+                    "edges": {
+                        "n": {
+                            "type": "house",
+                            "value": 1
+                        },
+                        "ne": {
+                            "type": "forest",
+                            "value": 3
+                        },
+                        "se": {
+                            "type": "grass",
+                            "value": 1
+                        },
+                        "s": {
+                            "type": "field",
+                            "value": 1
+                        },
+                        "sw": {
+                            "type": "grass",
+                            "value": 1
+                        },
+                        "nw": {
+                            "type": "house",
+                            "value": 2
+                        }
+                    },
+                    "center": "house",
+                    "rotation": 0
+                },
+                "score": 2,
+                "bonusTilesAwarded": 0,
+                "completedMissions": [],
+                "missionBonusTilesAwarded": 0,
+                "generatedMission": null,
+                "missionTurnBefore": 31,
+                "purgedMissions": [],
+                "consumedSpecialCell": null,
+                "consumedBonusCell": null,
+                "playerId": "p_19fa808ff7e_bb91989a"
+            },
+            {
+                "q": 0,
+                "r": -1,
+                "key": "0,-1",
+                "tile": {
+                    "id": "tile_1785231643730_55cb5a1bbba108",
+                    "edges": {
+                        "n": {
+                            "type": "forest",
+                            "value": 5
+                        },
+                        "ne": {
+                            "type": "house",
+                            "value": 4
+                        },
+                        "se": {
+                            "type": "grass",
+                            "value": 1
+                        },
+                        "s": {
+                            "type": "grass",
+                            "value": 1
+                        },
+                        "sw": {
+                            "type": "field",
+                            "value": 1
+                        },
+                        "nw": {
+                            "type": "field",
+                            "value": 1
+                        }
+                    },
+                    "center": "grass",
+                    "rotation": 0
+                },
+                "score": 62,
+                "bonusTilesAwarded": 0,
+                "completedMissions": [],
+                "missionBonusTilesAwarded": 0,
+                "generatedMission": null,
+                "missionTurnBefore": 32,
+                "purgedMissions": [],
+                "consumedSpecialCell": null,
+                "consumedBonusCell": null,
+                "playerId": "p_19fa808ff7e_bb91989a"
+            },
+            {
+                "q": -2,
+                "r": 2,
+                "key": "-2,2",
+                "tile": {
+                    "id": "tile_1785231643730_971a30aada9998",
+                    "edges": {
+                        "ne": {
+                            "type": "rail",
+                            "value": 1
+                        },
+                        "se": {
+                            "type": "forest",
+                            "value": 5
+                        },
+                        "s": {
+                            "type": "grass",
+                            "value": 1
+                        },
+                        "sw": {
+                            "type": "forest",
+                            "value": 3
+                        },
+                        "nw": {
+                            "type": "grass",
+                            "value": 1
+                        },
+                        "n": {
+                            "type": "rail",
+                            "value": 1
+                        }
+                    },
+                    "center": "rail",
+                    "rotation": 1
+                },
+                "score": 1502,
+                "bonusTilesAwarded": 0,
+                "completedMissions": [],
+                "missionBonusTilesAwarded": 0,
+                "generatedMission": null,
+                "missionTurnBefore": 33,
+                "purgedMissions": [],
+                "consumedSpecialCell": null,
+                "consumedBonusCell": {
+                    "q": -2,
+                    "r": 2,
+                    "key": "-2,2",
+                    "score": 1500
+                },
+                "playerId": "p_19fa808ff7e_bb91989a"
             }
         ],
         "placementHistory": [
@@ -2007,6 +2155,149 @@
                 "consumedSpecialCell": null,
                 "consumedBonusCell": null,
                 "playerId": "p_19f770b414c_f5ecf322"
+            },
+            {
+                "q": 1,
+                "r": -1,
+                "key": "1,-1",
+                "tile": {
+                    "id": "tile_1785231643730_0c0d31404e609",
+                    "edges": {
+                        "n": {
+                            "type": "house",
+                            "value": 1
+                        },
+                        "ne": {
+                            "type": "forest",
+                            "value": 3
+                        },
+                        "se": {
+                            "type": "grass",
+                            "value": 1
+                        },
+                        "s": {
+                            "type": "field",
+                            "value": 1
+                        },
+                        "sw": {
+                            "type": "grass",
+                            "value": 1
+                        },
+                        "nw": {
+                            "type": "house",
+                            "value": 2
+                        }
+                    },
+                    "center": "house",
+                    "rotation": 0
+                },
+                "score": 2,
+                "bonusTilesAwarded": 0,
+                "completedMissions": [],
+                "missionBonusTilesAwarded": 0,
+                "generatedMission": null,
+                "missionTurnBefore": 31,
+                "purgedMissions": [],
+                "consumedSpecialCell": null,
+                "consumedBonusCell": null,
+                "playerId": "p_19fa808ff7e_bb91989a"
+            },
+            {
+                "q": 0,
+                "r": -1,
+                "key": "0,-1",
+                "tile": {
+                    "id": "tile_1785231643730_55cb5a1bbba108",
+                    "edges": {
+                        "n": {
+                            "type": "forest",
+                            "value": 5
+                        },
+                        "ne": {
+                            "type": "house",
+                            "value": 4
+                        },
+                        "se": {
+                            "type": "grass",
+                            "value": 1
+                        },
+                        "s": {
+                            "type": "grass",
+                            "value": 1
+                        },
+                        "sw": {
+                            "type": "field",
+                            "value": 1
+                        },
+                        "nw": {
+                            "type": "field",
+                            "value": 1
+                        }
+                    },
+                    "center": "grass",
+                    "rotation": 0
+                },
+                "score": 62,
+                "bonusTilesAwarded": 0,
+                "completedMissions": [],
+                "missionBonusTilesAwarded": 0,
+                "generatedMission": null,
+                "missionTurnBefore": 32,
+                "purgedMissions": [],
+                "consumedSpecialCell": null,
+                "consumedBonusCell": null,
+                "playerId": "p_19fa808ff7e_bb91989a"
+            },
+            {
+                "q": -2,
+                "r": 2,
+                "key": "-2,2",
+                "tile": {
+                    "id": "tile_1785231643730_971a30aada9998",
+                    "edges": {
+                        "ne": {
+                            "type": "rail",
+                            "value": 1
+                        },
+                        "se": {
+                            "type": "forest",
+                            "value": 5
+                        },
+                        "s": {
+                            "type": "grass",
+                            "value": 1
+                        },
+                        "sw": {
+                            "type": "forest",
+                            "value": 3
+                        },
+                        "nw": {
+                            "type": "grass",
+                            "value": 1
+                        },
+                        "n": {
+                            "type": "rail",
+                            "value": 1
+                        }
+                    },
+                    "center": "rail",
+                    "rotation": 1
+                },
+                "score": 1502,
+                "bonusTilesAwarded": 0,
+                "completedMissions": [],
+                "missionBonusTilesAwarded": 0,
+                "generatedMission": null,
+                "missionTurnBefore": 33,
+                "purgedMissions": [],
+                "consumedSpecialCell": null,
+                "consumedBonusCell": {
+                    "q": -2,
+                    "r": 2,
+                    "key": "-2,2",
+                    "score": 1500
+                },
+                "playerId": "p_19fa808ff7e_bb91989a"
             }
         ],
         "specialCells": [
@@ -2040,12 +2331,6 @@
             }
         ],
         "bonusCells": [
-            {
-                "q": -2,
-                "r": 2,
-                "key": "-2,2",
-                "score": 1500
-            },
             {
                 "q": 4,
                 "r": -6,
@@ -2114,7 +2399,10 @@
                 "tile_1784312577948_dc41010ef5a168",
                 "tile_1784398941608_75be3e09098548",
                 "tile_1784408658309_f59eb177160b58",
-                "tile_1784408658309_76b9fe39cbfb68"
+                "tile_1784408658309_76b9fe39cbfb68",
+                "tile_1785231643730_55cb5a1bbba108",
+                "tile_1785231643730_971a30aada9998",
+                "tile_1785231643730_f075e935051628"
             ],
             "targetLevelByType": {
                 "mill": 1,
@@ -2124,7 +2412,7 @@
                 "grass": 1
             },
             "nextId": 6,
-            "turn": 31
+            "turn": 34
         },
         "players": {
             "p_19f64f58f76_8ee40503": {
@@ -21618,17 +21906,1483 @@
                 "rotationIndex": 0,
                 "scoreContribution": 0,
                 "lastSeen": 1784538970730
+            },
+            "p_19fa808ff7e_bb91989a": {
+                "id": "p_19fa808ff7e_bb91989a",
+                "name": "Piregwan",
+                "deck": [
+                    {
+                        "id": "tile_1785231643730_f075e935051628",
+                        "edges": {
+                            "n": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "house",
+                                "value": 2
+                            },
+                            "sw": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "grass",
+                                "value": 1
+                            }
+                        },
+                        "center": "grass",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643730_c8e4bda56f9cd",
+                        "edges": {
+                            "n": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "house",
+                                "value": 1
+                            }
+                        },
+                        "center": "grass",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643730_aae1737cf804c8",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 6
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "house",
+                                "value": 4
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 2
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643730_818ba52161c848",
+                        "edges": {
+                            "n": {
+                                "type": "house",
+                                "value": 4
+                            },
+                            "ne": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "forest",
+                                "value": 4
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 4
+                            },
+                            "sw": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 1
+                            }
+                        },
+                        "center": "forest",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643730_69b9038805a3d",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 3
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "rail",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "rail",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 2
+                            }
+                        },
+                        "center": "rail",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643730_2644441da386d",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "ne": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 3
+                            }
+                        },
+                        "center": "grass",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643730_f0150a11c2043",
+                        "edges": {
+                            "n": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "forest",
+                                "value": 4
+                            },
+                            "se": {
+                                "type": "house",
+                                "value": 4
+                            },
+                            "s": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 2
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643730_1660267bf57338",
+                        "edges": {
+                            "n": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "ne": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "house",
+                                "value": 4
+                            },
+                            "s": {
+                                "type": "house",
+                                "value": 2
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 1
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643730_125b4c5afb629",
+                        "edges": {
+                            "n": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "house",
+                                "value": 4
+                            },
+                            "sw": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "house",
+                                "value": 4
+                            }
+                        },
+                        "center": "house",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_2f8d3e492e8df",
+                        "edges": {
+                            "n": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "ne": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "s": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 6
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 2
+                            }
+                        },
+                        "center": "forest",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_9919ed79161e9",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 3
+                            },
+                            "ne": {
+                                "type": "rail",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "rail",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 2
+                            }
+                        },
+                        "center": "rail",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_28451d5dc480e",
+                        "edges": {
+                            "n": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "house",
+                                "value": 4
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 4
+                            },
+                            "sw": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 1
+                            }
+                        },
+                        "center": "grass",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_ea09b7cad56b28",
+                        "edges": {
+                            "n": {
+                                "type": "house",
+                                "value": 2
+                            },
+                            "ne": {
+                                "type": "house",
+                                "value": 2
+                            },
+                            "se": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 3
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "nw": {
+                                "type": "house",
+                                "value": 4
+                            }
+                        },
+                        "center": "house",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_afc2e9b29e536",
+                        "edges": {
+                            "n": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "house",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 1
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_fb244c68819ba8",
+                        "edges": {
+                            "n": {
+                                "type": "rail",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "water",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "rail",
+                                "value": 1
+                            }
+                        },
+                        "center": "rail",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_5b530b53c76138",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "ne": {
+                                "type": "forest",
+                                "value": 4
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "water",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "water",
+                                "value": 1
+                            }
+                        },
+                        "center": "water",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_095e93fdef7bb8",
+                        "edges": {
+                            "n": {
+                                "type": "house",
+                                "value": 3
+                            },
+                            "ne": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "se": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "house",
+                                "value": 4
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "nw": {
+                                "type": "house",
+                                "value": 1
+                            }
+                        },
+                        "center": "house",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_178783089f26d8",
+                        "edges": {
+                            "n": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "house",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 6
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_8f2f8849647d58",
+                        "edges": {
+                            "n": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "sw": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 5
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_0e3cd2d5879518",
+                        "edges": {
+                            "n": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "sw": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "grass",
+                                "value": 1
+                            }
+                        },
+                        "center": "grass",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_e40f3ec749e278",
+                        "edges": {
+                            "n": {
+                                "type": "house",
+                                "value": 2
+                            },
+                            "ne": {
+                                "type": "house",
+                                "value": 2
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 3
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "grass",
+                                "value": 1
+                            }
+                        },
+                        "center": "house",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_4baa391d03f618",
+                        "edges": {
+                            "n": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 1
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_991ee1b701e49",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 3
+                            },
+                            "ne": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "rail",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "rail",
+                                "value": 1
+                            }
+                        },
+                        "center": "rail",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_f282d8ba6bef18",
+                        "edges": {
+                            "n": {
+                                "type": "house",
+                                "value": 2
+                            },
+                            "ne": {
+                                "type": "house",
+                                "value": 3
+                            },
+                            "se": {
+                                "type": "house",
+                                "value": 4
+                            },
+                            "s": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 6
+                            }
+                        },
+                        "center": "house",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_2312d55c278b9",
+                        "edges": {
+                            "n": {
+                                "type": "rail",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "se": {
+                                "type": "forest",
+                                "value": 4
+                            },
+                            "s": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "rail",
+                                "value": 1
+                            }
+                        },
+                        "center": "rail",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_fe8b547e206bd",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "ne": {
+                                "type": "rail",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "rail",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 5
+                            }
+                        },
+                        "center": "rail",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_e73168a3767e1",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "ne": {
+                                "type": "water",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 1
+                            }
+                        },
+                        "center": "forest",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_9d0386b06e1348",
+                        "edges": {
+                            "n": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 6
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_d5118f7847d94",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 6
+                            },
+                            "ne": {
+                                "type": "house",
+                                "value": 3
+                            },
+                            "se": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 2
+                            }
+                        },
+                        "center": "forest",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_699f0a17251e7",
+                        "edges": {
+                            "n": {
+                                "type": "water",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "water",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "water",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "water",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 4
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 5
+                            }
+                        },
+                        "center": "water",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_37278c333f3838",
+                        "edges": {
+                            "n": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "sw": {
+                                "type": "house",
+                                "value": 3
+                            },
+                            "nw": {
+                                "type": "house",
+                                "value": 3
+                            }
+                        },
+                        "center": "grass",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_e3bc211adb7d8",
+                        "edges": {
+                            "n": {
+                                "type": "house",
+                                "value": 3
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "sw": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 5
+                            }
+                        },
+                        "center": "house",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_4b1d55c263468",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 4
+                            },
+                            "ne": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "sw": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 1
+                            }
+                        },
+                        "center": "forest",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_807cdf696e20f8",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 3
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "se": {
+                                "type": "forest",
+                                "value": 3
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 3
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 5
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 5
+                            }
+                        },
+                        "center": "forest",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_8b6338c4cd75b8",
+                        "edges": {
+                            "n": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "grass",
+                                "value": 1
+                            }
+                        },
+                        "center": "grass",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_4454e47cae2f6",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 4
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "grass",
+                                "value": 1
+                            }
+                        },
+                        "center": "grass",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_20c681c0774b5",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 6
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "grass",
+                                "value": 1
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_5eb4bb85ad93c",
+                        "edges": {
+                            "n": {
+                                "type": "house",
+                                "value": 3
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 6
+                            },
+                            "sw": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "house",
+                                "value": 1
+                            }
+                        },
+                        "center": "house",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_0232149f6961",
+                        "edges": {
+                            "n": {
+                                "type": "house",
+                                "value": 4
+                            },
+                            "ne": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "house",
+                                "value": 3
+                            },
+                            "s": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "house",
+                                "value": 3
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 2
+                            }
+                        },
+                        "center": "house",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_fd93c8984d5d",
+                        "edges": {
+                            "n": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 6
+                            },
+                            "sw": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 3
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_d2357df2f6be9",
+                        "edges": {
+                            "n": {
+                                "type": "house",
+                                "value": 4
+                            },
+                            "ne": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "water",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "forest",
+                                "value": 4
+                            }
+                        },
+                        "center": "grass",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_3984113fd03f3",
+                        "edges": {
+                            "n": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 4
+                            },
+                            "sw": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "house",
+                                "value": 4
+                            }
+                        },
+                        "center": "house",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_666bcce20e15e",
+                        "edges": {
+                            "n": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "house",
+                                "value": 1
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_a825d54685421",
+                        "edges": {
+                            "n": {
+                                "type": "forest",
+                                "value": 4
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "house",
+                                "value": 4
+                            },
+                            "nw": {
+                                "type": "grass",
+                                "value": 1
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_69585ba4d3816",
+                        "edges": {
+                            "n": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "se": {
+                                "type": "house",
+                                "value": 2
+                            },
+                            "s": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 2
+                            },
+                            "nw": {
+                                "type": "grass",
+                                "value": 1
+                            }
+                        },
+                        "center": "grass",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_4f579e3c393558",
+                        "edges": {
+                            "n": {
+                                "type": "field",
+                                "value": 1
+                            },
+                            "ne": {
+                                "type": "house",
+                                "value": 2
+                            },
+                            "se": {
+                                "type": "house",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "grass",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "forest",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 2
+                            }
+                        },
+                        "center": "field",
+                        "rotation": 0
+                    },
+                    {
+                        "id": "tile_1785231643731_8ac16a7f40281",
+                        "edges": {
+                            "n": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "ne": {
+                                "type": "field",
+                                "value": 2
+                            },
+                            "se": {
+                                "type": "water",
+                                "value": 1
+                            },
+                            "s": {
+                                "type": "water",
+                                "value": 1
+                            },
+                            "sw": {
+                                "type": "water",
+                                "value": 1
+                            },
+                            "nw": {
+                                "type": "field",
+                                "value": 1
+                            }
+                        },
+                        "center": "water",
+                        "rotation": 0
+                    }
+                ],
+                "rotationIndex": 0,
+                "scoreContribution": 0,
+                "lastSeen": 1785232311487
             }
         },
         "stats": {
-            "tiles": 31,
+            "tiles": 34,
             "totals": {
-                "field": 71,
-                "forest": 146,
+                "field": 74,
+                "forest": 162,
                 "water": 17,
-                "rail": 12,
-                "house": 75,
-                "grass": 36
+                "rail": 14,
+                "house": 82,
+                "grass": 42
             },
             "largest": {
                 "field": 9,
@@ -21644,15 +23398,19 @@
             "cometHits": 0
         },
         "cursors": {
-            "p_19f7eca3598_2263948a": {
+            "p_19fa808ff7e_bb91989a": {
                 "type": "cursor",
                 "visible": true,
                 "q": 0,
-                "r": -2,
-                "rotation": 0,
+                "r": 0,
+                "rotation": 5,
                 "tile": {
-                    "id": "tile_1784538609049_c81635bbc620e",
+                    "id": "tile_1785231643730_f075e935051628",
                     "edges": {
+                        "nw": {
+                            "type": "grass",
+                            "value": 1
+                        },
                         "n": {
                             "type": "house",
                             "value": 1
@@ -21662,36 +23420,32 @@
                             "value": 1
                         },
                         "se": {
-                            "type": "field",
+                            "type": "house",
                             "value": 2
                         },
                         "s": {
-                            "type": "field",
+                            "type": "house",
                             "value": 1
                         },
                         "sw": {
-                            "type": "forest",
-                            "value": 4
-                        },
-                        "nw": {
-                            "type": "field",
+                            "type": "grass",
                             "value": 1
                         }
                     },
-                    "center": "field",
-                    "rotation": 0
+                    "center": "grass",
+                    "rotation": 5
                 },
                 "valid": false,
                 "playerName": "Piregwan",
                 "roomCode": "REPLAY",
-                "playerId": "p_19f7eca3598_2263948a",
-                "updatedAt": 1784538970730
+                "playerId": "p_19fa808ff7e_bb91989a",
+                "updatedAt": 1785232311487
             }
         }
     },
     "schemaVersion": 1,
-    "stateVersion": 67,
-    "totalScore": 517,
+    "stateVersion": 73,
+    "totalScore": 2083,
     "gameOver": false,
     "placedTiles": [
         {
@@ -23207,6 +24961,149 @@
             "consumedSpecialCell": null,
             "consumedBonusCell": null,
             "playerId": "p_19f770b414c_f5ecf322"
+        },
+        {
+            "q": 1,
+            "r": -1,
+            "key": "1,-1",
+            "tile": {
+                "id": "tile_1785231643730_0c0d31404e609",
+                "edges": {
+                    "n": {
+                        "type": "house",
+                        "value": 1
+                    },
+                    "ne": {
+                        "type": "forest",
+                        "value": 3
+                    },
+                    "se": {
+                        "type": "grass",
+                        "value": 1
+                    },
+                    "s": {
+                        "type": "field",
+                        "value": 1
+                    },
+                    "sw": {
+                        "type": "grass",
+                        "value": 1
+                    },
+                    "nw": {
+                        "type": "house",
+                        "value": 2
+                    }
+                },
+                "center": "house",
+                "rotation": 0
+            },
+            "score": 2,
+            "bonusTilesAwarded": 0,
+            "completedMissions": [],
+            "missionBonusTilesAwarded": 0,
+            "generatedMission": null,
+            "missionTurnBefore": 31,
+            "purgedMissions": [],
+            "consumedSpecialCell": null,
+            "consumedBonusCell": null,
+            "playerId": "p_19fa808ff7e_bb91989a"
+        },
+        {
+            "q": 0,
+            "r": -1,
+            "key": "0,-1",
+            "tile": {
+                "id": "tile_1785231643730_55cb5a1bbba108",
+                "edges": {
+                    "n": {
+                        "type": "forest",
+                        "value": 5
+                    },
+                    "ne": {
+                        "type": "house",
+                        "value": 4
+                    },
+                    "se": {
+                        "type": "grass",
+                        "value": 1
+                    },
+                    "s": {
+                        "type": "grass",
+                        "value": 1
+                    },
+                    "sw": {
+                        "type": "field",
+                        "value": 1
+                    },
+                    "nw": {
+                        "type": "field",
+                        "value": 1
+                    }
+                },
+                "center": "grass",
+                "rotation": 0
+            },
+            "score": 62,
+            "bonusTilesAwarded": 0,
+            "completedMissions": [],
+            "missionBonusTilesAwarded": 0,
+            "generatedMission": null,
+            "missionTurnBefore": 32,
+            "purgedMissions": [],
+            "consumedSpecialCell": null,
+            "consumedBonusCell": null,
+            "playerId": "p_19fa808ff7e_bb91989a"
+        },
+        {
+            "q": -2,
+            "r": 2,
+            "key": "-2,2",
+            "tile": {
+                "id": "tile_1785231643730_971a30aada9998",
+                "edges": {
+                    "ne": {
+                        "type": "rail",
+                        "value": 1
+                    },
+                    "se": {
+                        "type": "forest",
+                        "value": 5
+                    },
+                    "s": {
+                        "type": "grass",
+                        "value": 1
+                    },
+                    "sw": {
+                        "type": "forest",
+                        "value": 3
+                    },
+                    "nw": {
+                        "type": "grass",
+                        "value": 1
+                    },
+                    "n": {
+                        "type": "rail",
+                        "value": 1
+                    }
+                },
+                "center": "rail",
+                "rotation": 1
+            },
+            "score": 1502,
+            "bonusTilesAwarded": 0,
+            "completedMissions": [],
+            "missionBonusTilesAwarded": 0,
+            "generatedMission": null,
+            "missionTurnBefore": 33,
+            "purgedMissions": [],
+            "consumedSpecialCell": null,
+            "consumedBonusCell": {
+                "q": -2,
+                "r": 2,
+                "key": "-2,2",
+                "score": 1500
+            },
+            "playerId": "p_19fa808ff7e_bb91989a"
         }
     ],
     "placementHistory": [
@@ -23577,6 +25474,149 @@
             "consumedSpecialCell": null,
             "consumedBonusCell": null,
             "playerId": "p_19f770b414c_f5ecf322"
+        },
+        {
+            "q": 1,
+            "r": -1,
+            "key": "1,-1",
+            "tile": {
+                "id": "tile_1785231643730_0c0d31404e609",
+                "edges": {
+                    "n": {
+                        "type": "house",
+                        "value": 1
+                    },
+                    "ne": {
+                        "type": "forest",
+                        "value": 3
+                    },
+                    "se": {
+                        "type": "grass",
+                        "value": 1
+                    },
+                    "s": {
+                        "type": "field",
+                        "value": 1
+                    },
+                    "sw": {
+                        "type": "grass",
+                        "value": 1
+                    },
+                    "nw": {
+                        "type": "house",
+                        "value": 2
+                    }
+                },
+                "center": "house",
+                "rotation": 0
+            },
+            "score": 2,
+            "bonusTilesAwarded": 0,
+            "completedMissions": [],
+            "missionBonusTilesAwarded": 0,
+            "generatedMission": null,
+            "missionTurnBefore": 31,
+            "purgedMissions": [],
+            "consumedSpecialCell": null,
+            "consumedBonusCell": null,
+            "playerId": "p_19fa808ff7e_bb91989a"
+        },
+        {
+            "q": 0,
+            "r": -1,
+            "key": "0,-1",
+            "tile": {
+                "id": "tile_1785231643730_55cb5a1bbba108",
+                "edges": {
+                    "n": {
+                        "type": "forest",
+                        "value": 5
+                    },
+                    "ne": {
+                        "type": "house",
+                        "value": 4
+                    },
+                    "se": {
+                        "type": "grass",
+                        "value": 1
+                    },
+                    "s": {
+                        "type": "grass",
+                        "value": 1
+                    },
+                    "sw": {
+                        "type": "field",
+                        "value": 1
+                    },
+                    "nw": {
+                        "type": "field",
+                        "value": 1
+                    }
+                },
+                "center": "grass",
+                "rotation": 0
+            },
+            "score": 62,
+            "bonusTilesAwarded": 0,
+            "completedMissions": [],
+            "missionBonusTilesAwarded": 0,
+            "generatedMission": null,
+            "missionTurnBefore": 32,
+            "purgedMissions": [],
+            "consumedSpecialCell": null,
+            "consumedBonusCell": null,
+            "playerId": "p_19fa808ff7e_bb91989a"
+        },
+        {
+            "q": -2,
+            "r": 2,
+            "key": "-2,2",
+            "tile": {
+                "id": "tile_1785231643730_971a30aada9998",
+                "edges": {
+                    "ne": {
+                        "type": "rail",
+                        "value": 1
+                    },
+                    "se": {
+                        "type": "forest",
+                        "value": 5
+                    },
+                    "s": {
+                        "type": "grass",
+                        "value": 1
+                    },
+                    "sw": {
+                        "type": "forest",
+                        "value": 3
+                    },
+                    "nw": {
+                        "type": "grass",
+                        "value": 1
+                    },
+                    "n": {
+                        "type": "rail",
+                        "value": 1
+                    }
+                },
+                "center": "rail",
+                "rotation": 1
+            },
+            "score": 1502,
+            "bonusTilesAwarded": 0,
+            "completedMissions": [],
+            "missionBonusTilesAwarded": 0,
+            "generatedMission": null,
+            "missionTurnBefore": 33,
+            "purgedMissions": [],
+            "consumedSpecialCell": null,
+            "consumedBonusCell": {
+                "q": -2,
+                "r": 2,
+                "key": "-2,2",
+                "score": 1500
+            },
+            "playerId": "p_19fa808ff7e_bb91989a"
         }
     ],
     "specialCells": [
@@ -23610,12 +25650,6 @@
         }
     ],
     "bonusCells": [
-        {
-            "q": -2,
-            "r": 2,
-            "key": "-2,2",
-            "score": 1500
-        },
         {
             "q": 4,
             "r": -6,
@@ -23684,7 +25718,10 @@
             "tile_1784312577948_dc41010ef5a168",
             "tile_1784398941608_75be3e09098548",
             "tile_1784408658309_f59eb177160b58",
-            "tile_1784408658309_76b9fe39cbfb68"
+            "tile_1784408658309_76b9fe39cbfb68",
+            "tile_1785231643730_55cb5a1bbba108",
+            "tile_1785231643730_971a30aada9998",
+            "tile_1785231643730_f075e935051628"
         ],
         "targetLevelByType": {
             "mill": 1,
@@ -23694,17 +25731,17 @@
             "grass": 1
         },
         "nextId": 6,
-        "turn": 31
+        "turn": 34
     },
     "stats": {
-        "tiles": 31,
+        "tiles": 34,
         "totals": {
-            "field": 71,
-            "forest": 146,
+            "field": 74,
+            "forest": 162,
             "water": 17,
-            "rail": 12,
-            "house": 75,
-            "grass": 36
+            "rail": 14,
+            "house": 82,
+            "grass": 42
         },
         "largest": {
             "field": 9,

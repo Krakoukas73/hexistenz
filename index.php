@@ -41,11 +41,26 @@ $LANG_FILES = [
     'pt' => 'portuguese',
     'fr-CA' => 'fr-CA',
 ];
-$t = [];
-foreach ($LANG_FILES as $code => $file) {
-    $t[$code] = json_decode(@file_get_contents($langDir . $file . '.json'), true) ?: [];
-}
 $LANGS = array_keys($LANG_FILES);
+
+// ── 2026-07-28 — on n'embarque plus QUE la langue utile ──────────────────────
+// Avant : les 6 fichiers de langue (≈408 Ko) étaient lus puis sérialisés dans le
+// <head> de CHAQUE chargement de page, dont ~340 Ko que le visiteur ne verrait
+// jamais. Désormais on embarque le français (repli obligatoire de resolveI18n +
+// langue du rendu PHP) et, s'il diffère, la langue préférée du visiteur.
+//
+// Cette préférence arrive par un cookie posé par setLang() côté JS. Elle ne sert
+// qu'à choisir quoi pré-charger : si le cookie est absent ou inconnu, on tombe sur
+// le français et le moteur JS ira chercher la langue manquante en fetch() (cf.
+// ensureLang plus bas). Le premier affichage reste donc toujours correct, sans
+// clignotement pour un visiteur qui revient dans sa langue.
+$prefLang = isset($_COOKIE['hexistenz_pres_lang']) ? (string)$_COOKIE['hexistenz_pres_lang'] : 'fr';
+if (!isset($LANG_FILES[$prefLang])) $prefLang = 'fr';
+
+$t = [];
+foreach (array_unique(['fr', $prefLang]) as $code) {
+    $t[$code] = json_decode(@file_get_contents($langDir . $LANG_FILES[$code] . '.json'), true) ?: [];
+}
 
 // Accesseur sûr côté PHP : tr($t,'fr','hero.tagline') — évite les notices sur clé
 // manquante. Sert uniquement à rendre le repli FR ; la traduction réactive passe
@@ -754,16 +769,23 @@ function fmt_date($iso) {
         <div class="hs-main">
           <div class="hs-name"><?= htmlspecialchars($hs['name']) ?></div>
           <?php if ($dateStr): ?><div class="hs-date"><?= $dateStr ?></div><?php endif; ?>
-          <?php if ($hs['tiles'] > 0): ?>
+          <?php if ($i < 3 && $hs['tiles'] > 0): ?>
           <div class="hs-headline-stat"><span class="icon">⬡</span><?= number_format($hs['tiles']) ?> <span data-i18n="scores.headline_stat"><?= tr($t,'fr','scores.headline_stat') ?></span></div>
           <?php endif; ?>
           <?php
+            // 2026-07-20 — "format étendu" (détail trains/bateaux/moulins/comètes +
+            // biomes) réservé aux 3 premiers rangs (demande explicite) : au-delà,
+            // la carte garde EXACTEMENT le même gabarit (rang/nom/date/score) mais
+            // sans le détail, pour rester lisible sur un classement plus long (jusqu'à
+            // 10). $smallStats reste vide pour $i >= 3, donc le bloc .hs-meta plus bas
+            // ($smallStats && ...) ne s'affiche simplement pas.
             // TOUTES les petites stats (lignes/bateaux/comètes + détail biomes) dans
             // UN SEUL flux .hs-meta — pas de blocs séparés qui se retrouvent sur des
             // lignes différentes. Même style partout (cf. .hs-meta-item en CSS).
             // Un seul data-i18n par mot (singulier/pluriel choisi ici, uniforme sur
             // les 3 langues depuis la refonte du 2026-07-14 : toutes ont .s/.p).
             $smallStats = '';
+            if ($i < 3) {
             if ($hs['trains'] > 0) {
               $key = $hs['trains'] > 1 ? 'scores.trains_p' : 'scores.trains_s';
               $smallStats .= '<span class="hs-meta-item"><span class="icon">🚂</span><span class="hs-stat-num">' . $hs['trains'] . '</span>'
@@ -800,6 +822,7 @@ function fmt_date($iso) {
                   . '</span>';
               }
             }
+            } // fin if ($i < 3) — format étendu réservé aux 3 premiers rangs
             if ($smallStats): ?>
           <div class="hs-meta"><?= $smallStats ?></div>
           <?php endif; ?>
@@ -845,11 +868,31 @@ function fmt_date($iso) {
   // CSS [data-lang] sur un markup dupliqué. Ici tout le JSON (toutes les langues)
   // est déjà dans la page (cf. <script id="i18n-data"> dans le <head>) ; changer
   // de langue = relire ce JSON et réécrire le texte de chaque [data-i18n].
+  // I18N ne contient que le français + éventuellement la langue préférée (cf. le
+  // bloc PHP en tête de fichier). Les autres sont chargées à la demande par
+  // ensureLang() — une seule requête, mise en cache par le navigateur.
   const I18N = JSON.parse(document.getElementById('i18n-data').textContent);
-  const LANGS = Object.keys(I18N);
+  const LANGS = <?= json_encode($LANGS, JSON_UNESCAPED_UNICODE) ?>;
+  const LANG_FILES = <?= json_encode($LANG_FILES, JSON_UNESCAPED_UNICODE) ?>;
 
   function resolveI18n(lang, path) {
     return path.split('.').reduce((node, key) => (node && typeof node === 'object') ? node[key] : undefined, I18N[lang]);
+  }
+
+  // Charge le JSON d'une langue si absent. Échec réseau → false, l'appelant garde
+  // le français (resolveI18n retombe dessus de toute façon).
+  async function ensureLang(l) {
+    if (I18N[l]) return true;
+    const file = LANG_FILES[l];
+    if (!file) return false;
+    try {
+      const res = await fetch('./json/languages/' + file + '.json');
+      if (!res.ok) return false;
+      I18N[l] = await res.json();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   function applyI18n(lang) {
@@ -860,11 +903,15 @@ function fmt_date($iso) {
     });
   }
 
-  function setLang(l) {
+  async function setLang(l) {
     if (!LANGS.includes(l)) l = 'fr';
+    await ensureLang(l);
     document.documentElement.lang = l;
     document.documentElement.dataset.lang = l;
     localStorage.setItem('hexistenz_pres_lang', l);
+    // Cookie lu par PHP au chargement suivant pour pré-embarquer la bonne langue
+    // (et donc éviter le fetch + le clignotement). 1 an, pas de donnée personnelle.
+    document.cookie = 'hexistenz_pres_lang=' + encodeURIComponent(l) + '; max-age=31536000; path=/; SameSite=Lax';
     const sel = document.getElementById('langSelect');
     if (sel) sel.value = l;
     applyI18n(l);

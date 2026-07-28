@@ -40,7 +40,7 @@
     "label": "Two ways to see the world",
     "title1": "Flat-worlders and globe-believers",
     "title2": "Two irreconcilable factions",
-    "sub": "Hexistenz splits its builders into two irreconcilable factions. A visual option,\n      a philosophical commitment. Which side are you on?",
+    "sub": "Hexistenz splits its builders into <strong>two irreconcilable factions</strong>. A visual option,\n      a philosophical commitment. Which side are you on?",
     "flat": {
       "tag": "Flat Mode",
       "name": "🪨 The Flat World",
@@ -56,7 +56,7 @@
   "biomes": {
     "label": "The biomes",
     "title": "Six biomes to connect",
-    "sub": "Each tile has six triangular sectors. Match identical biomes to form zones and maximize your score.",
+    "sub": "Each tile has six triangular sectors. <strong>Match identical biomes</strong> to form zones and maximize your score.",
     "grass": {
       "name": "Meadow",
       "desc": "Grassy expanses where every blade trembles in the wind, dotted with wildflowers, rocks, deer and shrubs. Neutral ground between major networks.",
@@ -91,7 +91,7 @@
   "missions": {
     "label": "Objectives",
     "title": "Missions",
-    "sub": "Each game generates automatic objectives tied to biomes and networks. Completing one scores 100 points and, more importantly, adds 3 new tiles to the draw pile — theoretically enabling infinite games.",
+    "sub": "Each game generates automatic objectives tied to biomes and networks. Completing one scores <strong>100 points and, more importantly, adds 3 new tiles to the draw pile</strong> — theoretically enabling infinite games.",
     "zone": {
       "name": "Biome zone",
       "desc": "Reach a minimum area in a given biome: <em>\"8-sector forest\"</em>, <em>\"12-sector grassland\"</em>…"
@@ -132,7 +132,7 @@
   "gameplay": {
     "label": "Game mechanics",
     "title": "How to play",
-    "sub": "A simple loop, infinite depth. Every tile placed transforms the world.",
+    "sub": "A simple loop, <strong>infinite depth</strong>. Every tile placed transforms the world.",
     "ui_caption": "Current tile · Next tile · Remaining tiles",
     "steps": {
       "draw": {
@@ -192,7 +192,7 @@
     "label": "Visual presets",
     "title1": "Several atmospheres",
     "title2": "Infinite customizations",
-    "sub": "Many ready-to-use visual presets — but each is a starting point: color LUT, cinematic effects (chromatic aberration, film grain, tilt-shift), retro pixelization, EGA and Amiga aesthetics, volumetric smoke, procedural sky… Hundreds of combinations to transform the entire world to your taste. Every customization can be exported in one click and shared with other players.",
+    "sub": "Many ready-to-use visual presets — but each is a starting point: color LUT, cinematic effects (chromatic aberration, film grain, tilt-shift), retro pixelization, EGA and Amiga aesthetics, volumetric smoke, procedural sky… <strong>Hundreds of combinations</strong> to transform the entire world to your taste. Every customization can be exported in one click and shared with other players.",
     "preset_word": "Preset",
     "presets": {
       "autumn": "Autumn",
@@ -208,7 +208,7 @@
   "creatures": {
     "label": "The world's life",
     "title": "A world full of creatures",
-    "sub": "The world doesn't just exist — it breathes. Animals, birds and inhabitants bring every biome to life through the seasons.",
+    "sub": "The world doesn't just exist — <strong>it breathes</strong>. Animals, birds and inhabitants bring every biome to life through the seasons.",
     "sheep": {
       "name": "Sheep",
       "desc": "Flocks graze peacefully in the grasslands, drifting along with the wind-swayed grass."
@@ -277,7 +277,7 @@
   "audio": {
     "label": "Sound design",
     "title": "A world you can hear",
-    "sub": "Sound follows the camera in real time — every biome, train and boat has its own voice, rising and fading with distance.",
+    "sub": "Sound follows the camera <strong>in real time</strong> — every biome, train and boat has its own voice, rising and fading with distance.",
     "spatial": {
       "name": "3D spatial sound",
       "desc": "Village ambience, forest and grassland birdsong, crows over the fields, waves on the shore, trains and boats — every source's volume follows its real distance and direction."
@@ -298,7 +298,7 @@
   "daynnight": {
     "label": "World atmosphere",
     "title": "Environment",
-    "sub": "One switch changes everything. Sun, clouds and blue sky give way to stars, moon and comets.",
+    "sub": "<strong>One switch changes everything</strong>. Sun, clouds and blue sky give way to stars, moon and comets.",
     "day": {
       "name": "Day Mode",
       "list": [
@@ -354,7 +354,7 @@
   "eda": {
     "label": "Art direction editor (EDA)",
     "title": "Extreme customization",
-    "sub": "Beyond the many presets, the EDA exposes dozens of metrics adjustable in real time, spread across 3 tabs — LUT, Cinematic, Environment. Every slider responds instantly, no reload, and the whole configuration copies/exports as JSON to be replayed or shared.",
+    "sub": "Beyond the many presets, the EDA exposes <strong>dozens of metrics adjustable in real time</strong>, spread across 3 tabs — LUT, Cinematic, Environment. Every slider responds instantly, no reload, and the whole configuration copies/exports as JSON to be replayed or shared.",
     "lut": {
       "label": "LUT",
       "desc": "Fog, light source, full color grading (RGB curves, gamma, levels) and per-biome palette."
@@ -371,7 +371,7 @@
   "multi": {
     "title1": "Multiplayer",
     "title2": "Build together",
-    "sub": "Join or create a room with a 6-letter code. The grid is shared in real time — each player places their tiles and sees others' moves as they happen.",
+    "sub": "Join or create a room with a 6-letter code. The grid is <strong>shared in real time</strong> — each player places their tiles and sees others' moves as they happen.",
     "features": [
       "All games are saved — resume or replay at any time",
       "Rooms joinable at any time, even mid-game",
@@ -379,9 +379,9 @@
       "The map grows collaboratively, tile by tile"
     ],
     "gallery_title": "SHARE YOUR SNAPSHOTS",
-    "gallery_promo": "Immortalize your best games: the 📷 button captures the world with no HUD, and the 🖼️ button opens the shared gallery, visible to every player",
+    "gallery_promo": "Immortalize your best games: the 📷 button captures the world with no HUD, and the 🖼️ button opens the <strong>shared gallery, visible to every player</strong>",
     "replay_title": "Record your games as video",
-    "replay_promo": "In one click, replay your whole game at high speed and download it as a video, straight from your browser.",
+    "replay_promo": "In one click, <strong>replay your whole game at high speed</strong> and download it as a video, straight from your browser.",
     "btn_create": "Create a game",
     "room_title": "Room code",
     "room_status": "Game in progress · 3 players",

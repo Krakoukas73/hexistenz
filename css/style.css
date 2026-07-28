@@ -1,12 +1,14 @@
-@import url('./base.css');
-@import url('./deck.css');
-@import url('./help.css');
-@import url('./highscore.css');
-@import url('./missions.css');
-@import url('./eda.css');
-@import url('./startupMenu.css');
-@import url('./snapshotGalleryOverlay.css');
-@import url('./preloader.css');
+/* ─── css/style.css — OBSOLÈTE depuis le 2026-07-28 ──────────────────────────
+   Ce fichier ne contenait qu'une chaîne de 9 @import. Ceux-ci sont désormais
+   déclarés en <link> explicites dans game.php (voir le bloc $cssSheets), pour
+   deux raisons :
+     • les @import ne sont pas vus par le preload scanner → un aller-retour
+       réseau supplémentaire avant que les 9 feuilles ne commencent à charger ;
+     • ils ne portaient pas de ?v= → le cache-busting de style.css ne les
+       revalidait jamais.
+   Plus aucune page ne charge ce fichier. Conservé vide le temps qu'un éventuel
+   cache navigateur en circulation expire ; supprimable ensuite.
+   ────────────────────────────────────────────────────────────────────────── */
 
 /* postprocessHud.css supprimé : PIX HUD fusionné dans debugLightUi (panel CUSTOMISATION) */
 /* eda.css : CSS du panneau EDA + HUD FPS, ex-installDebugLightCss() dans debugLightUi.js

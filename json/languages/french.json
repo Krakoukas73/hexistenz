@@ -40,7 +40,7 @@
     "label": "Deux façons de voir le monde",
     "title1": "Platistes et boulistes",
     "title2": "Deux factions irréconciliables",
-    "sub": "Hexistenz divise les bâtisseurs en deux factions irréconciliables. Une option visuelle,\n      un engagement philosophique. De quel côté êtes-vous&nbsp;?",
+    "sub": "Hexistenz divise les bâtisseurs en <strong>deux factions irréconciliables</strong>. Une option visuelle,\n      un engagement philosophique. De quel côté êtes-vous&nbsp;?",
     "flat": {
       "tag": "Mode Platiste",
       "name": "🪨 Le Monde Plat",
@@ -56,7 +56,7 @@
   "biomes": {
     "label": "Les biomes",
     "title": "Six biomes à connecter",
-    "sub": "Chaque tuile est composée de six secteurs triangulaires. Assemblez les biomes identiques pour former des zones et maximiser votre score.",
+    "sub": "Chaque tuile est composée de six secteurs triangulaires. <strong>Assemblez les biomes identiques</strong> pour former des zones et maximiser votre score.",
     "grass": {
       "name": "Prairie",
       "desc": "Étendues herbeuses où chaque brin frémit sous le vent, parsemées de fleurs sauvages, rochers, cerfs et buissons. Terrain neutre entre les grands réseaux.",
@@ -91,7 +91,7 @@
   "missions": {
     "label": "Objectifs",
     "title": "Les missions",
-    "sub": "Chaque partie génère des objectifs automatiques liés aux biomes et aux réseaux. Les accomplir rapporte 100 points et surtout 3 nouvelles tuiles dans la pioche — ce qui garantit théoriquement des parties infinies.",
+    "sub": "Chaque partie génère des objectifs automatiques liés aux biomes et aux réseaux. Les accomplir rapporte <strong>100 points et surtout 3 nouvelles tuiles dans la pioche</strong> — ce qui garantit théoriquement des parties infinies.",
     "zone": {
       "name": "Zone biome",
       "desc": "Atteindre une surface minimale dans un biome donné : <em>«&nbsp;Forêt de 8 secteurs&nbsp;»</em>, <em>«&nbsp;Prairie de 12 secteurs&nbsp;»</em>…"
@@ -132,7 +132,7 @@
   "gameplay": {
     "label": "Mécanique de jeu",
     "title": "Comment jouer",
-    "sub": "Une boucle simple, une profondeur infinie. Chaque tuile posée transforme le monde.",
+    "sub": "Une boucle simple, <strong>une profondeur infinie</strong>. Chaque tuile posée transforme le monde.",
     "ui_caption": "Tuile courante · Tuile suivante · Tuiles restantes",
     "steps": {
       "draw": {
@@ -192,7 +192,7 @@
     "label": "Ambiances visuelles",
     "title1": "Plusieurs atmosphères",
     "title2": "Une infinité de personnalisations",
-    "sub": "De nombreux presets visuels prêts à l'emploi — mais chacun est une base : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… Des centaines de combinaisons pour transformer le monde entier à votre goût. Chaque personnalisation s'exporte en un clic et peut être partagée avec d'autres joueurs.",
+    "sub": "De nombreux presets visuels prêts à l'emploi — mais chacun est une base : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… <strong>Des centaines de combinaisons</strong> pour transformer le monde entier à votre goût. Chaque personnalisation s'exporte en un clic et peut être partagée avec d'autres joueurs.",
     "preset_word": "Preset",
     "presets": {
       "autumn": "Automne",
@@ -208,7 +208,7 @@
   "creatures": {
     "label": "La vie du monde",
     "title": "Un monde de créatures",
-    "sub": "Le monde ne se contente pas d'exister : il respire. Animaux, oiseaux et habitants animent chaque biome au fil des saisons.",
+    "sub": "Le monde ne se contente pas d'exister : <strong>il respire</strong>. Animaux, oiseaux et habitants animent chaque biome au fil des saisons.",
     "sheep": {
       "name": "Moutons",
       "desc": "Des troupeaux paissent tranquillement dans les prairies, se déplaçant au gré des herbes qui ondulent sous le vent."
@@ -277,7 +277,7 @@
   "audio": {
     "label": "Ambiance sonore",
     "title": "Un monde qui s'entend",
-    "sub": "Le son suit la caméra en temps réel — chaque biome, chaque train, chaque bateau a sa propre voix, qui monte et s'efface avec la distance.",
+    "sub": "Le son suit la caméra <strong>en temps réel</strong> — chaque biome, chaque train, chaque bateau a sa propre voix, qui monte et s'efface avec la distance.",
     "spatial": {
       "name": "Son spatial 3D",
       "desc": "Ambiances de village, chants d'oiseaux de forêt et de prairie, corbeaux au-dessus des champs, ressac des plages, trains et bateaux — chaque source varie en volume selon sa distance et sa direction réelles."
@@ -298,7 +298,7 @@
   "daynnight": {
     "label": "Ambiance du monde",
     "title": "Environnement",
-    "sub": "Un seul interrupteur change tout. Le soleil, les nuages et le ciel bleu laissent place aux étoiles, à la lune et aux comètes.",
+    "sub": "<strong>Un seul interrupteur change tout</strong>. Le soleil, les nuages et le ciel bleu laissent place aux étoiles, à la lune et aux comètes.",
     "day": {
       "name": "Mode Jour",
       "list": [
@@ -354,7 +354,7 @@
   "eda": {
     "label": "Éditeur de direction artistique (EDA)",
     "title": "Personnalisation extrême",
-    "sub": "Au-delà des nombreux presets, l'EDA ouvre des dizaines de metrics ajustables en temps réel, réparties en 3 onglets — LUT, Cinématique, Environnement. Chaque curseur répond instantanément, sans rechargement, et l'ensemble se copie/exporte en JSON pour être rejoué ou partagé.",
+    "sub": "Au-delà des nombreux presets, l'EDA ouvre <strong>des dizaines de metrics ajustables en temps réel</strong>, réparties en 3 onglets — LUT, Cinématique, Environnement. Chaque curseur répond instantanément, sans rechargement, et l'ensemble se copie/exporte en JSON pour être rejoué ou partagé.",
     "lut": {
       "label": "LUT",
       "desc": "Brouillard, astre lumineux, étalonnage colorimétrique complet (courbes RVB, gamma, niveaux) et palette par biome."
@@ -371,7 +371,7 @@
   "multi": {
     "title1": "Multiplayer",
     "title2": "Bâtissez ensemble",
-    "sub": "Rejoignez ou créez une salle avec un code à 6 lettres. La grille est partagée en temps réel — chaque joueur pose ses tuiles et voit les placements des autres au fur et à mesure.",
+    "sub": "Rejoignez ou créez une salle avec un code à 6 lettres. La grille est <strong>partagée en temps réel</strong> — chaque joueur pose ses tuiles et voit les placements des autres au fur et à mesure.",
     "features": [
       "Toutes les parties sont sauvegardées — reprenez ou rejouez à tout moment",
       "Salles rejoignables à tout moment, même en cours de partie",
@@ -379,9 +379,9 @@
       "La carte se construit collaborativement, tuile après tuile"
     ],
     "gallery_title": "PARTAGEZ VOS CAPTURES",
-    "gallery_promo": "Immortalisez vos plus belles parties : le bouton 📷 capture le monde sans HUD, et le bouton 🖼️ ouvre la galerie partagée avec tous les joueurs",
+    "gallery_promo": "Immortalisez vos plus belles parties : le bouton 📷 capture le monde sans HUD, et le bouton 🖼️ ouvre la <strong>galerie partagée avec tous les joueurs</strong>",
     "replay_title": "Enregistrez vos parties en vidéo",
-    "replay_promo": "D'un clic, revivez toute la partie en accéléré et téléchargez-la en vidéo, directement depuis votre navigateur.",
+    "replay_promo": "D'un clic, <strong>revivez toute la partie en accéléré</strong> et téléchargez-la en vidéo, directement depuis votre navigateur.",
     "btn_create": "Créer une partie",
     "room_title": "Code de salle",
     "room_status": "Partie en cours · 3 joueurs",

@@ -40,7 +40,7 @@
     "label": "Deux façons ben différentes de voir le monde",
     "title1": "Platistes pis boulistes",
     "title2": "Deux gangs qui s'entendront jamais",
-    "sub": "Hexistenz divise le monde en deux gangs qui s'entendront jamais. Un choix visuel,\n      pis un vrai engagement philosophique. T'es de quel bord, toi&nbsp;?",
+    "sub": "Hexistenz divise le monde en <strong>deux gangs qui s'entendront jamais</strong>. Un choix visuel,\n      pis un vrai engagement philosophique. T'es de quel bord, toi&nbsp;?",
     "flat": {
       "tag": "Mode Platiste",
       "name": "🪨 Le monde ben droit",
@@ -56,7 +56,7 @@
   "biomes": {
     "label": "Les biomes",
     "title": "Six biomes à connecter",
-    "sub": "Chaque tuile est composée de six secteurs triangulaires. Assemble les biomes identiques pour former des zones et maximiser ton pointage.",
+    "sub": "Chaque tuile est composée de six secteurs triangulaires. <strong>Assemble les biomes identiques</strong> pour former des zones et maximiser ton pointage.",
     "grass": {
       "name": "Prairie",
       "desc": "De grandes étendues d'herbe qui bougent au vent, pleines de fleurs sauvages, de roches, de cerfs pis de buissons. Le terrain neutre entre les grands réseaux — le genre de place où tu poses n'importe quoi pis ça marche pareil.",
@@ -91,7 +91,7 @@
   "missions": {
     "label": "Objectifs",
     "title": "Les missions",
-    "sub": "Chaque game génère des objectifs liés aux biomes pis aux réseaux. Une mission réglée donne 100 points et surtout 3 nouvelles tuiles dans la pile — assez pour étirer la game pas mal longtemps.",
+    "sub": "Chaque game génère des objectifs liés aux biomes pis aux réseaux. Une mission réglée donne <strong>100 points et surtout 3 nouvelles tuiles dans la pile</strong> — assez pour étirer la game pas mal longtemps.",
     "zone": {
       "name": "Zone biome",
       "desc": "Atteindre une surface minimale dans un biome donné : <em>«&nbsp;Forêt de 8 secteurs&nbsp;»</em>, <em>«&nbsp;Prairie de 12 secteurs&nbsp;»</em>…"
@@ -132,7 +132,7 @@
   "gameplay": {
     "label": "Comment ça se joue",
     "title": "Comment jouer",
-    "sub": "Une boucle simple, une profondeur sans fin. Chaque tuile posée change le monde, tranquillement pas vite.",
+    "sub": "Une boucle simple, <strong>une profondeur sans fin</strong>. Chaque tuile posée change le monde, tranquillement pas vite.",
     "ui_caption": "Tuile courante · Tuile suivante · Tuiles restantes",
     "steps": {
       "draw": {
@@ -192,7 +192,7 @@
     "label": "Ambiances visuelles",
     "title1": "Plusieurs atmosphères",
     "title2": "Une infinité de personnalisations",
-    "sub": "Ben des presets visuels prêts à l'emploi — mais chacun est juste un point de départ : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… Des centaines de combinaisons pour retaper le monde au complet à ton goût. Chaque réglage s'exporte en un clic pis peut être partagé avec d'autres joueurs.",
+    "sub": "Ben des presets visuels prêts à l'emploi — mais chacun est juste un point de départ : LUT colorimétrique, effets cinématiques (aberration chromatique, grain pellicule, tilt-shift), pixelisation rétro, ambiances EGA et Amiga, fumée volumétrique, ciel procédural… <strong>Des centaines de combinaisons</strong> pour retaper le monde au complet à ton goût. Chaque réglage s'exporte en un clic pis peut être partagé avec d'autres joueurs.",
     "preset_word": "Preset",
     "presets": {
       "autumn": "Automne",
@@ -208,7 +208,7 @@
   "creatures": {
     "label": "La vie du monde",
     "title": "Un monde plein de monde",
-    "sub": "Le monde fait pas juste exister : il respire. Animaux, oiseaux pis habitants font vivre chaque biome au fil des saisons.",
+    "sub": "Le monde fait pas juste exister : <strong>il respire</strong>. Animaux, oiseaux pis habitants font vivre chaque biome au fil des saisons.",
     "sheep": {
       "name": "Moutons",
       "desc": "Des troupeaux broutent tranquillement dans les prairies, se promenant au gré des herbes qui ondulent dans le vent."
@@ -277,7 +277,7 @@
   "audio": {
     "label": "Ambiance sonore",
     "title": "Un monde qui fait du bruit",
-    "sub": "Le son suit la caméra en temps réel. Chaque biome, chaque train pis chaque bateau a sa propre voix, qui monte ou disparaît selon la distance.",
+    "sub": "Le son suit la caméra <strong>en temps réel</strong>. Chaque biome, chaque train pis chaque bateau a sa propre voix, qui monte ou disparaît selon la distance.",
     "spatial": {
       "name": "Son spatial 3D",
       "desc": "Le brouhaha du village, les oiseaux qui chantent en forêt pis en prairie, les corbeaux au-dessus des champs, le ressac des plages, les trains pis les bateaux — chaque son varie en volume selon sa vraie distance pis sa vraie direction."
@@ -298,7 +298,7 @@
   "daynnight": {
     "label": "Ambiance du monde",
     "title": "Environnement",
-    "sub": "Un seul interrupteur change toute la patente. Le soleil, les nuages pis le ciel bleu laissent leur place aux étoiles, à la lune et aux comètes.",
+    "sub": "<strong>Un seul interrupteur change toute la patente</strong>. Le soleil, les nuages pis le ciel bleu laissent leur place aux étoiles, à la lune et aux comètes.",
     "day": {
       "name": "Mode Jour",
       "list": [
@@ -354,7 +354,7 @@
   "eda": {
     "label": "Éditeur de direction artistique (EDA)",
     "title": "Personnalisation extrême",
-    "sub": "En plus des ben des presets, l'EDA ouvre des dizaines de réglages ajustables en temps réel, répartis en 3 onglets — LUT, Cinématique, Environnement. Chaque curseur répond tu-suite, sans recharger la page, pis le tout se copie/exporte en JSON pour être rejoué ou partagé.",
+    "sub": "En plus des ben des presets, l'EDA ouvre <strong>des dizaines de réglages ajustables en temps réel</strong>, répartis en 3 onglets — LUT, Cinématique, Environnement. Chaque curseur répond tu-suite, sans recharger la page, pis le tout se copie/exporte en JSON pour être rejoué ou partagé.",
     "lut": {
       "label": "LUT",
       "desc": "Brouillard, astre lumineux, étalonnage colorimétrique complet (courbes RVB, gamma, niveaux) et palette par biome."
@@ -371,7 +371,7 @@
   "multi": {
     "title1": "Multijoueur",
     "title2": "Bâtissez ça ensemble",
-    "sub": "Embarque ou crée une salle avec un code de 6 lettres. La grille est partagée en temps réel : chaque joueur pose ses tuiles pis voit les autres placer les leurs, right-là.",
+    "sub": "Embarque ou crée une salle avec un code de 6 lettres. La grille est <strong>partagée en temps réel</strong> : chaque joueur pose ses tuiles pis voit les autres placer les leurs, right-là.",
     "features": [
       "Toutes les games sont sauvegardées — repars-la ou rejoue-la quand ça te tente",
       "Tu peux embarquer dans une salle à n'importe quel moment, même en pleine game",
@@ -379,9 +379,9 @@
       "La carte se bâtit ensemble, une tuile à la fois"
     ],
     "gallery_title": "PARTAGE TES PHOTOS",
-    "gallery_promo": "Immortalise tes plus belles games : le bouton 📷 prend une photo sans HUD, pis le bouton 🖼️ ouvre l'album partagé avec tout le monde.",
+    "gallery_promo": "Immortalise tes plus belles games : le bouton 📷 prend une photo sans HUD, pis le bouton 🖼️ ouvre <strong>l'album partagé avec tout le monde</strong>.",
     "replay_title": "Enregistre tes games en vidéo",
-    "replay_promo": "En un clic, revis toute la game en accéléré pis télécharge-la en vidéo, direct depuis ton navigateur.",
+    "replay_promo": "En un clic, <strong>revis toute la game en accéléré</strong> pis télécharge-la en vidéo, direct depuis ton navigateur.",
     "btn_create": "Créer une game",
     "room_title": "Code de la salle",
     "room_status": "Game en cours · 3 joueurs",

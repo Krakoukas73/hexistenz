@@ -1,0 +1,11 @@
+# ─── json/games/.htaccess — 2026-07-28 ──────────────────────────────────────
+# Les fichiers de parties (room_*.json, verrous .lock, fichiers .tmp) ne sont
+# JAMAIS demandés par le navigateur : multiplayer.php les lit et les écrit
+# directement sur le disque (via __DIR__), ce que .htaccess n'affecte pas.
+# Interdire l'accès HTTP ferme donc l'énumération et la lecture/copie des parties
+# sans rien casser côté jeu.
+#
+# Ce que ça bloque concrètement, constaté avant correctif :
+#   GET json/games/                    → listing des 10 codes de parties
+#   GET json/games/room_SMALL.json     → état complet d'une partie, en clair
+Require all denied

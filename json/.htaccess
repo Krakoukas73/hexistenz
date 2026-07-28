@@ -1,0 +1,26 @@
+# ─── json/.htaccess — 2026-07-28 ────────────────────────────────────────────
+# Constaté en audit : Apache servait ce dossier avec l'auto-index activé, donc
+#   http://<hote>/hexistenz/json/games/
+# affichait la liste complète des parties (10 codes énumérés), et chaque
+#   http://<hote>/hexistenz/json/games/room_XXXXXX.json
+# était lisible en direct — en contournant entièrement multiplayer.php. Idem pour
+# highscores.json (pseudos + statistiques de parties).
+#
+# Ce fichier ne coupe QUE ce qui n'est jamais demandé par le navigateur :
+#   • json/games/*        → lu et écrit uniquement par multiplayer.php (accès disque
+#                           PHP, non concerné par .htaccess) ; cf. json/games/.htaccess
+#   • json/highscores.json → lu uniquement par highscore.php et index.php via __DIR__
+#
+# RESTENT accessibles (le client les fetch réellement, ne pas y toucher) :
+#   • json/ambiances.json   → presets d'ambiance du panel EDA
+#   • json/languages/*.json → traductions FR/EN/ES/IT/PT/fr-CA
+#
+# Vérifié après déploiement : ambiances + langues toujours en 200, games/ et
+# highscores en 403.
+
+# Plus d'auto-index : on ne liste jamais le contenu d'un dossier de données.
+Options -Indexes
+
+<Files "highscores.json">
+    Require all denied
+</Files>

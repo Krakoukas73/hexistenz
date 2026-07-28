@@ -40,7 +40,7 @@
     "label": "Due modi di vedere il mondo",
     "title1": "Piattisti e globisti",
     "title2": "Due fazioni inconciliabili",
-    "sub": "Hexistenz divide i costruttori in due fazioni inconciliabili. Una scelta visiva,\n      un impegno filosofico. Da che parte stai&nbsp;?",
+    "sub": "Hexistenz divide i costruttori in <strong>due fazioni inconciliabili</strong>. Una scelta visiva,\n      un impegno filosofico. Da che parte stai&nbsp;?",
     "flat": {
       "tag": "Modalità Piattista",
       "name": "🪨 Il Mondo Piatto",
@@ -56,7 +56,7 @@
   "biomes": {
     "label": "I biomi",
     "title": "Sei biomi da collegare",
-    "sub": "Ogni tessera è composta da sei settori triangolari. Unisci i biomi identici per formare zone e massimizzare il punteggio.",
+    "sub": "Ogni tessera è composta da sei settori triangolari. <strong>Unisci i biomi identici</strong> per formare zone e massimizzare il punteggio.",
     "grass": {
       "name": "Prateria",
       "desc": "Distese erbose dove ogni filo d'erba freme al vento, punteggiate di fiori selvatici, rocce, cervi e cespugli. Terreno neutro tra le grandi reti.",
@@ -91,7 +91,7 @@
   "missions": {
     "label": "Obiettivi",
     "title": "Le missioni",
-    "sub": "Ogni partita genera obiettivi automatici legati ai biomi e alle reti. Completarli frutta 100 punti e soprattutto 3 nuove tessere nel mazzo — il che garantisce teoricamente partite infinite.",
+    "sub": "Ogni partita genera obiettivi automatici legati ai biomi e alle reti. Completarli frutta <strong>100 punti e soprattutto 3 nuove tessere nel mazzo</strong> — il che garantisce teoricamente partite infinite.",
     "zone": {
       "name": "Zona bioma",
       "desc": "Raggiungere una superficie minima in un dato bioma: <em>«&nbsp;Foresta di 8 settori&nbsp;»</em>, <em>«&nbsp;Prateria di 12 settori&nbsp;»</em>…"
@@ -132,7 +132,7 @@
   "gameplay": {
     "label": "Meccanica di gioco",
     "title": "Come si gioca",
-    "sub": "Un ciclo semplice, una profondità infinita. Ogni tessera posata trasforma il mondo.",
+    "sub": "Un ciclo semplice, <strong>una profondità infinita</strong>. Ogni tessera posata trasforma il mondo.",
     "ui_caption": "Tessera corrente · Tessera successiva · Tessere rimanenti",
     "steps": {
       "draw": {
@@ -192,7 +192,7 @@
     "label": "Atmosfere visive",
     "title1": "Molteplici atmosfere",
     "title2": "Un'infinità di personalizzazioni",
-    "sub": "Numerosi preset visivi pronti all'uso — ma ognuno è una base: LUT colorimetrica, effetti cinematografici (aberrazione cromatica, grana pellicola, tilt-shift), pixelizzazione retrò, atmosfere EGA e Amiga, fumo volumetrico, cielo procedurale… Centinaia di combinazioni per trasformare l'intero mondo a proprio gusto. Ogni personalizzazione si esporta con un clic e può essere condivisa con altri giocatori.",
+    "sub": "Numerosi preset visivi pronti all'uso — ma ognuno è una base: LUT colorimetrica, effetti cinematografici (aberrazione cromatica, grana pellicola, tilt-shift), pixelizzazione retrò, atmosfere EGA e Amiga, fumo volumetrico, cielo procedurale… <strong>Centinaia di combinazioni</strong> per trasformare l'intero mondo a proprio gusto. Ogni personalizzazione si esporta con un clic e può essere condivisa con altri giocatori.",
     "preset_word": "Preset",
     "presets": {
       "autumn": "Autunno",
@@ -208,7 +208,7 @@
   "creatures": {
     "label": "La vita del mondo",
     "title": "Un mondo di creature",
-    "sub": "Il mondo non si limita a esistere: respira. Animali, uccelli e abitanti animano ogni bioma nel corso delle stagioni.",
+    "sub": "Il mondo non si limita a esistere: <strong>respira</strong>. Animali, uccelli e abitanti animano ogni bioma nel corso delle stagioni.",
     "sheep": {
       "name": "Pecore",
       "desc": "Greggi pascolano tranquillamente nelle praterie, spostandosi al ritmo delle erbe che ondeggiano al vento."
@@ -277,7 +277,7 @@
   "audio": {
     "label": "Atmosfera sonora",
     "title": "Un mondo che si sente",
-    "sub": "Il suono segue la telecamera in tempo reale — ogni bioma, ogni treno, ogni barca ha la propria voce, che sale e svanisce con la distanza.",
+    "sub": "Il suono segue la telecamera <strong>in tempo reale</strong> — ogni bioma, ogni treno, ogni barca ha la propria voce, che sale e svanisce con la distanza.",
     "spatial": {
       "name": "Suono spaziale 3D",
       "desc": "Atmosfere di villaggio, canti di uccelli di foresta e prateria, corvi sopra i campi, risacca delle spiagge, treni e barche — ogni sorgente varia in volume secondo la sua distanza e direzione reali."
@@ -298,7 +298,7 @@
   "daynnight": {
     "label": "Atmosfera del mondo",
     "title": "Ambiente",
-    "sub": "Un solo interruttore cambia tutto. Il sole, le nuvole e il cielo blu lasciano spazio a stelle, luna e comete.",
+    "sub": "<strong>Un solo interruttore cambia tutto</strong>. Il sole, le nuvole e il cielo blu lasciano spazio a stelle, luna e comete.",
     "day": {
       "name": "Modalità Giorno",
       "list": [
@@ -354,7 +354,7 @@
   "eda": {
     "label": "Editor di direzione artistica (EDA)",
     "title": "Personalizzazione estrema",
-    "sub": "Oltre ai numerosi preset, l'EDA apre decine di parametri regolabili in tempo reale, suddivisi in 3 schede — LUT, Cinematica, Ambiente. Ogni cursore risponde istantaneamente, senza ricaricamento, e l'insieme si copia/esporta in JSON per essere rigiocato o condiviso.",
+    "sub": "Oltre ai numerosi preset, l'EDA apre <strong>decine di parametri regolabili in tempo reale</strong>, suddivisi in 3 schede — LUT, Cinematica, Ambiente. Ogni cursore risponde istantaneamente, senza ricaricamento, e l'insieme si copia/esporta in JSON per essere rigiocato o condiviso.",
     "lut": {
       "label": "LUT",
       "desc": "Nebbia, astro luminoso, calibrazione colorimetrica completa (curve RGB, gamma, livelli) e palette per bioma."
@@ -371,7 +371,7 @@
   "multi": {
     "title1": "Multiplayer",
     "title2": "Costruite insieme",
-    "sub": "Unisciti o crea una stanza con un codice di 6 lettere. La griglia è condivisa in tempo reale — ogni giocatore posa le sue tessere e vede i piazzamenti degli altri man mano.",
+    "sub": "Unisciti o crea una stanza con un codice di 6 lettere. La griglia è <strong>condivisa in tempo reale</strong> — ogni giocatore posa le sue tessere e vede i piazzamenti degli altri man mano.",
     "features": [
       "Tutte le partite sono salvate — riprendi o rigioca in qualsiasi momento",
       "Stanze raggiungibili in qualsiasi momento, anche a partita in corso",
@@ -379,9 +379,9 @@
       "La mappa si costruisce collaborativamente, tessera dopo tessera"
     ],
     "gallery_title": "CONDIVIDI LE TUE CATTURE",
-    "gallery_promo": "Immortala le tue partite migliori: il pulsante 📷 cattura il mondo senza HUD, e il pulsante 🖼️ apre la galleria condivisa con tutti i giocatori",
+    "gallery_promo": "Immortala le tue partite migliori: il pulsante 📷 cattura il mondo senza HUD, e il pulsante 🖼️ apre la <strong>galleria condivisa con tutti i giocatori</strong>",
     "replay_title": "Registra le tue partite in video",
-    "replay_promo": "Con un clic, rivivi tutta la partita in accelerato e scaricala in video, direttamente dal tuo browser.",
+    "replay_promo": "Con un clic, <strong>rivivi tutta la partita in accelerato</strong> e scaricala in video, direttamente dal tuo browser.",
     "btn_create": "Crea una partita",
     "room_title": "Codice stanza",
     "room_status": "Partita in corso · 3 giocatori",

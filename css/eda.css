@@ -325,10 +325,12 @@ html[data-theme="ancien"] {
   padding: 2px 4px;
 }
 
-/* Bandeau de boutons in-game sur 3 lignes (2026-07-17, demande explicite) :
-   1) photo / galerie / replay — 2) langue / thème — 3) FPS / EDA.
-   Wrapper colonne ajouté autour des 3 `.debug-light-btn-row`, qui restent
-   chacune une simple rangée horizontale (inchangée) de ses boutons/selects. */
+/* Bandeau de boutons in-game (2026-07-17, demande explicite ; fusionné à 2 lignes
+   le 2026-07-20 pour la compatibilité 1920x1080) : 1) photo / galerie / replay —
+   2) langue / thème / FPS / EDA, tous les 4 sur la même ligne quelle que soit la
+   hauteur du navigateur. Wrapper colonne ajouté autour des `.debug-light-btn-row`,
+   qui restent chacune une simple rangée horizontale (inchangée) de ses
+   boutons/selects. */
 .debug-light-btn-rows {
   display: flex;
   flex-direction: column;
@@ -765,7 +767,13 @@ html[data-theme="ancien"] {
      dépasse la hauteur d'écran — d'où hauteur fixe (pas seulement max-height). */
   height: calc(100vh - 28px);
   max-height: calc(100vh - 28px);
-  /* Occupe toute la hauteur dispo — chaque colonne défile indépendamment en interne */
+  /* Occupe toute la hauteur dispo — chaque colonne défile indépendamment en interne.
+     2026-07-20 — REVERT : la tentative de rendre CE conteneur scrollable (englobant
+     bandeau ambiances + footer) a introduit une régression signalée : le bandeau
+     ambiances doit rester incompressible et intégralement visible, il ne doit
+     JAMAIS rétrécir ni défiler. Retour à overflow:hidden — le SEUL scroll voulu
+     est celui, interne, de .debug-light-columns (cf. règle plus bas), qui doit
+     rester dans les limites fixes de ce conteneur, pas déborder dessus. */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -773,6 +781,7 @@ html[data-theme="ancien"] {
   font-family: monospace;
   border-radius: 12px;
 }
+.debug-light-body::-webkit-scrollbar-track { background: transparent; }
 
 /* ── Onglets EDA (sous le header ambiances) — regroupent les rubriques par thème,
    chaque onglet affichant son contenu sur 3 colonnes fluides type journal (les
@@ -800,43 +809,64 @@ html[data-theme="ancien"] {
 }
 
 /* Conteneur des panneaux d'onglet : un seul panneau visible (.debug-light-tab-panel--active),
-   les autres sont display:none — pas de layout ni de coût pour les onglets masqués. */
+   les autres sont display:none — pas de layout ni de coût pour les onglets masqués.
+   2026-07-20 — CORRECTIF RÉEL du scroll d'onglet inefficace à faible hauteur (1920x1080
+   compris) : c'est CE conteneur qui porte désormais la hauteur bornée + overflow-y:auto
+   (au lieu de .debug-light-columns, cf. explication détaillée sur cette dernière règle
+   plus bas — root cause : CSS multi-colonnes ne peut PAS s'étendre verticalement et
+   scroller sur SA PROPRE boîte quand cette boîte a elle-même une hauteur bornée ; son
+   débordement va toujours À DROITE (colonnes supplémentaires), jamais vers le bas —
+   et ces colonnes en trop étaient rendues inaccessibles par l'overflow-x:hidden.
+   Plancher de 220px conservé : bandeau ambiances/onglets/footer restent incompressibles
+   (flex-shrink:0), donc c'est ce conteneur qui absorbe le manque de place. */
 .debug-light-tab-panels {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 220px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120,180,255,0.35) transparent;
 }
+.debug-light-tab-panels::-webkit-scrollbar { width: 4px; }
+.debug-light-tab-panels::-webkit-scrollbar-thumb { background: rgba(120,180,255,0.35); border-radius: 2px; }
+.debug-light-tab-panels::-webkit-scrollbar-track { background: transparent; }
 .debug-light-tab-panel {
   display: none;
   flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
+  /* 2026-07-20 — plus de flex:1 1 auto / min-height:0 ici : cet élément ne doit PLUS
+     être borné en hauteur (c'est .debug-light-tab-panels, son parent, qui borne et
+     scrolle désormais) — sinon on recrée le même bug que .debug-light-columns
+     ci-dessous sur cette boîte intermédiaire. */
 }
 .debug-light-tab-panel--active {
   display: flex;
 }
 
 /* ── Flux "journal" 3 colonnes fluides (2026-07-08) ─────────────────────────
-   Chaque onglet remplit d'abord la colonne 1, puis la 2, puis la 3. Une seule
-   barre de scroll pour tout l'onglet (les colonnes s'étendent sur la même
-   hauteur totale, cf. 'columns: 3' + 'overflow-y: auto'). Aucune rubrique
-   enfant direct de '.debug-light-columns' ne peut être coupée à cheval sur
-   deux colonnes (cf. 'break-inside: avoid' sur chaque rubrique). */
+   Chaque onglet remplit d'abord la colonne 1, puis la 2, puis la 3.
+   2026-07-20 — CORRECTIF root cause (scroll d'onglet "pas effectif" signalé à
+   1920x1080) : cet élément avait sa PROPRE hauteur bornée (flex:1 1 auto, min-height:0)
+   ET overflow-y:auto EN MÊME TEMPS que columns:3. Or le CSS multi-colonnes ne
+   déborde JAMAIS verticalement sur sa propre boîte : dès que le contenu dépasse
+   la hauteur disponible, le navigateur ajoute une 4e (5e, 6e...) colonne EN PLUS,
+   à droite — jamais une extension vers le bas. Avec overflow-x:hidden, cette
+   colonne en trop devenait invisible et à jamais inaccessible : la scrollbar
+   verticale n'avait elle-même rien à faire défiler (chaque colonne, par
+   définition, tient dans la hauteur impartie). D'où l'impression de "scroll pas
+   effectif" alors qu'il existait bien un ascenseur — il scrollait une boîte qui
+   ne débordait jamais dans SON axe. Fix : cet élément n'est plus borné en hauteur
+   ni scrollable lui-même (retrait de flex/min-height/overflow) — il se dimensionne
+   à sa hauteur naturelle de contenu (colonnes équilibrées, jamais de 4e colonne
+   puisqu'aucune limite de hauteur ne le contraint), et c'est désormais SON PARENT
+   (.debug-light-tab-panels, hauteur bornée + overflow-y:auto) qui scrolle
+   verticalement pour révéler l'intégralité du bloc 3-colonnes. */
 .debug-light-columns {
   columns: 3;
   column-gap: 14px;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
   padding-right: 4px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(120,180,255,0.35) transparent;
 }
-.debug-light-columns::-webkit-scrollbar { width: 4px; }
-.debug-light-columns::-webkit-scrollbar-thumb { background: rgba(120,180,255,0.35); border-radius: 2px; }
-.debug-light-columns::-webkit-scrollbar-track { background: transparent; }
 
 /* Chaque rubrique enfant direct = bloc indissociable dans le flux journal.
    'break-inside: avoid' + 'margin: 0 0 14px' fournissent l'espacement inter-
@@ -903,7 +933,13 @@ html[data-theme="ancien"] {
   margin-bottom: 6px;
 }
 
-/* Header plein largeur (ambiances) — au-dessus des 2 colonnes */
+/* Header plein largeur (ambiances) — au-dessus des 2 colonnes.
+   2026-07-20 — REVERT : rendu rétrécissable/scrollable un temps pour "libérer de
+   la place" pour les onglets à faible hauteur, puis signalé comme régression —
+   ce bandeau doit rester incompressible et toujours intégralement visible, quelle
+   que soit la hauteur du navigateur. Retour à flex-shrink:0. Le budget de hauteur
+   manquant à faible résolution doit être absorbé UNIQUEMENT par le scroll interne
+   de .debug-light-columns (cf. plus bas), jamais par ce bandeau. */
 .debug-light-header {
   flex-shrink: 0;
 }
@@ -1348,6 +1384,22 @@ body.lut-panel-open #kbdHintHud { display: none; }
    explicite — jusqu'ici seul le panneau déployé était refermé via fpsBtn.click()
    dans scene.js::toggleGridOnlyMode(), le badge "-- FPS" restait visible). */
 body.grid-only-mode .fps-counter { display: none !important; }
+
+/* 2026-07-20 — compatibilité 1920x1080 (fenêtre non maximisée / hauteur d'écran
+   réduite) : masque le badge FPS REPLIÉ quand la hauteur du navigateur manque,
+   comme pour le mode immersif ci-dessus, pour ne pas empiéter sur le jeu.
+   Le panneau DÉPLOYÉ (touche F, .fps-hud-fullscreen) reste toujours affiché —
+   l'utilisateur l'a ouvert explicitement, ce n'est plus le badge visé ici.
+   Seuil relevé 800px→960px (2026-07-20, bug signalé avec capture d'écran) :
+   un vrai navigateur en 1920x1080 (chrome du navigateur ~180-190px, mesuré en
+   direct) ne laisse qu'environ 895px de hauteur utile — largement au-dessus de
+   l'ancien seuil 800px, donc la règle ne se déclenchait jamais dans ce cas précis
+   pourtant explicitement visé par la demande initiale. Vérifié en direct : à
+   895px, #fps-counter (replié) chevauchait #scorePanel de ~50px avant ce fix. */
+@media (max-height: 960px) {
+  .fps-counter { display: none; }
+  .debug-light-panel.fps-hud-fullscreen .fps-counter { display: flex; }
+}
 
 /* Super-immersif (SHIFT+ESPACE) : aucun HUD — mode capture d'écran */
 body.huds-force-hidden #debugLightPanel { display: none !important; }
@@ -1843,6 +1895,10 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
+  /* 2026-07-20 — REVERT : le passage à overflow-y:auto (pour rendre TOUT le
+     panneau scrollable, bandeau ambiances compris) a introduit une régression
+     signalée : le bandeau ambiances doit rester incompressible et intégralement
+     visible. Retour à overflow:hidden — seul .debug-light-columns doit scroller. */
   overflow: hidden;
   /* 2026-07-18 — même bug que .fps-counter/.help-panel ci-dessus : la règle
      générale `[data-theme="ancien"] .internal-parchment { margin: -20px -25px
@@ -2051,4 +2107,41 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
   color: #e8dcc0;
   background: rgba(0,0,0,0.40);
   border-left: 2px solid #6b4e10;
+}
+
+/* 2026-07-20 — bug signalé : en thème médiéval, les sliders des rubriques
+   (.debug-light-row) ET l'ascenseur du panneau (.debug-light-tab-panels)
+   restaient bleutés (couleurs codées en dur du thème "Bleu sidéral" à la
+   racine — cf. .debug-light-row input[type="range"]/.pix-control, communes
+   aux 2 thèmes faute de redéclaration ici). Passage à la teinte chaude
+   cachet-de-cire (#8a6a2a, même accent que les titres de rubrique juste
+   au-dessus) au lieu du bleu #78aaff/rgba(120,170/180,255,...). */
+[data-theme="ancien"] .pix-control input[type="range"],
+[data-theme="ancien"] .debug-light-row input[type="range"] {
+  background: rgba(138,106,42,0.28);
+}
+[data-theme="ancien"] .pix-control input[type="range"]::-webkit-slider-thumb,
+[data-theme="ancien"] .debug-light-row input[type="range"]::-webkit-slider-thumb {
+  background: #f0e0b8;
+  box-shadow: 0 0 0 2px rgba(138,106,42,0.45), 0 1px 4px rgba(0,0,0,0.45);
+}
+[data-theme="ancien"] .pix-control input[type="range"]::-webkit-slider-thumb:hover,
+[data-theme="ancien"] .debug-light-row input[type="range"]::-webkit-slider-thumb:hover {
+  background: #fff8e6;
+  box-shadow: 0 0 0 3px rgba(138,106,42,0.55), 0 1px 6px rgba(0,0,0,0.50);
+}
+[data-theme="ancien"] .pix-control input[type="range"]::-moz-range-thumb,
+[data-theme="ancien"] .debug-light-row input[type="range"]::-moz-range-thumb {
+  background: #f0e0b8;
+  box-shadow: 0 0 0 2px rgba(138,106,42,0.45), 0 1px 4px rgba(0,0,0,0.45);
+}
+[data-theme="ancien"] .pix-control input[type="range"]::-moz-range-track,
+[data-theme="ancien"] .debug-light-row input[type="range"]::-moz-range-track {
+  background: rgba(138,106,42,0.28);
+}
+[data-theme="ancien"] .debug-light-tab-panels {
+  scrollbar-color: rgba(138,106,42,0.45) transparent;
+}
+[data-theme="ancien"] .debug-light-tab-panels::-webkit-scrollbar-thumb {
+  background: rgba(138,106,42,0.45);
 }

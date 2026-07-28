@@ -27,9 +27,16 @@ export function disposeObject3D(object) {
   });
 }
 
+// Vide un group ET libère les ressources GPU de chaque enfant. Contrairement aux
+// overlays à ressources partagées (houseOverlay/characterOverlay, qui appellent
+// group.clear() sans disposer), ici les enfants possèdent leur propre geometry/material.
+// 2026-07-28 — passage par `group.remove(child)` : `children.pop()` seul laissait
+// `child.parent` pointant vers le group sur des objets par ailleurs disposés.
 export function clearGroup(group) {
   while (group.children.length > 0) {
-    disposeObject3D(group.children.pop());
+    const child = group.children[group.children.length - 1];
+    group.remove(child);
+    disposeObject3D(child);
   }
 }
 

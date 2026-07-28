@@ -204,7 +204,7 @@ export function applyEnvironment(scene, renderer, dome, config = DEFAULT_VISUAL_
     visualScale: Number(lights.sunVisualScale ?? 1.18)
   };
 
-  const target = scene.getObjectByName('main-sun-shadow-target');
+  const target = _cachedByName(scene, 'main-sun-shadow-target');
   if (target) {
     // La position de la cible est tenue à jour par updateSunShadowOrbit().
     // Ne surtout pas la remettre à (0,0,0), sinon les ombres repartent du centre
@@ -213,7 +213,7 @@ export function applyEnvironment(scene, renderer, dome, config = DEFAULT_VISUAL_
     sun.target = target;
   }
 
-  const visualSun = scene.getObjectByName('visible-sky-sun');
+  const visualSun = _cachedByName(scene, 'visible-sky-sun');
   if (visualSun) visualSun.visible = lights.sunOrbitEnabled !== false;
 
   const fill = findOrCreateFillLight(scene);
@@ -286,36 +286,56 @@ function updateDomeMaterial(dome, env) {
   dome.visible = Number(env.domeOpacity ?? 0) > 0.001;
 }
 
+// ── Cache des objets de scène résolus par nom (2026-07-28) ───────────────────
+// applyVisualEnvironment() faisait 5 scene.getObjectByName() par appel (3 lumières +
+// la cible du soleil + le soleil visible), chacun étant une traversée récursive
+// complète du graphe. Or apply() est appelé à CHAQUE évènement `input` d'un slider
+// LUT du panel EDA (via applyAll), soit ~60 fois par seconde pendant un drag.
+// Ces objets sont créés une fois et jamais remplacés → mémoïsation par scène.
+// `entry.parent` sert de sentinelle : si l'objet a été retiré de la scène (reset,
+// changement de partie), on refait la recherche.
+const _sceneObjectCache = new WeakMap();   // scene -> Map(nom -> Object3D)
+
+function _cachedByName(scene, name) {
+  let byName = _sceneObjectCache.get(scene);
+  if (!byName) { byName = new Map(); _sceneObjectCache.set(scene, byName); }
+  const hit = byName.get(name);
+  if (hit && hit.parent) return hit;
+  const found = scene.getObjectByName(name) ?? null;
+  if (found) byName.set(name, found); else byName.delete(name);
+  return found;
+}
+
+// Résout par cache, et crée l'objet s'il n'existe pas encore.
+function _findOrCreate(scene, name, factory) {
+  const existing = _cachedByName(scene, name);
+  if (existing) return existing;
+  const created = factory();
+  created.name = name;
+  scene.add(created);
+  _sceneObjectCache.get(scene)?.set(name, created);
+  return created;
+}
+
 function findOrCreateHemisphereLight(scene) {
-  let light = scene.getObjectByName('hexistenz-environment-hemisphere');
-  if (!light) {
-    light = new THREE.HemisphereLight(0xffffff, 0x223344, 0.3);
-    light.name = 'hexistenz-environment-hemisphere';
-    scene.add(light);
-  }
-  return light;
+  return _findOrCreate(scene, 'hexistenz-environment-hemisphere',
+    () => new THREE.HemisphereLight(0xffffff, 0x223344, 0.3));
 }
 
 function findOrCreateSunLight(scene) {
-  let light = scene.getObjectByName('main-sun-shadow-light');
-  if (!light) {
-    light = new THREE.DirectionalLight(0xffffff, 3);
-    light.name = 'main-sun-shadow-light';
+  return _findOrCreate(scene, 'main-sun-shadow-light', () => {
+    const light = new THREE.DirectionalLight(0xffffff, 3);
     light.castShadow = true;
-    scene.add(light);
-  }
-  return light;
+    return light;
+  });
 }
 
 function findOrCreateFillLight(scene) {
-  let light = scene.getObjectByName('hexistenz-environment-fill-light');
-  if (!light) {
-    light = new THREE.DirectionalLight(0x8fd2ff, 0.035);
-    light.name = 'hexistenz-environment-fill-light';
+  return _findOrCreate(scene, 'hexistenz-environment-fill-light', () => {
+    const light = new THREE.DirectionalLight(0x8fd2ff, 0.035);
     light.position.set(5, 4, -6);
-    scene.add(light);
-  }
-  return light;
+    return light;
+  });
 }
 
 function inferPaletteKey(object, material) {

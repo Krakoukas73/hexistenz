@@ -345,7 +345,12 @@ export function createCharacterOverlay() {
  * de clone de hiérarchie GLB) — pas besoin de rebuild incrémental par tuile.
  */
 export function rebuildCharacterOverlay(group, placedTiles) {
-  while (group.children.length > 0) group.children.pop(); // pas de dispose : géométrie/matériaux partagés en cache
+  // clear() et non `while (children.length) children.pop()` (corrigé 2026-07-28) :
+  // vider le tableau à la main laissait `child.parent` pointant encore vers ce group,
+  // donc des InstancedMesh orphelins qui se croyaient toujours attachés. clear() fait
+  // exactement ce qu'on veut ici — détache ET remet parent à null — SANS toucher aux
+  // geometry/material, qui sont partagés via le cache et réutilisés au prochain rebuild.
+  group.clear();
 
   const specialBuildingSafeZones = collectSpecialBuildingSafeZones(placedTiles);
   const accumulator = new Map(); // variantKey → Map(chunkKey → Matrix4[])

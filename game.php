@@ -55,9 +55,31 @@ if ($mtimesGame) { $cssVersion = max($mtimesGame); }
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hexistenz</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="stylesheet" href="css/style.css?v=<?= $cssVersion ?>" />
-  <link rel="stylesheet" href="css/multiplayerUi.css?v=<?= $cssVersion ?>" />
-  <link rel="stylesheet" href="css/scorePopup.css?v=<?= $cssVersion ?>" />
+  <?php
+  // ── 2026-07-28 — @import remplacés par des <link> explicites ────────────────
+  // css/style.css n'était qu'une liste de 9 @import. Deux défauts :
+  //  1. PERFORMANCE : un @import n'est découvert qu'APRÈS téléchargement et parsing
+  //     du fichier qui le contient — invisible pour le preload scanner du navigateur.
+  //     Les 9 feuilles ne démarraient donc qu'au second aller-retour réseau, tout en
+  //     bloquant le rendu. En <link>, elles partent toutes en parallèle immédiatement.
+  //  2. CACHE : les URL des @import ne portaient aucun ?v=. Bumper style.css ne
+  //     revalidait pas base.css / eda.css / help.css… : le navigateur pouvait servir
+  //     une version en cache indéfiniment (cause probable des « aucun effet » /
+  //     « exactement pareil » signalés de longue date sur les HUD).
+  // Chaque feuille porte désormais SON PROPRE mtime : modifier eda.css ne réinvalide
+  // que eda.css, et le fait à coup sûr.
+  $cssSheets = [
+      'css/base.css', 'css/deck.css', 'css/help.css', 'css/highscore.css',
+      'css/missions.css', 'css/eda.css', 'css/startupMenu.css',
+      'css/snapshotGalleryOverlay.css', 'css/preloader.css',
+      'css/multiplayerUi.css', 'css/scorePopup.css',
+  ];
+  foreach ($cssSheets as $href) {
+      $abs = __DIR__ . '/' . $href;
+      $v = file_exists($abs) ? filemtime($abs) : $cssVersion;
+      echo '  <link rel="stylesheet" href="' . $href . '?v=' . $v . '" />' . "\n";
+  }
+  ?>
   <!-- Thèmes graphiques Bleu/Médiéval (cf. CONTEXT.md §32) — chargés ici pour que
        #scorePanel et .missionsBox réagissent à [data-theme="ancien"], comme
        .mode-panel (css/multiplayerUi.css) depuis le chantier précédent. -->

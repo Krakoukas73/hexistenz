@@ -40,7 +40,7 @@
     "label": "Duas formas de ver o mundo",
     "title1": "Planistas e globistas",
     "title2": "Duas facções irreconciliáveis",
-    "sub": "Hexistenz divide os construtores em duas facções irreconciliáveis. Uma escolha visual,\n      um compromisso filosófico. De que lado estás&nbsp;?",
+    "sub": "Hexistenz divide os construtores em <strong>duas facções irreconciliáveis</strong>. Uma escolha visual,\n      um compromisso filosófico. De que lado estás&nbsp;?",
     "flat": {
       "tag": "Modo Planista",
       "name": "🪨 O Mundo Plano",
@@ -56,7 +56,7 @@
   "biomes": {
     "label": "Os biomas",
     "title": "Seis biomas para conectar",
-    "sub": "Cada peça é composta por seis setores triangulares. Junta biomas idênticos para formar zonas e maximizar a tua pontuação.",
+    "sub": "Cada peça é composta por seis setores triangulares. <strong>Junta biomas idênticos</strong> para formar zonas e maximizar a tua pontuação.",
     "grass": {
       "name": "Pradaria",
       "desc": "Extensões de erva onde cada fio treme ao vento, salpicadas de flores silvestres, rochas, veados e arbustos. Terreno neutro entre as grandes redes.",
@@ -91,7 +91,7 @@
   "missions": {
     "label": "Objetivos",
     "title": "As missões",
-    "sub": "Cada partida gera objetivos automáticos ligados aos biomas e às redes. Cumpri-los rende 100 pontos e, sobretudo, 3 novas peças no baralho — o que garante, em teoria, partidas infinitas.",
+    "sub": "Cada partida gera objetivos automáticos ligados aos biomas e às redes. Cumpri-los rende <strong>100 pontos e, sobretudo, 3 novas peças no baralho</strong> — o que garante, em teoria, partidas infinitas.",
     "zone": {
       "name": "Zona de bioma",
       "desc": "Atingir uma superfície mínima num determinado bioma: <em>«&nbsp;Floresta de 8 setores&nbsp;»</em>, <em>«&nbsp;Pradaria de 12 setores&nbsp;»</em>…"
@@ -132,7 +132,7 @@
   "gameplay": {
     "label": "Mecânica de jogo",
     "title": "Como jogar",
-    "sub": "Um ciclo simples, uma profundidade infinita. Cada peça colocada transforma o mundo.",
+    "sub": "Um ciclo simples, <strong>uma profundidade infinita</strong>. Cada peça colocada transforma o mundo.",
     "ui_caption": "Peça atual · Peça seguinte · Peças restantes",
     "steps": {
       "draw": {
@@ -192,7 +192,7 @@
     "label": "Ambientes visuais",
     "title1": "Várias atmosferas",
     "title2": "Uma infinidade de personalizações",
-    "sub": "Numerosos presets visuais prontos a usar — mas cada um é uma base: LUT colorimétrica, efeitos cinematográficos (aberração cromática, grão de película, tilt-shift), pixelização retro, ambientes EGA e Amiga, fumo volumétrico, céu procedural… Centenas de combinações para transformar o mundo inteiro ao teu gosto. Cada personalização exporta-se num clique e pode ser partilhada com outros jogadores.",
+    "sub": "Numerosos presets visuais prontos a usar — mas cada um é uma base: LUT colorimétrica, efeitos cinematográficos (aberração cromática, grão de película, tilt-shift), pixelização retro, ambientes EGA e Amiga, fumo volumétrico, céu procedural… <strong>Centenas de combinações</strong> para transformar o mundo inteiro ao teu gosto. Cada personalização exporta-se num clique e pode ser partilhada com outros jogadores.",
     "preset_word": "Preset",
     "presets": {
       "autumn": "Outono",
@@ -208,7 +208,7 @@
   "creatures": {
     "label": "A vida do mundo",
     "title": "Um mundo de criaturas",
-    "sub": "O mundo não se limita a existir: ele respira. Animais, aves e habitantes animam cada bioma ao longo das estações.",
+    "sub": "O mundo não se limita a existir: <strong>ele respira</strong>. Animais, aves e habitantes animam cada bioma ao longo das estações.",
     "sheep": {
       "name": "Ovelhas",
       "desc": "Rebanhos pastam tranquilamente nas pradarias, deslocando-se ao sabor das ervas que ondulam ao vento."
@@ -277,7 +277,7 @@
   "audio": {
     "label": "Ambiente sonoro",
     "title": "Um mundo que se ouve",
-    "sub": "O som segue a câmara em tempo real — cada bioma, cada comboio, cada barco tem a sua própria voz, que sobe e se apaga com a distância.",
+    "sub": "O som segue a câmara <strong>em tempo real</strong> — cada bioma, cada comboio, cada barco tem a sua própria voz, que sobe e se apaga com a distância.",
     "spatial": {
       "name": "Som espacial 3D",
       "desc": "Ambientes de aldeia, cantos de aves de floresta e pradaria, corvos sobre os campos, rebentação nas praias, comboios e barcos — cada fonte varia em volume consoante a sua distância e direção reais."
@@ -298,7 +298,7 @@
   "daynnight": {
     "label": "Ambiente do mundo",
     "title": "Ambiente",
-    "sub": "Um único interruptor muda tudo. O sol, as nuvens e o céu azul dão lugar às estrelas, à lua e aos cometas.",
+    "sub": "<strong>Um único interruptor muda tudo</strong>. O sol, as nuvens e o céu azul dão lugar às estrelas, à lua e aos cometas.",
     "day": {
       "name": "Modo Dia",
       "list": [
@@ -354,7 +354,7 @@
   "eda": {
     "label": "Editor de Direção Artística (EDA)",
     "title": "Personalização extrema",
-    "sub": "Para além dos numerosos presets, o EDA abre dezenas de parâmetros ajustáveis em tempo real, repartidos em 3 separadores — LUT, Cinemática, Ambiente. Cada cursor responde instantaneamente, sem recarregar, e o conjunto copia-se/exporta-se em JSON para ser reproduzido ou partilhado.",
+    "sub": "Para além dos numerosos presets, o EDA abre <strong>dezenas de parâmetros ajustáveis em tempo real</strong>, repartidos em 3 separadores — LUT, Cinemática, Ambiente. Cada cursor responde instantaneamente, sem recarregar, e o conjunto copia-se/exporta-se em JSON para ser reproduzido ou partilhado.",
     "lut": {
       "label": "LUT",
       "desc": "Névoa, astro luminoso, calibração colorimétrica completa (curvas RGB, gama, níveis) e paleta por bioma."
@@ -371,7 +371,7 @@
   "multi": {
     "title1": "Multijogador",
     "title2": "Constrói em conjunto",
-    "sub": "Junta-te ou cria uma sala com um código de 6 letras. A grelha é partilhada em tempo real — cada jogador coloca as suas peças e vê as colocações dos outros à medida que acontecem.",
+    "sub": "Junta-te ou cria uma sala com um código de 6 letras. A grelha é <strong>partilhada em tempo real</strong> — cada jogador coloca as suas peças e vê as colocações dos outros à medida que acontecem.",
     "features": [
       "Todas as partidas são guardadas — retoma ou volta a jogar a qualquer momento",
       "Salas às quais te podes juntar a qualquer momento, mesmo a meio da partida",
@@ -379,9 +379,9 @@
       "O mapa constrói-se colaborativamente, peça após peça"
     ],
     "gallery_title": "PARTILHA AS TUAS CAPTURAS",
-    "gallery_promo": "Imortaliza as tuas melhores partidas: o botão 📷 captura o mundo sem HUD, e o botão 🖼️ abre a galeria partilhada com todos os jogadores",
+    "gallery_promo": "Imortaliza as tuas melhores partidas: o botão 📷 captura o mundo sem HUD, e o botão 🖼️ abre a <strong>galeria partilhada com todos os jogadores</strong>",
     "replay_title": "Grava as tuas partidas em vídeo",
-    "replay_promo": "Com um clique, revive toda a partida acelerada e descarrega-a em vídeo, diretamente do teu navegador.",
+    "replay_promo": "Com um clique, <strong>revive toda a partida acelerada</strong> e descarrega-a em vídeo, diretamente do teu navegador.",
     "btn_create": "Criar uma partida",
     "room_title": "Código da sala",
     "room_status": "Partida em curso · 3 jogadores",

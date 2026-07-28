@@ -2,6 +2,18 @@
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
+// Diagnostics détaillés dans les réponses d'erreur (chemins serveur, liste des parties,
+// message d'exception brut). false en production — cf. debug_paths() plus bas.
+// Déclaré ICI et pas à côté de la fonction : define() n'est pas hoisté comme les
+// déclarations de fonctions, or le bloc try ci-dessous l'utilise dès ses premières lignes.
+define('MULTIPLAYER_DEBUG', false);
+
+// Plafond de taille du corps POST (2026-07-28). snapshot.php en avait un (15 Mo), pas
+// celui-ci : un client pouvait POSTer un `state` arbitrairement gros, que le serveur
+// json_decodait puis réécrivait tel quel dans json/games/room_*.json. 2 Mo est très
+// large pour un snapshot de partie (le plus gros observé est de l'ordre de 200 Ko).
+define('MAX_POST_BYTES', 2 * 1024 * 1024);
+
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
@@ -11,12 +23,13 @@ $gamesDir = $rootDir . DIRECTORY_SEPARATOR . 'json' . DIRECTORY_SEPARATOR . 'gam
 try {
     if (!is_dir($gamesDir)) {
         if (!mkdir($gamesDir, 0775, true) && !is_dir($gamesDir)) {
-            respond(false, 'Impossible de créer le dossier /json/games.', 500, array('gamesDir' => $gamesDir));
+            // 'gamesDir' (chemin absolu serveur) désormais gaté — cf. debug_paths().
+            respond(false, 'Impossible de créer le dossier /json/games.', 500, debug_paths($gamesDir, ''));
         }
     }
 
     if (!is_writable($gamesDir)) {
-        respond(false, 'Le dossier /json/games existe mais il n’est pas inscriptible par PHP.', 500, array('gamesDir' => $gamesDir));
+        respond(false, 'Le dossier /json/games existe mais il n’est pas inscriptible par PHP.', 500, debug_paths($gamesDir, ''));
     }
 
     $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
@@ -24,6 +37,9 @@ try {
 
     if ($method === 'POST') {
         $raw = file_get_contents('php://input');
+        if ($raw !== false && strlen($raw) > MAX_POST_BYTES) {
+            respond(false, 'Requête trop volumineuse.', 413);
+        }
         $payload = json_decode($raw ? $raw : '{}', true);
         if (!is_array($payload)) {
             respond(false, 'JSON POST invalide.', 400);
@@ -103,7 +119,13 @@ try {
         respond(false, 'Action inconnue.', 400);
     });
 } catch (Exception $error) {
-    respond(false, 'Erreur PHP multiplayer : ' . $error->getMessage(), 500, array('file' => basename(__FILE__)));
+    // Le message d'exception peut contenir des chemins serveur → gaté comme debug_paths().
+    respond(
+        false,
+        MULTIPLAYER_DEBUG ? 'Erreur PHP multiplayer : ' . $error->getMessage() : 'Erreur serveur multijoueur.',
+        500,
+        array('file' => basename(__FILE__))
+    );
 }
 
 function create_room($gamesDir, $code, $playerId, $playerName, $state) {
@@ -318,22 +340,49 @@ function sync_top_level_state(&$room) {
 }
 
 function with_room_lock($gamesDir, $code, $callback) {
-    // Un seul verrou global, supprimé même si respond() fait exit.
-    // Important : les callbacks répondent directement puis quittent le script.
+    // Un seul verrou global. Important : les callbacks répondent directement puis
+    // quittent le script — d'où la libération via register_shutdown_function().
     $lockPath = $gamesDir . DIRECTORY_SEPARATOR . '.multiplayer.lock';
+
+    // ── 2026-07-28 — le fichier verrou n'est PLUS supprimé en fin de requête ──
+    // L'ancien code faisait @unlink($lockPath) au shutdown. Deux conséquences, les
+    // deux constatées en test (20 requêtes concurrentes → 14 réponses 500) :
+    //
+    //  1. FENÊTRE D'ÉCHEC : pendant la suppression, un fopen() concurrent sur le même
+    //     chemin échoue (sous Windows, ouvrir un fichier en cours de suppression lève
+    //     une violation de partage) → 'Impossible de créer le verrou' → HTTP 500. En
+    //     jeu, le poll (900 ms) et les envois de curseur (à chaque déplacement souris)
+    //     se chevauchent en permanence : la console se remplissait d'erreurs.
+    //
+    //  2. EXCLUSION MUTUELLE ROMPUE (plus grave, et silencieux) : si A détient le
+    //     verrou puis supprime le fichier, B recrée un fichier NEUF et verrouille
+    //     celui-là. Deux requêtes croient alors détenir le verrou en même temps et
+    //     peuvent écrire room_*.json concurremment.
+    //
+    // Un fichier verrou est un simple jeton de 0 octet : il doit PERSISTER. Le laisser
+    // en place corrige les deux problèmes d'un coup et ne coûte rien.
+
     // Mode 'a' (append) : crée si absent, ne tronque pas, universellement supporté.
     // 'c' n'est pas disponible sur toutes les configs PHP/serveur → évité.
-    $handle = fopen($lockPath, 'a');
-    if (!$handle) respond(false, 'Impossible de créer le verrou multiplayer dans /json/games.', 500, array('lockPath' => $lockPath));
+    // Quelques tentatives : filet de sécurité si un verrou d'une ancienne version du
+    // code (qui supprimait encore le fichier) est en cours de suppression au même moment.
+    $handle = false;
+    for ($attempt = 0; $attempt < 5 && !$handle; $attempt++) {
+        if ($attempt > 0) usleep(20000); // 20 ms
+        $handle = @fopen($lockPath, 'a');
+    }
+    if (!$handle) {
+        respond(false, 'Impossible de créer le verrou multiplayer dans /json/games.', 500, debug_paths($gamesDir, $code));
+    }
 
-    register_shutdown_function(function () use ($handle, $lockPath) {
+    register_shutdown_function(function () use ($handle) {
         @flock($handle, LOCK_UN);
         @fclose($handle);
-        @unlink($lockPath);
+        // Pas d'unlink : cf. explication ci-dessus.
     });
 
     if (!flock($handle, LOCK_EX)) {
-        respond(false, 'Impossible de verrouiller le multiplayer.', 500, array('lockPath' => $lockPath));
+        respond(false, 'Impossible de verrouiller le multiplayer.', 500, debug_paths($gamesDir, $code));
     }
 
     $callback();
@@ -401,7 +450,17 @@ function get_value($array, $key, $default) {
     return is_array($array) && array_key_exists($key, $array) ? $array[$key] : $default;
 }
 
+// Diagnostic renvoyé au client dans les réponses d'erreur (404/409).
+//
+// 2026-07-28 — ces champs exposaient le chemin ABSOLU du serveur sur disque, ses droits
+// d'écriture, et la LISTE COMPLÈTE des parties existantes… à n'importe qui déclenchant
+// une erreur (un simple ?action=poll&code=XXXX inconnu suffisait). Vérifié par grep :
+// aucun de ces champs n'est lu côté JS, ils ne servaient qu'au débogage manuel.
+// Désormais vide par défaut ; passer MULTIPLAYER_DEBUG à true en local pour les
+// retrouver (constante déclarée en TÊTE de fichier — define() n'est pas hoisté,
+// contrairement aux déclarations de fonctions, et le bloc try l'utilise dès la ligne 15).
 function debug_paths($gamesDir, $code) {
+    if (!MULTIPLAYER_DEBUG) return array();
     return array(
         'gamesDir' => $gamesDir,
         'roomPath' => room_path($gamesDir, $code),

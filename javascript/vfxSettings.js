@@ -68,6 +68,30 @@ function _clone(obj) {
 const _settings = _load();
 const _listeners = new Set();
 
+// ─── Écriture localStorage debouncée (200 ms) — 2026-07-28 ───────────────────
+// Divergence assumée par rapport au fichier livré par Cyril (à reporter lors d'un
+// futur merge) : les sliders VFX de la rubrique 8 du panel EDA appellent
+// setVfxSetting() à chaque évènement `input`, soit ~60 fois par seconde pendant un
+// drag. localStorage.setItem est SYNCHRONE et re-sérialise TOUT l'objet _settings à
+// chaque appel → saccades au drag. L'objet en mémoire et les listeners restent
+// notifiés immédiatement (aucun retard visuel) ; seule l'écriture disque est
+// différée. `pagehide` garantit qu'un réglage suivi d'une fermeture immédiate de
+// l'onglet (< 200 ms) n'est pas perdu.
+let _saveTimer = null;
+
+function _flushSettings() {
+  if (_saveTimer !== null) { clearTimeout(_saveTimer); _saveTimer = null; }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(_settings)); } catch (_) { /* stockage indisponible */ }
+}
+
+function _scheduleSave() {
+  if (_saveTimer === null) _saveTimer = setTimeout(_flushSettings, 200);
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', _flushSettings);
+}
+
 export function getVfxSettings(effect) {
   return _settings[effect];
 }
@@ -75,13 +99,13 @@ export function getVfxSettings(effect) {
 export function setVfxSetting(effect, key, value) {
   if (!_settings[effect] || !(key in _settings[effect])) return;
   _settings[effect][key] = value;
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(_settings)); } catch (_) { /* stockage indisponible */ }
+  _scheduleSave();
   for (const listener of _listeners) listener(effect, key, value);
 }
 
 export function resetVfxSettings(effect) {
   Object.assign(_settings[effect], DEFAULTS[effect]);
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(_settings)); } catch (_) {}
+  _scheduleSave();
   for (const listener of _listeners) listener(effect, null, null);
 }
 

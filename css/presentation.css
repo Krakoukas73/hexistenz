@@ -243,7 +243,11 @@ nav {
 .section-sub {
   font-size: 14px;
   color: var(--text-dim);
-  max-width: 580px;
+  /* 2026-07-20 — 580px ne couvrait qu'une fraction de la largeur disponible
+     (conteneur plein ou colonne de grid selon la section) ; retiré au profit de
+     100% pour occuper toute la largeur réellement offerte par le parent, quel
+     qu'il soit (même logique que le fix .hero-tagline du même jour). */
+  max-width: 100%;
   line-height: 1.75;
 }
 .section-sub--lead {

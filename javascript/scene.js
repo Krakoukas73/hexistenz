@@ -225,6 +225,17 @@ export function initScene(options = {}) {
   // du navigateur ou de l'OS, pas un vrai surcoût de rendu du jeu.
   let _rafPrevTs = null;
   let _vfxPrevTimeSeconds = null;
+
+  // ── Références de scène mémoïsées (2026-07-28) ─────────────────────────────
+  // animate() appelait scene.getObjectByName() trois fois PAR FRAME (étoiles, lumière
+  // soleil, cible du soleil). getObjectByName parcourt récursivement tout le graphe —
+  // soit 3 traversées complètes 60 fois par seconde, pour des objets créés une seule
+  // fois au montage de la scène et jamais remplacés ensuite.
+  // Résolution paresseuse (les objets n'existent pas encore ici) puis mise en cache.
+  let _starsRef = null, _sunLightRef = null, _sunTargetRef = null;
+  const _sceneRef = (cached, name) => (cached && cached.parent ? cached : scene.getObjectByName(name) ?? null);
+  // Vecteur de travail pour la direction du soleil — évite un THREE.Vector3 jeté par frame.
+  const _sunDirScratch = new THREE.Vector3();
   let _rafDeltaMin = Infinity, _rafDeltaMax = -Infinity;
   // 2026-07-05 — diagnostic pur : rayon caméra rock-solide (54.550-54.550, aucun mouvement)
   // pendant que le GPU réel continue d'osciller fortement → hypothèse caméra définitivement
@@ -993,15 +1004,16 @@ export function initScene(options = {}) {
     if (!isSoleil) updateCometSky(cometSky, camera, timeSeconds);
     // Étoiles : visibles seulement la nuit (lune)
     {
-      const _stars = scene.getObjectByName('hexistenz-distant-star-universe');
-      if (_stars && _stars.visible !== !isSoleil) _stars.visible = !isSoleil;
+      _starsRef = _sceneRef(_starsRef, 'hexistenz-distant-star-universe');
+      if (_starsRef && _starsRef.visible !== !isSoleil) _starsRef.visible = !isSoleil;
     }
     {
-      // Direction soleil : position de la lumière vers son target (normalisé)
-      const _sun = scene.getObjectByName('main-sun-shadow-light');
-      const _tgt = scene.getObjectByName('main-sun-shadow-target');
-      const _sunDir = _sun && _tgt
-        ? _sun.position.clone().sub(_tgt.position).normalize()
+      // Direction soleil : position de la lumière vers son target (normalisé).
+      // Références mémoïsées + vecteur de travail réutilisé (plus de .clone() par frame).
+      _sunLightRef  = _sceneRef(_sunLightRef,  'main-sun-shadow-light');
+      _sunTargetRef = _sceneRef(_sunTargetRef, 'main-sun-shadow-target');
+      const _sunDir = _sunLightRef && _sunTargetRef
+        ? _sunDirScratch.copy(_sunLightRef.position).sub(_sunTargetRef.position).normalize()
         : null;
       updateCloudSky(cloudSky, { camera, timeSeconds, sunDir: _sunDir, enabled: isSoleil && getCloudUserEnabled() });
     }

@@ -38,6 +38,11 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
           <button id="galleryBtn" class="debug-light-toggle" type="button" tabindex="-1"><span class="gallery-emoji">🖼️</span></button>
           <button id="replayBtn" class="debug-light-toggle" type="button" tabindex="-1"><span class="replay-emoji">🎬</span></button>
         </div>
+        <!-- 2026-07-20 — sélecteurs langue/thème + boutons FPS/EDA fusionnés sur UNE
+             seule ligne (demande explicite, compatibilité 1920x1080 : moins de lignes
+             empilées = moins de hauteur consommée, quelle que soit la hauteur du
+             navigateur — pas seulement sous un seuil donné, cf. règle ci-dessus qui ne
+             gère que le badge FPS replié). -->
         <div class="debug-light-btn-row">
           <select id="gameLangSelect" class="debug-light-toggle debug-light-lang-select" tabindex="-1">
             <option value="fr">FR</option>
@@ -51,8 +56,6 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
             <option value="bleu">BLEU SIDÉRAL</option>
             <option value="ancien">MÉDIÉVAL</option>
           </select>
-        </div>
-        <div class="debug-light-btn-row">
           <button id="fpsHudToggle" class="debug-light-toggle debug-light-toggle--fps" type="button" tabindex="-1"><mark class="btn-key">F</mark>PS</button>
           <button id="debugLightToggle" class="debug-light-toggle" type="button" tabindex="-1"><mark class="btn-key">E</mark>DA</button>
         </div>

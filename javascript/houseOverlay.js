@@ -196,11 +196,15 @@ function ensureHouseGlbModelsAndRebuild(group) {
  * (clearGroup de tileUtils.js disposerait ces ressources partagées à chaque appel —
  * sans danger en soi pour three.js, qui réuploaderait au GPU au prochain rendu, mais
  * inutilement coûteux vu la fréquence de placement de tuiles.)
+ *
+ * 2026-07-28 — `group.clear()` remplace `while (children.length) children.pop()` :
+ * vider le tableau à la main laissait `child.parent` pointant encore vers ce group
+ * (InstancedMesh orphelins se croyant toujours attachés). clear() détache ET remet
+ * parent à null, sans jamais toucher aux geometry/material — donc exactement le
+ * comportement recherché ici.
  */
 function _clearHouseOverlayChildren(group) {
-  while (group.children.length > 0) {
-    group.children.pop();
-  }
+  group.clear();
 }
 
 // ─── Construction des InstancedMesh ──────────────────────────────────────────

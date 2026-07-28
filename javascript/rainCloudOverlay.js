@@ -480,11 +480,60 @@ export function createRainCloudOverlay(scene) {
   };
   group.userData.overlay = overlay;
 
-  onVfxSettingsChange((effect) => {
-    if (effect === 'clouds' || effect === 'rain') rebuildRainCloudOverlay(overlay, overlay._lastPlacedTiles);
+  // ── Réaction aux réglages EDA — filtrée par CLÉ (2026-07-28) ────────────────
+  // Avant : n'importe quel réglage 'clouds' ou 'rain' déclenchait un rebuild complet
+  // (19 200 instances de pluie + 2 880 impacts avec un getTerrainSurfaceY() chacun +
+  // mergeGeometries de 32 maillages). Comme les sliders EDA émettent un évènement par
+  // frame de drag (~60/s), traîner un curseur saturait le CPU pour rien : sur les 6
+  // réglages concernés, 3 ne touchent AUCUNE géométrie.
+  //
+  //   clouds.densite / clouds.epaisseur → nombre d'ancrages / échelle des maillages :
+  //                                        rebuild obligatoire.
+  //   clouds.altitude                   → translation verticale pure : mesh.position.y
+  //                                        + uniform uAltitude (cf. _applyCloudAltitude).
+  //   rain.tailleGoutte                 → 2 uniforms (cf. _applyRainDropSize).
+  //   rain.densite / rain.impactSol     → RIEN : déjà lus à chaque frame par
+  //                                        updateRainCloudOverlay (uActiveRatio/uIntensity).
+  //
+  // effect === null = reset global / restauration de snapshot → tout recalculer.
+  onVfxSettingsChange((effect, key) => {
+    if (effect === null) {
+      rebuildRainCloudOverlay(overlay, overlay._lastPlacedTiles);
+      return;
+    }
+    if (effect === 'clouds') {
+      if (key === null || key === 'densite' || key === 'epaisseur') {
+        rebuildRainCloudOverlay(overlay, overlay._lastPlacedTiles);
+      } else if (key === 'altitude') {
+        _applyCloudAltitude(overlay, getVfxSettings('clouds').altitude);
+      }
+      return;
+    }
+    if (effect === 'rain') {
+      _applyRainDropSize(overlay, getVfxSettings('rain').tailleGoutte);
+    }
   });
 
   return overlay;
+}
+
+// ── Chemins rapides (pas de reconstruction de géométrie) ─────────────────────
+
+// Altitude des nuages. La géométrie fusionnée porte des positions MONDE bakées à
+// `_bakedCloudAltitude` ; plutôt que de tout re-baker, on décale le mesh en Y. Sûr :
+// group.position.y reste toujours 0 (le sway n'agit que sur X/Z, cf. update), et la
+// pluie ne dépend que de l'uniform uAltitude (ses instances sont ancrées à y=0).
+function _applyCloudAltitude(overlay, altitude) {
+  overlay.mesh.position.y = altitude - (overlay._bakedCloudAltitude ?? altitude);
+  overlay.rainMesh.material.uniforms.uAltitude.value = altitude;
+}
+
+// Largeur/longueur des streaks de pluie — gouttes FINES. tailleGoutte ∈ [0.001, 0.010]
+// pilote directement, du très fin au modéré.
+function _applyRainDropSize(overlay, tailleGoutte) {
+  const u = overlay.rainMesh.material.uniforms;
+  u.uDropWidth.value = 0.004 + tailleGoutte * 0.9;   // ~0.005 → 0.013 (fins)
+  u.uDropLength.value = 0.06 + tailleGoutte * 9.0;   // ~0.07 → 0.15 (traits qui tombent)
 }
 
 /** Recalcule ancrages nuages + gouttes de pluie à partir des tuiles posées + réglages. */
@@ -609,12 +658,14 @@ export function rebuildRainCloudOverlay(overlay, placedTiles) {
   splatPhaseAttr.needsUpdate = true;
   splatThreshAttr.needsUpdate = true;
 
-  // Largeur/longueur des streaks — gouttes FINES (le bug de visibilité venait du varying vAcross,
-  // PAS de la taille : plus besoin de gonfler). Plus de plancher élevé. tailleGoutte ∈ [0.003, 0.018]
-  // pilote directement, du très fin au modéré. À la caméra de jeu : ~0.02 large × ~0.12 long par défaut.
-  rainMesh.material.uniforms.uDropWidth.value = 0.004 + rainS.tailleGoutte * 0.9;   // ~0.007 → 0.022 (fins)
-  rainMesh.material.uniforms.uDropLength.value = 0.06 + rainS.tailleGoutte * 9.0;   // ~0.09 → 0.24 (traits qui tombent)
-  rainMesh.material.uniforms.uAltitude.value = s.altitude;
+  // Altitude bakée dans les positions monde de la géométrie fusionnée ci-dessus :
+  // mémorisée pour que _applyCloudAltitude() puisse ensuite décaler le mesh en Y sans
+  // reconstruire (le slider Altitude n'a plus besoin d'un rebuild, cf. onVfxSettingsChange).
+  overlay._bakedCloudAltitude = s.altitude;
+  overlay.mesh.position.y = 0;
+  overlay.rainMesh.material.uniforms.uAltitude.value = s.altitude;
+  // Taille des gouttes : même source de vérité que le chemin rapide.
+  _applyRainDropSize(overlay, rainS.tailleGoutte);
 
   overlay.anchors = anchors;
 }

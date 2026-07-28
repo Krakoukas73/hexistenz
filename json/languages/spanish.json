@@ -40,7 +40,7 @@
     "label": "Dos formas de ver el mundo",
     "title1": "Planistas y globistas",
     "title2": "Dos facciones irreconciliables",
-    "sub": "Hexistenz divide a sus constructores en dos facciones irreconciliables. Una opción visual,\n      un compromiso filosófico. ¿De qué lado estás?",
+    "sub": "Hexistenz divide a sus constructores en <strong>dos facciones irreconciliables</strong>. Una opción visual,\n      un compromiso filosófico. ¿De qué lado estás?",
     "flat": {
       "tag": "Modo Planista",
       "name": "🪨 El Mundo Plano",
@@ -56,7 +56,7 @@
   "biomes": {
     "label": "Los biomas",
     "title": "Seis biomas por conectar",
-    "sub": "Cada loseta está compuesta por seis sectores triangulares. Combina biomas idénticos para formar zonas y maximizar tu puntuación.",
+    "sub": "Cada loseta está compuesta por seis sectores triangulares. <strong>Combina biomas idénticos</strong> para formar zonas y maximizar tu puntuación.",
     "grass": {
       "name": "Pradera",
       "desc": "Extensiones herbosas donde cada brizna tiembla con el viento, salpicadas de flores silvestres, rocas, ciervos y arbustos. Terreno neutral entre las grandes redes.",
@@ -91,7 +91,7 @@
   "missions": {
     "label": "Objetivos",
     "title": "Las misiones",
-    "sub": "Cada partida genera objetivos automáticos ligados a los biomas y las redes. Cumplirlos otorga 100 puntos y, sobre todo, 3 losetas nuevas en la pila — lo que garantiza en teoría partidas infinitas.",
+    "sub": "Cada partida genera objetivos automáticos ligados a los biomas y las redes. Cumplirlos otorga <strong>100 puntos y, sobre todo, 3 losetas nuevas en la pila</strong> — lo que garantiza en teoría partidas infinitas.",
     "zone": {
       "name": "Zona de bioma",
       "desc": "Alcanzar una superficie mínima en un bioma dado: <em>«Bosque de 8 sectores»</em>, <em>«Pradera de 12 sectores»</em>…"
@@ -132,7 +132,7 @@
   "gameplay": {
     "label": "Mecánica de juego",
     "title": "Cómo jugar",
-    "sub": "Un bucle simple, una profundidad infinita. Cada loseta colocada transforma el mundo.",
+    "sub": "Un bucle simple, <strong>una profundidad infinita</strong>. Cada loseta colocada transforma el mundo.",
     "ui_caption": "Loseta actual · Loseta siguiente · Losetas restantes",
     "steps": {
       "draw": {
@@ -192,7 +192,7 @@
     "label": "Ambientes visuales",
     "title1": "Varias atmósferas",
     "title2": "Una infinidad de personalizaciones",
-    "sub": "Numerosos presets visuales listos para usar — pero cada uno es una base: LUT colorimétrico, efectos cinematográficos (aberración cromática, grano de película, tilt-shift), pixelado retro, ambientes EGA y Amiga, humo volumétrico, cielo procedural… Cientos de combinaciones para transformar el mundo entero a tu gusto. Cada personalización se exporta con un clic y puede compartirse con otros jugadores.",
+    "sub": "Numerosos presets visuales listos para usar — pero cada uno es una base: LUT colorimétrico, efectos cinematográficos (aberración cromática, grano de película, tilt-shift), pixelado retro, ambientes EGA y Amiga, humo volumétrico, cielo procedural… <strong>Cientos de combinaciones</strong> para transformar el mundo entero a tu gusto. Cada personalización se exporta con un clic y puede compartirse con otros jugadores.",
     "preset_word": "Preset",
     "presets": {
       "autumn": "Otoño",
@@ -208,7 +208,7 @@
   "creatures": {
     "label": "La vida del mundo",
     "title": "Un mundo de criaturas",
-    "sub": "El mundo no se contenta con existir: respira. Animales, aves y habitantes animan cada bioma a lo largo de las estaciones.",
+    "sub": "El mundo no se contenta con existir: <strong>respira</strong>. Animales, aves y habitantes animan cada bioma a lo largo de las estaciones.",
     "sheep": {
       "name": "Ovejas",
       "desc": "Rebaños pastan tranquilamente en las praderas, desplazándose al ritmo de las hierbas que ondulan con el viento."
@@ -277,7 +277,7 @@
   "audio": {
     "label": "Ambiente sonoro",
     "title": "Un mundo que se escucha",
-    "sub": "El sonido sigue a la cámara en tiempo real — cada bioma, cada tren, cada barco tiene su propia voz, que sube y se desvanece con la distancia.",
+    "sub": "El sonido sigue a la cámara <strong>en tiempo real</strong> — cada bioma, cada tren, cada barco tiene su propia voz, que sube y se desvanece con la distancia.",
     "spatial": {
       "name": "Sonido espacial 3D",
       "desc": "Ambientes de aldea, cantos de aves de bosque y pradera, cuervos sobre los campos, oleaje de las playas, trenes y barcos — cada fuente varía en volumen según su distancia y dirección reales."
@@ -298,7 +298,7 @@
   "daynnight": {
     "label": "Ambiente del mundo",
     "title": "Entorno",
-    "sub": "Un solo interruptor lo cambia todo. El sol, las nubes y el cielo azul dan paso a las estrellas, la luna y los cometas.",
+    "sub": "<strong>Un solo interruptor lo cambia todo</strong>. El sol, las nubes y el cielo azul dan paso a las estrellas, la luna y los cometas.",
     "day": {
       "name": "Modo Día",
       "list": [
@@ -354,7 +354,7 @@
   "eda": {
     "label": "Editor de dirección artística (EDA)",
     "title": "Personalización extrema",
-    "sub": "Más allá de los numerosos presets, el EDA abre decenas de parámetros ajustables en tiempo real, repartidos en 3 pestañas — LUT, Cinemática, Entorno. Cada control responde al instante, sin recarga, y el conjunto se copia/exporta en JSON para poder reproducirse o compartirse.",
+    "sub": "Más allá de los numerosos presets, el EDA abre <strong>decenas de parámetros ajustables en tiempo real</strong>, repartidos en 3 pestañas — LUT, Cinemática, Entorno. Cada control responde al instante, sin recarga, y el conjunto se copia/exporta en JSON para poder reproducirse o compartirse.",
     "lut": {
       "label": "LUT",
       "desc": "Niebla, astro luminoso, calibración colorimétrica completa (curvas RGB, gamma, niveles) y paleta por bioma."
@@ -371,7 +371,7 @@
   "multi": {
     "title1": "Multijugador",
     "title2": "Construid juntos",
-    "sub": "Únete o crea una sala con un código de 6 letras. La cuadrícula se comparte en tiempo real — cada jugador coloca sus losetas y ve las colocaciones de los demás en directo.",
+    "sub": "Únete o crea una sala con un código de 6 letras. La cuadrícula <strong>se comparte en tiempo real</strong> — cada jugador coloca sus losetas y ve las colocaciones de los demás en directo.",
     "features": [
       "Todas las partidas se guardan — reanuda o vuelve a jugar en cualquier momento",
       "Salas a las que unirse en cualquier momento, incluso en plena partida",
@@ -379,9 +379,9 @@
       "El mapa se construye de forma colaborativa, loseta a loseta"
     ],
     "gallery_title": "COMPARTE TUS CAPTURAS",
-    "gallery_promo": "Inmortaliza tus mejores partidas: el botón 📷 captura el mundo sin HUD, y el botón 🖼️ abre la galería compartida con todos los jugadores",
+    "gallery_promo": "Inmortaliza tus mejores partidas: el botón 📷 captura el mundo sin HUD, y el botón 🖼️ abre la <strong>galería compartida con todos los jugadores</strong>",
     "replay_title": "Graba tus partidas en vídeo",
-    "replay_promo": "Con un clic, revive toda la partida a velocidad acelerada y descárgala en vídeo, directamente desde tu navegador.",
+    "replay_promo": "Con un clic, <strong>revive toda la partida a velocidad acelerada</strong> y descárgala en vídeo, directamente desde tu navegador.",
     "btn_create": "Crear una partida",
     "room_title": "Código de sala",
     "room_status": "Partida en curso · 3 jugadores",
