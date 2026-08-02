@@ -111,6 +111,18 @@ const ASSETS_GLB = [
   './glb/astres/lune_melies.glb',
 ];
 
+// ─── Liste exhaustive des PNG ─────────────────────────────────────────────────
+// 2026-08-01 — demande explicite : le cadre décoratif ingame (thème médiéval,
+// #footerBanner/#headerBanner/#leftBanner/#rightBanner, cf. CONTEXT.md §39)
+// n'était préchargé nulle part (aucun tableau PNG n'existait avant ce round —
+// seuls GLB et OGG l'étaient). Sans préchargement, le motif du cadre pouvait
+// apparaître avec un léger délai/pop-in à la première ouverture du thème
+// médiéval. cadre.png (ex-footer2.png, cf. §39) est réutilisé tel quel sur
+// les 4 côtés — un seul fetch suffit à couvrir header/footer/left/right.
+const ASSETS_IMG = [
+  './images/cadre.png',
+];
+
 // ─── Liste exhaustive des OGG ─────────────────────────────────────────────────
 
 const ASSETS_OGG = [
@@ -143,6 +155,18 @@ const ASSETS_OGG = [
   './sounds/train-2.ogg',
   './sounds/train-3.ogg',
   './sounds/pirate.ogg',
+
+  // UI — annonces missions (cf. ttsAnnouncer.js::announceNewMission/announceMissionCompleted).
+  // 2026-07-31 (2e demande) — chaque jingle est devenu un pool de variantes tirées
+  // au hasard (3 pour nouvelle mission, 4 pour mission réussie) : les 7 fichiers
+  // doivent tous être préchargés, pas seulement celui qui sera pioché en premier.
+  './sounds/ui/mission-new-1.ogg',
+  './sounds/ui/mission-new-2.ogg',
+  './sounds/ui/mission-new-3.ogg',
+  './sounds/ui/mission-succes-1.ogg',
+  './sounds/ui/mission-succes-2.ogg',
+  './sounds/ui/mission-succes-3.ogg',
+  './sounds/ui/mission-succes-4.ogg',
 ];
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
@@ -155,11 +179,11 @@ const ASSETS_OGG = [
 // json/languages/{french,english}.json (clé game.preloader), même mécanisme
 // que les autres modules (top-level await + localStorage 'hexistenz_pres_lang').
 // Repli FR en dur : c'est le tout premier écran affiché, avant même le fetch.
-import { getLangFile } from './gameLangReactive.js';
+import { getLangFile, getLangVersion } from './gameLangReactive.js';
 
 const _langFile = getLangFile();
 
-const _plText = await fetch(`./json/languages/${_langFile}.json`)
+const _plText = await fetch(`./json/languages/${_langFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .then(data => data?.game?.preloader ?? {})
   .catch(err => {
@@ -190,6 +214,7 @@ function createOverlay() {
     <div id="preloader-bar-wrap">
       <div id="preloader-bar"></div>
     </div>
+    <div id="preloader-count"></div>
     <div id="preloader-label">${_plText.loading ?? 'Chargement…'}</div>
     <div id="preloader-filename"></div>
   `;
@@ -197,12 +222,30 @@ function createOverlay() {
   return el;
 }
 
-function setProgress(overlay, loaded, total, url = '') {
+// 2026-08-01 — demande explicite : afficher, sous la barre, le nombre de
+// fichiers déjà préchargés (ex: "45 fichiers/138 fichiers") ET, sur la même
+// ligne, le poids déjà téléchargé en Mo (ex: "9 Mo/82 Mo"). Le total en Mo
+// doit être connu AVANT le début du téléchargement réel (sinon le
+// dénominateur resterait à 0 jusqu'à la fin) : on fait donc un premier passage
+// de requêtes HEAD (légères, en parallèle) pour lire Content-Length de chaque
+// asset et sommer le poids total, puis on accumule le poids réellement reçu
+// (arrayBuffer().byteLength, cf. fetchAsset) au fil des téléchargements.
+function setProgress(overlay, loaded, total, url, loadedBytes, totalBytes) {
   const bar      = overlay.querySelector('#preloader-bar');
+  const count    = overlay.querySelector('#preloader-count');
   const label    = overlay.querySelector('#preloader-label');
   const filename = overlay.querySelector('#preloader-filename');
   const pct      = total > 0 ? Math.round((loaded / total) * 100) : 0;
-  if (bar)      bar.style.width = pct + '%';
+  if (bar)   bar.style.width = pct + '%';
+  if (count) {
+    const loadedMB = Math.round((loadedBytes ?? 0) / 1e6);
+    const totalMB  = Math.round((totalBytes ?? 0) / 1e6);
+    count.textContent = (_plText.loadingCount ?? '{loaded} fichiers / {total} fichiers · {loadedMB} Mo / {totalMB} Mo')
+      .replace('{loaded}', loaded)
+      .replace('{total}', total)
+      .replace('{loadedMB}', loadedMB)
+      .replace('{totalMB}', totalMB);
+  }
   if (label)    label.textContent = (_plText.loadingPct ?? 'Chargement… {pct} %').replace('{pct}', pct);
   if (filename) filename.textContent = url ? url.split('/').pop() : '';
 }
@@ -224,17 +267,42 @@ function dismissOverlay(overlay) {
 /**
  * Charge un asset via fetch() pour le mettre dans le cache HTTP.
  * Les erreurs (404, réseau) sont silencieuses : on avance quand même.
+ * Retourne le poids réellement reçu (octets), 0 en cas d'échec — ce poids
+ * réel (et non le Content-Length annoncé) alimente le compteur "X Mo/Y Mo".
  */
 async function fetchAsset(url) {
   try {
     const response = await fetch(url);
     if (response.ok) {
       // Consommer le body pour que le navigateur finalise bien la mise en cache.
-      await response.arrayBuffer();
+      const buf = await response.arrayBuffer();
+      return buf.byteLength;
     }
   } catch (_) {
     // Fichier absent ou erreur réseau : on continue.
   }
+  return 0;
+}
+
+/**
+ * Requête HEAD légère pour connaître à l'avance le poids (Content-Length)
+ * d'un asset, sans le télécharger. Utilisée uniquement pour établir le total
+ * en Mo affiché dès le début du chargement (cf. setProgress). Silencieuse en
+ * cas d'échec (serveur sans support HEAD, fichier absent, etc.) — l'asset
+ * contribuera alors 0 au total annoncé, mais son poids réel sera quand même
+ * compté au numérateur lors du fetch complet qui suit.
+ */
+async function headSize(url) {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    if (response.ok) {
+      const len = response.headers.get('content-length');
+      if (len) return parseInt(len, 10) || 0;
+    }
+  } catch (_) {
+    // Ignoré : le total sera simplement sous-estimé pour ce fichier.
+  }
+  return 0;
 }
 
 // ─── Point d'entrée public ────────────────────────────────────────────────────
@@ -246,17 +314,25 @@ async function fetchAsset(url) {
 export async function showPreloader(onReady) {
   const overlay = createOverlay();
 
-  const all    = [...ASSETS_GLB, ...ASSETS_OGG];
+  const all    = [...ASSETS_GLB, ...ASSETS_IMG, ...ASSETS_OGG];
   const total  = all.length;
   let   loaded = 0;
 
-  setProgress(overlay, 0, total);
+  // Pré-passe HEAD (parallèle, léger) pour connaître le poids total annoncé
+  // avant de lancer les vrais téléchargements — sinon le dénominateur "Y Mo"
+  // resterait à 0 jusqu'à la toute fin (cf. commentaires ci-dessus).
+  const sizes      = await Promise.all(all.map(headSize));
+  const totalBytes = sizes.reduce((a, b) => a + b, 0);
+  let   loadedBytes = 0;
+
+  setProgress(overlay, 0, total, '', loadedBytes, totalBytes);
 
   // Lancer tous les fetch en parallèle, mettre à jour la barre au fil de l'eau
   const tasks = all.map(url =>
-    fetchAsset(url).then(() => {
+    fetchAsset(url).then(bytes => {
       loaded += 1;
-      setProgress(overlay, loaded, total, url);
+      loadedBytes += bytes;
+      setProgress(overlay, loaded, total, url, loadedBytes, totalBytes);
     })
   );
 

@@ -1,0 +1,1222 @@
+{
+  "nav": {
+    "links": {
+      "factions": "Fraktionen",
+      "biomes": "Biome",
+      "missions": "Missionen",
+      "gameplay": "Spielprinzip",
+      "gallery": "Stimmungen",
+      "creatures": "Kreaturen",
+      "audio": "Audio",
+      "daynnight": "Umgebung",
+      "eda": "Personalisierung",
+      "multi": "Mehrspieler",
+      "scores": "Bestenliste"
+    },
+    "play": "Spielen"
+  },
+  "theme": {
+    "bleu": "Sternenblau",
+    "ancien": "Mittelalterlich"
+  },
+  "hero": {
+    "subtitle": "Kontemplatives Hexagon-Spiel, gemacht mit Nostalgie und Liebe ❤️ Three.js und jeder Menge Kacheln",
+    "inspi_text": "Inspiriert von <em>Dorfromantik</em>, der pastoralen Seele von <em>The Settlers</em> (Blue Byte, 1993)\n          und den wundervollen Welten von <em>Heroes of Might and Magic</em> (3DO).",
+    "inspi_buy": {
+      "dorfromantik": "Dorfromantik auf Steam",
+      "settlers": "The Settlers bei Ubisoft",
+      "heroes3": "Heroes III auf GOG"
+    },
+    "tagline": "<strong>Hexistenz ist ein kontemplatives Spiel</strong>, gemacht für Spieler, die es lieben, eine Welt\n          und ihre Details lange zu betrachten, ohne sich um die verstreichende Zeit zu kümmern.<br><br><strong>Setze\n          hexagonale Kacheln</strong> und beobachte, wie vor deinen Augen ein Territorium Gestalt annimmt: weite\n          Wälder aus Tannen und Birken, wogende Weizenfelder mit Mühlen dazwischen, mittelalterliche Dörfer mit\n          rauchenden Dächern, lange Eisenbahnnetze und breite Flüsse, auf denen deine Boote fahren.<br><br>Erfülle\n          Missionen, fange Kometen ab, umgib deine Kacheln vollständig, und errichte nach und nach eine lebendige\n          Welt, Kachel für Kachel.<br><br><strong>Spiele allein oder im Mehrspielermodus</strong>, nimm eine\n          gespeicherte Partie wieder auf, wann immer du Lust hast, <strong>halte deine schönsten Momente in der\n          Screenshot-Galerie fest</strong> und erlebe deine Partien im Zeitraffer dank herunterladbarer\n          Online-Replays noch einmal.<br><br>Das Spiel ist schon jetzt spielbar und vollständig in 9 Sprachen übersetzt, darunter ein Altfranzösisch aus dem 12. Jahrhundert.<br><br>Das Spiel ist kostenlos, ohne Registrierung, ohne Pay-to-Win und ohne Ingame-Käufe: kurzum, einzig und allein für die Nostalgie gemacht.",
+    "btn_play": "Jetzt spielen",
+    "btn_how": "Wie spielt man?",
+    "stats": {
+      "biomes_label": "Biome",
+      "games_label": "Partien",
+      "factions_label": "Fraktionen",
+      "langs_label": "Sprachen",
+      "themes_label": "Grafische Themen"
+    }
+  },
+  "factions": {
+    "label": "Zwei Arten, die Welt zu sehen",
+    "title1": "Flachweltler und Kugelweltler",
+    "title2": "Zwei unversöhnliche Fraktionen",
+    "sub": "Hexistenz teilt die Baumeister in <strong>zwei unversöhnliche Fraktionen</strong>. Eine visuelle Option,\n      ein philosophisches Bekenntnis. Auf welcher Seite stehst du&nbsp;?",
+    "flat": {
+      "tag": "Flachwelt-Modus",
+      "name": "🪨 Die flache Welt",
+      "desc": "Das Raster erstreckt sich horizontal, rein und geordnet. Jede gesetzte Kachel fügt sich in\n            eine vollkommen ebene Fläche ein, so wie es die Alten schon immer wussten.\n            Für alle, die ihren Augen vertrauen."
+    },
+    "globe": {
+      "tag": "Kugelwelt-Modus",
+      "name": "🌍 Die sphärische Welt",
+      "desc": "Die Krümmung der Welt zeigt sich, während das Raster wächst — entfernte Kacheln\n            biegen sich zum Horizont hin. Ein Echtzeit-GPU-Effekt, der jeder Partie eine\n            schwindelerregende Tiefe verleiht."
+    },
+    "vs": "Die Debatte ist noch nicht beendet."
+  },
+  "biomes": {
+    "label": "Die Biome",
+    "title": "Sechs zu verbindende Biome",
+    "sub": "Jede Kachel besteht aus sechs dreieckigen Sektoren. <strong>Verbinde gleiche Biome</strong>, um Zonen zu bilden und deinen Punktestand zu maximieren.",
+    "grass": {
+      "name": "Wiese",
+      "desc": "Grasflächen, deren Halme im Wind zittern, durchsetzt mit Wildblumen, Felsen, Hirschen und Büschen. Neutrales Gelände zwischen den großen Netzwerken.",
+      "tag": "Neutrales Biom"
+    },
+    "field": {
+      "name": "Feld",
+      "desc": "Weizen im Wind, prozedurale Mühlen und Heuballen. Das Chi-Mai-Thema erklingt, wenn die Kamera die Ähren streift.",
+      "tag": "Landwirtschaftliches Netzwerk"
+    },
+    "forest": {
+      "name": "Wald",
+      "desc": "Tannen, Birken, Pappeln als InstancedMesh, deren Laubkronen sich im Wind bis in das Unterholz wiegen. Pilze, Holzstapel, Hirsche — bis zu 22 Millionen Dreiecke.",
+      "tag": "Dichter Wald"
+    },
+    "house": {
+      "name": "Dorf",
+      "desc": "Mittelalterliche Häuser mit volumetrischem Rauch, Wachtürmen, Brunnen, Karren, animierten Hunden und Pferden.",
+      "tag": "Menschlicher Lebensraum"
+    },
+    "water": {
+      "name": "Wasser",
+      "desc": "Zusammenhängende Wasserfläche mit organischem Ufer, animierte Wellen und Gischt im Aquarell-Stil. Animierte Boote mit Kielwasser, prozedurale Strände und Zonen-Halos.",
+      "tag": "Flussnetzwerk ⛵"
+    },
+    "rail": {
+      "name": "Eisenbahn",
+      "desc": "Prozedurale Schienen, Schwellen und Schotter. Züge mit Waggons, Endbahnhöfen und Lokomotivrauch.",
+      "tag": "Eisenbahnnetzwerk 🚂"
+    }
+  },
+  "missions": {
+    "label": "Ziele",
+    "title": "Die Missionen",
+    "sub": "Jede Partie erzeugt automatische Ziele rund um Biome und Netzwerke. Sie zu erfüllen bringt <strong>100 Punkte und vor allem 3 neue Kacheln in den Stapel</strong> — was theoretisch endlose Partien garantiert.",
+    "zone": {
+      "name": "Biom-Zone",
+      "desc": "Erreiche eine Mindestfläche in einem bestimmten Biom: <em>«&nbsp;Wald mit 8 Sektoren&nbsp;»</em>, <em>«&nbsp;Wiese mit 12 Sektoren&nbsp;»</em>…"
+    },
+    "rail": {
+      "name": "Eisenbahn",
+      "desc": "Setze eine vorgegebene Anzahl an Schienensektoren. Jedes gesetzte Eisenbahndreieck bringt diese Mission voran."
+    },
+    "trains": {
+      "name": "Züge",
+      "desc": "Bilde eine Anzahl aktiver Zuglinien — jede Linie verbindet zwei Bahnhöfe über durchgängige, unterbrechungsfreie Schienen."
+    },
+    "water": {
+      "name": "Wasserweg",
+      "desc": "Bilde eine Wasserfläche mit einer Mindestgröße. Jedes gesetzte Wasserdreieck bringt diese Mission voran."
+    },
+    "boats": {
+      "name": "Boote",
+      "desc": "Lass eine Anzahl Boote auf dem Raster erscheinen. Auf jedem von Landkacheln umschlossenen See erscheint automatisch ein Boot."
+    },
+    "comets": {
+      "name": "Kometen",
+      "desc": "Kometen ziehen in Echtzeit über den Himmel. Klicke auf sie, um sie zur Explosion zu bringen und Punkte zu sammeln — Reflexe und Aufmerksamkeit gefragt."
+    },
+    "village": {
+      "name": "Blühendes Dorf",
+      "desc": "Bilde ein dichtes Dorf: gruppiere genug angrenzende Wohnsektoren, um die festgelegte Schwelle zu erreichen."
+    },
+    "fields": {
+      "name": "Bewirtschaftetes Land",
+      "desc": "Erweitere die Felder zu zusammenhängenden Zonen. Mühlen erscheinen erst, wenn die Zone groß genug ist, um sie aufzunehmen."
+    },
+    "mills": {
+      "name": "Windmühlen",
+      "desc": "Baue große Weizenfeldzonen, damit dort Mühlen erscheinen. Eine Mühle entsteht automatisch in der Mitte jeder großen Feldzone."
+    }
+  },
+  "gameplay": {
+    "label": "Spielmechanik",
+    "title": "Wie man spielt",
+    "sub": "Ein einfacher Kreislauf, <strong>eine unendliche Tiefe</strong>. Jede gesetzte Kachel verändert die Welt.",
+    "ui_caption": "Aktuelle Kachel · Nächste Kachel · Verbleibende Kacheln",
+    "steps": {
+      "draw": {
+        "title": "Ziehen",
+        "desc": "Eine hexagonale Kachel erscheint — sechs dreieckige Sektoren, jeder mit einem Biom. Beobachte die nächste, um vorauszuplanen."
+      },
+      "orient": {
+        "title": "Ausrichten",
+        "desc": "Drehe die Kachel, um ihre Kanten anzugleichen. Wasser und Schiene erfordern Kontinuität — eine falsche Platzierung blockiert das Netzwerk."
+      },
+      "place": {
+        "title": "Platzieren",
+        "desc": "Wähle die Position im axialen Raster. Eine Kachel mit sechs Nachbarn zu umgeben bringt sofort einen großen Bonus."
+      },
+      "score": {
+        "title": "Punkten",
+        "desc": "Erfülle Missionen und Zonen, fange Kometen ab, reiche deinen besten Score in der Weltrangliste ein."
+      }
+    },
+    "score_label": "Punktesystem",
+    "pills": {
+      "place": "Kachel platziert",
+      "edge": "Passende Kante",
+      "network": "Verbundenes Netzwerk",
+      "surround": "Kachel umschlossen",
+      "mission": "Mission erfüllt",
+      "comet": "Komet abgefangen",
+      "bonus": "Bonusfeld abgedeckt"
+    },
+    "kbd_title": "TASTATURSTEUERUNG",
+    "kbd": {
+      "camera_label": "Kamera",
+      "left_click_kbd": "Linksklick",
+      "left_click_desc": "Kamera bewegen",
+      "right_click_kbd": "Rechtsklick",
+      "right_click_desc": "Kamera drehen",
+      "wheel_kbd": "Mausrad",
+      "wheel_desc": "Zoom",
+      "space_kbd": "Leertaste",
+      "reset_cam": "Kamera zurücksetzen",
+      "zoom": "heran- / herauszoomen",
+      "shift_kbd": "SHIFT",
+      "speed_up": "beschleunigt Bewegung/Zoom",
+      "undo": "rückgängig machen",
+      "customization": "Personalisierung",
+      "perf_hud": "Performance-HUD",
+      "snapshot": "Bildschirmfoto",
+      "gallery": "Screenshot-Galerie",
+      "replay": "Replay der Partie",
+      "immersive": "immersiver Modus",
+      "super_immersive": "Super-immersiver Modus",
+      "mute": "stumm",
+      "mute_tts": "Stimme stumm",
+      "help": "Hilfe"
+    }
+  },
+  "gallery": {
+    "label": "Visuelle Stimmungen",
+    "title1": "Mehrere Atmosphären",
+    "title2": "Unendlich viele Personalisierungen",
+    "sub": "Zahlreiche einsatzbereite visuelle Presets — doch jeder ist nur eine Grundlage: Farb-LUT, filmische Effekte (chromatische Aberration, Filmkorn, Tilt-Shift), Retro-Pixelisierung, EGA- und Amiga-Stimmungen, volumetrischer Rauch, prozeduraler Himmel… <strong>Hunderte Kombinationen</strong>, um die gesamte Welt nach deinem Geschmack zu verwandeln. Jede Personalisierung lässt sich mit einem Klick exportieren und mit anderen Spielern teilen.",
+    "preset_word": "Preset",
+    "presets": {
+      "autumn": "Herbst",
+      "summer": "Lebhafter Sommer",
+      "nordic": "Nordisch",
+      "amiga": "Amiga",
+      "ega": "EGA 16 Farben",
+      "cga": "CGA 320×200 4 Farben",
+      "apple2": "Apple II",
+      "psyche": "Psyche-LSD"
+    }
+  },
+  "creatures": {
+    "label": "Das Leben der Welt",
+    "title": "Eine Welt voller Kreaturen",
+    "sub": "Die Welt existiert nicht einfach nur: <strong>sie atmet</strong>. Tiere, Vögel und Bewohner beleben jedes Biom im Wandel der Jahreszeiten.",
+    "sheep": {
+      "name": "Schafe",
+      "desc": "Herden weiden ruhig auf den Wiesen und bewegen sich mit den im Wind wogenden Gräsern."
+    },
+    "crows": {
+      "name": "Krähen",
+      "desc": "Krähenschwärme kreisen über den Weizenfeldern und lauern auf jede unbewachte Parzelle."
+    },
+    "farmer": {
+      "name": "Bauer",
+      "desc": "Mit der Mistgabel in der Hand wacht der Bauer über seinen Weizen und kommt und geht im Rhythmus der landwirtschaftlichen Jahreszeiten."
+    },
+    "druid": {
+      "name": "Druide",
+      "desc": "Eine einsame Gestalt wandert zwischen den Bäumen umher, stiller Wächter der Wälder und ihrer Geheimnisse."
+    },
+    "witch": {
+      "name": "Hexe",
+      "desc": "In manchen Wäldern, sobald die Nacht hereinbricht, erzählt man sich, dass Hexen zwischen den Bäumen umherstreifen, angezogen von der Stille und dem Schein vergessener Lagerfeuer. Nur wenige bekommen sie zu Gesicht — noch weniger wagen es, ihnen zu folgen."
+    },
+    "moon": {
+      "name": "Méliès-Mond",
+      "desc": "Im Nachtmodus trägt der Mond das ikonische Gesicht aus Méliès' Die Reise zum Mond — eine Hommage an den Stummfilm, eingebettet im Herzen des Sternenhimmels."
+    },
+    "seagulls": {
+      "name": "Möwen",
+      "desc": "Kleine Möwengruppen kreisen über den größten Wasserflächen, wobei sich einzelne Tiere manchmal vom Rest der Gruppe absetzen."
+    },
+    "fireflies": {
+      "name": "Glühwürmchen",
+      "desc": "Bei Einbruch der Nacht ziehen Schwärme funkelnder Glühwürmchen knapp über dem Boden umher und zeichnen warme Lichtpunkte, die sanft um die Kamera treiben."
+    },
+    "population": {
+      "villages_label": "Dörfer",
+      "forests_label": "Wälder",
+      "fields_label": "Weizenfelder",
+      "water_label": "Wasser",
+      "meadows_label": "Wiesen",
+      "tags": {
+        "village_women": "Dorfbewohnerinnen",
+        "village_men": "Dorfbewohner",
+        "farmer": "Bauer",
+        "blacksmith": "Schmied",
+        "merchant": "Händler",
+        "innkeeper": "Wirt",
+        "guard": "Wache",
+        "soldier": "Soldat",
+        "knight": "Ritter",
+        "archer": "Bogenschütze",
+        "warriors": "Krieger",
+        "mage": "Magier",
+        "monk": "Mönch",
+        "witch": "Hexe",
+        "crows": "Krähen",
+        "windmill": "Mühle",
+        "scarecrow": "Vogelscheuche",
+        "boat": "Boot",
+        "rowboats": "Ruderboote",
+        "seagulls": "Möwen",
+        "deer": "Hirsche",
+        "wildflowers": "Wildblumen"
+      }
+    },
+    "note": "22 verschiedene Gesichter bevölkern Dörfer und Wälder, jedes mit eigener Silhouette, eigenem Kostüm, eigener Rolle. Keine kopierten Statisten — eine echte Bevölkerung, Kachel für Kachel."
+  },
+  "audio": {
+    "label": "Klangkulisse",
+    "title": "Eine hörbare Welt",
+    "sub": "Der Klang folgt der Kamera <strong>in Echtzeit</strong> — jedes Biom, jeder Zug, jedes Boot hat seine eigene Stimme, die mit der Entfernung anschwillt und verklingt.",
+    "spatial": {
+      "name": "3D-Raumklang",
+      "desc": "Dorfstimmung, Vogelgesang aus Wald und Wiese, Krähen über den Feldern, Wellenrauschen an den Stränden, Züge und Boote — jede Quelle variiert in der Lautstärke je nach tatsächlicher Entfernung und Richtung."
+    },
+    "chimai": {
+      "name": "Chi Mai, das versteckte Thema",
+      "desc": "Senke die Kamera bis knapp über ein Weizenfeld, und ein geheimes melodisches Thema setzt ein — Musik und andere Klänge verblassen sanft, um ihm Platz zu machen."
+    },
+    "adaptive": {
+      "name": "Adaptive Musik",
+      "desc": "Intro-, Spiel- und Ausklangstücke, die sanft ineinander überblenden, aus mehreren Varianten geschöpft, damit es sich nie zweimal gleich anhört."
+    },
+    "voice": {
+      "name": "Eine Stimme, die die Partie kommentiert",
+      "desc": "Ein Sprecher (Text-to-Speech direkt im Browser, kein externer Dienst) meldet live deine Punkte, Missionen und wichtige Momente der Oberfläche — ein kurzer Klang geht jeder neuen und jeder abgeschlossenen Mission voraus. Verfügbar in allen 9 Sprachen des Spiels, mit automatisch gewählter männlicher Stimme für Deutsch und Russisch. Die Taste T schaltet nur sie stumm, ohne den Rest der Klangkulisse zu berühren."
+    },
+    "silence": {
+      "name": "Stille auf Knopfdruck",
+      "desc": "Die Taste M schaltet die gesamte Klangkulisse einschließlich Musik sofort ab und wieder ein — praktisch für eine ruhige Partie im Meeting oder in der Videokonferenz."
+    }
+  },
+  "daynnight": {
+    "label": "Stimmung der Welt",
+    "title": "Umgebung",
+    "sub": "<strong>Ein einziger Schalter verändert alles</strong>. Sonne, Wolken und blauer Himmel weichen Sternen, Mond und Kometen.",
+    "day": {
+      "name": "Tagmodus",
+      "list": [
+        "🌤 Sonne, die auf ihrer eigenen Rendering-Ebene kreist",
+        "⛅ Prozeduraler volumetrischer Himmel mit animierten FBM-Wolken",
+        "🔵 Zenith/Horizont-Verlauf in warmen Blautönen",
+        "🚫 Kometen ausgeblendet — zu hell für sie"
+      ]
+    },
+    "night": {
+      "name": "Nachtmodus",
+      "list": [
+        "🌙 Mond, tiefer nächtlicher Zenith/Horizont-Verlauf",
+        "✨ Funkelnde Sterne auf einer eigenen Sphäre",
+        "☄️ Kometen, die vorbeiziehen — klicken, um sie zu sprengen",
+        "🌑 Dunkle Atmosphäre, Dorfrauch besser sichtbar"
+      ]
+    },
+    "smoke": {
+      "name": "Rauch",
+      "list": [
+        "🏠 Bis zu 48 gleichzeitige Rauchsäulen, in Echtzeit raytraced über Schornsteinen und Lokomotiven",
+        "🌬️ Vier-Oktaven-Turbulenz, die mit der Höhe abdriftet — jede Säule ist einzigartig",
+        "🎲 Nur jedes dritte Haus raucht, zufällig bei der Kachelerzeugung bestimmt",
+        "🌙 Noch geheimnisvoller bei Einbruch der Nacht"
+      ]
+    },
+    "godrays": {
+      "name": "God Rays",
+      "list": [
+        "☀️ Volumetrische Lichtstrahlen, die von Sonne oder Mond ausgehen",
+        "🌲 Durchdringen Baumkronen, Türme und Wolken für eine filmische Beleuchtung",
+        "🎚️ Länge, Streuung und Schwellenwert über den Editor für künstlerische Leitung einstellbar"
+      ]
+    },
+    "rain": {
+      "name": "Regen",
+      "list": [
+        "💧 Dynamischer Regenschauer, jederzeit über das Wetter-HUD auslösbar",
+        "⛈️ Geht auf natürliche Weise in Gewitter und Blitze über",
+        "🎬 Stimmung verstärkt durch die Vignette und das Filmkorn der Kinematik"
+      ]
+    },
+    "mist": {
+      "name": "Morgennebel",
+      "list": [
+        "🌫️ Niedriger Schleier, der Fernsicht dämpft und Silhouetten weichzeichnet",
+        "☀️ Löst sich im Lauf der Minuten allmählich auf",
+        "🎚️ Dichte und Farbe des Nebels im Editor für künstlerische Leitung steuerbar"
+      ]
+    },
+    "storm": {
+      "name": "Gewitter & Brände",
+      "list": [
+        "⚡ Der Blitz schlägt unter der Gewitterdecke ein und kann eine Kachel entzünden",
+        "🔥 Bäume, Häuser, Türme und Mühlen brennen in ihrer echten Höhe, verkohlen und wachsen wieder nach",
+        "🌬️ Der Brandherd treibt im Wind, greift auf Nachbarn über und stoppt abrupt am Wasser",
+        "🌧️ Regen bremst die Ausbreitung und erstickt das Feuer bisweilen ganz"
+      ]
+    }
+  },
+  "eda": {
+    "label": "Editor für künstlerische Leitung (EKL)",
+    "title": "Extreme Personalisierung",
+    "sub": "Über die zahlreichen Presets hinaus eröffnet der EKL <strong>Dutzende in Echtzeit anpassbarer Werte</strong>, verteilt auf 3 Tabs — LUT, Kinematik, Umgebung. Jeder Regler reagiert sofort, ohne Neuladen, und alles lässt sich als JSON kopieren/exportieren, um es erneut abzuspielen oder zu teilen.",
+    "lut": {
+      "label": "LUT",
+      "desc": "Nebel, Lichtgestirn, vollständige Farbkalibrierung (RGB-Kurven, Gamma, Werte) und Palette pro Biom."
+    },
+    "cinematic": {
+      "label": "Kinematik",
+      "desc": "God Rays, Tilt-Shift, Bloom, Retro-Pixelisierung und Bildschirmkrümmung — um die Welt zu filmen, statt sie nur zu betrachten."
+    },
+    "environment": {
+      "label": "Umgebung",
+      "desc": "Wolken und Bewölkung, Wind (Weizen, Gräser, Bäume), dynamisches Wetter (Nebel, Glühwürmchen, Regen), Weltform (Kugel-/Flachwelt), Tag/Nacht-Umschaltung und Qualitäts-/Dichte-Presets."
+    }
+  },
+  "multi": {
+    "title1": "Mehrspieler",
+    "title2": "Gemeinsam bauen",
+    "sub": "Tritt einem Raum mit einem 6-stelligen Code bei oder erstelle einen. Das Raster wird <strong>in Echtzeit geteilt</strong> — jeder Spieler setzt seine Kacheln und sieht die Platzierungen der anderen fortlaufend.",
+    "features": [
+      "Alle Partien werden gespeichert — jederzeit fortsetzen oder erneut spielen",
+      "Räumen jederzeit beitreten, auch mitten in einer laufenden Partie",
+      "Echtzeit-Synchronisation · PHP + JSON",
+      "Die Karte entsteht gemeinschaftlich, Kachel für Kachel"
+    ],
+    "gallery_title": "TEILE DEINE SCREENSHOTS",
+    "gallery_promo": "Halte deine schönsten Partien fest: Die Schaltfläche 📷 fotografiert die Welt ohne HUD, und die Schaltfläche 🖼️ öffnet die <strong>mit allen Spielern geteilte Galerie</strong>",
+    "replay_title": "Zeichne deine Partien als Video auf",
+    "replay_promo": "Mit einem Klick <strong>erlebst du die ganze Partie im Zeitraffer noch einmal</strong> und lädst sie direkt aus deinem Browser als Video herunter.",
+    "btn_create": "Partie erstellen",
+    "room_title": "Raum-Code",
+    "room_status": "Partie läuft · 3 Spieler",
+    "tiles_placed_label": "Gesetzte Kacheln"
+  },
+  "scores": {
+    "label": "Weltrangliste",
+    "title": "Die effizientesten Baumeister",
+    "empty": "Noch kein Score erfasst — sei der Erste, der seine Kachel setzt.",
+    "try_luck": "Versuch dein Glück →",
+    "headline_stat": "gesetzte Kacheln",
+    "pts_suffix": "Pkt.",
+    "trains_s": "Lokomotive",
+    "trains_p": "Lokomotiven",
+    "boats_s": "Boot",
+    "boats_p": "Boote",
+    "mills_s": "Mühle",
+    "mills_p": "Mühlen",
+    "comets_s": "Komet",
+    "comets_p": "Kometen",
+    "largest_zone": "größte Zone",
+    "biome_labels": {
+      "forest": {
+        "s": "Baum",
+        "p": "Bäume"
+      },
+      "water": {
+        "s": "Wasser",
+        "p": "Wasser"
+      },
+      "house": {
+        "s": "Haus",
+        "p": "Häuser"
+      },
+      "field": {
+        "s": "Weizenfeld",
+        "p": "Weizenfelder"
+      },
+      "grass": {
+        "s": "Wiese",
+        "p": "Wiesen"
+      },
+      "rail": {
+        "s": "Eisenbahn",
+        "p": "Eisenbahnen"
+      }
+    }
+  },
+  "footer": {
+    "copy": "Kontemplatives Hexagon-Spiel, gemacht mit Nostalgie und Liebe ❤️ Three.js und jeder Menge Kacheln",
+    "github": "GitHub"
+  },
+  "game": {
+    "gallery": {
+      "title": "Screenshot-Galerie",
+      "empty": "Noch keine Aufnahme. Drücke 📷 im Spiel, um eine zu erstellen.",
+      "close": "Schließen",
+      "loading": "Wird geladen…",
+      "tilesCount": "Partie mit {n} Kacheln",
+      "modeBouliste": "Kugelwelt-Modus",
+      "modePlatiste": "Flachwelt-Modus",
+      "captured": "Aufnahme gemacht!"
+    },
+    "sound": {
+      "on": "Sound aktiviert",
+      "off": "Sound deaktiviert"
+    },
+    "replay": {
+      "restart": "Zum Anfang zurück",
+      "playPause": "Wiedergabe / Pause",
+      "close": "Replay schließen"
+    },
+    "eda": {
+      "mainTitle": "Editor für künstlerische Leitung",
+      "ambiances": "STIMMUNGEN",
+      "ambiancePrefix": "Stimmung",
+      "tabs": {
+        "lut": "LUT",
+        "cinematic": "Kinematik",
+        "environment": "Umgebung"
+      },
+      "headers": {
+        "lutFog": "1. Nebel",
+        "lutSun": "2. Lichtgestirn",
+        "lutGrading": "3. Kalibrierung",
+        "lutPalette": "4. Biom-Palette",
+        "cinema1": "1. KINEMATIK",
+        "godRays": "2. God Rays",
+        "tiltShift": "3. Tilt-Shift",
+        "bloom": "4. Bloom",
+        "pixelisation": "5. PIXELISIERUNG",
+        "crt": "6. BILDSCHIRMKRÜMMUNG",
+        "nuages": "3. WOLKEN",
+        "vent": "4. WIND",
+        "worldShape": "5. Weltform",
+        "dayNight": "6. Tag / Nacht",
+        "quality": "7. Qualität / Dichte",
+        "weather": "8. Wetter",
+        "waterFoam": "1. Gischt",
+        "waterWake": "2. Bootskielwasser",
+        "windWheat": "4.1 Weizenhalme",
+        "windGrass": "4.2 Grashalme",
+        "windTree": "4.3 Bäume"
+      },
+      "toggleTitles": {
+        "lutGrading": "Kalibrierung aktivieren / deaktivieren",
+        "lutPalette": "Biom-Palette aktivieren / deaktivieren",
+        "cinema1": "Filmische Effekte aktivieren / deaktivieren",
+        "godRays": "God Rays aktivieren / deaktivieren",
+        "tiltShift": "Tilt-Shift aktivieren / deaktivieren",
+        "bloom": "Bloom aktivieren / deaktivieren",
+        "pixelisation": "Pixelisierung aktivieren / deaktivieren",
+        "crt": "Bildschirmkrümmung aktivieren / deaktivieren",
+        "nuages": "Wolken aktivieren / deaktivieren",
+        "vent": "Alle Winde aktivieren / deaktivieren (Weizen, Wiese, Bäume)",
+        "worldShape": "Zwischen Kugelwelt (Sphäre) und Flachwelt (eben) wechseln",
+        "dayNight": "Zwischen Tag und Nacht wechseln",
+        "waterFoam": "Gischt aktivieren / deaktivieren",
+        "waterWake": "Bootskielwasser aktivieren / deaktivieren"
+      },
+      "modeActuel": "Aktueller Modus",
+      "preregalages": "Voreinstellungen",
+      "presetNames": {
+        "default": "Standard",
+        "mist": "Nebel",
+        "autumn": "Herbst",
+        "summerVivid": "Lebhafter Sommer",
+        "winter": "Winter",
+        "sepia": "Sepia",
+        "nordic": "Nordisch",
+        "desert": "Wüste",
+        "pong": "Pong",
+        "appleII": "Apple II",
+        "cga": "CGA",
+        "ega": "EGA",
+        "amiga": "Amiga",
+        "psyche": "Psyche-LSD"
+      },
+      "themeNames": {
+        "bleu": "Sternenblau",
+        "ancien": "Mittelalterlich"
+      },
+      "modes": {
+        "bouliste": "Kugelwelt",
+        "platiste": "Flachwelt",
+        "jour": "Tag",
+        "nuit": "Nacht"
+      },
+      "quality": {
+        "faible": "Niedrig",
+        "moyen": "Mittel",
+        "eleve": "Hoch",
+        "max": "Max"
+      },
+      "qualityTooltip": "Dichte {label} ({value})",
+      "weatherStopAll": "⏹ Alles stoppen",
+      "weatherStopAllTitle": "Stoppt alle laufenden Umgebungsereignisse",
+      "weatherGroups": {
+        "morningMist": "🌫️ Morgennebel",
+        "fireflies": "✨ Glühwürmchen",
+        "clouds": "☁️ Regenwolken",
+        "rain": "🌧️ Regen",
+        "storm": "⛈️ Gewitter",
+        "lightning": "⚡ Blitz",
+        "fire": "🔥 Feuer",
+        "panic": "🐑 Tierpanik"
+      },
+      "weatherRequires": "(erfordert {label})",
+      "weatherSwitchTitle": "Aktivieren / deaktivieren",
+      "weatherCloudsSwitchTitle": "Wolken aktivieren / deaktivieren",
+      "weatherResetTitle": "Zurücksetzen",
+      "presetTooltipApply": "Stimmung „{name}“ anwenden",
+      "presetTooltipDefault": "Zurück zu den Standardwerten",
+      "footer": {
+        "copy": "📋 Kopieren",
+        "copyTitle": "Alle aktuellen Parameter LUT + PIX + WASSER + KINEMATIK + WIND + WOLKEN + Weltform + Tag/Nacht + Dichte + Wetter als JSON kopieren (Grundlage für ein künftiges Stimmungs-Preset mit vorkonfigurierten Wettereffekten)",
+        "copied": "✓ Kopiert!",
+        "undo": "↩ Rückgängig",
+        "undoTitle": "Letzte Änderung rückgängig machen (Undo)",
+        "redo": "↪ Wiederholen",
+        "redoTitle": "Rückgängig gemachte Änderung wiederherstellen (Redo)",
+        "reset": "Zurücksetzen",
+        "resetTitle": "Auf Standardwerte zurücksetzen",
+        "compare": "Vergleichen",
+        "compareBack": "⟳ Zurück",
+        "compareTitle": "Zwischen aktuellen Parametern und letzter Stimmung wechseln",
+        "lastPresetTitle": "Zuletzt angewendete Stimmung"
+      },
+      "labels": {
+        "environment": {
+          "fogDensity": "Exp. Dichte",
+          "fogNear": "Beginn (linear)",
+          "fogFar": "Ende (linear)",
+          "skyColor": "Himmel",
+          "fogColor": "Nebelfarbe",
+          "domeColorTop": "Kuppel oben",
+          "domeColorBottom": "Kuppel unten"
+        },
+        "renderer": {
+          "toneMappingExposure": "Globale Belichtung"
+        },
+        "lights": {
+          "hemisphereIntensity": "Hemisphärenintensität",
+          "sunIntensity": "Intensität",
+          "sunOrbitRadius": "Orbitradius",
+          "sunOrbitHeight": "Orbithöhe",
+          "sunOrbitSpeed": "Orbitgeschwindigkeit",
+          "sunVisualScale": "Größe",
+          "fillIntensity": "Aufhellicht",
+          "hemisphereSkyColor": "Hemisphäre Himmel",
+          "hemisphereGroundColor": "Hemisphäre Boden",
+          "sunColor": "Sonne",
+          "fillColor": "Aufhellicht-Farbe"
+        },
+        "grading": {
+          "brightness": "Helligkeit",
+          "contrast": "Kontrast",
+          "saturation": "Sättigung",
+          "vibrance": "Vibrance",
+          "hue": "Farbtonverschiebung",
+          "gamma": "Gamma",
+          "blackLevel": "Schwarzwerte",
+          "whiteLevel": "Weißwerte",
+          "red": "Rotkanal",
+          "green": "Grünkanal",
+          "blue": "Blaukanal",
+          "redCurve": "Rotkurve",
+          "greenCurve": "Grünkurve",
+          "blueCurve": "Blaukurve"
+        },
+        "palette": {
+          "strength": "Palettenstärke",
+          "saturation": "Sättigung",
+          "contrast": "Kontrast",
+          "warmShift": "Warm / Kalt",
+          "targets": {
+            "field": "Felder",
+            "forest": "Wälder",
+            "grass": "Wiesen",
+            "house": "Dörfer",
+            "rail": "Eisenbahnen",
+            "water": "Wasser"
+          }
+        },
+        "water": {
+          "foamWidth": "Reichweite",
+          "foamScale": "Feinheit",
+          "foamDensity": "Uferdichte",
+          "foamAmbient": "Oberfläche",
+          "foamSharp": "Schärfe",
+          "foamSpeed": "Geschwindigkeit",
+          "deepDistance": "Verlauf — Ausdehnung",
+          "opacity": "Wasser — Deckkraft"
+        },
+        "wake": {
+          "armWidth": "Armbreite",
+          "spread": "V-Divergenz",
+          "length": "Länge",
+          "scale": "Feinheit",
+          "density": "Dichte",
+          "opacity": "Deckkraft"
+        },
+        "wind": {
+          "wheat": {
+            "strength": "Amplitude",
+            "speed": "Geschwindigkeit"
+          },
+          "grass": {
+            "strength": "Amplitude",
+            "speed": "Geschwindigkeit",
+            "sway": "Schwanken"
+          },
+          "tree": {
+            "strength": "Amplitude",
+            "speed": "Geschwindigkeit",
+            "frequency": "Frequenz",
+            "turbulence": "Turbulenz",
+            "gustStrength": "Böen",
+            "detailStrength": "Detail"
+          }
+        },
+        "cloud": {
+          "coverage": "Bedeckung",
+          "scale": "Mustergröße",
+          "speed": "Driftgeschwindigkeit"
+        },
+        "quality": {
+          "density": "Dichte"
+        },
+        "cin": {
+          "vignette": "Vignette",
+          "grain": "Filmkorn",
+          "chromatic": "Chrom. Aberration",
+          "halation": "Halation",
+          "barrel": "Tonnenverzerrung",
+          "scanLines": "Scanlines",
+          "scanLinesIntensity": "Scanline-Intensität",
+          "godRays": "Intensität",
+          "godRaysLength": "Länge",
+          "godRaysDiffusion": "Streuung",
+          "godRaysThreshold": "Helligkeitsschwelle",
+          "godRaysLayers": "Schichtung",
+          "tilt": "Intensität",
+          "focusCenter": "Fokuszentrum",
+          "focusBand": "Scharfer Bereich",
+          "bloomIntensity": "Intensität",
+          "bloomThreshold": "Schwelle",
+          "bloomRadius": "Radius",
+          "bloomSoftness": "Weichheit",
+          "crtCurvature": "Bildschirmkrümmung",
+          "crtMask": "Schwarze Ränder",
+          "crtCornerDark": "Verdunklung CRT-Ecken"
+        },
+        "pix": {
+          "pixelSize": "Radius (Pixel)",
+          "normalEdge": "Reliefkontur",
+          "depthEdge": "Tiefenkontur"
+        },
+        "vfx": {
+          "mist": {
+            "densite": "Dichte",
+            "compacite": "Kompaktheit",
+            "elevation": "Höhe"
+          },
+          "fireflies": {
+            "densite": "Dichte",
+            "taille": "Größe",
+            "vagabondage": "Umherstreifen",
+            "scintillement": "Funkeln"
+          },
+          "rain": {
+            "densite": "Dichte",
+            "tailleGoutte": "Tropfengröße",
+            "impactSol": "Bodenaufschlag"
+          },
+          "cloud": {
+            "densite": "Dichte",
+            "altitude": "Höhe",
+            "epaisseur": "Dicke"
+          },
+          "storm": {
+            "frequenceEclairs": "Blitzhäufigkeit",
+            "luminositeEclair": "Blitzhelligkeit",
+            "intensitePluie": "Regenintensität",
+            "altitudeChape": "Höhe Wolkendecke",
+            "opaciteChape": "Deckkraft Wolkendecke"
+          },
+          "fire": {
+            "probaAllumage": "Zündchance",
+            "densiteFlammes": "Flammendichte",
+            "duree": "Dauer",
+            "taille": "Größe",
+            "propagation": "Ausbreitung"
+          }
+        }
+      }
+    },
+    "help": {
+      "topbar.fps": "Erweitertes Performance-HUD ein-/ausblenden",
+      "topbar.eda": "Rendering-Panel öffnen oder schließen",
+      "topbar.snapshot": "Bildschirmfoto (ohne HUD)",
+      "topbar.gallery": "Screenshot-Galerie",
+      "topbar.replay": "Wiedergabe der Partie",
+      "topbar.lang": "Sprache",
+      "topbar.theme": "Grafisches Thema (Blau / Mittelalterlich)",
+      "topbar.mute": "Ton stummschalten / aktivieren",
+      "topbar.muteVoice": "Stimme stummschalten / aktivieren (TTS)",
+      "renderer.toneMappingExposure": "Globale Belichtung des Renderers (ACESFilmic). Steuert, wie viel Licht vor jeder Kalibrierung den „Sensor“ erreicht.\nWerte < 1 verdunkeln das Gesamtbild, > 2 können die Lichter überstrahlen.\nTypisch: 1,2–1,8 für ein natürliches Ergebnis.",
+      "environment.fogDensity": "Dichte des exponentiellen Nebels (FogExp2). Nur aktiv, wenn „Ende linear“ auf 0 steht.\nDie Sicht nimmt sehr schnell ab: bei 0,07 ist die Szene fast undurchsichtig.\nFür ein kontrolliertes Sichtfeld besser den linearen Modus über „Beginn“ und „Ende“ verwenden.",
+      "environment.fogNear": "Entfernung in 3D-Einheiten, ab der der lineare Nebel beginnt.\nSobald „Ende“ > 0 ist, wird automatisch von FogExp2 zu THREE.Fog(near, far) gewechselt.\nBei 0: Nebel schon im Vordergrund. Bei 5: nahe Objekte bleiben scharf.",
+      "environment.fogFar": "Entfernung, ab der der lineare Nebel vollständig undurchsichtig ist.\nAuf 0 setzen, um zum exponentiellen Modus zurückzukehren.\nBeispiel: Beginn = 3, Ende = 18 → Sichtfeld von 15 Einheiten — immersiv, ohne alles zu verschlucken.",
+      "lights.hemisphereIntensity": "Intensität des Hemisphärenlichts (Himmel + Boden).\nBeleuchtet Flächen, die nicht direktem Sonnenlicht ausgesetzt sind.\nZu hoch: flacht Schatten ab und nimmt dem Relief die Tiefe. Zu niedrig: Rückflächen liegen im völligen Dunkel.",
+      "lights.sunIntensity": "Stärke des Richtungslichts (Sonne).\nBestimmt die Härte der Schatten und den Reliefkontrast.\nWerte > 5 können helle Flächen überstrahlen, wenn auch die Belichtung hoch ist.",
+      "lights.sunOrbitRadius": "Radius der kreisförmigen Sonnenbahn um das Szenenzentrum.\nEin kleiner Radius (< 5) ergibt sehr geneigtes Licht aus der Mitte; ein großer (> 20) ergibt flacheres Licht von den Rändern her.",
+      "lights.sunOrbitHeight": "Vertikale Höhe der Sonne über der Szenenebene.\nHoch = kurze Schatten, zenitales Licht. Niedrig = lange, flache Schatten (goldene Stunde oder Sonnenuntergang).",
+      "lights.sunOrbitSpeed": "Winkelgeschwindigkeit der Sonne in Radiant/Sekunde.\nBei 0,06 dauert eine ganze Umrundung ≈ 100 Sekunden. Bei 0: Sonne fixiert. Bei 1: schnell rotierende Schatten.",
+      "lights.sunVisualScale": "Scheinbare Größe der Sonnenscheibe am Himmel.\nRein visuell — beeinflusst weder Lichtstärke noch Schatten.",
+      "lights.fillIntensity": "Intensität eines sanften Aufhelllichts (Fill Light), der Sonne gegenüber.\nHellt harte Schattenbereiche auf. Nützlich, um völlig schwarze Bereiche unter Überhängen oder auf der Rückseite von Hügeln zu vermeiden.",
+      "grading.brightness": "Zusätzliche Helligkeitsverschiebung nach dem Rendering.\nAddiert einen konstanten Wert zu allen Kanälen.\nUnterscheidet sich von der Belichtung: verstärkt keine Lichter, ändert nicht das Tonemapping.",
+      "grading.contrast": "Globaler Kontrast durch Drehung um das 50%-Grau.\n> 1: spreizt Schatten und Lichter (filmischer Look). < 1: komprimiert (matter/blasser Look).\nAn den Extremen → flaches Schwarz oder Weiß.",
+      "grading.saturation": "Globale Sättigung. Mischt die Graustufenversion (Luma) mit der Originalfarbe.\n0 = Graustufen. 1 = normal. > 1 = übersättigt.\nBei sehr hohen Werten (3+) laufen Farben über und können kippen.",
+      "grading.vibrance": "Intelligente Vibrance: verstärkt matte Farben, während bereits gesättigte Töne geschont werden.\nSanfter als reine Sättigung bei natürlichem Grün.\nNegativ: schwächt lebendige Farben vorrangig ab.",
+      "grading.hue": "Globale Drehung aller Farbtöne auf dem Farbkreis.\n±0,5 = halbe Drehung (Rot ↔ Cyan). Bei niedrigem Wert dezent.\nNützlich, um einen Farbstich zu korrigieren oder eine verschobene Palette zu erzeugen.",
+      "grading.gamma": "Gammakorrektur auf die Mitteltöne.\n< 1 = hellere Mitteltöne; > 1 = dunklere.\nWirkt nicht linear auf die Extreme (reines Schwarz/Weiß).",
+      "grading.blackLevel": "Schwarzpunkt-Niveau. Hebt reines Schwarz zu Grau an.\nErzeugt einen „ausgewaschenen filmischen“ oder „lifted blacks“-Look.\nZu hoch = Verlust an Tiefe und Dichte in den Schatten.",
+      "grading.whiteLevel": "Weißpunkt-Niveau. Komprimiert die Lichter unter 1,0.\nBei 0,871: reines Weiß wird cremefarben, nirgends „knallt“ es.\nNützlich für einen sanften, dezenten „S-Kurven“-Look.",
+      "grading.red": "Multiplikativer Gain des Rotkanals nach der Kalibrierung.\n> 1 erwärmt die Szene (orange/bernsteinfarbener Ton). < 1 kühlt sie ab.\nKombiniert mit Grün und Blau ermöglicht es eine feine Weißabgleich-Korrektur.",
+      "grading.green": "Multiplikativer Gain des Grünkanals.\nGrün dominiert die wahrgenommene Leuchtdichte (≈ 59 %).\nDiesen Kanal zu senken ergibt einen violett/magentafarbenen Effekt; ihn zu erhöhen macht das Bild grüner und wahrnehmbar heller.",
+      "grading.blue": "Multiplikativer Gain des Blaukanals.\nErhöhen ergibt eine kühle/nächtliche Stimmung. Verringern trocknet die Blautöne für einen warmen oder Sepia-Look aus.",
+      "grading.redCurve": "Tonkurve von Rot: wendet eine Potenz auf den Kanal an.\n< 1 = konvexe Kurve (hebt rote Mitteltöne an). > 1 = drückt Mitteltöne ein.\nWirkt nach dem Rot-Gain.",
+      "grading.greenCurve": "Tonkurve von Grün. Formt die Reaktion des Grünkanals in den Mitteltönen.\nNützlich, um den wahrgenommenen Kontrast zu verfeinern, ohne die Extreme zu berühren.",
+      "grading.blueCurve": "Tonkurve von Blau. Ermöglicht, die Stimmung in den mittleren Tönen zu formen.\nKurve < 1 = dichteres Blau in den hellen Tönen. > 1 = eingedrücktes Blau (warmer Look in den Mitten).",
+      "palette.strength": "Globale Stärke der Palettenharmonisierung auf den Zieltexturen.\n0: kein Effekt. 1: die Texturen werden vollständig zu ihrer Zielfarbe umgefärbt.\nFunktioniert über den Abgleich von GLB-Materialnamen.",
+      "palette.saturation": "Sättigung nach der Palettenharmonisierung.\n< 1: beruhigt die umgefärbten Texturen. > 1: verstärkt sie.\nErmöglicht eine Anpassung, ohne die Zielfarben selbst zu ändern.",
+      "palette.contrast": "Kontrast, angewendet auf die Farben nach der Harmonisierung.\nEine leichte Verstärkung (1,05–1,2) verbessert die Lesbarkeit umgefärbter Texturen.",
+      "palette.warmShift": "Globale Warm/Kalt-Verschiebung, angewendet auf die gesamte Biom-Palette.\nNegativ → kühlere/bläulichere Töne. Positiv → wärmere/goldenere Töne.",
+      "environment.skyColor": "Hintergrundfarbe des Renderers, sichtbar jenseits von Kuppel und Objekten.\nMeist dunkel, um nicht hinter den Kulissen durchzuscheinen.",
+      "environment.fogColor": "Farbe des Nebels, exponentiell oder linear.\nZu dieser Tönung hin verschmelzen Objekte mit der Entfernung.\nSollte der Himmelsfarbe entsprechen für einen stimmigen Horizont.",
+      "environment.domeColorTop": "Farbe der Kuppelspitze der sphärischen Atmosphäre.\nSichtbar am Himmel über den Objekten (falls domeOpacity > 0).",
+      "environment.domeColorBottom": "Farbe der Kuppelbasis der Atmosphäre.\nSimuliert den Horizont oder einen niedrigen Bodendunst.",
+      "lights.hemisphereSkyColor": "Farbton der „Himmel“-Komponente des Hemisphärenlichts.\nFärbt nach oben ausgerichtete Flächen (Dächer, ebene Flächen).",
+      "lights.hemisphereGroundColor": "Farbton der „Boden“-Komponente des Hemisphärenlichts.\nFärbt nach unten ausgerichtete Flächen (Brückenunterseiten, Hausunterseiten).",
+      "lights.sunColor": "Farbe des gerichteten Sonnenlichts.\nOrange bei Sonnenuntergang, weiß tagsüber, bläulich bei bedecktem Himmel.\nBeeinflusst stark die Farbe der geworfenen Schatten.",
+      "lights.fillColor": "Farbe des Aufhelllichts (Fill Light).\nMeist komplementär zur Sonne, um Schatten auszugleichen.",
+      "palette.targets.field": "Zielfarbe für die Harmonisierung der Feldtexturen.",
+      "palette.targets.forest": "Zielfarbe für Wald- und Baumtexturen.",
+      "palette.targets.grass": "Zielfarbe für Wiesen und Rasenflächen.",
+      "palette.targets.house": "Zielfarbe für Häuser und Dorfgebäude.",
+      "palette.targets.rail": "Zielfarbe für Schienen und Eisenbahninfrastruktur.",
+      "palette.targets.water": "Zielfarbe für Wasser (Seen, Flüsse, Meer).",
+      "pix.pixelSize": "Größe eines Pixels in Bildschirmeinheiten. Bei 1: native Auflösung. Bei 8: stark pixeliges 8-Bit-Aussehen.\nHohe Werte reduzieren die GPU-Last (weniger zu berechnende Fragmente) und verstärken den Retro-Look.\nKombiniert mit den Konturen ergibt sich ein Lowpoly-plus-Outline-Stil.",
+      "pix.normalEdge": "Intensität der auf Oberflächennormalen basierenden Konturen.\nErkennt Kanten zwischen Flächen unterschiedlicher Ausrichtung (z. B. Dachrand, Wandecke).\n0 = keine Normalkontur. 1 = starke Konturen bei allen geometrischen Übergängen.",
+      "pix.depthEdge": "Intensität der auf der Tiefe (Z-Buffer) basierenden Konturen.\nZeichnet Silhouetten zwischen unterschiedlich weit entfernten Objekten.\nErgänzt die Normalkontur: zusammen ergeben sie einen Cartoon- oder Comic-Look.",
+      "pix.worldShape": "Wählt die scheinbare Krümmung der Welt.\n„Kugelwelt“: die Erde ist eine Kugel, der Horizont ist gekrümmt — Mini-Planeten-Effekt.\n„Flachwelt“: keine Krümmung, klassisch flache Ansicht — traditioneller isometrischer Look.",
+      "env.dayNight": "Wechselt zwischen Tag und Nacht.\nÄndert das sichtbare Gestirn (Sonne/Mond), den Himmel, die Umgebungsfarben und lässt nachts Kometen erscheinen.",
+      "quality.density": "Globaler Multiplikator für die Inhaltsdichte (0,15 bis 1,0).\nReduziert die Anzahl natürlicher Requisiten, Grashalme und Schafe, um die Grafenverarbeitung zu entlasten und 60 FPS auf schwächeren Rechnern anzustreben.\nBetrifft nicht Gelände, Wasser, Gebäude oder Figuren (Gameplay und Systeme sind bereits separat optimiert). Baut den Inhalt bei jeder Änderung neu auf.",
+      "cin.tilt": "Intensität des Tilt-Shift-Effekts: fortschreitende Unschärfe oben und unten im Bild.\nSimuliert eine Shift-Optik, die die Schärfentiefe in der Mitte verringert.\nErzeugt die Illusion eines Miniaturmodells — bei 1 sehr stark.",
+      "cin.focusCenter": "Vertikale Position des Schärfezentrums des Tilt-Shift.\n0 = oben im Bild, 0,5 = Mitte, 1 = unten.\nEine Verschiebung nach unten legt die Schärfe auf die Elemente am Boden.",
+      "cin.focusBand": "Breite des scharfen Bandes des Tilt-Shift (als Bruchteil der Höhe).\n0,1 = sehr schmales Band, 0,5 = halbes Bild scharf, 1 = alles scharf (Effekt deaktiviert).",
+      "cin.vignette": "Verdunklung der Bildränder und -ecken.\nSimuliert den Lichtabfall an den Rändern eines Weitwinkelobjektivs.\nVerstärkt den Eindruck von Tiefe und lenkt den Blick zur Mitte.\nGeht bis 2: jenseits von 1 werden die Ränder nahezu vollständig schwarz.",
+      "cin.grain": "Menge des filmischen Rauschens, das über das Rendering gelegt wird.\nSimuliert die Unvollkommenheiten eines analogen Films oder eines empfindlichen Sensors.\nDezent bei 0,2, allgegenwärtig bei 1.",
+      "cin.chromatic": "Chromatische Aberration: seitliche Verschiebung der Farbkanäle zu den Rändern hin.\nSimuliert die Fehler eines unvollkommenen Objektivs, das nicht alle Wellenlängen im selben Punkt fokussiert.\nDezent bei 0,2, psychedelisch jenseits von 0,7.",
+      "cin.halation": "Lichthalo um sehr helle Bereiche, typisch für analogen Film.\nStarkes Licht „blutet“ leicht in benachbarte dunkle Bereiche.\nVerleiht Wärme und Organik — schön bei Sonnenuntergängen.",
+      "cin.barrel": "Tonnenverzerrung: die Bildränder werden nach außen gedrückt.\nSimuliert Fischaugen- oder Weitwinkelobjektive. Verstärkt den „Überwachungskamera“- oder Lo-Fi-Look.\nBei 1 ist das Bild stark gewölbt.",
+      "cin.scanLines": "Dunkle horizontale Linien im Zeilensprungverfahren, wie bei einem CRT-Monitor oder alten Fernseher.\n0 = keine Scanlines. 6 = sehr ausgeprägte Linien, Retro-TV-Look.\nStark in Kombination mit einer CGA/EGA-Palette für die Vintage-Ästhetik.",
+      "cin.scanLinesIntensity": "Schwarztiefe der Scanlines. 0 = transparent (keine Verdunklung, selbst bei\naktiven Scanlines). 1 = vollständig schwarz. Ohne Wirkung, wenn Scanlines auf 0 stehen.",
+      "cin.godRays": "Intensität der Dämmerungsstrahlen (God Rays), die von der Bildschirmposition der Sonne ausgehen.\nLeichter Screen-Space-Effekt, ohne zusätzlichen Rendering-Durchgang — besonders sichtbar\nnahe dem Horizont oder wenn die Sonne teilweise von einem Baum oder Turm verdeckt wird.\n0 = deaktiviert (keine GPU-Kosten).",
+      "cin.godRaysLength": "Reichweite der Strahlen, als Bruchteil des Bildschirms, zwischen dem angezeigten Pixel und der Sonne.\nNiedrig = kurze, lokale Strahlen um die Sonne. Hoch = Strahlen, die einen großen\nTeil des Bildes durchqueren.",
+      "cin.godRaysDiffusion": "Abschwächung der Strahlen entlang ihres Weges zur Sonne.\nNiedrig = kurze, scharfe Strahlen. Hoch = lange, weiche Strahlen, die sich\nweit von der Lichtquelle entfernen.",
+      "cin.godRaysThreshold": "Helligkeitsschwelle, ab der ein Pixel als Lichtquelle gilt\n(Himmel, Sonne) und zu den Strahlen beiträgt. Niedrig = mehr Bereiche tragen bei (mehr\npräsente Strahlen). Hoch = nur die hellsten Bereiche (die Sonne selbst) erzeugen sie.",
+      "cin.godRaysLayers": "Bricht den weichen Verlauf der Strahlen in überlagerte Dichteschichten auf — ein Effekt\naus übereinandergestapelten durchscheinenden Schleiern (Millefeuille) statt eines durchgehenden Halos.\n0 = klassischer weicher Verlauf. 1 = deutliche Schichtung, sichtbar gestufte Strahlen.",
+      "cin.bloomIntensity": "Intensität des Bloom: leichter Lichthalo um die Lichter (Sonne, Mond,\nSterne, erleuchtete Fenster, HUD-Elemente). Betrifft nur Pixel oberhalb der\nunten eingestellten Schwelle — verwäscht nie das gesamte Bild.\n0 = deaktiviert (keine GPU-Kosten).",
+      "cin.bloomThreshold": "Helligkeitsschwelle, ab der ein Pixel zum Bloom beiträgt.\nNiedrig = mehr Bereiche (selbst mäßig helle) erzeugen einen Halo.\nHoch = nur die intensivsten Quellen (Sonne, Lampen) erzeugen einen.",
+      "cin.bloomRadius": "Radius der Weichzeichnung um die Bloom-Quellpixel, in Bildschirmpixeln.\nNiedrig = enger, scharfer Halo. Hoch = breiterer, diffuserer Halo.",
+      "cin.bloomSoftness": "Weichheit des Übergangs an der Bloom-Schwelle.\nNiedrig = scharfer Schnitt zwischen „trägt bei“ und „trägt nicht bei“.\nHoch = allmählicher Übergang, weicherer Halo an den Quellrändern.",
+      "cin.crtCurvature": "Bildschirmkrümmung nach Art einer Kathodenstrahlröhre (CRT): verzerrt das Bild, als würde es\nauf einer gewölbten Fläche angezeigt. Parameter unabhängig von der oben\ngenannten Tonnenverzerrung (Objektiv). 0 = keine Verformung (keine GPU-Kosten).",
+      "cin.crtMask": "Maskiert die Bereiche, die nach Anwendung der Bildschirmkrümmung aus dem Rahmen fallen\n(schwarze Ränder), anstatt sie zu strecken. 0 = gedehnte Ränder (keine Maske),\n1 = außerhalb liegende Ränder vollständig schwarz maskiert. Ohne Wirkung, wenn die Krümmung 0 ist.",
+      "cin.crtCornerDark": "Zusätzliche Verdunklung der Bildschirmecken, typisch für eine Kathodenstrahlröhre.\n0 = keine Verdunklung. Ohne Wirkung, wenn die Bildschirmkrümmung 0 ist.",
+      "water.foamWidth": "Reichweite des Gischtstreifens am Ufer (in Metern).\n0 = keine Uferrgischt. Hohe Werte = breiter weißer Saum entlang der gesamten Küste.",
+      "water.foamScale": "Skalierung der Gischttextur. Je höher der Wert, desto feiner und dichter die Gischtmuster.\nNiedrig = große Flecken, hoch = feines, schaumiges Korn.",
+      "water.foamDensity": "Auslöseschwelle für die Uferrgischt. Je höher der Wert, desto mehr Fläche bedeckt die Gischt nahe dem Ufer.",
+      "water.foamAmbient": "Schwelle der Umgebungsgischt, sichtbar auf der gesamten Wasseroberfläche (nicht nur am Rand).\n0 = perfekt glatte Oberfläche auf offenem Wasser. Hohe Werte = diffuse Schaumkronen/Kräuselung überall.",
+      "water.foamSharp": "Schärfe des Gischtrandes. Niedrig = weicher, diffuser Übergang. Hoch = scharfe, klar abgegrenzte Kontur.",
+      "water.foamSpeed": "Animationsgeschwindigkeit der Gischt (Musterverlauf über die Zeit). 0 = eingefrorene, unbewegliche Gischt.",
+      "water.deepDistance": "Entfernung Ufer → offenes Wasser, über die sich der Farbverlauf flach/tief erstreckt.\nNiedrig = enger Übergang nahe dem Ufer. Hoch = auf großer Fläche verteilter Verlauf.",
+      "water.opacity": "Grunddeckkraft der Wasserfläche. Niedrig = durchscheinendes Wasser, das den Grund erkennen lässt. Hoch = deckendes Wasser.",
+      "wake.armWidth": "Halbe Breite jedes Arms des V-förmigen Kielwassers hinter dem Boot.",
+      "wake.spread": "Divergenz des V: wie schnell die beiden Arme sich voneinander entfernen, je weiter man sich vom Boot entfernt.",
+      "wake.length": "Länge, über die das Kielwasser hinter dem Boot verblasst, bevor es verschwindet.",
+      "wake.scale": "Skalierung des Gischtmusters im Kielwasser. Je höher der Wert, desto feiner das Korn.",
+      "wake.density": "Gischtabdeckung des Kielwassers. Niedrig = dezentes Kielwasser, hoch = dichte Gischtspur.",
+      "wake.opacity": "Maximale Deckkraft des Kielwassers, am stärksten direkt hinter dem Boot und dann mit zunehmender Länge abgeschwächt.",
+      "wind.wheat.strength": "Amplitude des Schwankens der Weizenähren. 0 = unbeweglich.",
+      "wind.wheat.speed": "Oszillationsgeschwindigkeit des Weizens im Wind.",
+      "wind.grass.strength": "Amplitude des Schwankens der Wiesenhalme.",
+      "wind.grass.speed": "Oszillationsgeschwindigkeit der Wiese im Wind.",
+      "wind.grass.sway": "Zusätzliches sinusförmiges Schwanken jedes Halms, unabhängig vom Windrauschen.",
+      "wind.tree.strength": "Amplitude des Schwankens der Baumkronen. Diese Einstellung zu ändern kompiliert die Shader bereits gepflanzter Bäume neu (kann kurz ruckeln).",
+      "wind.tree.speed": "Oszillationsgeschwindigkeit der Bäume im Wind.",
+      "wind.tree.frequency": "Räumliche Frequenz der Hauptwindwelle entlang des Stamms/Laubes.",
+      "wind.tree.turbulence": "Intensität der Böen und Detailzusätze zur Hauptwindwelle.",
+      "wind.tree.gustStrength": "Gewichtung der Böen (langsamere, größere Variation) in der Gesamtbewegung.",
+      "wind.tree.detailStrength": "Gewichtung des Feindetails (schnelle Kräuselung) in der Gesamtbewegung.",
+      "cloud.coverage": "Wolkenbedeckung am Horizont. 0 = klarer Himmel, 1 = bedeckter Himmel.",
+      "cloud.scale": "Skalierung des Wolkenmusters. Hoher Wert = kleinere, feinere Wolken; niedriger Wert = große Massen.",
+      "cloud.speed": "Driftgeschwindigkeit der Wolken am Horizont.",
+      "stats.drawCalls": "Gesamtzahl der von Three.js in diesem Frame ausgegebenen Rendering-Aufrufe (Draw Calls).\nJedes sichtbare Objekt kostet mindestens 1 Draw Call — Schatten fügen weitere hinzu.\n> 200 dc: Vorsicht bei der Performance auf mobilen GPUs.",
+      "stats.trackedDc": "Draw Calls, die den erfassten Objektkategorien zugeordnet sind (Kacheln, Bäume, Schienen …).\nDie Differenz zur Gesamtzahl = nicht kategorisierte Draw Calls (UI, Helfer, Skybox …).",
+      "stats.shadows": "Geschätzte Draw Calls für das Rendering der Schatten (Shadow Map).\nJedes „schattenwerfende“ Objekt rendert die Szene erneut aus der Perspektive der Sonne.\nDie shadowMapSize oder die Anzahl der Schattenwerfer reduzieren, um diese Kosten zu senken.",
+      "stats.triangles": "Gesamtzahl der in diesem Frame gerenderten Dreiecke.\nIndikator für geometrische Komplexität — Schatten verdoppeln diese Zahl.\nLOD-Meshes (Detailgrad) reduzieren diese Zahl in der Ferne.",
+      "stats.objects": "Gesamtzahl der in der Szene erfassten 3D-Objekte (Mesh, Group …).\nEntspricht nicht exakt den Draw Calls: ein Objekt kann mehrere Durchgänge erzeugen.",
+      "stats.textures": "Anzahl der im GPU-Speicher aktiven Texturen.\nEine nicht freigegebene Textur bleibt im VRAM. Nach dem Laden neuer Kacheln überwachen.",
+      "stats.shaders": "Anzahl der kompilierten und aktiven Shader-Programme (GLSL).\nJede Kombination aus Material + Defines = ein Shader. Zu viele Varianten = Ruckler beim ersten Frame.",
+      "game.tiles": "Gesamtzahl der seit Beginn der Partie gesetzten Kacheln.\nJede Kachel kann je nach Zusammensetzung zu einem oder mehreren Biomen gehören.",
+      "game.score": "Die Punktzahl: die Punkte, die du in dieser Partie erzielt hast.",
+      "game.efficiency": "Effizienz = Punktzahl ÷ gesetzte Kacheln, verringert solange zu wenige Kacheln gesetzt wurden, um aussagekräftig zu sein.\nDie Weltrangliste (Bestenliste-Bereich der Seite) basiert auf DIESER Effizienz, nicht auf der rohen Punktzahl!",
+      "game.mills": "Anzahl der Mühlen auf dem Raster.\nEine Mühle erscheint automatisch in der Mitte jeder großen Weizenfeldzone.",
+      "game.trains": "Gebildete Zuglinien: eine Linie = zwei durch durchgängige Schienen verbundene Bahnhöfe.\nJe länger die Linie, desto höher die Punktzahl.",
+      "game.boats": "Aktive Boote: ein Boot erscheint auf jeder von Land umgebenen Wasserfläche.\nJedes Boot erzeugt Punkte, solange es „schwimmfähig“ bleibt.",
+      "game.comets": "Abgefangene Kometen: zufällige Ereignisse, die über das Raster ziehen.\nEine Kachel zum richtigen Zeitpunkt an der vorhergesagten Stelle zu setzen, erlaubt es, sie abzufangen.",
+      "game.grass": "Insgesamt gesetzte Wiesenkacheln.\nMaximale Fläche = größte zusammenhängende Wiesenzone (angrenzende Kacheln desselben Bioms).",
+      "game.largestGrass": "Größte zusammenhängende Wiesenzone (Anzahl verbundener Kacheln).\nEine große zusammenhängende Zone bringt am Ende der Partie mehr Punkte.",
+      "game.field": "Insgesamt gesetzte Weizenfeldkacheln.\nFelder in der Nähe von Dörfern oder Flüssen geben Boni.",
+      "game.largestField": "Größte zusammenhängende Feldzone. Bestimmt den finalen Erntebonus.",
+      "game.forest": "Insgesamt gesetzte Waldkacheln.\nDichte Wälder (große Zonen) sind Refugien für die Tierwelt und bringen mehr Punkte.",
+      "game.largestForest": "Größter zusammenhängender Wald. Wälder > 7 Kacheln lösen manchmal besondere Ereignisse aus.",
+      "game.house": "Insgesamt gesetzte Dorfkacheln.\nIsolierte Häuser bringen wenig; ein dichtes, gut an das Schienennetz angebundenes Dorf bringt viel.",
+      "game.largestHouse": "Größtes zusammenhängendes Dorf. Ein Dorf = benachbarte Häuser.\nZahlreiche, dichte Dörfer maximieren den Stadtbonus.",
+      "game.water": "Insgesamt gesetzte Wasserkacheln (Seen, Flüsse, Meer).\nWasser, das an andere Biome grenzt, schafft wertvolle Küstenzonen.",
+      "game.largestWater": "Größte zusammenhängende Wasserfläche. Ein See > 5 Kacheln kann zusätzliche Boote aufnehmen.",
+      "game.rail": "Insgesamt gesetzte Eisenbahnkacheln.\nSchienen allein bringen nichts — erst die Verbindung zweier Bahnhöfe erzeugt eine Linie.",
+      "game.largestRail": "Längste zusammenhängende Eisenbahn (in Kacheln). Indikator für die maximale Reichweite des Netzwerks.",
+      "game.activeTile": "Die Kachel, die du als Nächstes setzen wirst.\nBewege den Cursor mit Z/Q/S/D, drehe mit dem Mausrad und setze mit der LEERTASTE.\nJede Seite der Kachel entspricht einem Biom — plane deine Verbindungen!",
+      "game.nextTile": "Die nächste Kachel, die ins Spiel kommt, nachdem du die aktuelle Kachel gesetzt hast.\nAntizipiere ihre Form, um den besten Platz dafür vorzubereiten.",
+      "game.deckRemaining": "Anzahl der im Stapel verbleibenden Kacheln.\nDie Partie endet, wenn der Stapel leer ist — optimiere jede Platzierung!",
+      "hs.summary": "Zusammenfassung der Partie: gesetzte Kacheln, Zuglinien, Boote, abgefangene Kometen.",
+      "hs.grass": "Wiese — Kacheln insgesamt / größte zusammenhängende Zone.",
+      "hs.field": "Weizenfeld — Kacheln insgesamt / größte zusammenhängende Zone.",
+      "hs.forest": "Wald — Kacheln insgesamt / größte zusammenhängende Zone.",
+      "hs.house": "Dorf — Kacheln insgesamt / größte zusammenhängende Zone.",
+      "hs.water": "Wasser — Kacheln insgesamt / größte zusammenhängende Fläche.",
+      "hs.rail": "Eisenbahn — Kacheln insgesamt / längste zusammenhängende Strecke.",
+      "fps.fps": "Vom Three.js-Engine gerenderte Bilder pro Sekunde.\n60 FPS = flüssige Darstellung und eingehaltenes Frame-Budget. < 30 FPS = spürbare Ruckler.\nDer Wert färbt sich rot, wenn das Frame-Budget (16,7 ms) durchgehend überschritten wird.",
+      "fps.adj": "Qualitative Bewertung der aktuellen Flüssigkeit.\nGrün (Exzellent / Flüssig): alles läuft gut. Orange (Solide / Ordentlich): akzeptabel, aber im Auge behalten.\nRot (Angespannt / Ächzend / Am Limit): die Engine steht unter Druck — den Flaschenhals suchen.",
+      "fps.cpu": "Prozentsatz des Frame-Budgets (16,7 ms), der vom JavaScript-Thread verbraucht wird.\nUmfasst Spiellogik, Overlay-Aktualisierungen, Animationen und GC-Pausen.\n> 80 %: die CPU ist der Flaschenhals — die Update-Häufigkeit oder die Anzahl aktiver Overlays reduzieren.",
+      "fps.gpu": "Prozentsatz des Frame-Budgets, der vom GPU-Rendering verbraucht wird.\nGemessen über eine echte GPU-Timing-Abfrage (EXT_disjoint_timer_query_webgl2), asynchron —\nder angezeigte Wert kann 1 bis mehrere Frames alt sein. Ist die Erweiterung auf diesem\nTreiber/Browser nicht verfügbar, wird auf eine CPU-Sendezeitmessung zurückgegriffen (mit „≈“ gekennzeichnet, weniger zuverlässig).\n> 80 %: die GPU ist ausgelastet — Dreiecke/Fragmente (Vegetation, Nachbearbeitung), Draw Calls oder Schatten reduzieren.",
+      "menu.solo": "Solomodus — spiele allein, in deinem eigenen Tempo.\nDeine Scores werden nach Ende der Partie in die globale Rangliste eingetragen.",
+      "menu.multi": "Mehrspielermodus — spiele in Echtzeit mit anderen Spielern.\nErstelle einen Raum und teile den Code, oder tritt einer bestehenden Partie bei.",
+      "menu.platiste": "Flache Geometrie — das Raster liegt auf einer horizontalen Ebene.\nBessere Lesbarkeit und vorhersehbares Verhalten: für Einsteiger empfohlen.",
+      "menu.bouliste": "Sphärische Geometrie — die Kacheln folgen der Krümmung eines Planeten.\nImmersivere Ansicht, aber das gekrümmte Raster kann anfangs verwirren.",
+      "menu.confirm": "Bestätigen und zum nächsten Schritt übergehen.",
+      "menu.create": "Einen neuen Mehrspielerraum erstellen.\nEin eindeutiger Code wird automatisch generiert — teile ihn den anderen Spielern mit, damit sie dir beitreten können.",
+      "menu.join": "Einem bestehenden Raum mit dem oben angegebenen Code beitreten.",
+      "menu.back": "Zurück zum Startbildschirm.",
+      "game.gridPercent": "Anzahl der seit Beginn der Partie auf dem Raster platzierten Kacheln.\nJede Platzierung erhöht diesen Zähler, auch im Mehrspielermodus.",
+      "game.lastScore": "Bei der letzten Platzierung erzielte Punkte.\nEnthält den Zonenbonus, falls die Kachel eine zusammenhängende Zone vergrößert oder geschlossen hat, sowie eventuelle Missionsboni.",
+      "game.newGame": "Eine neue Partie starten.\nDie laufende Partie bleibt aktiv und spielbar — du kannst jederzeit über das Menü dorthin zurückkehren.",
+      "game.abandonGame": "Die laufende Partie aufgeben.\nDie Partie wird endgültig geschlossen: du kannst weder weiterspielen noch einen neuen Score einreichen."
+    },
+    "missionHelp": {
+      "forest": "Setze Kacheln mit Waldsektoren 🌲.\nJedes gesetzte Walddreieck bringt diese Mission voran.\nDichte Zonen bringen am Ende der Partie mehr Punkte.",
+      "house": "Setze Kacheln mit Dorfsektoren 🛖.\nJedes gesetzte Hausdreieck bringt diese Mission voran.\nAn das Schienennetz angebundene Dörfer sind besonders lohnend.",
+      "rail": "Setze Kacheln mit Schienen 🛤️.\nJedes gesetzte Eisenbahndreieck bringt diese Mission voran.\nSchienen allein bringen ohne einen Bahnhof an jedem Ende nichts.",
+      "water": "Setze Kacheln mit Wassersektoren 💧.\nJedes gesetzte Wasserdreieck bringt diese Mission voran.\nGroße Wasserflächen können Boote aufnehmen.",
+      "grass": "Setze Kacheln mit Wiesensektoren 🌿.\nJedes gesetzte Wiesendreieck bringt diese Mission voran.\nGroße zusammenhängende Wiesenzonen bringen einen Flächenbonus.",
+      "field": "Setze Kacheln mit Weizenfeldsektoren 🌾.\nJedes gesetzte Felddreieck bringt diese Mission voran.\nFelder in der Nähe von Dörfern oder Flüssen geben Boni.",
+      "train": "Verbinde zwei Bahnhöfe mit durchgängigen Schienen 🚂.\nJede neu vervollständigte Zuglinie bringt diese Mission voran.\nJe länger die Linie, desto höher der Punktestand.",
+      "boat": "Erzeuge von Land umgebene Wasserflächen ⛵.\nAuf jedem von Landkacheln geschlossenen See erscheint automatisch ein Boot.\nJedes neue Boot bringt diese Mission voran.",
+      "mill": "Baue große Weizenfeldzonen ⚙️.\nEine Mühle erscheint automatisch in der Mitte jeder ausreichend großen Feldzone.\nJede neue Mühle bringt diese Mission voran."
+    },
+    "missionTitles": {
+      "forest": {
+        "one": "Einen Wald mit {target} Baum entwickeln",
+        "other": "Einen Wald mit {target} Bäumen entwickeln"
+      },
+      "house": {
+        "one": "Ein Dorf mit {target} Haus errichten",
+        "other": "Ein Dorf mit {target} Häusern errichten"
+      },
+      "rail": {
+        "one": "Eine Eisenbahn mit {target} Schiene ausbauen",
+        "other": "Eine Eisenbahn mit {target} Schienen ausbauen"
+      },
+      "water": {
+        "one": "Einen Wasserweg mit {target} Feld verbinden",
+        "other": "Einen Wasserweg mit {target} Feldern verbinden"
+      },
+      "grass": {
+        "one": "Eine Wiese mit {target} Feld erweitern",
+        "other": "Eine Wiese mit {target} Feldern erweitern"
+      },
+      "field": {
+        "one": "{target} Feld Weizenfelder bewirtschaften",
+        "other": "{target} Felder Weizenfelder bewirtschaften"
+      },
+      "train": {
+        "one": "{target} Zug verkehren lassen",
+        "other": "{target} Züge verkehren lassen"
+      },
+      "boat": {
+        "one": "{target} Boot erscheinen lassen",
+        "other": "{target} Boote erscheinen lassen"
+      },
+      "mill": {
+        "one": "{target} Mühle drehen lassen",
+        "other": "{target} Mühlen drehen lassen"
+      }
+    },
+    "ui": {
+      "modals": {
+        "scoreEnd": {
+          "kicker": "Partie beendet — Endstand",
+          "save": "Speichern"
+        },
+        "abandon": {
+          "kicker": "Partie aufgeben?",
+          "sub": "Diese Partie kann danach nicht mehr fortgesetzt werden.",
+          "cancel": "ABBRECHEN",
+          "confirm": "AUFGEBEN"
+        }
+      },
+      "hud": {
+        "player": "SPIELER",
+        "room": "PARTIE",
+        "abandon": "AUFGEBEN",
+        "newGame": "NEUE PARTIE",
+        "statsTitle": "STATISTIKEN DER PARTIE",
+        "mills": "Mühlen",
+        "trains": "Züge",
+        "boats": "Boote",
+        "comets": "Kometen",
+        "total": "Gesamt",
+        "grassMax": "Zusammenhängend",
+        "fieldMax": "Zusammenhängend",
+        "forestMax": "Zusammenhängend",
+        "houseMax": "Zusammenhängend",
+        "waterMax": "Zusammenhängend",
+        "railMax": "Zusammenhängend",
+        "biomes": {
+          "grass": "Wiese",
+          "field": "Weizenfeld",
+          "forest": "Wald",
+          "house": "Dorf",
+          "water": "Wasser",
+          "rail": "Eisenbahn"
+        },
+        "activeTileTitle": "AKTUELLE KACHEL",
+        "nextTileTitle": "NÄCHSTE KACHEL",
+        "deckRemaining": "VERBLEIBEND",
+        "tilesPlaced": "GESETZT",
+        "missionsTitle": "LAUFENDE MISSIONEN",
+        "noMission": "Keine Mission",
+        "efficiencyLabel": "Effizienz",
+        "scoreLabel": "Punktzahl"
+      },
+      "help": {
+        "title": "Hilfe",
+        "closeAria": "Hilfe schließen",
+        "objective": {
+          "title": "Grundregeln",
+          "text": "Setze die hexagonalen Kacheln, verbinde gleiche Texturen und erfülle die Missionen. Jede korrekt ausgerichtete Kante zahlt sich aus; Wasser und Schienen zahlen mehr.",
+          "points": {
+            "tile": "pro gesetzter Kachel",
+            "edge": "pro identischer Kante gegenüber einer Nachbarkachel",
+            "waterRail": "pro Wasser/Wasser- oder Schiene/Schiene-Verbindung",
+            "surround": "Bonus, wenn eine Kachel an allen 6 Seiten umschlossen ist",
+            "mission": "pro abgeschlossener Mission",
+            "bonus": "wenn du eine Kachel auf ein Bonusfeld setzt"
+          }
+        },
+        "placement": {
+          "title": "Platzierung",
+          "items": [
+            "Spielbeginn mit 50 Kacheln.",
+            "Die erste Kachel darf frei platziert werden; die folgenden müssen eine gesetzte Kachel berühren.",
+            "Das Spiel endet, wenn der Stapel leer ist.",
+            "Mit jeder Platzierung erweitert sich das spielbare Gebiet."
+          ]
+        },
+        "waterRail": {
+          "title": "Wasser und Schienen",
+          "text": "Wasser und Schienen sind strenge Netzwerke und schwieriger zu platzieren. Im Gegenzug bringt jede korrekte Verbindung mehr Punkte.",
+          "water": "verbindet sich nur mit Wasser: +25",
+          "rail": "verbindet sich nur mit Schiene: +25"
+        },
+        "bonusCells": {
+          "title": "Bonusfelder",
+          "text": "Zwischen 1 und 4 Bonusfelder werden auf dem Raster erzeugt. Sie ändern keine Platzierungsregel: gelingt es dir, eine Kachel darauf zu setzen, verschwinden sie und bringen sofort +1500 Punkte.",
+          "label": "optionales Ziel, reiner Punktgewinn, keine Falle"
+        },
+        "blackCells": {
+          "title": "Schwarze Zellen",
+          "text": "Schwarze Zellen sind spezielle Kacheln, die bereits auf dem Raster vorhanden sind. Sie fungieren als Joker: sie ersetzen, was um sie herum fehlt, und akzeptieren Verbindungen mit allen angrenzenden Texturen.",
+          "label": "gilt als kompatibel mit jeder Nachbarkante"
+        },
+        "textures": {
+          "title": "Texturen & Werte",
+          "field": {
+            "label": "Weizenfeld",
+            "code": "1-2 Weizen"
+          },
+          "forest": {
+            "label": "Wald",
+            "code": "1-6 Bäume"
+          },
+          "grass": {
+            "label": "Wiese",
+            "code": "1"
+          },
+          "house": {
+            "label": "Dorf",
+            "code": "1-4 Häuser"
+          },
+          "water": {
+            "label": "Wasser",
+            "code": "1"
+          },
+          "rail": {
+            "label": "Schiene",
+            "code": "1"
+          }
+        },
+        "missions": {
+          "title": "Missionen",
+          "text1": "Bei jeder neuen aktuellen Kachel besteht eine 20%ige Chance auf eine zusätzliche Mission. Sie kann Wald, Dorf, Eisenbahn, Wasserweg, Wiese, Weizenfeld, sichtbare Züge, Boote oder Mühlen verlangen.",
+          "text2": "Belohnung: +100 Punkte und +3 Kacheln. Die Ziele schreiten nach Typ voran, eine abgeschlossene Mission bleibt 5 Runden sichtbar. Die realen Werte zählen: Wiese/Wasser/Schiene = 1; Weizenfeld = 1-2; Haus = 1-4; Wald = 1-6 Bäume. Die Mühlen ⚙️ zählen die Anzahl aktiver großer Feldzonen."
+        },
+        "controls": {
+          "title": "Steuerung",
+          "moveCamera": "Kamera bewegen",
+          "resetCamera": "Kamera zurücksetzen",
+          "zoom": "Kamera heran- / herauszoomen",
+          "undo": "Letzten Zug rückgängig machen",
+          "toggleHelp": "Diese Hilfe ein-/ausblenden",
+          "muteSound": "Alle Sounds stumm- / freischalten",
+          "muteVoice": "Sprachansagen stumm- / freischalten",
+          "immersive": "Immersiver Modus",
+          "superImmersive": "Super-immersiver Modus",
+          "speedUp": "Beschleunigt Bewegungen und Zoom",
+          "wheelZoomRotate": "Zoom oder Rotation, falls verfügbar",
+          "rightClick": "Kamerarotation",
+          "perfHud": "FPS-HUD ein-/ausblenden",
+          "eda": "EKL-HUD ein-/ausblenden",
+          "snapshot": "Ein Bildschirmfoto aufnehmen",
+          "gallery": "Screenshot-Galerie öffnen",
+          "replay": "Replay-HUD der Partie ein-/ausblenden",
+          "wheelKbd": "Mausrad",
+          "leftClickKbd": "Linksklick",
+          "rightClickKbd": "Rechtsklick",
+          "spaceKbd": "LEERTASTE",
+          "shiftSpaceKbd": "SHIFT+LEERTASTE"
+        }
+      }
+    },
+    "highscore": {
+      "saving": "Wird gespeichert...",
+      "saved": "Score gespeichert! Zurück zum Menü...",
+      "error": "Highscore-Fehler.",
+      "defaultName": "Spieler"
+    },
+    "multiplayerRooms": {
+      "modeCopy": "Erstelle eine Partie oder tritt einer bestehenden Partie mit einem Code bei.",
+      "nameLabel": "Spitzname",
+      "namePlaceholder": "Dein Spitzname",
+      "codeLabel": "Partie-Code",
+      "codePlaceholder": "Z. B.: 377EA7",
+      "availableRoomsLabel": "Verfügbare Partien / Backups",
+      "loadingRooms": "Partien werden geladen...",
+      "btnCreate": "ERSTELLEN",
+      "btnJoin": "BEITRETEN",
+      "btnBack": "ZURÜCK",
+      "selectExisting": "Eine bestehende Partie auswählen",
+      "noRoomsFound": "Keine Partie in /json/games gefunden",
+      "listUnavailable": "Liste nicht verfügbar - PHP-Server stumm",
+      "roomsCount": {
+        "one": "{count} verfügbare Partie / Backups",
+        "other": "{count} verfügbare Partien / Backups"
+      },
+      "unknownDate": "unbekanntes Datum",
+      "playerWord": {
+        "one": "Spieler",
+        "other": "Spieler"
+      },
+      "tileWord": {
+        "one": "Kachel",
+        "other": "Kacheln"
+      },
+      "creatingRoom": "Partie {code} wird erstellt...",
+      "missingCode": "Partie-Code fehlt.",
+      "joiningRoom": "Verbindung zur Partie {code}...",
+      "roomNotFound": "Partie {code} gefunden, aber kein Snapshot vorhanden. Verschimmeltes JSON abgelehnt.",
+      "defaultNamePrefix": "Spieler"
+    },
+    "startupMenu": {
+      "nameChoice": {
+        "title": "Wie heißt du?",
+        "label": "Dein Vorname (oder Spitzname)",
+        "placeholder": "Z. B.: Rémi",
+        "confirm": "WEITER →"
+      },
+      "home": {
+        "title": "Wähle den Spielmodus: Solo oder Mehrspieler.",
+        "solo": "SOLO",
+        "multi": "MULTI"
+      },
+      "worldShape": {
+        "title": "Wähle die Geometrie deines Planeten:",
+        "flat": "FLACHWELT",
+        "globe": "KUGELWELT",
+        "note": "Wir empfehlen dir „<i>Flachwelt</i>“ zum Einstieg. Du kannst die Fraktion jederzeit im Spiel wechseln, denn selbst Planeten haben ein Recht auf eine Identitätskrise."
+      }
+    },
+    "preloader": {
+      "loading": "Wird geladen…",
+      "loadingPct": "Wird geladen… {pct} %",
+      "loadingCount": "{loaded} Dateien / {total} Dateien · {loadedMB} MB / {totalMB} MB"
+    },
+    "placementOverlay": {
+      "ok": "OK",
+      "outOfGrid": "AUSSERHALB DES RASTERS",
+      "forbidden": "VERBOTEN",
+      "incompatibleNetwork": "INKOMPATIBLES NETZWERK",
+      "edgeTypes": {
+        "field": "Feld",
+        "forest": "Wald",
+        "water": "Wasser",
+        "rail": "Schiene",
+        "house": "Haus",
+        "grass": "Wiese"
+      }
+    },
+    "multiplayerClient": {
+      "unreadableResponse": "Unlesbare Serverantwort ({status}): {text}",
+      "serverError": "Serverfehler {status}"
+    },
+    "kbdHint": "H oder ESC&nbsp;→ Hilfe &nbsp;|&nbsp; M&nbsp;→ stumm &nbsp;|&nbsp; T&nbsp;→ Stimme stumm &nbsp;|&nbsp; LEERTASTE&nbsp;→ immersiv &nbsp;|&nbsp; SHIFT+LEERTASTE&nbsp;→ super-immersiv",
+    "superImmersifExitHint": "LEERTASTE, um den super-immersiven Modus zu verlassen",
+    "langName": "Deutsch",
+    "tts": {
+      "pointsAnnounce": "{n} Punkte!",
+      "voiceOn": "Stimme aktiviert",
+      "voiceOff": "Stimme stumm",
+      "newMission": "Neue Mission: {title}",
+      "missionCompleted": "Bravo! Mission abgeschlossen!",
+      "edaOpened": "Editor für künstlerische Leitung",
+      "helpOpened": "Hilfe",
+      "millsCount": "Du hast {n} Mühlen",
+      "trainsCount": "Du hast {n} Züge",
+      "boatsCount": "Du hast {n} Boote",
+      "cometsCount": "Du hast {n} Kometen",
+      "languageChanged": "Deutsche Sprache"
+    },
+    "fpsAdjectives": {
+      "disastrous": "Katastrophal",
+      "bad": "Schlecht",
+      "mediocre": "Mittelmäßig",
+      "passable": "Passabel",
+      "good": "Gut",
+      "splendid": "Hervorragend"
+    }
+  }
+}

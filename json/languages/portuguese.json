@@ -27,13 +27,15 @@
       "settlers": "The Settlers na Ubisoft",
       "heroes3": "Heroes III na GOG"
     },
-    "tagline": "<strong>Hexistenz é um jogo contemplativo</strong>, pensado para quem gosta de observar\n          demoradamente um mundo e os seus detalhes, sem se preocupar com o tempo.<br><br><strong>Coloca peças\n          hexagonais</strong> e vê um território a ganhar forma diante dos teus olhos: vastas florestas de\n          pinheiros e bétulas, campos de trigo ondulantes com os seus moinhos, aldeias medievais de telhados\n          fumegantes, redes ferroviárias e largos rios onde navegam os teus barcos.<br><br>Cumpre missões,\n          intercepta cometas, rodeia as tuas peças, e constrói pouco a pouco um mundo vivo, peça após\n          peça.<br><br><strong>Joga sozinho ou em multijogador</strong>, retoma uma partida guardada quando\n          quiseres, <strong>captura os teus melhores momentos na galeria de capturas</strong>, e revive as tuas\n          partidas aceleradas com os replays online descarregáveis.",
+    "tagline": "<strong>Hexistenz é um jogo contemplativo</strong>, pensado para quem gosta de observar\n          demoradamente um mundo e os seus detalhes, sem se preocupar com o tempo.<br><br><strong>Coloca peças\n          hexagonais</strong> e vê um território a ganhar forma diante dos teus olhos: vastas florestas de\n          pinheiros e bétulas, campos de trigo ondulantes com os seus moinhos, aldeias medievais de telhados\n          fumegantes, redes ferroviárias e largos rios onde navegam os teus barcos.<br><br>Cumpre missões,\n          intercepta cometas, rodeia as tuas peças, e constrói pouco a pouco um mundo vivo, peça após\n          peça.<br><br><strong>Joga sozinho ou em multijogador</strong>, retoma uma partida guardada quando\n          quiseres, <strong>captura os teus melhores momentos na galeria de capturas</strong>, e revive as tuas\n          partidas aceleradas com os replays online descarregáveis.<br><br>O jogo já está jogável e totalmente traduzido em 9 idiomas, incluindo um francês antigo do século XII.<br><br>O jogo é gratuito, sem registo, sem pay-to-win e sem compras dentro do jogo: em suma, feito só por nostalgia.",
     "btn_play": "Jogar agora",
     "btn_how": "Como jogar?",
     "stats": {
       "biomes_label": "Biomas",
       "games_label": "Partidas",
-      "factions_label": "Facções"
+      "factions_label": "Facções",
+      "langs_label": "Idiomas",
+      "themes_label": "Temas gráficos"
     }
   },
   "factions": {
@@ -185,6 +187,7 @@
       "immersive": "modo imersivo",
       "super_immersive": "modo super-imersivo",
       "mute": "mudo",
+      "mute_tts": "mudo voz",
       "help": "ajuda"
     }
   },
@@ -290,6 +293,10 @@
       "name": "Música adaptativa",
       "desc": "Faixas de introdução, jogo e final que se encadeiam em fundido suave, escolhidas entre várias variantes para nunca soar igual de uma partida para outra."
     },
+    "voice": {
+      "name": "Uma voz que comenta a partida",
+      "desc": "Uma voz narradora (síntese de voz nativa do navegador, sem serviço externo) anuncia em direto os teus pontos, missões e momentos-chave da interface — um pequeno sinal sonoro precede cada nova missão e cada missão concluída. Disponível nos 9 idiomas do jogo, com uma voz masculina escolhida automaticamente para o alemão e o russo. A tecla T silencia-a à parte, sem tocar no resto da banda sonora."
+    },
     "silence": {
       "name": "Silêncio a pedido",
       "desc": "A tecla M corta e restabelece instantaneamente toda a banda sonora, música incluída — útil para uma partida tranquila numa reunião ou videochamada."
@@ -349,6 +356,15 @@
         "☀️ Dissipa-se progressivamente ao longo dos minutos",
         "🎚️ Densidade e cor da névoa controláveis no editor de direção artística"
       ]
+    },
+    "storm": {
+      "name": "Tempestades e incêndios",
+      "list": [
+        "⚡ O raio cai sob a manta de tempestade e pode incendiar uma peça",
+        "🔥 Árvores, casas, torres e moinhos ardem à sua altura real, enegrecem e depois renascem",
+        "🌬️ O foco deriva com o vento, propaga-se às vizinhas e para em seco à beira da água",
+        "🌧️ A chuva trava o contágio e por vezes afoga o incêndio por completo"
+      ]
     }
   },
   "eda": {
@@ -389,10 +405,11 @@
   },
   "scores": {
     "label": "Classificação mundial",
-    "title": "Os melhores construtores",
+    "title": "Os construtores mais eficientes",
     "empty": "Nenhuma pontuação registada — sê o primeiro a colocar a tua peça.",
     "try_luck": "Tentar a sorte →",
     "headline_stat": "peças colocadas",
+    "pts_suffix": "pts",
     "trains_s": "locomotiva",
     "trains_p": "locomotivas",
     "boats_s": "barco",
@@ -431,7 +448,7 @@
   },
   "footer": {
     "copy": "Jogo hexagonal contemplativo feito com nostalgia e amor ❤️ Three.js e muitas peças",
-    "github": "No GitHub"
+    "github": "GitHub"
   },
   "game": {
     "gallery": {
@@ -456,7 +473,12 @@
     "eda": {
       "mainTitle": "Editor de direção artística",
       "ambiances": "AMBIENTES",
-      "tabs": { "lut": "LUT", "cinematic": "Cinemática", "environment": "Ambiente" },
+      "ambiancePrefix": "ambiente",
+      "tabs": {
+        "lut": "LUT",
+        "cinematic": "Cinemática",
+        "environment": "Ambiente"
+      },
       "headers": {
         "lutFog": "1. Névoa",
         "lutSun": "2. Astro luminoso",
@@ -574,7 +596,9 @@
           "domeColorTop": "Cúpula topo",
           "domeColorBottom": "Cúpula base"
         },
-        "renderer": { "toneMappingExposure": "Exposição global" },
+        "renderer": {
+          "toneMappingExposure": "Exposição global"
+        },
         "lights": {
           "hemisphereIntensity": "Intensidade hemisfério",
           "sunIntensity": "Intensidade",
@@ -637,8 +661,15 @@
           "opacity": "Opacidade"
         },
         "wind": {
-          "wheat": { "strength": "Amplitude", "speed": "Velocidade" },
-          "grass": { "strength": "Amplitude", "speed": "Velocidade", "sway": "Balanço" },
+          "wheat": {
+            "strength": "Amplitude",
+            "speed": "Velocidade"
+          },
+          "grass": {
+            "strength": "Amplitude",
+            "speed": "Velocidade",
+            "sway": "Balanço"
+          },
           "tree": {
             "strength": "Amplitude",
             "speed": "Velocidade",
@@ -648,8 +679,14 @@
             "detailStrength": "Detalhe"
           }
         },
-        "cloud": { "coverage": "Cobertura", "scale": "Escala padrão", "speed": "Velocidade deriva" },
-        "quality": { "density": "Densidade" },
+        "cloud": {
+          "coverage": "Cobertura",
+          "scale": "Escala padrão",
+          "speed": "Velocidade deriva"
+        },
+        "quality": {
+          "density": "Densidade"
+        },
         "cin": {
           "vignette": "Vinheta",
           "grain": "Grão de película",
@@ -680,11 +717,41 @@
           "depthEdge": "Contorno profundidade"
         },
         "vfx": {
-          "mist": { "densite": "Densidade", "compacite": "Compacidade", "elevation": "Elevação" },
-          "fireflies": { "densite": "Densidade", "taille": "Tamanho", "vagabondage": "Deambulação", "scintillement": "Cintilação" },
-          "rain": { "densite": "Densidade", "tailleGoutte": "Tamanho gota", "impactSol": "Impacto solo" },
-          "cloud": { "densite": "Densidade", "altitude": "Altitude", "epaisseur": "Espessura" },
-          "storm": { "frequenceEclairs": "Frequência relâmpagos", "luminositeEclair": "Luminosidade relâmpago", "intensitePluie": "Intensidade chuva" }
+          "mist": {
+            "densite": "Densidade",
+            "compacite": "Compacidade",
+            "elevation": "Elevação"
+          },
+          "fireflies": {
+            "densite": "Densidade",
+            "taille": "Tamanho",
+            "vagabondage": "Deambulação",
+            "scintillement": "Cintilação"
+          },
+          "rain": {
+            "densite": "Densidade",
+            "tailleGoutte": "Tamanho gota",
+            "impactSol": "Impacto solo"
+          },
+          "cloud": {
+            "densite": "Densidade",
+            "altitude": "Altitude",
+            "epaisseur": "Espessura"
+          },
+          "storm": {
+            "frequenceEclairs": "Frequência relâmpagos",
+            "luminositeEclair": "Luminosidade relâmpago",
+            "intensitePluie": "Intensidade chuva",
+            "altitudeChape": "Altitude manta",
+            "opaciteChape": "Opacidade manta"
+          },
+          "fire": {
+            "probaAllumage": "Prob. ignição",
+            "densiteFlammes": "Densidade chamas",
+            "duree": "Duração",
+            "taille": "Tamanho",
+            "propagation": "Propagação"
+          }
         }
       }
     },
@@ -696,6 +763,8 @@
       "topbar.replay": "Reprise da partida",
       "topbar.lang": "Idioma",
       "topbar.theme": "Tema gráfico (Azul / Medieval)",
+      "topbar.mute": "Silenciar / ativar o som",
+      "topbar.muteVoice": "Silenciar / ativar a voz (TTS)",
       "renderer.toneMappingExposure": "Exposição global do renderer (ACESFilmic). Controla a quantidade de luz que atinge o \"sensor\" antes de qualquer calibração.\nValores < 1 escurecem o conjunto, > 2 podem saturar as altas luzes.\nTípico: 1.2–1.8 para uma imagem natural.",
       "environment.fogDensity": "Densidade da névoa exponencial (FogExp2). Ativa apenas quando \"Fim linear\" está a 0.\nA visibilidade cai muito rapidamente: a 0.07 a cena está quase opaca.\nPara um campo visual controlado, preferir o modo linear via \"Início\" e \"Fim\".",
       "environment.fogNear": "Distância em unidades 3D onde a névoa linear começa.\nAssim que \"Fim\" > 0, muda automaticamente de FogExp2 para THREE.Fog(near, far).\nA 0: névoa desde o primeiro plano. A 5: os objetos próximos permanecem nítidos.",
@@ -803,6 +872,8 @@
       "stats.textures": "Número de texturas ativas em memória GPU.\nUma textura não libertada permanece em VRAM. Vigiar após o carregamento de novas peças.",
       "stats.shaders": "Número de programas shader (GLSL) compilados e ativos.\nCada combinação de material + defines = um shader. Demasiadas variantes = engasgo na primeira frame.",
       "game.tiles": "Número total de peças colocadas no tabuleiro desde o início da partida.\nCada peça pode pertencer a um ou vários biomas consoante a sua composição.",
+      "game.score": "A pontuação: os pontos que ganhaste nesta partida.",
+      "game.efficiency": "Eficiência = pontuação ÷ peças colocadas, reduzida enquanto tiverem sido colocadas poucas peças para ser significativa.\nA classificação mundial (secção Classificação do site) baseia-se NESTA eficiência, não na pontuação bruta!",
       "game.mills": "Número de moinhos presentes na grelha.\nUm moinho aparece automaticamente no centro de cada grande zona de campo de trigo.",
       "game.trains": "Linhas de comboio formadas: uma linha = duas estações conectadas por carris contínuos.\nQuanto mais longa a linha, maiores os pontos de pontuação.",
       "game.boats": "Barcos ativos: um barco aparece em cada extensão de água rodeada de terra.\nCada barco gera pontos enquanto permanece \"à tona\".",
@@ -919,8 +990,12 @@
         "boats": "Barcos",
         "comets": "Cometas",
         "total": "Total",
-        "surfaceMax": "Superfície máx",
-        "railMax": "Via máx",
+        "grassMax": "Contígua",
+        "fieldMax": "Contíguo",
+        "forestMax": "Contígua",
+        "houseMax": "Contígua",
+        "waterMax": "Contígua",
+        "railMax": "Contígua",
         "biomes": {
           "grass": "Pradaria",
           "field": "Campo de trigo",
@@ -934,7 +1009,9 @@
         "deckRemaining": "RESTANTES",
         "tilesPlaced": "COLOCADAS",
         "missionsTitle": "MISSÕES EM CURSO",
-        "noMission": "Nenhuma missão"
+        "noMission": "Nenhuma missão",
+        "efficiencyLabel": "Eficiência",
+        "scoreLabel": "Pontuação"
       },
       "help": {
         "title": "Ajuda",
@@ -1016,6 +1093,7 @@
           "undo": "Anular o último movimento",
           "toggleHelp": "Mostrar / ocultar esta ajuda",
           "muteSound": "Cortar / ativar todos os sons",
+          "muteVoice": "Cortar / ativar os anúncios de voz",
           "immersive": "Modo imersivo",
           "superImmersive": "Modo super-imersivo",
           "speedUp": "Acelera as deslocações e o zoom",
@@ -1094,7 +1172,8 @@
     },
     "preloader": {
       "loading": "A carregar…",
-      "loadingPct": "A carregar… {pct} %"
+      "loadingPct": "A carregar… {pct} %",
+      "loadingCount": "{loaded} ficheiros / {total} ficheiros · {loadedMB} MB / {totalMB} MB"
     },
     "placementOverlay": {
       "ok": "OK",
@@ -1114,9 +1193,23 @@
       "unreadableResponse": "Resposta do servidor ilegível ({status}): {text}",
       "serverError": "Erro do servidor {status}"
     },
-    "kbdHint": "H ou ESC&nbsp;→ ajuda &nbsp;|&nbsp; M&nbsp;→ mudo &nbsp;|&nbsp; ESPAÇO&nbsp;→ imersivo &nbsp;|&nbsp; MAJ+ESPAÇO&nbsp;→ super-imersivo",
+    "kbdHint": "H ou ESC&nbsp;→ ajuda &nbsp;|&nbsp; M&nbsp;→ mudo &nbsp;|&nbsp; T&nbsp;→ mudo voz &nbsp;|&nbsp; ESPAÇO&nbsp;→ imersivo &nbsp;|&nbsp; MAJ+ESPAÇO&nbsp;→ super-imersivo",
     "superImmersifExitHint": "ESPAÇO para sair do modo super imersivo",
     "langName": "Português",
+    "tts": {
+      "pointsAnnounce": "{n} pontos!",
+      "voiceOn": "Voz ativada",
+      "voiceOff": "Voz desativada",
+      "newMission": "Nova missão: {title}",
+      "missionCompleted": "Muito bem! Missão concluída!",
+      "edaOpened": "Editor de direção de arte",
+      "helpOpened": "Ajuda",
+      "millsCount": "Você tem {n} moinhos",
+      "trainsCount": "Você tem {n} trens",
+      "boatsCount": "Você tem {n} barcos",
+      "cometsCount": "Você tem {n} cometas",
+      "languageChanged": "Língua portuguesa"
+    },
     "fpsAdjectives": {
       "disastrous": "Desastroso",
       "bad": "Mau",

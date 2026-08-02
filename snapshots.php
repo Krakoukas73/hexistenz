@@ -71,26 +71,67 @@ if (is_dir($snapDir)) {
         }
     }
 }
+<?php
+// 2026-08-01 — demande explicite : sur mobile, préférer "bleu" à "ancien"
+// par défaut (cf. javascript/themeManager.js / index.php / game.php pour
+// l'explication complète) — juste pour éviter le flash visuel avant que le
+// script inline plus bas (qui lit localStorage) ne corrige l'attribut.
+$isMobileUA = false;
+if (!empty($_SERVER['HTTP_USER_AGENT'])) {
+    $isMobileUA = (bool)preg_match('/Android|iPhone|iPad|iPod|Mobile|Windows Phone/i', $_SERVER['HTTP_USER_AGENT']);
+}
+$defaultTheme = $isMobileUA ? 'bleu' : 'ancien';
 ?><!DOCTYPE html>
-<html lang="fr" data-theme="ancien">
+<html lang="fr" data-theme="<?= htmlspecialchars($defaultTheme) ?>">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow" />
 <title>Hexistenz — Galerie de captures</title>
-<link rel="stylesheet" href="css/snapshots.css" />
+<?php
+// 2026-07-28 — cache-busting CSS, même bug/fix que game.php/index.php (cf.
+// CONTEXT.md §26) : ces 3 feuilles n'avaient AUCUN ?v=, donc un navigateur
+// ayant déjà ouvert la galerie une fois pouvait continuer à servir une version
+// en cache indéfiniment après modification sur disque — cause très probable
+// d'un retour utilisateur "toujours pareil, tu n'as rien adapté" sur un fix
+// pourtant bien présent dans le fichier. $cssVersion = mtime le plus récent
+// des 3 fichiers ; chacun porte quand même SON PROPRE mtime individuellement
+// (comme game.php), pour qu'un futur changement d'un seul des trois n'oblige
+// pas à revalider les deux autres inutilement.
+$snapCssFiles = [
+    __DIR__ . '/css/snapshots.css',
+    __DIR__ . '/css/themes/bleu.css',
+    __DIR__ . '/css/themes/medieval.css',
+];
+$snapCssVersion = time();
+$snapCssMtimes = array_filter(array_map(function ($f) { return file_exists($f) ? filemtime($f) : 0; }, $snapCssFiles));
+if ($snapCssMtimes) { $snapCssVersion = max($snapCssMtimes); }
+function snapCssV($path) {
+    global $snapCssVersion;
+    $abs = __DIR__ . '/' . $path;
+    return file_exists($abs) ? filemtime($abs) : $snapCssVersion;
+}
+?>
+<link rel="stylesheet" href="css/snapshots.css?v=<?= snapCssV('css/snapshots.css') ?>" />
 <!-- Thèmes graphiques Bleu/Médiéval (cf. CONTEXT.md §32) — page chargée soit en URL
      directe, soit dans l'<iframe> de snapshotGallery.js (game.php) : même origine,
      donc même localStorage['hexistenz_theme'] que le reste du jeu. Bug signalé
      2026-07-17 : la mosaïque restait sombre (thème bleu figé) même quand le cadre
      de l'overlay parent passait en parchemin — cette page n'avait aucune plomberie
      de thème. Même pattern précoce que game.php/index.php pour éviter le flash. -->
-<link rel="stylesheet" href="css/themes/bleu.css" />
-<link rel="stylesheet" href="css/themes/medieval.css" />
+<link rel="stylesheet" href="css/themes/bleu.css?v=<?= snapCssV('css/themes/bleu.css') ?>" />
+<link rel="stylesheet" href="css/themes/medieval.css?v=<?= snapCssV('css/themes/medieval.css') ?>" />
 <script>
   (function() {
     var th = localStorage.getItem('hexistenz_theme');
-    document.documentElement.dataset.theme = (th === 'bleu') ? 'bleu' : 'ancien';
+    if (th !== 'bleu' && th !== 'ancien') {
+      var ua = navigator.userAgent || '';
+      var isMobile = (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean')
+        ? navigator.userAgentData.mobile
+        : /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua);
+      th = isMobile ? 'bleu' : 'ancien';
+    }
+    document.documentElement.dataset.theme = th;
   })();
 </script>
 </head>
@@ -113,6 +154,16 @@ if (is_dir($snapDir)) {
   </div>
 
   <script type="application/json" id="snap-data"><?= json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+  <?php
+  // 2026-07-29 — même cache-busting que les CSS ci-dessus, cette fois pour
+  // json/languages/*.json (fetch côté client par snapshotsPage.js) — cf.
+  // gameLangReactive.js::getLangVersion() et game.php pour le pattern jumeau.
+  $snapLangFiles = glob(__DIR__ . '/json/languages/*.json') ?: [];
+  $snapLangVersion = time();
+  $snapLangMtimes = array_filter(array_map('filemtime', $snapLangFiles));
+  if ($snapLangMtimes) { $snapLangVersion = max($snapLangMtimes); }
+  ?>
+  <script>window.HEXISTENZ_LANG_VERSION = <?= json_encode((string) $snapLangVersion) ?>;</script>
   <script type="module" src="javascript/snapshotsPage.js?v=<?= file_exists(__DIR__ . '/javascript/snapshotsPage.js') ? filemtime(__DIR__ . '/javascript/snapshotsPage.js') : time() ?>"></script>
 </body>
 </html>

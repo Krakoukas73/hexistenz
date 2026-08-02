@@ -1,5 +1,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, LOD_HOUSE_CULL_DISTANCE, LOD_WATCHTOWER_CULL_DISTANCE } from './config.js';
+import { EDGE_ORDER, EDGE_TYPES, HEX_SIZE, TILE_VISUAL, SECTOR_DEFS, LOD_HOUSE_CULL_DISTANCE, LOD_WATCHTOWER_CULL_DISTANCE, HITBOX_R } from './config.js';
+import { registerPropHitbox, getPropRegistryGeneration } from './propHitboxRegistry.js';
 
 import { hashUnit100k as hashUnit } from './hashUtils.js';
 import { createOuterVertices } from './hexGeometry.js';
@@ -22,6 +23,23 @@ import { getPropChunkKey, computePropBoundingSphere } from './decorOverlay.js';
 // Pré-alloués — évitent les allocations par maison (2026-07-04 : instancing, cf. plus bas)
 const _hCurvQuat     = new THREE.Quaternion();
 const _hInstanceDummy = new THREE.Object3D();
+const _H_WHITE_COLOR = new THREE.Color(1, 1, 1);   // reset instanceColor = neutre (pas de teinte)
+const _hInstanceMatrixScratch = new THREE.Matrix4();
+
+// Retrouve, dans un InstancedMesh, l'instance dont la position monde (XZ) est la plus proche de
+// (worldX, worldZ) — évite de dépendre d'un index mémorisé au moment de la collecte (invalide
+// dès qu'un rebuild ultérieur change l'ordre des instances, cf. forestOverlay.js).
+function _findInstanceIndexNear(mesh, worldX, worldZ, tolSq = 0.0004) {
+  let bestIdx = -1, bestDistSq = tolSq;
+  for (let i = 0; i < mesh.count; i += 1) {
+    mesh.getMatrixAt(i, _hInstanceMatrixScratch);
+    const e = _hInstanceMatrixScratch.elements;
+    const dx = e[12] - worldX, dz = e[14] - worldZ;
+    const d2 = dx * dx + dz * dz;
+    if (d2 < bestDistSq) { bestDistSq = d2; bestIdx = i; }
+  }
+  return bestIdx;
+}
 const _houseLodFrustum = new THREE.Frustum();
 const _houseLodMatrix  = new THREE.Matrix4();
 
@@ -266,7 +284,32 @@ function addSectorBuildings(group, accumulator, tileX, tileZ, sector, columnCoun
     tower.quaternion.premultiply(_hCurvQuat);
     group.add(tower);
     group.userData.watchtowerLodItems.push({ object: tower, center: new THREE.Vector3(towerX, towerSurfaceY, towerZ) });
-    // (pas d'enregistrement hitbox : la tour n'a pas besoin de bloquer d'autres objets ici)
+    // Enregistrement hitbox (2026-07-28, retour user : « le feu doit se propager aux modèles
+    // 3D... maisons ») — fireOverlay.js s'appuie sur ce registre pour cibler les vrais props.
+    // Effet de bord assumé : les objets "mous" (tonneaux/charrettes/bancs, villageDecorOverlay.js
+    // via tryResolve) évitent désormais aussi les tours, ce qu'ils ne faisaient pas avant.
+    // setColor (2026-07-29) — la tour n'est PAS instanciée (objet unique par tuile, cf.
+    // commentaire ci-dessus) : ses matériaux ne sont pas partagés, on les teinte directement
+    // (couleur d'origine mémorisée sur le premier appel pour un reset fidèle).
+    // height : hauteur RÉELLE du modèle (bbox monde) — le rayon de hitbox ne décrit que
+    // l'emprise au sol, or une tour est l'objet le PLUS haut du jeu. fireOverlay.js s'en sert
+    // pour dimensionner ses langues de flamme (retour user 2026-07-29 : « pas d'effet flammes
+    // sur les items » — des flammes calibrées "tonneau" au pied d'une tour ne se voient pas).
+    const _towerBox = new THREE.Box3().setFromObject(tower);
+    registerPropHitbox(towerX, towerZ, HITBOX_R.watchtower, {
+      kind: 'landmark',   // repère unique (pas 1-par-tuile comme les maisons) — cf. fireOverlay.js _findBurnTargets
+      height: Math.max(0.05, _towerBox.max.y - _towerBox.min.y),
+      setColor(color) {
+        tower.traverse(child => {
+          if (!child.isMesh || !child.material) return;
+          for (const m of Array.isArray(child.material) ? child.material : [child.material]) {
+            if (!m.color) continue;
+            if (!m.userData._fireOriginalColor) m.userData._fireOriginalColor = m.color.clone();
+            m.color.copy(color ?? m.userData._fireOriginalColor);
+          }
+        });
+      }
+    });
   }
 
   // Maisons : exactement columnCount maisons — le label de zone reflétera ce compte précis.
@@ -296,6 +339,48 @@ function addSectorBuildings(group, accumulator, tileX, tileZ, sector, columnCoun
     const byChunk = accumulator.get(params.key);
     if (!byChunk.has(chunkKey)) byChunk.set(chunkKey, []);
     byChunk.get(chunkKey).push(_hInstanceDummy.matrix.clone());
+
+    // Enregistrement hitbox (2026-07-28, retour user : « le feu doit se propager aux modèles
+    // 3D... maisons ») — fireOverlay.js cible les vrais props via ce registre. Effet de bord
+    // assumé : les objets "mous" (tonneaux/charrettes/bancs, villageDecorOverlay.js via
+    // tryResolve) évitent désormais aussi les maisons, ce qu'ils ne faisaient pas avant.
+    // setColor (2026-07-29, retour user : « pas sûr que ça détecte bien les objets » — un index
+    // capté à la collecte devenait faux dès le rebuild SUIVANT, très fréquent dans ce jeu (pose
+    // de tuile ailleurs = resetPropHitboxRegistry() + reconstruction complète). Résolu par
+    // POSITION à chaque appel, comme pour les arbres (forestOverlay.js) : retrouve l'instance
+    // qui occupe VRAIMENT cette position dans le mesh actuel, donc reste correct après rebuild.
+    const houseChunkMapKey = `${params.key}:${chunkKey}`;
+    registerPropHitbox(worldX, worldZ, HITBOX_R.house, {
+      // Hauteur réelle de la maison (faîte/cheminée), pas son emprise au sol — cf. le calcul
+      // de chimneyWorldY plus bas, même constante. Sert à dimensionner les flammes.
+      height: HOUSE_SCALE * 1.70,
+      // Cache de la résolution par position, invalidé au rebuild des props (cf.
+      // getPropRegistryGeneration) — le feu recolore chaque frame, la recherche d'instance ne
+      // doit pas être refaite 60×/s pour un résultat inchangé.
+      _gen: -1,
+      _hits: null,
+      setColor(color) {
+        const gen = getPropRegistryGeneration();
+        if (this._gen !== gen) {
+          this._hits = [];
+          const meshes = group.userData.houseChunkMeshes?.get(houseChunkMapKey);
+          if (meshes) {
+            for (const mesh of meshes) {
+              const idx = _findInstanceIndexNear(mesh, worldX, worldZ);
+              if (idx >= 0) this._hits.push({ mesh, idx });
+            }
+          }
+          this._gen = gen;
+        }
+        for (const { mesh, idx } of this._hits) {
+          if (!mesh.instanceColor) {
+            mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(mesh.count * 3).fill(1), 3);
+          }
+          mesh.setColorAt(idx, color ?? _H_WHITE_COLOR);
+          mesh.instanceColor.needsUpdate = true;
+        }
+      }
+    });
 
     // Enregistre la position de la cheminée pour le pass de fumée volumétrique.
     // Y réel = base house + hauteur chimney dans le modèle (HOUSE_SCALE * 1.70).

@@ -1,9 +1,9 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 
 const _langFile = getLangFile();
 
-const _poText = await fetch(`./json/languages/${_langFile}.json`)
+const _poText = await fetch(`./json/languages/${_langFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .then(data => data?.game?.placementOverlay ?? {})
   .catch(err => {

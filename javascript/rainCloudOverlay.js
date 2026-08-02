@@ -67,7 +67,31 @@ import { WORLD_CURVATURE_SHADER, WORLD_CURVATURE_UNIFORMS } from './worldCurvatu
 //   startsWith('hexistenz-vfx-rain-clouds') → catégorie « Nuages de pluie »
 const OVERLAY_NAME = 'hexistenz-vfx-rain-clouds';
 const CLOUD_MESH_NAME = 'hexistenz-vfx-rain-clouds-mesh';
+const CANOPY_MESH_NAME = 'hexistenz-vfx-rain-clouds-canopy'; // chape d'orage (sceneProfiler : 'Nuages de pluie')
 const RAIN_MESH_NAME = 'hexistenz-vfx-rain';
+
+// ── Chape d'orage (2026-07-12) : UN seul grand mesh plat et bosselé qui recouvre tout le
+//    plateau pendant l'orage (remplace les cumulus épars, crossfade géré dans update). Bruit en
+//    espace MONDE (lumps ancrés au monde, pas à l'écran), sombre et menaçant, double-face.
+//    Étendue = boîte du plateau + marge. Choix assumé : elle PEUT masquer le plateau vu de haut.
+const CANOPY_SEGMENTS = 72;        // subdivisions du plan (lumps lisses)
+const CANOPY_MARGIN = 20;          // débord (unités monde) au-delà de la boîte du plateau
+const CANOPY_AMPLITUDE = 1.7;      // profondeur des bosses (assez plat vs largeur → une « chape »)
+// Texture de couverture (2026-07-30) : donne à la chape la silhouette du plateau posé au lieu
+// d'un rectangle. 128² suffit — elle n'est jamais vue de près et le fondu la lisse de toute
+// façon. Rayons en unités monde autour de chaque tuile : plein jusqu'à CORE, puis dégradé
+// jusqu'à FEATHER (débord volontairement généreux → la chape déborde en s'estompant, elle ne
+// s'arrête pas net au bord du plateau).
+const CANOPY_COV_TEX = 128;
+const CANOPY_COV_CORE = HEX_SIZE * 1.6;
+const CANOPY_COV_FEATHER = HEX_SIZE * 6.5;
+
+/** Texture 1×1 opaque — couverture par défaut avant le premier rebuild (chape pleine). */
+function _makeFullCoverageTexture() {
+  const t = new THREE.DataTexture(new Uint8Array([255]), 1, 1, THREE.RedFormat);
+  t.needsUpdate = true;
+  return t;
+}
 
 // Fondus. Entrée douce (apparition progressive), sortie quasi instantanée : couper
 // un switch stoppe l'effet tout de suite (retour utilisateur 2026-07-09).
@@ -184,6 +208,7 @@ const SPLAT_MESH_NAME = 'hexistenz-vfx-rain-impact';
 const CLOUD_VERTEX_SHADER = /* glsl */ `
   ${WORLD_CURVATURE_SHADER}
   attribute float aoShade;
+  uniform float uStormInflate;   // orage : gonfle chaque nuage autour de son centre (nuages plus GROS)
   varying float vAo;
   varying vec3 vNormalW;
   varying vec3 vWorldPos;
@@ -191,7 +216,9 @@ const CLOUD_VERTEX_SHADER = /* glsl */ `
   void main() {
     vAo = aoShade;
     vNormalW = normalize(mat3(modelMatrix) * normal);   // translation/échelle uniforme → direction conservée
-    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+    // Inflation en espace local (autour du centre du nuage) → les nuages grossissent sur place,
+    // sans dériver ni changer d'altitude. 1.0 = normal, >1 = orage menaçant.
+    vec4 worldPosition = modelMatrix * vec4(position * uStormInflate, 1.0);
     worldPosition = dorfromantikApplyWorldCurvature(worldPosition);
     vWorldPos = worldPosition.xyz;
     gl_Position = projectionMatrix * viewMatrix * worldPosition;
@@ -236,8 +263,79 @@ const CLOUD_FRAGMENT_SHADER = /* glsl */ `
     float n = _vnoise(vWorldPos * 3.0) * 0.6 + _vnoise(vWorldPos * 6.5) * 0.4;
     base *= mix(0.92, 1.05, n);
 
-    vec3 color = mix(base, uStormColor, uStormMix);
+    // Orage : assombrit fortement en CONSERVANT le relief. uStormColor agit comme un facteur
+    // d'assombrissement teinté ardoise (multiplication), au lieu d'un aplat gris uniforme qui
+    // gommait les bosses → nuages sombres, denses et menaçants, mais toujours bombés.
+    vec3 stormy = base * (uStormColor * 2.0);   // ×2 : uStormColor centré sur ~0.5 = neutre
+    vec3 color = mix(base, stormy, uStormMix);
     gl_FragColor = vec4(color, uOpacity);
+  }
+`;
+
+// ─── Shaders CHAPE D'ORAGE ──────────────────────────────────────────────────
+// Bruit valeur 2D + fbm partagés (déplacement des lumps + turbulence d'ombrage), en espace monde.
+const CANOPY_NOISE_GLSL = /* glsl */ `
+  float _ch(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float _cnoise(vec2 p){
+    vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+    return mix(mix(_ch(i), _ch(i+vec2(1,0)), f.x),
+               mix(_ch(i+vec2(0,1)), _ch(i+vec2(1,1)), f.x), f.y);
+  }
+  float _cfbm(vec2 p){
+    float v = 0.0, a = 0.5;
+    for (int i = 0; i < 4; i++){ v += a * _cnoise(p); p *= 2.03; a *= 0.5; }
+    return v;
+  }
+`;
+
+const CANOPY_VERTEX_SHADER = /* glsl */ `
+  ${WORLD_CURVATURE_SHADER}
+  ${CANOPY_NOISE_GLSL}
+  uniform float uTime;
+  uniform float uAmplitude;
+  varying vec3 vWorldPos;
+  varying float vLump;
+  void main() {
+    vec4 wp = modelMatrix * vec4(position, 1.0);
+    // Lumps qui roulent lentement (dérive du champ de bruit dans le temps), ancrés au monde.
+    float f = _cfbm(wp.xz * 0.05 + vec2(uTime * 0.012, uTime * 0.008));
+    vLump = f;
+    wp.y -= (f - 0.5) * 2.0 * uAmplitude;   // bosses au-dessus/en dessous du plan → volume nuageux
+    wp = dorfromantikApplyWorldCurvature(wp);
+    vWorldPos = wp.xyz;
+    gl_Position = projectionMatrix * viewMatrix * wp;
+  }
+`;
+
+const CANOPY_FRAGMENT_SHADER = /* glsl */ `
+  ${CANOPY_NOISE_GLSL}
+  uniform float uTime;
+  uniform float uOpacity;
+  uniform vec3 uColor;
+  uniform sampler2D uCoverage;      // couverture du plateau, cf. _buildCanopyCoverage
+  uniform vec2 uCoverageOrigin;     // coin (minX, minZ) monde de la texture
+  uniform vec2 uCoverageSize;       // étendue monde (w, d) de la texture
+  varying vec3 vWorldPos;
+  varying float vLump;
+  void main() {
+    // Turbulence sombre (deux échelles) → masse roulante menaçante, pas un aplat.
+    float n = _cfbm(vWorldPos.xz * 0.11 + vec2(uTime * 0.02, -uTime * 0.015));
+    float shade = mix(0.5, 1.12, n);        // creux sombres, crêtes un peu plus claires
+    shade *= mix(0.82, 1.08, vLump);        // bosses hautes légèrement éclaircies (relief)
+
+    // Silhouette « patatoïde » épousant la forme du plateau posé, bords fondus vers le
+    // transparent (2026-07-30, retour Cyril : la chape était un rectangle net). La couverture
+    // est pré-calculée sur CPU à chaque rebuild (empreinte des tuiles + dégradé), on ne fait
+    // ici qu'un échantillonnage. Le bord est encore brouillé par le bruit pour éviter une
+    // frontière trop régulière (contour organique, cohérent avec le reste des VFX).
+    vec2 cuv = (vWorldPos.xz - uCoverageOrigin) / uCoverageSize;
+    float cov = texture2D(uCoverage, cuv).r;
+    float edgeNoise = _cfbm(vWorldPos.xz * 0.24 + vec2(uTime * 0.01, uTime * 0.013));
+    cov = clamp(cov + (edgeNoise - 0.5) * 0.22, 0.0, 1.0);
+    cov = smoothstep(0.06, 0.62, cov);       // fondu doux, jamais de bord franc
+    if (cov <= 0.002) discard;               // hors plateau : rien à dessiner du tout
+
+    gl_FragColor = vec4(uColor * shade, uOpacity * cov);
   }
 `;
 
@@ -378,8 +476,9 @@ export function createRainCloudOverlay(scene) {
       uOpacity: { value: 0 },
       uTopColor: { value: new THREE.Color('#ffffff') },
       uUnderColor: { value: new THREE.Color('#7f9bc6') },   // creux bleutés bien marqués (façon réf cumulus)
-      uStormColor: { value: new THREE.Color('#5b6570') },
+      uStormColor: { value: new THREE.Color('#2b3340') },   // facteur d'assombrissement (×2 en shader) : ardoise sombre menaçante
       uStormMix: { value: 0 },
+      uStormInflate: { value: 1 },                          // 1 = normal, >1 = nuages gonflés (orage)
       uWorldCurvatureEnabled: WORLD_CURVATURE_UNIFORMS.uWorldCurvatureEnabled
     },
     vertexShader: CLOUD_VERTEX_SHADER,
@@ -394,6 +493,32 @@ export function createRainCloudOverlay(scene) {
   mesh.name = CLOUD_MESH_NAME;
   mesh.frustumCulled = false;
   mesh.userData.skipPaletteHarmony = true;
+
+  // ── Chape d'orage : grand plan bosselé, sombre, double-face, recouvrant tout le plateau. ──
+  const canopyMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uOpacity: { value: 0 },
+      uAmplitude: { value: CANOPY_AMPLITUDE },
+      uColor: { value: new THREE.Color('#2b3340') },   // ardoise sombre menaçante (comme la teinte orage des cumulus)
+      // Silhouette du plateau (remplie au rebuild par _buildCanopyCoverage). Texture 1×1 blanche
+      // en attendant : chape pleine, comportement d'avant, aucun trou visuel au 1er frame.
+      uCoverage: { value: _makeFullCoverageTexture() },
+      uCoverageOrigin: { value: new THREE.Vector2(0, 0) },
+      uCoverageSize: { value: new THREE.Vector2(1, 1) },
+      uWorldCurvatureEnabled: WORLD_CURVATURE_UNIFORMS.uWorldCurvatureEnabled
+    },
+    vertexShader: CANOPY_VERTEX_SHADER,
+    fragmentShader: CANOPY_FRAGMENT_SHADER,
+    transparent: true, depthWrite: true, depthTest: true,   // occulte (chape opaque) ; fondu bref via uOpacity
+    side: THREE.DoubleSide,                                 // vue de dessous OU de dessus selon la caméra
+    blending: THREE.NormalBlending, fog: false
+  });
+  const canopyMesh = new THREE.Mesh(new THREE.BufferGeometry(), canopyMat);
+  canopyMesh.name = CANOPY_MESH_NAME;
+  canopyMesh.frustumCulled = false;
+  canopyMesh.visible = false;
+  canopyMesh.userData.skipPaletteHarmony = true;
 
   // ── Mesh pluie ──
   const rainGeom = new THREE.PlaneGeometry(1, 1);
@@ -466,14 +591,14 @@ export function createRainCloudOverlay(scene) {
   const group = new THREE.Group();
   group.name = OVERLAY_NAME;
   group.visible = false;
-  group.add(mesh, rainMesh);
+  group.add(mesh, canopyMesh, rainMesh);
   scene.add(group);
   // Les impacts au sol sont posés à la hauteur du terrain et NE doivent PAS dériver au vent
   // comme les nuages/pluie → hors du group qui oscille (sway), directement dans la scène.
   scene.add(impactMesh);
 
   const overlay = {
-    group, mesh, rainMesh, impactMesh, anchors: [], _lastPlacedTiles: null,
+    group, mesh, canopyMesh, rainMesh, impactMesh, anchors: [], _lastPlacedTiles: null,
     swayPhase: hashUnitFull('rain-cloud-sway') * 1000,
     _cloudWasOn: false, _cloudOnSince: 0, _cloudOffSince: null,
     _rainWasOn: false, _rainOnSince: 0, _rainOffSince: null
@@ -511,10 +636,69 @@ export function createRainCloudOverlay(scene) {
     }
     if (effect === 'rain') {
       _applyRainDropSize(overlay, getVfxSettings('rain').tailleGoutte);
+      return;
+    }
+    // storm.altitudeChape → simple déplacement du mesh (pas de reconstruction).
+    // storm.opaciteChape → RIEN à faire ici : relu à chaque frame par updateRainCloudOverlay.
+    if (effect === 'storm' && (key === null || key === 'altitudeChape')) {
+      overlay.canopyMesh.position.y = getVfxSettings('storm').altitudeChape;
     }
   });
 
   return overlay;
+}
+
+/**
+ * Construit la texture de couverture de la chape d'orage : la silhouette du plateau posé,
+ * avec un dégradé vers l'extérieur (2026-07-30, retour Cyril — la chape était un rectangle net).
+ *
+ * Principe : on tamponne un dégradé radial par tuile, en gardant le MAX. L'union des disques
+ * donne naturellement une forme « patatoïde » qui suit le plateau, et le dégradé donne le fondu.
+ * Coût borné : on ne parcourt que les texels dans le rayon FEATHER de chaque tuile (quelques
+ * centaines), pas la texture entière par tuile — et seulement au rebuild, jamais par frame.
+ */
+function _buildCanopyCoverage(overlay, placedTiles, originX, originZ, worldW, worldD) {
+  const N = CANOPY_COV_TEX;
+  const data = new Uint8Array(N * N);
+  const perX = N / worldW, perZ = N / worldD;          // texels par unité monde
+  const rTexX = CANOPY_COV_FEATHER * perX, rTexZ = CANOPY_COV_FEATHER * perZ;
+
+  for (const placedTile of placedTiles.values()) {
+    const p = axialToWorld(placedTile.q, placedTile.r);
+    const cx = (p.x - originX) * perX, cz = (p.z - originZ) * perZ;
+    const x0 = Math.max(0, Math.floor(cx - rTexX)), x1 = Math.min(N - 1, Math.ceil(cx + rTexX));
+    const z0 = Math.max(0, Math.floor(cz - rTexZ)), z1 = Math.min(N - 1, Math.ceil(cz + rTexZ));
+    for (let tz = z0; tz <= z1; tz += 1) {
+      const dzw = (tz + 0.5) / perZ + originZ - p.z;
+      for (let tx = x0; tx <= x1; tx += 1) {
+        const dxw = (tx + 0.5) / perX + originX - p.x;
+        const dist = Math.hypot(dxw, dzw);
+        if (dist >= CANOPY_COV_FEATHER) continue;
+        let v;
+        if (dist <= CANOPY_COV_CORE) v = 1;
+        else {
+          const t = (dist - CANOPY_COV_CORE) / (CANOPY_COV_FEATHER - CANOPY_COV_CORE);
+          v = 1 - t * t * (3 - 2 * t);                  // smoothstep inversé → fondu doux
+        }
+        const b = (v * 255) | 0;
+        const i = tz * N + tx;
+        if (b > data[i]) data[i] = b;
+      }
+    }
+  }
+
+  const tex = new THREE.DataTexture(data, N, N, THREE.RedFormat);
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.needsUpdate = true;
+
+  const u = overlay.canopyMesh.material.uniforms;
+  if (u.uCoverage.value) u.uCoverage.value.dispose();   // libère la texture du rebuild précédent
+  u.uCoverage.value = tex;
+  u.uCoverageOrigin.value.set(originX, originZ);
+  u.uCoverageSize.value.set(worldW, worldD);
 }
 
 // ── Chemins rapides (pas de reconstruction de géométrie) ─────────────────────
@@ -667,6 +851,37 @@ export function rebuildRainCloudOverlay(overlay, placedTiles) {
   // Taille des gouttes : même source de vérité que le chemin rapide.
   _applyRainDropSize(overlay, rainS.tailleGoutte);
 
+  // ── Chape d'orage : (re)construit un grand plan horizontal subdivisé couvrant toute la boîte
+  //    englobante du plateau (+ marge), à l'altitude des nuages. Le relief bosselé est fait dans
+  //    le vertex shader (bruit monde) → ici, juste un plan plat bien subdivisé. ──
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  if (placedTiles && placedTiles.size > 0) {
+    for (const placedTile of placedTiles.values()) {
+      const p = axialToWorld(placedTile.q, placedTile.r);
+      if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+      if (p.z < minZ) minZ = p.z; if (p.z > maxZ) maxZ = p.z;
+    }
+  }
+  const _oldCanopyGeom = overlay.canopyMesh.geometry;
+  if (Number.isFinite(minX)) {
+    const w = (maxX - minX) + CANOPY_MARGIN * 2;
+    const d = (maxZ - minZ) + CANOPY_MARGIN * 2;
+    const canopyGeom = new THREE.PlaneGeometry(w, d, CANOPY_SEGMENTS, CANOPY_SEGMENTS);
+    canopyGeom.rotateX(-Math.PI / 2);                               // plan horizontal (XZ)
+    // Altitude portée par mesh.position.y (et non cuite dans la géométrie) : le curseur EDA
+    // « Altitude chape » peut ainsi la changer sans reconstruire le plan (72×72 segments).
+    // Le bruit du vertex shader est indexé sur wp.xz — un décalage en Y ne le modifie pas.
+    canopyGeom.translate((minX + maxX) * 0.5, 0, (minZ + maxZ) * 0.5);
+    overlay.canopyMesh.geometry = canopyGeom;
+    // Silhouette du plateau : la chape n'est plus un rectangle, elle épouse les tuiles posées
+    // et s'estompe sur ses bords (cf. CANOPY_FRAGMENT_SHADER).
+    _buildCanopyCoverage(overlay, placedTiles, minX - CANOPY_MARGIN, minZ - CANOPY_MARGIN, w, d);
+  } else {
+    overlay.canopyMesh.geometry = new THREE.BufferGeometry();
+  }
+  overlay.canopyMesh.position.y = getVfxSettings('storm').altitudeChape;
+  if (_oldCanopyGeom) _oldCanopyGeom.dispose();
+
   overlay.anchors = anchors;
 }
 
@@ -691,6 +906,8 @@ function _fade(on, timeSeconds, state, fadeIn, fadeOut, keys) {
   return 0;
 }
 
+const STORM_INFLATE = 1.35;   // orage : facteur de grossissement des nuages (autour de leur centre)
+
 export function updateRainCloudOverlay(overlay, environmentDirector, timeSeconds, deltaSeconds) {
   const cloudsEnabled = isVfxGroupExpanded('clouds');
   const stormActive = isEnvironmentEventActive(environmentDirector, 'storm');
@@ -710,15 +927,33 @@ export function updateRainCloudOverlay(overlay, environmentDirector, timeSeconds
   const rainVisible = rainFade > 0.001 && hasAnchors;
   const impactVisible = rainVisible && impactIntensity > 0.001;
 
-  overlay.group.visible = cloudVisible || rainVisible;
-  overlay.mesh.visible = cloudVisible;
+  // Rampe d'orage en FONDU (~0.9 s) : pilote le relais cumulus → chape (pas de pop brutal).
+  const stormT0 = overlay._stormT ?? 0;
+  overlay._stormT = stormT0 + ((stormActive ? 1 : 0) - stormT0) * Math.min(1, deltaSeconds / 0.9);
+  const stormT = overlay._stormT;
+
+  // Pendant l'orage : les cumulus épars s'effacent au profit de la CHAPE qui recouvre tout le ciel.
+  const cumulusVisible = cloudVisible && stormT < 0.997;
+  const canopyVisible = hasAnchors && stormT > 0.003;
+
+  overlay.group.visible = cumulusVisible || rainVisible || canopyVisible;
+  overlay.mesh.visible = cumulusVisible;
+  overlay.canopyMesh.visible = canopyVisible;
   overlay.rainMesh.visible = rainVisible;
   overlay.impactMesh.visible = impactVisible;
 
-  // Uniforms nuages.
-  overlay.mesh.material.uniforms.uTime.value = timeSeconds;
-  overlay.mesh.material.uniforms.uOpacity.value = cloudFade;
-  overlay.mesh.material.uniforms.uStormMix.value = stormActive ? 1 : 0;
+  // Cumulus : s'assombrissent/gonflent (transition) puis s'effacent quand l'orage monte.
+  const cu = overlay.mesh.material.uniforms;
+  cu.uTime.value = timeSeconds;
+  cu.uOpacity.value = cloudFade * (1 - stormT);
+  cu.uStormMix.value = stormT;
+  cu.uStormInflate.value = 1 + (STORM_INFLATE - 1) * stormT;
+
+  // Chape d'orage : fondu d'opacité piloté par la rampe d'orage, plafonné par le curseur EDA
+  // « Opacité chape » (2026-07-30, retour Piregwan : à 1 elle masquait totalement le plateau).
+  const ccu = overlay.canopyMesh.material.uniforms;
+  ccu.uTime.value = timeSeconds;
+  ccu.uOpacity.value = stormT * stormS.opaciteChape;
 
   // Uniforms pluie : densité vive = rain.densite (+ boost orage), bornée à 1.
   let activeRatio = 0.12 + rainS.densite * 0.88;   // densité 0 → 0.12 (bruine), densité 1 → 1.0 (pluie battante)

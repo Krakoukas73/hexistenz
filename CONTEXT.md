@@ -2,13 +2,31 @@
 
 ## 1. Nature du projet
 
-**Version courante : `v0.9.2.6.10`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
+**Version courante : `v0.9.4.1`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
 
 Jeu web contemplatif de pose de tuiles hexagonales, inspiré de Dorfromantik / The Settlers / HoMM. Le joueur pioche une tuile, la tourne, la pose sur une grille hexagonale. Chaque tuile a 6 secteurs triangulaires (biomes ou réseaux). Objectif : connecter les biomes, compléter des missions, maximiser le score.
 
 Stack : JavaScript ES Modules natifs, sans bundler. Three.js r160 (CDN). PHP pour highscores/multiplayer. JSON stockage. Pas de framework, pas de SQL.
 
-**Le jeu est entièrement traduit en 6 langues : FR/EN/ES/IT/PT + `fr-CA`** (québécois, easter egg, sélecteur "QC") (prez `index.php`, jeu `game.php`, panneau EDA compris), via l'architecture i18n scalable `LANG_FILES`/`data-i18n` (cf. §21, entrées 2026-07-14/15/16). Sélecteur de langue accessible en jeu à tout moment, sans rechargement — contenu traduit dans `json/languages/*.json`.
+**Le jeu est entièrement traduit en 9 langues : FR/EN/ES/IT/PT/DE/RU + `fr-CA` + `fr-MED`** (prez `index.php`, jeu `game.php`, panneau EDA compris), via l'architecture i18n scalable `LANG_FILES`/`data-i18n` (cf. §21, entrées 2026-07-14/15/16, et §35 pour l'allemand/russe/médiéval). Sélecteur de langue accessible en jeu à tout moment, sans rechargement — contenu traduit dans `json/languages/*.json`.
+
+Les deux dernières sont des variantes de saveur, pas des langues au sens strict :
+- `fr-CA` — québécois, easter egg, sélecteur **"QC"**.
+- `fr-MED` — **français médiéval (XIIe siècle)**, sélecteur **"XII"**, fichier `french-medieval.json`.
+  Français moderne enrichi de vocabulaire et de tournures de chroniqueur : orthographe strictement
+  moderne (contrainte TTS — l'ancien français réel est mal prononcé par la synthèse vocale) et
+  lisibilité immédiate exigée. Trois passes d'intensification successives (2026-07-29/30), la
+  dernière ayant retiré « moult »/« céans » devenus des tics au profit d'inversions sujet-verbe,
+  de négations « ne… point / ne… mie » et d'un lexique plus large. Sa locale TTS est `fr-FR`.
+  ⚠️ Les infobulles techniques du panneau EDA y restent délibérément claires et utilisables :
+  les termes techniques (LUT, bloom, GPU, FPS, shader) ne sont jamais traduits ni habillés.
+
+**Réglages par défaut au tout premier lancement (2026-07-31, demande explicite)** — aucune préférence enregistrée (localStorage vide, pas de cookie) :
+- **Langue : `fr-CA`** (auparavant `fr`). Repli changé aux 4 points qui en décidaient : `gameLangReactive.js::getGameLang()` (jeu, source de vérité unique), le script de pré-hydratation de `game.php` (attribut `data-lang` avant le premier paint), et les 2 replis équivalents de la prez `index.php` (`$prefLang` côté PHP + `setLang()` côté JS). Un visiteur ayant déjà choisi une langue garde ce choix — rien ne change pour lui. Le HUD/la prez restent rendus en français par le PHP le temps que le JS bascule vers fr-CA (même flash bref déjà existant pour tout visiteur revenant dans une langue non-française).
+- **Thème : `ancien`** (médiéval) — **déjà le défaut depuis le 2026-07-17** (cf. §32), aucune modification nécessaire ici.
+- Vérifié en direct (192.168.0.41, jeu ET prez) sur un profil sans localStorage/cookies : `data-lang="fr-CA"`/`data-theme="ancien"` posés dès le premier paint, textes affichés en français canadien ("Choisis c'est quoi la forme de ta planète, asteur…").
+
+**Intro de la prez (`hero.tagline`) — phrase de clôture ajoutée (2026-07-31, demande explicite)** : une dernière phrase, après le paragraphe existant, annonce que le jeu est jouable dès maintenant et traduit en 9 langues, y compris le vieux français du XIIe siècle (`fr-MED`) — mise en avant volontaire de cette langue "easter egg" dans l'argumentaire public. Ajoutée aux 9 `json/languages/*.json` (clé `hero.tagline`, juste avant le `btn_play`), chacune dans le registre déjà établi pour sa langue (fr-CA en québécois informel, fr-MED en tournure de chroniqueur avec inversion sujet-verbe). Vérifiée en direct sur 8 des 9 langues (fr, en, es, it, pt, de, ru, fr-CA, fr-MED) via `setLang()`.
 
 ### Arborescence web (racine)
 
@@ -107,7 +125,9 @@ Cycle : `createXxxOverlay()` → `rebuildXxxOverlay(group, placedTiles)` → `up
 | `bonusCellChestOverlay.js` | Coffre animé sur chaque cellule bonus |
 | `shaders/morningMistOverlay.js` | Brume matinale volumétrique (nappe de brouillard, courbure monde) — piloté par `environmentDirector` (cf. §29), déplacé dans `shaders/` le 2026-07-11 (cf. §21) |
 | `weatherVfxOverlay.js` | Lucioles via moteur particules `wawa-vfx-vanilla` — piloté par `environmentDirector` (cf. §29). Partie pluie retirée le 2026-07-12 au profit de `rainCloudOverlay.js` |
-| `rainCloudOverlay.js` | Nuages metaball (marching-cubes) + pluie tombant de chaque nuage + impacts au sol — piloté par `environmentDirector` et le switch « Nuages de pluie » de la rubrique 8 (cf. §29). À distinguer de `cloudSky.js` (nuages d'horizon) |
+| `rainCloudOverlay.js` | Nuages metaball (marching-cubes) + pluie tombant de chaque nuage + impacts au sol + **chape d'orage** (plan bosselé à silhouette « patatoïde », altitude/opacité réglables) — piloté par `environmentDirector` et le switch « Nuages de pluie » de la rubrique 8 (cf. §29). À distinguer de `cloudSky.js` (nuages d'horizon) |
+| `lightningOverlay.js` | Éclairs : zébrure (TubeGeometry midpoint-displacement) + halo + `PointLight`, point de frappe tiré sous les nuages. Expose le hook `onLightningStrike(listener)` (cf. §36) |
+| `fireOverlay.js` | Feu allumé par la foudre : flammes montant sur les vrais modèles 3D à leur hauteur réelle, noircissement puis repousse, dérive au vent, propagation aux voisines, extinction par la pluie (cf. §36) |
 
 ---
 
@@ -475,7 +495,7 @@ Ex-panneau flottant `qualityUi.js` (bouton "⚙ QUALITÉ"), intégré dans le pa
 
 Ex-HUD flottant `environmentDebugUi.js` ("🌦 ENV", bas-gauche), fusionné dans le panel EDA le 2026-07-08 puis **supprimé**. Génère dynamiquement une ligne par événement du catalogue `ENVIRONMENT_EVENTS` (`environmentDirector.js`) : label + suffixe italique « (nécessite X) » quand `def.requires` est renseigné + `<span class="weather-status">` (● actif) + bouton `.debug-light-weather-btn` (même charte visuelle que `.debug-light-preset-btn` de la rubrique 7, variante `--active` en tonalité stop rouge quand l'événement tourne). Un bouton `⏹ Tout arrêter` (`.debug-light-weather-stopall`) full-width en bas de rubrique. Câblage direct à l'API de `environmentDirector.js` : `triggerEnvironmentEvent`/`stopEnvironmentEvent`/`stopAllEnvironmentEvents`, rafraîchissement des statuts via `onEnvironmentChange` + `setInterval(500 ms)` (capte aussi l'auto-expiration entre 2 transitions). Le bouton d'un événement à prérequis (Éclair → Orage, Panique animale → Feu) est désactivé tant que le prérequis n'est pas actif. `environmentDirector` est créé dans `scene.js` **avant** `createDebugLightUI(...)` et passé en param (`{ ...visualEnvironment, postprocess, forestOverlay, cloudSky, environmentDirector }`) → `wireEdaPanel`.
 
-**Depuis le 2026-07-09 (merge VFX Cyril, cf. §29), les hooks ne sont plus inertes** : déclencher `groundMist`/`fireflies`/`rain`/`storm` active l'effet visuel correspondant (fondu entrée/sortie) via `shaders/morningMistOverlay.js`, `weatherVfxOverlay.js` (lucioles) et `rainCloudOverlay.js` (nuages + pluie + impacts, depuis le 2026-07-12). `lightning`/`fire`/`panic` restent déclenchables sans rendu visuel. Leurs paramètres fins sont pilotés dans la **même rubrique 8** (cf. sous-section suivante) :
+**Depuis le 2026-07-09 (merge VFX Cyril, cf. §29), les hooks ne sont plus inertes** : déclencher `groundMist`/`fireflies`/`rain`/`storm` active l'effet visuel correspondant (fondu entrée/sortie) via `shaders/morningMistOverlay.js`, `weatherVfxOverlay.js` (lucioles) et `rainCloudOverlay.js` (nuages + pluie + impacts, depuis le 2026-07-12). `lightning` et `fire` sont rendus depuis le 2026-07-30 (`lightningOverlay.js`/`fireOverlay.js`, cf. §36) ; seul `panic` reste déclenchable sans rendu visuel. Leurs paramètres fins sont pilotés dans la **même rubrique 8** (cf. sous-section suivante) :
 
 **Réglages VFX MÉTÉO — fusionnés dans la rubrique 8 (2026-07-10, ex-rubrique 2 indépendante)** : trois groupes de sliders (🌫️ Brume matinale / ✨ Lucioles / 🌧️ Pluie-Orage), chacun avec un bouton ↺ réinitialiser, affichés sous les boutons de déclenchement d'évènements et le bouton `⏹ Tout arrêter` de la rubrique 8 (même conteneur `.debug-light-weather-section`, même thème « météo »). Contrairement à EAU/VENT/NUAGES (getters/setters dédiés par overlay), ces réglages passent par le store commun `vfxSettings.js` (`getVfxSettings`/`setVfxSetting`/`resetVfxSettings`, persistance localStorage gérée là-bas). Générés dans `hud_eda.js` (`#debugLightVfxControls`, déplacé dans le markup mais toujours peuplé par le même `querySelector('#debugLightVfxControls')` — sélection par id, insensible à l'emplacement) via `createRawSlider` — hors export 📋 Copier (réglage machine, pas « regard »), undo/redo câblé via `pushUndo`. Classe CSS `.debug-light-vfx-section` (ex-wrapper à en-tête propre "2. VFX MÉTÉO") supprimée de `debugLightUi.js`, devenue morte après la fusion.
 
@@ -662,7 +682,9 @@ tileUtils.js / zoneUtils.js    Utilitaires tuiles et BFS zones
 placementRules.js / scoring.js / gameRules.js
 placementOverlay.js            UI hover placement (ghost tuile)
 propPlacement.js               Helpers snap terrain, sécurité ground type
-propHitboxRegistry.js          Registre hitboxes collision props (évite chevauchements)
+propHitboxRegistry.js          Registre hitboxes collision props (évite chevauchements) + poignées `meta` pour le feu (cf. §36)
+lightningOverlay.js            Éclairs + hook onLightningStrike (cf. §36)
+fireOverlay.js                 Feu : allumage par la foudre, combustion des modèles 3D, propagation (cf. §36)
 raggedEdge.js                  Bords irréguliers du plateau
 random.js                      Générateur pseudo-aléatoire
 tileRailOverlay.js             Rails procéduraux
@@ -1227,9 +1249,14 @@ Système d'effets météo visuels piloté par événements, intégré le 2026-07
 - `rainCloudOverlay.js` — nuages type Animal Crossing (metaballs marching-cubes précalculés, fusionnés en 1 mesh opaque via `mergeGeometries`), pluie streak tombant sous chaque nuage (InstancedMesh billboard cylindrique, chute animée GPU), impacts au sol (disques posés à `getTerrainSurfaceY`, hors du group qui dérive au vent). **Distinct de `cloudSky.js`** (nuages d'horizon décoratifs, mode jour). Réagit aux events `rain`/`storm` **et** au switch UI « Nuages de pluie » (`isVfxGroupExpanded('clouds')`) — pas de nuages, pas de pluie. Maillage marching-cubes mis en cache par seed (`_cloudGeomCache`) → coût à la 1re construction seulement (~30 ms) ; reposer une tuile ne recalcule au pire qu'un nuage. Noms de meshes **à ne pas renommer** (lus par `sceneProfiler.js::_classifyInstanced`) : `hexistenz-vfx-rain`, `hexistenz-vfx-rain-impact`, `hexistenz-vfx-rain-clouds*`. API : `createRainCloudOverlay(scene)`, `rebuildRainCloudOverlay(overlay, placedTiles)` (appelé par `rebuildInitialDerivedOverlays`), `updateRainCloudOverlay(overlay, director, t, dt)`, `getRainCloudAnchors(overlay)` (prévu pour un futur `lightningOverlay.js`, non livré).
   - **Réaction aux réglages filtrée par CLÉ (2026-07-28, §34)** : `onVfxSettingsChange((effect, key) => …)` ne reconstruit que pour `clouds.densite`/`clouds.epaisseur`. `clouds.altitude` → `_applyCloudAltitude()` (translation `mesh.position.y` + uniform `uAltitude`, altitude bakée mémorisée dans `overlay._bakedCloudAltitude`) ; `rain.tailleGoutte` → `_applyRainDropSize()` (2 uniforms) ; `rain.densite`/`rain.impactSol` → **rien** (déjà lus chaque frame via `uActiveRatio`/`uIntensity`). Avant ce filtrage, traîner n'importe lequel de ces 6 sliders déclenchait un rebuild complet 60 fois par seconde.
 
-**Rendus non branchés** — `lightning`, `fire` et `panic` sont déclenchables via le HUD (machine à états active, dépendances `requires` vérifiées : Éclair→Orage, Panique→Feu) mais **aucun overlay ne les rend visuellement**. Scaffolding Phase 0 conservé pour valider exclusions et dépendances.
+- `lightningOverlay.js` + `fireOverlay.js` — **livrés le 2026-07-30** (merge Cyril, cf. §36). `panic` reste le seul évènement non rendu visuellement.
 
-**Store de réglages — `vfxSettings.js`** : `getVfxSettings(effect)`/`setVfxSetting(effect, key, value)`/`resetVfxSettings(effect)`/`onVfxSettingsChange(listener)` + `VFX_SETTINGS_DEFAULTS` + `isVfxGroupExpanded(effect)`/`setVfxGroupExpanded(effect, bool)` (état des switches par item, **volontairement non persisté** — en mémoire seulement, false à chaque rechargement). Effets : `groundMist`, `fireflies`, `rain` (densite/tailleGoutte/impactSol), `clouds` (densite/altitude/epaisseur), `storm` (frequenceEclairs/luminositeEclair/intensitePluie). Écritures localStorage debouncées 200 ms (§34). `getAllVfxSettings`/`setAllVfxSettings` ont été retirés le 2026-07-12 (remplacement complet par la version Cyril) : le snapshot Undo/Redo et l'export 📋 Copier passent par les helpers locaux `_snapshotAllVfx()`/`_restoreAllVfx()` d'`edaPanelWiring.js`, qui itèrent sur `_VFX_EFFECT_KEYS`. Zone couverte = `VFX_WORLD_RADIUS` (`variables.js`, 15 unités).
+**Chape d'orage (`rainCloudOverlay.js`, 2026-07-30)** — pendant l'orage, un unique grand plan bosselé double-face recouvre le plateau, en plus des cumulus. Deux pièges y sont documentés en dur :
+- Son **altitude est portée par `canopyMesh.position.y`**, pas cuite dans la géométrie : le curseur EDA la déplace sans reconstruire le plan 72×72 (le bruit du vertex shader est indexé sur `wp.xz`, un décalage en Y ne le modifie pas).
+- Sa **silhouette** n'est pas rectangulaire : une texture de couverture 128² (`_buildCanopyCoverage`) est calculée **au rebuild uniquement**, en tamponnant un dégradé radial par tuile posée et en gardant le max — l'union des disques épouse le plateau, le dégradé donne le fondu. Uniforms `uCoverage`/`uCoverageOrigin`/`uCoverageSize`, initialisés à une texture 1×1 opaque pour que le 1er frame avant rebuild reste identique à l'ancien comportement.
+- ⚠️ **`opaciteChape` défaut 0.72, pas 1.** À 1 la carte est totalement masquée sous orage (bug remonté en jeu). L'ambiance sombre de l'orage ne vient PAS de cette opacité mais de `updateStormAmbience()` dans `scene.js` : on peut donc baisser l'opacité sans perdre l'atmosphère.
+
+**Store de réglages — `vfxSettings.js`** : `getVfxSettings(effect)`/`setVfxSetting(effect, key, value)`/`resetVfxSettings(effect)`/`onVfxSettingsChange(listener)` + `VFX_SETTINGS_DEFAULTS` + `isVfxGroupExpanded(effect)`/`setVfxGroupExpanded(effect, bool)` (état des switches par item, **volontairement non persisté** — en mémoire seulement, false à chaque rechargement). Effets : `groundMist`, `fireflies`, `rain` (densite/tailleGoutte/impactSol), `clouds` (densite/altitude/epaisseur), `storm` (frequenceEclairs/luminositeEclair/intensitePluie/**altitudeChape**/**opaciteChape**), **`fire`** (probaAllumage/densiteFlammes/duree/taille/propagation). `_load()` repart toujours d'un clone des `DEFAULTS` et n'y surcharge que les clés effectivement stockées : **ajouter une clé ne casse pas un localStorage existant**, elle arrive à sa valeur par défaut. Écritures localStorage debouncées 200 ms (§34). `getAllVfxSettings`/`setAllVfxSettings` ont été retirés le 2026-07-12 (remplacement complet par la version Cyril) : le snapshot Undo/Redo et l'export 📋 Copier passent par les helpers locaux `_snapshotAllVfx()`/`_restoreAllVfx()` d'`edaPanelWiring.js`, qui itèrent sur `_VFX_EFFECT_KEYS`. Zone couverte = `VFX_WORLD_RADIUS` (`variables.js`, 15 unités).
 
 **Câblage `scene.js`** : `environmentDirector` créé en premier, puis `weatherVfxOverlay` et `rainCloudOverlay`. Dans `animate()`, un `deltaSeconds` clampé (`Math.min(0.1, …)` via `_vfxPrevTimeSeconds`) alimente `updateEnvironmentDirector` → `updateMorningMist` → `updateWeatherVfxOverlay(…, t, dt)` → `updateRainCloudOverlay(…, director, t, dt)`. `rebuildRainCloudOverlay(overlay, placedTiles)` est appelé dans `rebuildInitialDerivedOverlays()`.
 
@@ -1399,6 +1426,11 @@ Pièges rencontrés dans l'ordre, à ne plus reproduire :
 
 **🖥️ Bandeau langue/thème/FPS/EDA fusionné sur une seule ligne** (`edaPanelHost.js`) — les 2 `<select>` et les 2 boutons partagent désormais UNE rangée `.debug-light-btn-row`, quelle que soit la hauteur du navigateur (économie de hauteur verticale empilée).
 
+**Addendum 2026-07-31, demande explicite — 2 correctifs supplémentaires sur ce même bandeau :**
+- **Badge FPS replié rendu INVISIBLE en permanence** (`css/eda.css`, règle `.fps-counter`) : jusqu'ici il restait affiché en continu (résumé FPS/CPU/GPU, `_buildHud()` avec `_fpsHudExpanded=false`), seul le panneau détaillé (touche F) était optionnel. `display: none` posé par défaut sur `.fps-counter`, ré-autorisé UNIQUEMENT par `.debug-light-panel.fps-hud-fullscreen .fps-counter { display: flex; }` — posée par `_syncFpsFullscreen()` (`hud_fps.js`) quand `_fpsHudExpanded=true`, donc seulement via la touche F ou le bouton FPS du bandeau. Rend caduques (laissées en place, inoffensives) les anciennes règles qui ne masquaient le badge replié que dans des cas particuliers (`body.grid-only-mode`, `@media max-height:960px` ci-dessus — cette dernière simplifiée en simple note historique, son comportement étant désormais couvert par le nouveau défaut).
+- **Les 2 rangées de boutons fusionnées en UNE SEULE** (`edaPanelHost.js`) : 📷/🖼️/🎬/😃/🔊 d'un côté et langue/thème/FPS/EDA de l'autre (2 lignes depuis le 2026-07-20 ci-dessus) partagent maintenant un seul `.debug-light-btn-row` — les 9 contrôles s'alignent horizontalement. `.debug-light-btn-rows` (wrapper colonne) conservé tel quel malgré son enfant unique désormais, pour ne pas toucher au reste du CSS.
+- Vérifié en direct (192.168.0.41, thème médiéval) : badge FPS totalement absent au chargement et après fermeture du panneau détaillé, réapparaît en plein (60 FPS, détail complet) au clic sur FPS/touche F ; les 9 contrôles confirmés sur une seule ligne par capture d'écran.
+
 **🐛🐛🐛 Panneau EDA illisible/tronqué à faible hauteur — 3 itérations avant la bonne solution, 2 régressions corrigées en cours de route :**
 1. **1ère cause** (bandeau ambiances + onglets + footer tous `flex-shrink:0`) : tout le déficit de hauteur retombait sur `.debug-light-tab-panels`, l'écrasant à ~25px — techniquement scrollable (`overflow-y:auto`) mais visuellement inexploitable. 1ère tentative fautive : rendre `.debug-light-body` (+ `.internal-parchment` ancien) ET `.debug-light-header` (bandeau ambiances) rétrécissables/scrollables — **régression signalée** : le bandeau ambiances doit rester incompressible, jamais rétréci ni scrollé. Revert intégral de ces 2 changements (`.debug-light-header` → `flex-shrink:0` fixe, `.debug-light-body`/`.internal-parchment` ancien → `overflow:hidden` comme à l'origine).
 2. **Vraie root cause du "scroll pas effectif"** : `.debug-light-columns` (flux journal `columns:3`) portait SA PROPRE hauteur bornée (`flex:1 1 auto; min-height:0`) EN MÊME TEMPS que `overflow-y:auto`. Or **le CSS multi-colonnes ne déborde jamais verticalement sur sa propre boîte** — passé la hauteur impartie, le navigateur ajoute une 4e/5e colonne EN PLUS (à droite), jamais une extension vers le bas ; avec `overflow-x:hidden`, ces colonnes en trop étaient invisibles et à jamais inaccessibles, alors que la scrollbar verticale n'avait elle-même rien à faire défiler (chaque colonne tient par définition dans la hauteur impartie). **Fix définitif** : le scroll/la hauteur bornée sont désormais portés par `.debug-light-tab-panels` (parent), pas par `.debug-light-columns` lui-même — celui-ci n'a plus ni `flex`/`min-height`/`overflow` propres, il se dimensionne à sa hauteur naturelle de contenu (jamais de 4e colonne, aucune limite ne le contraint), et c'est son ancêtre borné qui scrolle pour révéler l'intégralité du bloc. **Règle générale : ne jamais poser `overflow-y:auto` directement sur un élément `columns:N` qui a lui-même une hauteur bornée — toujours déporter le scroll sur un conteneur ANCÊTRE non-multicol.** `.debug-light-tab-panels` garde un plancher `min-height:220px` (seul élément flexible du groupe, bandeau ambiances/onglets/footer restant `flex-shrink:0` fixes).
@@ -1453,3 +1485,286 @@ Mesuré avant/après : **20 requêtes concurrentes → 14 × HTTP 500** ; après
 ### Code mort identifié (non supprimé, à traiter à l'occasion)
 
 `css/postprocessHud.css` (3,7 Ko, plus chargé nulle part — seul un commentaire de `style.css` y fait référence) · `replayGallery.js::openReplayGallery` jamais appelé (overlay inatteignable) · `startupMenuShared.js::getPlayerNameFromCookie`/`savePlayerNameCookie` (le nom joueur passe en réalité par `localStorage`) · `environmentDirector.js::getEnvironmentSnapshot` · `gridRegions.js::getRegionOccupancy`. (`getRainCloudAnchors` est mort aussi mais documenté/assumé pour le futur `lightningOverlay`.)
+
+---
+
+## 35. TTS ingame — annonces vocales (`ttsAnnouncer.js`)
+
+Lit à voix haute, dans la langue actuellement sélectionnée (9 langues), certains évènements de jeu via la Web Speech API du navigateur (`SpeechSynthesis`), sans service externe.
+
+**Module central : `javascript/ttsAnnouncer.js`.** Suit le même mécanisme réactif top-level-await + `registerLangRefresh` que le reste du code i18n (cf. §20/§30) : les gabarits de phrases sont chargés une fois depuis `game.tts` (`json/languages/*.json`) puis mis à jour automatiquement si la langue change en cours de partie.
+
+### Déclencheurs
+
+Tous câblés au(x) choke point(s) unique(s) de leur action, jamais dupliqués par entrée (touche/bouton/clic overlay) :
+
+- `announcePoints(score)` — à chaque pose qui rapporte un score strictement positif (`scene.js::placeTile`, même condition que `showScorePopup`).
+- `announceMissionCompleted(completedMissions)` — une seule annonce même si plusieurs missions se terminent d'un coup, précédée d'un jingle (cf. pools ci-dessous).
+- `announceNewMission(mission)` — titre via `formatMissionTitle()` (`missionLabels.js`), précédée d'un jingle.
+- `announceEdaOpened()` / `announceHelpOpened()` — à l'ouverture des panneaux EDA/Aide (`edaPanelWiring.js::_setLutOpen`, `scene.js::toggleHelp`).
+- `announceStatsIfChanged(stats)` — un compteur (moulins/trains/bateaux/comètes) annoncé individuellement s'il a changé depuis le dernier appel (`scene.js::refreshStatsUI`) ; aucune annonce au premier appel (évite un "0 moulins" parasite au chargement). Texte préfixé "Tu as {n}..." (FR) / équivalent informel par langue.
+- `announceVoiceOn()` / `announceSoundOn()` — uniquement à la RÉACTIVATION des touches T/M respectivement (jamais à la coupure, silence par définition).
+- `announceLanguageChanged()` / annonce de thème — au changement via les sélecteurs `#gameLangSelect`/`#gameThemeSelect` (jeu) et `#langSelect`/`#themeSelect` (prez, cf. plus bas).
+
+### File d'attente de tour vs annonces UI isolées
+
+Deux régimes distincts, volontaires :
+
+- **Annonces de tour** (`announcePoints`/`announceMissionCompleted`/`announceNewMission`/`announceStatsIfChanged`) passent par une file maison — `_enqueue()`/`_queueGen`/`_queueTail` (Promises chaînées) — plutôt que par la file interne de `speechSynthesis`, qui ne sait pas intercaler un fichier audio (jingle) au bon moment. Chaque job n'est exécuté qu'une fois le précédent RÉELLEMENT terminé : `_speakAndWait(text)` résout sur `utterance.onend`/`onerror` plutôt que de rendre la main dès l'appel de `speak()`. `resetTtsQueue()` (appelée une seule fois en tout début de la séquence d'annonces de `placeTile()`) incrémente `_queueGen` et réinitialise `_queueTail` en plus de `speechSynthesis.cancel()` — les jobs déjà empilés d'un tour précédent (génération périmée) sont silencieusement ignorés plutôt que de parler en retard.
+- **Annonces UI isolées** (EDA/aide/voix-on/son-on/langue/thème) appellent `resetTtsQueue()` puis `speak()` classique (fire-and-forget) — retour immédiat sur une action ponctuelle, pas besoin d'attendre la fin de l'énoncé.
+
+### Jingles de mission — pools + séquencement
+
+`announceNewMission`/`announceMissionCompleted` sont précédées d'un jingle audio ponctuel, tiré au hasard (`_pickCue(urls)`, `Math.random()`, pas d'anti-répétition) dans un pool : `MISSION_NEW_SOUND_URLS` (3 variantes, `mission-new-1/2/3.ogg`) et `MISSION_SUCCESS_SOUND_URLS` (4 variantes, `mission-succes-1/2/3/4.ogg`). Les 7 fichiers sont dans `ASSETS_OGG` (`preloader.js`).
+
+Séquence voulue : **SON complet → 150 ms de silence → TTS** (`_playCueThenSpeak`, `MISSION_SOUND_TO_TTS_DELAY_MS = 150`). Deux bugs corrigés au fil de l'implémentation, tous deux dus à une approche "fire-and-forget" trop optimiste :
+1. **Ordre cassé sur un tour à 3 annonces** — chaque `announce*` appelait `speak()` indépendamment, en comptant sur la file interne `speechSynthesis` (correcte pour l'ordre des voix) mais celle-ci ne sait rien du jingle hors-TTS ; le jingle de la 3e annonce partait donc immédiatement à l'appel JS, avant que les 2 premières phrases aient fini. Fixé par la file maison ci-dessus.
+2. **Chevauchement son/TTS** — `_playCue()` ne faisait que DÉMARRER le jingle puis rendait la main aussitôt ; les 150 ms étaient donc comptés depuis le DÉBUT du son, pas sa FIN. Invisible avec l'ancien fichier unique (~1,2 s), flagrant avec les variantes de pool plus longues (`mission-new-2.ogg` mesuré à 2,39 s). Fix : `_playCue()` retourne désormais une Promise résolue sur l'évènement `ended`/`error` de l'`Audio`, attendue avant le `_waitMs(150)`. Vérifié en direct avec horodatage réel : `mission-new-2.ogg` (2391 ms) → TTS démarré à 2557 ms (+166 ms) ; `mission-succes-3.ogg` (3043 ms) → TTS démarré à 3197 ms (+154 ms) — aucun chevauchement.
+
+### Sélection de voix (`_pickVoice`)
+
+Priorité à une voix système correspondant EXACTEMENT à la locale BCP-47 (`TTS_LOCALES` : fr→fr-FR, en→en-US, es→es-ES, it→it-IT, pt→pt-PT, de→de-DE, ru→ru-RU, fr-CA→fr-CA, fr-MED→fr-FR), sinon repli sur la même famille (`fr-*`). L'étape de correspondance exacte utilise `.filter()` (pas `.find()`) pour pouvoir choisir PARMI plusieurs voix exactes quand la langue en a plusieurs installées (cas allemand/russe, cf. ci-dessous), puis applique `FALLBACK_VOICE_HINTS` à cet ensemble filtré.
+
+**Voix masculine forcée pour DE et RU** (exigence explicite) : `FALLBACK_VOICE_HINTS.de`/`.ru` listent des noms de voix masculines connues (Stefan/Markus/Conrad/Yannick/Klaus côté DE) ; sélectionnées en priorité si présentes parmi les voix "de-DE"/"ru-RU" installées. Vérifié avec des voix simulées (monkey-patch `speechSynthesis.getVoices()`) faute de plusieurs voix natives disponibles sur le poste de test.
+
+**fr-CA distinct de fr** : aucune voix `fr-CA` dédiée n'est installée sur le poste testé — `FALLBACK_VOICE_HINTS` choisit alors un nom de voix différent de celui utilisé par `fr` pur au sein de la famille `fr-*`, pour un rendu au moins audiblement distinct (les 2 gabarits de texte sont de toute façon différents — fr-CA en registre "québécois" volontairement enjoué).
+
+### Langues (9) et cache-busting JSON
+
+Les gabarits `game.tts.*` sont traduits dans les 9 `json/languages/*.json` (fr/en/es/it/pt/de/ru/fr-CA/fr-MED). `german.json`/`russian.json`/`french-medieval.json` suivent le même pattern d'intégration à 3 lignes (`LANG_FILES` dans `gameLangReactive.js`, `$LANG_FILES` dans `index.php`, `<option>` dans le sélecteur `edaPanelHost.js`) — `game.php` n'a besoin d'aucune modification, son `$langVersion` scanne `json/languages/*.json` via `glob()`.
+
+Les `fetch()` de `json/languages/*.json` (21 points, 18 fichiers JS) sont cache-bustés via `?v=<filemtime>` (`getLangVersion()`/`getLangUrl()`, `gameLangReactive.js`), alignés sur le même système que le CSS. **Exception documentée, hors périmètre** : `index.php` (la prez) a son propre mécanisme `ensureLang()` de chargement paresseux, cache long assumé comme choix de perf pour cette page précise.
+
+### Touche `T` (jeu) et `M`/`T` (prez)
+
+**En jeu** : `T` coupe/rétablit les annonces vocales UNIQUEMENT (musique/ambiance gérées séparément par `M` → `musicPlayer.js::toggleMute`, ré-exportées via `soundDesign.js`). État de session, pas de persistance. Documentée dans l'aide (touche `H`) et dans `index.php` (rubrique Contrôles clavier), 9 langues.
+
+**Sur la prez `index.php`** — page hors du graphe de modules du jeu (tout son JS est un `<script>` classique, pas `type="module"`) : les touches étaient déjà documentées dans le bandeau clavier mais purement décoratives (aucun effet sur la page elle-même) jusqu'à leur câblage effectif. `M` coupe/rétablit `initPrezMusic()` (l'instance `Audio` est exposée via `window.__prezMusicAudio` pour que le listener clavier la joigne ; `.muted` plutôt qu'un volume à 0, pour ne pas interférer avec le fondu d'entrée). `T` coupe/rétablit `speakPrez()` via le garde-fou `_prezTtsMuted`. Confirmation vocale à la réactivation seulement, réutilise les clés déjà traduites `game.sound.on/off`/`game.tts.voiceOn/Off` (aucune nouvelle clé). `isPrezFormTarget()` exclut `input`/`select`/`textarea`/`contentEditable` du handler — nécessaire ici (contrairement au jeu) car la prez a 2 `<select>` visibles (langue/thème) où taper `m`/`t` doit rester un raccourci de sélection natif.
+
+Un toast `#prez-toast` (`css/presentation.css`, variables de thème existantes `--bg-card`/`--text`/`--gold`, donc cohérent avec les 2 thèmes sans code additionnel) confirme visuellement LES DEUX directions pour M et T — nécessaire car la page n'a pas de popup central comme le jeu, et une coupure sans aucun retour (ni son ni visuel) donnait l'impression que la touche "ne faisait rien".
+
+`speakPrez()` — mécanisme autonome dupliqué de `ttsAnnouncer.js` (TTS_LOCALES/FALLBACK_VOICE_HINTS/_pickVoice) plutôt qu'importé : la prez a son propre système de langue (`setLang()`/`I18N`/`ensureLang()`), indépendant de `gameLangReactive.js` — les callbacks `registerLangRefresh` de `ttsAnnouncer.js` ne se déclenchent que via `setGameLang()`, jamais appelée par la prez. `setLang(l, announce=true)`/`setTheme(th, announce=true)` : les appels d'initialisation (restauration depuis `localStorage` au chargement) passent `announce=false` pour ne jamais parler toute seule au chargement.
+
+### Pièges connus / hors périmètre
+
+**Cache HTTP des modules JS** : `<script type="module">` et les `import` internes n'ont AUCUN cache-busting (contrairement au JSON i18n et au CSS) — un navigateur ayant déjà chargé le jeu peut garder un fichier `.js` en cache indéfiniment, y compris après un edit confirmé sur disque. Symptôme typique : une fonction "n'existe pas" ou un comportement pré-édit persiste malgré le code à jour sur le serveur. Un rechargement forcé (Ctrl+Shift+R) suffit systématiquement ; gap connu, jamais traité (portée jugée trop large pour l'instant).
+---
+
+## 36. Orage → Éclair → Feu (`lightningOverlay.js` + `fireOverlay.js`) — travaux Cyril, mergés 2026-07-30
+
+Chaîne visée par la roadmap : **Orage → Éclair frappe une tuile → Feu → propagation → Panique animale → extinction → conséquences (score)**. Au 2026-07-30 : **F1 clos, F2 en grande partie fait**, P1 (panique) et S1 (score/son) non commencés. Le feu est **purement cosmétique** : aucun impact gameplay, décision de design encore ouverte.
+
+### Ce que ça fait
+
+`lightningOverlay.js` tire un point de frappe sous les nuages via `getRainCloudAnchors()` et notifie `(x, z, t)` par le hook **`onLightningStrike(listener)`**. `fireOverlay.js` s'y abonne : si la tuile frappée est inflammable (tout sauf `water`/`rail`), un **foyer** s'allume avec une probabilité réglable.
+
+Cycle par objet touché : les flammes montent **le long du modèle 3D**, dimensionnées sur sa **hauteur réelle** ; l'objet vire à la teinte feu puis au noir charbonné (`CHAR_RAMP` 3.5 s) ; une fois consumé les flammes **retombent et se détachent**, puis repartent avec la dérive du foyer ; après extinction, maintien charbonné puis **repousse** vers la couleur d'origine. Rien n'est détruit définitivement.
+
+Couvre arbres, maisons, tours de guet, moulins, bottes de paille. Les **rochers se couvrent de suie sans jamais s'enflammer** (`flammable: false`). Le foyer dérive au vent, **accroche les props rencontrés en route** (horloge de combustion propre à chacun), se propage aux tuiles voisines avec un biais vent, et **s'arrête au bord de l'eau** comme au bord du plateau.
+
+### `propHitboxRegistry.js` — point de rendez-vous props ↔ feu
+
+Le registre transporte désormais une poignée `meta` optionnelle, **sans rien connaître de THREE.js ni de l'instancing** :
+
+| champ | rôle |
+|---|---|
+| `setColor(color)` | recolore l'instance ou l'objet unique ; `null` = restaure l'original |
+| `height` | **hauteur réelle** du modèle |
+| `kind: 'landmark'` | tour, moulin — posés 1× par tuile/zone |
+| `flammable: false` | rocher — noircit mais n'attire aucune flamme |
+
+Trois pièges à ne pas « simplifier » :
+
+1. **`height` est indispensable** : le rayon de hitbox ne dit rien de la hauteur (tour : rayon 0.218, hauteur 0.411). C'est exactement ce qui rendait les flammes invisibles sur les grands modèles.
+2. **La résolution d'instance se fait PAR POSITION, pas par index mémorisé** (`_findInstanceIndexNear`). Un index capté à la collecte devient faux dès le rebuild suivant — or toute pose de tuile en déclenche un.
+3. **`getPropRegistryGeneration()` est un impératif de perf**, pas un confort. Le feu appelle `setColor` à chaque frame sur chaque objet en train de brûler ; la recherche par position est en O(nb instances). Le compteur permet aux closures de mettre leur résultat en cache et de ne le recalculer qu'au rebuild réel.
+
+Les `landmark` (tour, moulin) sont **recherchés séparément** : posés une fois par tuile/zone, ils ne sont jamais garantis parmi les 3 props les plus proches. Les inflammables sont **triés en premier** pour qu'une nuée de rochers ne sature pas les places de cibles au détriment d'une maison voisine.
+
+### ⚠️ Bug de fond corrigé au passage (hors périmètre feu)
+
+Dans `scene.js`, chemin de synchro multijoueur, `resetPropHitboxRegistry()` était appelé **à chaque poll** alors que les rebuilds qui repeuplent le registre sont **conditionnels** :
+
+```js
+resetPropHitboxRegistry();                          // ← était à CHAQUE poll
+if (_addedKeys.length > 0 || _removedCount > 0) {   // ← rebuilds seulement si changement
+```
+
+Registre vidé en boucle et jamais reconstruit, silencieusement (aucune erreur console). Mesuré sur 225 tuiles : **0 hitbox → 610** après correction (dont 380 inflammables, 176 rochers, 19 repères). Impact au-delà du feu : **`tryResolve()` était aveugle**, les props « mous » (tonneaux, charrettes, bancs, panneaux) pouvaient se placer en chevauchant maisons et arbres. Le reset est désormais **à l'intérieur** du bloc conditionnel.
+
+### Perf — mesures réelles
+
+`MAX_FLAMES_PER_FOYER = 8` (relevé de 5), `MAX_BURNING = 8` foyers, `MAX_CHAR_TARGETS = 10` par foyer. Coût **fill-bound**.
+
+En conditions réelles (orage + éclairs + feu, réglages par défaut) : **60 FPS constants, GPU ~34 %**. En test de stress artificiel (proba d'allumage 1, fréquence d'éclairs 1, taille et densité de flammes au maximum) : **effondrement à 1-2 FPS**. Ce n'est pas une régression, c'est le comportement fill-bound annoncé — une partie réelle ne compte que 1 à 2 foyers.
+
+### Extinction par la pluie — recalibrée après mesure
+
+Défaut de conception trouvé le 2026-07-30 : un feu ne peut naître **QUE** pendant un orage (l'éclair exige `storm`), et `fireOverlay` teste `rainy = rain || storm` — or `rain` et `storm` sont mutuellement exclusifs (`exclusiveGroup: 'weather'`). Donc **« sous la pluie » est le cas général, jamais l'exception**.
+
+| | ancien (1.0 / 0.05) | actuel (0.35 / 0.013) |
+|---|---|---|
+| durée sous pluie | 15.3 s (**÷2**) | 19.8 s (65 %) |
+| foyers noyés | **53 %** (8/15) | **23 %** (7/30) |
+
+Constantes : `RAIN_BURNOUT_ACCEL = 0.35`, `RAIN_DOUSE_PER_SEC = 0.013`.
+
+*Piège de mesure, si le test est refait* : une tuile dont la dérive est bloquée fait sauter `age` à `growD+platD` (8 s au lieu de 30.5 s) et fausse tout. Choisir une tuile où la dérive passe.
+
+### HUD FPS
+
+Meshes nommés `hexistenz-vfx-fire*` et `hexistenz-vfx-lightning*`, classés dans `sceneProfiler.js` (catégories « Feu » et « Éclairs »), dans `_classifyInstanced` (fumée/braises = `VFXParticles`) **et** `_classifyMesh` (flammes, lueur, décalque, zébrure). ⚠️ La règle `startsWith('hexistenz-vfx-fire')` exclut explicitement `hexistenz-vfx-fireflies` — les lucioles commencent par le même préfixe.
+
+### Réglages EDA
+
+Rubrique **🔥 Feu** (onglet Environnement) : `probaAllumage`, `densiteFlammes`, `duree`, `taille`, `propagation` — libellés i18n dans les 9 langues sous `game.eda.labels.vfx.fire`.
+
+### Limite connue
+
+⬜ **Pas de mémoire du sol consumé** : rien n'empêche un nouveau foyer de rallumer une tuile déjà brûlée. C'est le **seul point restant de F2**.
+
+### Fausse piste documentée — LOD ≠ chape
+
+Un symptôme « la grille et les objets disparaissent d'un coup à une certaine hauteur caméra, seuls les badges hexagonaux flottent sur le vide » a d'abord été attribué à la chape d'orage. **C'est faux.** Mesure A/B à caméra strictement identique : **359 draw calls et 6 casters d'ombre, orage allumé COMME éteint**. Le culling vient des `updateXxxLOD` (`child.visible = distSq < cullDistSq && frustum.intersectsSphere(sphere)`, booléen sec sur la distance caméra→objet), mécanisme **préexistant** et volontaire, avec des seuils serrés (arbres 11.0, maisons 11.4, tours 11.9, rails 13.0). Les badges survivent parce qu'ils sont du DOM superposé au canvas. Comportement validé tel quel par l'utilisateur — **ne pas y toucher**.
+
+## 37. HUD basse résolution — `#debugLightPanel` + `#scorePanel` (chantier clos, 2026-07-31, v0.9.3.34 — sans bump)
+
+Objectif utilisateur : rendre le jeu jouable sur écran étroit/FHD, où deux HUD débordaient ou envahissaient l'écran. Trois correctifs dans `css/eda.css` et `css/base.css`, deux d'entre eux corrigés une 2e fois après retour utilisateur (régressions).
+
+### `#debugLightPanel` — alignement à droite + wrap 2 lignes
+
+Les 9 boutons/selects du bandeau in-game (photo/galerie/replay/TTS/son/langue/thème/FPS/EDA) vivent dans `.debug-light-left-col`, seul enfant visible de `.debug-light-panel` (`display:flex; justify-content:space-between`) tant que `.debug-light-body` (panel EDA déployé) est masqué — **un unique enfant flex sous `space-between` se colle mécaniquement à `flex-start` (gauche)**, indépendamment du nom de la classe. `.debug-light-btn-row` n'avait par ailleurs aucun `flex-wrap`, donc les 9 contrôles (chacun `flex-shrink:0`) débordaient hors écran en basse résolution au lieu de passer à la ligne.
+
+Fix retenu : `.debug-light-btn-row { flex-wrap: wrap; max-width: calc(100vw - 28px); justify-content: flex-end; }` (borne fluide, pas de media query — se déclenche dès que le contenu dépasse). Pour l'alignement à droite, **1ère version fautive** : `.debug-light-panel.collapsed { justify-content: flex-end }`, qui déplaçait toute la boîte `.debug-light-left-col` — y compris `#fps-counter` (HUD FPS avancé, touche F), logé dans le même conteneur, qui doit rester ancré à gauche quel que soit l'état des boutons. Fix correctif : `.debug-light-panel.collapsed .debug-light-left-col { width: 100% }` (élargit la boîte uniquement en état replié, aucun effet sur le panel EDA déployé) + `.debug-light-btn-rows { align-self: flex-end }` (pousse seulement les boutons dans cette boîte élargie). `#fps-counter` garde l'`align-items:flex-start` par défaut du parent — les deux widgets sont désormais positionnés indépendamment l'un de l'autre.
+
+### `#scorePanel` — masquage automatique en basse résolution
+
+Le bloc joueur/partie + `stats-card-grid` (6 cartes biomes) passe déjà `width: calc(100vw - 28px)` sous 1050px (règle préexistante, `base.css`) ; en dessous d'une certaine largeur, ce panneau élargi + son contenu **occupe la quasi-totalité de l'écran et rend le plateau injouable** (plus de place pour interagir avec les tuiles).
+
+**1ère version fautive** : nouveau seuil `@media (max-width: 600px) { #scorePanel { display: none !important } }`, distinct du seuil 1050px déjà en place pour la même carte. Résultat : zone morte 600–1050px où rien ne cachait le panneau, avec un symptôme différent par thème — thème bleu : la règle `width:calc(100vw-28px)` restait seule active, panneau étiré pleine largeur au lieu de disparaître ; thème ancien : `[data-theme="ancien"] #scorePanel` impose sa propre largeur fixe (`310px`, **hors media query**, spécificité ID+attribut) qui l'emporte de toute façon sur la règle générique de largeur, donc le panneau semblait « jamais masqué » dans cette plage. Fix : aligner le seuil de masquage sur **1050px**, identique à celui déjà établi pour ce panneau — plus de zone intermédiaire, `display:none !important` l'emporte dans les deux thèmes (l'importance prime toujours sur la spécificité, y compris face à la règle `[data-theme="ancien"] #scorePanel { display:flex }` non `!important`). `#arcadeScore` (petit score en haut à gauche) n'est pas concerné, reste toujours affiché.
+
+### Piège méthodologique — cache CSS lors de la vérification live
+
+Après le 1er correctif du `#debugLightPanel`, une vérification live semblait passer (`getComputedStyle` renvoyait la nouvelle règle) alors que le navigateur servait en fait une **version encore en cache** de `eda.css` dans l'onglet ouvert depuis le début de session — masquant la régression FPS jusqu'au signalement utilisateur. Un `document.styleSheets` + inspection directe de `cssRules` (plutôt que `getComputedStyle`, qui peut refléter un état DOM déjà modifié par un test précédent) a confirmé l'absence de la règle attendue ; une **navigation fraîche** (pas juste un re-fetch) l'a fait apparaître. Le cache-busting `?v=<?= $cssVersion ?>` (PHP, `filemtime`) est fiable pour un nouveau chargement de page — pas pour un onglet déjà ouvert de longue date pendant une session de vérifications successives. Pour toute vérification live portant sur un fichier CSS modifié en cours de session : renaviguer (pas seulement re-tester en JS) avant de conclure.
+
+## 38. Classement par efficacité + HUD efficacité en jeu + tooltips hover (chantier clos, 2026-08-01, v0.9.3.34 → v0.9.3.35)
+
+### Rubrique Classement de la prez (`index.php`) — tri par efficacité
+
+Le classement (top 10 au lieu de 5, détail sur les 6 meilleurs au lieu de 3) n'est plus trié par score brut mais par une nouvelle métrique **efficacité**, canonique dans `javascript/variables.js` : `confidence = (min(tiles, EFFICIENCY_MIN_TILES) / EFFICIENCY_MIN_TILES) ^ EFFICIENCY_MIN_TILES_EXPONENT` puis `efficiency = (score / tiles) * confidence` (tiles=0 → 0). `EFFICIENCY_MIN_TILES = 20`, exposant quadratique (2, pas linéaire — pénalise plus fortement les parties très courtes dont le ratio score/tuiles n'est pas significatif). `index.php` mire ces 2 constantes depuis `variables.js` par regex (même mécanisme déjà établi pour `HEXISTENZ_VERSION`), calcule `efficiency`/`confidence` côté PHP pour chaque highscore et trie dessus (`usort` sur `efficiency` au lieu de `score`). Chaque carte affiche désormais aussi le nombre de comètes interceptées (après les moulins, inconditionnel même hors détail) et un suffixe "pts" traduit après le score (`scores.pts_suffix`, 9 langues). Hiérarchie visuelle inversée : l'efficacité (grande, `--font-title`) domine, le score (petit, atténué) passe en second — reflète que le classement se base sur l'efficacité, pas le score brut.
+
+### HUD arcade in-game — ligne d'efficacité sous le score
+
+`#arcadeScore` (haut gauche, `game.php`) est passé d'une simple ligne à une colonne flex : `.arcade-score-row` (score + suffixe "pts") suivie de `.arcade-efficiency`, calculée dans `ui.js::updateScoreUI()` avec la **même formule et les mêmes constantes** que la prez (import direct depuis `variables.js`, pas de duplication). `#scorePanel` (bloc joueur/stats) a dû être redescendu (`top: 104px → 134px → 158px`, valeurs mesurées en direct à chaque itération, jamais estimées) pour ne pas chevaucher cette nouvelle ligne.
+
+### Tooltips hover sur score/efficacité + thème médiéval du tooltip partagé
+
+`#dbgScore`/`.arcade-score-row` et `#dbgEfficiency` ont reçu un tooltip (`attachHelpTooltip`, système déjà utilisé pour les stats) expliquant respectivement que ce sont les points du joueur, et le principe de l'efficacité en insistant sur le fait que le classement mondial s'y base (nouvelles clés `game.help["game.score"]`/`["game.efficiency"]`, 9 langues). Le libellé affiché a aussi été préfixé ("Efficacité : 17.1%", `game.ui.hud.efficiencyLabel`, 9 langues), et `.arcade-efficiency` recalée sur les mêmes effets CSS que `.arcade-score-row` (blanc, double `text-shadow`) à 65% de la taille (80px→52px, 60px→39px en compact) au lieu de sa propre teinte bleu pâle.
+
+**Bug retour utilisateur** : le hover ne déclenchait rien du tout. Cause : `#arcadeScore` porte `pointer-events: none` (pour ne pas gêner les clics sur le plateau 3D en dessous), hérité par ses enfants — aucun hover réel n'était possible sur `.arcade-score-row`/`.arcade-efficiency` tant qu'ils n'annulaient pas explicitement cet héritage. **Piège méthodologique notable** : les vérifications précédentes utilisaient `element.dispatchEvent(new MouseEvent(...))` en JS, qui déclenche l'écouteur directement sur la cible sans passer par le hit-testing CSS — donc `pointer-events:none` ne bloque pas un événement synthétique, seulement un vrai clic/survol matériel. Le bug est passé inaperçu jusqu'au retour utilisateur avec un hover réel. Fix : `pointer-events: auto` explicite sur `.arcade-score-row` et `.arcade-efficiency`. Leçon : pour vérifier qu'un hover fonctionne réellement, utiliser un hover matériel (`computer` tool) en plus/à la place d'un `dispatchEvent`, qui peut donner un faux positif.
+
+L'UI des tooltips (`#lutHelpTooltip`, CSS injecté en JS par `helpTooltip.js`, base "bleu sidéral" partagée game-wide) a reçu un override `[data-theme="ancien"] #lutHelpTooltip` dans `css/themes/medieval.css` (palette "cachet de cire" déjà utilisée pour `.fps-hud-close`/`.debug-light-close` : fond `#4a3623`, texte `#f0e6d0`, police Georgia) — l'attribut+ID bat l'ID seul du CSS injecté quel que soit l'ordre d'injection, pas de `!important` nécessaire.
+
+**Bug pré-existant découvert en vérifiant ce dernier point** (non lié à cette session, daté du 19/07) : un commentaire CSS jamais fermé (`/* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient`, suivi directement de `}` sans `*/`) après `.parchment-picture--v2` **avalait tout le CSS qui suivait dans le fichier** jusqu'au premier `*/` rencontré plus loin — soit `.parchment-picture--v3/v4/v5` (jamais appliquées), `.parchment-picture::after`, et tout override ajouté en fin de fichier, y compris le nouveau tooltip médiéval. Symptôme trompeur : `fetch()` sur `medieval.css` renvoyait bien le contenu à jour (texte brut, aucune notion de syntaxe), et même une requête `cache:no-store`/hard-reload semblait "fonctionner" ; seule l'inspection de `document.styleSheets[i].cssRules` (nombre de règles réellement parsées, très inférieur au nombre de sélecteurs présents dans le fichier) a révélé que le **parseur CSS du navigateur**, pas le cache HTTP, était en cause — un commentaire non fermé peut se refermer bien plus loin que prévu sur le tout premier `*/` suivant, quel que soit le nombre de `/* */` qu'il traverse au passage (pas de nesting). Le même motif exact était dupliqué 4 fois (après v2/v3/v4/v5) ; les 4 ont été refermés. Vérification a posteriori : comptage de `{`/`}` sur le texte débarrassé de ses commentaires (balance à 0) comme test de non-régression rapide pour ce genre de bug.
+
+## 39. Cadre décoratif ingame (`#footerBanner`/`#headerBanner`/`#leftBanner`/`#rightBanner`) — chantier clos (2026-08-01, v0.9.3.35 → v0.9.3.39)
+
+Bannière ornementale (lierre/pierre) affichée uniquement en thème médiéval, ingame (`game.php`), jamais sur la prez (`index.php`). Née comme simple bandeau bas (`#footerBanner`), étendue sur demande explicite en **cadre complet à 4 côtés** autour de l'écran de jeu.
+
+### 4 éléments, 1 seule image source
+
+Les 4 côtés réutilisent tous la **même image** (renommée `footer2.png` → `cadre.png` en toute fin de chantier, demande explicite — seule l'`url()` change, image identique) :
+- `#footerBanner` : bande horizontale collée en bas (`bottom:0`), orientation native.
+- `#headerBanner` : même bande, collée en haut (`top:0`), `transform: rotate(180deg)` (d'où `background-position` inversé `top left` au lieu de `bottom left` pour compenser le retournement).
+- `#leftBanner`/`#rightBanner` : bandes verticales. Technique — un conteneur `width:85px; height:100vh; overflow:hidden` habille un pseudo-élément `::before` qui, lui, est une bande horizontale classique (`width:100vh; height:85px`, même `background-size`), centré (`top/left:50%`) puis tourné à `rotate(90deg)`/`rotate(-90deg)` autour de son propre centre. Centrer avant de tourner garantit un alignement pixel-perfect sur le conteneur quelle que soit la hauteur d'écran (pas de calcul de `translate` dépendant de la résolution).
+- `z-index` : header/footer à 5, left/right à **4** (inférieur) — demande explicite "les côtés passent sous le header/footer" aux 4 coins, pour un raccord visuel propre sans double-épaisseur.
+- Masquage par défaut (thème bleu) centralisé dans `css/base.css` (`display:none` sur les 4 IDs), réaffichage uniquement via `[data-theme="ancien"]` dans `medieval.css`.
+
+### Historique des itérations de taille/technique (background-size)
+
+Chaîne de retours utilisateur, chacun vérifié en direct (Claude-in-Chrome) avant le suivant :
+1. `<img>` étiré `width:100vw;height:auto` → rejeté (disproportionné à 5120px de large).
+2. `<div>` + `background-repeat:repeat-x` sur le fichier original 792×50 (`footer.png`, redimensionné sur disque — **fichier écrasé irréversiblement, pas de git**) → rejeté ("trop zoomé").
+3. `background-size: auto 28px` → "trop petit" ; `auto 38px` → accepté temporairement.
+4. Nouveau fichier `footer2.png` (1885×119, RGBA natif) + `auto 19px` (−50%) → `auto 53px` (+180%).
+5. **Bug seam** : `background-size: auto <hauteur>` laisse le navigateur calculer une largeur de motif non entière (ex. 1885×53/119=839.34px) → dérive d'arrondi cumulative sur le `repeat-x` → interstice de 1px visible par endroits, alors que le fichier est nativement seamless. **Fix définitif** : toujours fixer largeur ET hauteur en pixels ENTIERS dans `background-size` (jamais `auto <valeur>`), ratio source 1885:119 respecté par arrondi. → `1172px 74px` (+40%) → `1346px 85px` (+15%, valeur finale).
+6. **Bug troncature (bord bas uniquement)** : lors du dernier passage à 85px, le `background-size` du footer avait été mis à jour mais la propriété `height` du conteneur était restée à l'ancienne valeur (74px) — oubli. Avec `background-position: bottom left`, un conteneur plus petit que le motif rogne le HAUT de celui-ci (l'ancrage bas restant fixe), d'où l'asymétrie visible seulement sur ce côté. Fix : `height` alignée sur `background-size` (85px partout, comme header/left/right depuis le début). **Leçon reprise du bug #33/#34 (`box-sizing`/`max-height`)** : toute paire `background-size`/`height` (ou plus généralement toute paire de constantes qui doivent rester égales) doit être mise à jour **ensemble**, jamais l'une sans l'autre — sinon la dérive est silencieuse jusqu'au prochain retour visuel.
+
+### Fichier source
+
+`images/cadre.png` (ex-`footer2.png`), 1885×119px, mode RGBA natif (transparence vérifiée par histogramme alpha avant usage, non retouchée), motif nativement seamless horizontalement. Le fichier `footer.png` original (792×50, mode P, recadré à la volée en tout début de chantier) reste sur disque mais n'est plus référencé nulle part.
+
+### Écartement des HUD par rapport au cadre (2026-08-01, v0.9.3.37 → v0.9.3.38)
+
+Une fois le cadre posé sur les 4 côtés, les HUD (score/efficacité, panneau stats, tuile courante/suivante, missions, EDA, HUD FPS, 9 boutons rouges bas-droite) chevauchaient ou frôlaient les bords. Écartement fait exclusivement via des overrides `[data-theme="ancien"]` (zéro régression thème bleu, vérifié à chaque round par bascule live `document.documentElement.setAttribute('data-theme','bleu')`).
+
+Historique de la marge, itérée en 4 rounds suite aux retours utilisateur successifs :
+
+- Round 1 : +85px sur tous les éléments concernés (`#arcadeScore`, `#scorePanel`, `#tileUI`, `.missionsBox` via héritage flex, `.debug-light-panel`).
+- Round 2 : jugé trop large → repassé à +65px partout, plus corrections ponctuelles (EDA et HUD FPS sortaient de l'écran par le haut ; score/efficacité masqués par le manuscrit stats de partie).
+- Round 3 : marge finale ramenée à 52px (65→52) sur l'ensemble des éléments, et le cadre + ses 4 côtés passés en z-index au-dessus de tout le reste de l'interface (`#footerBanner`/`#headerBanner` : 99999 ; `#leftBanner`/`#rightBanner` : 99998, un cran sous header/footer pour préserver le passage sous les coins). Ancien maximum du projet avant ce chantier : 20000 (snapshots.css).
+- Round 4 (ajustements fins) : score/efficacité/stats de partie redescendus de 12px (marge haut jugée trop grande) ; marge cadre pour tuile courante/suivante et missions réduite de 10px supplémentaires.
+
+Formules de dérivation utilisées à chaque round pour éviter de réintroduire le bug de chevauchement (documentées dans les CSS eux-mêmes) :
+- `#scorePanel` top = `#arcadeScore` top + écart d'origine constant.
+- `.debug-light-body` (corps EDA) height/max-height = calc(100vh − (top visé + bordure 9-slice 100px + marge basse visée)).
+- `.debug-light-panel.fps-hud-fullscreen` top = marge cadre visée (jamais thémé avant ce chantier, d'où le bug initial de débordement en haut).
+
+Fonctionnalité ajoutée en cours de route : les 9 boutons rouges (`.debug-light-btn-rows`) se masquent automatiquement dès qu'EDA ou le HUD FPS est ouvert (`body.lut-panel-open` / `body.fps-hud-deployed`), ce qui simplifie l'équation d'espace vertical (suggestion de l'utilisateur lui-même).
+
+### Bug tooltips sous le cadre — leçon CSS injecté en JS (2026-08-01)
+
+Les tooltips hover (petits popups d'aide) sur les 9 boutons rouges restaient affichés SOUS le cadre malgré un premier correctif de z-index dans `eda.css`. Cause réelle : `javascript/helpTooltip.js::ensureHelpTooltip()` injecte à l'exécution son propre `<style>` en fin de `<head>` avec sa propre règle `#lutHelpTooltip` — cette règle, injectée après le chargement de `eda.css`, gagne la cascade à spécificité égale et rend tout changement dans `eda.css` inopérant (dead code). Corrigé à la source dans `helpTooltip.js` : z-index 20500 → 100000 (au-dessus du cadre à 99999). La règle laissée dans `eda.css` est conservée en synchronisation par clarté mais n'a aucun effet réel — commentée en ce sens.
+
+Leçon générale pour ce projet : avant de modifier un z-index ou une règle CSS qui semble ne pas s'appliquer, vérifier si un fichier JS n'injecte pas une règle concurrente au runtime (`document.head.appendChild(styleTag)`), qui prime sur les feuilles `<link>` statiques à spécificité égale du fait de son ordre d'insertion tardif dans le DOM.
+
+### Fix ESC sur HUD FPS déployé (2026-08-01)
+
+La touche ESC fermait déjà l'EDA quand il était ouvert. Comportement étendu au HUD FPS déployé (`.fps-hud-fullscreen`) : ESC le ferme désormais au lieu d'ouvrir l'aide, via un nouveau garde-fou dans `scene.js` (handler clavier, ~L716), symétrique à celui de l'EDA (clique sur `.fps-hud-close` s'il existe, puis `return`).
+
+Note technique de vérification : ce fix a d'abord semblé ne pas s'appliquer en live malgré un code correct sur disque — diagnostiqué comme un cache HTTP navigateur sur le module JS (`scene.js` n'a aucun cache-busting contrairement aux CSS qui utilisent `?v=filemtime()`), confirmé par `fetch()` (cache par défaut, contenu périmé) vs `fetch(url,{cache:'no-store'})` (contenu à jour). Lacune préexistante du projet, non corrigée ici (hors périmètre de la demande) — juste contournée pour la vérification via hard-reload.
+
+### Cadre médiéval sur la prez (`index.php`) — même image, nav repositionné (2026-08-01, v0.9.3.38 → v0.9.3.39)
+
+Demande explicite : "le même cadre sur la prez en thème médiéval : tu le poses par dessus tout le reste, simplement." Repris à l'identique du cadre ingame (même fichier `images/cadre.png`, mêmes dimensions/background-size 1346×85, même z-index 99999 header/footer et 99998 gauche/droite) sur 4 nouveaux ids dédiés — `#prezFooterBanner`/`#prezHeaderBanner`/`#prezLeftBanner`/`#prezRightBanner` (ajoutés dans `index.php`, juste après `.bg-layer`). Ids distincts des `#footerBanner`/etc. du jeu car **`css/themes/medieval.css` est chargé à la fois par `game.php` ET `index.php`** — réutiliser les mêmes ids aurait fait apparaître le cadre du jeu sur la prez et inversement. Masquage par défaut (thème bleu) ajouté dans `css/presentation.css` (fichier toujours chargé par la prez, même logique que `base.css` côté jeu).
+
+`<nav>` (bandeau menu de la prez, `position:fixed`, seul endroit du projet à utiliser `<nav>`, cf. `index.php`) recouvert par la nouvelle bande haute du cadre (`top:0` → `85px`) : repositionné en 4 itérations suite aux retours successifs de l'utilisateur, `[data-theme="ancien"] nav` (themes/medieval.css) uniquement (thème bleu non concerné, `top:0` d'origine inchangé) :
+
+1. `top: 85px` — décale le nav sous la bande haute du cadre (aucun chevauchement).
+2. "trou béant en haut et sans texture" — `border-width` du nav passait de `0 50px 50px 50px` (pas de bord sur le dessus, valeur d'origine v3) à `50px` partout : le dessus du bandeau nav n'avait jusque-là aucune texture (`background:none`, rien pour habiller le dessus), laissant voir le fond plat de la page entre le bas du cadre et le haut du contenu du nav. Comblé par un bord-image top identique aux 3 autres côtés (même `manuscrit-1.png`, mêmes coins 9-slice). `top` remonté à `73px` (-12px) dans la foulée.
+3. "gap entre le cadre partie haute et le header des menus" — `top: 73px → 48px` (-25px) : le bord-image top de 50px + padding-top 12px du nav restait en grande partie SOUS le cadre (`pointer-events:none`, purement décoratif, aucun souci fonctionnel), mais le contenu du nav (logo/liens) n'émergeait qu'à `top + 62px`, laissant un espace visible sous le cadre.
+4. "toujours pas collé en haut" — `top: 48px → 23px` (-25px encore). Formule finale : contenu du nav apparaît à `navTop + border-top(50) + padding-top(12) = 23 + 62 = 85px`, exactement la valeur du bas du cadre (`#prezHeaderBanner`, `bottom: 85px` en coordonnées écran) → gap nul, vérifié en direct (`getBoundingClientRect()` sur `.nav-logo` vs le cadre : écart de -2px, dans la marge d'erreur du rendu).
+
+Piège à retenir si ce nav est encore retouché : la formule utile n'est PAS son `top` seul, mais `top + border-top-width + padding-top` (le contenu visible émerge seulement après avoir traversé le bord-image ET le padding) — comparer cette somme à la hauteur du cadre haut (85px), pas `top` directement.
+
+## 40. Contenu masqué/tronqué sous le cadre en basse résolution — 4 correctifs (2026-08-01, v0.9.3.39 → v0.9.4.1)
+
+Suite directe du chantier §39 (cadre décoratif) : plusieurs surfaces différentes se sont révélées, une par une, jamais réellement testées en basse résolution (largeur OU hauteur de viewport réduite). Chantier clos, tous les cas vérifiés en direct (Claude-in-Chrome, `resize_window` + `getBoundingClientRect()`) de 420px à 900px de hauteur/largeur, 2 thèmes.
+
+### a. `.container` de la prez déborde du cadre en largeur réduite
+
+`.container` (`presentation.css`) n'avait que 24px de padding horizontal — très inférieur aux bandes verticales du cadre (`#prezLeftBanner`/`#prezRightBanner`, 85px de large chacune, z-index 99998). Sous ~1150px de large, le padding ne suffisait plus à dégager le cadre, qui passait par-dessus (z-index supérieur) et masquait titres/images/sections. Fix scopé `[data-theme="ancien"] .container { padding: 0 100px; }` (85px de cadre + 15px de respiration) — sans effet sur les grands écrans (le padding ne joue que quand `.container` touche ses propres bords, `max-width:1100px` prenant le relais au-delà). Thème bleu non concerné (pas de cadre), déjà correct.
+
+### b. HUD missions/stats de partie chevauchent le bandeau de 9 boutons en basse hauteur
+
+`#tileUI`/`.missionsBox` (`deck.css`/`missions.css`) et `#scorePanel`/`.stats-panel` (`base.css`) réservaient chacun une marge basse de seulement 20px dans leur `max-height` — une constante héritée d'avant l'existence du cadre ET de `.debug-light-panel` (le bandeau des 9 boutons rouges, ancré en bas, pouvant grandir à 82px sur 2 rangées en largeur réduite). Résultat : les deux HUD pouvaient légalement s'étendre jusqu'à chevaucher le bandeau de boutons et passer sous le cadre bas.
+
+Piège additionnel découvert en cours de route : pour `#scorePanel` en thème médiéval, une règle `@media (max-height: 1100px)` — qui s'applique dans la quasi-totalité des cas visés — définissait sa PROPRE valeur de `max-height`, jamais mise à jour en même temps que la règle non-compacte ; corriger uniquement cette dernière n'avait donc aucun effet visible. Les 2 versions (compacte et non-compacte) ont dû être synchronisées.
+
+Réserves mesurées en direct et portées de 20px à :
+- Bleu : 100px (`.debug-light-panel` bottom:4px + 82px de boutons + 10px de respiration).
+- Médiéval : 152px (bottom:56px du bandeau, déjà décalé par le cadre, + 82px + 10px).
+
+### c. Menus pre-game (`.mode-screen`/`.mode-panel`, `startupMenu.js`) — 3 itérations
+
+Le plus long correctif du lot, avec une régression corrigée en cours de route :
+
+1. **1ère tentative (rejetée)** : `.mode-screen` (l'écran plein écran qui centre le parchemin pre-game) n'avait ni scroll ni `max-height` — en basse hauteur, `.mode-panel` débordait sans aucun moyen d'y accéder. Corrigé en rendant `.mode-screen` lui-même scrollable (`overflow-y:auto` + `align-items:safe center`) — **mais ceci nécessitait aussi de remonter son z-index (9999→100000) au-dessus du cadre (99999) pour rester cliquable, ce qui a fait disparaître le cadre visuellement derrière le menu**. Retour utilisateur immédiat ("tu as retiré le cadre... incohérent") : le cadre doit rester au-dessus du menu, exactement comme il encadre le reste du jeu.
+2. **2e tentative** : z-index de `.mode-screen` restauré à 9999 (jamais retouché depuis), scroll déplacé DANS le parchemin lui-même (`.mode-panel` borné par `max-height` + `.internal-parchment`, son enfant, qui reçoit le scroll réel) — même schéma que `#scorePanel`/`.missionsBox` (§39, point b). Piège découvert au passage : `.internal-parchment` est `display:contents` en thème **bleu** (`themes/bleu.css`) — un wrapper transparent sans boîte propre, un `overflow-y:auto` dessus n'a donc aucun effet en bleu ; le scroll doit vivre sur `.mode-panel` lui-même par défaut (couvre le bleu), le thème médiéval inversant ce choix (`.internal-parchment` a une vraie boîte 9-slice là-bas).
+3. **3e tentative (correctif du correctif)** : malgré (2), le parchemin médiéval restait tronqué sous le cadre sans marge. Cause : le calcul de `max-height` oubliait la bordure 9-slice du parchemin (50px haut + 50px bas = 100px, `box-sizing:content-box` donc ajoutée PAR-DESSUS `max-height`, jamais incluse dedans) et utilisait un plancher de `margin-top` supposé fixe (120px, valeur haute du `clamp()`) qui ne correspondait pas à la vraie valeur en vigueur sous 760px de hauteur (`@media (max-height:760px)` la fixe à 112px). Déficit d'environ 108px, invisible tant que `.mode-screen` restait centré sans scroll propre — l'excédent se répartissait alors de façon imprévisible entre le haut et le bas de l'écran (piège de la centration flexbox "unsafe" avec contenu en overflow). Fix structurel : une custom property CSS (`--mp-margin-top`, définie et mise à jour par `startupMenu.css`, y compris sous son propre `@media`) est désormais LUE par la règle médiéval (`multiplayerUi.css`) pour son propre calcul de `max-height` — les deux valeurs ne peuvent plus diverger. Marge basse portée à 100px (85px de cadre + 15px, pas la convention réduite à 52px utilisée ailleurs dans le HUD in-game — jamais validée par l'utilisateur pour ce panneau spécifique).
+
+Résultat final : `.mode-screen` reste à z-index 9999 (sous le cadre, inchangé depuis l'origine) ; `.mode-panel`/`.internal-parchment` portent le scroll réel, bornés par une `max-height` qui tient compte de tout l'overhead non-shrinkable (marge, bordure/padding) des deux thèmes.
+
+### Bump
+
+`HEXISTENZ_VERSION` : `v0.9.3.39` → `v0.9.4.1` (saut de version mineure, demande explicite — ce chantier clôt une série de corrections consécutives sur le thème médiéval en basse résolution, cf. §39 et ce paragraphe).

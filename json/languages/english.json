@@ -27,13 +27,15 @@
       "settlers": "The Settlers on Ubisoft",
       "heroes3": "Heroes III on GOG"
     },
-    "tagline": "<strong>Hexistenz is a contemplative game</strong>, made for players who love watching a world\n          and its details unfold slowly, with no clock to race.<br><br><strong>Place hexagonal tiles</strong> and\n          watch a landscape take shape before your eyes: vast forests of firs and birches, swaying wheat fields\n          dotted with mills, medieval villages with smoking rooftops, sprawling railway networks, and wide rivers\n          where your boats sail.<br><br>Complete missions, intercept comets, surround your tiles, and gradually\n          build a living world, one tile at a time.<br><br><strong>Play solo or multiplayer</strong>, resume a\n          saved game whenever you like, <strong>capture your best moments in the gallery</strong>, and relive\n          your games sped up with downloadable online replays.",
+    "tagline": "<strong>Hexistenz is a contemplative game</strong>, made for players who love watching a world\n          and its details unfold slowly, with no clock to race.<br><br><strong>Place hexagonal tiles</strong> and\n          watch a landscape take shape before your eyes: vast forests of firs and birches, swaying wheat fields\n          dotted with mills, medieval villages with smoking rooftops, sprawling railway networks, and wide rivers\n          where your boats sail.<br><br>Complete missions, intercept comets, surround your tiles, and gradually\n          build a living world, one tile at a time.<br><br><strong>Play solo or multiplayer</strong>, resume a\n          saved game whenever you like, <strong>capture your best moments in the gallery</strong>, and relive\n          your games sped up with downloadable online replays.<br><br>The game is playable right now and fully translated into 9 languages, including 12th-century Old French.<br><br>The game is free, with no sign-up, no pay-to-win, and no in-game purchases: in short, made purely for nostalgia.",
     "btn_play": "Play Now",
     "btn_how": "How to play?",
     "stats": {
       "biomes_label": "Biomes",
       "games_label": "Games",
-      "factions_label": "Factions"
+      "factions_label": "Factions",
+      "langs_label": "Languages",
+      "themes_label": "Graphic themes"
     }
   },
   "factions": {
@@ -185,6 +187,7 @@
       "immersive": "immersive mode",
       "super_immersive": "super-immersive mode",
       "mute": "mute",
+      "mute_tts": "mute voice",
       "help": "help"
     }
   },
@@ -290,6 +293,10 @@
       "name": "Adaptive music",
       "desc": "Intro, in-game and ending tracks crossfade smoothly, drawn from several variants so no two games sound quite the same."
     },
+    "voice": {
+      "name": "A voice that comments the game",
+      "desc": "A spoken narrator (browser-native text-to-speech, no external service) calls out your points, missions and key interface moments live — a short chime precedes every new and every completed mission. Available in all 9 languages of the game, with a male voice automatically chosen for German and Russian. The T key silences it on its own, without touching the rest of the soundtrack."
+    },
     "silence": {
       "name": "Silence on demand",
       "desc": "The M key instantly cuts and restores the entire soundtrack, music included — handy for a quiet game during a call or a meeting."
@@ -349,6 +356,15 @@
         "☀️ Gradually lifts as the minutes pass",
         "🎚️ Fog density and colour tunable in the art-direction editor"
       ]
+    },
+    "storm": {
+      "name": "Storms & wildfires",
+      "list": [
+        "⚡ Lightning strikes beneath the storm canopy and can set a tile ablaze",
+        "🔥 Trees, houses, towers and windmills burn at their true height, char black, then grow back",
+        "🌬️ The blaze drifts with the wind, spreads to neighbours and stops dead at the water's edge",
+        "🌧️ Rain slows the spread and sometimes drowns the fire outright"
+      ]
     }
   },
   "eda": {
@@ -389,10 +405,11 @@
   },
   "scores": {
     "label": "Global leaderboard",
-    "title": "The greatest builders",
+    "title": "The most efficient builders",
     "empty": "No scores yet — be the first to place your tile.",
     "try_luck": "Try your luck →",
     "headline_stat": "tiles placed",
+    "pts_suffix": "pts",
     "trains_s": "line",
     "trains_p": "lines",
     "boats_s": "boat",
@@ -431,7 +448,7 @@
   },
   "footer": {
     "copy": "A contemplative hexagonal game made with love ❤️ Three.js and a lot of tiles",
-    "github": "On GitHub"
+    "github": "GitHub"
   },
   "game": {
     "gallery": {
@@ -456,7 +473,12 @@
     "eda": {
       "mainTitle": "Art direction editor",
       "ambiances": "PRESETS",
-      "tabs": { "lut": "LUT", "cinematic": "Cinematic", "environment": "Environment" },
+      "ambiancePrefix": "preset",
+      "tabs": {
+        "lut": "LUT",
+        "cinematic": "Cinematic",
+        "environment": "Environment"
+      },
       "headers": {
         "lutFog": "1. Fog",
         "lutSun": "2. Light source",
@@ -574,7 +596,9 @@
           "domeColorTop": "Dome top",
           "domeColorBottom": "Dome bottom"
         },
-        "renderer": { "toneMappingExposure": "Global exposure" },
+        "renderer": {
+          "toneMappingExposure": "Global exposure"
+        },
         "lights": {
           "hemisphereIntensity": "Hemisphere intensity",
           "sunIntensity": "Intensity",
@@ -637,8 +661,15 @@
           "opacity": "Opacity"
         },
         "wind": {
-          "wheat": { "strength": "Amplitude", "speed": "Speed" },
-          "grass": { "strength": "Amplitude", "speed": "Speed", "sway": "Sway" },
+          "wheat": {
+            "strength": "Amplitude",
+            "speed": "Speed"
+          },
+          "grass": {
+            "strength": "Amplitude",
+            "speed": "Speed",
+            "sway": "Sway"
+          },
           "tree": {
             "strength": "Amplitude",
             "speed": "Speed",
@@ -648,8 +679,14 @@
             "detailStrength": "Detail"
           }
         },
-        "cloud": { "coverage": "Coverage", "scale": "Pattern scale", "speed": "Drift speed" },
-        "quality": { "density": "Density" },
+        "cloud": {
+          "coverage": "Coverage",
+          "scale": "Pattern scale",
+          "speed": "Drift speed"
+        },
+        "quality": {
+          "density": "Density"
+        },
         "cin": {
           "vignette": "Vignette",
           "grain": "Film grain",
@@ -680,11 +717,41 @@
           "depthEdge": "Depth outline"
         },
         "vfx": {
-          "mist": { "densite": "Density", "compacite": "Compactness", "elevation": "Elevation" },
-          "fireflies": { "densite": "Density", "taille": "Size", "vagabondage": "Wandering", "scintillement": "Flicker" },
-          "rain": { "densite": "Density", "tailleGoutte": "Drop size", "impactSol": "Ground impact" },
-          "cloud": { "densite": "Density", "altitude": "Altitude", "epaisseur": "Thickness" },
-          "storm": { "frequenceEclairs": "Lightning frequency", "luminositeEclair": "Lightning brightness", "intensitePluie": "Rain intensity" }
+          "mist": {
+            "densite": "Density",
+            "compacite": "Compactness",
+            "elevation": "Elevation"
+          },
+          "fireflies": {
+            "densite": "Density",
+            "taille": "Size",
+            "vagabondage": "Wandering",
+            "scintillement": "Flicker"
+          },
+          "rain": {
+            "densite": "Density",
+            "tailleGoutte": "Drop size",
+            "impactSol": "Ground impact"
+          },
+          "cloud": {
+            "densite": "Density",
+            "altitude": "Altitude",
+            "epaisseur": "Thickness"
+          },
+          "storm": {
+            "frequenceEclairs": "Lightning frequency",
+            "luminositeEclair": "Lightning brightness",
+            "intensitePluie": "Rain intensity",
+            "altitudeChape": "Canopy altitude",
+            "opaciteChape": "Canopy opacity"
+          },
+          "fire": {
+            "probaAllumage": "Ignition chance",
+            "densiteFlammes": "Flame density",
+            "duree": "Duration",
+            "taille": "Size",
+            "propagation": "Spread"
+          }
         }
       }
     },
@@ -696,6 +763,8 @@
       "topbar.replay": "Game replay",
       "topbar.lang": "Language",
       "topbar.theme": "Graphic theme (Blue / Vintage)",
+      "topbar.mute": "Mute / unmute sound",
+      "topbar.muteVoice": "Mute / unmute voice (TTS)",
       "renderer.toneMappingExposure": "Global renderer exposure (ACESFilmic). Controls how much light reaches the \"sensor\" before any grading.\nValues < 1 darken the whole scene, > 2 can blow out highlights.\nTypical: 1.2–1.8 for a natural look.",
       "environment.fogDensity": "Density of the exponential fog (FogExp2). Only active when \"Linear Far\" is at 0.\nVisibility drops off very quickly: at 0.07 the scene is almost opaque.\nFor a controlled visual range, prefer linear mode via \"Near\" and \"Far\".",
       "environment.fogNear": "Distance in 3D units where linear fog begins.\nAs soon as \"Far\" > 0, automatically switches from FogExp2 to THREE.Fog(near, far).\nAt 0: fog starts right in the foreground. At 5: nearby objects stay sharp.",
@@ -803,6 +872,8 @@
       "stats.textures": "Number of active textures in GPU memory.\nAn unreleased texture stays in VRAM. Worth watching after loading new tiles.",
       "stats.shaders": "Number of compiled and active shader programs (GLSL).\nEach material + defines combination = one shader. Too many variants = stutter on the first frame.",
       "game.tiles": "Total number of tiles placed on the board since the start of the game.\nEach tile can belong to one or more biomes depending on its composition.",
+      "game.score": "The score: the points you've earned in this game.",
+      "game.efficiency": "Efficiency = score ÷ tiles placed, reduced while too few tiles have been placed for it to be meaningful.\nThe world ranking (Leaderboard section of the site) is based on THIS efficiency, not the raw score!",
       "game.mills": "Number of mills present on the grid.\nA mill automatically appears at the center of each large wheat field zone.",
       "game.trains": "Train lines formed: one line = two stations connected by continuous rails.\nThe longer the line, the higher the score points.",
       "game.boats": "Active boats: a boat appears on every body of water surrounded by land.\nEach boat generates points as long as it stays \"afloat\".",
@@ -919,8 +990,12 @@
         "boats": "Boats",
         "comets": "Comets",
         "total": "Total",
-        "surfaceMax": "Max area",
-        "railMax": "Max track",
+        "grassMax": "Contiguous",
+        "fieldMax": "Contiguous",
+        "forestMax": "Contiguous",
+        "houseMax": "Contiguous",
+        "waterMax": "Contiguous",
+        "railMax": "Contiguous",
         "biomes": {
           "grass": "Meadow",
           "field": "Wheat field",
@@ -934,7 +1009,9 @@
         "deckRemaining": "REMAINING",
         "tilesPlaced": "PLACED",
         "missionsTitle": "ACTIVE MISSIONS",
-        "noMission": "No mission"
+        "noMission": "No mission",
+        "efficiencyLabel": "Efficiency",
+        "scoreLabel": "Score"
       },
       "help": {
         "title": "Help",
@@ -1016,6 +1093,7 @@
           "undo": "Undo the last move",
           "toggleHelp": "Show / hide this help",
           "muteSound": "Mute / unmute all sounds",
+          "muteVoice": "Mute / unmute voice announcements",
           "immersive": "Immersive mode",
           "superImmersive": "Super-immersive mode",
           "speedUp": "Speeds up movement and zoom",
@@ -1094,7 +1172,8 @@
     },
     "preloader": {
       "loading": "Loading…",
-      "loadingPct": "Loading… {pct} %"
+      "loadingPct": "Loading… {pct} %",
+      "loadingCount": "{loaded} files / {total} files · {loadedMB} MB / {totalMB} MB"
     },
     "placementOverlay": {
       "ok": "OK",
@@ -1114,9 +1193,23 @@
       "unreadableResponse": "Unreadable server response ({status}): {text}",
       "serverError": "Server error {status}"
     },
-    "kbdHint": "H or ESC&nbsp;→ help &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; SPACE&nbsp;→ immersive &nbsp;|&nbsp; SHIFT+SPACE&nbsp;→ super-immersive",
+    "kbdHint": "H or ESC&nbsp;→ help &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; T&nbsp;→ mute voice &nbsp;|&nbsp; SPACE&nbsp;→ immersive &nbsp;|&nbsp; SHIFT+SPACE&nbsp;→ super-immersive",
     "superImmersifExitHint": "SPACE to exit super-immersive mode",
     "langName": "English",
+    "tts": {
+      "pointsAnnounce": "{n} points!",
+      "voiceOn": "Voice on",
+      "voiceOff": "Voice off",
+      "newMission": "New mission: {title}",
+      "missionCompleted": "Well done! Mission complete!",
+      "edaOpened": "Art direction editor",
+      "helpOpened": "Help",
+      "millsCount": "You have {n} mills",
+      "trainsCount": "You have {n} trains",
+      "boatsCount": "You have {n} boats",
+      "cometsCount": "You have {n} comets",
+      "languageChanged": "English language"
+    },
     "fpsAdjectives": {
       "disastrous": "Disastrous",
       "bad": "Bad",

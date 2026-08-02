@@ -13,7 +13,7 @@ No install · No login · Just play
 [![Three.js](https://img.shields.io/badge/Three.js-r160-black?style=flat-square&logo=threedotjs)](https://threejs.org)
 [![WebGL](https://img.shields.io/badge/WebGL-2.0-red?style=flat-square)](https://www.khronos.org/webgl/)
 [![No bundler](https://img.shields.io/badge/no%20bundler-ES%20Modules-blue?style=flat-square)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)
-[![Languages](https://img.shields.io/badge/🌐-FR%20·%20EN%20·%20ES%20·%20IT%20·%20PT%20·%20🇨🇦%20QC-informational?style=flat-square)](#)
+[![Languages](https://img.shields.io/badge/🌐-FR%20·%20EN%20·%20ES%20·%20IT%20·%20PT%20·%20DE%20·%20RU%20·%20🇨🇦%20QC%20·%20XII-informational?style=flat-square)](#)
 
 </div>
 
@@ -34,8 +34,8 @@ No install · No login · Just play
 >
 > 🇬🇧 Hexistenz is a hex tile-placement game playable **directly in your browser** — nothing to install, nothing to download. Inspired by **Dorfromantik** and the spirit of **The Settlers (Blue Byte, 1993)**, it invites you to patiently build a coherent world: meadows, forests, fields, villages, railways, rivers and coastlines come together tile by tile in a real-time 3D low-poly universe.
 
-🇫🇷 Le jeu est **entièrement traduit en 6 langues** — 🇫🇷 français, 🇬🇧 anglais, 🇪🇸 espagnol, 🇮🇹 italien, 🇵🇹 portugais, et 🇨🇦 **canadien** (québécois, easter egg 100% jouable, glissé là surtout pour troller les Français) — sélecteur de langue accessible à tout moment en jeu, sans recharger la page.
-🇬🇧 The game is **fully translated into 6 languages** — 🇫🇷 French, 🇬🇧 English, 🇪🇸 Spanish, 🇮🇹 Italian, 🇵🇹 Portuguese, and 🇨🇦 **Canadian** (Québécois, a fully playable easter egg, mostly there to troll the French) — with a language selector available at any time in-game, no page reload needed.
+🇫🇷 Le jeu est **entièrement traduit en 9 langues** — 🇫🇷 français, 🇬🇧 anglais, 🇪🇸 espagnol, 🇮🇹 italien, 🇵🇹 portugais, 🇩🇪 allemand, 🇷🇺 russe, 🇨🇦 **canadien** (québécois, easter egg 100% jouable, glissé là surtout pour troller les Français) et ⚜️ **français médiéval** (XIIᵉ siècle : « Or oyez : le héraut a pris la parole » — chroniques, quêtes et besace, mais en orthographe moderne pour rester lisible et bien prononcé) — sélecteur de langue accessible à tout moment en jeu, sans recharger la page. Les annonces vocales (TTS, Web Speech API) suivent la langue choisie, avec sélection automatique d'une voix masculine pour l'allemand et le russe.
+🇬🇧 The game is **fully translated into 9 languages** — 🇫🇷 French, 🇬🇧 English, 🇪🇸 Spanish, 🇮🇹 Italian, 🇵🇹 Portuguese, 🇩🇪 German, 🇷🇺 Russian, 🇨🇦 **Canadian** (Québécois, a fully playable easter egg, mostly there to troll the French) and ⚜️ **Medieval French** (12th century chronicler's voice — quests, chronicles and satchels, in modern spelling so it stays readable and speaks well) — with a language selector available at any time in-game, no page reload needed. Voice announcements (TTS, Web Speech API) follow the selected language, automatically preferring a male voice for German and Russian.
 
 🇫🇷 **Deux thèmes graphiques** habillent l'intégralité de l'interface — **Bleu classique** (l'identité visuelle d'origine, fonds sombres et liserés lumineux) et **Médiéval** (habillage parchemin, texture 9-slice, encre sombre et typographie serif) — sélecteur de thème accessible depuis la présentation comme en jeu, sans recharger la page.
 🇬🇧 **Two graphic themes** dress the entire interface — **Classic Blue** (the original look, dark backgrounds and glowing edges) and **Medieval** (a parchment skin, 9-slice texture, dark ink and serif typography) — theme selector available from the landing page and in-game, no page reload needed.
@@ -115,6 +115,32 @@ The core mechanic: **connections**. Extending a zone of the same type earns poin
 - switch between **Sun mode** (daytime) and **Moon mode** (starlit night)
 - toggle **sun orbit** to freeze the light
 - adjust orbit speed, radius, and height
+
+---
+
+## ⛈️ Météo, orage et incendies / Weather, storms and wildfires
+
+🇫🇷 Le monde a sa propre météo, pilotée par un chef d'orchestre d'évènements : brume matinale, lucioles à la nuit tombée, nuages, pluie et **orage**. Pendant l'orage, le ciel s'assombrit, une chape nuageuse épouse la forme du plateau et **la foudre tombe**.
+
+Et quand un éclair frappe une tuile inflammable, **ça brûle vraiment** :
+- les flammes montent **le long des vrais modèles 3D** — un arbre, une maison, une tour de guet ou un moulin brûlent chacun à leur hauteur réelle
+- l'objet noircit progressivement jusqu'au charbon, puis **repousse** vers sa couleur d'origine : rien n'est détruit définitivement
+- les **rochers se couvrent de suie** sans jamais s'enflammer
+- le foyer **dérive au vent**, accroche au passage ce qu'il rencontre, se propage aux tuiles voisines… et **s'arrête net au bord de l'eau**
+- la pluie ralentit la contagion, consume plus vite, et **noie parfois le foyer** (environ un sur quatre)
+
+Tout est réglable en direct depuis l'EDA : probabilité d'allumage, densité et taille des flammes, durée, agressivité de la propagation, altitude et opacité de la chape d'orage.
+
+🇬🇧 The world runs its own weather, driven by an event conductor: morning mist, fireflies at dusk, clouds, rain and **thunderstorms**. During a storm the sky darkens, a cloud canopy moulds itself to the shape of your board, and **lightning strikes**.
+
+And when a bolt hits a flammable tile, **things genuinely burn**:
+- flames climb **the actual 3D models** — a tree, a house, a watchtower or a windmill each burn at their true height
+- the object chars progressively to black, then **grows back** to its original colour: nothing is permanently destroyed
+- **rocks get sooty** but never catch fire
+- the blaze **drifts with the wind**, catches whatever it meets on the way, spreads to neighbouring tiles… and **stops dead at the water's edge**
+- rain slows the spread, burns things out faster, and **sometimes drowns the fire** (roughly one in four)
+
+Everything is live-tunable from the art-direction editor: ignition chance, flame density and size, duration, spread aggressiveness, storm canopy altitude and opacity.
 
 ---
 

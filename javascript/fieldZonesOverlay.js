@@ -15,9 +15,11 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 import {
   EDGE_ORDER,
   EDGE_TYPES,
-  SECTOR_DEFS
+  SECTOR_DEFS,
+  HITBOX_R
 } from './config.js';
 import { hashUnit10k as hashUnit, hashNumber } from './hashUtils.js';
+import { registerPropHitbox } from './propHitboxRegistry.js';
 import { axialToWorld, makeHexKey } from './hex.js';
 import { HEX_DIRECTIONS, getOppositeEdge } from './placementRules.js';
 import { getEdgeValue } from './tileGenerator.js';
@@ -208,6 +210,28 @@ function createFieldFlagReward(zone) {
   if (flag) {
     flag.name = 'field-zone-mill-glb';
     group.add(flag);
+    // Hitbox + setColor (2026-07-29, retour user : « aucun effet sur... les moulins ») — le
+    // moulin est un objet unique par zone (pas instancié), ses matériaux ne sont donc pas
+    // partagés : on peut les teinter directement, comme la tour de guet (houseOverlay.js).
+    // height : hauteur RÉELLE du modèle (bbox monde). Le rayon de hitbox ne décrit que
+    // l'emprise au sol — un moulin est bien plus haut que large, et fireOverlay.js dimensionne
+    // ses langues de flamme sur cette hauteur pour envelopper l'objet au lieu d'allumer une
+    // flaque plate à son pied (retour user 2026-07-29).
+    const _millBox = new THREE.Box3().setFromObject(flag);
+    registerPropHitbox(group.position.x, group.position.z, HITBOX_R.mill, {
+      kind: 'landmark',   // 1 par ZONE (pas par tuile) — cf. fireOverlay.js _findBurnTargets
+      height: Math.max(0.05, _millBox.max.y - _millBox.min.y),
+      setColor(color) {
+        flag.traverse(child => {
+          if (!child.isMesh || !child.material) return;
+          for (const m of Array.isArray(child.material) ? child.material : [child.material]) {
+            if (!m.color) continue;
+            if (!m.userData._fireOriginalColor) m.userData._fireOriginalColor = m.color.clone();
+            m.color.copy(color ?? m.userData._fireOriginalColor);
+          }
+        });
+      }
+    });
   }
 
   const flockCount = Math.min(3, 1 + Math.floor(zone.total / 8));

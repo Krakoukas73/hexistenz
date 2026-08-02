@@ -25,14 +25,19 @@ const _jsonCache = {}; // { fr: {...}, en: {...}, es: {...} } — évite de re-f
 // réduit toute 3e langue à 'fr'. Centralisé ici : LANG_FILES est la SEULE source de vérité
 // pour la liste des langues supportées et leur fichier JSON associé. Ajouter une langue =
 // une ligne ici (+ une <option> dans le <select> du HUD), rien d'autre à toucher.
-export const LANG_FILES = { fr: 'french', en: 'english', es: 'spanish', it: 'italian', pt: 'portuguese', 'fr-CA': 'fr-CA' };
+export const LANG_FILES = { fr: 'french', en: 'english', es: 'spanish', it: 'italian', pt: 'portuguese', 'fr-CA': 'fr-CA', de: 'german', ru: 'russian', 'fr-MED': 'french-medieval' };
 
 export function getGameLang() {
   try {
     const stored = localStorage.getItem('hexistenz_pres_lang');
-    return Object.prototype.hasOwnProperty.call(LANG_FILES, stored) ? stored : 'fr';
+    // 2026-07-31 — langue par défaut au tout premier lancement (aucune valeur en
+    // localStorage) : "fr-CA" (français canadien) sur demande explicite, à la
+    // place du français standard utilisé jusqu'ici. N'affecte que les visiteurs
+    // sans préférence déjà enregistrée ; quiconque a déjà choisi une langue garde
+    // ce choix (lu depuis localStorage ci-dessus, jamais écrasé).
+    return Object.prototype.hasOwnProperty.call(LANG_FILES, stored) ? stored : 'fr-CA';
   } catch {
-    return 'fr';
+    return 'fr-CA';
   }
 }
 
@@ -41,13 +46,30 @@ export function getLangFile(lang = getGameLang()) {
   return LANG_FILES[lang] ?? LANG_FILES.fr;
 }
 
+// 2026-07-29 — cache-busting (même bug/fix que le CSS, cf. CONTEXT.md §26) : tous
+// les fetch() de json/languages/*.json à travers le code (une vingtaine d'appels,
+// un par module bilingue) n'avaient aucun ?v=, donc le navigateur pouvait continuer
+// à servir une traduction périmée indéfiniment après modification sur disque — cause
+// confirmée d'un retour utilisateur "toujours pareil" sur le texte TTS fr-CA. La
+// version est calculée côté PHP (mtime le plus récent parmi tous les fichiers de
+// langue, cf. game.php/snapshots.php/replays.php) et exposée via
+// window.HEXISTENZ_LANG_VERSION — un seul point de lecture ici, réutilisé par TOUS
+// les appelants (getLangUrl), plutôt que de dupliquer la query string partout.
+export function getLangVersion() {
+  return (typeof window !== 'undefined' && window.HEXISTENZ_LANG_VERSION) || '';
+}
+
+/** URL complète (avec cache-busting) du fichier JSON d'une langue. */
+export function getLangUrl(lang = getGameLang()) {
+  return `./json/languages/${getLangFile(lang)}.json?v=${getLangVersion()}`;
+}
+
 async function _loadLangJson(lang) {
   if (_jsonCache[lang]) return _jsonCache[lang];
-  const file = getLangFile(lang);
-  const data = await fetch(`./json/languages/${file}.json`)
+  const data = await fetch(getLangUrl(lang))
     .then(r => r.json())
     .catch(err => {
-      console.error(`[gameLangReactive] Impossible de charger ${file}.json`, err);
+      console.error(`[gameLangReactive] Impossible de charger ${getLangFile(lang)}.json`, err);
       return {};
     });
   _jsonCache[lang] = data;
@@ -61,7 +83,7 @@ export function registerLangRefresh(cb) {
 
 /** Point d'entrée unique pour basculer la langue en jeu (appelé par le sélecteur du HUD). */
 export async function setGameLang(lang) {
-  if (!Object.prototype.hasOwnProperty.call(LANG_FILES, lang)) lang = 'fr';
+  if (!Object.prototype.hasOwnProperty.call(LANG_FILES, lang)) lang = 'fr-CA';
   if (getGameLang() === lang) return;
   try { localStorage.setItem('hexistenz_pres_lang', lang); } catch {}
   document.documentElement.dataset.lang = lang;

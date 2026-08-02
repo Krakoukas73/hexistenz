@@ -14,12 +14,38 @@
 export const THEMES = ['bleu', 'ancien'];
 const STORAGE_KEY = 'hexistenz_theme';
 
+// 2026-08-01 — demande explicite : le thème par défaut ("ancien"/Médiéval,
+// cf. commentaire d'en-tête) est visuellement lourd (cadre décoratif 4 côtés,
+// parchemins 9-slice, cf. CONTEXT.md §39) et prend beaucoup de place en
+// pixels — pénalisant sur petit écran. Détection mobile (Android/iOS/autres)
+// pour ne préférer "bleu" QUE quand le visiteur n'a JAMAIS choisi de thème
+// lui-même (aucune entrée localStorage) — un choix explicite, même sur
+// mobile, reste toujours prioritaire et n'est jamais écrasé.
+// Détection volontairement simple (regex UA), cohérente avec le reste du
+// projet qui n'utilise aucune lib de détection dédiée : navigator.userAgent
+// couvre Android/iPhone/iPad/iPod ; userAgentData.mobile (Client Hints,
+// Chrome/Edge récents) utilisé en complément quand disponible, plus fiable
+// sur les Chromebooks/tablettes qui usurpent parfois un UA desktop.
+function isMobileDevice() {
+  try {
+    if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
+      return navigator.userAgentData.mobile;
+    }
+  } catch {}
+  try {
+    return /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(navigator.userAgent || '');
+  } catch {
+    return false;
+  }
+}
+
 export function getTheme() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return THEMES.includes(stored) ? stored : 'ancien';
+    if (THEMES.includes(stored)) return stored;
+    return isMobileDevice() ? 'bleu' : 'ancien';
   } catch {
-    return 'ancien';
+    return isMobileDevice() ? 'bleu' : 'ancien';
   }
 }
 

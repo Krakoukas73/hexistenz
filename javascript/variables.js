@@ -13,7 +13,7 @@
 // ----------------------------------------------------------------------------
 // VERSION
 // ----------------------------------------------------------------------------
-export const HEXISTENZ_VERSION = 'v0.9.3.23';
+export const HEXISTENZ_VERSION = 'v0.9.4.1';
 
 // ----------------------------------------------------------------------------
 // DEBUG — diagnostics de production (2026-07-16)
@@ -475,6 +475,10 @@ export const HITBOX_R = {
   cart:       HEX_SIZE * 0.17 * 0.85 * 0.94,                // −15% −6%
   signpost:   HEX_SIZE * 0.06 * 0.85 * 0.75,               // −15% −25%
   fountain:   HEX_SIZE * 0.13,
+  // 2026-07-30 (merge Cyril, paquet feu) — le moulin n'avait pas de hitbox : il n'a jamais eu
+  // besoin de bloquer les autres props. fireOverlay.js s'appuie désormais sur le registre de
+  // hitbox pour cibler les vrais modèles 3D, donc le moulin doit y figurer pour pouvoir brûler.
+  mill:       HEX_SIZE * 0.20,
 };
 
 // ----------------------------------------------------------------------------
@@ -577,3 +581,34 @@ export const VFX_WORLD_RADIUS = 15; // rayon (unités monde) de la zone couverte
 // SCORE — ÉVÉNEMENTS SPÉCIAUX
 // ----------------------------------------------------------------------------
 export const COMET_HIT_SCORE = 75;
+
+// ----------------------------------------------------------------------------
+// CLASSEMENT — EFFICACITÉ (rubrique "Classement" de la prez, index.php)
+// ----------------------------------------------------------------------------
+// 2026-07-31 — demande explicite : le classement de la prez trie par
+// EFFICACITÉ = score / tuiles posées (exprimée en %), pas par score brut —
+// sinon une partie minuscule et chanceuse trustait la 1ère place avec un
+// score dérisoire. Cas observé : 3 tuiles / 1516 pts = 505.3 % d'efficacité
+// brute, devant une vraie partie de 159 tuiles à 70.7 %.
+//
+// EFFICIENCY_MIN_TILES / EFFICIENCY_MIN_TILES_EXPONENT minorent cette
+// efficacité brute quand l'échantillon (nombre de tuiles) est trop court
+// pour être significatif — rampe de confiance qui vaut 1 à partir de
+// EFFICIENCY_MIN_TILES tuiles, et diminue en-dessous :
+//
+//   confiance   = (min(tiles, EFFICIENCY_MIN_TILES) / EFFICIENCY_MIN_TILES) ^ EFFICIENCY_MIN_TILES_EXPONENT
+//   efficacité  = (score / tiles) * confiance
+//
+// Exposant 2 (quadratique, pas linéaire) volontaire : une rampe linéaire
+// (confiance = tiles/20) minorait trop peu les parties très courtes — ex.
+// 3 tuiles → confiance 0.15 → 505.3 % retombe à 75.8 %, encore devant une
+// partie de 159 tuiles à 70.7 %. En quadratique, 3 tuiles → confiance
+// 0.0225 → 505.3 % retombe à 11.4 %, ce qui reflète mieux le manque de
+// signal d'un échantillon aussi court.
+//
+// ⚠️ Mirroré en PHP (index.php, lecture par regex — même mécanisme que
+// HEXISTENZ_VERSION plus haut) : ces 2 constantes DOIVENT rester des entiers
+// simples sur leur propre ligne (`= <nombre>;`) pour que le regex les
+// retrouve. Si la formule elle-même change, la reporter aussi dans index.php.
+export const EFFICIENCY_MIN_TILES = 20;
+export const EFFICIENCY_MIN_TILES_EXPONENT = 2;

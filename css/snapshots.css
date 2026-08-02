@@ -209,6 +209,23 @@ html[data-theme="ancien"] .gallery-caption-meta { color: rgba(51, 36, 21, 0.72);
   display: block;
 }
 
+/* 2026-07-28 — fix : sur une photo cliquée en thème médiéval, la date/légende
+   restait illisible (marron foncé sur fond quasi noir). Cause : les règles
+   html[data-theme="ancien"] .gallery-caption-date/-meta (ci-dessus, pensées
+   pour la mosaïque sur fond clair #ece0c0) ont une spécificité plus élevée
+   (html + attribut + classe) que .gallery-viewer-caption .gallery-caption-date
+   (2 classes) et l'emportaient donc MÊME à l'intérieur de la visionneuse — qui
+   a un fond volontairement sombre dans les 2 thèmes (cf. note plus haut sur
+   .gallery-viewer-caption). Override ciblé ici avec une spécificité encore
+   supérieure : texte clair (parchemin), cohérent avec l'identité médiévale au
+   lieu de réutiliser tel quel le blanc bleuté du thème bleu. */
+html[data-theme="ancien"] .gallery-viewer-caption .gallery-caption-date {
+  color: #f0e6d0;
+}
+html[data-theme="ancien"] .gallery-viewer-caption .gallery-caption-meta {
+  color: rgba(240, 230, 208, 0.75);
+}
+
 /* Pas de croix de fermeture (retirée le 2026-07-15) — cliquer sur l'image agrandie ou
    n'importe où ailleurs dans la visionneuse ferme (cf. snapshotsPage.js), seuls les
    boutons ‹/› de navigation ci-dessous échappent à cette règle. */

@@ -21,6 +21,8 @@ const CELL_SIZE = HEX_SIZE * 0.5;
 /** @type {Map<string, Array<{x:number, z:number, r:number}>>} */
 const _grid = new Map();
 
+let _generation = 0;
+
 function _cellKey(cx, cz) { return `${cx},${cz}`; }
 function _cellOf(x, z)    { return [Math.floor(x / CELL_SIZE), Math.floor(z / CELL_SIZE)]; }
 
@@ -50,19 +52,47 @@ function _candidates(x, z, r) {
  */
 export function resetPropHitboxRegistry() {
   _grid.clear();
+  _generation += 1;
 }
+
+/**
+ * Compteur incrémenté à CHAQUE reset, donc à chaque reconstruction des props (les rebuilds
+ * appellent toujours resetPropHitboxRegistry() d'abord, cf. scene.js). Permet aux callbacks
+ * setColor de mettre en cache l'index d'instance qu'ils ont résolu par position et de ne le
+ * recalculer que lorsque les meshes ont réellement été reconstruits — sans ça, une recherche
+ * O(nombre d'instances) serait refaite à chaque frame pour chaque objet en train de brûler.
+ */
+export function getPropRegistryGeneration() { return _generation; }
 
 /**
  * Enregistre un obstacle circulaire en (x, z) avec rayon r.
  * @param {number} x  Position world X
  * @param {number} z  Position world Z
  * @param {number} r  Rayon du hitbox
+ * @param {{setColor?: (color: import('three').Color|null) => void}|null} [meta]
+ *   Optionnel (2026-07-29) — poignée fournie par l'appelant (forestOverlay.js/houseOverlay.js)
+ *   permettant à un effet (ex. feu) de teinter/reset l'instance ou l'objet réel correspondant,
+ *   sans que ce registre ait besoin de connaître les détails d'instancing/THREE.js.
  */
-export function registerPropHitbox(x, z, r) {
+export function registerPropHitbox(x, z, r, meta = null) {
   const [cx, cz] = _cellOf(x, z);
   const key = _cellKey(cx, cz);
   if (!_grid.has(key)) _grid.set(key, []);
-  _grid.get(key).push({ x, z, r });
+  _grid.get(key).push({ x, z, r, meta });
+}
+
+/**
+ * Retourne les hitbox (arbres/bâtiments/rochers déjà posés) dont le CENTRE tombe dans un
+ * rayon r autour de (x, z) — permet à un effet (ex. feu) de s'ancrer sur les vrais props
+ * d'une tuile plutôt que sur un point générique. Lecture seule, ne modifie pas le registre.
+ * @param {number} x
+ * @param {number} z
+ * @param {number} r
+ * @returns {Array<{x:number, z:number, r:number, meta:object|null}>}
+ */
+export function getHitboxesNear(x, z, r) {
+  const r2 = r * r;
+  return _candidates(x, z, r).filter(h => (h.x - x) * (h.x - x) + (h.z - z) * (h.z - z) <= r2);
 }
 
 /**

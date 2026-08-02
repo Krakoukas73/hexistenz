@@ -119,6 +119,47 @@
   font-family: Georgia, "Times New Roman", serif;
 }
 [data-theme="ancien"] .mode-panel[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
+/* 2026-08-01 — demande explicite : réserve supplémentaire pour le cadre
+   décoratif (85px de large, cf. css/themes/medieval.css), qui reste
+   au-dessus de ce menu (z-index 99999, jamais modifié — cf. correctif dans
+   css/startupMenu.css pour l'historique).
+   `overflow` repassé à visible ICI (contrairement à la règle non-thémée,
+   cf. css/startupMenu.css) : en médiéval, .internal-parchment est une vraie
+   boîte (bordure manuscrit-1.png 9-slice + marge négative de bleed), donc
+   c'est ELLE qui doit porter le scroll réel (cf. règle
+   `.mode-panel > .internal-parchment` plus bas dans ce fichier) — jamais ce
+   conteneur-ci, qui clipperait sinon sa propre bordure/marge (même piège
+   déjà documenté sur #scorePanel/.missionsBox/etc.).
+   2026-08-01 — CORRECTIF (demande explicite : "continue d'être tronqué
+   verticalement et passe sous le cadre sans aucune marge de sécurité") :
+   la 1ère version de ce calcul (max-height: calc(100vh - 196px)) oubliait
+   la bordure 9-slice de CE parchemin (50px haut + 50px bas = 100px,
+   box-sizing:content-box donc ces 100px s'AJOUTENT par-dessus max-height,
+   jamais inclus dedans) — et utilisait un plancher de margin-top supposé
+   fixe (120px) qui ne correspondait pas à la vraie valeur en vigueur sous
+   760px de hauteur (112px, cf. @media dans css/startupMenu.css). D'où un
+   déficit de budget d'environ 108px, invisible tant que `.mode-screen`
+   reste centré sans scroll propre (le débordement se répartit alors de
+   façon imprévisible entre le haut et le bas). Fix : `var(--mp-margin-top)`
+   (custom property définie et tenue à jour par css/startupMenu.css, y
+   compris sous son propre @media max-height:760px) remplace la constante
+   supposée — ce calcul ne peut plus diverger de la vraie valeur de
+   margin-top, quel que soit le breakpoint actif — et la bordure 100px est
+   maintenant explicitement soustraite.
+   2026-08-01 — CORRECTIF 2 (même demande, "sans AUCUNE marge de sécurité") :
+   même après le correctif ci-dessus, marge basse de 76px < largeur réelle du
+   cadre (85px) → un résidu de 9px restait sous le bandeau. Vérifié en direct
+   (1280×600) : marge-basse portée à 100px (85px de cadre + 15px de
+   respiration réelle, cohérent avec le choix fait pour .container de la
+   prez sur ce même sujet, cf. css/themes/medieval.css) — plus de convention
+   "52px" ici, cette réduction n'a jamais été validée par l'utilisateur pour
+   CE panneau, contrairement aux HUD in-game où elle avait été explicitement
+   demandée. */
+[data-theme="ancien"] .mode-screen--with-background .mode-panel {
+  overflow: visible;
+  margin-bottom: 100px;
+  max-height: calc(100vh - var(--mp-margin-top) - 100px - 100px);
+}
 [data-theme="ancien"] .mode-panel h1,
 [data-theme="ancien"] .mode-panel p,
 [data-theme="ancien"] .mode-panel label {
@@ -143,13 +184,13 @@
 [data-theme="ancien"] .mode-panel button {
   background: none;
   border-style: solid;
-  border-width: 0 8px;
-  border-image-source: url("../images/button2.png");
-  border-image-slice: 0 8 fill;
-  border-image-width: 0 8px;
+  border-width: 0 6px;
+  border-image-source: url("../images/button3.png");
+  border-image-slice: 0 6 fill;
+  border-image-width: 0 6px;
   border-image-repeat: stretch;
   border-radius: 0;
-  height: 42px;
+  height: 38px;
   box-sizing: border-box;
   color: #f5e2b8;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
@@ -186,3 +227,20 @@
    css/startupMenu.css) — donc AUCUNE des 2 corrections nécessaires plus haut
    ne s'applique ici. Wrapper simple, sans piège. */
 [data-theme="ancien"] .mode-panel > .internal-parchment { margin: -20px -25px -20px -25px; }
+
+/* 2026-08-01 — demande explicite : ascenseur vertical DANS le parchemin
+   (pas sur .mode-screen, qui doit rester sous le cadre décoratif — cf.
+   css/startupMenu.css pour l'historique complet). Générique (pas scopé à un
+   thème) : .mode-panel est désormais flex column + max-height (startupMenu.css),
+   donc .internal-parchment (son unique enfant, cf. javascript/startupMenu.js)
+   doit se comporter comme partout ailleurs dans le projet — flex:1 1 auto +
+   min-height:0 pour pouvoir rétrécir dans l'espace borné du parent, overflow-y:auto
+   pour faire apparaître un ascenseur réel dès que son contenu dépasse cet espace.
+   Le thème bleu (pas de bordure 9-slice/bleed négatif) en profite aussi : même
+   bug de contenu inatteignable en basse résolution, indépendant du thème. */
+.mode-panel > .internal-parchment {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}

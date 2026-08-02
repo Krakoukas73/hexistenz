@@ -42,7 +42,24 @@ const DEFAULTS = {
   storm: {
     frequenceEclairs:  0.5, // 0..1 — nombre d'éclairs par minute (mappé sur un intervalle mini/maxi)
     luminositeEclair:  1.0, // 0..2 — intensité du flash + du halo bleuté
-    intensitePluie:    1.6  // multiplicateur appliqué sur les réglages "rain" pendant l'orage
+    intensitePluie:    1.6, // multiplicateur appliqué sur les réglages "rain" pendant l'orage
+    // 2026-07-30 — retour Piregwan : « injouable, ça masque totalement la map ». La chape
+    // d'orage (rainCloudOverlay.js) était figée à l'altitude des cumulus et à une opacité de 1
+    // au pic d'orage, donc totalement opaque au-dessus du plateau. Ces deux curseurs la rendent
+    // réglable. Défauts choisis pour rester jouable d'emblée : plus haut que les cumulus (5.0)
+    // et translucide. L'ambiance sombre de l'orage ne dépend PAS de ces valeurs — elle vient de
+    // updateStormAmbience() dans scene.js, qui assombrit les lumières indépendamment.
+    altitudeChape:     7.0, // unités monde — hauteur de la chape, indépendante de clouds.altitude
+    opaciteChape:      0.72 // 0..1 — opacité max au pic d'orage (1 = masque totalement le plateau)
+  },
+  // 2026-07-30 (merge Cyril, paquet feu) — réglages du feu allumé par la foudre
+  // (fireOverlay.js). Curseurs correspondants dans le panneau EDA, rubrique 9 FEU.
+  fire: {
+    probaAllumage:  0.75, // 0..1 — proba qu'un éclair sur une tuile inflammable allume un foyer
+    densiteFlammes: 0.6,  // 0..1 — quantité de flammes/fumée par foyer
+    duree:          1.0,  // 0.3..3 — multiplicateur de la durée de vie du foyer
+    taille:         0.6,  // 0..1 — échelle des flammes
+    propagation:    0.6   // 0..1 — agressivité de la propagation aux tuiles voisines
   }
 };
 

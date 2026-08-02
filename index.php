@@ -2,11 +2,36 @@
 // Version — extraite de variables.js
 $version = '';
 $varsFile = __DIR__ . '/javascript/variables.js';
+// 2026-07-29 — date de dernière modification de variables.js, affichée à côté
+// (hors) de la pastille de version, en italique, dans la langue en cours. La
+// pastille garde SA géométrie/pastille propre ; cette date est un span frère,
+// simple texte. Rendu PHP initial en français (même convention que tout le
+// reste du fichier, cf. tr($t,'fr',...) partout ailleurs) — reformatée côté
+// JS via Intl.DateTimeFormat dans setLang() ci-dessous dès que la langue
+// préférée diffère du français (même pattern que applyI18n pour le texte).
+$versionDate = '';
+$varsMtime = null;
+// 2026-07-31 — seuil/exposant de la minoration d'efficacité (rubrique Classement,
+// cf. bloc $highscores plus bas) : valeurs par défaut ici, écrasées par la lecture
+// regex de variables.js juste après si le fichier est trouvable — même mécanisme
+// que $version ci-dessus. Garder ces défauts synchronisés avec variables.js.
+$efficiencyMinTiles = 20;
+$efficiencyMinTilesExponent = 2;
 if (file_exists($varsFile)) {
     $js = file_get_contents($varsFile);
     if (preg_match("/HEXISTENZ_VERSION\s*=\s*'([^']+)'/", $js, $m)) {
         $version = $m[1];
     }
+    if (preg_match('/EFFICIENCY_MIN_TILES\s*=\s*(\d+)/', $js, $m)) {
+        $efficiencyMinTiles = (int)$m[1];
+    }
+    if (preg_match('/EFFICIENCY_MIN_TILES_EXPONENT\s*=\s*(\d+)/', $js, $m)) {
+        $efficiencyMinTilesExponent = (int)$m[1];
+    }
+    $varsMtime = filemtime($varsFile);
+    $frMonths = [1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril', 5 => 'mai', 6 => 'juin',
+                 7 => 'juillet', 8 => 'août', 9 => 'septembre', 10 => 'octobre', 11 => 'novembre', 12 => 'décembre'];
+    $versionDate = (int)date('j', $varsMtime) . ' ' . $frMonths[(int)date('n', $varsMtime)] . ' ' . date('Y', $varsMtime);
 }
 // Cache-busting CSS — 2026-07-18 : auparavant basé UNIQUEMENT sur le mtime de
 // presentation.css, ce qui laissait les navigateurs servir une version en cache
@@ -22,6 +47,23 @@ $cssFiles = [
 $cssVersion = time();
 $mtimes = array_filter(array_map(function ($f) { return file_exists($f) ? filemtime($f) : 0; }, $cssFiles));
 if ($mtimes) { $cssVersion = max($mtimes); }
+
+// 2026-08-01 — demande explicite : sur mobile (Android/iOS/autre), préférer le
+// thème "bleu" (léger) plutôt que "ancien"/Médiéval (cadre décoratif 4 côtés +
+// parchemins 9-slice, lourd et gourmand en pixels sur petit écran) — MAIS
+// uniquement quand le visiteur n'a jamais choisi lui-même de thème (repris
+// intégralement côté JS, cf. javascript/themeManager.js::getTheme() pour le
+// jeu et le bloc setTheme ci-dessous pour cette page — un choix stocké dans
+// localStorage prévaut toujours, PHP ne peut de toute façon pas le lire).
+// Détection ici UNIQUEMENT pour éviter le flash visuel "médiéval" avant que
+// le JS ne corrige l'attribut data-theme au chargement (valeur de repli du
+// tout premier rendu serveur) — même regex UA que côté JS, gardée simple et
+// cohérente avec le reste du projet (pas de lib de détection dédiée).
+$isMobileUA = false;
+if (!empty($_SERVER['HTTP_USER_AGENT'])) {
+    $isMobileUA = (bool)preg_match('/Android|iPhone|iPad|iPod|Mobile|Windows Phone/i', $_SERVER['HTTP_USER_AGENT']);
+}
+$defaultTheme = $isMobileUA ? 'bleu' : 'ancien';
 
 // Refonte i18n scalable du 2026-07-14 (cf. CONTEXT.md §21) : l'ancien mécanisme
 // dupliquait CHAQUE texte en autant de paires data-fr/data-en qu'il y avait de
@@ -40,6 +82,9 @@ $LANG_FILES = [
     'it' => 'italian',
     'pt' => 'portuguese',
     'fr-CA' => 'fr-CA',
+    'de' => 'german',
+    'ru' => 'russian',
+    'fr-MED' => 'french-medieval',
 ];
 $LANGS = array_keys($LANG_FILES);
 
@@ -54,8 +99,13 @@ $LANGS = array_keys($LANG_FILES);
 // le français et le moteur JS ira chercher la langue manquante en fetch() (cf.
 // ensureLang plus bas). Le premier affichage reste donc toujours correct, sans
 // clignotement pour un visiteur qui revient dans sa langue.
-$prefLang = isset($_COOKIE['hexistenz_pres_lang']) ? (string)$_COOKIE['hexistenz_pres_lang'] : 'fr';
-if (!isset($LANG_FILES[$prefLang])) $prefLang = 'fr';
+// 2026-07-31 — repli "fr-CA" (au lieu de "fr") quand aucune préférence n'est
+// encore connue (pas de cookie), sur demande explicite. Le français reste de
+// toute façon toujours embarqué ci-dessous (array_unique(['fr', $prefLang])) :
+// c'est le rendu PHP statique (tr($t,'fr',...) partout dans ce fichier) qui
+// reste en français le temps que setLang() bascule vers fr-CA côté JS.
+$prefLang = isset($_COOKIE['hexistenz_pres_lang']) ? (string)$_COOKIE['hexistenz_pres_lang'] : 'fr-CA';
+if (!isset($LANG_FILES[$prefLang])) $prefLang = 'fr-CA';
 
 $t = [];
 foreach (array_unique(['fr', $prefLang]) as $code) {
@@ -74,7 +124,18 @@ function tr($t, $lang, $path) {
     return $node;
 }
 
-// Highscores — top 10, même logique que highscore.php
+// Highscores — top 10, même logique que highscore.php.
+// 2026-07-31 — demande explicite : classement de LA PREZ (uniquement — la modale
+// in-game reste sur highscore.php::sort_scores(), inchangée, toujours par score
+// brut) reclassé par EFFICACITÉ = score / tuiles posées, exprimée en % (ex :
+// 11243 pts / 159 tuiles = 70.7%), affichée en petit sous le score de CHAQUE
+// entrée (pas seulement les détaillées). tiles=0 (edge case, partie quasi
+// vide) → efficacité 0 plutôt qu'une division par zéro.
+// Formule + constantes ($efficiencyMinTiles / $efficiencyMinTilesExponent) :
+// cf. javascript/variables.js §"CLASSEMENT — EFFICACITÉ" (source canonique,
+// mirorée en tête de ce fichier par regex) — minore l'efficacité brute quand
+// le nombre de tuiles est trop faible pour être significatif (rampe
+// quadratique, confiance 1 à partir de $efficiencyMinTiles tuiles).
 $highscores = [];
 $hsFile = __DIR__ . '/json/highscores.json';
 if (file_exists($hsFile)) {
@@ -95,11 +156,17 @@ if (file_exists($hsFile)) {
                         $biomeTotals[$bt]  = isset($totals[$bt])  ? (int)$totals[$bt]  : 0;
                         $biomeLargest[$bt] = isset($largest[$bt]) ? (int)$largest[$bt] : 0;
                     }
+                    $tiles = isset($stats['tiles']) ? (int)$stats['tiles'] : 0;
+                    $score = (int)$entry['score'];
+                    $confidence = $efficiencyMinTiles > 0
+                        ? pow(min($tiles, $efficiencyMinTiles) / $efficiencyMinTiles, $efficiencyMinTilesExponent)
+                        : 1.0;
                     $clean[] = [
                         'name'         => (string)$entry['name'],
-                        'score'        => (int)$entry['score'],
+                        'score'        => $score,
                         'date'         => isset($entry['date']) ? (string)$entry['date'] : '',
-                        'tiles'        => isset($stats['tiles'])      ? (int)$stats['tiles']      : 0,
+                        'tiles'        => $tiles,
+                        'efficiency'   => $tiles > 0 ? round(($score / $tiles) * $confidence, 1) : 0.0,
                         'trains'       => isset($stats['trainLines']) ? (int)$stats['trainLines'] : 0,
                         'boats'        => isset($stats['boatCount'])  ? (int)$stats['boatCount']  : 0,
                         'mills'        => isset($stats['millCount'])  ? (int)$stats['millCount']  : 0,
@@ -109,7 +176,7 @@ if (file_exists($hsFile)) {
                     ];
                 }
             }
-            usort($clean, function($a, $b) { return $b['score'] - $a['score']; });
+            usort($clean, function($a, $b) { return $b['efficiency'] <=> $a['efficiency']; });
             $highscores = array_slice($clean, 0, 10);
         }
     }
@@ -123,7 +190,7 @@ function fmt_date($iso) {
 }
 ?>
 <!doctype html>
-<html lang="fr" data-lang="fr" data-theme="ancien">
+<html lang="fr" data-lang="fr" data-theme="<?= htmlspecialchars($defaultTheme) ?>">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -146,6 +213,17 @@ function fmt_date($iso) {
 
 <div id="particles-js" aria-hidden="true"></div>
 <div class="bg-layer" aria-hidden="true"></div>
+
+<!-- 2026-08-01 — cadre décoratif médiéval, repris tel quel du jeu (game.php,
+     cf. CONTEXT.md §39) : même image (cadre.png), même technique CSS (4
+     divs posées par-dessus tout via z-index, gauche/droite en rotation
+     90°/-90°). Demande explicite : "par dessus tout le reste, simplement".
+     Masqué par défaut (thème bleu), affiché uniquement en [data-theme="ancien"]
+     via css/themes/medieval.css. -->
+<div id="prezFooterBanner" aria-hidden="true"></div>
+<div id="prezHeaderBanner" aria-hidden="true"></div>
+<div id="prezLeftBanner" aria-hidden="true"></div>
+<div id="prezRightBanner" aria-hidden="true"></div>
 
 <!-- ─── NAV ────────────────────────────────────────────────────── -->
 <nav>
@@ -197,7 +275,7 @@ function fmt_date($iso) {
   <div class="container">
     <div class="hero-inner">
       <div class="hero-text">
-        <h1 class="hero-title">⬡ HEXISTENZ<?php if ($version): ?><span class="hero-version"><?= htmlspecialchars($version) ?></span><?php endif; ?></h1>
+        <h1 class="hero-title">⬡ HEXISTENZ<?php if ($version): ?><span class="hero-version"><?= htmlspecialchars($version) ?></span><?php endif; ?><?php if ($versionDate): ?><span class="hero-version-date" id="heroVersionDate"><?= htmlspecialchars($versionDate) ?></span><?php endif; ?></h1>
         <p class="hero-subtitle" data-i18n="hero.subtitle"><?= tr($t,'fr','hero.subtitle') ?></p>
 
         <p class="hero-inspi" data-i18n="hero.inspi_text"><?= tr($t,'fr','hero.inspi_text') ?></p>
@@ -247,6 +325,8 @@ function fmt_date($iso) {
           <div class="stat-item"><div class="stat-num">6</div><div class="stat-label" data-i18n="hero.stats.biomes_label"><?= tr($t,'fr','hero.stats.biomes_label') ?></div></div>
           <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label" data-i18n="hero.stats.games_label"><?= tr($t,'fr','hero.stats.games_label') ?></div></div>
           <div class="stat-item"><div class="stat-num">2</div><div class="stat-label" data-i18n="hero.stats.factions_label"><?= tr($t,'fr','hero.stats.factions_label') ?></div></div>
+          <div class="stat-item"><div class="stat-num">9</div><div class="stat-label" data-i18n="hero.stats.langs_label"><?= tr($t,'fr','hero.stats.langs_label') ?></div></div>
+          <div class="stat-item"><div class="stat-num">2</div><div class="stat-label" data-i18n="hero.stats.themes_label"><?= tr($t,'fr','hero.stats.themes_label') ?></div></div>
         </div></div>
       </div>
 
@@ -399,6 +479,7 @@ function fmt_date($iso) {
       <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.space_kbd"><?= tr($t,'fr','gameplay.kbd.space_kbd') ?></kbd><span data-i18n="gameplay.kbd.immersive"><?= tr($t,'fr','gameplay.kbd.immersive') ?></span></div>
       <div class="kbd-strip-item"><kbd data-i18n="gameplay.kbd.shift_kbd"><?= tr($t,'fr','gameplay.kbd.shift_kbd') ?></kbd><kbd data-i18n="gameplay.kbd.space_kbd"><?= tr($t,'fr','gameplay.kbd.space_kbd') ?></kbd><span data-i18n="gameplay.kbd.super_immersive"><?= tr($t,'fr','gameplay.kbd.super_immersive') ?></span></div>
       <div class="kbd-strip-item"><kbd>M</kbd><span data-i18n="gameplay.kbd.mute"><?= tr($t,'fr','gameplay.kbd.mute') ?></span></div>
+      <div class="kbd-strip-item"><kbd>T</kbd><span data-i18n="gameplay.kbd.mute_tts"><?= tr($t,'fr','gameplay.kbd.mute_tts') ?></span></div>
       <div class="kbd-strip-item"><kbd>H</kbd><kbd>ESC</kbd><span data-i18n="gameplay.kbd.help"><?= tr($t,'fr','gameplay.kbd.help') ?></span></div>
       </div>
     </div>
@@ -581,6 +662,10 @@ function fmt_date($iso) {
         ['key' => 'spatial',  'icon' => '🎧'],
         ['key' => 'chimai',   'icon' => '🎻'],
         ['key' => 'adaptive', 'icon' => '🎶'],
+        // 2026-07-31 — voix off (TTS, cf. CONTEXT.md §35) : points/missions/repères
+        // d'interface annoncés à voix haute, jingle .ogg devant chaque annonce de
+        // mission, dans les 9 langues du jeu.
+        ['key' => 'voice',    'icon' => '🗣️'],
         ['key' => 'silence',  'icon' => '🔇'],
       ];
       foreach ($audioCards as $ac): $k = $ac['key']; ?>
@@ -612,6 +697,10 @@ function fmt_date($iso) {
         ['key' => 'godrays', 'img' => 'images/godrays.jpg',  'alt' => 'God Rays',      'icon' => '🔆', 'cls' => 'daynight-card',       'span' => true],
         ['key' => 'rain',    'img' => 'images/pluie.jpg',    'alt' => 'Pluie',         'icon' => '🌧️', 'cls' => 'daynight-card rain',  'span' => true],
         ['key' => 'mist',    'img' => 'images/brume.jpg',    'alt' => 'Brume matinale','icon' => '🌫️', 'cls' => 'daynight-card mist',  'span' => true],
+        // 2026-07-30 — orage + incendies (cf. CONTEXT.md §36). L'illustration images/orage.jpg
+        // est fournie séparément par Piregwan ; le reste de la carte (textes 9 langues sous
+        // daynnight.storm) est en place et s'affichera dès que le fichier sera déposé.
+        ['key' => 'storm',   'img' => 'images/orage.jpg',    'alt' => 'Orage et incendies','icon' => '⚡', 'cls' => 'daynight-card rain', 'span' => true],
       ];
       foreach ($dnCards as $di => $dc):
         $k = $dc['key'];
@@ -769,23 +858,25 @@ function fmt_date($iso) {
         <div class="hs-main">
           <div class="hs-name"><?= htmlspecialchars($hs['name']) ?></div>
           <?php if ($dateStr): ?><div class="hs-date"><?= $dateStr ?></div><?php endif; ?>
-          <?php if ($i < 3 && $hs['tiles'] > 0): ?>
+          <?php if ($i < 6 && $hs['tiles'] > 0): ?>
           <div class="hs-headline-stat"><span class="icon">⬡</span><?= number_format($hs['tiles']) ?> <span data-i18n="scores.headline_stat"><?= tr($t,'fr','scores.headline_stat') ?></span></div>
           <?php endif; ?>
           <?php
-            // 2026-07-20 — "format étendu" (détail trains/bateaux/moulins/comètes +
-            // biomes) réservé aux 3 premiers rangs (demande explicite) : au-delà,
-            // la carte garde EXACTEMENT le même gabarit (rang/nom/date/score) mais
-            // sans le détail, pour rester lisible sur un classement plus long (jusqu'à
-            // 10). $smallStats reste vide pour $i >= 3, donc le bloc .hs-meta plus bas
-            // ($smallStats && ...) ne s'affiche simplement pas.
+            // 2026-07-20 — "format étendu" (détail trains/bateaux/moulins + biomes)
+            // réservé aux 6 premiers rangs (2026-07-31 : élargi de 3 à 6 sur demande
+            // explicite) : au-delà, la carte garde EXACTEMENT le même gabarit (rang/
+            // nom/date/score) mais sans ce détail, pour rester lisible sur un
+            // classement plus long (jusqu'à 10). Exception (2026-07-31, demande
+            // explicite) : les COMÈTES sortent de cette règle — comptées sur CHAQUE
+            // entrée (jusqu'à 10), même à 0, juste après les moulins ; cf. bloc dédié
+            // plus bas, volontairement HORS du "if ($i < 6)".
             // TOUTES les petites stats (lignes/bateaux/comètes + détail biomes) dans
             // UN SEUL flux .hs-meta — pas de blocs séparés qui se retrouvent sur des
             // lignes différentes. Même style partout (cf. .hs-meta-item en CSS).
             // Un seul data-i18n par mot (singulier/pluriel choisi ici, uniforme sur
             // les 3 langues depuis la refonte du 2026-07-14 : toutes ont .s/.p).
             $smallStats = '';
-            if ($i < 3) {
+            if ($i < 6) {
             if ($hs['trains'] > 0) {
               $key = $hs['trains'] > 1 ? 'scores.trains_p' : 'scores.trains_s';
               $smallStats .= '<span class="hs-meta-item"><span class="icon">🚂</span><span class="hs-stat-num">' . $hs['trains'] . '</span>'
@@ -801,11 +892,17 @@ function fmt_date($iso) {
               $smallStats .= '<span class="hs-meta-item"><span class="icon">⚙️</span><span class="hs-stat-num">' . $hs['mills'] . '</span>'
                 . ' <span data-i18n="' . $key . '">' . htmlspecialchars(tr($t,'fr',$key)) . '</span></span>';
             }
-            if ($hs['comets'] > 0) {
-              $key = $hs['comets'] > 1 ? 'scores.comets_p' : 'scores.comets_s';
-              $smallStats .= '<span class="hs-meta-item"><span class="icon">☄️</span><span class="hs-stat-num">' . $hs['comets'] . '</span>'
-                . ' <span data-i18n="' . $key . '">' . htmlspecialchars(tr($t,'fr',$key)) . '</span></span>';
             }
+            // 2026-07-31 — demande explicite : contrairement aux autres stats
+            // détaillées ci-dessus (réservées aux 6 premiers rangs, ET seulement
+            // si >0), le nombre de comètes cliquées doit être visible sur CHAQUE
+            // entrée du classement (jusqu'à 10) — y compris à 0 — juste après les
+            // moulins dans le flux .hs-meta. D'où : hors du bloc "if ($i < 6)"
+            // ci-dessus, et sans garde ">0".
+            $cometKey = $hs['comets'] > 1 ? 'scores.comets_p' : 'scores.comets_s';
+            $smallStats .= '<span class="hs-meta-item"><span class="icon">☄️</span><span class="hs-stat-num">' . $hs['comets'] . '</span>'
+              . ' <span data-i18n="' . $cometKey . '">' . htmlspecialchars(tr($t,'fr',$cometKey)) . '</span></span>';
+            if ($i < 6) {
             foreach ($biomeIcons as $bt => $icon) {
               $tot = $hs['totals'][$bt] ?? 0;
               $max = $hs['largest'][$bt] ?? 0;
@@ -822,13 +919,23 @@ function fmt_date($iso) {
                   . '</span>';
               }
             }
-            } // fin if ($i < 3) — format étendu réservé aux 3 premiers rangs
+            } // fin if ($i < 6) — format étendu réservé aux 6 premiers rangs
             if ($smallStats): ?>
           <div class="hs-meta"><?= $smallStats ?></div>
           <?php endif; ?>
         </div>
         <div class="hs-score-col">
-          <div class="hs-score"><?= number_format($hs['score']) ?></div>
+          <!-- 2026-07-31 — classement reclassé par efficacité (score/tuile), demande
+               explicite : affichée sur TOUTES les entrées (pas seulement les 6
+               détaillées) puisque c'est désormais le critère de tri du classement.
+               2e demande (même jour) : devient le nombre EN AVANT (gros, en premier),
+               le score brut passant en second, réduit — hiérarchie visuelle inversée
+               par rapport à la 1ère version. -->
+          <div class="hs-efficiency"><?= number_format($hs['efficiency'], 1) ?>%</div>
+          <!-- 2026-07-31 — 3e demande (même jour) : le score, désormais discret sous
+               l'efficacité, doit être suivi de son unité ("pts" + équivalents, 9
+               langues) pour rester lisible une fois réduit. -->
+          <div class="hs-score"><?= number_format($hs['score']) ?> <span data-i18n="scores.pts_suffix"><?= htmlspecialchars(tr($t,'fr','scores.pts_suffix')) ?></span></div>
         </div>
         </div>
       </div>
@@ -874,6 +981,10 @@ function fmt_date($iso) {
   const I18N = JSON.parse(document.getElementById('i18n-data').textContent);
   const LANGS = <?= json_encode($LANGS, JSON_UNESCAPED_UNICODE) ?>;
   const LANG_FILES = <?= json_encode($LANG_FILES, JSON_UNESCAPED_UNICODE) ?>;
+  // 2026-07-29 — mtime de javascript/variables.js (ms, pour `new Date()` côté JS),
+  // utilisé par updateVersionDate() plus bas pour reformater la date affichée à
+  // côté de la pastille de version selon la langue en cours.
+  const HEXISTENZ_VARS_MTIME = <?= $varsMtime ? ((int)$varsMtime * 1000) : 'null' ?>;
 
   function resolveI18n(lang, path) {
     return path.split('.').reduce((node, key) => (node && typeof node === 'object') ? node[key] : undefined, I18N[lang]);
@@ -903,8 +1014,94 @@ function fmt_date($iso) {
     });
   }
 
-  async function setLang(l) {
-    if (!LANGS.includes(l)) l = 'fr';
+  // ─── TTS prez (2026-07-29) — annonce vocale au changement de langue/thème ────
+  // Page hors du graphe de modules du jeu (tout ce <script> est en JS classique,
+  // pas type="module") : pas de réutilisation directe de gameLangReactive.js/
+  // ttsAnnouncer.js — setLang()/setTheme() ci-dessous ne passent PAS par
+  // gameLangReactive.js::setGameLang(), donc les callbacks registerLangRefresh de
+  // ttsAnnouncer.js ne se déclencheraient jamais ici (désync garantie). Mécanisme
+  // dédié et minimal à la place, qui lit directement I18N[lang] (déjà chargé par
+  // ensureLang() ci-dessus) au moment de parler — jamais de valeur mise en cache
+  // à l'avance. Même logique de sélection de voix que javascript/ttsAnnouncer.js
+  // (dupliquée ici plutôt qu'importée, même pattern que snapshotsPage.js/
+  // replaysPage.js qui dupliquent déjà leur propre mini-map de locales).
+  const TTS_LOCALES_PREZ = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA', de: 'de-DE', ru: 'ru-RU', 'fr-MED': 'fr-FR' };
+
+  // 2026-07-29 — reformate la date à côté de la pastille de version (span
+  // #heroVersionDate, rendu en français par PHP par défaut) dans la langue en
+  // cours, via Intl.DateTimeFormat — réutilise TTS_LOCALES_PREZ ci-dessus
+  // (mêmes codes BCP47 déjà nécessaires pour le TTS, pas besoin d'une 2e map).
+  function updateVersionDate(l) {
+    const el = document.getElementById('heroVersionDate');
+    if (!el || !HEXISTENZ_VARS_MTIME) return;
+    const locale = TTS_LOCALES_PREZ[l] ?? TTS_LOCALES_PREZ.fr;
+    try {
+      el.textContent = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' })
+        .format(new Date(HEXISTENZ_VARS_MTIME));
+    } catch (_) {
+      // Locale non reconnue par le moteur JS (cas limite navigateur) → on garde
+      // le texte déjà affiché (rendu FR initial ou dernière langue valide) plutôt
+      // que de planter le reste de setLang().
+    }
+  }
+  // fr-CA sans voix dédiée sur la plupart des postes → repli nommé ; allemand →
+  // préférence voix masculine (demande explicite, cf. ttsAnnouncer.js::FALLBACK_VOICE_HINTS).
+  const PREZ_VOICE_HINTS = { 'fr-CA': ['julie', 'paul'], de: ['stefan', 'markus', 'conrad', 'yannick', 'klaus', 'male'], ru: ['pavel', 'dmitry', 'dmitri', 'yuri', 'male'] };
+  let _prezVoicesCache = [];
+  if ('speechSynthesis' in window) {
+    const _refreshPrezVoices = () => { _prezVoicesCache = window.speechSynthesis.getVoices(); };
+    _refreshPrezVoices();
+    window.speechSynthesis.onvoiceschanged = _refreshPrezVoices;
+  }
+  function _pickPrezVoice(locale, langCode) {
+    if (!_prezVoicesCache.length) return null;
+    const lang = locale.toLowerCase();
+    const base = lang.split('-')[0];
+    const hints = PREZ_VOICE_HINTS[langCode];
+    const exactMatches = _prezVoicesCache.filter(v => v.lang.toLowerCase() === lang);
+    if (exactMatches.length) {
+      if (hints) {
+        for (const hint of hints) {
+          const hinted = exactMatches.find(v => v.name.toLowerCase().includes(hint));
+          if (hinted) return hinted;
+        }
+      }
+      return exactMatches[0];
+    }
+    const family = _prezVoicesCache.filter(v => v.lang.toLowerCase().startsWith(base + '-'));
+    if (hints) {
+      for (const hint of hints) {
+        const hinted = family.find(v => v.name.toLowerCase().includes(hint));
+        if (hinted) return hinted;
+      }
+    }
+    if (family.length) return family[0];
+    return _prezVoicesCache.find(v => v.lang.toLowerCase() === base) || null;
+  }
+  // 2026-07-31 — état muet des touches M (son) / T (voix), locale à cette page
+  // (session uniquement, jamais persisté — même choix que scene.js). Déclaré ICI,
+  // avant speakPrez(), pour que son garde-fou _prezTtsMuted soit toujours défini.
+  let _prezSoundMuted = false;
+  let _prezTtsMuted = false;
+
+  function speakPrez(text, langCode) {
+    if (!text || !('speechSynthesis' in window)) return;
+    if (_prezTtsMuted) return;
+    const locale = TTS_LOCALES_PREZ[langCode] ?? TTS_LOCALES_PREZ.fr;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = locale;
+    const voice = _pickPrezVoice(locale, langCode);
+    if (voice) utter.voice = voice;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  }
+
+  // `announce = false` sur les 2 appels d'initialisation ci-dessous (langue/thème
+  // restaurés depuis localStorage au chargement de la page) : on ne parle QUE sur
+  // une action explicite de l'utilisateur via les sélecteurs, jamais au premier
+  // affichage.
+  async function setLang(l, announce = true) {
+    if (!LANGS.includes(l)) l = 'fr-CA';
     await ensureLang(l);
     document.documentElement.lang = l;
     document.documentElement.dataset.lang = l;
@@ -915,19 +1112,47 @@ function fmt_date($iso) {
     const sel = document.getElementById('langSelect');
     if (sel) sel.value = l;
     applyI18n(l);
+    updateVersionDate(l);
     if (typeof updateNavCompact === 'function') updateNavCompact();
+    if (announce) speakPrez(resolveI18n(l, 'game.tts.languageChanged') ?? resolveI18n('fr', 'game.tts.languageChanged'), l);
   }
 
   const saved = localStorage.getItem('hexistenz_pres_lang');
-  setLang(LANGS.includes(saved) ? saved : 'fr');
+  // 2026-07-31 — repli "fr-CA" (au lieu de "fr") au tout premier lancement, sur
+  // demande explicite. ensureLang() (setLang ci-dessus) ira chercher fr-CA.json
+  // à la volée si le cookie PHP n'avait pas déjà pré-embarqué la bonne langue.
+  setLang(LANGS.includes(saved) ? saved : 'fr-CA', false);
 
   // ─── Sélecteur de thème graphique (2026-07-17) ─────────────────────────────
   // Même clé localStorage que javascript/themeManager.js (utilisé côté jeu) :
   // le choix fait ici est partagé avec game.php. Thème par défaut "ancien"
   // (Médiéval) depuis 2026-07-17, cf. CONTEXT.md §32.
+  // 2026-08-01 — demande explicite : par défaut MOBILE (Android/iOS/autre),
+  // préférer "bleu" (léger) à "ancien" (cadre décoratif lourd, cf.
+  // javascript/themeManager.js pour l'explication complète) — uniquement
+  // quand aucun choix n'a jamais été stocké par le visiteur (cf. plus bas).
+  // Détection dupliquée ici (même regex que themeManager.js) car cette page
+  // n'importe pas ce module en ES module (script classique) ; $defaultTheme
+  // (PHP, même regex côté serveur) évite déjà le flash visuel au tout
+  // premier rendu, ce bloc JS ne fait que confirmer/persister le même choix.
   const THEMES = ['bleu', 'ancien'];
-  function setTheme(th) {
-    if (!THEMES.includes(th)) th = 'ancien';
+  function isMobileDevice() {
+    try {
+      if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
+        return navigator.userAgentData.mobile;
+      }
+    } catch {}
+    try {
+      return /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(navigator.userAgent || '');
+    } catch {
+      return false;
+    }
+  }
+  function defaultTheme() {
+    return isMobileDevice() ? 'bleu' : 'ancien';
+  }
+  function setTheme(th, announce = true) {
+    if (!THEMES.includes(th)) th = defaultTheme();
     document.documentElement.dataset.theme = th;
     localStorage.setItem('hexistenz_theme', th);
     const sel = document.getElementById('themeSelect');
@@ -937,9 +1162,91 @@ function fmt_date($iso) {
     // premier appel (page load). Il existera pour tous les changements de
     // thème ultérieurs via le sélecteur, d'où la garde ci-dessous.
     if (window.initParticles) window.initParticles(th);
+    // 2026-07-29 — annonce vocale (TTS) du thème, dans la langue actuellement
+    // affichée (pas liée au thème lui-même) — réutilise directement theme.bleu/
+    // theme.ancien, déjà traduit dans les 7 langues (mêmes clés que les <option>
+    // data-i18n ci-dessus).
+    if (announce) {
+      const currentLang = document.documentElement.dataset.lang || 'fr';
+      speakPrez(resolveI18n(currentLang, 'theme.' + th) ?? resolveI18n('fr', 'theme.' + th), currentLang);
+    }
   }
   const savedTheme = localStorage.getItem('hexistenz_theme');
-  setTheme(THEMES.includes(savedTheme) ? savedTheme : 'ancien');
+  setTheme(THEMES.includes(savedTheme) ? savedTheme : defaultTheme(), false);
+
+  // ─── Touches M / T sur la prez (2026-07-31, demande explicite) ─────────────
+  // Déjà documentées dans le bandeau clavier de cette page (gameplay.kbd.mute/
+  // .mute_tts, cf. plus haut) mais jusqu'ici sans aucun effet ICI (elles ne
+  // pilotaient que le jeu, game.php) — cf. CONTEXT.md §35 pour l'équivalent
+  // in-game (scene.js, key === 'm'/'t'). Même séparation stricte : M coupe/
+  // rétablit UNIQUEMENT la musique de fond (initPrezMusic plus bas dans le
+  // fichier, expose window.__prezMusicAudio), T coupe/rétablit UNIQUEMENT les
+  // annonces vocales (speakPrez, via _prezTtsMuted ci-dessus) — jamais l'un
+  // sans l'autre.
+  //
+  // Erratum (même jour) : la 1ère version ne montrait RIEN à la coupure (pas de
+  // popup central sur cette page, contrairement au jeu) et ne parlait qu'à la
+  // réactivation — repéré en test réel : la touche T (silence à la coupure,
+  // PAR DESIGN) semblait donc "ne rien faire du tout" au premier appui, faute
+  // de tout retour perceptible (le fonctionnement lui-même était pourtant
+  // correct — vérifié en rejouant exactement la séquence de touches réelle).
+  // Fix : petit toast visuel (#prez-toast, css/presentation.css) affiché sur
+  // LES DEUX directions pour M et pour T, en plus de la confirmation vocale
+  // qui elle reste réservée à la réactivation (mêmes clés déjà traduites en 9
+  // langues, game.sound.on/off et game.tts.voiceOn/Off — game.php utilise ces
+  // mêmes clés pour son propre popup central).
+  let _prezToastTimer = null;
+  function showPrezToast(text) {
+    if (!text) return;
+    let el = document.getElementById('prez-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'prez-toast';
+      el.className = 'prez-toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = text;
+    clearTimeout(_prezToastTimer);
+    // Force un reflow avant d'ajouter la classe --visible, pour que la
+    // transition CSS se rejoue même si le toast était déjà affiché (appuis
+    // rapprochés sur M/T).
+    el.classList.remove('prez-toast--visible');
+    void el.offsetWidth;
+    el.classList.add('prez-toast--visible');
+    _prezToastTimer = setTimeout(() => el.classList.remove('prez-toast--visible'), 1400);
+  }
+
+  function isPrezFormTarget(target) {
+    if (!target) return false;
+    const tag = target.tagName?.toLowerCase();
+    return tag === 'input' || tag === 'select' || tag === 'textarea' || target.isContentEditable;
+  }
+
+  window.addEventListener('keydown', (event) => {
+    if (isPrezFormTarget(event.target)) return;
+    const key = event.key.toLowerCase();
+    const currentLang = document.documentElement.dataset.lang || 'fr';
+
+    if (key === 'm') {
+      event.preventDefault();
+      _prezSoundMuted = !_prezSoundMuted;
+      if (window.__prezMusicAudio) window.__prezMusicAudio.muted = _prezSoundMuted;
+      const key2 = _prezSoundMuted ? 'game.sound.off' : 'game.sound.on';
+      showPrezToast(resolveI18n(currentLang, key2) ?? resolveI18n('fr', key2));
+      if (!_prezSoundMuted) speakPrez(resolveI18n(currentLang, key2) ?? resolveI18n('fr', key2), currentLang);
+      return;
+    }
+
+    if (key === 't') {
+      event.preventDefault();
+      _prezTtsMuted = !_prezTtsMuted;
+      if (_prezTtsMuted && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+      const key2 = _prezTtsMuted ? 'game.tts.voiceOff' : 'game.tts.voiceOn';
+      showPrezToast(resolveI18n(currentLang, key2) ?? resolveI18n('fr', key2));
+      if (!_prezTtsMuted) speakPrez(resolveI18n(currentLang, key2) ?? resolveI18n('fr', key2), currentLang);
+      return;
+    }
+  });
 
   const navToggle = document.getElementById('navToggle');
   const navLinks  = document.getElementById('navLinks');
@@ -1162,6 +1469,12 @@ window.initParticles(document.documentElement.dataset.theme === 'bleu' ? 'bleu' 
   }
 
   tryPlay();
+
+  // 2026-07-31 — exposée pour la touche M (listener global installé plus haut
+  // dans le fichier, bloc TTS/setLang) : .muted plutôt que volume à 0, pour ne
+  // jamais interférer avec le fondu d'entrée (fadeIn ci-dessus) ni avec une
+  // reprise après un futur ré-armement autoplay.
+  window.__prezMusicAudio = audio;
 })();
 </script>
 </body>

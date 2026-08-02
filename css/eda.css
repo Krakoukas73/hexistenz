@@ -6,7 +6,7 @@
 
 .debug-light-panel {
   position: fixed;
-  bottom: 14px;
+  bottom: 4px;   /* 2026-08-01 — demande explicite : rapprocher du bord bas (max 4px) */
   left: 14px;
   right: 14px;
   z-index: 3000;
@@ -17,6 +17,44 @@
   pointer-events: none;
   color: #f4ead6;
   font: 12px/1.35 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* 2026-08-01 — demande explicite : écarter du cadre décoratif ingame en
+   thème médiéval (cf. CONTEXT.md §39) — .debug-light-panel (les 9 boutons
+   bas-droite + FPS/EDA) longe les 3 bords bas/gauche/droite, donc les 3
+   décalés. Thème bleu non concerné (pas de cadre), règle de base inchangée.
+   ERRATUM (même jour) : +85px jugé trop → ramené à +65px. Ce même delta de
+   65px a été répercuté sur les réserves de hauteur de .fps-counter et
+   .debug-light-body (thème ancien, plus bas dans ce fichier) : ces 2
+   panneaux se déploient VERS LE HAUT depuis ce bandeau, donc remonter le
+   bandeau de 65px réduit d'autant l'espace disponible au-dessus avant de
+   sortir de l'écran — sans ce correctif, EDA et le HUD FPS débordaient par
+   le haut (bug signalé).
+   ERRATUM 2 (même jour) : marge cadre 65px → 52px. bottom = 4+52 = 56px ;
+   left/right = 14+52 = 66px. Répercuté également sur .fps-hud-fullscreen et
+   .debug-light-body plus bas. */
+[data-theme="ancien"] .debug-light-panel {
+  bottom: 56px;
+  left: 66px;
+  right: 66px;
+}
+
+/* 2026-07-31 — état replié par défaut : seul .debug-light-left-col est visible
+   (.debug-light-body est display:none), donc `justify-content:space-between` ci-dessus
+   n'a plus qu'un seul enfant à répartir et le colle mécaniquement à flex-start (gauche).
+   CORRECTIF (même jour) : une 1ère version poussait TOUT .debug-light-left-col à droite
+   via `justify-content:flex-end` sur le panel — ça déplaçait aussi #fps-counter (HUD FPS,
+   touche F), qui vit dans ce même conteneur et doit lui rester aligné à gauche. Au lieu de
+   déplacer la boîte entière, .debug-light-left-col est élargi à 100% (uniquement replié :
+   aucun effet en état déployé, où il garde sa taille shrink-to-fit d'origine) pour offrir
+   de l'espace interne, et seule .debug-light-btn-rows (les boutons) se pousse à droite via
+   align-self ci-dessous — #fps-counter garde l'alignement flex-start par défaut du parent. */
+.debug-light-panel.collapsed .debug-light-left-col {
+  width: 100%;
+}
+
+.debug-light-btn-rows {
+  align-self: flex-end;
 }
 
 .debug-light-left-col {
@@ -40,9 +78,21 @@
   /* Limite la hauteur totale à l'écran disponible, avec scroll interne.
      Réserve : 34px (boutons) + 6px (gap) + 14px (bas) + 14px (haut) = 68px */
   max-height: calc(100vh - 72px);
-  display: flex;
+  /* 2026-07-31, demande explicite : le badge FPS REPLIÉ (résumé FPS/CPU/GPU,
+     _buildHud() avec _fpsHudExpanded=false) ne doit plus jamais s'afficher —
+     avant ce fix il restait visible en permanence, seul le panneau détaillé
+     (touche F) était optionnel. `display: none` par défaut ; ré-autorisé
+     UNIQUEMENT par .fps-hud-fullscreen ci-dessous (posée par _syncFpsFullscreen()
+     dans hud_fps.js quand _fpsHudExpanded=true, donc uniquement via la touche F
+     ou le bouton du bandeau). Rend caduques (mais inoffensives, laissées telles
+     quelles) les anciennes règles ciblant spécifiquement le badge replié
+     (grid-only-mode, media max-height — cf. plus bas). */
+  display: none;
   flex-direction: column;
   overflow: hidden;
+}
+.debug-light-panel.fps-hud-fullscreen .fps-counter {
+  display: flex;
 }
 
 /* Zone scrollable : tout ce qui est sous le header FPS + indices */
@@ -343,6 +393,16 @@ html[data-theme="ancien"] {
   flex-direction: row;
   gap: 6px;
   pointer-events: none;
+  /* 2026-07-31 — basse résolution : les 9 boutons/selects (flex-shrink:0 chacun,
+     cf. .debug-light-toggle) dépassaient la largeur de l'écran au lieu de passer
+     à la ligne. max-width borne la rangée à la largeur dispo (panneau en
+     position:fixed avec left/right:14px), ce qui déclenche flex-wrap dès que le
+     contenu ne tient plus — sans effet en résolution normale (rangée déjà plus
+     étroite que ce max). justify-content:flex-end aligne aussi la/les ligne(s)
+     à droite, cohérent avec le panneau désormais right-aligned ci-dessus. */
+  flex-wrap: wrap;
+  max-width: calc(100vw - 28px);
+  justify-content: flex-end;
 }
 
 .debug-light-toggle {
@@ -419,6 +479,42 @@ html[data-theme="ancien"] {
   display: inline-block;
   font-size: 1.6em;
   line-height: 1;
+}
+
+/* Boutons 🗣️ (voix TTS, touche T) et 🔊 (son global, touche M) — 2026-07-29,
+   demande explicite. Même pattern span interne que #snapshotBtn/#galleryBtn/#replayBtn. */
+#ttsMuteBtn,
+#soundMuteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#ttsMuteBtn .tts-emoji,
+#soundMuteBtn .sound-emoji {
+  display: inline-block;
+  font-size: 1.6em;
+  line-height: 1;
+}
+
+/* État "coupé" (touche T ou M, ou clic direct sur le bouton) : glyphe assombri +
+   barre diagonale rouge en surimpression — visible sur les 2 thèmes sans réglage
+   supplémentaire (simple calque ::after par-dessus le fond du bouton, thème bleu
+   sidéral OU border-image médiéval, cf. plus bas dans ce fichier). */
+.debug-light-toggle--muted {
+  opacity: 0.5;
+}
+.debug-light-toggle--muted::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 50%;
+  height: 2px;
+  background: rgba(224, 64, 64, 0.9);
+  box-shadow: 0 0 2px rgba(0,0,0,0.6);
+  transform: translateY(-50%) rotate(-30deg);
+  border-radius: 2px;
+  pointer-events: none;
 }
 
 /* ─── Panneau replay (replayEngine.js, 2026-07-16) ────────────────────────────────
@@ -1123,7 +1219,19 @@ html[data-theme="ancien"] {
 /* ── Tooltip custom LUT ── */
 #lutHelpTooltip {
   position: fixed;
-  z-index: 9999;
+  /* 2026-08-01 — demande explicite : les popups d'aide au survol doivent
+     apparaître AU-DESSUS du cadre décoratif médiéval (z-index 99999/99998,
+     cf. CONTEXT.md §39), pas en dessous. #lutHelpTooltip est le SEUL
+     système de tooltip du jeu (partagé game-wide : stats, EDA, boutons,
+     score/efficacité — cf. commentaire medieval.css ~1372). 9999 → 100000.
+     ERRATUM (même jour) : cette règle est en réalité MORTE — javascript/
+     helpTooltip.js injecte dynamiquement en <head> (ensureHelpTooltip(),
+     au runtime, donc APRÈS ce fichier) sa PROPRE règle #lutHelpTooltip qui
+     gagne systématiquement la cascade à spécificité égale. Le vrai z-index
+     à modifier est celui-là (corrigé, même valeur 100000, pour rester
+     cohérent). Valeur laissée ici synchronisée pour éviter toute confusion
+     future, mais sans effet réel. */
+  z-index: 100000;
   max-width: 240px;
   padding: 8px 11px;
   border-radius: 9px;
@@ -1386,20 +1494,12 @@ body.lut-panel-open #kbdHintHud { display: none; }
 body.grid-only-mode .fps-counter { display: none !important; }
 
 /* 2026-07-20 — compatibilité 1920x1080 (fenêtre non maximisée / hauteur d'écran
-   réduite) : masque le badge FPS REPLIÉ quand la hauteur du navigateur manque,
-   comme pour le mode immersif ci-dessus, pour ne pas empiéter sur le jeu.
-   Le panneau DÉPLOYÉ (touche F, .fps-hud-fullscreen) reste toujours affiché —
-   l'utilisateur l'a ouvert explicitement, ce n'est plus le badge visé ici.
-   Seuil relevé 800px→960px (2026-07-20, bug signalé avec capture d'écran) :
-   un vrai navigateur en 1920x1080 (chrome du navigateur ~180-190px, mesuré en
-   direct) ne laisse qu'environ 895px de hauteur utile — largement au-dessus de
-   l'ancien seuil 800px, donc la règle ne se déclenchait jamais dans ce cas précis
-   pourtant explicitement visé par la demande initiale. Vérifié en direct : à
-   895px, #fps-counter (replié) chevauchait #scorePanel de ~50px avant ce fix. */
-@media (max-height: 960px) {
-  .fps-counter { display: none; }
-  .debug-light-panel.fps-hud-fullscreen .fps-counter { display: flex; }
-}
+   réduite) : masquait le badge FPS REPLIÉ quand la hauteur du navigateur manque
+   (chevauchait #scorePanel de ~50px sous 960px de hauteur utile). Devenu
+   redondant le 2026-07-31 : le badge replié est désormais `display: none` par
+   défaut EN PERMANENCE (cf. règle `.fps-counter` plus haut), quelle que soit la
+   hauteur — cette media query ne pouvait donc plus jamais rien changer. Note
+   conservée pour l'historique plutôt que la règle elle-même. */
 
 /* Super-immersif (SHIFT+ESPACE) : aucun HUD — mode capture d'écran */
 body.huds-force-hidden #debugLightPanel { display: none !important; }
@@ -1418,6 +1518,19 @@ body.lut-panel-open #tileUI { display: none !important; }
 body.fps-hud-deployed #scorePanel  { display: none !important; }
 body.fps-hud-deployed #arcadeScore { display: none !important; }
 
+/* 2026-08-01 — demande explicite : quand EDA ou le HUD FPS est ouvert, masquer
+   la rangée des 9 boutons rouges (.debug-light-btn-rows) — "ça sera plus
+   simple" : évite d'avoir à réserver de la place pour cette rangée sous/à
+   côté du panneau ouvert, ce qui permettait au HUD FPS notamment de sortir de
+   l'écran par le haut (le panneau devait jusque-là partager la hauteur
+   disponible avec la rangée de boutons). Fermeture toujours possible via le
+   bouton "X" propre à chaque panneau (#debugLightClose / .fps-hud-close),
+   indépendant de cette rangée. */
+body.lut-panel-open .debug-light-btn-rows,
+body.fps-hud-deployed .debug-light-btn-rows {
+  display: none !important;
+}
+
 /* FPS HUD plein hauteur — le scorePanel est masqué via JS, le fps-counter occupe toute la hauteur */
 .debug-light-panel.fps-hud-fullscreen {
   top: 14px;
@@ -1429,6 +1542,19 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
 .debug-light-panel.fps-hud-fullscreen .fps-counter {
   flex: 1 1 auto;
   max-height: none;
+}
+
+/* 2026-08-01 — demande explicite : "HUD FPS pas assez de marge en haut, trop
+   en bas". Cause : top:14px ci-dessus n'a jamais été adapté au cadre
+   décoratif médiéval (65px, cf. CONTEXT.md §39) — valeur héritée d'avant son
+   existence. Avec la rangée de boutons masquée ci-dessus (.debug-light-btn-
+   rows), .fps-counter (flex:1 1 auto, max-height:none) remplit maintenant
+   TOUTE la hauteur du panneau automatiquement dès que celui-ci est
+   correctement borné en haut ET en bas — d'où le simple ajustement du `top`
+   ci-dessous (le `bottom` reste hérité de la règle ancien de base).
+   ERRATUM (même jour) : marge cadre 65px → 52px. top = 14+52 = 66px. */
+[data-theme="ancien"] .debug-light-panel.fps-hud-fullscreen {
+  top: 66px;
 }
 
 /* ─── [data-theme="bleu"] — apparence actuelle par défaut (HUD FPS + HUD EDA,
@@ -1644,7 +1770,12 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
   box-sizing: content-box;
   width: 380px;
   max-width: calc(100vw - 128px);
-  max-height: calc(100vh - 172px);
+  /* 2026-08-01 — demande explicite : .debug-light-panel (parent, cf. plus
+     haut) a été remonté de 65px pour l'écarter du cadre décoratif — ce
+     panneau se déployant VERS LE HAUT depuis ce bandeau, la réserve doit
+     grandir d'autant pour ne pas sortir de l'écran par le haut (bug
+     signalé "HUD FPS sort de l'écran par le haut"). 172px → 237px. */
+  max-height: calc(100vh - 237px);
   min-height: 0;
   overflow: visible;
 }
@@ -1885,8 +2016,21 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
      bleed sans être tronquée par SON PROPRE overflow. */
   box-sizing: content-box;
   width: min(560px, calc(100vw - 200px));
-  height: calc(100vh - 160px);
-  max-height: calc(100vh - 160px);
+  /* 2026-08-01 — demande explicite : "EDA pas assez de marge en haut, trop en
+     bas". .debug-light-body n'a pas de `top` propre — son sommet est
+     purement déduit de sa propre hauteur totale (contenu + bordure 100px),
+     le panneau parent (.debug-light-panel, bottom:69px ancien) étant
+     "wrap-content" et ancré par le bas via align-items:flex-end. Donc réduire
+     la réserve ci-dessous AUGMENTE mécaniquement la marge du haut sans
+     toucher au bas (déjà correct à 69px) : top résultant = 100vh - bottom(69)
+     - hauteur_totale. Cible : top ≈ 79px (cohérent avec le reste du cadre,
+     65px) → hauteur_totale = 100vh - 69 - 79 = 100vh - 148px → contenu
+     (hauteur_totale - bordure 100px) = 100vh - 248px. 225px → 248px.
+     ERRATUM (même jour) : marge cadre 65px → 52px. bottom panel = 4+52=56 ;
+     top cible = 14+52=66 → hauteur_totale = 100vh-56-66 = 100vh-122px →
+     contenu = 100vh-222px. */
+  height: calc(100vh - 222px);
+  max-height: calc(100vh - 222px);
   overflow: visible;
 }
 [data-theme="ancien"] .debug-light-body[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
@@ -1922,21 +2066,26 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
    .debug-light-toggle--fps-active/--lut-active) rendu via filter: brightness
    au lieu d'un changement de fond (le fond vient de l'image). Cap 8px (mesure
    réelle du rayon de coin sur button2.png). height: 42px FORCÉ (hauteur
-   native de l'image, cf. css/themes/medieval.css §32). */
+   native de l'image, cf. css/themes/medieval.css §32).
+   2026-08-01 — demande explicite : button2.png → button3.png (156x38, cf.
+   css/themes/medieval.css §32 pour l'explication complète). Cap 8px → 6px,
+   height 42px → 38px. */
 [data-theme="ancien"] #snapshotBtn,
 [data-theme="ancien"] #galleryBtn,
 [data-theme="ancien"] #replayBtn,
+[data-theme="ancien"] #ttsMuteBtn,
+[data-theme="ancien"] #soundMuteBtn,
 [data-theme="ancien"] #fpsHudToggle,
 [data-theme="ancien"] #debugLightToggle {
   background: none;
   border-style: solid;
-  border-width: 0 8px;
-  border-image-source: url("../images/button2.png");
-  border-image-slice: 0 8 fill;
-  border-image-width: 0 8px;
+  border-width: 0 6px;
+  border-image-source: url("../images/button3.png");
+  border-image-slice: 0 6 fill;
+  border-image-width: 0 6px;
   border-image-repeat: stretch;
   border-radius: 0;
-  height: 42px;
+  height: 38px;
   box-sizing: border-box;
   color: #f5e2b8;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
@@ -1956,6 +2105,8 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
 [data-theme="ancien"] #snapshotBtn:hover,
 [data-theme="ancien"] #galleryBtn:hover,
 [data-theme="ancien"] #replayBtn:hover,
+[data-theme="ancien"] #ttsMuteBtn:hover,
+[data-theme="ancien"] #soundMuteBtn:hover,
 [data-theme="ancien"] #fpsHudToggle:hover,
 [data-theme="ancien"] #debugLightToggle:hover { filter: brightness(1.12); }
 [data-theme="ancien"] #fpsHudToggle.debug-light-toggle--fps-active,
@@ -1984,13 +2135,13 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
   background-position: right 8px center;
   background-size: 9px 6px;
   border-style: solid;
-  border-width: 0 8px;
-  border-image-source: url("../images/button2.png");
-  border-image-slice: 0 8 fill;
-  border-image-width: 0 8px;
+  border-width: 0 6px;
+  border-image-source: url("../images/button3.png");
+  border-image-slice: 0 6 fill;
+  border-image-width: 0 6px;
   border-image-repeat: stretch;
   border-radius: 0;
-  height: 42px;
+  height: 38px;
   box-sizing: border-box;
   color: #f5e2b8;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
@@ -2034,13 +2185,13 @@ body.fps-hud-deployed #arcadeScore { display: none !important; }
 [data-theme="ancien"] .debug-light-preset-btn {
   background: none;
   border-style: solid;
-  border-width: 0 8px;
-  border-image-source: url("../images/button2.png");
-  border-image-slice: 0 8 fill;
-  border-image-width: 0 8px;
+  border-width: 0 6px;
+  border-image-source: url("../images/button3.png");
+  border-image-slice: 0 6 fill;
+  border-image-width: 0 6px;
   border-image-repeat: stretch;
   border-radius: 0;
-  height: 42px;
+  height: 38px;
   box-sizing: border-box;
   color: #f5e2b8;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);

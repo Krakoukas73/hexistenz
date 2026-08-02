@@ -497,8 +497,19 @@ kbd {
      bleed sans être tronquée par SON PROPRE overflow. */
   box-sizing: content-box;
   padding: 0;
-  width: min(1300px, calc(100vw - 150px));
-  max-height: calc(100vh - 150px);
+  /* 2026-08-01 — CORRECTIF (demande explicite : "aucune marge de sécurité sur
+     les 4 côtés, contenu masqué par le cadre en basse résolution") : les
+     150px d'origine ne réservaient qu'une marge esthétique de viewport,
+     jamais mise à jour depuis l'ajout du cadre décoratif (#footerBanner/etc.,
+     cf. CONTEXT.md §39) — ce panneau est un modal plein écran centré comme
+     .mode-panel (pre-game), pas un HUD de coin, donc même traitement que là-
+     bas plutôt que la convention réduite "52px" des HUD : 100px de marge par
+     côté (85px de cadre + 15px de respiration) × 2 côtés = 200px, PLUS les
+     100px de bordure 9-slice propre à ce parchemin (box-sizing:content-box,
+     s'ajoutent par-dessus width/max-height, jamais inclus dedans) = 300px au
+     total, sur la largeur ET la hauteur. */
+  width: min(1300px, calc(100vw - 300px));
+  max-height: calc(100vh - 300px);
   overflow: visible;
 }
 [data-theme="ancien"] .help-panel[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
@@ -507,7 +518,8 @@ kbd {
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   /* 2026-07-18 — même bug que .fps-counter/.debug-light-body (css/eda.css) :
      la règle générale `[data-theme="ancien"] .internal-parchment { margin:
      -20px -25px -20px -25px; }` (css/themes/medieval.css) s'appliquait quand
@@ -517,7 +529,14 @@ kbd {
      ci-dessus, c'est CET élément (.internal-parchment) qui porte maintenant
      le clip (overflow:hidden ici) — sa propre marge négative n'est jamais
      coupée par son propre overflow. Le bleed s'applique donc enfin
-     normalement. */
+     normalement.
+     2026-08-01 — CORRECTIF (demande explicite : "aucune marge de sécurité,
+     contenu masqué par le cadre") : overflow:hidden remplacé par
+     overflow-y:auto — même pattern que .mode-panel > .internal-parchment
+     (css/multiplayerUi.css) et #scorePanel/.internal-parchment (css/base.css)
+     — un ascenseur réel apparaît désormais si le contenu dépasse l'espace
+     borné par le nouveau budget de .help-panel (cf. règle ci-dessus), au lieu
+     d'être silencieusement rogné sans le moindre indice visuel. */
   margin: -20px -25px -20px -25px;
 }
 [data-theme="ancien"] .help-header { border-bottom: 1px solid rgba(74, 54, 35, 0.24); }

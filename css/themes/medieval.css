@@ -160,19 +160,44 @@
 [data-theme="ancien"] nav {
   left: 30px;
   right: 30px;
+  /* 2026-08-01 — demande explicite ("le cadre passe par-dessus tout, mais le
+     nav doit rester fixe ET VISIBLE") : le cadre médiéval de la prez
+     (#prezHeaderBanner, cf. plus bas, z-index 99999) occupe désormais toute
+     la bande top:0 → 85px de la fenêtre. Le <nav> (jusque-là top:0, hérité de
+     presentation.css) se retrouvait donc entièrement sous cette bande.
+     Poussé de 85px vers le bas pour dégager exactement la hauteur du cadre
+     haut — le nav reste `position:fixed` (inchangé) et son z-index (90) n'a
+     pas besoin d'être relevé : le cadre est purement décoratif
+     (pointer-events:none), donc même s'il recouvre visuellement le TOUT
+     début du nav en dessous de 85px, plus aucun chevauchement ne subsiste
+     avec ce décalage.
+     2026-08-01 — 2e round (demande explicite) : "trou béant en haut et sans
+     texture" — avec border-width top à 0 (valeur d'origine, cf. ci-dessous),
+     le dessus du bandeau nav ne portait aucune texture (background:none),
+     ce qui laissait apparaître le fond plat de la page entre le bas du
+     cadre vertical (#prezHeaderBanner, jusqu'à 85px) et le haut du contenu
+     du nav. Comblé par un bord-image top de 50px (border-width passe à
+     "50px" partout, comme les 3 autres côtés) — même texture manuscrit-1.png,
+     mêmes coins. Nav remonté de 12px (85px → 73px, demande explicite) pour
+     resserrer l'ensemble.
+     2026-08-01 — 3e round (demande explicite : "il reste encore un gap
+     entre le cadre partie haute et le header des menus") : encore 25px de
+     trop → remonté à nouveau, 73px → 48px.
+     2026-08-01 — 4e round (demande explicite : "toujours pas collé en
+     haut") : encore 25px de trop → remonté à nouveau, 48px → 23px. */
+  top: 23px;
   /* padding-top à 12px (valeur d'origine v3, jamais retouché) : c'est la SEULE
-     marge visible côté haut (border-top:0), la réduire écraserait le haut du
-     bandeau. Toute la réduction de hauteur demandée porte donc sur
-     padding-bottom, ramené à 0 (le bord-image 50px du bas contient déjà sa
-     propre marge visuelle via le grain du parchemin, cf. .score-pills qui
-     utilise le même padding:0). Total : 12(haut) + 42(contenu, = hauteur
-     .nav-cta, aucun rognage) + 0(bas) + 50(bord) = 104px (-28px vs 132px
-     d'origine). */
+     marge visible côté haut historique du contenu, en plus du nouveau bord
+     texturé de 50px ci-dessus. padding-bottom resté à 0 (le bord-image 50px
+     du bas contient déjà sa propre marge visuelle via le grain du parchemin,
+     cf. .score-pills qui utilise le même padding:0). Total : 50(bord haut,
+     nouveau) + 12(haut) + 42(contenu, = hauteur .nav-cta, aucun rognage) +
+     0(bas) + 50(bord bas) = 154px. */
   padding: 12px 14px 0;
   height: 42px;
   background: none;
   border-style: solid;
-  border-width: 0 50px 50px 50px;
+  border-width: 50px;
   border-image-source: url("../../images/manuscrit-1.png");
   border-image-slice: 50 fill;
   border-image-repeat: repeat;
@@ -182,12 +207,68 @@
   filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35));
 }
 [data-theme="ancien"] nav[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
+/* 2026-08-01 — demande explicite : "laisse bcp de marge avant la 1ere image
+   bouliste-transparent.png (au moins 125px)". #hero hérite déjà d'un
+   padding-top:96px générique (cf. presentation.css, `section { padding:
+   96px 0; }`), suffisant en thème bleu (nav bas, gap mesuré 138px, déjà
+   >125px, non retouché). En thème médiéval, le <nav> est bien plus haut
+   (border-image top/bottom 50px chacun + cadre, cf. règle [data-theme=
+   "ancien"] nav ci-dessus, nav.bottom ≈ 177px) : le gap réel entre le bas
+   du nav et .hero-banner (96px de padding − 177px de nav) était déjà NÉGATIF
+   avant ce correctif, laissant un chevauchement. margin-top scopé au thème
+   médiéval uniquement (pas touché en bleu, déjà correct) : 206px, dérivé
+   pour obtenir un gap final de 125px pile (206 + 96 padding − 177 nav.bottom
+   = 125), vérifié en direct. */
+[data-theme="ancien"] #hero {
+  margin-top: 206px;
+}
+/* 2026-08-01 — demande explicite : "quand la résolution devient trop basse
+   en largeur... tout le contenu de la prez... se fait déborder par le
+   cadre qui masque en étant par dessus". Cause : .container (presentation.css)
+   n'a que 24px de padding horizontal, très inférieur aux bandes verticales
+   décoratives #prezLeftBanner/#prezRightBanner (85px de large chacune,
+   z-index 99998, cf. plus bas) — dès que le viewport devient plus étroit que
+   1100px+marges, le padding de 24px ne suffit plus à dégager le cadre, qui
+   passe par-dessus (z-index supérieur) et masque titres/images/sections.
+   Fix scopé au thème médiéval uniquement (le thème bleu n'a pas de cadre,
+   confirmé "parfaitement niquel" par l'utilisateur) : padding porté à 100px
+   (85px de cadre + 15px de respiration), qui prime sur le padding générique
+   de presentation.css par la spécificité du sélecteur. Sur les grands écrans
+   ceci ne change rien visuellement : .container est de toute façon centré
+   par ses marges auto sous 1100px de large, seul le gouttière change. */
+[data-theme="ancien"] .container {
+  padding: 0 100px;
+}
 /* gap réduit (20px -> 8px) — nécessaire pour que les 11 liens tiennent sur
    une seule ligne malgré l'espace pris par le cadre 50px + la marge 30px
    (cf. v3, inchangé depuis). */
 [data-theme="ancien"] .nav-links { gap: 0 8px; }
 [data-theme="ancien"] .nav-logo { color: #2a1c0f; }
-[data-theme="ancien"] .hero-version { color: #6b4e10; }
+/* 2026-07-28 — pastille inversée : fond marron sombre, typo claire (parchemin).
+   #4a3623 est le brun dominant du thème, #f0e6d0 sa teinte parchemin clair —
+   les deux déjà utilisés ailleurs dans ce fichier. Géométrie (padding/rayon)
+   dans presentation.css.
+   2026-07-28 (v2) — passage d'un fond plat à un léger dégradé + relief (ombre
+   portée plus prononcée + liseré clair en haut façon biseau métal/cuir gravé),
+   sur demande explicite ("plus graphiques : légers dégradés, ombres"). */
+[data-theme="ancien"] .hero-version {
+  background: linear-gradient(160deg, #5c4530 0%, #4a3623 55%, #3a2a18 100%);
+  color: #f0e6d0;
+  border: 1px solid #2a1c0f;
+  box-shadow:
+    0 3px 8px rgba(20, 12, 5, 0.55),
+    inset 0 1px 0 rgba(255, 240, 210, 0.16),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+}
+/* 2026-07-29 — .hero-version-date héritait de var(--text-dim) (teinte claire
+   pensée pour fond sombre) → quasi invisible sur le parchemin clair de ce
+   thème. Même brun dominant que le reste du thème (#4a3623, cf. .hero-version
+   ci-dessus), sans le fond/la pastille (ce n'en est pas une, cf. presentation.css). */
+[data-theme="ancien"] .hero-version-date {
+  color: #4a3623;
+  opacity: 0.72;
+}
 /* 2026-07-19 — fond clair rgba(74,54,35,0.08) retiré sur demande explicite
    (créait une plaque plus claire visible par-dessus le fond parchemin déjà
    clair du bandeau) : #lang-toggle/#theme-toggle/.nav-toggle restent
@@ -600,11 +681,14 @@
 [data-theme="ancien"] .hs-meta-item .icon::after {
   background: #c9a869;
 }
-[data-theme="ancien"] .hs-score {
+/* 2026-07-31 — couleur transférée de .hs-score à .hs-efficiency (inversion de
+   hiérarchie visuelle demandée : l'efficacité devient le gros nombre coloré,
+   le score brut passe en petit texte discret, cf. presentation.css). */
+[data-theme="ancien"] .hs-efficiency {
   color: #6b4e10;
   text-shadow: none;
 }
-[data-theme="ancien"] .hs-card.gold-1 .hs-score { color: #a5780f; }
+[data-theme="ancien"] .hs-card.gold-1 .hs-efficiency { color: #a5780f; }
 [data-theme="ancien"] .hs-empty {
   font-family: Georgia, "Times New Roman", serif;
   color: #4a3623;
@@ -870,8 +954,25 @@
 [data-theme="ancien"] .player-dot.active { border-color: #6b4e10; background: #f0e6d0; }
 [data-theme="ancien"] .room-scores { border-top: 1px solid rgba(74,54,35,0.25); }
 
-/* Stats-bar mobile (≤600px, cf. presentation.css) : bordures internes 2×2. */
+/* Stats-bar responsive (≤900px puis ≤600px, cf. presentation.css) — même bug
+   aux 2 paliers, même cause : presentation.css pose `flex-wrap`/`display:grid`
+   sur `.stats-bar`, mais en thème ancien c'est `.stats-bar > .internal-parchment`
+   qui porte le layout réel (`.stats-bar` lui-même est `display:block`, cf. plus
+   haut — sélecteur `[data-theme="ancien"] .stats-bar` PLUS spécifique que la
+   règle générique de presentation.css, il gagne donc toujours, y compris dans
+   les media queries). Résultat avant fix : `.internal-parchment` restait
+   `display:flex` SANS wrap à TOUTES les largeurs — les items (5 depuis l'ajout
+   des cartes Langues/Thèmes) se comprimaient hors du cadre visible au lieu de
+   passer sur plusieurs lignes, signalé par l'utilisateur comme seuls les 2
+   premiers items restant visibles. 2026-07-31. */
+@media (max-width: 900px) {
+  [data-theme="ancien"] .stats-bar > .internal-parchment { flex-wrap: wrap; }
+}
 @media (max-width: 600px) {
+  [data-theme="ancien"] .stats-bar > .internal-parchment {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
   [data-theme="ancien"] .stat-item { border-bottom: 1px solid rgba(74,54,35,0.35); }
   [data-theme="ancien"] .stat-item:nth-child(odd) { border-right: 1px solid rgba(74,54,35,0.35); }
 }
@@ -917,19 +1018,25 @@
    border-radius:0 car la forme vient entièrement de l'image (elle a déjà ses
    coins arrondis et sa bordure sombre intégrés). Cible : .nav-cta, .btn-primary,
    .btn-secondary — .nav-toggle explicitement exclu (icône hamburger carrée,
-   pas un bouton texte). */
+   pas un bouton texte).
+   2026-08-01 — demande explicite : image remplacée par button3.png (156x38,
+   -4px largeur/-4px hauteur vs button2.png). Cellules 1/2/3/4/6/7/8/9 (tout
+   sauf le centre 5) 2px moins larges : cap 8px → 6px (border-width,
+   border-image-slice, border-image-width, les 3 doivent rester synchronisés).
+   height forcé 42px → 38px (hauteur native du nouveau fichier, même logique
+   qu'avant : pas de slice vertical, donc toute hauteur ≠ native déforme). */
 [data-theme="ancien"] .nav-cta,
 [data-theme="ancien"] .btn-primary,
 [data-theme="ancien"] .btn-secondary {
   background: none;
   border-style: solid;
-  border-width: 0 8px;
-  border-image-source: url("../../images/button2.png");
-  border-image-slice: 0 8 fill;
-  border-image-width: 0 8px;
+  border-width: 0 6px;
+  border-image-source: url("../../images/button3.png");
+  border-image-slice: 0 6 fill;
+  border-image-width: 0 6px;
   border-image-repeat: stretch;
   border-radius: 0;
-  height: 42px;
+  height: 38px;
   box-sizing: border-box;
   /* 2026-07-19 — fix centrage vertical texte : ces boutons sont des <a> en
      display:inline-block (base bleue, presentation.css) centrés uniquement
@@ -1113,7 +1220,7 @@
     0.32% 19.048%, 0.11% 17.857%, 0.31% 16.667%, 0.7% 15.476%, 0.41% 14.286%, 0.64% 13.095%, 0.25% 11.905%, 0.22% 10.714%,
     0.13% 9.524%, 0.09% 8.333%, 0.65% 7.143%, 0.8% 5.952%, 0.35% 4.762%, 0.2% 3.571%, 0.35% 2.381%, 0.77% 1.19%
   );
-  /* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient
+  /* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient) — commentaire clos le 2026-08-01 (bug pré-existant : ce commentaire n'était jamais fermé, ce qui rendait TOUT le CSS qui suivait dans ce fichier — .parchment-picture--v3/v4/v5, .gallery-card--contain, .parchment-picture::after et l'override #lutHelpTooltip ajouté ce jour — invisible pour le parseur CSS du navigateur, avalé comme texte de commentaire jusqu'au premier "*/" rencontré plus loin dans le fichier. Découvert en vérifiant en direct pourquoi l'override tooltip médiéval ne s'appliquait pas. */
 }
 
 [data-theme="ancien"] .parchment-picture--v3 {
@@ -1161,7 +1268,7 @@
     0.17% 19.048%, 0.54% 17.857%, 0.58% 16.667%, 0.33% 15.476%, 0.17% 14.286%, 0.36% 13.095%, 0.59% 11.905%, 0.43% 10.714%,
     0.33% 9.524%, 0.33% 8.333%, 0.37% 7.143%, 0.44% 5.952%, 0.27% 4.762%, 0.51% 3.571%, 0.27% 2.381%, 0.66% 1.19%
   );
-  /* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient
+  /* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient) — commentaire clos le 2026-08-01 (bug pré-existant : ce commentaire n'était jamais fermé, ce qui rendait TOUT le CSS qui suivait dans ce fichier — .parchment-picture--v3/v4/v5, .gallery-card--contain, .parchment-picture::after et l'override #lutHelpTooltip ajouté ce jour — invisible pour le parseur CSS du navigateur, avalé comme texte de commentaire jusqu'au premier "*/" rencontré plus loin dans le fichier. Découvert en vérifiant en direct pourquoi l'override tooltip médiéval ne s'appliquait pas. */
 }
 
 [data-theme="ancien"] .parchment-picture--v4 {
@@ -1209,7 +1316,7 @@
     0.14% 19.048%, 0.64% 17.857%, 0.12% 16.667%, 0.42% 15.476%, 0.6% 14.286%, 0.17% 13.095%, 0.09% 11.905%, 0.52% 10.714%,
     0.73% 9.524%, 0.09% 8.333%, 0.69% 7.143%, 0.31% 5.952%, 0.28% 4.762%, 0.41% 3.571%, 0.31% 2.381%, 0.21% 1.19%
   );
-  /* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient
+  /* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient) — commentaire clos le 2026-08-01 (bug pré-existant : ce commentaire n'était jamais fermé, ce qui rendait TOUT le CSS qui suivait dans ce fichier — .parchment-picture--v3/v4/v5, .gallery-card--contain, .parchment-picture::after et l'override #lutHelpTooltip ajouté ce jour — invisible pour le parseur CSS du navigateur, avalé comme texte de commentaire jusqu'au premier "*/" rencontré plus loin dans le fichier. Découvert en vérifiant en direct pourquoi l'override tooltip médiéval ne s'appliquait pas. */
 }
 
 [data-theme="ancien"] .parchment-picture--v5 {
@@ -1257,7 +1364,7 @@
     0.39% 19.048%, 0.23% 17.857%, 0.78% 16.667%, 0.09% 15.476%, 0.26% 14.286%, 0.15% 13.095%, 0.17% 11.905%, 0.63% 10.714%,
     0.71% 9.524%, 0.25% 8.333%, 0.67% 7.143%, 0.35% 5.952%, 0.27% 4.762%, 0.11% 3.571%, 0.74% 2.381%, 0.76% 1.19%
   );
-  /* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient
+  /* 2026-07-19 — 4e passe : le fondu rectangulaire (2 linear-gradient) — commentaire clos le 2026-08-01 (bug pré-existant : ce commentaire n'était jamais fermé, ce qui rendait TOUT le CSS qui suivait dans ce fichier — .parchment-picture--v3/v4/v5, .gallery-card--contain, .parchment-picture::after et l'override #lutHelpTooltip ajouté ce jour — invisible pour le parseur CSS du navigateur, avalé comme texte de commentaire jusqu'au premier "*/" rencontré plus loin dans le fichier. Découvert en vérifiant en direct pourquoi l'override tooltip médiéval ne s'appliquait pas. */
 }
 
 /* Types dont l'<img> d'origine porte elle-même l'aspect-ratio (pas de boîte
@@ -1323,4 +1430,362 @@
     repeating-radial-gradient(circle at 30% 20%, rgba(60,40,20,0.5) 0 0.6px, transparent 0.6px 3.2px),
     repeating-linear-gradient(11deg, rgba(60,40,20,0.35) 0 0.5px, transparent 0.5px 7px),
     repeating-linear-gradient(101deg, rgba(60,40,20,0.3) 0 0.5px, transparent 0.5px 9px);
+}
+
+/* 2026-08-01 — demande explicite : l'UI des tooltips hover (#lutHelpTooltip,
+   cf. javascript/helpTooltip.js) est partagée game-wide (stats, EDA, boutons,
+   score/efficacité arcade...) et restait figée dans la palette "bleu sidéral"
+   (fond bleu marine translucide + bordure bleu clair + flou verre) même en
+   thème médiéval, faute d'override. Le CSS de base est injecté en JS dans
+   <head> au premier ensureHelpTooltip() — potentiellement APRÈS ce fichier —
+   mais [data-theme="ancien"] #lutHelpTooltip (spécificité attribut+id) bat
+   #lutHelpTooltip (id seul) quel que soit l'ordre d'injection, donc cet
+   override s'applique sans !important (même logique déjà validée pour les
+   fixes debugLightPanel de ce chantier). Palette "cachet de cire" reprise
+   telle quelle (même brun/crème que .fps-hud-close/.debug-light-close
+   ci-dessus) plutôt que le parchemin 9-slice des grands panneaux fixes
+   (#scorePanel, .help-panel...) — une bulle flottante qui suit la souris et
+   change de taille selon le texte ne se prête pas à un 9-slice. */
+[data-theme="ancien"] #lutHelpTooltip {
+  background: #4a3623;
+  border: 1px solid #6b4e10;
+  box-shadow: 0 6px 20px rgba(20, 12, 4, 0.55);
+  backdrop-filter: none;
+  color: #f0e6d0;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+/* 2026-08-01 — bannière footer.png : collée en bas de l'écran, uniquement ingame
+   en thème médiéval. Le menu pre-game (.mode-screen, z-index:9999, fond opaque,
+   cf. css/multiplayerUi.css) la recouvre déjà naturellement, sans logique JS
+   supplémentaire. La prez (index.php) n'a pas cet élément, donc jamais concernée.
+   z-index bas + pointer-events:none pour ne jamais gêner le HUD (FPS/EDA etc.,
+   z-index >= 3000) ni les clics.
+   2026-08-01 — erratum (demande explicite) : la 1ère version étirait un <img>
+   en width:100vw/height:auto — sur une très grande résolution (5120px de large),
+   le ratio d'origine (1885x119) donnait une bande ~323px de haut, disproportionnée.
+   Remplacé par un <div> à fond RÉPÉTÉ horizontalement : images/footer.png a été
+   redimensionné sur disque à 792x50px (motif déjà nativement seamless, resize
+   uniforme donc toujours seamless) et s'affiche en repeat-x.
+   2026-08-01 — 2e erratum (demande explicite : "le motif qui se répète est trop
+   gros dans le bandeau") : à sa taille native (792x50, background-size:auto), un
+   seul motif (liane/pierre) occupait ~800px de large pour seulement 50px de haut
+   → rendu "zoomé"/disproportionné à l'affichage même si aucune règle CSS ne le
+   grossit littéralement. Fix : background-size réduit (28px, puis 38px après
+   retour "trop petit") — motif plus fin, répété plus souvent.
+   2026-08-01 — 3e round (demande explicite) : nouveau fichier source
+   images/footer2.png (1885x119, RGBA natif, transparence non retouchée cette
+   fois — vérifié via histogramme alpha avant usage) remplace footer.png
+   (792x50, recadré à la volée précédemment). Demande explicite : réduire encore
+   d'au moins 50% par rapport au dernier réglage (38px) → 19px de haut. Largeur
+   recalculée automatiquement (background-size: auto 19px), motif toujours
+   seamless (fichier source inchangé, seul le CSS scale). */
+[data-theme="ancien"] #footerBanner {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 85px;
+  background-image: url("../../images/cadre.png");
+  background-repeat: repeat-x;
+  background-position: bottom left;
+  /* 2026-08-01 — fichier renommé footer2.png → cadre.png (demande explicite),
+     url() mise à jour ci-dessous en conséquence (v0.9.3.37). Aucun autre
+     changement, image identique.
+     2026-08-01 — demande explicite : +180% par rapport à 19px → 19 × 2.8 ≈ 53px.
+     height du conteneur remontée à 53px en même temps (au lieu de rester à 50px)
+     pour ne pas rogner le haut du motif maintenant plus grand que le conteneur.
+     2026-08-01 — BUG CORRIGÉ (demande explicite : "un pixel vide se glisse entre
+     les 2 répétitions, alors que le fichier est seamless") : `background-size:
+     auto 53px` laisse le navigateur calculer la largeur du motif lui-même
+     (1885 × 53/119 = 839.34px, une valeur NON ENTIÈRE). Chaque répétition du
+     repeat-x est alors positionnée avec un arrondi indépendant au pixel près,
+     et ces arrondis s'accumulent/divergent d'une répétition à l'autre → un
+     interstice d'1px apparaît par endroits, alors que le fichier lui-même est
+     parfaitement seamless. Fix : largeur ET hauteur fixées explicitement en
+     pixels ENTIERS (au lieu de `auto <hauteur>`), pour que CHAQUE répétition
+     fasse exactement la même taille en pixels, sans dérive d'arrondi. +40% par
+     rapport à 53px → 53 × 1.4 ≈ 74px de haut ; largeur recalculée à l'identique
+     du ratio d'origine (1885:119) et arrondie à l'entier le plus proche : 1172px.
+     2026-08-01 — 5e round (demande explicite) : +15% par rapport à 74px →
+     74 × 1.15 ≈ 85px de haut ; largeur recalculée au même ratio (1885:119) et
+     arrondie à l'entier : 1346px. Toujours des pixels entiers pour éviter toute
+     dérive d'arrondi sur le repeat-x.
+     2026-08-01 — BUG CORRIGÉ (demande explicite : "l'image de BG est tronquée
+     en hauteur sur le bord inférieur, contrairement aux 3 autres côtés") : la
+     propriété `height` du conteneur était restée à 74px (valeur du round
+     précédent) alors que `background-size` était déjà monté à 85px lors du
+     5e round ci-dessus — oubli lors de cette dernière modif. Avec
+     `background-position: bottom left`, un conteneur plus petit que le
+     motif (74px < 85px) rogne le HAUT du motif (l'ancrage bas restant fixe).
+     Fix : `height` remonté à 85px pour matcher le `background-size`,
+     exactement comme #headerBanner/#leftBanner/#rightBanner. */
+  background-size: 1346px 85px;
+  /* 2026-08-01 — demande explicite : le cadre (4 côtés) passe AU-DESSUS de
+     TOUT le reste de l'UI (HUD, panneaux, modales — le plus haut z-index
+     du projet était jusqu'ici 20000, cf. css/snapshots.css). 99999 garantit
+     de rester gagnant dans tous les cas. pointer-events:none inchangé : le
+     cadre reste purement décoratif, aucun clic n'est intercepté même en
+     z-index maximal. */
+  z-index: 99999;
+  pointer-events: none;
+  user-select: none;
+  /* 2026-08-01 — demande explicite : généralisation de l'ombre validée sur
+     la prez (#prezFooterBanner, cf. plus bas) au jeu (pre-game + ingame).
+     Pas de `transform` sur cet élément (background-position:bottom left
+     suffit, pas de retournement) — le filter s'applique donc directement
+     sans le piège filter+transform rencontré sur #headerBanner ci-dessous.
+     Direction vers le HAUT (vers le contenu, cette bande étant en bas).
+     2026-08-01 — demande explicite : ombre plus diffuse sur les 4 côtés du
+     cadre (jeu + prez, 8 règles au total) — flou +20% (3px→3.6px) et
+     intensité/opacité +20% (0.45→0.54), offset (distance) inchangé. */
+  filter: drop-shadow(0 -2px 3.6px rgba(0, 0, 0, 0.54));
+}
+
+/* 2026-08-01 — demande explicite : le footer devient un cadre ("frame")
+   complet — la même bannière dupliquée en haut de l'écran. #headerBanner
+   réutilise exactement footer2.png, avec les mêmes dimensions/zoom/repeat
+   que #footerBanner (background-size et background-repeat identiques),
+   mais retournée à 180° (transform:rotate(180deg)) et collée en haut
+   (top:0 au lieu de bottom:0). Comme la div est tournée à 180°, son
+   background-position doit aussi être inversé ("top left" au lieu de
+   "bottom left") pour que le motif s'aligne visuellement de la même façon
+   une fois la rotation appliquée. Même logique medieval-only / ingame-only
+   que #footerBanner (masquée par défaut, réaffichée uniquement par
+   [data-theme="ancien"]). */
+/* 2026-08-01 — demande explicite : généralisation de l'ombre validée sur la
+   prez (#prezHeaderBanner) au jeu. Piège filter+transform déjà rencontré et
+   documenté en détail sur #prezHeaderBanner (cf. plus bas dans ce fichier) :
+   combiner `filter` et `transform: rotate(180deg)` sur le MÊME élément
+   rend l'ombre invisible ou mal positionnée (le navigateur calcule la zone
+   de rendu du filtre avant la rotation, sur un layer dont le centre ne
+   correspond plus au centre visuel une fois étendu par le filtre).
+   Restructuré à l'identique : rotation déplacée sur un ::before dédié,
+   `filter` sur le conteneur parent NON transformé — offset standard (Y
+   positif = vers le bas à l'écran, vers le contenu). */
+[data-theme="ancien"] #headerBanner {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 85px;
+  z-index: 99999;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 2px 3.6px rgba(0, 0, 0, 0.54));
+}
+[data-theme="ancien"] #headerBanner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("../../images/cadre.png");
+  background-repeat: repeat-x;
+  background-position: top left;
+  background-size: 1346px 85px;
+  transform: rotate(180deg);
+}
+
+/* 2026-08-01 — demande explicite : côtés gauche/droit du cadre, à base de
+   la même image footer2.png, tournée à 90°/-90°, "passant sous" (donc
+   z-index légèrement inférieur) les parties header/footer au niveau des 4
+   coins. Suite à la demande explicite de faire passer le cadre entier
+   au-dessus de tout le reste de l'UI, le couple header/footer est monté à
+   99999 (cf. plus haut) ; left/right suivent à 99998 — un cran en dessous —
+   pour conserver EXACTEMENT le même agencement relatif des 4 coins qu'avant
+   (header/footer par-dessus), tout en dépassant largement le plus haut
+   z-index utilisé ailleurs dans le projet (20000, css/snapshots.css).
+   #leftBanner/#rightBanner sont des conteneurs verticaux
+   (width:85px, height:100vh) avec overflow:hidden ; le motif (bande
+   horizontale identique à header/footer, même background-size 1346x85)
+   est porté par un pseudo-élément ::before centré puis tourné à 90°/-90°
+   autour de son propre centre — comme le pseudo-élément fait 100vh de
+   long (= la hauteur du conteneur) et 85px d'épais (= la largeur du
+   conteneur), la rotation de 90° l'aligne exactement sur le conteneur
+   sans décalage, quelle que soit la hauteur d'écran. */
+[data-theme="ancien"] #leftBanner,
+[data-theme="ancien"] #rightBanner {
+  display: block;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 85px;
+  height: 100vh;
+  z-index: 99998;
+  pointer-events: none;
+  user-select: none;
+  /* 2026-08-01 — demande explicite : généralisation de l'ombre validée sur
+     la prez (#prezLeftBanner/#prezRightBanner). `overflow: hidden` retiré :
+     le ::before (100vh × 85px avant rotation) recouvre après rotation
+     EXACTEMENT les mêmes dimensions que ce conteneur (85px × 100vh),
+     l'overflow:hidden n'était donc là que par précaution, jamais
+     nécessaire au motif — il aurait sinon rogné l'ombre du filter. Comme
+     seul le ::before porte `transform: rotate()`, le filter (sur ce
+     conteneur non transformé) suit le sens standard, direction horizontale
+     vers le contenu. */
+}
+[data-theme="ancien"] #leftBanner {
+  left: 0;
+  filter: drop-shadow(2px 0 3.6px rgba(0, 0, 0, 0.54));
+}
+[data-theme="ancien"] #rightBanner {
+  right: 0;
+  filter: drop-shadow(-2px 0 3.6px rgba(0, 0, 0, 0.54));
+}
+[data-theme="ancien"] #leftBanner::before,
+[data-theme="ancien"] #rightBanner::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100vh;
+  height: 85px;
+  background-image: url("../../images/cadre.png");
+  background-repeat: repeat-x;
+  background-size: 1346px 85px;
+}
+[data-theme="ancien"] #leftBanner::before {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+[data-theme="ancien"] #rightBanner::before {
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+/* 2026-08-01 — demande explicite : "le même cadre sur la prez en thème
+   médiéval : tu le poses par dessus tout le reste, simplement". Reprise
+   à l'identique du cadre ingame ci-dessus (même image cadre.png, mêmes
+   dimensions/background-size, même z-index 99999/99998), sur 4 nouveaux
+   ids dédiés (#prezFooterBanner/#prezHeaderBanner/#prezLeftBanner/
+   #prezRightBanner, cf. index.php) pour ne jamais entrer en conflit avec
+   les #footerBanner/#headerBanner/#leftBanner/#rightBanner du jeu — ce
+   fichier medieval.css est chargé À LA FOIS par game.php ET index.php.
+   Masqués par défaut dans css/presentation.css (même logique que
+   base.css côté jeu), réaffichés ici uniquement en [data-theme="ancien"].
+   Point d'attention signalé par l'utilisateur : la prez a un <nav> fixe
+   (top:0, cf. règle [data-theme="ancien"] nav plus haut dans ce fichier)
+   qui se retrouverait sous la bande haute du cadre — corrigé en poussant
+   ce <nav> de 85px vers le bas (cf. règle [data-theme="ancien"] nav
+   modifiée en conséquence), pour qu'il reste visible ET cliquable. */
+[data-theme="ancien"] #prezFooterBanner {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 85px;
+  background-image: url("../../images/cadre.png");
+  background-repeat: repeat-x;
+  background-position: bottom left;
+  background-size: 1346px 85px;
+  z-index: 99999;
+  pointer-events: none;
+  user-select: none;
+  /* 2026-08-01 — demande explicite : même ombre que #prezHeaderBanner,
+     inversée 180° (direction du HAUT au lieu du bas, puisque cette bande
+     est en bas de l'écran — l'ombre doit toujours pointer VERS le
+     contenu). Contrairement à #prezHeaderBanner, cet élément n'a PAS de
+     `transform: rotate()` (background-position:bottom left suffit, pas de
+     retournement) — le filter peut donc s'appliquer directement ici sans
+     le piège filter+transform rencontré plus haut (cf. commentaire
+     détaillé sur #prezHeaderBanner). Mêmes valeurs de flou/opacité
+     resserrées (2px, 3px, 0.45), offsetY négatif = vers le haut. */
+  filter: drop-shadow(0 -2px 3.6px rgba(0, 0, 0, 0.54));
+}
+/* 2026-08-01 — TEST demande explicite : effet d'ombre sur la bande TOP du
+   cadre, prez uniquement pour l'instant (à généraliser si validé). Un
+   box-shadow classique projetterait une ombre sur la boîte rectangulaire de
+   la div, pas sur la silhouette réelle du feuillage — filter: drop-shadow()
+   suit au contraire le canal alpha de l'image (même technique déjà en place
+   sur le bord-image parchemin du <nav>, cf. plus haut dans ce fichier).
+   ERRATUM (même jour, 2 tentatives précédentes invisibles à l'écran, avec
+   offsetY positif puis négatif) : la cause n'était PAS le signe de
+   l'offset, mais le fait de combiner `filter` ET `transform: rotate(180deg)`
+   sur le MÊME élément. Dans ce cas, le navigateur calcule la zone de rendu
+   du filtre (bounding box + marge nécessaire à l'ombre/flou) AVANT
+   d'appliquer la rotation, sur un layer dont le centre de rotation ne
+   correspond plus au centre visuel une fois le layer étendu par le filtre
+   — le résultat observé était soit une ombre partiellement hors-écran (au-
+   dessus de top:0, tronquée), soit invisible selon le signe. Restructuré :
+   la rotation est déplacée sur un ::before dédié (background-image +
+   transform), le `filter` reste sur le conteneur parent, qui lui N'EST PAS
+   transformé — le sens de l'offset redevient alors standard (Y positif =
+   ombre vers le bas à l'écran), exactement comme sur le <nav>. */
+[data-theme="ancien"] #prezHeaderBanner {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 85px;
+  z-index: 99999;
+  pointer-events: none;
+  user-select: none;
+  /* 2026-08-01 — retour utilisateur : "encore trop diffuse, trop distante
+     en px et trop floue" — resserré : offset 6px→2px, flou 10px→3px
+     (opacité inchangée à 0.45). Ombre plus fine et plus collée au motif. */
+  filter: drop-shadow(0 2px 3.6px rgba(0, 0, 0, 0.54));
+}
+[data-theme="ancien"] #prezHeaderBanner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("../../images/cadre.png");
+  background-repeat: repeat-x;
+  background-position: top left;
+  background-size: 1346px 85px;
+  transform: rotate(180deg);
+}
+[data-theme="ancien"] #prezLeftBanner,
+[data-theme="ancien"] #prezRightBanner {
+  display: block;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 85px;
+  height: 100vh;
+  z-index: 99998;
+  pointer-events: none;
+  user-select: none;
+  /* 2026-08-01 — demande explicite : même ombre que #prezHeaderBanner/
+     #prezFooterBanner, adaptée aux 2 bandes verticales — direction
+     horizontale, vers le CONTENU (donc vers la droite pour la bande
+     gauche, vers la gauche pour la bande droite). `overflow: hidden`
+     retiré (cf. ci-dessous) pour ne pas rogner cette ombre : la bande
+     tournée du ::before (100vh × 85px avant rotation, translate(-50%,-50%)
+     rotate(±90deg)) recouvre après rotation EXACTEMENT les mêmes
+     dimensions que ce conteneur (85px × 100vh) — l'overflow:hidden n'était
+     donc là que par précaution, jamais nécessaire pour le motif lui-même,
+     et peut être retiré sans risque pour laisser respirer le filter.
+     Comme pour le header (cf. commentaire détaillé sur #prezHeaderBanner),
+     le `filter` reste ici sur le conteneur NON tourné — seul le ::before
+     porte `transform: rotate()` — donc le sens de l'offset est standard
+     (X positif = ombre vers la droite à l'écran), aucun piège de rotation
+     à compenser. */
+}
+[data-theme="ancien"] #prezLeftBanner {
+  left: 0;
+  filter: drop-shadow(2px 0 3.6px rgba(0, 0, 0, 0.54));
+}
+[data-theme="ancien"] #prezRightBanner {
+  right: 0;
+  filter: drop-shadow(-2px 0 3.6px rgba(0, 0, 0, 0.54));
+}
+[data-theme="ancien"] #prezLeftBanner::before,
+[data-theme="ancien"] #prezRightBanner::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100vh;
+  height: 85px;
+  background-image: url("../../images/cadre.png");
+  background-repeat: repeat-x;
+  background-size: 1346px 85px;
+}
+[data-theme="ancien"] #prezLeftBanner::before {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+[data-theme="ancien"] #prezRightBanner::before {
+  transform: translate(-50%, -50%) rotate(-90deg);
 }

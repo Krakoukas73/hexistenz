@@ -21,7 +21,7 @@ import {
   HITBOX_R,
   DEBUG_FLAGS
 } from './variables.js';
-import { registerPropHitbox } from './propHitboxRegistry.js';
+import { registerPropHitbox, getPropRegistryGeneration } from './propHitboxRegistry.js';
 import { getCurvatureTiltQuaternion } from './worldCurvature.js';
 
 const CENTER_SAFE_RADIUS = HEX_SIZE * (TILE_VISUAL.centerRadiusScale + TREE_CENTER_SAFE_RADIUS_EXTRA);
@@ -32,6 +32,23 @@ let modelsRequested = false;
 
 // Dummy réutilisé pour calculer les matrices d'instance sans allocation par arbre
 const _instanceDummy = new THREE.Object3D();
+const _WHITE_COLOR = new THREE.Color(1, 1, 1);   // reset instanceColor = neutre (pas de teinte)
+const _instanceMatrixScratch = new THREE.Matrix4();
+
+// Retrouve, dans un InstancedMesh, l'instance dont la position monde (XZ) est la plus proche de
+// (worldX, worldZ). Utilisé pour recolorer un prop précis SANS dépendre d'un index mémorisé au
+// moment de la collecte (invalide dès qu'un rebuild ultérieur change l'ordre des instances).
+function _findInstanceIndexNear(mesh, worldX, worldZ, tolSq = 0.0004) {
+  let bestIdx = -1, bestDistSq = tolSq;
+  for (let i = 0; i < mesh.count; i += 1) {
+    mesh.getMatrixAt(i, _instanceMatrixScratch);
+    const e = _instanceMatrixScratch.elements;
+    const dx = e[12] - worldX, dz = e[14] - worldZ;
+    const d2 = dx * dx + dz * dz;
+    if (d2 < bestDistSq) { bestDistSq = d2; bestIdx = i; }
+  }
+  return bestIdx;
+}
 // Pré-alloué pour le tilt de courbure monde (bouliste)
 const _curvTiltQuat  = new THREE.Quaternion();
 
@@ -138,7 +155,7 @@ export function rebuildForestOverlay(group, placedTiles, changedTile = null) {
     const accumulator = new Map();
     for (const pt of placedTiles.values()) {
       if (getChunkKey(pt.q, pt.r) === chunkKey) {
-        collectTreeInstances(accumulator, pt, specialBuildingSafeZones);
+        collectTreeInstances(group, accumulator, pt, specialBuildingSafeZones);
       }
     }
     const _t3 = performance.now();
@@ -166,7 +183,7 @@ export function rebuildForestOverlay(group, placedTiles, changedTile = null) {
 
   const accumulator = new Map(); // variantKey → Map<chunkKey, Matrix4[]>
   for (const placedTile of placedTiles.values()) {
-    collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones);
+    collectTreeInstances(group, accumulator, placedTile, specialBuildingSafeZones);
   }
   const _rfT3 = performance.now();
 
@@ -264,7 +281,7 @@ function normalizeModel(model, def) {
 }
 
 // Phase 1 : accumule les matrices d'instance par variant (ordonné par TREE_MODEL_DEFS pour stabilité)
-function collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones = []) {
+function collectTreeInstances(group, accumulator, placedTile, specialBuildingSafeZones = []) {
   const tileWorld = axialToWorld(placedTile.q, placedTile.r);
   const vertices = createOuterVertices();
 
@@ -317,13 +334,54 @@ function collectTreeInstances(accumulator, placedTile, specialBuildingSafeZones 
       // La scale de base est cuite dans la géo (child.matrixWorld du prototype), on applique seulement le jitter ici.
       _instanceDummy.scale.setScalar(scaleJitter);
       _instanceDummy.updateMatrix();
-      registerPropHitbox(_instanceDummy.position.x, _instanceDummy.position.z, HITBOX_R.treeTrunk);
 
       if (!accumulator.has(variantKey)) accumulator.set(variantKey, new Map());
       const byChunk = accumulator.get(variantKey);
       const chunkKey = getChunkKey(placedTile.q, placedTile.r);
       if (!byChunk.has(chunkKey)) byChunk.set(chunkKey, []);
       byChunk.get(chunkKey).push(_instanceDummy.matrix.clone());
+
+      // setColor (2026-07-29, retour user : « pas sûr que ça détecte bien les objets » — un
+      // index capté à la collecte devenait faux dès le rebuild SUIVANT (replacement de tuile
+      // ailleurs sur la carte relance resetPropHitboxRegistry() + reconstruction complète,
+      // très fréquent dans ce jeu). Résolu par POSITION à chaque appel plutôt que par index
+      // mémorisé : retrouve l'instance qui occupe VRAIMENT cette position dans le mesh actuel,
+      // donc reste correct même après un rebuild entre-temps. Un arbre = plusieurs InstancedMesh
+      // (une par sous-mesh du GLB), toutes nommées `instanced-tree-${variantKey}-${chunkKey}`,
+      // recolorées ensemble (instanceColor, initialisé à blanc = neutre).
+      const meshNamePrefix = `instanced-tree-${variantKey}-${chunkKey}`;
+      const targetWX = _instanceDummy.position.x, targetWZ = _instanceDummy.position.z;
+      registerPropHitbox(targetWX, targetWZ, HITBOX_R.treeTrunk, {
+        // Hauteur réelle de l'arbre : géométrie cuite (TREE_WIND.heightEnd = hauteur monde du
+        // prototype, cf. variables.js) × jitter d'instance. Le rayon de hitbox ne couvre que le
+        // TRONC — un arbre est ~4× plus haut que large. Sert à dimensionner les flammes.
+        height: TREE_WIND.heightEnd * scaleJitter,
+        // Résolution par position mise en CACHE tant que les props n'ont pas été reconstruits
+        // (génération du registre) : le feu appelle setColor à chaque frame sur chaque objet en
+        // train de brûler, et la recherche parcourt toutes les instances du mesh — la refaire
+        // 60×/s par arbre serait un coût pur pour un résultat identique.
+        _gen: -1,
+        _hits: null,
+        setColor(color) {
+          const gen = getPropRegistryGeneration();
+          if (this._gen !== gen) {
+            this._hits = [];
+            for (const child of group.children) {
+              if (!child.isInstancedMesh || child.name !== meshNamePrefix) continue;
+              const idx = _findInstanceIndexNear(child, targetWX, targetWZ);
+              if (idx >= 0) this._hits.push({ mesh: child, idx });
+            }
+            this._gen = gen;
+          }
+          for (const { mesh, idx } of this._hits) {
+            if (!mesh.instanceColor) {
+              mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(mesh.count * 3).fill(1), 3);
+            }
+            mesh.setColorAt(idx, color ?? _WHITE_COLOR);
+            mesh.instanceColor.needsUpdate = true;
+          }
+        }
+      });
     }
   }
 }

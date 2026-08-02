@@ -16,6 +16,20 @@ body::after {
   z-index: 2;
 }
 
+/* 2026-08-01 — bannière footer.png : masquée par défaut (thème bleu / sécurité),
+   réaffichée uniquement par [data-theme="ancien"] dans medieval.css (voir commentaire
+   dans game.php pour le détail du périmètre ingame-only).
+   2026-08-01 — #headerBanner (cadre haut, même image retournée à 180°) suit
+   exactement la même logique de masquage par défaut.
+   2026-08-01 — #leftBanner/#rightBanner (côtés du cadre, même image tournée
+   à 90°/-90°) suivent la même logique. */
+#footerBanner,
+#headerBanner,
+#leftBanner,
+#rightBanner {
+  display: none;
+}
+
 #app {
   position: fixed;
   inset: 0;
@@ -34,23 +48,52 @@ body::after {
 }
 
 
+/* 2026-08-01 — passage en colonne (était une simple rangée) pour loger la
+   ligne d'efficacité EN COURS sous le score, cf. .arcade-efficiency plus bas.
+   .arcade-score-row porte maintenant ce que #arcadeScore portait seul avant
+   (flex row/baseline/gap pour "1234" + "pts (+2)"). */
 #arcadeScore {
   position: fixed;
   top: 14px;
   left: 14px;
   z-index: 12;
   font-family: 'BebasNeue', system-ui, sans-serif;
-  font-size: 80px;
-  line-height: 1;
   color: #ffffff;
-  text-shadow:
-    0 0 24px rgba(90, 170, 255, 0.7),
-    0 0 6px rgba(90, 170, 255, 0.4);
   pointer-events: none;
   user-select: none;
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.arcade-score-row {
+  display: flex;
   align-items: baseline;
   gap: 6px;
+  font-size: 80px;
+  line-height: 1;
+  text-shadow:
+    0 0 24px rgba(90, 170, 255, 0.7),
+    0 0 6px rgba(90, 170, 255, 0.4);
+  /* 2026-08-01 — #arcadeScore (parent) porte pointer-events:none pour ne pas
+     gêner les clics sur le plateau 3D en dessous ; ré-activé ici pour que le
+     hover du tooltip (attachHelpTooltip, cf. ui.js) fonctionne réellement.
+     Bug retour utilisateur : les vérifs précédentes utilisaient dispatchEvent()
+     en JS, qui contourne le hit-testing CSS et masquait ce problème — un vrai
+     survol souris ne déclenchait jamais le tooltip tant que pointer-events
+     restait à none (hérité du parent). */
+  pointer-events: auto;
+}
+
+/* 2026-08-01 — erratum du même jour : demande initiale mal comprise, c'est le
+   TITRE ("Score"/"Efficacité") qui doit être PLUS PETIT que le chiffre, pas
+   l'inverse (1ère version faisait #dbgScore à 0.65em du titre). #dbgScore
+   reste maintenant à la taille pleine héritée de .arcade-score-row (80px) ;
+   c'est .arcade-label (classe commune aux 2 libellés, cf. #dbgEfficiency
+   plus bas) qui passe à 65% via em — s'adapte automatiquement à la variante
+   compacte (@media max-height:1100px, 60px) sans dupliquer de règle là-bas. */
+.arcade-label {
+  font-size: 0.65em;
 }
 
 .arcade-suffix {
@@ -61,18 +104,100 @@ body::after {
   text-shadow: none;
 }
 
+/* Efficacité EN COURS (score / tuiles posées, même formule de minoration que
+   la prez — cf. javascript/variables.js EFFICIENCY_MIN_TILES/_EXPONENT,
+   appliquée côté client dans ui.js::updateScoreUI). Alignée à gauche comme le
+   score (align-items:flex-start du parent).
+   2026-08-01 — demande explicite : mêmes effets CSS que .arcade-score-row
+   (couleur blanche + double text-shadow identique, au lieu de la teinte bleu
+   pâle utilisée jusqu'ici) mais 35% plus petit — 80px × 0.65 = 52px (mesure
+   exacte, pas arrondie visuellement). Idem pour la variante compacte
+   (@media max-height:1100px) : 60px × 0.65 = 39px, cf. plus bas dans ce
+   fichier. pointer-events:auto pour la même raison que .arcade-score-row
+   ci-dessus (hérite sinon du none de #arcadeScore, tooltip hover mort). */
+.arcade-efficiency {
+  margin-top: 2px;
+  font-family: 'BebasNeue', system-ui, sans-serif;
+  font-size: 52px;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow:
+    0 0 24px rgba(90, 170, 255, 0.7),
+    0 0 6px rgba(90, 170, 255, 0.4);
+  pointer-events: auto;
+}
+
+/* 2026-08-01 — demande explicite : écarter les HUD du cadre décoratif
+   ingame en thème médiéval (#footerBanner/#headerBanner/#leftBanner/
+   #rightBanner, cf. CONTEXT.md §39) — ici haut ET gauche, #arcadeScore
+   touchant les 2 bords. Thème bleu non concerné (pas de cadre) : `top`/
+   `left` de base (14px) restent inchangés.
+   ERRATUM (même jour) : +85px jugé trop → ramené à +65px. #scorePanel
+   (ci-dessous) doit suivre ce même décalage sur son `top` pour conserver
+   l'écart vertical avec ce bloc, sous peine de le recouvrir (cf. bug
+   signalé "score et efficacité masqués par le manuscrit stats de partie"). */
+/* 2026-08-01 — demande explicite : "trop de marge en haut sur score" →
+   remonté légèrement (-20px). #scorePanel (plus bas dans ce fichier) suit
+   le même delta sur son propre `top` pour conserver l'écart vertical entre
+   les 2 blocs (sinon le score/efficacité redevient masqué par le manuscrit,
+   même bug que précédemment).
+   ERRATUM (même jour) : marge cadre 65px → 52px. left = 14+52 = 66px ;
+   top = 14+52-20(ajustement esthétique ci-dessus, inchangé) = 46px.
+   ERRATUM 2 (même jour, demande explicite) : décalé de 12px vers le bas →
+   46+12 = 58px. #scorePanel (plus bas) suit le même delta. */
+[data-theme="ancien"] #arcadeScore {
+  top: 58px;
+  left: 66px;
+}
+
+
 /* 2026-07-17 — 2e chantier "HUD in-game" du thème Ancien (cf. CONTEXT.md §32) :
    #scorePanel + .missionsBox (css/missions.css). Fond/bordure/rayon/couleurs
    déportés dans [data-theme="bleu"]/[data-theme="ancien"] en bas de fichier —
    ce qui reste ici est le layout partagé (position, tailles, structure). */
+/* top 104 → 134 (2026-08-01) : +30px pour la nouvelle ligne d'efficacité
+   ajoutée sous le score (#arcadeScore, cf. plus haut) — sans ce décalage, le
+   scorePanel chevaucherait cette ligne. Valeur mesurée en direct (Chrome),
+   pas estimée.
+   top 134 → 158 (2026-08-01, même jour) : la ligne d'efficacité est passée de
+   28px à 52px (mêmes effets CSS que le score, 35% plus petit — demande
+   explicite) + libellé "Efficacité : " préfixé, ce qui a fait déborder le bas
+   de la ligne sous le haut du scorePanel (mesuré en direct : chevauchement de
+   14px). Nouveau top = bas réel de #dbgEfficiency + 10px de marge, comme à
+   l'origine. */
 #scorePanel {
   position: fixed;
-  top: 104px;
+  top: 158px;
   left: 14px;
   z-index: 12;
   width: 360px;
   max-width: calc(100vw - 28px);
-  max-height: calc(100vh - 28px);
+  /* 2026-08-01 — BUG CORRIGÉ (demande explicite : "le HUD score/stats est
+     tronqué verticalement en faible résolution, l'ascenseur devrait apparaître
+     plus vite"). max-height valait calc(100vh - 28px), une formule héritée
+     d'une époque où top valait 14px (avant les 3 bumps successifs vers
+     104→134→158px documentés plus haut dans ce fichier) — jamais mise à jour
+     en même temps que top. Résultat : le panneau pouvait légalement grandir
+     jusqu'à top(158) + max-height(100vh-28) = 100vh + 130px, soit 130px sous
+     le bas réel de l'écran, AVANT que overflow-y:auto ne se déclenche — d'où
+     un HUD visuellement tronqué au lieu de scrollable. Formule corrigée pour
+     réserver top(158px) + une marge basse de 20px (cohérent avec #tileUI,
+     deck.css), afin que l'ascenseur apparaisse dès que le contenu dépasse
+     l'espace réellement disponible, jamais après.
+     2026-08-01 — CORRECTIF 2 (demande explicite : "en basse résolution
+     verticale, le HUD stats de partie chevauche les 9 boutons en bas à
+     droite"). La marge basse de 20px ci-dessus n'a jamais tenu compte de
+     .debug-light-panel (eda.css), qui vit lui aussi en position:fixed, ancré
+     par le bas (bottom:4px en bleu) et qui peut grandir jusqu'à 2 rangées de
+     boutons (82px de haut, cf. .debug-light-btn-row/flex-wrap) sur les
+     largeurs étroites. Mesuré en direct (Chrome, 1280×435) : bottom:4px +
+     hauteur 82px + 10px de respiration ≈ 96px, arrondi à 100px — sans cette
+     marge, #scorePanel pouvait légalement descendre jusqu'à 18px sous le
+     bord du bandeau de boutons. Reserve 20px → 100px (top(158)+100=258).
+     Thème médiéval : cf. plus bas [data-theme="ancien"] #scorePanel, qui a
+     SA PROPRE formule (top différent + bordure 100px + cadre décoratif) et
+     doit suivre le même principe avec ses propres valeurs. */
+  max-height: calc(100vh - 258px);
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
@@ -147,7 +272,9 @@ body::after {
 
 .stats-summary-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* 2026-07-29 — demande explicite : moulins/trains/bateaux/comètes sur UNE
+     seule ligne (4 colonnes) au lieu de 2 lignes de 2. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 9px;
 }
@@ -171,7 +298,9 @@ body::after {
 
 .stats-summary-card strong {
   overflow-wrap: anywhere;
-  font-size: 42px;
+  /* 2026-07-29 — réduit de 42px à 28px : les 4 cartes tiennent désormais sur
+     une seule ligne (grid 4 colonnes ci-dessus), moins de place par carte. */
+  font-size: 28px;
   font-weight: 1000;
   line-height: 1;
   font-family: 'BebasNeue', system-ui, sans-serif;
@@ -343,19 +472,20 @@ body::after {
 
 #statsPanel .stats-summary-row {
   margin-bottom: 8px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px;
+  /* 2026-07-29 — même passage à 4 colonnes que la règle générique ci-dessus. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
 }
 
 #statsPanel .stats-summary-card {
-  padding: 7px 8px;
+  padding: 6px 7px;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
 }
 
 #statsPanel .stats-summary-card strong {
-  font-size: 42px;
+  font-size: 28px;
 }
 
 #statsPanel .stats-card-grid {
@@ -421,16 +551,83 @@ body::after {
   }
 }
 
+/* 2026-07-31 — demande explicite : en basse résolution (petit écran mobile),
+   #scorePanel élargi à calc(100vw - 28px) ci-dessus + son contenu (bloc
+   joueur/partie + stats-card-grid 6 cartes) finit par occuper la quasi-
+   totalité de la page et rend le jeu injouable (plus de place pour le
+   plateau hexagonal). On le masque entièrement en dessous de ce seuil —
+   même mécanisme que `body.grid-only-mode #scorePanel` (display:none
+   !important) plus haut, mais déclenché automatiquement par la résolution
+   plutôt que par un toggle utilisateur. #arcadeScore (petit score en haut
+   à gauche) n'est pas concerné : lui reste toujours affiché, il n'occupe
+   qu'un coin de l'écran.
+   CORRECTIF (même jour) : 1ère version utilisait un seuil de 600px, distinct
+   du seuil de 1050px déjà utilisé ci-dessus pour "élargir" ce même panneau.
+   Entre 600 et 1050px, ni l'un ni l'autre ne cachait rien : en thème bleu, la
+   règle width:calc(100vw-28px) restait seule active → panneau étiré pleine
+   largeur au lieu de disparaître (signalé). En thème ancien, [data-theme=
+   "ancien"] #scorePanel (plus bas dans ce fichier) impose sa PROPRE largeur
+   fixe (310px, hors media query, spécificité ID+attribut) qui l'emporte de
+   toute façon sur la règle générique 1050px — donc à 600–1050px le panneau
+   ancien restait affiché normalement, semblant "jamais masqué" (signalé).
+   Fix : aligner ce seuil sur 1050px, IDENTIQUE à celui déjà établi pour ce
+   panneau, pour qu'il n'y ait plus de zone intermédiaire où l'un des 2 thèmes
+   échappe au masquage. display:none !important l'emporte dans les 2 thèmes,
+   y compris sur la règle ancien non-!important vue plus haut (l'importance
+   prime toujours sur la spécificité). */
+@media (max-width: 1050px) {
+  #scorePanel {
+    display: none !important;
+  }
+}
+
+/* 2026-08-01 — demande explicite : même masquage total, mais déclenché par la
+   résolution VERTICALE cette fois ("c'est nickel, ne change rien" pour le
+   seuil horizontal ci-dessus — on ajoute simplement l'équivalent en hauteur).
+   Seuil choisi : 700px, aligné sur le cutoff "basse hauteur" déjà en usage
+   ailleurs dans ce fichier (cf. @media max-height:760px, css/startupMenu.css)
+   — assez bas pour ne jamais se déclencher sur une résolution desktop usuelle
+   (1080p compact reste couvert par le seuil 1100px ci-dessous, qui ne fait que
+   RÉDUIRE la taille du HUD, pas le masquer), mais assez généreux pour libérer
+   de la place utile dès qu'une fenêtre devient franchement basse. Même
+   mécanisme que le masquage horizontal : display:none !important dans les 2
+   thèmes. */
+@media (max-height: 700px) {
+  #scorePanel {
+    display: none !important;
+  }
+}
+
 /* Compact layout pour les écrans ≤ 1100 px de hauteur (ex: 1920×1080). */
 @media (max-height: 1100px) {
-  #arcadeScore {
+  .arcade-score-row {
     font-size: 60px;
   }
 
+  .arcade-efficiency {
+    font-size: 39px; /* 60px × 0.65, même ratio 35% plus petit qu'en résolution normale */
+  }
+
+  /* top 88 → 112 → 125 (2026-08-01, 2e ajustement même jour), même raison
+     qu'en résolution normale ci-dessus (ligne d'efficacité 21px→39px + libellé
+     préfixé) : chevauchement mesuré en direct de 3px, +10px de marge. */
   #scorePanel {
-    top: 88px;
+    top: 125px;
     padding: 10px 12px;
-    max-height: calc(100vh - 160px); /* réserve de place pour le mini-HUD FPS en bas */
+    /* 2026-08-01 — même correction que la règle non-thémée plus haut :
+       top(125px) + marge basse 20px, au lieu de 160px (constante qui ne
+       correspondait à rien de précis). Réserve toujours de la place pour le
+       mini-HUD FPS en bas via cette marge de 20px.
+       2026-08-01 — CORRECTIF 2 (demande explicite : "en basse résolution
+       verticale, le HUD stats de partie chevauche les 9 boutons en bas à
+       droite"). CETTE règle (@media max-height:1100px) est celle qui gagne
+       réellement en pratique — la quasi-totalité des cas "basse résolution
+       verticale" signalés tombent sous ce seuil de 1100px. La marge basse de
+       20px ne tenait jamais compte de .debug-light-panel (eda.css,
+       position:fixed ancré par le bas, jusqu'à 82px de haut sur 2 rangées de
+       boutons). Reserve 20px → 100px (top(125)+100=225), même valeur mesurée
+       en direct que la règle non-compacte plus haut. */
+    max-height: calc(100vh - 225px);
   }
 
 
@@ -450,7 +647,8 @@ body::after {
   }
 
   #statsPanel .stats-summary-card strong {
-    font-size: 32px;
+    /* 2026-07-29 — cohérent avec le passage à 4 colonnes (28px en base). */
+    font-size: 22px;
   }
 
   #statsPanel .stats-card-grid {
@@ -491,9 +689,9 @@ body.grid-only-mode .help-overlay {
 
 /* En mode immersif le panneau LUT est entièrement fonctionnel (utile pour régler les visuels) */
 
-body.grid-only-mode #tileUI .missionsBox {
-  display: none !important;
-}
+/* 2026-07-29 — demande explicite : le HUD missions doit rester visible/jouable
+   en immersif simple (touche Espace, grid-only-mode). Il ne reste masqué que
+   dans le super-immersif (SHIFT+Espace → huds-force-hidden, cf. eda.css). */
 
 
 .stats-boats { background: linear-gradient(135deg, rgba(220, 220, 220, 0.16), rgba(110, 118, 130, 0.10)); }
@@ -604,9 +802,49 @@ body.grid-only-mode #tileUI .missionsBox {
      .internal-parchment peut alors bleeder dans la bordure sans être
      tronquée, puisque ce n'est plus elle qui porte le clip. */
   box-sizing: content-box;
+  /* 2026-08-01 — demande explicite : écarter les HUD du cadre décoratif
+     (cf. CONTEXT.md §39) — left 14px → 79px (erratum même jour : 85px
+     ramené à 65px). max-width recalculé en conséquence (128px = bordure
+     100px + 28px de marges d'origine ; +65px pour le nouveau left, marge
+     droite inchangée).
+     `top` AUSSI décalé (79+65=... en fait ce bloc n'avait PAS de `top`
+     propre avant — il héritait de la règle non-thémée top:158px, partagée
+     avec le thème bleu). Depuis qu'#arcadeScore (ci-dessus) est descendu de
+     65px en thème médiéval SEULEMENT, l'écart vertical entre les 2 blocs
+     s'était réduit à 158-79=79px — largement insuffisant pour la hauteur du
+     bloc score+efficacité (~144px), d'où le bug signalé "score/efficacité
+     masqués par le manuscrit". Fix : `top` ancien-spécifique = top
+     #arcadeScore (79) + écart d'origine (158-14=144) = 223px, propre à ce
+     thème (le thème bleu garde top:158px hérité, inchangé).
+     ERRATUM (même jour, demande explicite "trop de marge en haut sur
+     score") : #arcadeScore remonté de 20px (79→59) → même delta répercuté
+     ici pour conserver l'écart : 223→203px.
+     ERRATUM 2 (même jour) : marge cadre 65px → 52px. Nouveau top #arcadeScore
+     = 46px → top ici = 46+144 = 190px. left = 14+52 = 66px. max-width :
+     128+52 = 180px retranchés.
+     ERRATUM 3 (même jour, demande explicite) : #arcadeScore décalé de 12px
+     vers le bas (46→58) → même delta ici : 190+12 = 202px. */
+  top: 202px;
+  left: 66px;
   width: 310px;
-  max-width: calc(100vw - 128px);
-  max-height: calc(100vh - 128px);
+  max-width: calc(100vw - 180px);
+  /* 2026-08-01 — BUG CORRIGÉ (même famille que la règle non-thémée plus haut,
+     mais pire ici : box-sizing:content-box ajoute encore 100px (bordure
+     50px haut + 50px bas) au-dessus du max-height du contenu). Formule :
+     top(202) + bordure(100) + marge basse(20) = 322px retranchés, pour que
+     le HUD ne dépasse jamais le bas réel de l'écran et que le scroll
+     interne (.internal-parchment ci-dessous) se déclenche dès que
+     nécessaire.
+     2026-08-01 — CORRECTIF 2 (demande explicite : "en basse résolution
+     verticale, le HUD stats de partie chevauche les 9 boutons en bas à
+     droite ET passe sous le cadre"). Même cause que la règle non-thémée
+     plus haut (marge basse de 20px jamais mise à jour depuis l'ajout du
+     cadre décoratif ni de .debug-light-panel), en pire ici : le panneau des
+     9 boutons est lui-même repoussé par le cadre (bottom:56px en médiéval,
+     eda.css) et peut grandir à 82px de haut (2 rangées). Mesuré en direct :
+     bottom(56) + hauteur(82) + 10px de respiration ≈ 148px, arrondi à 152px.
+     Reserve 20px → 152px : top(202) + bordure(100) + 152 = 454px. */
+  max-height: calc(100vh - 454px);
   overflow: visible;
   display: flex;
   flex-direction: column;
@@ -637,6 +875,41 @@ body.grid-only-mode #tileUI .missionsBox {
   border: 1px solid rgba(74, 54, 35, 0.18);
   background: rgba(0, 0, 0, 0.04);
 }
+/* 2026-07-31 — fond flou/translucide par biome (demande explicite), thème
+   médiéval UNIQUEMENT. `.stats-card` a déjà `position:relative; overflow:hidden`
+   (base.css plus haut) : le `overflow:hidden` clippe le débordement du blur sans
+   rien y toucher. `::before` étant déjà pris par la barre d'accent colorée
+   (5px de large), l'image passe par `::after` — `inset:-6px` (légèrement plus
+   grand que la boîte) évite le liseré transparent/sombre que `filter:blur()`
+   ferait apparaître sur les bords s'il était pile calé sur `inset:0`. z-index:0
+   sur `::after` + `position:relative; z-index:1` sur les 2 blocs de contenu
+   réels : sans ça, un pseudo-élément positionné (même z-index:auto) peint
+   au-dessus du flux normal non positionné (ordre de peinture CSS2.1 Annexe E),
+   ce qui aurait caché le texte derrière l'image. */
+[data-theme="ancien"] .stats-card::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  background-size: cover;
+  background-position: center;
+  /* 2026-07-31, ajustements successifs demandés : flou 4px→2px→1px→0.88px→0.81px
+     (-8%) ; opacité 0.30→0.20→0.184→0.162 (-12%). */
+  filter: blur(0.81px);
+  opacity: 0.162;
+  z-index: 0;
+  pointer-events: none;
+}
+[data-theme="ancien"] .stats-card-head,
+[data-theme="ancien"] .stats-metrics {
+  position: relative;
+  z-index: 1;
+}
+[data-theme="ancien"] .stats-grass::after  { background-image: url("../images/biome-prairie.jpg"); }
+[data-theme="ancien"] .stats-field::after  { background-image: url("../images/biome-ble.jpg"); }
+[data-theme="ancien"] .stats-forest::after { background-image: url("../images/biome-foret.jpg"); }
+[data-theme="ancien"] .stats-house::after  { background-image: url("../images/biome-village.jpg"); }
+[data-theme="ancien"] .stats-water::after  { background-image: url("../images/biome-eau.jpg"); }
+[data-theme="ancien"] .stats-rail::after   { background-image: url("../images/biome-train.jpg"); }
 /* 2026-07-18 — CORRECTIF v3 : .internal-parchment porte maintenant le scroll
    réel (overflow-y:auto/overflow-x:hidden, déplacé depuis #scorePanel
    lui-même, désormais overflow:visible) ET la marge négative de bleed. Comme
@@ -662,6 +935,44 @@ body.grid-only-mode #tileUI .missionsBox {
      autres côtés n'ont pas été signalés). */
   margin: -40px -25px -20px -25px;
 }
+
+/* 2026-08-01 — le mode compact (@media max-height:1100px, plus haut dans ce
+   fichier) fixe top:125px + un max-height réduit pour #scorePanel — mais en
+   thème médiéval, la règle non-thémée [data-theme="ancien"] #scorePanel
+   ci-dessus a une spécificité plus élevée (attribut+id > id) et gagnait donc
+   TOUJOURS, quelle que soit la hauteur du viewport : le mode compact n'avait
+   jamais d'effet réel en médiéval, laissant le HUD tronqué même après le
+   "fix" apparent du thème bleu. Cette règle, à spécificité égale mais placée
+   APRÈS la règle non-thémée (donc gagnante en cascade) et activée seulement
+   sous 1100px, corrige enfin ce cas — même calcul que la règle bleue
+   correspondante (top 125 + bordure 100 + marge basse 20 = 245px retranchés). */
+@media (max-height: 1100px) {
+  /* 2026-08-01 — même correction que la règle ancien non-compacte plus haut :
+     #arcadeScore descendu de 65px (thème médiéval) → écart d'origine
+     (125-14=111px) préservé : top = 79 (nouveau top #arcadeScore) + 111 =
+     190px. max-height : top(190) + bordure(100) + marge basse(20) = 310px.
+     ERRATUM (même jour, "trop de marge en haut sur score") : #arcadeScore
+     remonté de 20px (79→59) → même delta répercuté : 190→170px.
+     ERRATUM 2 (même jour) : marge cadre 65px → 52px. Nouveau top #arcadeScore
+     = 46px → top ici = 46+111 = 157px. max-height : 157+100+20 = 277px.
+     ERRATUM 3 (même jour, demande explicite) : #arcadeScore décalé de 12px
+     vers le bas (46→58) → top ici = 157+12 = 169px. max-height :
+     169+100+20 = 289px.
+     2026-08-01 — CORRECTIF 4 (demande explicite : "en basse résolution
+     verticale, le HUD stats de partie chevauche les 9 boutons en bas à
+     droite ET passe sous le cadre"). CETTE règle (@media max-height:1100px)
+     est celle qui gagne réellement en pratique pour la quasi-totalité des
+     cas "basse résolution verticale" signalés (seuil 1100px). Même cause que
+     partout ailleurs : marge basse de 20px jamais mise à jour depuis l'ajout
+     du cadre (52px) ni de .debug-light-panel (jusqu'à 82px sur 2 rangées).
+     Reserve 20px → 152px (mesuré en direct, cf. règle non-compacte
+     équivalente plus haut) : top(169) + bordure(100) + 152 = 421px. */
+  [data-theme="ancien"] #scorePanel {
+    top: 169px;
+    max-height: calc(100vh - 421px);
+  }
+}
+
 [data-theme="ancien"] .stats-card-head { color: #332415; }
 [data-theme="ancien"] .stats-metrics div { background: rgba(0, 0, 0, 0.08); }
 [data-theme="ancien"] .stats-metrics span { color: #4a3623; }

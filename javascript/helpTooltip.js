@@ -14,8 +14,17 @@ const _TOOLTIP_CSS = `
      s'affichaient sous le panneau replay lui-même (.replay-overlay,
      z-index:10500). z-index relevé au-dessus du plus haut overlay du jeu
      (snapshots.css utilise 20000) pour que le tooltip soit toujours au-dessus,
-     quel que soit l'overlay actif. */
-  z-index: 20500;
+     quel que soit l'overlay actif.
+     2026-08-01 — demande explicite : les tooltips des 9 boutons rouges
+     (bas-droite) s'affichaient toujours SOUS le cadre décoratif médiéval
+     (#footerBanner/#headerBanner z-index:99999, #leftBanner/#rightBanner
+     99998, cf. CONTEXT.md §39) — cette règle-ci, injectée dynamiquement en
+     <head> à l'exécution (ensureHelpTooltip()), est la SEULE source
+     effective pour #lutHelpTooltip : elle est ajoutée après le chargement
+     de eda.css et gagne donc la cascade à spécificité égale, rendant tout
+     changement fait dans eda.css inopérant. z-index relevé au-dessus du
+     cadre : 20500 → 100000. */
+  z-index: 100000;
   max-width: 240px;
   padding: 8px 11px;
   border-radius: 9px;

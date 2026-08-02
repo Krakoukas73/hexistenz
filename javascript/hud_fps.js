@@ -1,11 +1,11 @@
 import { LUT_HELP, delegateHelpTooltip } from './help.js';
 import { scanScene, GROUP_ORDER, GROUP_ICONS, ITEM_GROUP, CATEGORY_ICONS } from './sceneProfiler.js';
-import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 
 const _fpsLangFile = getLangFile();
 // `const` volontairement conservé, objet muté en place au changement de langue
 // en jeu (cf. gameLangReactive.js) : lu à chaque tick FPS, donc auto-rafraîchi.
-const _fpsAdjText = await fetch(`./json/languages/${_fpsLangFile}.json`)
+const _fpsAdjText = await fetch(`./json/languages/${_fpsLangFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .then(data => data?.game?.fpsAdjectives ?? {})
   .catch(err => {

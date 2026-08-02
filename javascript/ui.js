@@ -2,6 +2,7 @@ import { renderMiniTile } from './tileMesh.js';
 import { LUT_HELP, ensureHelpTooltip, delegateHelpTooltip, attachHelpTooltip } from './help.js';
 import { MISSION_TYPE_ICON, MISSION_HELP, HUD_TEXT } from './missionLabels.js';
 import { escapeHtml } from './domUtils.js';
+import { EFFICIENCY_MIN_TILES, EFFICIENCY_MIN_TILES_EXPONENT } from './variables.js';
 
 export function createUI() {
   const ui = {
@@ -21,6 +22,8 @@ export function createUI() {
     score: document.getElementById('dbgScore'),
     gridPercent: document.getElementById('dbgGridPercent'),
     lastScore: document.getElementById('dbgLastScore'),
+    efficiency: document.getElementById('dbgEfficiency'),
+    efficiencyValue: document.getElementById('dbgEfficiencyValue'),
     stats: {
       mills: document.getElementById('statMills'),
       grass: document.getElementById('statGrass'),
@@ -102,6 +105,13 @@ export function createUI() {
   attachHelpTooltip(ui.gridPercent?.parentElement, () => LUT_HELP['game.gridPercent']);
   attachHelpTooltip(ui.lastScore?.parentElement, () => LUT_HELP['game.lastScore']);
 
+  // 2026-08-01 — tooltips sur le score arcade (haut gauche) et l'efficacité en
+  // cours affichée en dessous : le score attache sur .arcade-score-row (le
+  // wrapper englobant #dbgScore + suffixe "pts"), l'efficacité directement sur
+  // #dbgEfficiency qui EST déjà le wrapper (pas de label séparé).
+  attachHelpTooltip(ui.score?.parentElement, () => LUT_HELP['game.score']);
+  attachHelpTooltip(ui.efficiency, () => LUT_HELP['game.efficiency']);
+
   // Tooltips sur les 3 boîtes tuiles (tileUI droite)
   attachHelpTooltip(ui.activeTile?.parentElement,   () => LUT_HELP['game.activeTile']);
   attachHelpTooltip(ui.nextTile?.parentElement,     () => LUT_HELP['game.nextTile']);
@@ -163,6 +173,33 @@ export function updateScoreUI(ui, totalScore, lastScore = 0, placedTileCount = n
 
   if (placedTileCount !== null) {
     setText(ui.gridPercent, String(placedTileCount));
+  }
+
+  // 2026-08-01 — demande explicite : afficher, sous le score du HUD arcade
+  // (#arcadeScore, en haut à gauche), l'efficacité EN COURS — même formule
+  // (et mêmes constantes EFFICIENCY_MIN_TILES/_EXPONENT) que le classement de
+  // la prez (index.php), qui minore l'efficacité brute quand le nombre de
+  // tuiles posées est encore trop faible pour être significatif. Calculée ici
+  // plutôt que dupliquée à chaque site d'appel de updateScoreUI (init, pose,
+  // annulation, comète, sync multijoueur — cf. scene.js).
+  if (ui.efficiency) {
+    const tiles = placedTileCount ?? 0;
+    let efficiency = 0;
+    if (tiles > 0) {
+      const confidence = EFFICIENCY_MIN_TILES > 0
+        ? Math.pow(Math.min(tiles, EFFICIENCY_MIN_TILES) / EFFICIENCY_MIN_TILES, EFFICIENCY_MIN_TILES_EXPONENT)
+        : 1;
+      efficiency = (totalScore / tiles) * confidence;
+    }
+    // 2026-08-01 — le libellé "Efficacité" est un <span data-i18n="game.ui.hud.
+    // efficiencyLabel"> statique dans game.php, traduit par gameHudI18n.js comme
+    // tout le reste du HUD statique (réactif au changement de langue en jeu via
+    // gameLangReactive.js). Erreur de la 1ère version : le libellé était injecté
+    // ici via setText() sur TOUT #dbgEfficiency (HUD_TEXT.efficiencyLabel), ce qui
+    // écrasait le texte à chaque pose de tuile mais ne se retraduisait qu'au
+    // pose suivante — jamais immédiatement au changement de langue, puisque rien
+    // ici n'écoute setGameLang(). Seule la valeur numérique est mise à jour ici.
+    setText(ui.efficiencyValue, `${efficiency.toFixed(1)}%`);
   }
 }
 

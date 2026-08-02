@@ -4,14 +4,14 @@
 // Réutilise gameLangReactive.js uniquement pour LIRE la langue déjà choisie en jeu
 // (même clé localStorage 'hexistenz_pres_lang') : pas de sélecteur de langue ici, la
 // galerie hérite simplement de la langue courante du jeu.
-import { getGameLang, getLangFile } from './gameLangReactive.js';
+import { getGameLang, getLangFile, getLangVersion } from './gameLangReactive.js';
 
-const LOCALES = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA' };
+const LOCALES = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA', de: 'de-DE', ru: 'ru-RU', 'fr-MED': 'fr-FR' };
 const BATCH_SIZE = 30;
 
 async function loadTexts() {
   const file = getLangFile(getGameLang());
-  const data = await fetch(`./json/languages/${file}.json`)
+  const data = await fetch(`./json/languages/${file}.json?v=${getLangVersion()}`)
     .then(r => r.json())
     .catch(() => ({}));
   return data?.game?.gallery ?? {};

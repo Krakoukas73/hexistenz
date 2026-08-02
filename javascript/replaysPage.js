@@ -4,13 +4,13 @@
 // Contrairement à snapshotsPage.js (données embarquées côté PHP), la liste des parties
 // est récupérée en direct via multiplayer.php?action=listall — pas de scan disque
 // dupliqué côté PHP, une seule source de vérité (multiplayer.php).
-import { getGameLang, getLangFile } from './gameLangReactive.js';
+import { getGameLang, getLangFile, getLangVersion } from './gameLangReactive.js';
 
-const LOCALES = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA' };
+const LOCALES = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA', de: 'de-DE', ru: 'ru-RU', 'fr-MED': 'fr-FR' };
 
 async function loadTexts() {
   const file = getLangFile(getGameLang());
-  const data = await fetch(`./json/languages/${file}.json`)
+  const data = await fetch(`./json/languages/${file}.json?v=${getLangVersion()}`)
     .then(r => r.json())
     .catch(() => ({}));
   return data?.game?.replayGallery ?? {};

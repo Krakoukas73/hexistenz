@@ -27,13 +27,15 @@
       "settlers": "The Settlers sur Ubisoft",
       "heroes3": "Heroes III sur GOG"
     },
-    "tagline": "<strong>Hexistenz, c'est un jeu contemplatif</strong>, pensé pour ceux qui aiment prendre leur\n          temps pour observer un monde pis ses détails, sans se stresser avec l'horloge.<br><br><strong>Pose des\n          tuiles hexagonales</strong> pis regarde un territoire prendre forme sous tes yeux : de vastes forêts de\n          sapins et de bouleaux, des champs de blé qui brassent dans le vent avec leurs moulins, des villages\n          médiévaux aux toits fumants, des voies ferrées à n'en plus finir pis de grandes rivières où naviguent\n          tes bateaux.<br><br>Remplis des missions, intercepte des comètes, entoure tes tuiles, pis bâtis-toi\n          tranquillement tout un monde vivant, une tuile à la fois.<br><br><strong>Joue tout seul ou en\n          multijoueur</strong>, reprends une partie sauvegardée quand ça te tente, <strong>capture tes plus beaux\n          moments dans la galerie</strong>, pis revis tes parties en accéléré avec les replays en ligne téléchargeables.",
+    "tagline": "<strong>Hexistenz, c'est un jeu contemplatif</strong>, pensé pour ceux qui aiment prendre leur\n          temps pour observer un monde pis ses détails, sans se stresser avec l'horloge.<br><br><strong>Pose des\n          tuiles hexagonales</strong> pis regarde un territoire prendre forme sous tes yeux : de vastes forêts de\n          sapins et de bouleaux, des champs de blé qui brassent dans le vent avec leurs moulins, des villages\n          médiévaux aux toits fumants, des voies ferrées à n'en plus finir pis de grandes rivières où naviguent\n          tes bateaux.<br><br>Remplis des missions, intercepte des comètes, entoure tes tuiles, pis bâtis-toi\n          tranquillement tout un monde vivant, une tuile à la fois.<br><br><strong>Joue tout seul ou en\n          multijoueur</strong>, reprends une partie sauvegardée quand ça te tente, <strong>capture tes plus beaux\n          moments dans la galerie</strong>, pis revis tes parties en accéléré avec les replays en ligne téléchargeables.<br><br>Le jeu est jouable dès astheure pis traduit au grand complet en 9 langues, ça inclut même le vieux français du XIIe siècle.<br><br>Pis c'est gratuit, sans inscription, sans pay-to-win pis sans achat ingame : dans le fond, c'est toute rien que pour la nostalgie.",
     "btn_play": "Partir la game",
     "btn_how": "Comment ça marche ?",
     "stats": {
       "biomes_label": "Biomes",
       "games_label": "Games",
-      "factions_label": "Factions"
+      "factions_label": "Factions",
+      "langs_label": "Langues",
+      "themes_label": "Thèmes graphiques"
     }
   },
   "factions": {
@@ -185,6 +187,7 @@
       "immersive": "mode immersif",
       "super_immersive": "mode super-immersif",
       "mute": "couper le son",
+      "mute_tts": "tais l'annonceur",
       "help": "aide"
     }
   },
@@ -290,6 +293,10 @@
       "name": "Musique adaptative",
       "desc": "Des pistes d'intro, de jeu pis de fin qui s'enchaînent tout en douceur, pigées parmi plusieurs versions pour jamais sonner pareil d'une game à l'autre."
     },
+    "voice": {
+      "name": "Une voix qui te jase la game",
+      "desc": "Une voix (synthèse vocale drette dans ton navigateur, pas de service externe) t'annonce tes points, tes missions pis les affaires importantes de l'interface, en direct — un p'tit son se fait entendre juste avant chaque nouvelle mission pis chaque mission réussie. Disponible dans les 9 langues du jeu, avec une voix d'homme choisie tu-seule en allemand pis en russe. La touche T la ferme à part, sans toucher au reste de la trame sonore."
+    },
     "silence": {
       "name": "Silence quand ça te tente",
       "desc": "La touche M coupe ou remet toute la bande-son drette là, musique comprise — pratique pour jouer en cachette pendant une réunion, quand t'es tanné du bruit."
@@ -349,6 +356,15 @@
         "☀️ Se dissipe progressivement au fil des minutes",
         "🎚️ Densité et couleur du brouillard pilotables dans l'éditeur de direction artistique"
       ]
+    },
+    "storm": {
+      "name": "Orage pis feux",
+      "list": [
+        "⚡ La foudre pogne en dessous du couvert d'orage pis a peut mettre le feu à une tuile",
+        "🔥 Arbres, maisons, tours pis moulins brûlent à leur vraie hauteur, noircissent, pis repoussent après",
+        "🌬️ Le feu dérive au vent, se propage aux voisines pis arrête sec au bord de l'eau",
+        "🌧️ La pluie ralentit ça pis des fois a noie le brasier au complet"
+      ]
     }
   },
   "eda": {
@@ -389,10 +405,11 @@
   },
   "scores": {
     "label": "Palmarès mondial",
-    "title": "Les meilleurs bâtisseurs",
+    "title": "Les bâtisseurs les plus efficaces",
     "empty": "Y'a encore rien pantoute au palmarès — sois le premier à poser une tuile.",
     "try_luck": "Envoye, tente ta chance →",
     "headline_stat": "tuiles posées",
+    "pts_suffix": "pts",
     "trains_s": "locomotive",
     "trains_p": "locomotives",
     "boats_s": "bateau",
@@ -431,7 +448,7 @@
   },
   "footer": {
     "copy": "Jeu hexagonal contemplatif fait avec nostalgie, amour ❤️, Three.js pis beaucoup trop de tuiles",
-    "github": "Sur GitHub"
+    "github": "GitHub"
   },
   "game": {
     "gallery": {
@@ -456,7 +473,12 @@
     "eda": {
       "mainTitle": "Éditeur de direction artistique",
       "ambiances": "AMBIANCES",
-      "tabs": { "lut": "LUT", "cinematic": "Cinématique", "environment": "Environnement" },
+      "ambiancePrefix": "ambiance",
+      "tabs": {
+        "lut": "LUT",
+        "cinematic": "Cinématique",
+        "environment": "Environnement"
+      },
       "headers": {
         "lutFog": "1. Brouillard",
         "lutSun": "2. Astre lumineux",
@@ -574,7 +596,9 @@
           "domeColorTop": "Dôme haut",
           "domeColorBottom": "Dôme bas"
         },
-        "renderer": { "toneMappingExposure": "Exposition globale" },
+        "renderer": {
+          "toneMappingExposure": "Exposition globale"
+        },
         "lights": {
           "hemisphereIntensity": "Intensité hémisphère",
           "sunIntensity": "Intensité",
@@ -637,8 +661,15 @@
           "opacity": "Opacité"
         },
         "wind": {
-          "wheat": { "strength": "Amplitude", "speed": "Vitesse" },
-          "grass": { "strength": "Amplitude", "speed": "Vitesse", "sway": "Balancement" },
+          "wheat": {
+            "strength": "Amplitude",
+            "speed": "Vitesse"
+          },
+          "grass": {
+            "strength": "Amplitude",
+            "speed": "Vitesse",
+            "sway": "Balancement"
+          },
           "tree": {
             "strength": "Amplitude",
             "speed": "Vitesse",
@@ -648,8 +679,14 @@
             "detailStrength": "Détail"
           }
         },
-        "cloud": { "coverage": "Couverture", "scale": "Échelle motif", "speed": "Vitesse dérive" },
-        "quality": { "density": "Densité" },
+        "cloud": {
+          "coverage": "Couverture",
+          "scale": "Échelle motif",
+          "speed": "Vitesse dérive"
+        },
+        "quality": {
+          "density": "Densité"
+        },
         "cin": {
           "vignette": "Vignette",
           "grain": "Grain film",
@@ -680,11 +717,41 @@
           "depthEdge": "Contour profondeur"
         },
         "vfx": {
-          "mist": { "densite": "Densité", "compacite": "Compacité", "elevation": "Élévation" },
-          "fireflies": { "densite": "Densité", "taille": "Taille", "vagabondage": "Vagabondage", "scintillement": "Scintillement" },
-          "rain": { "densite": "Densité", "tailleGoutte": "Taille goutte", "impactSol": "Impact sol" },
-          "cloud": { "densite": "Densité", "altitude": "Altitude", "epaisseur": "Épaisseur" },
-          "storm": { "frequenceEclairs": "Fréquence éclairs", "luminositeEclair": "Luminosité éclair", "intensitePluie": "Intensité pluie" }
+          "mist": {
+            "densite": "Densité",
+            "compacite": "Compacité",
+            "elevation": "Élévation"
+          },
+          "fireflies": {
+            "densite": "Densité",
+            "taille": "Taille",
+            "vagabondage": "Vagabondage",
+            "scintillement": "Scintillement"
+          },
+          "rain": {
+            "densite": "Densité",
+            "tailleGoutte": "Taille goutte",
+            "impactSol": "Impact sol"
+          },
+          "cloud": {
+            "densite": "Densité",
+            "altitude": "Altitude",
+            "epaisseur": "Épaisseur"
+          },
+          "storm": {
+            "frequenceEclairs": "Fréquence éclairs",
+            "luminositeEclair": "Luminosité éclair",
+            "intensitePluie": "Intensité pluie",
+            "altitudeChape": "Altitude chape",
+            "opaciteChape": "Opacité chape"
+          },
+          "fire": {
+            "probaAllumage": "Proba allumage",
+            "densiteFlammes": "Densité flammes",
+            "duree": "Durée",
+            "taille": "Taille",
+            "propagation": "Propagation"
+          }
         }
       }
     },
@@ -696,6 +763,8 @@
       "topbar.replay": "Reregarde la partie",
       "topbar.lang": "Langue",
       "topbar.theme": "Thème graphique (Bleu / Médiéval)",
+      "topbar.mute": "Couper / rétablir le son, mon chum",
+      "topbar.muteVoice": "Couper / rétablir la voix (TTS)",
       "renderer.toneMappingExposure": "Exposition globale du renderer (ACESFilmic). Contrôle la quantité de lumière atteignant le \"capteur\" avant tout étalonnage.\nValeurs < 1 assombrissent l'ensemble, > 2 peuvent saturer les hautes lumières.\nTypique : 1.2–1.8 pour un rendu naturel.",
       "environment.fogDensity": "Densité du brouillard exponentiel (FogExp2). Actif uniquement quand \"Fin linéaire\" est à 0.\nLa visibilité chute très rapidement : à 0.07 la scène est quasi-opaque.\nPour un champ visuel contrôlé, préférer le mode linéaire via \"Début\" et \"Fin\".",
       "environment.fogNear": "Distance en unités 3D où le brouillard linéaire commence.\nDès que \"Fin\" > 0, bascule automatiquement de FogExp2 vers THREE.Fog(near, far).\nÀ 0 : brouillard dès le premier plan. À 5 : les objets proches restent nets.",
@@ -803,6 +872,8 @@
       "stats.textures": "Nombre de textures actives en mémoire GPU.\nUne texture non libérée reste en VRAM. Surveiller après chargement de nouvelles tuiles.",
       "stats.shaders": "Nombre de programmes shader (GLSL) compilés et actifs.\nChaque combinaison de matériau + defines = un shader. Trop de variantes = stutter à la première frame.",
       "game.tiles": "Nombre total de tuiles posées sur le plateau depuis le début de la partie.\nChaque tuile peut appartenir à un ou plusieurs biomes selon sa composition.",
+      "game.score": "Le score : les points que tu as marqués dans cette partie.",
+      "game.efficiency": "L'efficacité = score ÷ tuiles posées, minorée tant que trop peu de tuiles ont été posées pour être significative.\nLe classement mondial (rubrique Classement du site) est basé sur CETTE efficacité, pas sur le score brut !",
       "game.mills": "Nombre de moulins présents sur la grille.\nUn moulin apparaît automatiquement au centre de chaque grande zone de champ de blé.",
       "game.trains": "Lignes de train formées : une ligne = deux gares connectées par des rails continus.\nPlus la ligne est longue, plus les points de score sont élevés.",
       "game.boats": "Bateaux actifs : un bateau apparaît sur chaque étendue d'eau entourée de terres.\nChaque bateau génère des points tant qu'il reste \"à flot\".",
@@ -919,8 +990,12 @@
         "boats": "Bateaux",
         "comets": "Comètes",
         "total": "Total",
-        "surfaceMax": "Surface max",
-        "railMax": "Voie max",
+        "grassMax": "Contiguë",
+        "fieldMax": "Contigu",
+        "forestMax": "Contiguë",
+        "houseMax": "Contigu",
+        "waterMax": "Contiguë",
+        "railMax": "Contiguë",
         "biomes": {
           "grass": "Prairie",
           "field": "Champ de blé",
@@ -934,7 +1009,9 @@
         "deckRemaining": "RESTANTES",
         "tilesPlaced": "POSÉES",
         "missionsTitle": "MISSIONS EN COURS",
-        "noMission": "Y'a pas de mission, faque relaxe"
+        "noMission": "Y'a pas de mission, faque relaxe",
+        "efficiencyLabel": "Efficacité",
+        "scoreLabel": "Score"
       },
       "help": {
         "title": "Aide",
@@ -1016,6 +1093,7 @@
           "undo": "Défaire le dernier mouvement",
           "toggleHelp": "Afficher / masquer cette aide",
           "muteSound": "Couper / activer tous les sons",
+          "muteVoice": "Faire taire / réactiver l'annonceur vocal",
           "immersive": "Mode immersif",
           "superImmersive": "Mode super-immersif",
           "speedUp": "Accélère les déplacements pis le zoom",
@@ -1094,7 +1172,8 @@
     },
     "preloader": {
       "loading": "Ça s'en vient…",
-      "loadingPct": "Ça s'en vient… {pct} %"
+      "loadingPct": "Ça s'en vient… {pct} %",
+      "loadingCount": "{loaded} fichiers / {total} fichiers · {loadedMB} Mo / {totalMB} Mo"
     },
     "placementOverlay": {
       "ok": "C'EST BEAU",
@@ -1114,9 +1193,23 @@
       "unreadableResponse": "Réponse serveur illisible ({status}) : {text}",
       "serverError": "Erreur serveur {status}"
     },
-    "kbdHint": "H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif",
+    "kbdHint": "H ou ESC&nbsp;→ aide &nbsp;|&nbsp; M&nbsp;→ mute &nbsp;|&nbsp; T&nbsp;→ tais l'annonceur &nbsp;|&nbsp; ESPACE&nbsp;→ immersif &nbsp;|&nbsp; MAJ+ESPACE&nbsp;→ super-immersif",
     "superImmersifExitHint": "ESPACE pour sortir du super-immersif, mon chum",
     "langName": "Québécois",
+    "tts": {
+      "pointsAnnounce": "{n} points, en plein dans le mille !",
+      "voiceOn": "L'annonceur jase encore",
+      "voiceOff": "L'annonceur s'la ferme",
+      "newMission": "Une nouvelle mission vient de rentrer : {title}",
+      "missionCompleted": "Bravo mon chum, mission accomplie !",
+      "edaOpened": "L'éditeur de direction artistique, mon chum",
+      "helpOpened": "L'aide, right là",
+      "millsCount": "T'as {n} moulins, mon chum",
+      "trainsCount": "T'as {n} trains, mon chum",
+      "boatsCount": "T'as {n} bateaux, mon chum",
+      "cometsCount": "T'as {n} comètes, mon chum",
+      "languageChanged": "Langue québécoise, mon chum"
+    },
     "fpsAdjectives": {
       "disastrous": "Un désastre en tabarnak",
       "bad": "Poche",

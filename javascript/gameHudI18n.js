@@ -16,7 +16,7 @@
 // que edaPanelWiring.js puisse forcer une traduction immédiate juste après avoir
 // construit son DOM dynamique (sliders EAU/VENT/NUAGES/VFX créés à l'exécution,
 // après le premier passage de ce moteur si la langue sauvegardée n'est pas FR).
-import { getGameLang, registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { getGameLang, registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 
 function resolve(data, path) {
   return path.split('.').reduce((node, key) => (node && typeof node === 'object') ? node[key] : undefined, data);
@@ -38,7 +38,7 @@ registerLangRefresh(applyGameI18n);
 
 function _loadCurrentLangData() {
   const lang = getGameLang();
-  return fetch(`./json/languages/${getLangFile(lang)}.json`).then(r => r.json());
+  return fetch(`./json/languages/${getLangFile(lang)}.json?v=${getLangVersion()}`).then(r => r.json());
 }
 
 // Le HTML servi par PHP est toujours en FR (repli par défaut, pas de flash-free

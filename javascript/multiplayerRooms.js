@@ -14,11 +14,11 @@ import { createRoom, generateRoomCode, getOrCreatePlayerId, joinRoom, listRooms 
 import { LUT_HELP, attachHelpTooltip, hideHelpTooltip } from './help.js';
 import { escapeHtml } from './domUtils.js';
 import { setStatus, normalizeWorldShapeMode, normalizeCode } from './startupMenuShared.js';
-import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 
 const _langFile = getLangFile();
 
-const _mpText = await fetch(`./json/languages/${_langFile}.json`)
+const _mpText = await fetch(`./json/languages/${_langFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .then(data => data?.game?.multiplayerRooms ?? {})
   .catch(err => {

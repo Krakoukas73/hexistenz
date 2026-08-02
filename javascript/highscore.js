@@ -4,14 +4,14 @@
 // 'hexistenz_pres_lang'). Repli FR en dur à chaque site d'appel : ce sont des
 // messages affichés pendant l'enregistrement du score (chemin critique), on
 // évite un texte vide si le fetch échoue.
-import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 
 const _langFile = getLangFile();
 
 // `const` volontairement conservé, objet muté en place au changement de langue
 // en jeu (cf. gameLangReactive.js / CONTEXT.md §21) : ces messages sont lus à
 // chaque appel (setStatus), donc la mutation en place suffit à les rafraîchir.
-const _hsText = await fetch(`./json/languages/${_langFile}.json`)
+const _hsText = await fetch(`./json/languages/${_langFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .then(data => data?.game?.highscore ?? {})
   .catch(err => {

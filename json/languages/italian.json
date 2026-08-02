@@ -27,13 +27,15 @@
       "settlers": "The Settlers su Ubisoft",
       "heroes3": "Heroes III su GOG"
     },
-    "tagline": "<strong>Hexistenz è un gioco contemplativo</strong>, pensato per chi ama osservare a lungo un\n          mondo e i suoi dettagli, senza preoccuparsi del tempo.<br><br><strong>Posiziona tessere esagonali</strong>\n          e guarda un territorio prendere forma sotto i tuoi occhi: vaste foreste di abeti e betulle, campi di\n          grano ondeggianti con i loro mulini, villaggi medievali dai tetti fumanti, reti ferroviarie e ampi fiumi\n          dove navigano le tue barche.<br><br>Completa missioni, intercetta comete, circonda le tue tessere, e\n          costruisci poco a poco un mondo vivo, tessera dopo tessera.<br><br><strong>Gioca da solo o in\n          multiplayer</strong>, riprendi una partita salvata quando vuoi, <strong>cattura i tuoi momenti migliori\n          nella galleria delle catture</strong>, e rivivi le tue partite in accelerato con i replay online scaricabili.",
+    "tagline": "<strong>Hexistenz è un gioco contemplativo</strong>, pensato per chi ama osservare a lungo un\n          mondo e i suoi dettagli, senza preoccuparsi del tempo.<br><br><strong>Posiziona tessere esagonali</strong>\n          e guarda un territorio prendere forma sotto i tuoi occhi: vaste foreste di abeti e betulle, campi di\n          grano ondeggianti con i loro mulini, villaggi medievali dai tetti fumanti, reti ferroviarie e ampi fiumi\n          dove navigano le tue barche.<br><br>Completa missioni, intercetta comete, circonda le tue tessere, e\n          costruisci poco a poco un mondo vivo, tessera dopo tessera.<br><br><strong>Gioca da solo o in\n          multiplayer</strong>, riprendi una partita salvata quando vuoi, <strong>cattura i tuoi momenti migliori\n          nella galleria delle catture</strong>, e rivivi le tue partite in accelerato con i replay online scaricabili.<br><br>Il gioco è già giocabile ed è interamente tradotto in 9 lingue, compreso un francese antico del XII secolo.<br><br>Il gioco è gratuito, senza registrazione, senza pay-to-win e senza acquisti in-game: insomma, fatto solo per nostalgia.",
     "btn_play": "Gioca ora",
     "btn_how": "Come si gioca?",
     "stats": {
       "biomes_label": "Biomi",
       "games_label": "Partite",
-      "factions_label": "Fazioni"
+      "factions_label": "Fazioni",
+      "langs_label": "Lingue",
+      "themes_label": "Temi grafici"
     }
   },
   "factions": {
@@ -185,6 +187,7 @@
       "immersive": "modalità immersiva",
       "super_immersive": "modalità super-immersiva",
       "mute": "muto",
+      "mute_tts": "muto voce",
       "help": "aiuto"
     }
   },
@@ -290,6 +293,10 @@
       "name": "Musica adattiva",
       "desc": "Tracce di intro, di gioco e di fine che si susseguono in dissolvenza morbida, pescate tra diverse varianti per non suonare mai uguali da una partita all'altra."
     },
+    "voice": {
+      "name": "Una voce che commenta la partita",
+      "desc": "Una voce narrante (sintesi vocale nativa del browser, nessun servizio esterno) annuncia in diretta i tuoi punti, le missioni e i momenti chiave dell'interfaccia — un breve segnale sonoro precede ogni nuova missione e ogni missione completata. Disponibile nelle 9 lingue del gioco, con una voce maschile scelta automaticamente per il tedesco e il russo. Il tasto T la silenzia da sola, senza toccare il resto della colonna sonora."
+    },
     "silence": {
       "name": "Silenzio a richiesta",
       "desc": "Il tasto M interrompe e ripristina istantaneamente l'intera colonna sonora, musica compresa — utile per una partita tranquilla in riunione o in videochiamata."
@@ -349,6 +356,15 @@
         "☀️ Si dissolve progressivamente col passare dei minuti",
         "🎚️ Densità e colore della nebbia regolabili nell'editor di direzione artistica"
       ]
+    },
+    "storm": {
+      "name": "Temporali e incendi",
+      "list": [
+        "⚡ Il fulmine cade sotto la coltre temporalesca e può incendiare una tessera",
+        "🔥 Alberi, case, torri e mulini bruciano alla loro altezza reale, anneriscono e poi rinascono",
+        "🌬️ Il focolaio deriva col vento, si propaga alle vicine e si arresta netto sul bordo dell'acqua",
+        "🌧️ La pioggia rallenta il contagio e talvolta soffoca del tutto il rogo"
+      ]
     }
   },
   "eda": {
@@ -389,10 +405,11 @@
   },
   "scores": {
     "label": "Classifica mondiale",
-    "title": "I migliori costruttori",
+    "title": "I costruttori più efficienti",
     "empty": "Nessun punteggio registrato — sii il primo a posare la tua tessera.",
     "try_luck": "Tenta la fortuna →",
     "headline_stat": "tessere posate",
+    "pts_suffix": "pt",
     "trains_s": "locomotiva",
     "trains_p": "locomotive",
     "boats_s": "barca",
@@ -431,7 +448,7 @@
   },
   "footer": {
     "copy": "Gioco esagonale contemplativo fatto con nostalgia e amore ❤️ Three.js e tante tessere",
-    "github": "Su GitHub"
+    "github": "GitHub"
   },
   "game": {
     "gallery": {
@@ -456,7 +473,12 @@
     "eda": {
       "mainTitle": "Editor di direzione artistica",
       "ambiances": "ATMOSFERE",
-      "tabs": { "lut": "LUT", "cinematic": "Cinematica", "environment": "Ambiente" },
+      "ambiancePrefix": "atmosfera",
+      "tabs": {
+        "lut": "LUT",
+        "cinematic": "Cinematica",
+        "environment": "Ambiente"
+      },
       "headers": {
         "lutFog": "1. Nebbia",
         "lutSun": "2. Astro luminoso",
@@ -574,7 +596,9 @@
           "domeColorTop": "Cupola alta",
           "domeColorBottom": "Cupola bassa"
         },
-        "renderer": { "toneMappingExposure": "Esposizione globale" },
+        "renderer": {
+          "toneMappingExposure": "Esposizione globale"
+        },
         "lights": {
           "hemisphereIntensity": "Intensità emisfero",
           "sunIntensity": "Intensità",
@@ -637,8 +661,15 @@
           "opacity": "Opacità"
         },
         "wind": {
-          "wheat": { "strength": "Ampiezza", "speed": "Velocità" },
-          "grass": { "strength": "Ampiezza", "speed": "Velocità", "sway": "Oscillazione" },
+          "wheat": {
+            "strength": "Ampiezza",
+            "speed": "Velocità"
+          },
+          "grass": {
+            "strength": "Ampiezza",
+            "speed": "Velocità",
+            "sway": "Oscillazione"
+          },
           "tree": {
             "strength": "Ampiezza",
             "speed": "Velocità",
@@ -648,8 +679,14 @@
             "detailStrength": "Dettaglio"
           }
         },
-        "cloud": { "coverage": "Copertura", "scale": "Scala motivo", "speed": "Velocità deriva" },
-        "quality": { "density": "Densità" },
+        "cloud": {
+          "coverage": "Copertura",
+          "scale": "Scala motivo",
+          "speed": "Velocità deriva"
+        },
+        "quality": {
+          "density": "Densità"
+        },
         "cin": {
           "vignette": "Vignettatura",
           "grain": "Grana pellicola",
@@ -680,11 +717,41 @@
           "depthEdge": "Contorno profondità"
         },
         "vfx": {
-          "mist": { "densite": "Densità", "compacite": "Compattezza", "elevation": "Elevazione" },
-          "fireflies": { "densite": "Densità", "taille": "Dimensione", "vagabondage": "Vagabondaggio", "scintillement": "Scintillio" },
-          "rain": { "densite": "Densità", "tailleGoutte": "Dimensione goccia", "impactSol": "Impatto suolo" },
-          "cloud": { "densite": "Densità", "altitude": "Altitudine", "epaisseur": "Spessore" },
-          "storm": { "frequenceEclairs": "Frequenza fulmini", "luminositeEclair": "Luminosità fulmine", "intensitePluie": "Intensità pioggia" }
+          "mist": {
+            "densite": "Densità",
+            "compacite": "Compattezza",
+            "elevation": "Elevazione"
+          },
+          "fireflies": {
+            "densite": "Densità",
+            "taille": "Dimensione",
+            "vagabondage": "Vagabondaggio",
+            "scintillement": "Scintillio"
+          },
+          "rain": {
+            "densite": "Densità",
+            "tailleGoutte": "Dimensione goccia",
+            "impactSol": "Impatto suolo"
+          },
+          "cloud": {
+            "densite": "Densità",
+            "altitude": "Altitudine",
+            "epaisseur": "Spessore"
+          },
+          "storm": {
+            "frequenceEclairs": "Frequenza fulmini",
+            "luminositeEclair": "Luminosità fulmine",
+            "intensitePluie": "Intensità pioggia",
+            "altitudeChape": "Altitudine coltre",
+            "opaciteChape": "Opacità coltre"
+          },
+          "fire": {
+            "probaAllumage": "Prob. accensione",
+            "densiteFlammes": "Densità fiamme",
+            "duree": "Durata",
+            "taille": "Dimensione",
+            "propagation": "Propagazione"
+          }
         }
       }
     },
@@ -696,6 +763,8 @@
       "topbar.replay": "Replay della partita",
       "topbar.lang": "Lingua",
       "topbar.theme": "Tema grafico (Blu / Medievale)",
+      "topbar.mute": "Disattiva / riattiva l'audio",
+      "topbar.muteVoice": "Disattiva / riattiva la voce (TTS)",
       "renderer.toneMappingExposure": "Esposizione globale del renderer (ACESFilmic). Controlla la quantità di luce che raggiunge il \"sensore\" prima di qualsiasi calibrazione.\nValori < 1 scuriscono l'insieme, > 2 possono saturare le alte luci.\nTipico: 1.2–1.8 per una resa naturale.",
       "environment.fogDensity": "Densità della nebbia esponenziale (FogExp2). Attiva solo quando \"Fine lineare\" è a 0.\nLa visibilità cala molto rapidamente: a 0.07 la scena è quasi opaca.\nPer un campo visivo controllato, preferire la modalità lineare tramite \"Inizio\" e \"Fine\".",
       "environment.fogNear": "Distanza in unità 3D dove inizia la nebbia lineare.\nAppena \"Fine\" > 0, passa automaticamente da FogExp2 a THREE.Fog(near, far).\nA 0: nebbia fin dal primo piano. A 5: gli oggetti vicini restano nitidi.",
@@ -803,6 +872,8 @@
       "stats.textures": "Numero di texture attive in memoria GPU.\nUna texture non liberata resta in VRAM. Sorvegliare dopo il caricamento di nuove tessere.",
       "stats.shaders": "Numero di programmi shader (GLSL) compilati e attivi.\nOgni combinazione di materiale + define = uno shader. Troppe varianti = scatto al primo frame.",
       "game.tiles": "Numero totale di tessere posate sul tabellone dall'inizio della partita.\nOgni tessera può appartenere a uno o più biomi secondo la sua composizione.",
+      "game.score": "Il punteggio: i punti che hai guadagnato in questa partita.",
+      "game.efficiency": "Efficienza = punteggio ÷ tessere posate, ridotta finché sono state posate troppo poche tessere perché sia significativa.\nLa classifica mondiale (sezione Classifica del sito) si basa su QUESTA efficienza, non sul punteggio grezzo!",
       "game.mills": "Numero di mulini presenti sulla griglia.\nUn mulino compare automaticamente al centro di ogni grande zona di campo di grano.",
       "game.trains": "Linee ferroviarie formate: una linea = due stazioni collegate da binari continui.\nPiù la linea è lunga, più i punti punteggio sono elevati.",
       "game.boats": "Barche attive: una barca compare su ogni distesa d'acqua circondata da terra.\nOgni barca genera punti finché resta \"a galla\".",
@@ -919,8 +990,12 @@
         "boats": "Barche",
         "comets": "Comete",
         "total": "Totale",
-        "surfaceMax": "Superficie max",
-        "railMax": "Ferrovia max",
+        "grassMax": "Contigua",
+        "fieldMax": "Contiguo",
+        "forestMax": "Contigua",
+        "houseMax": "Contiguo",
+        "waterMax": "Contigua",
+        "railMax": "Contigua",
         "biomes": {
           "grass": "Prateria",
           "field": "Campo di grano",
@@ -934,7 +1009,9 @@
         "deckRemaining": "RIMANENTI",
         "tilesPlaced": "POSATE",
         "missionsTitle": "MISSIONI IN CORSO",
-        "noMission": "Nessuna missione"
+        "noMission": "Nessuna missione",
+        "efficiencyLabel": "Efficienza",
+        "scoreLabel": "Punteggio"
       },
       "help": {
         "title": "Aiuto",
@@ -1016,6 +1093,7 @@
           "undo": "Annulla l'ultima mossa",
           "toggleHelp": "Mostra / nascondi questo aiuto",
           "muteSound": "Disattiva / attiva tutti i suoni",
+          "muteVoice": "Disattiva / attiva gli annunci vocali",
           "immersive": "Modalità immersiva",
           "superImmersive": "Modalità super immersiva",
           "speedUp": "Accelera gli spostamenti e lo zoom",
@@ -1094,7 +1172,8 @@
     },
     "preloader": {
       "loading": "Caricamento…",
-      "loadingPct": "Caricamento… {pct} %"
+      "loadingPct": "Caricamento… {pct} %",
+      "loadingCount": "{loaded} file / {total} file · {loadedMB} MB / {totalMB} MB"
     },
     "placementOverlay": {
       "ok": "OK",
@@ -1114,9 +1193,23 @@
       "unreadableResponse": "Risposta server illeggibile ({status}): {text}",
       "serverError": "Errore server {status}"
     },
-    "kbdHint": "H o ESC&nbsp;→ aiuto &nbsp;|&nbsp; M&nbsp;→ muto &nbsp;|&nbsp; SPAZIO&nbsp;→ immersivo &nbsp;|&nbsp; MAIUSC+SPAZIO&nbsp;→ super immersivo",
+    "kbdHint": "H o ESC&nbsp;→ aiuto &nbsp;|&nbsp; M&nbsp;→ muto &nbsp;|&nbsp; T&nbsp;→ muto voce &nbsp;|&nbsp; SPAZIO&nbsp;→ immersivo &nbsp;|&nbsp; MAIUSC+SPAZIO&nbsp;→ super immersivo",
     "superImmersifExitHint": "SPAZIO per uscire dal mondo super immersivo",
     "langName": "Italiano",
+    "tts": {
+      "pointsAnnounce": "{n} punti!",
+      "voiceOn": "Voce attivata",
+      "voiceOff": "Voce disattivata",
+      "newMission": "Nuova missione: {title}",
+      "missionCompleted": "Bravo! Missione completata!",
+      "edaOpened": "Editor di direzione artistica",
+      "helpOpened": "Guida",
+      "millsCount": "Hai {n} mulini",
+      "trainsCount": "Hai {n} treni",
+      "boatsCount": "Hai {n} barche",
+      "cometsCount": "Hai {n} comete",
+      "languageChanged": "Lingua italiana"
+    },
     "fpsAdjectives": {
       "disastrous": "Disastroso",
       "bad": "Cattivo",

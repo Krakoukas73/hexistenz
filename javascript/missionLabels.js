@@ -18,11 +18,11 @@
 //     règle de suffixe générique — robuste à n'importe quelle langue/mot.
 import { EDGE_TYPES } from './config.js';
 import { MISSION_TYPE_LABEL } from './missions.js';
-import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 
 const _langFile = getLangFile();
 
-const _langData = await fetch(`./json/languages/${_langFile}.json`)
+const _langData = await fetch(`./json/languages/${_langFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .catch(err => {
     console.error(`[missionLabels] Impossible de charger ${_langFile}.json`, err);

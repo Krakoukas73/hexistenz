@@ -10,6 +10,21 @@ $langDir = __DIR__ . '/json/languages/';
 $t = [
     'fr' => json_decode(@file_get_contents($langDir . 'french.json'), true) ?: [],
 ];
+
+// 2026-07-29 — cache-busting des fichiers json/languages/*.json (même bug/fix que
+// le CSS, cf. plus bas $cssVersion et CONTEXT.md §26) : tous les fetch() JS de ces
+// fichiers (gameLangReactive.js, ttsAnnouncer.js, scene.js, edaPanelWiring.js...)
+// n'avaient aucun ?v=, donc le navigateur pouvait continuer à servir une traduction
+// périmée indéfiniment après modification sur disque — cause confirmée d'un retour
+// "toujours pareil" sur le texte TTS fr-CA (2026-07-29). $langVersion = mtime le
+// plus récent parmi TOUS les fichiers de langue, exposé au JS via window global
+// (une simple query string, pas un <link> — inutile de versionner chaque fichier
+// individuellement ici, une traduction éditée invalide de toute façon TOUTES les
+// langues en pratique). Lu par gameLangReactive.js::getLangVersion().
+$langJsonFiles = glob($langDir . '*.json') ?: [];
+$langVersion = time();
+$langMtimes = array_filter(array_map('filemtime', $langJsonFiles));
+if ($langMtimes) { $langVersion = max($langMtimes); }
 function tr($t, $lang, $path) {
     $node = $t[$lang] ?? [];
     foreach (explode('.', $path) as $part) {
@@ -47,9 +62,23 @@ $cssFilesGame = [
 $cssVersion = time();
 $mtimesGame = array_filter(array_map(function ($f) { return file_exists($f) ? filemtime($f) : 0; }, $cssFilesGame));
 if ($mtimesGame) { $cssVersion = max($mtimesGame); }
+
+// 2026-08-01 — demande explicite : sur mobile, préférer "bleu" (léger) à
+// "ancien"/Médiéval (cadre décoratif 4 côtés, lourd en pixels sur petit
+// écran) — uniquement quand aucun thème n'a jamais été choisi par le
+// visiteur (localStorage, illisible côté PHP) ; ici juste pour éviter le
+// flash visuel "médiéval" avant que le script inline plus bas (qui LIT le
+// localStorage) ne corrige l'attribut. Même regex UA que index.php/
+// javascript/themeManager.js, cf. leurs commentaires pour l'explication
+// complète.
+$isMobileUA = false;
+if (!empty($_SERVER['HTTP_USER_AGENT'])) {
+    $isMobileUA = (bool)preg_match('/Android|iPhone|iPad|iPod|Mobile|Windows Phone/i', $_SERVER['HTTP_USER_AGENT']);
+}
+$defaultTheme = $isMobileUA ? 'bleu' : 'ancien';
 ?>
 <!doctype html>
-<html lang="fr" data-lang="fr" data-theme="ancien">
+<html lang="fr" data-lang="fr" data-theme="<?= htmlspecialchars($defaultTheme) ?>">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -108,21 +137,65 @@ if ($mtimesGame) { $cssVersion = max($mtimesGame); }
     // Le HUD lui-même reste rendu en FR par PHP ; javascript/gameHudI18n.js
     // rattrape la traduction juste après si la langue sauvegardée n'est pas FR.
     (function() {
-      var l = localStorage.getItem('hexistenz_pres_lang') || 'fr';
+      // 2026-07-31 — repli "fr-CA" (au lieu de "fr") au tout premier lancement,
+      // sur demande explicite (cf. gameLangReactive.js::getGameLang()).
+      var l = localStorage.getItem('hexistenz_pres_lang') || 'fr-CA';
       document.documentElement.dataset.lang = l;
     })();
     // 2026-07-17 — restaure le thème graphique choisi dans la prez (même clé
     // localStorage que javascript/themeManager.js). Le HUD in-game réagit
     // progressivement à [data-theme="ancien"] : .mode-panel (menus pre-game),
     // #scorePanel + .missionsBox (HUD in-partie) — cf. CONTEXT.md §32.
+    // 2026-08-01 — demande explicite : par défaut MOBILE, préférer "bleu" à
+    // "ancien" (cf. javascript/themeManager.js pour l'explication complète)
+    // — uniquement si th n'est ni 'bleu' ni 'ancien' (jamais choisi), sinon
+    // le choix explicite du visiteur (quel qu'il soit, même sur mobile)
+    // prévaut toujours.
     (function() {
       var th = localStorage.getItem('hexistenz_theme');
-      document.documentElement.dataset.theme = (th === 'bleu') ? 'bleu' : 'ancien';
+      if (th !== 'bleu' && th !== 'ancien') {
+        var ua = navigator.userAgent || '';
+        var isMobile = (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean')
+          ? navigator.userAgentData.mobile
+          : /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua);
+        th = isMobile ? 'bleu' : 'ancien';
+      }
+      document.documentElement.dataset.theme = th;
     })();
   </script>
 </head>
 <body>
   <canvas id="app"></canvas>
+
+  <!-- 2026-08-01 — demande explicite : bannière décorative collée en bas de
+       l'écran, uniquement en thème médiéval et uniquement ingame (jamais sur
+       la prez index.php, qui est un fichier séparé — et jamais sur les menus
+       pre-game/multi ici, cf. commentaire CSS dans css/themes/medieval.css :
+       .mode-screen, l'overlay plein écran de startupMenu.js/multiplayerRooms.js,
+       a un z-index bien plus élevé et un fond opaque, donc la recouvre déjà
+       naturellement sans logique JS supplémentaire). Masquée par défaut
+       (display:none, base.css) ; réaffichée uniquement par
+       [data-theme="ancien"] dans medieval.css.
+       2026-08-01 — erratum : un <img> étiré en width:100vw/height:auto devenait
+       énorme sur les grandes résolutions (5120px de large → ~323px de haut,
+       hors de proportion). Remplacé par un <div> à fond répété (images/footer.png
+       redimensionné à 792x50px, motif nativement seamless horizontalement,
+       cf. css/themes/medieval.css) : hauteur fixe 50px quelle que soit la largeur
+       d'écran, background-repeat:repeat-x. -->
+  <div id="footerBanner" aria-hidden="true"></div>
+  <!-- 2026-08-01 — demande explicite : le footer devient un cadre complet
+       ("frame intégrale") : la même image footer2.png dupliquée en haut de
+       l'écran, tournée à 180° (background elle-même retournée en CSS via
+       transform, cf. css/themes/medieval.css), mêmes dimensions/zoom/repeat
+       que le footer. Même logique medieval-only / ingame-only que footerBanner. -->
+  <div id="headerBanner" aria-hidden="true"></div>
+  <!-- 2026-08-01 — demande explicite : cadre complet, ajout des côtés
+       gauche/droit (même image footer2.png, tournée à 90°/-90° en CSS),
+       passant SOUS les parties header/footer (z-index inférieur, cf.
+       medieval.css) au niveau des 4 coins. Même logique medieval-only /
+       ingame-only que footerBanner/headerBanner. -->
+  <div id="leftBanner" aria-hidden="true"></div>
+  <div id="rightBanner" aria-hidden="true"></div>
 
   <div id="scorePopup" aria-hidden="true"></div>
 
@@ -151,7 +224,15 @@ if ($mtimesGame) { $cssVersion = max($mtimesGame); }
     </div>
   </div>
 
-  <div id="arcadeScore"><span id="dbgScore">0</span><span class="arcade-suffix">pts <span id="dbgLastScore"></span></span></div>
+  <!-- 2026-08-01 — demande explicite : l'efficacité EN COURS (même algo que le
+       classement de la prez, cf. variables.js EFFICIENCY_MIN_TILES/_EXPONENT)
+       s'affiche désormais SOUS le score, à la ligne, toujours alignée à gauche
+       comme le score lui-même — d'où le passage de #arcadeScore en 2 lignes
+       (colonne) au lieu d'une seule rangée. -->
+  <div id="arcadeScore">
+    <div class="arcade-score-row"><span class="arcade-label" data-i18n="game.ui.hud.scoreLabel">Score</span> : <span id="dbgScore">0</span><span class="arcade-suffix"><span id="dbgLastScore"></span></span></div>
+    <div id="dbgEfficiency" class="arcade-efficiency"><span class="arcade-label" data-i18n="game.ui.hud.efficiencyLabel">Efficacité</span> : <span id="dbgEfficiencyValue">0.0%</span></div>
+  </div>
 
   <aside id="scorePanel">
     <div class="internal-parchment">
@@ -179,27 +260,27 @@ if ($mtimesGame) { $cssVersion = max($mtimesGame); }
       <div class="stats-card-grid">
         <div class="stats-card stats-grass">
           <div class="stats-card-head"><span class="stats-icon">🌿</span><span data-i18n="game.ui.hud.biomes.grass"><?= tr($t,'fr','game.ui.hud.biomes.grass') ?></span></div>
-          <div class="stats-metrics"><div><span data-i18n="game.ui.hud.total"><?= tr($t,'fr','game.ui.hud.total') ?></span><strong id="statGrass">0</strong></div><div><span data-i18n="game.ui.hud.surfaceMax"><?= tr($t,'fr','game.ui.hud.surfaceMax') ?></span><strong id="statLargestGrass">0</strong></div></div>
+          <div class="stats-metrics"><div><span data-i18n="game.ui.hud.total"><?= tr($t,'fr','game.ui.hud.total') ?></span><strong id="statGrass">0</strong></div><div><span data-i18n="game.ui.hud.grassMax"><?= tr($t,'fr','game.ui.hud.grassMax') ?></span><strong id="statLargestGrass">0</strong></div></div>
         </div>
 
         <div class="stats-card stats-field">
           <div class="stats-card-head"><span class="stats-icon">🌾</span><span data-i18n="game.ui.hud.biomes.field"><?= tr($t,'fr','game.ui.hud.biomes.field') ?></span></div>
-          <div class="stats-metrics"><div><span data-i18n="game.ui.hud.total"><?= tr($t,'fr','game.ui.hud.total') ?></span><strong id="statField">0</strong></div><div><span data-i18n="game.ui.hud.surfaceMax"><?= tr($t,'fr','game.ui.hud.surfaceMax') ?></span><strong id="statLargestField">0</strong></div></div>
+          <div class="stats-metrics"><div><span data-i18n="game.ui.hud.total"><?= tr($t,'fr','game.ui.hud.total') ?></span><strong id="statField">0</strong></div><div><span data-i18n="game.ui.hud.fieldMax"><?= tr($t,'fr','game.ui.hud.fieldMax') ?></span><strong id="statLargestField">0</strong></div></div>
         </div>
 
         <div class="stats-card stats-forest">
           <div class="stats-card-head"><span class="stats-icon">🌲</span><span data-i18n="game.ui.hud.biomes.forest"><?= tr($t,'fr','game.ui.hud.biomes.forest') ?></span></div>
-          <div class="stats-metrics"><div><span data-i18n="game.ui.hud.total"><?= tr($t,'fr','game.ui.hud.total') ?></span><strong id="statForest">0</strong></div><div><span data-i18n="game.ui.hud.surfaceMax"><?= tr($t,'fr','game.ui.hud.surfaceMax') ?></span><strong id="statLargestForest">0</strong></div></div>
+          <div class="stats-metrics"><div><span data-i18n="game.ui.hud.total"><?= tr($t,'fr','game.ui.hud.total') ?></span><strong id="statForest">0</strong></div><div><span data-i18n="game.ui.hud.forestMax"><?= tr($t,'fr','game.ui.hud.forestMax') ?></span><strong id="statLargestForest">0</strong></div></div>
         </div>
 
         <div class="stats-card stats-house">
           <div class="stats-card-head"><span class="stats-icon">🛖</span><span data-i18n="game.ui.hud.biomes.house"><?= tr($t,'fr','game.ui.hud.biomes.house') ?></span></div>
-          <div class="stats-metrics"><div><span data-i18n="game.ui.hud.total"><?= tr($t,'fr','game.ui.hud.total') ?></span><strong id="statHouse">0</strong></div><div><span data-i18n="game.ui.hud.surfaceMax"><?= tr($t,'fr','game.ui.hud.surfaceMax') ?></span><strong id="statLargestHouse">0</strong></div></div>
+          <div class="stats-metrics"><div><span data-i18n="game.ui.hud.total"><?= tr($t,'fr','game.ui.hud.total') ?></span><strong id="statHouse">0</strong></div><div><span data-i18n="game.ui.hud.houseMax"><?= tr($t,'fr','game.ui.hud.houseMax') ?></span><strong id="statLargestHouse">0</strong></div></div>
         </div>
 
         <div class="stats-card stats-water">
           <div class="stats-card-head"><span class="stats-icon">💧</span><span data-i18n="game.ui.hud.biomes.water"><?= tr($t,'fr','game.ui.hud.biomes.water') ?></span></div>
-          <div class="stats-metrics"><div><span data-i18n="game.ui.hud.total"><?= tr($t,'fr','game.ui.hud.total') ?></span><strong id="statWater">0</strong></div><div><span data-i18n="game.ui.hud.surfaceMax"><?= tr($t,'fr','game.ui.hud.surfaceMax') ?></span><strong id="statLargestWater">0</strong></div></div>
+          <div class="stats-metrics"><div><span data-i18n="game.ui.hud.total"><?= tr($t,'fr','game.ui.hud.total') ?></span><strong id="statWater">0</strong></div><div><span data-i18n="game.ui.hud.waterMax"><?= tr($t,'fr','game.ui.hud.waterMax') ?></span><strong id="statLargestWater">0</strong></div></div>
         </div>
 
         <div class="stats-card stats-rail">
@@ -335,6 +416,7 @@ if ($mtimesGame) { $cssVersion = max($mtimesGame); }
             <div><kbd>Ctrl+Z</kbd><span data-i18n="game.ui.help.controls.undo"><?= tr($t,'fr','game.ui.help.controls.undo') ?></span></div>
             <div><kbd>H</kbd><kbd>ESC</kbd><span data-i18n="game.ui.help.controls.toggleHelp"><?= tr($t,'fr','game.ui.help.controls.toggleHelp') ?></span></div>
             <div><kbd>M</kbd><span data-i18n="game.ui.help.controls.muteSound"><?= tr($t,'fr','game.ui.help.controls.muteSound') ?></span></div>
+            <div><kbd>T</kbd><span data-i18n="game.ui.help.controls.muteVoice"><?= tr($t,'fr','game.ui.help.controls.muteVoice') ?></span></div>
             <div><kbd data-i18n="game.ui.help.controls.spaceKbd"><?= tr($t,'fr','game.ui.help.controls.spaceKbd') ?></kbd><span data-i18n="game.ui.help.controls.immersive"><?= tr($t,'fr','game.ui.help.controls.immersive') ?></span></div>
             <div><kbd data-i18n="game.ui.help.controls.shiftSpaceKbd"><?= tr($t,'fr','game.ui.help.controls.shiftSpaceKbd') ?></kbd><span data-i18n="game.ui.help.controls.superImmersive"><?= tr($t,'fr','game.ui.help.controls.superImmersive') ?></span></div>
             <div><kbd>SHIFT</kbd><span data-i18n="game.ui.help.controls.speedUp"><?= tr($t,'fr','game.ui.help.controls.speedUp') ?></span></div>
@@ -361,6 +443,7 @@ if ($mtimesGame) { $cssVersion = max($mtimesGame); }
     </div>
   </section>
 
+  <script>window.HEXISTENZ_LANG_VERSION = <?= json_encode((string) $langVersion) ?>;</script>
   <script type="module" src="javascript/main.js"></script>
   <script type="module" src="javascript/gameHudI18n.js"></script>
   <!-- 2026-07-20 — variation aléatoire manuscrit.png/manuscrit-2.png (thème

@@ -20,11 +20,11 @@ import { LUT_HELP } from './help.js';
 // (clé game.startupMenu), même mécanisme que les autres modules (top-level
 // await + localStorage 'hexistenz_pres_lang'). Repli FR en dur à chaque site
 // d'appel : ce sont les tout premiers écrans vus par le joueur.
-import { getLangFile } from './gameLangReactive.js';
+import { getLangFile, getLangVersion } from './gameLangReactive.js';
 
 const _langFile = getLangFile();
 
-const _menuData = await fetch(`./json/languages/${_langFile}.json`)
+const _menuData = await fetch(`./json/languages/${_langFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .catch(err => {
     console.error(`[startupMenu] Impossible de charger ${_langFile}.json`, err);

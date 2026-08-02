@@ -13,8 +13,9 @@ import { getContentDensity, setContentDensity, MIN_DENSITY, MAX_DENSITY } from '
 import { ENVIRONMENT_EVENTS, onEnvironmentChange, triggerEnvironmentEvent, stopEnvironmentEvent, stopAllEnvironmentEvents, isEnvironmentEventActive } from './environmentDirector.js';
 import { getVfxSettings, setVfxSetting, resetVfxSettings, onVfxSettingsChange, isVfxGroupExpanded, setVfxGroupExpanded } from './vfxSettings.js';
 import { escapeHtml } from './domUtils.js';
-import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 import { applyCurrentLang } from './gameHudI18n.js';
+import { announceEdaOpened, speak, resetTtsQueue } from './ttsAnnouncer.js';
 
 // Panneau EDA traduit le 2026-07-14 (signalé non connecté par l'utilisateur) : tout
 // le panneau (rubriques, libellés de sliders, boutons, tooltips) était en français
@@ -181,15 +182,31 @@ const VFX_CLOUD_SLIDERS = [
   { key: 'altitude',  label: 'Altitude',  min: 1,   max: 10,  step: 0.1 },
   { key: 'epaisseur', label: 'Épaisseur', min: 0.1, max: 1.5, step: 0.05 },
 ];
+// altitudeChape / opaciteChape ajoutés 2026-07-30 (retour Piregwan : la chape d'orage masquait
+// totalement la map, injouable). Altitude min 3 = juste au-dessus des props les plus hauts ;
+// max 15 = chape lointaine. Opacité 0 = chape invisible (orage sans couvercle), 1 = ancien
+// comportement totalement opaque.
 const VFX_STORM_SLIDERS = [
   { key: 'frequenceEclairs', label: 'Fréquence éclairs', min: 0, max: 1, step: 0.01 },
   { key: 'luminositeEclair', label: 'Luminosité éclair',  min: 0, max: 2, step: 0.05 },
   { key: 'intensitePluie',   label: 'Intensité pluie',    min: 1, max: 3, step: 0.05 },
+  { key: 'altitudeChape',    label: 'Altitude chape',     min: 3, max: 15, step: 0.1 },
+  { key: 'opaciteChape',     label: 'Opacité chape',      min: 0, max: 1,  step: 0.01 },
+];
+// 2026-07-30 (merge Cyril, paquet feu) — le paquet livrait les 5 réglages dans
+// vfxSettings.js mais aucun curseur pour les piloter en jeu, contrairement à tous les
+// autres effets météo. Bornes alignées sur les commentaires de vfxSettings.js::fire.
+const VFX_FIRE_SLIDERS = [
+  { key: 'probaAllumage',  label: 'Proba allumage', min: 0,   max: 1, step: 0.01 },
+  { key: 'densiteFlammes', label: 'Densité flammes', min: 0,   max: 1, step: 0.01 },
+  { key: 'duree',          label: 'Durée',           min: 0.3, max: 3, step: 0.05 },
+  { key: 'taille',         label: 'Taille',          min: 0,   max: 1, step: 0.01 },
+  { key: 'propagation',    label: 'Propagation',     min: 0,   max: 1, step: 0.01 },
 ];
 // Liste des effets VFX gérés par vfxSettings.js — sert au snapshot Undo/Redo et à
 // l'export 📋 Copier depuis que getAllVfxSettings/setAllVfxSettings ont été retirés
 // (remplacement complet par la version Cyril, 2026-07-12).
-const _VFX_EFFECT_KEYS = ['groundMist', 'fireflies', 'clouds', 'rain', 'storm'];
+const _VFX_EFFECT_KEYS = ['groundMist', 'fireflies', 'clouds', 'rain', 'storm', 'fire'];
 function _snapshotAllVfx() {
   const snap = {};
   for (const e of _VFX_EFFECT_KEYS) snap[e] = { ...getVfxSettings(e) };
@@ -435,7 +452,7 @@ let _kbdHintText = '';
 const _edaText = {};
 
 {
-  const _langData = await fetch(`./json/languages/${_edaLangFile}.json`)
+  const _langData = await fetch(`./json/languages/${_edaLangFile}.json?v=${getLangVersion()}`)
     .then(r => r.json())
     .catch(err => {
       console.error(`[edaPanelWiring] Impossible de charger ${_edaLangFile}.json`, err);
@@ -974,6 +991,21 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
       compareBtn.disabled   = false;
       _comparing            = false;
       _updateCompareBtn();
+      // 2026-07-29 — annonce vocale (TTS) du bouton ambiance cliqué, dans la langue
+      // en cours : "{ambiancePrefix} {nom}" (ex. FR → "ambiance nordique"). Même
+      // mécanisme que le TTS du sélecteur de thème (edaPanelHost.js) : resetTtsQueue()
+      // pour ne pas empiler sur une annonce précédente. IMPORTANT : ne PAS réutiliser
+      // la variable `_label` capturée à la construction du bouton (fermeture figée à
+      // la langue active au chargement de la page) — après un changement de langue en
+      // jeu, seul le TEXTE VISIBLE du bouton est retraduit (via data-i18n/registerLangRefresh),
+      // pas cette fermeture JS. Sans ce recalcul, le TTS annoncerait l'ancienne langue
+      // (bug constaté en testant FR→RU : le texte affiché passait bien en russe mais le
+      // TTS restait sur le libellé français). `_edaText` est muté en place à chaque
+      // changement de langue (cf. registerLangRefresh plus haut) → toujours à jour ici.
+      const _currentLabel = preset.key ? (_edaText.presetNames?.[preset.key] ?? _rawLabel) : _rawLabel;
+      const _ambiancePrefix = _edaText.ambiancePrefix ?? 'ambiance';
+      resetTtsQueue();
+      speak(`${_ambiancePrefix} ${_currentLabel}`);
     });
     presetsContainer.appendChild(btn);
   }
@@ -990,6 +1022,10 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     // que le HUD FPS avancé, les deux conditions sont combinées dans hud_fps.js::_syncFpsFullscreen
     // (exposée ici via `fpsApi.syncFullscreen`, les deux HUDs partageant le même `root`).
     fpsApi.syncFullscreen();
+    // 2026-07-29 — annonce vocale (TTS) "Éditeur de direction artistique" à
+    // l'OUVERTURE uniquement (pas à la fermeture) — même choke point pour le
+    // bouton, la croix de fermeture et la touche E, cf. les 3 appelants ci-dessous.
+    if (isOpen) announceEdaOpened();
   }
 
   lutToggleBtn.addEventListener('click', () => {
@@ -1704,7 +1740,7 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
       { effect: 'rain',       eventId: 'rain',        title: '🌧️ Pluie',          sliders: VFX_RAIN_SLIDERS,    i18nKey: 'rain',        labelNs: 'rain' },
       { effect: 'storm',      eventId: 'storm',       title: '⛈️ Orage',          sliders: VFX_STORM_SLIDERS,   i18nKey: 'storm',       labelNs: 'storm' },
       { effect: null,         eventId: 'lightning',   title: '⚡ Éclair',          sliders: null,                i18nKey: 'lightning',   labelNs: null },
-      { effect: null,         eventId: 'fire',        title: '🔥 Feu',            sliders: null,                i18nKey: 'fire',        labelNs: null },
+      { effect: 'fire',       eventId: 'fire',        title: '🔥 Feu',            sliders: VFX_FIRE_SLIDERS,    i18nKey: 'fire',        labelNs: 'fire' },
       { effect: null,         eventId: 'panic',       title: '🐑 Panique animale', sliders: null,               i18nKey: 'panic',       labelNs: null }
     ];
     const _weatherRefreshers = [];

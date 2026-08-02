@@ -68,6 +68,19 @@ body {
 section { padding: 96px 0; }
 section + section { border-top: 1px solid var(--border); }
 
+/* 2026-08-01 — cadre décoratif médiéval de la prez (#prezFooterBanner/
+   #prezHeaderBanner/#prezLeftBanner/#prezRightBanner, cf. index.php et
+   css/themes/medieval.css) : masqué par défaut (thème bleu, ou tout état
+   avant application du thème), même logique que #footerBanner et consorts
+   côté jeu (css/base.css). Réaffichés uniquement par
+   [data-theme="ancien"] dans themes/medieval.css. */
+#prezFooterBanner,
+#prezHeaderBanner,
+#prezLeftBanner,
+#prezRightBanner {
+  display: none;
+}
+
 /* ─── NAV ────────────────────────────────────────────────────── */
 /* 2026-07-19 — homogénéisation : seul le layout partagé (position/z-index/
    display/gap) reste ici. Le "look" (left/right, padding, fond, liseré, flou,
@@ -304,6 +317,16 @@ nav {
 #hero {
   position: relative;
   z-index: 1;
+  /* 2026-08-01 — demande explicite : "laisse bcp de marge avant la 1ere
+     image bouliste-transparent.png (au moins 125px)". #hero hérite déjà
+     d'un padding-top:96px générique (`section { padding: 96px 0; }` plus
+     haut dans ce fichier) ; le <nav> fixed (thème bleu, hauteur ~83px) ne
+     laissait donc que 21px de marge réelle entre le bas du nav et l'image
+     — insuffisant. margin-top ajouté ici pour porter ce gap à 125px
+     (112 + 96 padding − 83 nav.bottom = 125). Thème médiéval : override
+     séparé et plus grand dans css/themes/medieval.css (nav bien plus haut
+     à cause du cadre décoratif, cf. CONTEXT.md §39). */
+  margin-top: 112px;
 }
 
 .hero-banner {
@@ -360,6 +383,15 @@ nav {
    dessine son texte via background-clip:text (dégradé) — sans ce reset, le
    span hériterait du même clip et deviendrait transparent lui aussi. Couleur
    réelle fixée par thème ci-dessous (même pattern que l'ex-.nav-version). */
+/* 2026-07-28 — passage en PASTILLE (fond plein + coins arrondis) sur demande :
+   le rapport fond/texte est inversé par rapport au titre selon le thème.
+   Médiéval → fond marron sombre + typo claire ; Bleu sidéral → fond bleu clair
+   + typo sombre. Ici uniquement la géométrie (commune aux 2 thèmes) ; les
+   couleurs vivent dans css/themes/medieval.css et css/themes/bleu.css, comme
+   pour le reste de la prez (cf. CONTEXT.md §32).
+   Les resets background-clip/text-fill restent indispensables : .hero-title
+   dessine son texte via background-clip:text (dégradé), sans quoi ce span
+   hériterait du clip et deviendrait transparent. */
 .hero-version {
   display: inline-block;
   font-family: var(--font-body);
@@ -367,11 +399,42 @@ nav {
   font-weight: 400;
   letter-spacing: 0.08em;
   margin-left: 16px;
+  /* 2026-07-28 — CORRECTIF : vertical-align:bottom aligne sur le bas de la
+     LIGNE (line box) du titre, qui réserve l'espace des descentes de police
+     (jambages de g/j/p/q/y — mesuré en live : fontBoundingBoxDescent ~55px à
+     158px de font-size, alors que "HEXISTENZ" (tout en capitales, sans
+     jambage) n'a qu'un actualBoundingBoxDescent ~5px) — la pastille se
+     retrouvait ainsi ~20-50px plus bas que le bas visuel réel des lettres,
+     signalé par l'utilisateur ("plus basse sur les 2 thèmes"). vertical-align:
+     baseline aligne au contraire sur la ligne de base du texte (bas visuel des
+     capitales, quasi confondu avec le bas des lettres pour ce titre tout en
+     majuscules) — seul le padding-bottom propre à la pastille (le "dessous" de
+     son propre texte interne) dépasse encore légèrement sous cette ligne,
+     dépassement mineur et volontaire (cohérent avec un badge/pastille, pas un
+     défaut d'alignement). */
   vertical-align: baseline;
-  background: none;
+  padding: 5px 12px 4px;
+  border-radius: 8px;
+  line-height: 1;
   -webkit-background-clip: initial;
   background-clip: initial;
   -webkit-text-fill-color: initial;
+}
+/* 2026-07-29 — date de dernière modif de variables.js, à côté (hors) de la
+   pastille .hero-version ci-dessus : simple texte italique, pas de fond/pastille
+   propre — même vertical-align:baseline que .hero-version pour rester aligné
+   sur le titre plutôt que de "flotter" au-dessus/dessous. */
+.hero-version-date {
+  display: inline-block;
+  vertical-align: baseline;
+  margin-left: 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+  opacity: 0.75;
 }
 .hero-subtitle {
   font-size: 13px;
@@ -486,6 +549,13 @@ nav {
   flex: 1;
   padding: 18px 20px;
   text-align: center;
+  /* 2026-07-31 — sans ceci, `min-width: 50%` (media query ≤900px plus bas)
+     s'appliquait à la boîte de CONTENU seule ; les 40px de padding horizontal
+     s'ajoutaient PAR-DESSUS, donc 2 items à 50% dépassaient 100% de la largeur
+     disponible et le flex-wrap les repoussait chacun sur sa propre ligne — colonne
+     unique au lieu de 2 par ligne, invisible avec l'ancien total de 3 items mais
+     flagrant avec les 5 items actuels (Langues/Thèmes graphiques ajoutés). */
+  box-sizing: border-box;
 }
 .stat-num {
   font-family: var(--font-title);
@@ -1157,11 +1227,26 @@ nav {
 .hs-biome-note { font-size: 10px; font-weight: 600; }
 
 .hs-score-col { text-align: right; }
-.hs-score {
+/* 2026-07-31 — classement reclassé par efficacité (score/tuile) au lieu du score
+   brut (demande explicite), affichée sur CHAQUE entrée. 2e demande (même jour) :
+   hiérarchie visuelle inversée — l'efficacité devient LE gros nombre en avant
+   (plus grosse que ne l'était .hs-score, 46px vs 41px), le score brut passe en
+   second, réduit — même traitement discret que .hs-date sous le nom (petit
+   texte, pas la typo titre). Couleurs thémées (var(--blue)/gold en bleu,
+   brun/doré en ancien, cf. themes/bleu.css et themes/medieval.css) suivent le
+   même transfert : c'est maintenant .hs-efficiency qui les porte. */
+.hs-efficiency {
   font-family: var(--font-title);
-  font-size: 41px;
+  font-size: 46px;
   letter-spacing: 0.04em;
   line-height: 1;
+}
+.hs-score {
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  opacity: 0.72;
 }
 .hs-empty { text-align: center; padding: 56px; font-size: 14px; margin-top: 40px; }
 
@@ -1278,7 +1363,8 @@ body.nav-compact .hero-content { padding-top: 56px; }
   .hs-card { grid-template-columns: 60px 1fr auto; padding: 16px 16px; }
   .hs-rank { font-size: 32px; }
   .hs-name { font-size: 17px; }
-  .hs-score { font-size: 28px; }
+  .hs-efficiency { font-size: 31px; }
+  .hs-score { font-size: 11px; }
   .hs-headline-stat { font-size: 15px; }
   .hs-headline-stat .icon { font-size: 26px; }
 
@@ -1302,6 +1388,58 @@ body.nav-compact .hero-content { padding-top: 56px; }
 
   nav { gap: 10px; padding: 10px 14px; }
   .nav-logo { font-size: 38px; }
-  .hero-version { display: none; }
+  /* 2026-07-28 — display:none retiré sur demande explicite ("conserve la
+     pastille de version, meme en mobile 900px") : la pastille reste visible à
+     toutes les largeurs, seule sa taille est réduite ici pour rester
+     proportionnée à côté du titre réduit. */
+  .hero-version { font-size: 11px; padding: 4px 9px 3px; margin-left: 10px; }
+  /* 2026-07-29 — même réduction proportionnée que .hero-version ci-dessus. */
+  .hero-version-date { font-size: 11px; margin-left: 7px; }
   .nav-cta { padding: 8px 14px; font-size: 10px; }
+}
+
+/* ─── TOAST clavier M/T (2026-07-31) ────────────────────────────────────────
+   Confirmation visuelle des touches M (son) / T (voix) sur la prez — cette
+   page n'a pas le popup central du jeu (#scorePopup, scorePopup.js), donc sans
+   ceci la coupure (M ou T) restait totalement imperceptible : pas de son
+   (normal, silence voulu à la coupure) ET pas de retour visuel. S'affiche sur
+   LES DEUX directions (contrairement à la confirmation vocale, qui ne parle
+   qu'à la réactivation) pour que chaque appui produise toujours un effet
+   perceptible. Couleurs héritées du thème actif (--bg-card/--text/--gold),
+   pas de nouvelle variable.
+   2026-08-01 — demande explicite : "les helpers (touches T/M) doivent être
+   alignés au centre de l'écran : en thème médiéval avec le cadre, ils sont
+   masqués". Double correctif :
+   1. Repositionné du bas de l'écran (bottom:28px) vers le centre exact
+      (top/left:50%, transform:translate(-50%,-50%)) — demande explicite,
+      appliqué aux 2 thèmes (pas de comportement thème-spécifique demandé).
+   2. z-index relevé 9999 → 100000 : en thème médiéval, le cadre décoratif
+      (#prezFooterBanner/etc., cf. CONTEXT.md §39) est en z-index 99999, donc
+      strictement au-dessus de l'ancien 9999 du toast — c'est ce qui le
+      masquait complètement en bas d'écran (zone recouverte par la bande
+      basse du cadre). 100000 aligné sur la convention déjà en place pour
+      #lutHelpTooltip (cf. javascript/helpTooltip.js, CONTEXT.md §39) :
+      tout élément devant rester visible par-dessus le cadre utilise ce
+      même palier. */
+.prez-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.96);
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  z-index: 100000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.prez-toast--visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }

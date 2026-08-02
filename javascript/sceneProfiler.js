@@ -270,6 +270,12 @@ function _classifyInstanced(obj) {
   if (n === 'hexistenz-vfx-rain')                 return 'Pluie';
   if (n === 'hexistenz-vfx-rain-impact')          return 'Pluie';
   if (n.startsWith('hexistenz-vfx-rain-clouds'))  return 'Nuages de pluie';
+  // 2026-07-30 (merge Cyril, paquet feu) — la roadmap impose que tout nouvel overlay
+  // apparaisse nommé dans le HUD FPS. Fumée et braises du feu sont des VFXParticles
+  // (donc InstancedMesh), classées ici ; les meshes non instanciés (flammes, lueur,
+  // décalque de noircissement, éclair) sont classés dans _classifyMesh plus bas.
+  if (n.startsWith('hexistenz-vfx-fire'))         return 'Feu';
+  if (n.startsWith('hexistenz-vfx-lightning'))    return 'Éclairs';
   if (n.startsWith('instanced-tree-')) {
     const rest = n.slice('instanced-tree-'.length);
     const species = _TREE_SPECIES_KEYS.find(k => rest.startsWith(k));
@@ -361,6 +367,16 @@ function _classifyMesh(name) {
     if (biome === 'void')   return 'Terrain Vide';
     return 'Terrain Autre';
   }
+  // 2026-07-30 (merge Cyril, paquet feu) — meshes non instanciés du feu (flammes, lueur,
+  // décalque de noircissement) et de l'éclair (zébrure, halo). Placé AVANT les règles
+  // génériques ci-dessous pour ne pas être capté par un includes() plus large.
+  // Le !startsWith('...fireflies') est défensif : 'hexistenz-vfx-fireflies' commence lui
+  // aussi par 'hexistenz-vfx-fire'. Aujourd'hui les lucioles sont instanciées (donc
+  // classées dans _classifyInstanced, avant cette fonction), mais si elles cessaient de
+  // l'être elles atterriraient ici et seraient comptées comme du feu.
+  if (name.startsWith('hexistenz-vfx-fire') &&
+      !name.startsWith('hexistenz-vfx-fireflies'))               return 'Feu';
+  if (name.startsWith('hexistenz-vfx-lightning'))                return 'Éclairs';
   if (name.includes('wheat'))                                    return 'Brins de blé';
   if (name.startsWith('grass-'))                                 return "Brins d'herbe";
   if (name.includes('sand-beach') || name.includes('shore'))    return 'Plages';

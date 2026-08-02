@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 import { DECK_SIZE, GRID_RADIUS, COMET_HIT_SCORE, LOD_RAIL_TRACK_CULL_DISTANCE, LOD_PAVED_ROAD_CULL_DISTANCE } from './config.js';
 import { EDGE_TYPES, DEBUG_FLAGS, HEXISTENZ_VERSION } from './variables.js';
 import { WORLD_CURVATURE, setWorldCurvatureEnabled, getWorldCurvatureEnabled } from './worldCurvature.js';
@@ -29,19 +29,21 @@ import { createSmokeVolumePass, updateSmokeVolumePass, MAX_SMOKE_SOURCES } from 
 import { addSingleTileToDecorOverlay, createDecorOverlay, rebuildDecorOverlay, updateDecorOverlay, updateNaturalPropsLOD, updateFieldDecorLOD, computeLodHeightFactor } from './decorOverlay.js';
 import { addBonusCellChest, createBonusCellChestOverlay, rebuildBonusCellChestOverlay, removeBonusCellChest, updateBonusCellChestOverlay, updateBonusCellChestLOD } from './bonusCellChestOverlay.js';
 import { createSheepOverlay, rebuildSheepOverlay, updateSheepOverlay, updateSheepLOD } from './sheepOverlay.js';
-import { createAmbientSoundDesign, startEndingMusic, startIngameMusic, toggleMute } from './soundDesign.js';
+import { createAmbientSoundDesign, startEndingMusic, startIngameMusic, toggleMute, registerAmbientSoundDesign } from './soundDesign.js';
 import { createVisualEnvironment } from './visualEnvironment.js';
 import { createCometSky, updateCometSky, tryCometHit, removeCometFromSky, spawnCometExplosion } from './cometSky.js';
 import { createCloudSky, updateCloudSky, getCloudUserEnabled, getCloudSkyParams } from './cloudSky.js';
 import { updateGlobalWind } from './globalWind.js';
 import { resetPropHitboxRegistry } from './propHitboxRegistry.js';
-import { createDebugLightUI, tickFps } from './edaPanelHost.js';
+import { createDebugLightUI, tickFps, syncMuteButtons } from './edaPanelHost.js';
 import { captureSnapshot } from './snapshotCapture.js';
 import { openSnapshotGallery, closeSnapshotGallery, isSnapshotGalleryOpen } from './snapshotGallery.js';
-import { createEnvironmentDirector, updateEnvironmentDirector } from './environmentDirector.js';
+import { createEnvironmentDirector, updateEnvironmentDirector, isEnvironmentEventActive } from './environmentDirector.js';
 import { createMorningMistOverlay, updateMorningMist } from '../shaders/morningMistOverlay.js';
 import { createWeatherVfxOverlay, updateWeatherVfxOverlay } from './weatherVfxOverlay.js';
 import { createRainCloudOverlay, rebuildRainCloudOverlay, updateRainCloudOverlay } from './rainCloudOverlay.js';
+import { createLightningOverlay, updateLightningOverlay } from './lightningOverlay.js';
+import { createFireOverlay, updateFireOverlay } from './fireOverlay.js';
 import { askHighscoreSubmit, createHighscoreUI } from './highscore.js';
 import { applySceneCurvatureFlags, applySceneEnvironment, applySceneShadowFlags, createCamera, createPixelPostprocess, createRenderer, createThreeScene, setAstreMode, resizeRenderer, updateSunShadowOrbit, updateWorldCurvedSprites } from './threeSetup.js';
 import { applyShadowCulling, rebuildShadowCasters } from './shadowCulling.js';
@@ -55,6 +57,7 @@ import { MISSION_REWARD, MISSION_TILE_REWARD, advanceMissionTurn, clonePlain, co
 import { formatMissionTitle } from './missionLabels.js';
 import { pollRoom, updateCursor, updateRoomState } from './multiplayerClient.js';
 import { showScorePopup, showCenterMessage } from './scorePopup.js';
+import { announcePoints, toggleTtsMute, resetTtsQueue, announceNewMission, announceMissionCompleted, announceHelpOpened, announceStatsIfChanged, announceVoiceOn, announceSoundOn } from './ttsAnnouncer.js';
 import { applyTheme } from './themeManager.js';
 
 // 2026-07-17 — reconfirme le thème graphique (data-theme) au chargement du module jeu.
@@ -83,7 +86,7 @@ const _sceneLangFile = getLangFile();
 // en jeu. Contrairement au kbdHint (edaPanelWiring.js), pas besoin de repousser dans
 // un DOM déjà créé : _showSuperImmersifExitHint() recrée l'élément à chaque appel
 // (retire l'existant, en crée un neuf), donc relire la variable suffit.
-let _superImmersifExitHintText = await fetch(`./json/languages/${_sceneLangFile}.json`)
+let _superImmersifExitHintText = await fetch(`./json/languages/${_sceneLangFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .then(data => data?.game?.superImmersifExitHint ?? '')
   .catch(err => {
@@ -98,7 +101,7 @@ registerLangRefresh((data) => {
 // Texte du popup central "Capture faite !" après un clic réussi sur 📷 (2026-07-15,
 // même mécanisme réactif que le hint ci-dessus). Clé game.gallery.captured — regroupée
 // avec les autres textes liés aux captures/galerie plutôt qu'une section dédiée.
-let _snapshotCapturedText = await fetch(`./json/languages/${_sceneLangFile}.json`)
+let _snapshotCapturedText = await fetch(`./json/languages/${_sceneLangFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .then(data => data?.game?.gallery?.captured ?? '')
   .catch(err => {
@@ -114,22 +117,63 @@ registerLangRefresh((data) => {
 // (2026-07-20, demande explicite : même mécanisme que le popup de thème/langue —
 // gros popup central via showCenterMessage). Clé game.sound.{on,off}, même
 // mécanisme réactif top-level await + registerLangRefresh que ci-dessus.
-let _soundOnText = await fetch(`./json/languages/${_sceneLangFile}.json`)
+let _soundOnText = await fetch(`./json/languages/${_sceneLangFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .then(data => data?.game?.sound?.on ?? '')
   .catch(err => {
     console.error(`[scene] Impossible de charger ${_sceneLangFile}.json`, err);
     return '';
   });
-let _soundOffText = await fetch(`./json/languages/${_sceneLangFile}.json`)
+let _soundOffText = await fetch(`./json/languages/${_sceneLangFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .then(data => data?.game?.sound?.off ?? '')
+  .catch(() => '');
+
+// Textes du popup central "Voix activée"/"Voix coupée" sur la touche T (2026-07-29,
+// demande explicite : T coupe/réactive UNIQUEMENT le TTS, indépendamment de M
+// ci-dessus). Clé game.tts.{voiceOn,voiceOff}, même mécanisme réactif.
+let _voiceOnText = await fetch(`./json/languages/${_sceneLangFile}.json?v=${getLangVersion()}`)
+  .then(r => r.json())
+  .then(data => data?.game?.tts?.voiceOn ?? '')
+  .catch(() => '');
+let _voiceOffText = await fetch(`./json/languages/${_sceneLangFile}.json?v=${getLangVersion()}`)
+  .then(r => r.json())
+  .then(data => data?.game?.tts?.voiceOff ?? '')
   .catch(() => '');
 
 registerLangRefresh((data) => {
   _soundOnText = data?.game?.sound?.on ?? '';
   _soundOffText = data?.game?.sound?.off ?? '';
+  _voiceOnText = data?.game?.tts?.voiceOn ?? '';
+  _voiceOffText = data?.game?.tts?.voiceOff ?? '';
 });
+
+// Ambiance orage (2026-07-12, arrivé via le merge du paquet Cyril le 2026-07-30) : assombrit
+// soleil/hémisphérique/fill et masque le disque du soleil pendant l'évènement 'storm', rampe
+// réversible ~1 s (suit jour/nuit + réglages EDA via les intensités de base mémorisées hors orage).
+const _stormAmbience = { dim: 0, baseSun: null, baseHemi: null, baseFill: null };
+
+function updateStormAmbience(scene, environmentDirector, deltaSeconds) {
+  const target = isEnvironmentEventActive(environmentDirector, 'storm') ? 1 : 0;
+  _stormAmbience.dim += (target - _stormAmbience.dim) * Math.min(1, deltaSeconds / 1.0);
+  const d = _stormAmbience.dim;
+
+  const sun   = scene.getObjectByName('main-sun-shadow-light');
+  const hemi  = scene.getObjectByName('hexistenz-environment-hemisphere');
+  const fill  = scene.getObjectByName('hexistenz-environment-fill-light');
+  const astre = scene.getObjectByName('visible-sky-sun');
+
+  // Hors orage : mémorise les intensités courantes comme base (jour/nuit, sliders EDA…).
+  if (d < 0.002) {
+    if (sun)  _stormAmbience.baseSun  = sun.intensity;
+    if (hemi) _stormAmbience.baseHemi = hemi.intensity;
+    if (fill) _stormAmbience.baseFill = fill.intensity;
+  }
+  if (sun  && _stormAmbience.baseSun  != null) sun.intensity  = _stormAmbience.baseSun  * (1 - 0.92 * d); // soleil quasi coupé
+  if (hemi && _stormAmbience.baseHemi != null) hemi.intensity = _stormAmbience.baseHemi * (1 - 0.60 * d); // ambiant bien assombri
+  if (fill && _stormAmbience.baseFill != null) fill.intensity = _stormAmbience.baseFill * (1 - 0.50 * d);
+  if (astre) astre.visible = d < 0.5;   // l'astre (soleil) dégage en orage (repensé plus tard)
+}
 
 export function initScene(options = {}) {
   const canvas = document.getElementById('app');
@@ -289,6 +333,10 @@ export function initScene(options = {}) {
   // plateau ; update chaque frame ; visibilité gérée en interne via isVfxGroupExpanded
   // + isEnvironmentEventActive('rain'/'storm').
   const rainCloudOverlay = createRainCloudOverlay(scene);
+  // 2026-07-30 (merge Cyril) — chaîne orage → éclair → feu. lightningOverlay tire ses points de
+  // frappe sous les nuages (getRainCloudAnchors), fireOverlay s'abonne à onLightningStrike.
+  const lightningOverlay = createLightningOverlay(scene);
+  const fireOverlay = createFireOverlay(scene);
 
   // Créé ici (et non plus juste après createCamera) : le panel VENT/NUAGES a besoin
   // des références forestOverlay (arbres GPU-wind) et cloudSky (nuages horizon jour).
@@ -378,6 +426,10 @@ export function initScene(options = {}) {
   // 1 overlay/frame dans animate() : rebuild() puis lod() immédiat pour éviter pop-in et flash labels.
   const overlayRebuildQueue = new Map();
   const ambientSoundDesign = createAmbientSoundDesign({ camera, canvas, placedTiles, fieldWaterEffectsOverlay, railTrainOverlay, waterBoatOverlay, houseOverlay });
+  // 2026-07-29 — permet à toggleMute() d'être appelée SANS argument depuis le bouton
+  // 🔊 (edaPanelHost.js, créé plus tôt dans initScene, avant que cette instance
+  // n'existe) tout en mutant correctement l'ambiance THREE.Audio comme la touche M.
+  registerAmbientSoundDesign(ambientSoundDesign);
   const gridOverlay = createGrid([...placedTiles.values()]);
   syncPlacementGridKeys();
   totalGridTiles = getGridCellCount(gridOverlay);
@@ -608,6 +660,32 @@ export function initScene(options = {}) {
       // changement de thème/langue) confirmant l'état son après bascule.
       const muted = toggleMute(ambientSoundDesign);
       showCenterMessage(muted ? _soundOffText : _soundOnText);
+      // 2026-07-29 (6e round TTS), demande explicite : "Sons activés" doit aussi
+      // être PRONONCÉ (pas seulement affiché) à la réactivation — même principe
+      // que announceVoiceOn() pour la touche T (voir plus bas).
+      if (!muted) announceSoundOn();
+      // 2026-07-29 — resynchronise l'état visuel (actif/barré) du bouton 🔊
+      // (edaPanelHost.js) : la touche M peut changer cet état sans passer par le
+      // bouton, qui doit rester le reflet fidèle de l'état réel dans les 2 sens.
+      syncMuteButtons();
+      return;
+    }
+
+    if (key === 't') {
+      event.preventDefault();
+      // 2026-07-29, demande explicite : T coupe/réactive UNIQUEMENT les annonces
+      // vocales (TTS) — la musique/ambiance (touche M ci-dessus) n'est pas touchée.
+      // Même mécanisme de confirmation (popup central) que M.
+      const ttsMuted = toggleTtsMute();
+      showCenterMessage(ttsMuted ? _voiceOffText : _voiceOnText);
+      // 2026-07-29 (3e round), demande explicite : "voix activée" doit aussi être
+      // PRONONCÉ (pas seulement affiché) à la réactivation. Appelé APRÈS
+      // toggleTtsMute() : _ttsMuted vient de repasser à false, donc speak() (dans
+      // announceVoiceOn) n'est plus bloqué par son propre garde-fou.
+      if (!ttsMuted) announceVoiceOn();
+      // 2026-07-29 — resynchronise l'état visuel (actif/barré) du bouton 🗣️
+      // (edaPanelHost.js), même logique que syncMuteButtons() pour M ci-dessus.
+      syncMuteButtons();
       return;
     }
 
@@ -644,6 +722,26 @@ export function initScene(options = {}) {
       // s'exécutait toujours ensuite, ouvrant l'aide par erreur.
       if (gridOnlyMode) {
         toggleGridOnlyMode(false);
+        return;
+      }
+      // 2026-07-29, demande explicite : si le panneau EDA est ouvert, ESC doit
+      // UNIQUEMENT le réduire (pas aussi ouvrir l'aide dans la foulée) — même
+      // garde-fou que gridOnlyMode ci-dessus. Relais vers la croix de fermeture
+      // du panneau (edaPanelWiring.js::_setLutOpen(false)) plutôt qu'une
+      // duplication de sa logique (masquage HUD score, fpsApi.syncFullscreen()…).
+      const edaPanel = document.getElementById('debugLightPanel');
+      if (edaPanel && !edaPanel.classList.contains('collapsed')) {
+        edaPanel.querySelector('.debug-light-close')?.click();
+        return;
+      }
+      // 2026-08-01, demande explicite : même garde-fou que l'EDA ci-dessus,
+      // mais pour le HUD FPS déployé — ESC doit UNIQUEMENT le refermer (pas
+      // aussi ouvrir l'aide). Relais vers .fps-hud-close (hud_fps.js::
+      // _toggleFpsHud() via son handler de clic délégué), présent dans le DOM
+      // uniquement quand _fpsHudExpanded est vrai (cf. hud_fps.js ~187).
+      const fpsHudClose = document.querySelector('.fps-hud-close');
+      if (fpsHudClose) {
+        fpsHudClose.click();
         return;
       }
       toggleHelp();
@@ -982,6 +1080,9 @@ export function initScene(options = {}) {
     updateMorningMist(morningMistOverlay, environmentDirector, timeSeconds, deltaSeconds);
     updateWeatherVfxOverlay(weatherVfxOverlay, environmentDirector, timeSeconds, deltaSeconds);
     updateRainCloudOverlay(rainCloudOverlay, environmentDirector, timeSeconds, deltaSeconds);
+    updateLightningOverlay(lightningOverlay, environmentDirector, rainCloudOverlay, placedTiles, timeSeconds, deltaSeconds);
+    updateFireOverlay(fireOverlay, environmentDirector, placedTiles, timeSeconds, deltaSeconds);
+    updateStormAmbience(scene, environmentDirector, deltaSeconds);
     updateAnimatedBiomeTextures(timeSeconds);
     updateGlobalWind(timeSeconds);
     updateRealisticWater(timeSeconds);
@@ -1383,6 +1484,10 @@ export function initScene(options = {}) {
   function toggleHelp(forceVisible = null) {
     helpVisible = forceVisible ?? !helpVisible;
     setHelpVisible(ui, helpVisible);
+    // 2026-07-29 — annonce vocale (TTS) "Aide en ligne" à l'OUVERTURE uniquement —
+    // même choke point pour ESC, touche H, clic sur l'overlay et bouton fermer
+    // (cf. les appelants de toggleHelp ci-dessous).
+    if (helpVisible) announceHelpOpened();
   }
 
   /** Affiche "ESPACE pour sortir du monde super immersif" 5 secondes en haut de l'écran. */
@@ -1599,6 +1704,14 @@ export function initScene(options = {}) {
     lastScore = placedTile.score;
     updateScoreUI(ui, totalScore, lastScore, placedTiles.size, totalGridTiles);
     showScorePopup(placedTile.score); // pose LOCALE validée uniquement — jamais dans updateScoreUI() (init/undo/sync/grille)
+    // 2026-07-29 — séquence d'annonces vocales (TTS) pour ce tour : on coupe net toute
+    // annonce laissée par un tour précédent (resetTtsQueue), puis on enchaîne dans l'ordre
+    // points → mission(s) terminée(s) → nouvelle mission (speak() met en file, ne coupe plus
+    // entre elles — cf. ttsAnnouncer.js). Chaque fonction est un no-op si rien à annoncer.
+    resetTtsQueue();
+    announcePoints(placedTile.score);
+    announceMissionCompleted(completedMissions);
+    announceNewMission(placedTile.generatedMission);
     refreshStatsUI();
     if (isMultiplayer) persistMultiplayerState();
     if (deck.length === 0) endGame();
@@ -1643,7 +1756,12 @@ export function initScene(options = {}) {
   }
 
   function refreshStatsUI() {
-    updateStatsUI(ui, getFullGameStats());
+    const stats = getFullGameStats();
+    updateStatsUI(ui, stats);
+    // 2026-07-29 — annonces vocales (TTS) moulins/trains/bateaux/comètes : ne
+    // parle que si un des 4 compteurs a changé depuis le dernier appel (cf.
+    // ttsAnnouncer.js::announceStatsIfChanged, mémorise la valeur précédente).
+    announceStatsIfChanged(stats);
   }
 
   function maybeAddMissionForCurrentTile() {
@@ -2034,12 +2152,19 @@ export function initScene(options = {}) {
       rebuildWaterSurfaceOverlay(waterSurfaceOverlay, placedTiles);
       applySceneCurvatureFlags(waterSurfaceOverlay);
       rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
-      resetPropHitboxRegistry();
       // ⚠️ Tous les overlays via queue → LOD immédiat, évite le flash (visible=true hors RAF)
       // Optimisation : si aucune tuile n'a changé (sync no-op — le joueur a déjà appliqué
       // la tuile localement avant que le poll retourne son propre état sauvegardé), on skip
       // tous les rebuilds d'overlays. Deck/score/missions sont déjà mis à jour ci-dessus.
       if (_addedKeys.length > 0 || _removedCount > 0) {
+        // 2026-07-30 (merge Cyril) — CORRECTIF hors périmètre feu, bug préexistant : ce reset
+        // était appelé à CHAQUE poll de synchro, alors que les rebuilds qui repeuplent le
+        // registre sont conditionnels (ce bloc). Résultat mesuré : 0 hitbox sur 225 tuiles en
+        // partie multi au repos. Conséquence au-delà du feu — tryResolve() était aveugle, les
+        // props « mous » (tonneaux, charrettes, bancs, panneaux) pouvaient se placer en
+        // chevauchant maisons et arbres. Doit rester DANS le bloc conditionnel, juste avant
+        // les rebuilds de props (forest/house/decor) qui le repeuplent.
+        resetPropHitboxRegistry();
         overlayRebuildQueue.set('boat',   { rebuild: () => rebuildWaterBoatOverlay(waterBoatOverlay, placedTiles),     lod: () => updateWaterBoatLOD(waterBoatOverlay, camera) });
         overlayRebuildQueue.set('wheat',  { rebuild: () => rebuildFieldWheatOverlay(fieldWheatOverlay, placedTiles),   lod: () => updateFieldWheatLOD(fieldWheatOverlay, camera) });
         overlayRebuildQueue.set('grass',  { rebuild: () => rebuildGrassBladeOverlay(grassBladeOverlay, placedTiles),   lod: () => updateGrassBladeLOD(grassBladeOverlay, camera) });

@@ -211,11 +211,24 @@ export function weightedRandom(weights) {
 
 let _globalMuted = false;
 
+// 2026-07-29 — référence de secours pour toggleMute() SANS argument, utilisée par
+// les nouveaux boutons 🔊/🗣️ du bandeau bas-gauche (edaPanelHost.js), qui n'ont
+// pas accès à l'instance `ambientSoundDesign` locale à scene.js (créée bien APRÈS
+// createDebugLightUI() dans l'ordre d'initialisation, cf. scene.js::initScene).
+// La touche M continue de passer son propre argument explicitement (inchangé) ;
+// registerAmbientSoundDesign() est appelée une seule fois dès que l'instance existe.
+let _ambientRef = null;
+export function registerAmbientSoundDesign(instance) {
+  _ambientRef = instance;
+}
+
 /**
  * Active ou désactive tous les sons (musique + ambiance).
  * Retourne le nouvel état muet (true = muet).
+ * `ambientSoundDesign` optionnel : retombe sur la dernière instance enregistrée via
+ * registerAmbientSoundDesign() si omis (cf. commentaire ci-dessus).
  */
-export function toggleMute(ambientSoundDesign) {
+export function toggleMute(ambientSoundDesign = _ambientRef) {
   _globalMuted = !_globalMuted;
 
   // Musique HTML Audio
@@ -226,5 +239,14 @@ export function toggleMute(ambientSoundDesign) {
   // Ambiance THREE.Audio
   ambientSoundDesign?.setMuted(_globalMuted);
 
+  return _globalMuted;
+}
+
+/**
+ * Lit l'état muet courant sans le modifier — ajouté le 2026-07-29 pour que
+ * ttsAnnouncer.js (annonces vocales SpeechSynthesis) respecte la touche M
+ * sans avoir besoin de dupliquer son propre état muet.
+ */
+export function isMuted() {
   return _globalMuted;
 }

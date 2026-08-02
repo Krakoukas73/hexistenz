@@ -6,7 +6,52 @@
   flex-direction: column;
   gap: 8px;
   align-items: stretch;
-  max-height: calc(100vh - 40px);
+  max-height: calc(100vh - 120px);
+  /* 2026-07-28 — CORRECTIF (v1 avec overflow:hidden ici a cassé le HUD Missions
+     en entier — titre ET liste invisibles, cf. missions.css pour l'explication
+     complète). Retiré : #tileUI n'a besoin d'AUCUN overflow propre — max-height
+     ci-dessus suffit à borner l'espace disponible pour le flex-shrink de ses 2
+     enfants (comportement standard flexbox : un max-height sur un conteneur
+     flex-column sans height explicite sert de taille principale définie pour
+     le calcul de flex-shrink), et c'est .missionsBox (ci-dessous) qui gère son
+     propre scroll interne — même principe que #scorePanel (base.css), qui n'a
+     lui non plus jamais eu besoin d'overflow sur un ancêtre.
+     2026-08-01 — CORRECTIF (demande explicite : "en basse résolution
+     verticale, le HUD missions en cours chevauche les 9 boutons en bas à
+     droite"). max-height valait calc(100vh - 40px) (top:20 + marge basse
+     20px) — cette marge de 20px ne tenait jamais compte de
+     .debug-light-panel (eda.css, position:fixed ancré par le bas), qui peut
+     grandir à 2 rangées de boutons (82px) sur les largeurs étroites. Mesuré
+     en direct (Chrome, thème bleu, bottom:4px) : 4+82+10px de respiration ≈
+     96px, arrondi à 100px. Reserve 20px → 100px (top(20)+100=120). Thème
+     médiéval : cf. plus bas [data-theme="ancien"] #tileUI, marge propre
+     (cadre + panneau boutons décalé). */
+}
+
+/* 2026-08-01 — demande explicite : écarter du cadre décoratif ingame en
+   thème médiéval (cf. CONTEXT.md §39) — #tileUI touche le bord HAUT ET
+   DROIT, donc les 2 décalés. .missionsBox (enfant flex direct, cf.
+   missions.css) suit automatiquement, aucune règle séparée nécessaire.
+   max-height recalculée pour garder la même marge basse de 20px qu'à
+   l'origine (top(20)+marge(20)=40 → top(85)+marge(20)=105). Thème bleu non
+   concerné (pas de cadre), règle de base inchangée.
+   ERRATUM (même jour) : +85px jugé trop → ramené à +65px.
+   ERRATUM 2 (même jour) : marge cadre 65px → 52px. top/right = 20+52 = 72px.
+   max-height : 40+52 = 92px retranchés.
+   ERRATUM 3 (même jour, demande explicite) : marge réduite de 10px de plus
+   → top/right = 72-10 = 62px. max-height : 92-10 = 82px retranchés.
+   ERRATUM 4 (même jour, demande explicite : "en basse résolution verticale,
+   le HUD missions en cours chevauche les 9 boutons en bas à droite et passe
+   sous le cadre"). Même cause que la règle non-thémée plus haut (marge
+   basse jamais mise à jour depuis l'ajout du cadre), en pire ici :
+   .debug-light-panel est lui-même repoussé par le cadre (bottom:56px en
+   médiéval, eda.css) et peut grandir à 82px (2 rangées de boutons). Mesuré
+   en direct : bottom(56) + hauteur(82) + 10px de respiration ≈ 148px,
+   arrondi à 152px. max-height : top(62) + 152 = 214px retranchés. */
+[data-theme="ancien"] #tileUI {
+  top: 62px;
+  right: 62px;
+  max-height: calc(100vh - 214px);
 }
 
 /* 2026-07-17 — wrapper autour de .tilePreviewRow + .tileCountRow (demande

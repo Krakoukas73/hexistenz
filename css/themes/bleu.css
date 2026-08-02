@@ -32,7 +32,32 @@
   backdrop-filter: blur(14px);
 }
 [data-theme="bleu"] .nav-logo { color: var(--blue); }
-[data-theme="bleu"] .hero-version { color: rgba(160,210,255,0.90); }
+/* 2026-07-28 — pastille inversée : fond bleu clair, typo sombre. Miroir exact
+   du traitement médiéval (fond sombre / typo claire). #b8d8ff est la teinte
+   médiane du dégradé de .hero-title, #071420 la déclinaison sombre du fond de
+   nav rgba(7,12,20,…). Géométrie (padding/rayon) dans presentation.css.
+   2026-07-28 (v2) — passage d'un fond plat à un léger dégradé + relief (ombre
+   portée bleutée + liseré clair en haut façon verre/métal poli), sur demande
+   explicite ("plus graphiques : légers dégradés, ombres") — même traitement
+   que la version médiévale, teintes inversées. */
+[data-theme="bleu"] .hero-version {
+  background: linear-gradient(160deg, #e2f0ff 0%, #b8d8ff 55%, #8ec0ff 100%);
+  color: #071420;
+  border: 1px solid rgba(120,180,255,0.65);
+  box-shadow:
+    0 3px 10px rgba(7, 12, 20, 0.5),
+    0 0 16px rgba(120, 180, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 2px rgba(20, 60, 110, 0.25);
+}
+/* 2026-07-29 — même ajustement de contraste que côté médiéval (cf. medieval.css) :
+   var(--text-dim) reste correct sur le fond sombre de ce thème, mais on fixe
+   une teinte explicite cohérente avec le reste du thème bleu sidéral (même
+   bleu pâle que .stats-summary-card span ailleurs dans l'UI) plutôt que de
+   dépendre d'une variable partagée qui pourrait changer de sens ailleurs. */
+[data-theme="bleu"] .hero-version-date {
+  color: rgba(225, 242, 255, 0.72);
+}
 [data-theme="bleu"] #lang-toggle,
 [data-theme="bleu"] #theme-toggle,
 [data-theme="bleu"] .nav-toggle { background: rgba(255,255,255,0.05); }
@@ -184,8 +209,11 @@
 [data-theme="bleu"] .hs-biome-label { color: var(--text); }
 [data-theme="bleu"] .hs-stat-num, [data-theme="bleu"] .hs-biome-total, [data-theme="bleu"] .hs-biome-max { color: var(--blue); }
 [data-theme="bleu"] .hs-biome-note { color: var(--text-dim); }
-[data-theme="bleu"] .hs-score { color: var(--blue); text-shadow: 0 0 50px rgba(120,180,255,0.5); }
-[data-theme="bleu"] .hs-card.gold-1 .hs-score { color: var(--gold); }
+/* 2026-07-31 — couleur transférée de .hs-score à .hs-efficiency (inversion de
+   hiérarchie visuelle demandée : l'efficacité devient le gros nombre coloré,
+   le score brut passe en petit texte discret, cf. presentation.css). */
+[data-theme="bleu"] .hs-efficiency { color: var(--blue); text-shadow: 0 0 50px rgba(120,180,255,0.5); }
+[data-theme="bleu"] .hs-card.gold-1 .hs-efficiency { color: var(--gold); }
 [data-theme="bleu"] .hs-empty { color: var(--text-dim); border: 1px solid var(--border); border-radius: 12px; }
 
 [data-theme="bleu"] .hero-inspi-card {

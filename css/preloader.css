@@ -64,6 +64,16 @@
   transition: width 0.18s ease-out;
 }
 
+/* 2026-08-01 — demande explicite : compteur "X fichiers/Y fichiers · X Mo/Y Mo"
+   directement sous la barre de progression (avant le libellé "Chargement… X %"). */
+#preloader-count {
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(180, 210, 255, 0.55);
+  margin-bottom: 8px;
+}
+
 #preloader-label {
   font-family: system-ui, sans-serif;
   font-size: 11px;

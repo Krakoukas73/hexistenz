@@ -6,6 +6,34 @@
   padding: 10px;
   border-radius: 12px;
   font-family: monospace;
+  /* 2026-07-28 — fix "HUD Missions sort de la page en basse résolution
+     (≤1080px)" : #tileUI (deck.css) est en flex-column avec max-height ;
+     .missionsBox (2e enfant, taille variable selon le nombre de missions
+     actives) doit pouvoir rétrécir dans cet espace borné plutôt que déborder
+     silencieusement hors du viewport. flex:1 1 auto + min-height:0 permet ce
+     rétrécissement (comportement flex par défaut sinon bloqué).
+     RÉGRESSION CORRIGÉE (même jour) : une 1ère version posait aussi
+     overflow-y:auto directement ICI. Ça cassait ENTIÈREMENT le HUD (titre +
+     liste invisibles) en thème médiéval, où l'enfant .missionsBox >
+     .internal-parchment porte une marge négative de bleed -20px -25px
+     (medieval.css, compense la bordure 9-slice 50px) — poser le scroll réel
+     sur le PARENT de cet enfant le clippe hors de la zone scrollable
+     atteignable (une boîte avec overflow:auto ne peut pas scroller vers un
+     contenu qui déborde par une marge négative de son propre enfant : ce
+     contenu reste hors de portée, jamais affiché). Exactement le même piège
+     déjà rencontré et corrigé pour #scorePanel (base.css, CORRECTIFS v1→v3) :
+     leur solution — poser le scroll réel sur l'élément qui porte LUI-MÊME la
+     marge négative, jamais sur son parent — est reprise ci-dessous et dans
+     medieval.css. Ici : overflow-y:auto reste posé directement (thème bleu,
+     où .internal-parchment est display:contents et ne porte aucune marge —
+     cf. bleu.css) ; le thème médiéval l'annule et le redéplace plus bas
+     (cf. medieval.css). */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  scrollbar-width: thin;
 }
 
 /* Titre — identique à .score-title */
@@ -26,7 +54,12 @@
 
 /* Ligne de mission — position:relative + overflow:hidden pour le liseré ::before.
    flex-direction:column pour empiler le titre court au-dessus de la rangée
-   bar+chiffres+icône (2026-07-11). */
+   bar+chiffres+icône (2026-07-11).
+   2026-08-01 — plusieurs tentatives de resserrement de ce <li> ont toutes été
+   rejetées par l'utilisateur (padding/gap réduits, titre raccourci, barre
+   étirée...) — remis intégralement à l'état d'origine ci-dessous, à la demande
+   explicite de l'utilisateur ("remets comme c'était"). NE PLUS RETOUCHER ce
+   bloc (li/title/row/icon/bar) sans confirmation explicite très précise. */
 .missionList li.mission-item {
   position: relative;
   display: flex;
@@ -261,15 +294,37 @@
   padding: 0;
   color: #332415;
   font-family: Georgia, "Times New Roman", serif;
+  /* 2026-07-28 — CORRECTIF (cf. note détaillée sur la règle .missionsBox non
+     thémée ci-dessus) : annule le scroll direct hérité de la règle de base
+     (overflow-y:auto), qui clippait le bleed négatif de .internal-parchment
+     ci-dessous et rendait tout le HUD invisible. #scorePanel passe display:flex
+     + overflow:visible pour la même raison (base.css, CORRECTIF v3) — même
+     traitement ici. */
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
 }
 [data-theme="ancien"] .missionsBox[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
 [data-theme="ancien"] .missionsBox .title { color: #4a3623; }
-/* 2026-07-18 — même wrapper/marge négative que la prez et .mode-panel (cf.
-   css/themes/medieval.css §32) : .missionsBox n'est ni flex/grid ni
-   overflow:hidden sur lui-même (.missionList, flex column, est un enfant
-   normal), donc aucune des 2 corrections nécessaires ailleurs ne s'applique
-   ici — wrapper simple, sans piège. */
-[data-theme="ancien"] .missionsBox > .internal-parchment { margin: -20px -25px -20px -25px; }
+/* 2026-07-28 — CORRECTIF : c'est désormais CET élément (et non plus
+   .missionsBox, son parent) qui porte le scroll réel — même schéma que
+   #scorePanel > .internal-parchment (base.css CORRECTIF v3) : une boîte ne
+   clippe jamais sa propre bordure/marge, seulement le contenu débordant de
+   SES enfants — le bleed négatif ci-dessous s'affiche donc normalement, et
+   .missionList (l'enfant dont la hauteur varie avec le nombre de missions)
+   peut scroller dans l'espace restant sans jamais pousser #tileUI hors du
+   viewport. La coloration de la scrollbar (::-webkit-scrollbar sur
+   .internal-parchment) est déjà générique dans ce fichier de thème,
+   cf. medieval.css. */
+[data-theme="ancien"] .missionsBox > .internal-parchment {
+  margin: -20px -25px -20px -25px;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 [data-theme="ancien"] .missionList li.mission-item {
   border: 1px solid rgba(74, 54, 35, 0.20);
   background: rgba(0, 0, 0, 0.06);
@@ -281,3 +336,28 @@
 [data-theme="ancien"] .missionList .mission-sep,
 [data-theme="ancien"] .missionList .mission-goal { color: #332415; text-shadow: none; }
 [data-theme="ancien"] .missionList .mission-realised { color: #4a3623; }
+
+/* 2026-08-01 — demande explicite : "en dessous d'une certaine résolution
+   horizontale, le HUD stats de partie (#scorePanel) est masqué, c'est
+   nickel, ne change rien. Pour exactement les mêmes triggers, masque aussi
+   .missionsBox." Seuil unique identifié dans base.css : @media
+   (max-width: 1050px) { #scorePanel { display: none !important; } } (les
+   2 thèmes, display:none !important pour l'emporter sur toute règle de
+   spécificité plus élevée). Reprise à l'identique ici — même seuil, même
+   !important, même mécanisme — pour .missionsBox. */
+@media (max-width: 1050px) {
+  .missionsBox {
+    display: none !important;
+  }
+}
+
+/* 2026-08-01 — demande explicite (2e round, "c'est validé, masque aussi ces
+   2 HUD en dessous d'une certaine résolution VERTICALE") : équivalent en
+   hauteur du masquage horizontal ci-dessus, seuil identique à celui posé
+   pour #scorePanel (base.css) — 700px, cf. commentaire détaillé là-bas pour
+   la justification du seuil. */
+@media (max-height: 700px) {
+  .missionsBox {
+    display: none !important;
+  }
+}

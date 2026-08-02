@@ -17,7 +17,7 @@
 // code, donc LUT_HELP est garanti pleinement peuplé pour ui.js,
 // startupMenu.js, multiplayerRooms.js, edaPanelWiring.js et hud_fps.js.
 
-import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 
 const _langFile = getLangFile();
 
@@ -28,7 +28,7 @@ const _langFile = getLangFile();
 // (delegateHelpTooltip(el, attr, LUT_HELP)) capturent cette référence une seule fois
 // à l'attache — si on réassignait LUT_HELP à un nouvel objet, ces références
 // deviendraient périmées. La mutation en place les garde à jour automatiquement.
-export const LUT_HELP = await fetch(`./json/languages/${_langFile}.json`)
+export const LUT_HELP = await fetch(`./json/languages/${_langFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .then(data => data?.game?.help ?? {})
   .catch(err => {

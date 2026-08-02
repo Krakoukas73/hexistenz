@@ -43,7 +43,7 @@ import { createWaterSurfaceOverlay, rebuildWaterSurfaceOverlay } from './waterSu
 import { createWaterZoneOverlay, rebuildWaterZoneOverlay } from './waterZoneOverlay.js';
 import { applySceneCurvatureFlags } from './threeSetup.js';
 import { attachHelpTooltip } from './help.js';
-import { registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 
 // Rythme artificiel à ×1 (pas de vrais timestamps, cf. décision utilisateur).
 // 700ms (2026-07-16, doublé depuis 350ms) — jugé trop rapide en test réel, en particulier
@@ -52,7 +52,7 @@ const BASE_INTERVAL_MS = 700;
 
 // ─── i18n minimal (textes du panneau replay) ─────────────────────────────────────────
 const _langFile = getLangFile();
-const _replayText = await fetch(`./json/languages/${_langFile}.json`)
+const _replayText = await fetch(`./json/languages/${_langFile}.json?v=${getLangVersion()}`)
   .then(r => r.json())
   .then(data => data?.game?.replay ?? {})
   .catch(err => {

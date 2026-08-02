@@ -64,9 +64,51 @@
    (position, marges) reste ici. */
 .mode-screen--with-background .mode-panel {
   position: relative;
-  overflow: visible !important;
   z-index: 4;
-  margin-top: clamp(120px, 18vh, 180px);
+  /* 2026-08-01 — CORRECTIF (demande explicite, 3e round) : le 1er essai
+     ("safe center" + scroll sur .mode-screen) avait fait passer le menu
+     AU-DESSUS du cadre décoratif — corrigé en revenant au schéma "ascenseur
+     dans le parchemin" (cf. bloc de commentaire détaillé plus bas + règle
+     [data-theme="ancien"] plus bas dans ce fichier). Le 2e essai (celui-ci
+     remplacé) restait malgré tout tronqué SOUS le cadre en médiéval, sans
+     aucune marge : le calcul de max-height oubliait 2 choses — (1) le
+     `border: 50px solid` du parchemin médiéval (box-sizing:content-box,
+     donc ces 100px s'AJOUTENT au-dessus de max-height, jamais inclus dedans)
+     et (2) le fait que `margin-top` n'est PAS un plancher fixe de 120px
+     comme supposé : `@media (max-height:760px)` plus bas dans ce fichier le
+     fait chuter à 112px pile — une valeur non répercutée dans le calcul
+     d'origine. Résultat mesuré en direct (1280×600) : le budget déclaré
+     manquait 100+8=108px, et `.mode-screen` étant centré (align-items:
+     center, JAMAIS "safe" — cf. raison plus haut) sans être scrollable
+     lui-même, l'excédent débordait de façon invisible et imprévisible au
+     lieu d'être proprement réservé en bas.
+     Fix structurel : `--mp-margin-top` (custom property) porte la valeur de
+     margin-top UNE SEULE FOIS ; la règle médiéval plus bas (multiplayerUi.css)
+     LIT cette même variable pour son propre calcul de max-height — impossible
+     que les 2 valeurs divergent à nouveau, quel que soit le breakpoint de
+     margin-top actif. */
+  --mp-margin-top: clamp(120px, 18vh, 180px);
+  --mp-margin-bottom: 24px;
+  margin-top: var(--mp-margin-top);
+  margin-bottom: var(--mp-margin-bottom);
+  /* IMPORTANT (piège déjà rencontré ailleurs) : `.internal-parchment` (son
+     enfant unique, cf. javascript/startupMenu.js) est `display:contents` en
+     thème BLEU (css/themes/bleu.css — wrapper "transparent" sans boîte
+     propre, ne sert qu'au bleed du parchemin médiéval) — un `overflow-y:auto`
+     posé dessus n'aurait donc AUCUN effet en bleu. Le scroll réel vit donc
+     ICI par défaut (couvre le bleu). Le thème médiéval (.internal-parchment
+     génère une vraie boîte avec bordure 9-slice + marge négative de bleed)
+     inverse ce choix : cf. [data-theme="ancien"] .mode-screen--with-background
+     .mode-panel (multiplayerUi.css), qui repasse overflow à visible ICI et
+     déplace le scroll réel sur `.mode-panel > .internal-parchment` — même
+     schéma que #scorePanel/.internal-parchment (base.css).
+     Budget bleu : marge haute(var) + padding(28×2=56) + bordure(1×2=2) +
+     marge basse(24) retranchés de 100vh. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--mp-margin-top) - var(--mp-margin-bottom) - 58px);
 }
 
 [data-theme="bleu"] .mode-screen--with-background .mode-panel {
@@ -126,7 +168,13 @@
 
 @media (max-height: 760px) {
   .mode-screen--with-background .mode-panel {
-    margin-top: 112px;
+    /* 2026-08-01 — passe par la custom property (cf. règle de base plus
+       haut) plutôt que margin-top directement : la règle médiéval
+       (multiplayerUi.css) lit --mp-margin-top pour son propre budget de
+       max-height, elle doit donc toujours voir la valeur réellement en
+       vigueur, y compris sous ce breakpoint. */
+    --mp-margin-top: 112px;
+    margin-top: var(--mp-margin-top);
   }
 
   .mode-logo {

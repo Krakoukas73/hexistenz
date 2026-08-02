@@ -7,5 +7,5 @@
 // Ce fichier ne fait plus que ré-exporter les deux pour ne rien casser chez les
 // importateurs externes (scene.js, startupMenu.js, multiplayerRooms.js) — API
 // publique inchangée.
-export { startMenuMusic, startIngameMusic, startEndingMusic, setMusicDuck, setChiMaiMode, toggleMute } from './musicPlayer.js';
+export { startMenuMusic, startIngameMusic, startEndingMusic, setMusicDuck, setChiMaiMode, toggleMute, isMuted, registerAmbientSoundDesign } from './musicPlayer.js';
 export { createAmbientSoundDesign } from './ambientSoundDesign.js';

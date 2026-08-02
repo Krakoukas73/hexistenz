@@ -28,6 +28,16 @@ header('Cache-Control: no-store');
     <p id="galleryEmpty" class="gallery-empty" hidden></p>
   </div>
 
+  <?php
+  // 2026-07-29 — cache-busting json/languages/*.json (fetch côté client par
+  // replaysPage.js), même pattern que game.php/snapshots.php — cf.
+  // gameLangReactive.js::getLangVersion().
+  $replayLangFiles = glob(__DIR__ . '/json/languages/*.json') ?: [];
+  $replayLangVersion = time();
+  $replayLangMtimes = array_filter(array_map('filemtime', $replayLangFiles));
+  if ($replayLangMtimes) { $replayLangVersion = max($replayLangMtimes); }
+  ?>
+  <script>window.HEXISTENZ_LANG_VERSION = <?= json_encode((string) $replayLangVersion) ?>;</script>
   <script type="module" src="javascript/replaysPage.js?v=<?= file_exists(__DIR__ . '/javascript/replaysPage.js') ? filemtime(__DIR__ . '/javascript/replaysPage.js') : time() ?>"></script>
 </body>
 </html>

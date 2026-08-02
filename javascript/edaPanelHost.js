@@ -15,11 +15,51 @@
 import { ensureHelpTooltip, attachHelpTooltip, LUT_HELP } from './help.js';
 import { tickFps, initFpsHud } from './hud_fps.js';
 import { EDA_BODY_HTML, wireEdaPanel } from './edaPanelWiring.js';
-import { getGameLang, setGameLang, registerLangRefresh, getLangFile } from './gameLangReactive.js';
+import { getGameLang, setGameLang, registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 import { getTheme, setTheme } from './themeManager.js';
 import { showCenterMessage } from './scorePopup.js';
+import { announceLanguageChanged, speak, resetTtsQueue, toggleTtsMute, isTtsMuted, announceVoiceOn, announceSoundOn } from './ttsAnnouncer.js';
+import { toggleMute, isMuted } from './soundDesign.js';
 
 export { tickFps };
+
+// 2026-07-29 — textes du popup central pour les 2 nouveaux boutons 🗣️/🔊 du bandeau
+// bas-gauche (mêmes clés json que scene.js::_soundOnText/_soundOffText/_voiceOnText/
+// _voiceOffText, dupliquées ICI plutôt qu'importées : scene.js importe déjà
+// edaPanelHost.js (createDebugLightUI/tickFps) — un import dans l'autre sens créerait
+// une dépendance circulaire. Même mécanisme réactif top-level-await + registerLangRefresh
+// que le reste du fichier.
+const _edaHostLangFile = getLangFile();
+const _edaHostLangData = await fetch(`./json/languages/${_edaHostLangFile}.json?v=${getLangVersion()}`)
+  .then(r => r.json())
+  .catch(err => {
+    console.error(`[edaPanelHost] Impossible de charger ${_edaHostLangFile}.json`, err);
+    return {};
+  });
+let _soundOnText = _edaHostLangData?.game?.sound?.on ?? '';
+let _soundOffText = _edaHostLangData?.game?.sound?.off ?? '';
+let _voiceOnText = _edaHostLangData?.game?.tts?.voiceOn ?? '';
+let _voiceOffText = _edaHostLangData?.game?.tts?.voiceOff ?? '';
+
+registerLangRefresh((data) => {
+  _soundOnText = data?.game?.sound?.on ?? '';
+  _soundOffText = data?.game?.sound?.off ?? '';
+  _voiceOnText = data?.game?.tts?.voiceOn ?? '';
+  _voiceOffText = data?.game?.tts?.voiceOff ?? '';
+});
+
+// Références aux 2 boutons, remplies par createDebugLightUI() ci-dessous — servent
+// à syncMuteButtons() (exportée), appelée par scene.js après un mute/unmute déclenché
+// au CLAVIER (touches M/T) pour que l'état visuel (actif/barré) des boutons reste
+// synchronisé quelle que soit l'origine du changement (clic OU touche).
+let _soundMuteBtnRef = null;
+let _ttsMuteBtnRef = null;
+
+/** Resynchronise l'état visuel (actif/barré) des boutons 🔊/🗣️ sur l'état réel courant. */
+export function syncMuteButtons() {
+  _soundMuteBtnRef?.classList.toggle('debug-light-toggle--muted', isMuted());
+  _ttsMuteBtnRef?.classList.toggle('debug-light-toggle--muted', isTtsMuted());
+}
 
 export function createDebugLightUI({ visualEnvironment, postprocess, forestOverlay = null, cloudSky = null, environmentDirector = null }) {
   if (!visualEnvironment) return null;
@@ -33,17 +73,23 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
     <div class="debug-light-left-col">
       <div id="fps-counter" class="fps-counter">-- FPS</div>
       <div class="debug-light-btn-rows">
+        <!-- 2026-07-31, demande explicite : les 2 rangées (photo/galerie/replay/voix/son
+             d'une part, langue/thème/FPS/EDA d'autre part) fusionnées en UNE SEULE ligne
+             (dépasse le stade "compatibilité 1920x1080" du 2026-07-20 ci-dessous, qui
+             n'était déjà qu'une réduction 3→2 lignes — cf. CONTEXT.md §35/§21).
+             .debug-light-btn-row reste inchangée (flex row, nowrap) : un seul conteneur
+             suffit désormais, .debug-light-btn-rows (wrapper colonne) n'a plus qu'un
+             enfant mais reste en place pour ne pas toucher au reste du CSS. -->
         <div class="debug-light-btn-row">
           <button id="snapshotBtn" class="debug-light-toggle" type="button" tabindex="-1"><span class="snapshot-emoji">📷</span></button>
           <button id="galleryBtn" class="debug-light-toggle" type="button" tabindex="-1"><span class="gallery-emoji">🖼️</span></button>
           <button id="replayBtn" class="debug-light-toggle" type="button" tabindex="-1"><span class="replay-emoji">🎬</span></button>
-        </div>
-        <!-- 2026-07-20 — sélecteurs langue/thème + boutons FPS/EDA fusionnés sur UNE
-             seule ligne (demande explicite, compatibilité 1920x1080 : moins de lignes
-             empilées = moins de hauteur consommée, quelle que soit la hauteur du
-             navigateur — pas seulement sous un seuil donné, cf. règle ci-dessus qui ne
-             gère que le badge FPS replié). -->
-        <div class="debug-light-btn-row">
+          <!-- 2026-07-29 — boutons 🗣️ (voix TTS, touche T) / 🔊 (son global, touche M),
+               demande explicite : même ligne que 📷/🖼️/🎬, cliquables, actifs/barrés
+               selon l'état courant (cf. syncMuteButtons ci-dessus et .debug-light-toggle--muted
+               dans css/eda.css). -->
+          <button id="ttsMuteBtn" class="debug-light-toggle" type="button" tabindex="-1"><span class="tts-emoji">😃</span></button>
+          <button id="soundMuteBtn" class="debug-light-toggle" type="button" tabindex="-1"><span class="sound-emoji">🔊</span></button>
           <select id="gameLangSelect" class="debug-light-toggle debug-light-lang-select" tabindex="-1">
             <option value="fr">FR</option>
             <option value="en">EN</option>
@@ -51,6 +97,9 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
             <option value="it">IT</option>
             <option value="pt">PT</option>
             <option value="fr-CA">QC</option>
+            <option value="de">DE</option>
+            <option value="ru">RU</option>
+            <option value="fr-MED">XII</option>
           </select>
           <select id="gameThemeSelect" class="debug-light-toggle debug-light-lang-select" tabindex="-1">
             <option value="bleu">BLEU SIDÉRAL</option>
@@ -79,6 +128,33 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
   attachHelpTooltip(root.querySelector('#replayBtn'),       () => LUT_HELP['topbar.replay'] ?? '');
   attachHelpTooltip(root.querySelector('#gameLangSelect'),  () => LUT_HELP['topbar.lang'] ?? '');
   attachHelpTooltip(root.querySelector('#gameThemeSelect'), () => LUT_HELP['topbar.theme'] ?? '');
+  attachHelpTooltip(root.querySelector('#ttsMuteBtn'),      () => LUT_HELP['topbar.muteVoice'] ?? '');
+  attachHelpTooltip(root.querySelector('#soundMuteBtn'),    () => LUT_HELP['topbar.mute'] ?? '');
+
+  // ─── Boutons 🗣️/🔊 (2026-07-29, demande explicite) ──────────────────────────
+  // Relais cliquable vers exactement le même comportement que les touches T/M
+  // (scene.js) : bascule + popup central de confirmation + annonce vocale à la
+  // RÉACTIVATION uniquement (silence à la coupure). `toggleMute()` sans argument
+  // retombe sur la dernière instance ambientSoundDesign enregistrée via
+  // registerAmbientSoundDesign() (musicPlayer.js) — ce module n'a pas directement
+  // accès à cette instance (créée après createDebugLightUI() dans scene.js).
+  _soundMuteBtnRef = root.querySelector('#soundMuteBtn');
+  _ttsMuteBtnRef = root.querySelector('#ttsMuteBtn');
+  syncMuteButtons();
+
+  _soundMuteBtnRef.addEventListener('click', () => {
+    const muted = toggleMute();
+    syncMuteButtons();
+    showCenterMessage(muted ? _soundOffText : _soundOnText);
+    if (!muted) announceSoundOn();
+  });
+
+  _ttsMuteBtnRef.addEventListener('click', () => {
+    const muted = toggleTtsMute();
+    syncMuteButtons();
+    showCenterMessage(muted ? _voiceOffText : _voiceOnText);
+    if (!muted) announceVoiceOn();
+  });
 
   // Sélecteur de langue en jeu (2026-07-13, v2 — v1 avec 2 boutons FR/EN rejetée :
   // pas scalable si d'autres langues arrivent un jour). Un unique <select> qui
@@ -94,7 +170,11 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
   // démarrage en pleine partie, inacceptable).
   const langSelect = root.querySelector('#gameLangSelect');
   langSelect.value = getGameLang();
-  langSelect.addEventListener('change', () => setGameLang(langSelect.value));
+  // 2026-07-29 — annonce vocale (TTS) "Langue française" (etc.) au changement de
+  // langue. setGameLang() est asynchrone : on attend sa résolution avant d'annoncer,
+  // pour être sûr que ttsAnnouncer.js (abonné via registerLangRefresh, comme tous
+  // les modules bilingues) a bien reçu la nouvelle langue avant de parler.
+  langSelect.addEventListener('change', () => setGameLang(langSelect.value).then(announceLanguageChanged));
 
   // Sélecteur de thème graphique en jeu (2026-07-17, demande explicite) — juste après
   // le sélecteur de langue dans le même bandeau. Même composant themeManager.js déjà
@@ -122,7 +202,7 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
     if (optBleu) optBleu.textContent = (themeNames?.bleu ?? 'Bleu sidéral').toUpperCase();
     if (optAncien) optAncien.textContent = (themeNames?.ancien ?? 'Médiéval').toUpperCase();
   }
-  fetch(`./json/languages/${getLangFile()}.json`)
+  fetch(`./json/languages/${getLangFile()}.json?v=${getLangVersion()}`)
     .then(r => r.json())
     .then(data => applyThemeOptionLabels(data?.game?.eda?.themeNames))
     .catch(err => console.error('[edaPanelHost] Impossible de charger les libellés de thème', err));
@@ -130,7 +210,16 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
 
   themeSelect.addEventListener('change', () => {
     const theme = setTheme(themeSelect.value);
-    showCenterMessage(_themeNames?.[theme] ?? theme);
+    const themeLabel = _themeNames?.[theme] ?? theme;
+    showCenterMessage(themeLabel);
+    // 2026-07-29 — annonce vocale (TTS) du thème sélectionné, dans la langue en
+    // cours. Réutilise directement `themeLabel` (déjà traduit via game.eda.themeNames,
+    // même texte que le popup visuel ci-dessus) — pas de nouvelle clé json nécessaire,
+    // contrairement à announceLanguageChanged qui a besoin d'une phrase dédiée
+    // (contrainte grammaticale, cf. §35 CONTEXT.md) : un simple nom de thème
+    // ("Bleu sidéral", "Médiéval") se prononce très bien tel quel.
+    resetTtsQueue();
+    speak(themeLabel);
   });
 
   const fpsApi = initFpsHud(root);

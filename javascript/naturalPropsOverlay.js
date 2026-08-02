@@ -25,7 +25,7 @@ import { placeObjectOnTerrain, getTerrainNormalAt } from './terrainHeight.js';
 import { getCurvatureTiltQuaternion } from './worldCurvature.js';
 import { ROCK_DENSITY, HITBOX_R } from './variables.js';
 import { scaledCount } from './contentDensity.js';
-import { registerPropHitbox } from './propHitboxRegistry.js';
+import { registerPropHitbox, getPropRegistryGeneration } from './propHitboxRegistry.js';
 import { getHexVertex, normalize2 } from './hexGeometry.js';
 import {
   snapPropBottomToSurface,
@@ -50,6 +50,61 @@ const SECTOR_BY_KEY    = Object.fromEntries(SECTOR_DEFS.map(s => [s.key, s]));
 const DIRECTION_BY_EDGE = Object.fromEntries(HEX_DIRECTIONS.map(d => [d.edge, d]));
 // Pré-alloué pour le tilt de courbure monde (bouliste)
 const _npCurvQuat = new THREE.Quaternion();
+const _NP_WHITE_COLOR = new THREE.Color(1, 1, 1);   // reset instanceColor = neutre (pas de teinte)
+const _npInstanceMatrixScratch = new THREE.Matrix4();
+
+// Retrouve, dans un InstancedMesh, l'instance dont la position monde (XZ) est la plus proche de
+// (worldX, worldZ) — évite de dépendre d'un index mémorisé au moment de la collecte (invalide
+// dès qu'un rebuild ultérieur change l'ordre des instances, cf. forestOverlay.js).
+function _findInstanceIndexNear(mesh, worldX, worldZ, tolSq = 0.0004) {
+  let bestIdx = -1, bestDistSq = tolSq;
+  for (let i = 0; i < mesh.count; i += 1) {
+    mesh.getMatrixAt(i, _npInstanceMatrixScratch);
+    const e = _npInstanceMatrixScratch.elements;
+    const dx = e[12] - worldX, dz = e[14] - worldZ;
+    const d2 = dx * dx + dz * dz;
+    if (d2 < bestDistSq) { bestDistSq = d2; bestIdx = i; }
+  }
+  return bestIdx;
+}
+
+/**
+ * Poignée de recoloration d'un prop instancié, consommée par le feu (propHitboxRegistry.js →
+ * fireOverlay.js). Mutualisée entre bottes de foin et rochers.
+ *
+ * `flammable: false` → le prop se couvre de suie mais n'accueille PAS de langue de flamme
+ * dimensionnée sur lui : un rocher ne brûle pas, il noircit (retour user 2026-07-29).
+ *
+ * La résolution par position est mise en cache tant que les props n'ont pas été reconstruits
+ * (génération du registre) — le feu appelle setColor à chaque frame sur chaque objet touché.
+ */
+function _makeInstancedBurnMeta(group, meshNamePrefix, wx, wz, height, flammable = true) {
+  return {
+    height,
+    flammable,
+    _gen: -1,
+    _hits: null,
+    setColor(color) {
+      const gen = getPropRegistryGeneration();
+      if (this._gen !== gen) {
+        this._hits = [];
+        for (const child of group.children) {
+          if (!child.isInstancedMesh || child.name !== meshNamePrefix) continue;
+          const idx = _findInstanceIndexNear(child, wx, wz);
+          if (idx >= 0) this._hits.push({ mesh: child, idx });
+        }
+        this._gen = gen;
+      }
+      for (const { mesh, idx } of this._hits) {
+        if (!mesh.instanceColor) {
+          mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(mesh.count * 3).fill(1), 3);
+        }
+        mesh.setColorAt(idx, color ?? _NP_WHITE_COLOR);
+        mesh.instanceColor.needsUpdate = true;
+      }
+    }
+  };
+}
 
 // ─── Point d'entrée ────────────────────────────────────────────────────────────
 
@@ -66,15 +121,15 @@ export function createNaturalGroundProps(placedTiles) {
       const type = getTileEdgeType(placedTile, edge);
       if (!isSafePropGroundType(type)) continue;
 
-      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'flower',    placedTiles);
-      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'brindille', placedTiles);
-      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'grass',     placedTiles);
-      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'shrub',        placedTiles);
-      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'pile-de-bois', placedTiles);
-      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'deer',         placedTiles);
-      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'rock',     placedTiles);
-      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'reed',     placedTiles);
-      collectNaturalPropInstances(accumulator, placedTile, edge, type, 'mushroom', placedTiles);
+      collectNaturalPropInstances(group, accumulator, placedTile, edge, type, 'flower',    placedTiles);
+      collectNaturalPropInstances(group, accumulator, placedTile, edge, type, 'brindille', placedTiles);
+      collectNaturalPropInstances(group, accumulator, placedTile, edge, type, 'grass',     placedTiles);
+      collectNaturalPropInstances(group, accumulator, placedTile, edge, type, 'shrub',        placedTiles);
+      collectNaturalPropInstances(group, accumulator, placedTile, edge, type, 'pile-de-bois', placedTiles);
+      collectNaturalPropInstances(group, accumulator, placedTile, edge, type, 'deer',         placedTiles);
+      collectNaturalPropInstances(group, accumulator, placedTile, edge, type, 'rock',     placedTiles);
+      collectNaturalPropInstances(group, accumulator, placedTile, edge, type, 'reed',     placedTiles);
+      collectNaturalPropInstances(group, accumulator, placedTile, edge, type, 'mushroom', placedTiles);
     }
   }
 
@@ -83,9 +138,9 @@ export function createNaturalGroundProps(placedTiles) {
     for (const edge of EDGE_ORDER) {
       const type = getTileEdgeType(placedTile, edge);
       if (type === EDGE_TYPES.field) {
-        collectNaturalPropInstances(accumulator, placedTile, edge, EDGE_TYPES.field, 'hay-bale', placedTiles);
+        collectNaturalPropInstances(group, accumulator, placedTile, edge, EDGE_TYPES.field, 'hay-bale', placedTiles);
       } else if (type === EDGE_TYPES.grass && isGrassAdjacentToField(placedTile, edge, placedTiles)) {
-        collectNaturalPropInstances(accumulator, placedTile, edge, EDGE_TYPES.grass, 'hay-bale', placedTiles);
+        collectNaturalPropInstances(group, accumulator, placedTile, edge, EDGE_TYPES.grass, 'hay-bale', placedTiles);
       }
     }
   }
@@ -94,7 +149,7 @@ export function createNaturalGroundProps(placedTiles) {
   for (const placedTile of placedTiles.values()) {
     const centerType = getTileCenterType(placedTile);
     if (centerType === EDGE_TYPES.grass || centerType === EDGE_TYPES.forest) {
-      collectNaturalPropInstancesCenter(accumulator, placedTile, centerType);
+      collectNaturalPropInstancesCenter(group, accumulator, placedTile, centerType);
     }
   }
 
@@ -106,7 +161,7 @@ export function createNaturalGroundProps(placedTiles) {
 
 // ─── Collecte des instances ────────────────────────────────────────────────────
 
-function collectNaturalPropInstances(accumulator, placedTile, edge, type, kind, placedTiles) {
+function collectNaturalPropInstances(group, accumulator, placedTile, edge, type, kind, placedTiles) {
   const seed   = `${placedTile.key}:natural:${kind}:${edge}`;
   const chance = getNaturalPropChance(kind, type, placedTile, edge, placedTiles);
   if (hashUnit(seed) > chance) return;
@@ -197,15 +252,35 @@ function collectNaturalPropInstances(accumulator, placedTile, edge, type, kind, 
     _propInstanceDummy.scale.setScalar(jitter);
     _propInstanceDummy.updateMatrix();
 
-    if (kind === 'rock') {
-      registerPropHitbox(_propInstanceDummy.position.x, _propInstanceDummy.position.z, HITBOX_R.rockLarge);
-    }
-
     if (!accumulator.has(variantKey)) accumulator.set(variantKey, new Map());
     const byChunk  = accumulator.get(variantKey);
     const chunkKey = getPropChunkKey(placedTile.q, placedTile.r);
     if (!byChunk.has(chunkKey)) byChunk.set(chunkKey, []);
     byChunk.get(chunkKey).push(_propInstanceDummy.matrix.clone());
+
+    // Rocher : enregistré APRÈS le calcul de chunkKey (nécessaire au nom du mesh instancié).
+    // Il ne brûle pas, mais se couvre de suie quand le feu passe dessus (flammable: false).
+    if (kind === 'rock') {
+      const rockWX = _propInstanceDummy.position.x, rockWZ = _propInstanceDummy.position.z;
+      registerPropHitbox(rockWX, rockWZ, HITBOX_R.rockLarge, _makeInstancedBurnMeta(
+        group, `instanced-prop-${variantKey}-${chunkKey}`, rockWX, rockWZ, HITBOX_R.rockLarge * 1.2, false
+      ));
+    }
+
+    // setColor (2026-07-29, retour user : « aucun effet sur... la paille » puis « pas sûr que
+    // ça détecte bien les objets ») — même mécanisme que forestOverlay.js : plusieurs
+    // InstancedMesh (une par sous-mesh du GLB) partageant le nom
+    // `instanced-prop-${variantKey}-${chunkKey}`. Résolu par POSITION à chaque appel (pas par
+    // index mémorisé, invalide dès qu'un rebuild ultérieur — très fréquent — change l'ordre).
+    if (kind === 'hay-bale') {
+      const targetWX = _propInstanceDummy.position.x, targetWZ = _propInstanceDummy.position.z;
+      // Botte de foin : à peu près aussi haute que large (cylindre couché), et bien
+      // inflammable elle — contrairement au rocher.
+      registerPropHitbox(targetWX, targetWZ, HAY_BALE_TARGET_WIDTH * 0.5 * jitter, _makeInstancedBurnMeta(
+        group, `instanced-prop-${variantKey}-${chunkKey}`, targetWX, targetWZ,
+        HAY_BALE_TARGET_WIDTH * 0.55 * jitter, true
+      ));
+    }
   }
 }
 
@@ -214,7 +289,7 @@ function collectNaturalPropInstances(accumulator, placedTile, edge, type, kind, 
 // aucun décor via le chemin normal. Cette fonction place les props directement dans
 // le disque central (centerRadiusScale = 0.33) avec une vérification de distance simple.
 
-function collectNaturalPropInstancesCenter(accumulator, placedTile, type) {
+function collectNaturalPropInstancesCenter(group, accumulator, placedTile, type) {
   const CENTER_MAX_RADIUS = HEX_SIZE * 0.27; // légèrement en-deçà de 0.33 — marge turbulence bords
   const tilePos = axialToWorld(placedTile.q, placedTile.r);
 
@@ -272,15 +347,19 @@ function collectNaturalPropInstancesCenter(accumulator, placedTile, type) {
       _propInstanceDummy.scale.setScalar(jitter);
       _propInstanceDummy.updateMatrix();
 
-      if (kind === 'rock') {
-        registerPropHitbox(_propInstanceDummy.position.x, _propInstanceDummy.position.z, HITBOX_R.rockLarge);
-      }
-
       if (!accumulator.has(variantKey)) accumulator.set(variantKey, new Map());
       const byChunk  = accumulator.get(variantKey);
       const chunkKey = getPropChunkKey(placedTile.q, placedTile.r);
       if (!byChunk.has(chunkKey)) byChunk.set(chunkKey, []);
       byChunk.get(chunkKey).push(_propInstanceDummy.matrix.clone());
+
+      // Idem chemin secteur : le rocher noircit sous le feu sans jamais s'enflammer.
+      if (kind === 'rock') {
+        const rockWX = _propInstanceDummy.position.x, rockWZ = _propInstanceDummy.position.z;
+        registerPropHitbox(rockWX, rockWZ, HITBOX_R.rockLarge, _makeInstancedBurnMeta(
+          group, `instanced-prop-${variantKey}-${chunkKey}`, rockWX, rockWZ, HITBOX_R.rockLarge * 1.2, false
+        ));
+      }
     }
   }
 }
