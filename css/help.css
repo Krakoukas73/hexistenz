@@ -513,6 +513,32 @@ kbd {
   overflow: visible;
 }
 [data-theme="ancien"] .help-panel[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
+/* 2026-08-03 — demande explicite : typo "Enchanted-Land" sur #helpTitle
+   (titre du panneau d'aide, ≥12px, jamais Bebas Neue ici — hérite de Georgia
+   via .help-panel juste au-dessus, remplacé par Enchanted-Land seulement sur
+   ce titre pour ne pas affecter le reste du panneau (contrôles, légendes,
+   chiffres) qui reste hors périmètre). */
+[data-theme="ancien"] #helpTitle {
+  font-family: 'EnchantedLand', Georgia, "Times New Roman", serif;
+  /* 2026-08-03 — demande explicite : cohérence avec les acquis de la prez,
+     aucun letter-spacing sur Enchanted-Land — reset du -0.06em hérité de
+     .help-header h1 (base.css, pensé pour Bebas Neue très condensée). */
+  letter-spacing: normal;
+  /* 2026-08-03 (round suivant) — jamais de gras sur Enchanted-Land : reset
+     du gras natif du <h1> (font-weight:700 par défaut du navigateur, jamais
+     explicitement redéfini jusqu'ici). */
+  font-weight: 400;
+  /* 2026-08-03 (round suivant) — demande explicite : "trop grand, tronqué,
+     sort de l'écran". .help-header h1 (base.css) est calibré pour Bebas
+     Neue très condensée : clamp(30px, 4vw, 52px). Avec le size-adjust:180%
+     global d'EnchantedLand (css/themes/medieval.css), ce même font-size
+     rend visuellement ~1.8× plus grand (jusqu'à ~94px effectifs) — largement
+     assez pour déborder du panneau/passer sous le bouton de fermeture selon
+     la largeur d'écran. Taille fixe et raisonnable ici, indépendante du
+     clamp non pertinent pour cette police. */
+  font-size: 28px;
+  line-height: 1.2;
+}
 [data-theme="ancien"] .help-panel > .internal-parchment {
   display: flex;
   flex-direction: column;
@@ -579,4 +605,8 @@ kbd {
   background: #4a3623;
   color: #f0e6d0;
   border: none;
+  /* 2026-08-03 — demande explicite : héritait du text-shadow clair posé sur
+     body pour les textes Enchanted-Land de la prez — sur le fond sombre de la
+     touche (#4a3623), ce halo clair rendait le texte illisible. */
+  text-shadow: none;
 }

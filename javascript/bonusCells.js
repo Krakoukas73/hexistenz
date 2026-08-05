@@ -7,7 +7,7 @@ import { GROUND_CLEARANCE } from './propPlacement.js';
 
 export const BONUS_CELL_MIN = 1;
 export const BONUS_CELL_MAX = 4;
-export const BONUS_CELL_SCORE = 1500;
+export const BONUS_CELL_SCORE = 500;
 
 export function createBonusCells(blockedKeys = new Set(), gridRegions = null) {
   const availableHexes = getAllGridHexes(gridRegions ?? undefined).filter(hex => !blockedKeys.has(makeHexKey(hex.q, hex.r)));

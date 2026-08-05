@@ -1045,7 +1045,7 @@
         },
         "bonusCells": {
           "title": "Caselle bonus",
-          "text": "Tra 1 e 4 caselle bonus vengono generate sulla griglia. Non cambiano nessuna regola di posizionamento: se riesci a posare una tessera sopra, scompaiono e fruttano immediatamente +1500 punti.",
+          "text": "Tra 1 e 4 caselle bonus vengono generate sulla griglia. Non cambiano nessuna regola di posizionamento: se riesci a posare una tessera sopra, scompaiono e fruttano immediatamente +500 punti.",
           "label": "obiettivo opzionale, puro punteggio, zero trappole"
         },
         "blackCells": {
@@ -1208,7 +1208,8 @@
       "trainsCount": "Hai {n} treni",
       "boatsCount": "Hai {n} barche",
       "cometsCount": "Hai {n} comete",
-      "languageChanged": "Lingua italiana"
+      "languageChanged": "Lingua italiana",
+      "themeChanged": "Tema {theme}"
     },
     "fpsAdjectives": {
       "disastrous": "Disastroso",

@@ -47,6 +47,25 @@ body::after {
   color: rgba(220, 240, 255, 0.9);
 }
 
+/* 2026-08-03 — demande explicite : ces HUD in-partie (#scorePanel, #tileUI,
+   #arcadeScore — et .missionsBox, cf. missions.css) n'ont jamais eu de
+   masquage par défaut : ils sont dans le DOM dès le chargement de game.php,
+   sans display:none tant qu'aucun JS ne les cache. Résultat, un flash
+   disgracieux entre la fin du preloader (dont le fondu de sortie, ~700ms,
+   laisse transparaître la page en dessous, cf. preloader.js::dismissOverlay)
+   et l'affichage du menu pre-game (.mode-screen, opaque, z-index:9999, créé
+   SYNCHRONE juste après par showStartupScreen() — donc aucun gap après lui,
+   le souci est bien pendant le fondu du preloader). Masqués par défaut via
+   cette classe sur <body> (game.php), retirée uniquement au vrai lancement
+   de la partie (multiplayerRooms.js::startMultiplayerScene, juste après
+   overlay.remove() du menu pre-game) — jamais avant, jamais en revenant sur
+   un menu. */
+body.game-not-started #scorePanel,
+body.game-not-started #tileUI,
+body.game-not-started #arcadeScore {
+  display: none !important;
+}
+
 
 /* 2026-08-01 — passage en colonne (était une simple rangée) pour loger la
    ligne d'efficacité EN COURS sous le score, cf. .arcade-efficiency plus bas.
@@ -850,7 +869,28 @@ body.grid-only-mode .help-overlay {
   flex-direction: column;
 }
 [data-theme="ancien"] #scorePanel[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
-[data-theme="ancien"] .score-title { color: #4a3623; }
+[data-theme="ancien"] .score-title {
+  color: #4a3623;
+  /* 2026-08-03 — demande explicite : typo Enchanted-Land, 12px (plancher),
+     hérite déjà de Georgia via #scorePanel — reste hors périmètre le voisin
+     .multiplayer-info-value (chiffre/pseudo, jamais Enchanted-Land). */
+  font-family: 'EnchantedLand', Georgia, "Times New Roman", serif;
+  /* demande explicite (même round) : plus de MAJUSCULES, seule la 1ère
+     lettre capitalisée — cf. .title (css/themes/medieval.css) pour le détail
+     de la technique lowercase + ::first-letter. */
+  text-transform: lowercase;
+  /* 2026-08-03 (round suivant) — cohérence avec les acquis de la prez :
+     aucun letter-spacing sur Enchanted-Land, reset du 0.18em hérité de la
+     règle de base non thémée (pensée pour l'ancienne typo monospace). */
+  letter-spacing: normal;
+  /* 2026-08-03 (round suivant) — cohérence de taille avec .title
+     (css/themes/medieval.css, 14px) : 12px ne partageait pas les dimensions
+     établies pendant les essais prez/pré-partie. */
+  font-size: 14px;
+}
+[data-theme="ancien"] .score-title::first-letter {
+  text-transform: uppercase;
+}
 [data-theme="ancien"] .multiplayer-info { border-bottom: 1px solid rgba(74, 54, 35, 0.24); }
 [data-theme="ancien"] .multiplayer-info-value {
   color: #332415;
@@ -861,12 +901,64 @@ body.grid-only-mode .help-overlay {
   background: rgba(0, 0, 0, 0.05);
   box-shadow: none;
 }
-[data-theme="ancien"] .stats-title { color: #332415; }
+[data-theme="ancien"] #statsPanel .stats-title {
+  /* ::first-letter (règle plus bas) n'est jamais appliqué sur un conteneur
+     flex (exclusion explicite de la spec CSS, même pour les items anonymes
+     générés par le texte direct) — la règle de base (non thémée) pose
+     display:flex uniquement pour positionner ::after (le filet décoratif),
+     déjà désactivé ici (content:none, #statsPanel .stats-title::after
+     plus haut dans ce fichier) : aucune régression visuelle à repasser en
+     block, seul usage de .stats-title dans tout le projet (game.php). */
+  display: block;
+}
+[data-theme="ancien"] .stats-title {
+  color: #332415;
+  /* 2026-08-03 — demande explicite : typo Enchanted-Land sur .stats-title
+     ("ANNALES DES HAUTS FAITS") — base à 11px (base.css, hors thème),
+     remonté à 12px ICI uniquement (jamais en dessous du plancher) ; hérite
+     déjà de Georgia via #scorePanel. Casse : plus de MAJUSCULES (override du
+     text-transform:uppercase de la règle de base), seule la 1ère lettre
+     capitalisée — cf. .title (css/themes/medieval.css) pour la technique. */
+  font-family: 'EnchantedLand', Georgia, "Times New Roman", serif;
+  text-transform: lowercase;
+  /* 2026-08-03 (round suivant) — cohérence avec les acquis de la prez :
+     aucun letter-spacing sur Enchanted-Land, reset du 0.16em hérité de la
+     règle de base non thémée (pensée pour l'ancienne typo monospace). */
+  letter-spacing: normal;
+  /* 2026-08-03 (round suivant) — cohérence de taille avec .title
+     (css/themes/medieval.css, 14px) : la police héritée était plus petite
+     et ne partageait pas les dimensions établies pendant les essais prez/
+     pré-partie. */
+  font-size: 14px;
+  /* 2026-08-03 (round suivant) — jamais de gras sur Enchanted-Land : reset
+     du font-weight:900 hérité de la règle de base non thémée (pensée pour
+     l'ancienne typo condensée en capitales). */
+  font-weight: 400;
+}
+[data-theme="ancien"] .stats-title::first-letter {
+  text-transform: uppercase;
+}
 [data-theme="ancien"] .stats-summary-card {
   border: 1px solid rgba(74, 54, 35, 0.20);
   background: rgba(0, 0, 0, 0.05);
 }
-[data-theme="ancien"] .stats-summary-card span:not(.stats-emoji) { color: #4a3623; }
+[data-theme="ancien"] .stats-summary-card span:not(.stats-emoji) {
+  color: #4a3623;
+  /* 2026-08-03 — demande explicite : typo Enchanted-Land sur les titres des
+     DIV du HUD statistiques (moulins/convois/nefs/comètes) — même convention
+     que les autres titres HUD (.title/.score-title/.stats-title) : 14px,
+     jamais de gras, aucun letter-spacing, casse "1ère lettre seulement" (pas
+     de MAJUSCULES malgré text-transform:uppercase hérité de la règle de base
+     non thémée, pensée pour l'ancienne typo Space Mono). */
+  font-family: 'EnchantedLand', Georgia, "Times New Roman", serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: lowercase;
+}
+[data-theme="ancien"] .stats-summary-card span:not(.stats-emoji)::first-letter {
+  text-transform: uppercase;
+}
 [data-theme="ancien"] .stats-summary-card strong {
   color: #332415;
   text-shadow: none;
@@ -903,6 +995,24 @@ body.grid-only-mode .help-overlay {
 [data-theme="ancien"] .stats-metrics {
   position: relative;
   z-index: 1;
+}
+/* 2026-08-03 — demande explicite : typo Enchanted-Land sur les titres des
+   DIV du HUD statistiques (prairie/champ de blé/forêt/bourg/eau/voie
+   ferrée) — même convention que .stats-summary-card ci-dessus. Ciblé sur le
+   span de texte uniquement (`:not(.stats-icon)`, l'emoji reste inchangé) :
+   .stats-card-head est display:flex (règle de base plus haut), et
+   ::first-letter ne s'applique jamais à un conteneur flex — appliqué ici
+   directement sur le span de texte (inline, pas flex), qui accepte
+   ::first-letter sans problème. */
+[data-theme="ancien"] .stats-card-head span:not(.stats-icon) {
+  font-family: 'EnchantedLand', Georgia, "Times New Roman", serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: lowercase;
+}
+[data-theme="ancien"] .stats-card-head span:not(.stats-icon)::first-letter {
+  text-transform: uppercase;
 }
 [data-theme="ancien"] .stats-grass::after  { background-image: url("../images/biome-prairie.jpg"); }
 [data-theme="ancien"] .stats-field::after  { background-image: url("../images/biome-ble.jpg"); }

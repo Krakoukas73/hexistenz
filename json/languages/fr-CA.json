@@ -1045,7 +1045,7 @@
         },
         "bonusCells": {
           "title": "Cases bonus",
-          "text": "Entre 1 et 4 cases bonus se retrouvent sur la grille. Ça change aucune règle de placement : si tu réussis à poser une tuile dessus, ça disparaît pis ça rapporte tu-suite +1500 points.",
+          "text": "Entre 1 et 4 cases bonus se retrouvent sur la grille. Ça change aucune règle de placement : si tu réussis à poser une tuile dessus, ça disparaît pis ça rapporte tu-suite +500 points.",
           "label": "objectif optionnel, pur score, zéro piège"
         },
         "blackCells": {
@@ -1208,7 +1208,8 @@
       "trainsCount": "T'as {n} trains, mon chum",
       "boatsCount": "T'as {n} bateaux, mon chum",
       "cometsCount": "T'as {n} comètes, mon chum",
-      "languageChanged": "Langue québécoise, mon chum"
+      "languageChanged": "Langue québécoise, mon chum",
+      "themeChanged": "Thème {theme}, mon chum"
     },
     "fpsAdjectives": {
       "disastrous": "Un désastre en tabarnak",

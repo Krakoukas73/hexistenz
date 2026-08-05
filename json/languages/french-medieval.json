@@ -1045,7 +1045,7 @@
         },
         "bonusCells": {
           "title": "Cases de faveur",
-          "text": "De 1 à 4 cases de faveur sont semées sur la grille. Nulle règle de placement n'en est changée : si tu parviens à poser une tuile dessus, elles s'effacent et te valent aussitôt +1500 points.",
+          "text": "De 1 à 4 cases de faveur sont semées sur la grille. Nulle règle de placement n'en est changée : si tu parviens à poser une tuile dessus, elles s'effacent et te valent aussitôt +500 points.",
           "label": "quête facultative, pur prestige, nul piège"
         },
         "blackCells": {
@@ -1208,7 +1208,8 @@
       "trainsCount": "Par tes rails cheminent {n} convois",
       "boatsCount": "Sur tes eaux voguent {n} nefs",
       "cometsCount": "Tu as abattu {n} comètes au firmament",
-      "languageChanged": "Français médiéval"
+      "languageChanged": "Français médiéval",
+      "themeChanged": "Thème {theme}"
     },
     "fpsAdjectives": {
       "disastrous": "Piteux",

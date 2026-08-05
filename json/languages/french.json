@@ -1045,7 +1045,7 @@
         },
         "bonusCells": {
           "title": "Cases bonus",
-          "text": "Entre 1 et 4 cases bonus sont générées sur la grille. Elles ne changent aucune règle de placement : si tu arrives à poser une tuile dessus, elles disparaissent et rapportent immédiatement +1500 points.",
+          "text": "Entre 1 et 4 cases bonus sont générées sur la grille. Elles ne changent aucune règle de placement : si tu arrives à poser une tuile dessus, elles disparaissent et rapportent immédiatement +500 points.",
           "label": "objectif optionnel, pur score, zéro piège"
         },
         "blackCells": {
@@ -1208,7 +1208,8 @@
       "trainsCount": "Tu as {n} trains",
       "boatsCount": "Tu as {n} bateaux",
       "cometsCount": "Tu as {n} comètes",
-      "languageChanged": "Langue française"
+      "languageChanged": "Langue française",
+      "themeChanged": "Thème {theme}"
     },
     "fpsAdjectives": {
       "disastrous": "Désastreux",

@@ -3,60 +3,322 @@
     "name": "⭐ Défaut",
     "key": "default",
     "bg": "linear-gradient(135deg,#ffd36d,#b58239)",
-    "pixelization": { "enabled": false, "pixelSize": 1 },
-    "delta": { "grading": { "whiteLevel": 0.90 } },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 0, "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46, "godRaysEnabled": true, "crtEnabled": false }
+    "pixelization": {
+      "enabled": false,
+      "pixelSize": 1,
+      "normalEdgeStrength": 0,
+      "depthEdgeStrength": 0,
+      "worldShapeMode": "platiste"
+    },
+    "delta": {
+      "renderer": {
+        "toneMappingExposure": 2
+      },
+      "environment": {
+        "skyColor": "#02040a",
+        "fogColor": "#02040a",
+        "fogDensity": 0.004,
+        "fogNear": 0,
+        "fogFar": 0,
+        "domeColorTop": "#2f4b67",
+        "domeColorBottom": "#162638",
+        "domeOpacity": 0
+      },
+      "lights": {
+        "hemisphereSkyColor": "#fff4d6",
+        "hemisphereGroundColor": "#8aaa8e",
+        "hemisphereIntensity": 0.62,
+        "sunColor": "#ffe2b0",
+        "sunIntensity": 2.1,
+        "sunOrbitEnabled": true,
+        "sunOrbitRadius": 10.5,
+        "sunOrbitHeight": 3.4,
+        "sunOrbitSpeed": 0.06,
+        "sunVisualScale": 0.78,
+        "fillColor": "#c4d8f0",
+        "fillIntensity": 0.3
+      },
+      "grading": {
+        "enabled": true,
+        "brightness": 0,
+        "contrast": 1.025,
+        "saturation": 0.96,
+        "vibrance": 0.16,
+        "hue": -0.006,
+        "gamma": 1.035,
+        "blackLevel": 0,
+        "whiteLevel": 0.9,
+        "red": 1.03,
+        "green": 1,
+        "blue": 0.97,
+        "redCurve": 1,
+        "greenCurve": 1,
+        "blueCurve": 1,
+        "paletteColors": [],
+        "paletteDither": 0
+      },
+      "palette": {
+        "enabled": false,
+        "strength": 0.31,
+        "saturation": 1.04,
+        "contrast": 1.015,
+        "warmShift": 0.016,
+        "targets": {
+          "field": "#d9b357",
+          "forest": "#456c3f",
+          "grass": "#78a957",
+          "house": "#998969",
+          "rail": "#c0b8a5",
+          "water": "#4fa0bd"
+        }
+      }
+    },
+    "cinema": {
+      "enabled": true,
+      "tilt": 0.6,
+      "focusCenter": 0.5,
+      "focusBand": 0.35,
+      "vignette": 0.55,
+      "grain": 0.3,
+      "chromatic": 0.45,
+      "halation": 0,
+      "barrel": 0,
+      "scanLines": 0,
+      "scanLinesIntensity": 0.52,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "godRaysEnabled": false,
+      "tiltShiftEnabled": true,
+      "bloomIntensity": 0,
+      "bloomThreshold": 0.75,
+      "bloomRadius": 2,
+      "bloomSoftness": 0.4,
+      "crtCurvature": 0.17,
+      "crtMask": 1,
+      "crtCornerDark": 0,
+      "bloomEnabled": true,
+      "crtEnabled": true
+    },
+    "water": {
+      "foamEnabled": true,
+      "wakeEnabled": true,
+      "foam": {
+        "foamWidth": 0.42,
+        "foamScale": 3,
+        "foamDensity": 0.52,
+        "foamAmbient": 0.38,
+        "foamSharp": 0.012,
+        "foamSpeed": 1,
+        "deepDistance": 0.75,
+        "opacity": 0.8
+      },
+      "wake": {
+        "armWidth": 0.08,
+        "spread": 0.28,
+        "length": 1.2,
+        "scale": 5.5,
+        "density": 0.5,
+        "opacity": 0.9
+      }
+    },
+    "wind": {
+      "enabled": true,
+      "wheat": {
+        "strength": 0.0255,
+        "speed": 1.65
+      },
+      "grass": {
+        "strength": 1.5,
+        "speed": 0.5625,
+        "sway": 0.08
+      },
+      "tree": {
+        "strength": 0.034,
+        "speed": 1.38,
+        "frequency": 0.78,
+        "turbulence": 0.3,
+        "gustStrength": 0.26,
+        "detailStrength": 0.08
+      }
+    },
+    "cloud": {
+      "enabled": true,
+      "coverage": 0.41,
+      "scale": 0.026202,
+      "speed": 0.0945
+    },
+    "dayNight": "lune",
+    "density": 0.3
   },
   {
     "name": "🌫️ Brume",
     "key": "mist",
     "bg": "linear-gradient(135deg,#90c8d8,#2860a0)",
     "delta": {
-      "renderer": { "toneMappingExposure": 1.28 },
-      "environment": { "fogDensity": 0.014, "fogColor": "#b8ccd8", "skyColor": "#0a1620" },
-      "lights": { "sunIntensity": 1.6, "sunColor": "#d4e4f0", "hemisphereSkyColor": "#b8d4e4", "hemisphereGroundColor": "#7890a0", "hemisphereIntensity": 0.65, "fillIntensity": 0.32 },
-      "grading": { "contrast": 0.96, "saturation": 0.78, "vibrance": 0.06, "red": 0.96, "green": 1.01, "blue": 1.08, "gamma": 1.02 }
+      "renderer": {
+        "toneMappingExposure": 1.28
+      },
+      "environment": {
+        "fogDensity": 0.014,
+        "fogColor": "#b8ccd8",
+        "skyColor": "#0a1620"
+      },
+      "lights": {
+        "sunIntensity": 1.6,
+        "sunColor": "#d4e4f0",
+        "hemisphereSkyColor": "#b8d4e4",
+        "hemisphereGroundColor": "#7890a0",
+        "hemisphereIntensity": 0.65,
+        "fillIntensity": 0.32
+      },
+      "grading": {
+        "contrast": 0.96,
+        "saturation": 0.78,
+        "vibrance": 0.06,
+        "red": 0.96,
+        "green": 1.01,
+        "blue": 1.08,
+        "gamma": 1.02
+      }
     },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 0, "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46, "godRaysEnabled": true, "crtEnabled": false }
+    "cinema": {
+      "enabled": true,
+      "halation": 0,
+      "barrel": 0,
+      "scanLines": 0,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "godRaysEnabled": true,
+      "crtEnabled": false
+    },
+    "density": 0.3
   },
   {
     "name": "🍂 Automne",
     "key": "autumn",
     "bg": "linear-gradient(135deg,#e85820,#7a2808)",
     "delta": {
-      "renderer": { "toneMappingExposure": 1.42 },
-      "lights": { "sunColor": "#e07010", "sunIntensity": 2.2, "hemisphereGroundColor": "#9a8060", "hemisphereIntensity": 1.03, "fillIntensity": 0.30 },
-      "grading": { "brightness": 0.015, "saturation": 1.14, "vibrance": 0.36, "red": 1.13, "green": 0.97, "blue": 0.83, "contrast": 1.06, "whiteLevel": 0.66 },
-      "palette": { "warmShift": 0.048, "targets": { "field": "#c09038", "forest": "#7a4018", "grass": "#a07028", "house": "#b88060", "rail": "#c0b088", "water": "#4a7898" } }
+      "renderer": {
+        "toneMappingExposure": 1.42
+      },
+      "lights": {
+        "sunColor": "#e07010",
+        "sunIntensity": 2.2,
+        "hemisphereGroundColor": "#9a8060",
+        "hemisphereIntensity": 1.03,
+        "fillIntensity": 0.3
+      },
+      "grading": {
+        "brightness": 0.015,
+        "saturation": 1.14,
+        "vibrance": 0.36,
+        "red": 1.13,
+        "green": 0.97,
+        "blue": 0.83,
+        "contrast": 1.06,
+        "whiteLevel": 0.66
+      },
+      "palette": {
+        "warmShift": 0.048,
+        "targets": {
+          "field": "#c09038",
+          "forest": "#7a4018",
+          "grass": "#a07028",
+          "house": "#b88060",
+          "rail": "#c0b088",
+          "water": "#4a7898"
+        }
+      }
     },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "chromatic": 1, "scanLines": 0, "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46, "godRaysEnabled": true, "crtEnabled": false }
+    "cinema": {
+      "enabled": true,
+      "halation": 0,
+      "barrel": 0,
+      "chromatic": 1,
+      "scanLines": 0,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "godRaysEnabled": false,
+      "tiltShiftEnabled": true,
+      "crtEnabled": false
+    },
+    "density": 0.3
   },
   {
     "name": "☀️ Été vif",
     "key": "summerVivid",
     "bg": "linear-gradient(135deg,#60d040,#187840)",
     "delta": {
-      "renderer": { "toneMappingExposure": 1.56 },
-      "lights": { "sunColor": "#ffffc0", "sunIntensity": 2.9, "hemisphereGroundColor": "#8ab890", "hemisphereIntensity": 0.68, "fillIntensity": 0.30 },
-      "grading": { "saturation": 1.22, "vibrance": 0.42, "contrast": 1.04, "green": 1.05, "blue": 1.02, "red": 1.01 },
-      "palette": { "targets": { "field": "#e8c858", "forest": "#206820", "grass": "#58c038", "house": "#c0a878", "rail": "#d0c8a4", "water": "#28a8d6" } }
+      "renderer": {
+        "toneMappingExposure": 1.56
+      },
+      "lights": {
+        "sunColor": "#ffffc0",
+        "sunIntensity": 2.9,
+        "hemisphereGroundColor": "#8ab890",
+        "hemisphereIntensity": 0.68,
+        "fillIntensity": 0.3
+      },
+      "grading": {
+        "saturation": 1.22,
+        "vibrance": 0.42,
+        "contrast": 1.04,
+        "green": 1.05,
+        "blue": 1.02,
+        "red": 1.01
+      },
+      "palette": {
+        "targets": {
+          "field": "#e8c858",
+          "forest": "#206820",
+          "grass": "#58c038",
+          "house": "#c0a878",
+          "rail": "#d0c8a4",
+          "water": "#28a8d6"
+        }
+      }
     },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 0, "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46, "godRaysEnabled": true, "crtEnabled": false }
+    "cinema": {
+      "enabled": true,
+      "halation": 0,
+      "barrel": 0,
+      "scanLines": 0,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "godRaysEnabled": false,
+      "tiltShiftEnabled": true,
+      "crtEnabled": false
+    },
+    "density": 0.3
   },
   {
     "name": "❄️ Hiver",
     "key": "winter",
     "bg": "linear-gradient(135deg,#a0b8d0,#0a1828)",
     "delta": {
-      "renderer": { "toneMappingExposure": 2.30 },
+      "renderer": {
+        "toneMappingExposure": 2.3
+      },
       "environment": {
-        "fogDensity": 0.010,
+        "fogDensity": 0.01,
         "fogColor": "#b8c4cc",
         "skyColor": "#6a7880"
       },
       "lights": {
         "sunColor": "#e0ecf8",
-        "sunIntensity": 2.80,
+        "sunIntensity": 2.8,
         "hemisphereSkyColor": "#90a8bc",
         "hemisphereGroundColor": "#d4dce0",
         "hemisphereIntensity": 0.92,
@@ -65,32 +327,32 @@
       },
       "grading": {
         "brightness": 0.16,
-        "saturation": 0.10,
-        "vibrance": 0.00,
+        "saturation": 0.1,
+        "vibrance": 0.0,
         "contrast": 1.06,
         "red": 0.92,
-        "green": 0.90,
+        "green": 0.9,
         "blue": 1.08,
         "gamma": 1.02,
         "whiteLevel": 0.92
       },
       "palette": {
-        "warmShift": -0.060,
+        "warmShift": -0.06,
         "targets": {
-          "field":  "#f0f4f6",
+          "field": "#f0f4f6",
           "forest": "#e0eaee",
-          "grass":  "#ecf2f4",
-          "house":  "#d8e0e6",
-          "rail":   "#dce4e8"
+          "grass": "#ecf2f4",
+          "house": "#d8e0e6",
+          "rail": "#dce4e8"
         }
       }
     },
     "cinema": {
       "enabled": true,
-      "tilt": 0.70,
+      "tilt": 0.7,
       "focusCenter": 0.52,
       "focusBand": 0.18,
-      "vignette": 0.80,
+      "vignette": 0.8,
       "halation": 0,
       "grain": 0.22,
       "chromatic": 0.15,
@@ -101,202 +363,600 @@
       "godRaysDiffusion": 0.86,
       "godRaysThreshold": 0.14,
       "godRaysLayers": 0.46,
-      "godRaysEnabled": true,
+      "godRaysEnabled": false,
+      "tiltShiftEnabled": true,
       "crtEnabled": false
-    }
+    },
+    "density": 0.3
   },
   {
     "name": "📜 Sépia",
     "key": "sepia",
     "bg": "linear-gradient(135deg,#c09040,#6a4010)",
     "delta": {
-      "renderer": { "toneMappingExposure": 1.50 },
-      "lights": { "sunColor": "#c89850", "sunIntensity": 1.6, "hemisphereGroundColor": "#907050", "hemisphereIntensity": 0.52, "fillIntensity": 0.18 },
-      "grading": { "saturation": 0.28, "vibrance": 0.02, "contrast": 0.92, "red": 1.22, "green": 0.96, "blue": 0.66, "gamma": 1.14 },
-      "palette": { "strength": 0.18, "warmShift": 0.070, "saturation": 0.32 }
+      "renderer": {
+        "toneMappingExposure": 1.5
+      },
+      "lights": {
+        "sunColor": "#c89850",
+        "sunIntensity": 1.6,
+        "hemisphereGroundColor": "#907050",
+        "hemisphereIntensity": 0.52,
+        "fillIntensity": 0.18
+      },
+      "grading": {
+        "saturation": 0.28,
+        "vibrance": 0.02,
+        "contrast": 0.92,
+        "red": 1.22,
+        "green": 0.96,
+        "blue": 0.66,
+        "gamma": 1.14
+      },
+      "palette": {
+        "strength": 0.18,
+        "warmShift": 0.07,
+        "saturation": 0.32
+      }
     },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 0, "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46, "godRaysEnabled": true, "crtEnabled": false }
+    "cinema": {
+      "enabled": true,
+      "halation": 0,
+      "barrel": 0,
+      "scanLines": 0,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "godRaysEnabled": true,
+      "crtEnabled": false
+    },
+    "density": 0.3
   },
   {
     "name": "🌲 Nordique",
     "key": "nordic",
     "bg": "linear-gradient(135deg,#4890a8,#0a2838)",
     "delta": {
-      "renderer": { "toneMappingExposure": 1.72 },
-      "environment": { "fogDensity": 0.008, "fogColor": "#081c12" },
-      "lights": { "sunColor": "#c8e0e8", "sunIntensity": 1.7, "hemisphereSkyColor": "#98c0c8", "hemisphereGroundColor": "#284838", "hemisphereIntensity": 0.60, "fillColor": "#508898", "fillIntensity": 0.28 },
-      "grading": { "brightness": 0.02, "saturation": 0.88, "vibrance": 0.18, "contrast": 1.05, "blue": 1.06, "green": 1.04, "red": 0.94, "gamma": 1.03, "whiteLevel": 0.63 },
-      "palette": { "warmShift": -0.012, "targets": { "forest": "#185020", "grass": "#488038", "field": "#b8a050" } }
+      "renderer": {
+        "toneMappingExposure": 1.72
+      },
+      "environment": {
+        "fogDensity": 0.008,
+        "fogColor": "#081c12"
+      },
+      "lights": {
+        "sunColor": "#c8e0e8",
+        "sunIntensity": 1.7,
+        "hemisphereSkyColor": "#98c0c8",
+        "hemisphereGroundColor": "#284838",
+        "hemisphereIntensity": 0.6,
+        "fillColor": "#508898",
+        "fillIntensity": 0.28
+      },
+      "grading": {
+        "brightness": 0.02,
+        "saturation": 0.88,
+        "vibrance": 0.18,
+        "contrast": 1.05,
+        "blue": 1.06,
+        "green": 1.04,
+        "red": 0.94,
+        "gamma": 1.03,
+        "whiteLevel": 0.63
+      },
+      "palette": {
+        "warmShift": -0.012,
+        "targets": {
+          "forest": "#185020",
+          "grass": "#488038",
+          "field": "#b8a050"
+        }
+      }
     },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "chromatic": 1, "scanLines": 0, "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46, "godRaysEnabled": true, "crtEnabled": false }
+    "cinema": {
+      "enabled": true,
+      "halation": 0,
+      "barrel": 0,
+      "chromatic": 1,
+      "scanLines": 0,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "godRaysEnabled": false,
+      "tiltShiftEnabled": true,
+      "crtEnabled": false
+    },
+    "density": 0.3
   },
   {
     "name": "🏜️ Désert",
     "key": "desert",
     "bg": "linear-gradient(135deg,#f0b840,#a86010)",
     "delta": {
-      "renderer": { "toneMappingExposure": 1.72 },
-      "environment": { "fogDensity": 0.005 },
-      "lights": { "sunColor": "#fff0a8", "sunIntensity": 3.4, "hemisphereSkyColor": "#ffe8a0", "hemisphereGroundColor": "#c09840", "hemisphereIntensity": 0.54, "fillColor": "#d0a030", "fillIntensity": 0.30 },
-      "grading": { "saturation": 0.70, "vibrance": 0.06, "red": 1.22, "green": 0.72, "blue": 0.66, "contrast": 1.10, "gamma": 1.04 },
-      "palette": { "warmShift": 0.080, "targets": { "field": "#f0c820", "forest": "#907010", "grass": "#c09820", "house": "#d4a850" } }
+      "renderer": {
+        "toneMappingExposure": 1.72
+      },
+      "environment": {
+        "fogDensity": 0.005
+      },
+      "lights": {
+        "sunColor": "#fff0a8",
+        "sunIntensity": 3.4,
+        "hemisphereSkyColor": "#ffe8a0",
+        "hemisphereGroundColor": "#c09840",
+        "hemisphereIntensity": 0.54,
+        "fillColor": "#d0a030",
+        "fillIntensity": 0.3
+      },
+      "grading": {
+        "saturation": 0.7,
+        "vibrance": 0.06,
+        "red": 1.22,
+        "green": 0.72,
+        "blue": 0.66,
+        "contrast": 1.1,
+        "gamma": 1.04
+      },
+      "palette": {
+        "warmShift": 0.08,
+        "targets": {
+          "field": "#f0c820",
+          "forest": "#907010",
+          "grass": "#c09820",
+          "house": "#d4a850"
+        }
+      }
     },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 0, "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46, "godRaysEnabled": true, "crtEnabled": false }
+    "cinema": {
+      "enabled": true,
+      "halation": 0,
+      "barrel": 0,
+      "scanLines": 0,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "godRaysEnabled": false,
+      "tiltShiftEnabled": true,
+      "crtEnabled": false
+    },
+    "density": 0.3
   },
   {
     "name": "🏓 Pong",
     "key": "pong",
     "bg": "linear-gradient(135deg,#999999,#111111)",
-    "pixelization": { "pixelSize": 15, "enabled": true, "normalEdgeStrength": 0, "depthEdgeStrength": 0, "worldShapeMode": "platiste" },
+    "pixelization": {
+      "pixelSize": 15,
+      "enabled": true,
+      "normalEdgeStrength": 0,
+      "depthEdgeStrength": 0,
+      "worldShapeMode": "platiste"
+    },
     "delta": {
-      "renderer": { "toneMappingExposure": 1.45 },
-      "environment": { "skyColor": "#02040a", "fogColor": "#02040a", "fogDensity": 0.004, "domeColorTop": "#2f4b67", "domeColorBottom": "#162638", "domeOpacity": 0 },
+      "renderer": {
+        "toneMappingExposure": 1.45
+      },
+      "environment": {
+        "skyColor": "#02040a",
+        "fogColor": "#02040a",
+        "fogDensity": 0.004,
+        "domeColorTop": "#2f4b67",
+        "domeColorBottom": "#162638",
+        "domeOpacity": 0
+      },
       "lights": {
-        "hemisphereSkyColor": "#fff4d6", "hemisphereGroundColor": "#8aaa8e", "hemisphereIntensity": 0.62,
-        "sunColor": "#ffe2b0", "sunIntensity": 2.1,
-        "sunOrbitEnabled": true, "sunOrbitRadius": 10.5, "sunOrbitHeight": 3.40, "sunOrbitSpeed": 0.06, "sunVisualScale": 0.78,
-        "fillColor": "#c4d8f0", "fillIntensity": 0.3
+        "hemisphereSkyColor": "#fff4d6",
+        "hemisphereGroundColor": "#8aaa8e",
+        "hemisphereIntensity": 0.62,
+        "sunColor": "#ffe2b0",
+        "sunIntensity": 2.1,
+        "sunOrbitEnabled": true,
+        "sunOrbitRadius": 10.5,
+        "sunOrbitHeight": 3.4,
+        "sunOrbitSpeed": 0.06,
+        "sunVisualScale": 0.78,
+        "fillColor": "#c4d8f0",
+        "fillIntensity": 0.3
       },
       "grading": {
         "enabled": true,
-        "brightness": 0.15, "contrast": 1.3, "saturation": 0, "vibrance": 0,
-        "hue": -0.006, "gamma": 1.02, "blackLevel": 0, "whiteLevel": 0.998,
-        "red": 1.03, "green": 1, "blue": 0.97,
-        "redCurve": 1, "greenCurve": 1, "blueCurve": 1,
-        "paletteColors": ["#000000", "#ffffff"], "paletteDither": 0.7
+        "brightness": 0.15,
+        "contrast": 1.3,
+        "saturation": 0,
+        "vibrance": 0,
+        "hue": -0.006,
+        "gamma": 1.02,
+        "blackLevel": 0,
+        "whiteLevel": 0.998,
+        "red": 1.03,
+        "green": 1,
+        "blue": 0.97,
+        "redCurve": 1,
+        "greenCurve": 1,
+        "blueCurve": 1,
+        "paletteColors": [
+          "#000000",
+          "#ffffff"
+        ],
+        "paletteDither": 0.7
       },
       "palette": {
-        "enabled": true, "strength": 0.31, "saturation": 1.04, "contrast": 1.015, "warmShift": 0.016,
-        "targets": { "field": "#d9b357", "forest": "#456c3f", "grass": "#78a957", "house": "#998969", "rail": "#c0b8a5", "water": "#4fa0bd" }
+        "enabled": true,
+        "strength": 0.31,
+        "saturation": 1.04,
+        "contrast": 1.015,
+        "warmShift": 0.016,
+        "targets": {
+          "field": "#d9b357",
+          "forest": "#456c3f",
+          "grass": "#78a957",
+          "house": "#998969",
+          "rail": "#c0b8a5",
+          "water": "#4fa0bd"
+        }
       }
     },
     "cinema": {
       "enabled": true,
-      "tilt": 0.2, "focusCenter": 0.52, "focusBand": 0.15, "tiltShiftEnabled": true,
-      "vignette": 0.95, "grain": 0.8, "chromatic": 1, "halation": 0, "barrel": 0,
-      "scanLines": 4, "crtEnabled": true, "crtCurvature": 0.67, "crtMask": 1, "crtCornerDark": 0.50,
-      "godRaysEnabled": true, "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46,
-      "bloomEnabled": true, "bloomIntensity": 0, "bloomThreshold": 0.37, "bloomRadius": 6.5, "bloomSoftness": 0.6
-    }
+      "tilt": 0.2,
+      "focusCenter": 0.52,
+      "focusBand": 0.15,
+      "tiltShiftEnabled": true,
+      "vignette": 0.95,
+      "grain": 0.8,
+      "chromatic": 1,
+      "halation": 0,
+      "barrel": 0,
+      "scanLines": 4,
+      "crtEnabled": true,
+      "crtCurvature": 0.67,
+      "crtMask": 1,
+      "crtCornerDark": 0.5,
+      "godRaysEnabled": true,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "bloomEnabled": true,
+      "bloomIntensity": 0,
+      "bloomThreshold": 0.37,
+      "bloomRadius": 6.5,
+      "bloomSoftness": 0.6
+    },
+    "density": 0.3
   },
   {
     "name": "🖥️ Apple II",
     "key": "appleII",
     "bg": "linear-gradient(135deg,#00cc44,#003311)",
-    "pixelization": { "pixelSize": 3, "enabled": true, "normalEdgeStrength": 0, "depthEdgeStrength": 0 },
+    "pixelization": {
+      "pixelSize": 3,
+      "enabled": true,
+      "normalEdgeStrength": 0,
+      "depthEdgeStrength": 0
+    },
     "delta": {
-      "renderer": { "toneMappingExposure": 1.45 },
-      "environment": { "fogDensity": 0.003, "skyColor": "#000000", "fogColor": "#000000" },
+      "renderer": {
+        "toneMappingExposure": 1.45
+      },
+      "environment": {
+        "fogDensity": 0.003,
+        "skyColor": "#000000",
+        "fogColor": "#000000"
+      },
       "lights": {
-        "sunColor": "#00ff44", "sunIntensity": 2.0,
-        "hemisphereSkyColor": "#005522", "hemisphereGroundColor": "#002211", "hemisphereIntensity": 0.55,
-        "fillColor": "#003311", "fillIntensity": 0.25
+        "sunColor": "#00ff44",
+        "sunIntensity": 2.0,
+        "hemisphereSkyColor": "#005522",
+        "hemisphereGroundColor": "#002211",
+        "hemisphereIntensity": 0.55,
+        "fillColor": "#003311",
+        "fillIntensity": 0.25
       },
       "grading": {
-        "saturation": 0.0, "vibrance": 0.0, "contrast": 1.30, "gamma": 1.02, "brightness": 0.15,
-        "paletteColors": ["#000000", "#003300", "#006600", "#009900", "#00cc00", "#00ff00"],
+        "saturation": 0.0,
+        "vibrance": 0.0,
+        "contrast": 1.3,
+        "gamma": 1.02,
+        "brightness": 0.15,
+        "paletteColors": [
+          "#000000",
+          "#003300",
+          "#006600",
+          "#009900",
+          "#00cc00",
+          "#00ff00"
+        ],
         "paletteDither": 0.7
       }
     },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 4, "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46, "godRaysEnabled": true, "crtEnabled": true, "crtCurvature": 0.67, "crtMask": 1, "crtCornerDark": 0.50 }
+    "cinema": {
+      "enabled": true,
+      "halation": 0,
+      "barrel": 0,
+      "scanLines": 4,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "godRaysEnabled": true,
+      "crtEnabled": true,
+      "crtCurvature": 0.67,
+      "crtMask": 1,
+      "crtCornerDark": 0.5
+    },
+    "density": 0.3
   },
   {
     "name": "CGA",
     "key": "cga",
     "bg": "linear-gradient(135deg,#55ffff,#ff55ff)",
-    "pixelization": { "pixelSize": 3, "enabled": true, "normalEdgeStrength": 0, "depthEdgeStrength": 0 },
+    "pixelization": {
+      "pixelSize": 3,
+      "enabled": true,
+      "normalEdgeStrength": 0,
+      "depthEdgeStrength": 0
+    },
     "delta": {
-      "renderer": { "toneMappingExposure": 1.75 },
-      "environment": { "fogDensity": 0.002, "skyColor": "#000000", "fogColor": "#000000" },
+      "renderer": {
+        "toneMappingExposure": 1.75
+      },
+      "environment": {
+        "fogDensity": 0.002,
+        "skyColor": "#000000",
+        "fogColor": "#000000"
+      },
       "lights": {
-        "sunColor": "#ffffff", "sunIntensity": 2.4,
-        "hemisphereSkyColor": "#55ffff", "hemisphereGroundColor": "#ff55ff", "hemisphereIntensity": 0.55,
-        "fillColor": "#aaaaaa", "fillIntensity": 0.35
+        "sunColor": "#ffffff",
+        "sunIntensity": 2.4,
+        "hemisphereSkyColor": "#55ffff",
+        "hemisphereGroundColor": "#ff55ff",
+        "hemisphereIntensity": 0.55,
+        "fillColor": "#aaaaaa",
+        "fillIntensity": 0.35
       },
       "grading": {
-        "saturation": 1.0, "vibrance": 0.0, "contrast": 1.0, "gamma": 1.0,
-        "red": 1.0, "green": 1.0, "blue": 1.0, "brightness": 0.035,
-        "paletteColors": ["#000000", "#55ffff", "#ff55ff", "#ffffff"],
+        "saturation": 1.0,
+        "vibrance": 0.0,
+        "contrast": 1.0,
+        "gamma": 1.0,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 1.0,
+        "brightness": 0.035,
+        "paletteColors": [
+          "#000000",
+          "#55ffff",
+          "#ff55ff",
+          "#ffffff"
+        ],
         "paletteDither": 0.7
       },
-      "palette": { "enabled": false }
+      "palette": {
+        "enabled": false
+      }
     },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 4, "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46, "godRaysEnabled": true, "crtEnabled": true, "crtCurvature": 0.67, "crtMask": 1, "crtCornerDark": 0.50 }
+    "cinema": {
+      "enabled": true,
+      "halation": 0,
+      "barrel": 0,
+      "scanLines": 4,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "godRaysEnabled": true,
+      "crtEnabled": true,
+      "crtCurvature": 0.67,
+      "crtMask": 1,
+      "crtCornerDark": 0.5
+    },
+    "density": 0.3
   },
   {
     "name": "EGA",
     "key": "ega",
     "bg": "linear-gradient(135deg,#55ffff,#aa0000)",
-    "pixelization": { "pixelSize": 3, "enabled": true, "normalEdgeStrength": 0, "depthEdgeStrength": 0 },
+    "pixelization": {
+      "pixelSize": 3,
+      "enabled": true,
+      "normalEdgeStrength": 0,
+      "depthEdgeStrength": 0
+    },
     "delta": {
-      "renderer": { "toneMappingExposure": 2.40 },
-      "environment": { "fogDensity": 0.002, "skyColor": "#000000", "fogColor": "#000000" },
+      "renderer": {
+        "toneMappingExposure": 2.4
+      },
+      "environment": {
+        "fogDensity": 0.002,
+        "skyColor": "#000000",
+        "fogColor": "#000000"
+      },
       "lights": {
-        "sunColor": "#dddd44", "sunIntensity": 2.4,
-        "hemisphereSkyColor": "#224466", "hemisphereGroundColor": "#224422", "hemisphereIntensity": 0.45,
-        "fillColor": "#553311", "fillIntensity": 0.22
+        "sunColor": "#dddd44",
+        "sunIntensity": 2.4,
+        "hemisphereSkyColor": "#224466",
+        "hemisphereGroundColor": "#224422",
+        "hemisphereIntensity": 0.45,
+        "fillColor": "#553311",
+        "fillIntensity": 0.22
       },
       "grading": {
-        "saturation": 1.0, "vibrance": 0.0, "contrast": 1.0, "gamma": 1.0,
-        "red": 1.0, "green": 1.0, "blue": 1.0, "brightness": 0.0,
+        "saturation": 1.0,
+        "vibrance": 0.0,
+        "contrast": 1.0,
+        "gamma": 1.0,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 1.0,
+        "brightness": 0.0,
         "paletteColors": [
-          "#000000", "#110800",
-          "#1a4418", "#2a6628",
-          "#5a9828", "#88cc44",
-          "#886600", "#ddcc44",
-          "#442211", "#886644", "#ccbb88",
-          "#225566", "#3388aa",
+          "#000000",
+          "#110800",
+          "#1a4418",
+          "#2a6628",
+          "#5a9828",
+          "#88cc44",
+          "#886600",
+          "#ddcc44",
+          "#442211",
+          "#886644",
+          "#ccbb88",
+          "#225566",
+          "#3388aa",
           "#666666",
-          "#ddddbb", "#ffffff"
+          "#ddddbb",
+          "#ffffff"
         ],
         "paletteDither": 0.6
       },
-      "palette": { "enabled": false }
+      "palette": {
+        "enabled": false
+      }
     },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 3, "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46, "godRaysEnabled": true, "crtEnabled": true, "crtCurvature": 0.67, "crtMask": 1, "crtCornerDark": 0.50 }
+    "cinema": {
+      "enabled": true,
+      "halation": 0,
+      "barrel": 0,
+      "scanLines": 3,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "godRaysEnabled": true,
+      "crtEnabled": true,
+      "crtCurvature": 0.67,
+      "crtMask": 1,
+      "crtCornerDark": 0.5
+    },
+    "density": 0.3
   },
   {
     "name": "Amiga",
     "key": "amiga",
     "bg": "linear-gradient(135deg,#0066bb,#ff8800)",
-    "pixelization": { "pixelSize": 2, "enabled": true, "normalEdgeStrength": 0, "depthEdgeStrength": 0 },
+    "pixelization": {
+      "pixelSize": 2,
+      "enabled": true,
+      "normalEdgeStrength": 0,
+      "depthEdgeStrength": 0
+    },
     "delta": {
-      "renderer": { "toneMappingExposure": 2.40 },
-      "environment": { "fogDensity": 0.003, "skyColor": "#000022", "fogColor": "#001133" },
+      "renderer": {
+        "toneMappingExposure": 2.4
+      },
+      "environment": {
+        "fogDensity": 0.003,
+        "skyColor": "#000022",
+        "fogColor": "#001133"
+      },
       "lights": {
-        "sunColor": "#ffdd66", "sunIntensity": 2.4,
-        "hemisphereSkyColor": "#446688", "hemisphereGroundColor": "#225522", "hemisphereIntensity": 0.30,
-        "fillColor": "#aa7722", "fillIntensity": 0.16
+        "sunColor": "#ffdd66",
+        "sunIntensity": 2.4,
+        "hemisphereSkyColor": "#446688",
+        "hemisphereGroundColor": "#225522",
+        "hemisphereIntensity": 0.3,
+        "fillColor": "#aa7722",
+        "fillIntensity": 0.16
       },
       "grading": {
-        "saturation": 1.0, "vibrance": 0.0, "contrast": 1.0, "gamma": 1.0,
-        "red": 1.0, "green": 1.0, "blue": 1.0, "brightness": 0.0,
+        "saturation": 1.0,
+        "vibrance": 0.0,
+        "contrast": 1.0,
+        "gamma": 1.0,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 1.0,
+        "brightness": 0.0,
         "paletteColors": [
-          "#000000", "#111100", "#332211",
-          "#443322", "#665544",
-          "#142a14", "#1e4420", "#2a5e2c", "#386636",
-          "#609c30", "#78b040", "#90c450", "#aad860",
-          "#664400", "#886600", "#aa8800", "#ccaa00", "#eedd44",
-          "#f4eebb", "#ffffff",
-          "#553322", "#776655", "#998877", "#ccbbaa",
-          "#3a1e08", "#5a3014", "#7a4e22",
-          "#1a3855", "#336688", "#558eaa",
-          "#333333", "#4d4d5a", "#666666", "#7a7a88", "#999999", "#aaaabb", "#cccccc",
+          "#000000",
+          "#111100",
+          "#332211",
+          "#443322",
+          "#665544",
+          "#142a14",
+          "#1e4420",
+          "#2a5e2c",
+          "#386636",
+          "#609c30",
+          "#78b040",
+          "#90c450",
+          "#aad860",
+          "#664400",
+          "#886600",
+          "#aa8800",
+          "#ccaa00",
+          "#eedd44",
+          "#f4eebb",
+          "#ffffff",
+          "#553322",
+          "#776655",
+          "#998877",
+          "#ccbbaa",
+          "#3a1e08",
+          "#5a3014",
+          "#7a4e22",
+          "#1a3855",
+          "#336688",
+          "#558eaa",
+          "#333333",
+          "#4d4d5a",
+          "#666666",
+          "#7a7a88",
+          "#999999",
+          "#aaaabb",
+          "#cccccc",
           "#cc2200"
         ],
         "paletteDither": 0.45
       },
-      "palette": { "enabled": false }
+      "palette": {
+        "enabled": false
+      }
     },
-    "cinema": { "enabled": true, "halation": 0, "barrel": 0, "scanLines": 2, "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46, "godRaysEnabled": true, "crtEnabled": true, "crtCurvature": 0.67, "crtMask": 1, "crtCornerDark": 0.50 }
+    "cinema": {
+      "enabled": true,
+      "halation": 0,
+      "barrel": 0,
+      "scanLines": 2,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "godRaysEnabled": true,
+      "crtEnabled": true,
+      "crtCurvature": 0.67,
+      "crtMask": 1,
+      "crtCornerDark": 0.5
+    },
+    "density": 0.3
   },
   {
     "name": "🌈 Psyché-LSD",
     "key": "psyche",
     "bg": "linear-gradient(135deg,#ff00ff,#8800ff,#0088ff)",
-    "pixelization": { "enabled": false, "pixelSize": 1, "normalEdgeStrength": 0, "depthEdgeStrength": 0, "worldShapeMode": "platiste" },
+    "pixelization": {
+      "enabled": false,
+      "pixelSize": 1,
+      "normalEdgeStrength": 0,
+      "depthEdgeStrength": 0,
+      "worldShapeMode": "platiste"
+    },
     "delta": {
-      "renderer": { "toneMappingExposure": 1.55 },
+      "renderer": {
+        "toneMappingExposure": 1.55
+      },
       "environment": {
         "skyColor": "#200040",
         "fogColor": "#3d0066",
@@ -310,28 +970,28 @@
       "lights": {
         "hemisphereSkyColor": "#aa00ff",
         "hemisphereGroundColor": "#00ff66",
-        "hemisphereIntensity": 0.90,
+        "hemisphereIntensity": 0.9,
         "sunColor": "#ff22cc",
         "sunIntensity": 2.6,
         "sunOrbitEnabled": true,
         "sunOrbitRadius": 10.5,
-        "sunOrbitHeight": 3.40,
+        "sunOrbitHeight": 3.4,
         "sunOrbitSpeed": 0.06,
         "sunVisualScale": 0.78,
         "fillColor": "#ff0088",
-        "fillIntensity": 0.50
+        "fillIntensity": 0.5
       },
       "grading": {
         "enabled": true,
         "brightness": 0.03,
         "contrast": 1.35,
-        "saturation": 2.20,
-        "vibrance": 1.20,
+        "saturation": 2.2,
+        "vibrance": 1.2,
         "hue": 0.08,
         "gamma": 0.85,
         "blackLevel": 0,
         "whiteLevel": 0.998,
-        "red": 1.10,
+        "red": 1.1,
         "green": 0.88,
         "blue": 1.28,
         "redCurve": 1,
@@ -358,17 +1018,52 @@
     },
     "cinema": {
       "enabled": true,
-      "tilt": 0.2, "focusCenter": 0.52, "focusBand": 0.15, "tiltShiftEnabled": true,
-      "vignette": 1.34, "grain": 0.74, "chromatic": 1, "halation": 0.36, "barrel": 0.45,
-      "scanLines": 0, "crtEnabled": false, "crtCurvature": 0.67, "crtMask": 1, "crtCornerDark": 0.5,
-      "godRays": 0.67, "godRaysLength": 0.34, "godRaysDiffusion": 0.86, "godRaysThreshold": 0.14, "godRaysLayers": 0.46, "godRaysEnabled": true,
-      "bloomEnabled": true, "bloomIntensity": 1.42, "bloomThreshold": 0.22, "bloomRadius": 6.5, "bloomSoftness": 0.6
+      "tilt": 0.2,
+      "focusCenter": 0.52,
+      "focusBand": 0.15,
+      "tiltShiftEnabled": true,
+      "vignette": 1.34,
+      "grain": 0.74,
+      "chromatic": 1,
+      "halation": 0.36,
+      "barrel": 0.45,
+      "scanLines": 0,
+      "crtEnabled": false,
+      "crtCurvature": 0.67,
+      "crtMask": 1,
+      "crtCornerDark": 0.5,
+      "godRays": 0.67,
+      "godRaysLength": 0.34,
+      "godRaysDiffusion": 0.86,
+      "godRaysThreshold": 0.14,
+      "godRaysLayers": 0.46,
+      "godRaysEnabled": true,
+      "bloomEnabled": true,
+      "bloomIntensity": 1.42,
+      "bloomThreshold": 0.22,
+      "bloomRadius": 6.5,
+      "bloomSoftness": 0.6
     },
     "wind": {
       "enabled": true,
-      "wheat": { "strength": 0.047, "speed": 2.6 },
-      "grass": { "strength": 1.45, "speed": 0.75, "sway": 0.08 },
-      "tree": { "strength": 0.12, "speed": 2.48, "frequency": 1.93, "turbulence": 0.73, "gustStrength": 0.88, "detailStrength": 0.08 }
-    }
+      "wheat": {
+        "strength": 0.047,
+        "speed": 2.6
+      },
+      "grass": {
+        "strength": 1.45,
+        "speed": 0.75,
+        "sway": 0.08
+      },
+      "tree": {
+        "strength": 0.12,
+        "speed": 2.48,
+        "frequency": 1.93,
+        "turbulence": 0.73,
+        "gustStrength": 0.88,
+        "detailStrength": 0.08
+      }
+    },
+    "density": 0.3
   }
 ]

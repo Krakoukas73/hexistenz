@@ -16,6 +16,7 @@ import { escapeHtml } from './domUtils.js';
 import { registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 import { applyCurrentLang } from './gameHudI18n.js';
 import { announceEdaOpened, speak, resetTtsQueue } from './ttsAnnouncer.js';
+import { HEXISTENZ_VERSION } from './variables.js';
 
 // Panneau EDA traduit le 2026-07-14 (signalé non connecté par l'utilisateur) : tout
 // le panneau (rubriques, libellés de sliders, boutons, tooltips) était en français
@@ -431,7 +432,13 @@ const LUT_SECTIONS = [
 // Chaque preset : { name, bg, pixelization?, delta, cinema }
 // cinema contient la config cinématique (scan lines, halation, barrel…)
 // Presets rétro CRT : scanLines > 0 ; tous les autres : scanLines = 0.
-const VISUAL_PRESETS = await fetch('./json/ambiances.json')
+// 2026-08-02 — cache-busting (même bug que json/languages/*.json, cf. gameLangReactive.js
+// getLangUrl / CONTEXT.md §26) : ce fetch n'avait aucun ?v=, donc le navigateur pouvait
+// continuer à servir un ambiances.json périmé indéfiniment après modification sur disque —
+// cause confirmée d'un retour "les presets n'ont pas changé" alors que le fichier servi par
+// le serveur était bien à jour. Ajout d'un ?v=HEXISTENZ_VERSION, même mécanisme que le
+// cssVersion PHP utilisé pour les feuilles de style.
+const VISUAL_PRESETS = await fetch(`./json/ambiances.json?v=${HEXISTENZ_VERSION}`)
   .then(r => r.json())
   .catch(e => { console.error('[edaPanelWiring] Impossible de charger ambiances.json :', e); return []; });
 
@@ -977,6 +984,22 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
         localStorage.setItem('hexistenz_daynightmode', preset.dayNight);
         _renderDayNightControls();
         document.dispatchEvent(new CustomEvent('hexistenz:dayNightChange', { detail: { mode: preset.dayNight } }));
+      }
+      // 2026-08-04 — demande explicite : les 14 ambiances prédéfinies pilotent
+      // désormais aussi la rubrique 7 "Qualité / densité" (jusqu'ici un réglage
+      // MACHINE/perf pur, jamais touché par un preset — cf. commentaire détaillé
+      // plus bas). Même logique que Jour/Nuit ci-dessus : appliqué seulement si le
+      // preset le précise, silencieux sinon (pas de valeur par défaut forcée qui
+      // écraserait un réglage machine que le joueur a lui-même choisi). La UI de
+      // la rubrique 7 (_qualityDensitySlider) est déclarée plus bas dans cette
+      // même fonction mais déjà initialisée au moment où ce handler s'exécute
+      // (clic utilisateur, forcément après la construction complète du panneau).
+      if (typeof preset.density === 'number' && preset.density !== getContentDensity()) {
+        setContentDensity(preset.density);
+        if (_qualityDensitySlider) {
+          _qualityDensitySlider.input.value = String(preset.density);
+          _qualityDensitySlider.output.textContent = formatNumber(preset.density);
+        }
       }
       applyAll();
       // Snapshot pour "Comparer"
@@ -1644,12 +1667,19 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
     window.dispatchEvent(new CustomEvent('hexistenz:resetCamera'));
   });
 
-  // ─── Synchroniser la largeur du LUT panel avec #tileUI (×2.8) ───────────────────────
+  // ─── Synchroniser la largeur du LUT panel avec #tileUI (×1.56128) ───────────────────
   // 2026-07-08 : +40% vs l'ancien ×2 (2 × 1.4 = 2.8) pour accueillir le flux journal
-  // sur 3 colonnes. Chaque colonne fait donc ~2.8/3 ≈ 0.93 × largeur #tileUI (un peu
-  // plus étroite que les 2 anciennes colonnes ×1, compensé par une 3e colonne complète).
+  // sur 3 colonnes.
+  // 2026-08-01 (1er round) — demande explicite : "le HUD EDA occupe presque tout
+  // l'écran" — largeur réduite de 18% (2.8 × 0.82 = 2.296).
+  // 2026-08-01 (2e round) — 2 demandes explicites dans le même message : (a) le
+  // flux passe de 3 à 2 colonnes (cf. .debug-light-columns, columns:2 dans
+  // css/eda.css) ; (b) largeur encore réduite de 20% (2.296 × 0.8 = 1.8368).
+  // 2026-08-01 (3e round) — demande explicite : encore −15%
+  // (1.8368 × 0.85 = 1.56128). Chaque colonne fait donc désormais
+  // ~1.56128/2 ≈ 0.781 × largeur #tileUI.
   const lutBody = root.querySelector('.debug-light-body');
-  const LUT_WIDTH_FACTOR = 2.8; // +40% par rapport au ×2 précédent (flux journal 3-col)
+  const LUT_WIDTH_FACTOR = 1.56128; // 1.8368 × 0.85 (−15%, demande explicite 2026-08-01, 3e round)
   function _syncLutWidth() {
     const tileUI = document.getElementById('tileUI');
     if (tileUI && lutBody) {
@@ -1670,10 +1700,12 @@ export function wireEdaPanel(root, { visualEnvironment, postprocess, forestOverl
   // ─── Contrôles QUALITÉ / DENSITÉ (onglet Environnement, rubrique 7) ──────────
   // Ex-panneau flottant qualityUi.js (bouton "⚙ QUALITÉ"), fusionné dans l'EDA le
   // 2026-07-08 — même geste que l'intégration du HUD EAU (§19 / cf. import ci-dessus).
-  // Réglage MACHINE (perf), pas "regard" : hors undo/redo et hors export 📋 Copier,
-  // comme Forme du monde / Jour-Nuit — mais ici l'export n'a de toute façon aucun
-  // sens à partager entre joueurs (dépend de la machine de chacun). Persistance
-  // propre à contentDensity.js (localStorage 'hexistenz_content_density').
+  // Réglage MACHINE (perf), pas "regard" : hors undo/redo, comme Forme du monde /
+  // Jour-Nuit. Persistance propre à contentDensity.js (localStorage
+  // 'hexistenz_content_density'). Inclus dans l'export 📋 Copier depuis §16 (valeur
+  // informative, dépend de la machine de qui l'importe). Depuis le 2026-08-04, les
+  // 14 ambiances prédéfinies peuvent aussi le piloter (cf. handler de clic preset
+  // plus haut) — demande explicite malgré la nature "machine" du réglage.
   const QUALITY_PRESETS = [
     { emoji: '🐌', label: 'Faible', key: 'faible', value: 0.30 },
     { emoji: '🚶', label: 'Moyen',  key: 'moyen',  value: 0.55 },

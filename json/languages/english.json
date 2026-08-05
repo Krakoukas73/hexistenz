@@ -1045,7 +1045,7 @@
         },
         "bonusCells": {
           "title": "Bonus cells",
-          "text": "Between 1 and 4 bonus cells are generated on the grid. They do not change any placement rule: if you manage to place a tile on one, it disappears and immediately earns +1500 points.",
+          "text": "Between 1 and 4 bonus cells are generated on the grid. They do not change any placement rule: if you manage to place a tile on one, it disappears and immediately earns +500 points.",
           "label": "optional objective, pure score, zero risk"
         },
         "blackCells": {
@@ -1208,7 +1208,8 @@
       "trainsCount": "You have {n} trains",
       "boatsCount": "You have {n} boats",
       "cometsCount": "You have {n} comets",
-      "languageChanged": "English language"
+      "languageChanged": "English language",
+      "themeChanged": "Theme {theme}"
     },
     "fpsAdjectives": {
       "disastrous": "Disastrous",

@@ -2,7 +2,7 @@
 
 ## 1. Nature du projet
 
-**Version courante : `v0.9.4.1`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
+**Version courante : `v0.9.4.2.2`** (source unique : `variables.js` → `HEXISTENZ_VERSION`).
 
 Jeu web contemplatif de pose de tuiles hexagonales, inspiré de Dorfromantik / The Settlers / HoMM. Le joueur pioche une tuile, la tourne, la pose sur une grille hexagonale. Chaque tuile a 6 secteurs triangulaires (biomes ou réseaux). Objectif : connecter les biomes, compléter des missions, maximiser le score.
 
@@ -1768,3 +1768,166 @@ Résultat final : `.mode-screen` reste à z-index 9999 (sous le cadre, inchangé
 ### Bump
 
 `HEXISTENZ_VERSION` : `v0.9.3.39` → `v0.9.4.1` (saut de version mineure, demande explicite — ce chantier clôt une série de corrections consécutives sur le thème médiéval en basse résolution, cf. §39 et ce paragraphe).
+
+## 41. Aide basse résolution, masquage HUD, mute prez, largeur EDA, presets God Rays/Tilt-shift (2026-08-01/02, v0.9.4.1 → v0.9.4.2)
+
+Série de corrections ponctuelles, sans lien architectural entre elles autre que la basse résolution / le panel EDA.
+
+### a. Aide (touche H) tronquée en basse résolution (régression)
+
+Même famille de bug que §40 mais sur `.help-panel` (`help.css`), pas encore traitée à l'époque : `width`/`max-height` réservaient seulement `calc(100vw/vh - 150px)`, insuffisant face au cadre (100px de marge+buffer par côté + 100px de bordure 9-slice propre = 300px de réserve totale nécessaire, panneau centré donc double réserve comme `.mode-panel` en §40c, pas la convention réduite 52px des HUD de coin). Porté à `calc(... - 300px)`. `.internal-parchment` du panneau passait aussi de `overflow:hidden` (clip silencieux) à `overflow-y:auto` (scroll réel).
+
+### b. Masquage HUD stats/missions sous seuils de résolution
+
+`#scorePanel` (`base.css`) avait déjà un seuil `@media (max-width:1050px)` ; `.missionsBox` (`missions.css`) reçoit désormais le même seuil largeur (demande explicite : mêmes triggers que scorePanel). Les deux reçoivent en plus un seuil hauteur `@media (max-height:700px)` (valeur choisie par jugement — sous les résolutions desktop courantes type 1080p, effective sur fenêtres réellement basses ; validée en direct à 565px/715px de hauteur utile).
+
+### c. Mute TTS de la prez aligné sur le jeu (touche M)
+
+`speakPrez()` (`index.php`) ne vérifiait que `_prezTtsMuted` (touche T) ; ajout de la vérification `_prezSoundMuted` (touche M) en tête de fonction, symétrique du `speak()` ingame (`ttsAnnouncer.js`). M coupe désormais aussi les TTS de la prez (sélecteurs langue/thème inclus), pas seulement la musique.
+
+### d. Largeur du panel EDA — 3 réductions successives + 2 colonnes
+
+`LUT_WIDTH_FACTOR` (`edaPanelWiring.js`, multiplicateur appliqué à `#tileUI.offsetWidth` par `_syncLutWidth()`) réduit en 3 passes sur demande explicite : `2.8` → `2.296` (−18%) → `1.8368` (−20% de plus) → `1.56128` (−15% de plus). Fallback CSS initial `.debug-light-body { width: min(Npx, ...) }` (`eda.css`) synchronisé à chaque passe (620px → 508px → 406px → 345px) pour éviter un flash plus large que la taille finale. `.debug-light-columns` (flux "journal" de chaque onglet) passé de `columns:3` à `columns:2`.
+
+### e. Presets d'ambiance EDA — désactiver God Rays / activer Tilt-shift (6 ambiances)
+
+Demande : les boutons Défaut, Automne, Été vif, Hiver, Nordique, Désert doivent désactiver God Rays et activer Tilt-shift du cinématique. Ajout de `"godRaysEnabled": false` et `"tiltShiftEnabled": true` dans le bloc `cinema` de ces 6 presets (`json/ambiances.json`) — les 8 autres presets (Brume, Sépia, Pong, Apple II, CGA, EGA, Amiga, Psyché-LSD) non concernés, laissés inchangés. Chaque `_commitX()` (ex. `_commitCin`) fait un merge PARTIEL sur l'état courant, donc un champ absent d'un preset hérite silencieusement de la valeur précédemment active — d'où la nécessité de fixer explicitement les 2 clés dans chaque preset ciblé plutôt que de compter sur un défaut global.
+
+**Bug de cache découvert en vérifiant en direct** : `VISUAL_PRESETS = await fetch('./json/ambiances.json')` (`edaPanelWiring.js`, chargé une fois au niveau module) n'avait aucun paramètre de cache-busting — même bug que celui corrigé en juillet pour `json/languages/*.json` (cf. §35, `getLangUrl()`/`HEXISTENZ_LANG_VERSION`). Le navigateur pouvait continuer à servir un `ambiances.json` périmé indéfiniment après modification sur disque, y compris après un rechargement forcé. Fix : `?v=${HEXISTENZ_VERSION}` ajouté à ce fetch (import de `HEXISTENZ_VERSION` depuis `variables.js`), même mécanisme que `cssVersion` côté PHP pour les feuilles de style. Vérifié en direct dans Chrome (6 presets ciblés + 1 preset témoin non affecté).
+
+### Bump
+
+`HEXISTENZ_VERSION` : `v0.9.4.1` → `v0.9.4.2` (demande explicite).
+
+## 42. Bonus cell 1500→500 pts, fix flash HUD pre-game, typo Enchanted-Land sur la prez en thème médiéval (2026-08-03, v0.9.4.2 → v0.9.4.2.2)
+
+### a. Récompense case bonus : 1500 → 500 points
+
+Changement de valeur pure, 3 emplacements synchronisés (demande explicite) : `BONUS_CELL_SCORE` (`javascript/bonusCells.js`, la constante réellement consommée par `scene.js::placeTile` pour le calcul de score), la pastille `+1500`→`+500` de la rubrique "comment jouer" de la prez (`index.php`), l'aide en jeu touche H (`game.php`), et le texte descriptif complet dans les 9 fichiers `json/languages/*.json` ("...rapportent immédiatement +1500 points." → "+500 points."). `javascript/variables.js` contient une 2e constante `BONUS_CELL_SCORE` du même nom mais dans un module différent (jamais importée par `scene.js`, code mort pour ce mécanisme) — laissée telle quelle, hors scope.
+
+### b. Flash disgracieux des HUD in-game au chargement de la prez
+
+Bug signalé : entre la fin du préchargement (`preloader.js`) et l'affichage du menu pre-game (`.mode-screen`, choix bouliste/platiste), les HUD `#scorePanel`/`#tileUI`/`.missionsBox`/`#arcadeScore` de `game.php` s'affichaient brièvement — ces éléments n'avaient jamais eu de masquage par défaut (aucun `display:none` tant qu'aucun JS ne les cache), et le fondu de sortie du preloader (`dismissOverlay()`, ~700ms de transition CSS) laisse transparaître la page en dessous pendant l'animation, avant que `showStartupScreen()` (synchrone, opaque, z-index 9999) ne recouvre l'écran.
+
+Fix : classe `game-not-started` posée par défaut sur `<body>` (`game.php`), qui masque les 4 HUD via `display:none !important` (`base.css`) tant qu'elle est présente ; retirée uniquement au vrai lancement de la partie, dans `multiplayerRooms.js::startMultiplayerScene()` juste après `overlay.remove()` du menu pre-game — jamais avant, jamais en revenant sur un menu. Vérifié en direct (computed style avant/après retrait de la classe).
+
+### c. Typo "Enchanted-Land" (police gothique fournie par l'utilisateur, `fonts/Enchanted-Land.otf`) sur les textes de corps de la prez en thème médiéval — chantier itératif en ~10 rounds
+
+Mécanisme central : `presentation.css` définit `--font-body`/`--font-title` dans `:root` (jamais utilisées par `game.php`, qui n'importe pas `presentation.css` et écrit ses `font-family` en dur — donc toute redéfinition de `--font-body` scopée `[data-theme="ancien"]` est **sans aucun effet sur le jeu/HUD**, uniquement sur la prez). `medieval.css` redéfinit `--font-body: 'EnchantedLand', Georgia, 'Times New Roman', serif;` sous `[data-theme="ancien"]` — tout texte de la prez consommant cette variable (en cascade depuis `body { font-family: var(--font-body) }`) bascule donc automatiquement, y compris via héritage pour les éléments sans `font-family` propre.
+
+**Réglages typographiques appliqués** (tous scopés `[data-theme="ancien"]`, medieval.css) :
+- `@font-face` avec `size-adjust: 180%` (police visuellement petite à taille égale ; 200% d'abord, puis −10% sur demande explicite) ;
+- `word-spacing: 0.16em`, `line-height: 1.7` et `font-weight: 400` posés une fois sur `[data-theme="ancien"]` (héritage, cascade CSS) ;
+- `letter-spacing` resserré (`-0.015em`) testé puis **entièrement retiré** sur demande explicite finale (letters à espacement normal) ;
+- `<strong>`/`<b>` perdent leur gras (400, pas de graisse alternative dans le fichier statique) et gagnent un `text-decoration: underline` à la place (gras jugé illisible avec cette police) ;
+- `line-height` unifié à **2.0** sur tous les sélecteurs EnchantedLand ayant leur propre valeur explicite (`.mission-desc`, `.biome-desc`, `.faction-desc`, `.creature-desc`, `.audio-desc`, `.daynight-list li`, `.step-desc`, `.eda-showcase-desc`, `.section-sub`, `.hero-tagline`, `.hero-inspi`, `.population-note`, `.multi-feature-list li`, `body`) — un texte avec line-height propre n'hérite JAMAIS de celui d'un ancêtre, d'où la nécessité de lister individuellement chaque sélecteur plutôt que de compter sur la règle globale ;
+- `font-size` des textes à 15px ramenés à 14px (`.hero-tagline`), et ceux à 11/11.5px ramenés à 12px (`.mission-desc`, `.audio-desc`, `.eda-showcase-desc`, `.hero-inspi`, `.population-group-label`, `.footer-copy`, `.footer-sep`) ;
+- `text-shadow: 0 0 4px rgba(255,250,235,0.8), 0 1px 2px rgba(255,250,235,0.6)` (valeur validée, celle déjà utilisée par `.hero-subtitle`) appliqué à tout texte EnchantedLand qui n'avait pas déjà exactement cette valeur (la plupart n'avaient rien ou une ancienne valeur single-layer `0 0 3px`/alpha 0.75) — **sauf** `.population-tag` (retiré explicitement, le flou du glow devenait plus voyant que le texte à cette petite taille de pastille).
+
+**Exclusions explicites** (texte qui reste en Space Mono/Georgia malgré l'héritage de `var(--font-body)`, avec reset `word-spacing`/`line-height`/`text-shadow` dédié pour empêcher toute fuite par héritage depuis `body`) : le bandeau `nav` et ses enfants (`.nav-cta`, liens, `#theme-toggle select`/`#lang-toggle select` — ces derniers ont leur propre règle scopée par ID, plus spécifique que "nav", d'où une fuite initiale corrigée séparément), `.btn-primary`/`.btn-secondary`, `.hero-version`/`.hero-version-date`, `.biome-tag`, `.gallery-label span` (mot-clé + nom de preset galerie), `.footer-link`, `.section-label`, `.gameplay-ui-caption`, le contenu des `<kbd>` de la rubrique "Contrôles clavier" (fuite initiale via une règle `.kbd-strip kbd { font-family: var(--font-body) }` dédiée dans `presentation.css`, plus spécifique que l'héritage du conteneur `.kbd-strip-item`), et tout le groupe `.hs-card`/`.stats-bar`/`.kbd-strip`/`.room-demo` (highscores, stats de partie, démo de salle multi — jamais passés à EnchantedLand, reset word-spacing/line-height/text-shadow posé sur le CONTENEUR pour couvrir tous les descendants sans valeur propre en une seule règle).
+
+**Bugs de fuite par héritage rencontrés et corrigés** (`text-shadow`/`word-spacing`/`line-height` sont des propriétés CSS héritées — un reset posé sur `body` se propage à TOUT descendant sans déclaration propre, y compris dans des zones explicitement exclues de la police elle-même) : `.nav-links a`, `#theme-toggle select`/`#lang-toggle select`, `.hs-date`/`.hs-name`/`.stat-num`/`.stat-label`/`.kbd-strip kbd`/`.room-code`/`.room-score-name`, `.biome-tag`/`.gallery-label span`/`.hero-version-date` — chacun corrigé par un reset explicite ciblé (jamais un reset générique qui aurait écrasé les valeurs propres de `.nav-cta`/`.btn-primary`/`.hero-version`/`.footer-link`, qui ont leurs propres `text-shadow` intentionnels en `presentation.css`).
+
+**Piège de cascade récurrent** : plusieurs déclarations `[data-theme="ancien"] .section-sub { ... text-shadow: ... }` etc. existaient DÉJÀ plus bas dans `medieval.css` (ancien travail, thème parchemin) — même spécificité que les nouvelles règles consolidées posées plus haut dans ce round, donc la déclaration la PLUS BASSE dans le fichier gagnait toujours, silencieusement. Corrigé en éditant directement ces déclarations préexistantes plutôt qu'en ajoutant une règle concurrente plus haut.
+
+Chantier non définitif — l'utilisateur a validé "le reste semble okay pour la prez" mais le rendu reste un TEST (annulation possible : 3 blocs isolés dans `medieval.css` — `@font-face`, redéfinition `--font-body`, réservations nav/boutons — documentés en commentaire dès la 1ʳᵉ passe).
+
+**Prochaine étape (annoncée, pas commencée)** : étendre EnchantedLand aux menus pre-game et in-game (HUD de jeu), hors scope de ce round qui ne couvrait que la prez (`index.php`).
+
+### Bump
+
+`HEXISTENZ_VERSION` : `v0.9.4.2` → `v0.9.4.2.2` (demande explicite).
+
+## 43. Typo Enchanted-Land étendue aux menus pre-game + HUD in-game, cohérence taille/graisse/interligne avec la prez (2026-08-03, v0.9.4.2.2 → v0.9.4.2.3)
+
+Suite directe du §42 (qui ne couvrait que la prez, `index.php`) : extension d'EnchantedLand aux menus pre-game (`.mode-panel`, partagé par `startupMenu.js`/`multiplayerRooms.js`) et à une liste ciblée de titres/labels du HUD in-game (`game.php`), avec les mêmes règles de base que la prez (jamais sous 12px, jamais sur boutons/formulaires/chiffres/scores, jamais de gras).
+
+### a. Textes convertis
+
+Pre-game (`css/multiplayerUi.css`, scope `.mode-panel`) : `.mode-copy`/`.mode-shape-note` (`<p>`, textes descriptifs) et `.multi-status` (messages de statut, y compris code de partie). Exclusions : `label`/`input`/`select`/`select option`/boutons, repassés en Georgia explicitement pour ne pas hériter d'EnchantedLand.
+
+In-game (fichiers CSS respectifs) : `H1 id="helpTitle"` (`help.css`), `div class="title"` (`css/themes/medieval.css`, partagé par `.tileDeckBox`/`.missionsBox`), `div class="score-title"` (`base.css`), `div class="debug-light-main-title"` (`eda.css`, titre du panneau EDA), `LI class="mission-empty"` (`missions.css`, message "aucune mission").
+
+### b. Bugs de fuite/incohérence corrigés au fil des rounds
+
+- **Text-shadow illisible sur fond sombre** : retiré sur `.lutHelpTooltip`, les 3 titres d'onglet du HUD "LUT", et les `<kbd>` de l'aide (glow clair hérité de `body`, invisible/illisible sur fond sombre).
+- **Casse tout-capitales** : `.title`/`.score-title`/`.debug-light-main-title`/`#helpTitle` passaient encore en MAJUSCULES (héritées du CSS `text-transform:uppercase` et/ou du texte source déjà en capitales dans `json/languages/*.json`) — fix via `text-transform: lowercase` sur l'élément + `::first-letter { text-transform: uppercase }`. Piège rencontré sur `.stats-title` : `::first-letter` ne s'applique jamais à un conteneur `display:flex` (exclusion du spec CSS) — corrigé en repassant `#statsPanel .stats-title` à `display:block` (le seul usage du sélecteur dans tout le projet, `::after` décoratif déjà désactivé donc aucune régression).
+- **Letter-spacing non nul** : chacun des 5 éléments in-game héritait un letter-spacing de sa règle de base non thémée (0.18em/0.16em/0.14em/-0.06em selon les cas, pensés pour Bebas Neue/Space Mono) — reset à `normal` partout, cohérence stricte avec la prez ("aucun letter-spacing sur les typos enchanted-land, jamais !").
+- **Font-weight non standard** : `.stats-title`/`.debug-light-main-title` héritaient `font-weight: 900` de leur règle de base (pensée pour capitales condensées), `#helpTitle` gardait le gras natif du `<h1>` (700, jamais redéfini), `.mission-empty` avait 500 — tous ramenés à `font-weight: 400` (jamais de gras sur EnchantedLand, règle absolue).
+- **Font-size incohérent** : `.score-title`/`.stats-title` étaient à 12px, `.mode-copy`/`.mode-shape-note`/`.multi-status` n'avaient AUCUN override et héritaient donc de la taille par défaut du navigateur (~16px, hors convention, sans reset de graisse) — tous unifiés à **14px** (même valeur que `.title`, déjà validée) ; `.debug-light-main-title` était déjà à 14px, inchangé.
+- **Line-height incohérent (pre-game)** : `.mode-panel p` (règle de base non thémée) impose `line-height: 1.45`, une valeur EXPLICITE qui n'hérite donc jamais du réglage global `line-height: 1.7` posé sur `[data-theme="ancien"]` (html) — override dédié à **`line-height: 2.0`**, la même valeur que tous les textes de corps EnchantedLand de la prez (`body`/`.biome-desc`/etc., §42). `.multi-status` héritait déjà correctement du `body` (2.0), aucune fuite là — vérifié en direct plutôt que supposé.
+- **Word-spacing/letter-spacing pre-game** : vérifiés en direct (`getComputedStyle`) après le fix ci-dessus — déjà corrects par héritage naturel du réglage global `[data-theme="ancien"]` (`word-spacing: 0.16em`, letter-spacing `normal`), aucune règle supplémentaire nécessaire.
+- **`#helpTitle` trop grand, tronqué, sortait de l'écran** : `.help-header h1` (base.css) est calibré pour Bebas Neue très condensée avec `font-size: clamp(30px, 4vw, 52px)` — combiné au `size-adjust: 180%` global d'EnchantedLand (§42), ce même font-size rendait visuellement jusqu'à ~94px effectifs, largement de quoi déborder du panneau/chevaucher le bouton de fermeture selon la largeur d'écran. Fix : taille fixe `font-size: 28px` (le clamp responsive n'a pas de sens pour cette police), `line-height: 1.2`.
+
+### c. Méthode de vérification
+
+Chaque correctif vérifié en direct dans Chrome (`getComputedStyle` sur `fontFamily`/`fontSize`/`fontWeight`/`letterSpacing`/`lineHeight`/`textShadow`/`display` + captures d'écran), en naviguant le vrai flux de jeu (choix de forme du monde → FONDER/REJOINDRE → HUD in-game → panneau EDA → panneau d'aide) plutôt qu'en se fiant au seul code source, plusieurs bugs de fuite par héritage n'étant visibles qu'au rendu.
+
+### Bump
+
+`HEXISTENZ_VERSION` : `v0.9.4.2.2` → `v0.9.4.2.3` (demande explicite).
+
+## 44. Curseurs custom par thème (`css/cursors.css` + `javascript/customCursor.js`) — chantier clos (2026-08-04, v0.9.4.2.3 → v0.9.4.3)
+
+Remplacement du curseur natif du navigateur par des curseurs custom (assets `cursors/kenney-cursor-pack/`), sur l'intégralité du site (prez `index.php`, menus pre-game, HUD in-game `game.php`, galerie `snapshots.php`, replays), avec un jeu d'images distinct par thème graphique.
+
+### a. Curseurs par thème (`css/cursors.css`, sélecteur `[data-theme="..."] *` + `!important`)
+
+Nécessaire car de nombreux éléments du projet déclarent déjà leur propre `cursor: pointer` explicite (sélecteur de type, spécificité supérieure à `*`) — sans `!important` le reset global serait silencieusement ignoré partout où un `cursor` est déjà posé.
+
+- **Thème Médiéval** (`[data-theme="ancien"]`) : `gauntlet_open.png` par défaut (gant ouvert), `gauntlet_point.png` (doigt tendu) au survol d'un élément cliquable, `door_exit.png` sur les 4 boutons "Jouer" de la prez (`a[href="game.php"]` — nav.play, hero.btn_play, multi.btn_create, scores.try_luck).
+- **Thème Bleu sidéral** (`[data-theme="bleu"]`) : `hand_open.png` par défaut, `hand_point.png` au survol d'un élément cliquable, `target_round_b.png` sur les mêmes 4 boutons "Jouer", `hand_closed.png` tant que le bouton de la souris est maintenu enfoncé (`*:active`, natif, aucun JS — `:active` se propage à l'élément pressé et à tous ses ancêtres jusqu'à `<html>`, donc couvre même un clic sur une zone "vide").
+- **Éléments "cliquables"** (règle commune aux 2 thèmes, spécificité type/attribut > `*` générique) : `a`, `button`, `input[type="button/submit/checkbox/radio/range"]`, `select`, `label[for]`, `[role="button"]`, `[onclick]`, `.cursor-pointer`, **et tout champ de saisie texte** — `input:not([type])` (le type HTML par défaut d'un `<input>` est "text", donc `input[type="text"]` seul ne suffit pas à couvrir les champs sans attribut `type`, comme ceux de `multiplayerRooms.js`), `input[type="text"/"password"/"search"/"email"/"number"/"tel"/"url"]`, `textarea`.
+- **Exception** : la liste DÉPLIÉE d'un `<select>` (au clic) est dessinée par l'OS, entièrement hors DOM/CSS — aucune règle `cursor` ne peut l'atteindre, sur aucun site. Le `<select>` fermé obéit normalement aux règles ci-dessus.
+
+### b. Survol du cadre décoratif (`javascript/customCursor.js`, thème Médiéval uniquement)
+
+Au survol du cadre décoratif (les 4 bandeaux `#headerBanner`/`#footerBanner`/`#leftBanner`/`#rightBanner`, §39), le gant redevient `gauntlet_open.png`. Piège rencontré : une 1ère version ciblait directement ces 4 sélecteurs en CSS — sans effet, car ces éléments ont TOUS `pointer-events: none` (volontaire, pour laisser passer les clics vers le contenu en dessous). Un élément avec `pointer-events: none` n'est jamais hit-testé par le navigateur : aucune règle `cursor` posée dessus ne peut jamais s'appliquer, quelle que soit sa spécificité — `getComputedStyle()` peut pourtant afficher la bonne valeur, ce qui a produit un faux positif de vérification (corrigé après retour utilisateur, vérifié ensuite via un vrai survol simulé). Fix réel : détection de zone en JS (`updateCadreHover()`, souris à moins de 85px d'un bord de fenêtre — même valeur que la taille du cadre) qui pose une classe `cadre-hover` sur `<html>`, exploitée par une règle CSS dédiée de spécificité supérieure.
+
+### c. Socle curseur animé (`customCursor.js::setAnimated()`/`reset()`)
+
+Préparé mais non utilisé à ce jour (aucun asset animé dans le projet) : `cursor: url()` n'anime aucun GIF/APNG sur les navigateurs modernes (seule la 1ère image s'affiche) — un calque `<img>` `#hzCursorFollower` (`position:fixed`, suit la souris via `translate3d()` dans le handler `mousemove`) est prêt à prendre le relais du curseur CSS statique le jour où un asset animé sera fourni.
+
+### d. Fix collatéral — `snapshots.php` cassé
+
+Un second `<?php` avait été inséré par erreur alors qu'un bloc PHP était déjà ouvert depuis la ligne 1 (jamais refermé par un `?>` entre les deux) → `Parse error: unexpected token "<"` ligne 74, galerie de captures entièrement inaccessible. Supprimé, aucune autre modification du fichier — vérifié en direct sur le serveur réel (18 captures affichées correctement).
+
+### Bump
+
+`HEXISTENZ_VERSION` : `v0.9.4.2.3` → `v0.9.4.3` (demande explicite).
+
+## 45. Curseurs custom — correctifs et polish, déplacement des assets — chantier clos (2026-08-05, v0.9.4.3 → v1.0.0)
+
+Suite directe du §44 : plusieurs correctifs sur le système de curseurs custom, un ajout gameplay, un polish visuel, et un déplacement d'assets — clôturés avec le passage en v1.0.0.
+
+### a. Descendants d'éléments cliquables (`css/cursors.css`)
+
+Les règles "cliquable" du §44 (`[data-theme="..."] a, button, ...`) ne ciblaient que l'élément cliquable lui-même — ses enfants (`<span>` emoji/label des boutons de preset EDA, `<mark>` des raccourcis clavier des 9 boutons HUD `.debug-light-panel`) retombaient sur la règle par défaut (`gauntlet_open.png`/`hand_open.png`) dès que la souris passait du bouton à son contenu interne, car CSS résout le `cursor` de chaque élément indépendamment par spécificité — un enfant ne "hérite" pas de la règle plus spécifique posée sur son parent. Fix : règle dédiée par thème, mêmes sélecteurs racine suffixés `*` (`a *, button *, label *, [role="button"] *, [onclick] *, .cursor-pointer *`), même spécificité que la règle parent donc aucun conflit d'ordre — couvre tout élément cliquable existant ou futur sans liste ad-hoc par cas.
+
+### b. Checkbox switches sans attribut `for` (`css/cursors.css` + `customCursor.js`)
+
+Les switches de l'EDA (`<label class="pix-switch"><input type="checkbox"/><span></span></label>`, association implicite par imbrication) ne matchaient jamais le sélecteur `label[for]` utilisé jusqu'ici — ni eux ni leur `<span>` visuel (le rail/curseur du switch, seul élément réellement survolé en pratique). `label[for]` → `label` (sans condition d'attribut) dans les 2 CSS et dans `CLICKABLE_SELECTOR` (JS, utilisé par la détection cadre-hover).
+
+### c. Curseur de pose de tuile ne cède plus la place au survol du HUD
+
+Le curseur animé de gameplay (`line_cross.png`/`disabled.png`, §pose de tuile) masque tout curseur natif tant qu'il est actif (classe `cursor-animated-active` → `cursor: none !important` global) — y compris au survol des 9 boutons HUD, qui restaient donc invisibles/mal indiqués par-dessus une tuile en cours de pose. Fix dans `onMouseMove` (`customCursor.js`) : si le curseur animé est actif ET que l'élément réellement survolé est cliquable (même `CLICKABLE_SELECTOR`), le calque animé est temporairement masqué (opacité 0, classe retirée) pour laisser réapparaître le curseur "cliquable" natif du thème ; restauré automatiquement dès que la souris quitte l'élément cliquable.
+
+### d. Drop shadow léger sur tous les curseurs, 2 thèmes
+
+`cursor: url()` ne supporte aucun filtre CSS — impossible d'ajouter une ombre en CSS pur sur les 7 curseurs natifs (gauntlet_open/point, door_exit, hand_open/point/closed, target_round_b). Ombre pré-cuite dans le PNG via un script Python (PIL) : canvas élargi 32×32 → 44×44 (+6px de marge par bord), silhouette de l'image originale en noir semi-transparent (alpha 160/255) décalée de (2,2) et floutée (GaussianBlur r=1.4), image d'origine recomposée par-dessus. Fichiers `<nom>_shadow.png` à côté des originaux (jamais modifiés) ; hotspot de chaque règle CSS = ancien hotspot + 6. Pour `line_cross.png`/`disabled.png` (affichés via `<img>` `#hzCursorFollower`, pas `cursor: url()`) : simple `filter: drop-shadow(2px 2px 1.5px rgba(0,0,0,0.55))` CSS sur `#hzCursorFollower img` — couvre aussi tout futur curseur animé sans retouche d'asset.
+
+### e. `user-select: none` en jeu uniquement (`css/cursors.css`)
+
+Scope `body:not(.game-not-started)` — cette classe est posée par défaut sur `<body>` (`game.php`) et retirée uniquement au lancement réel de la partie (`multiplayerRooms.js::startMultiplayerScene`, même pattern que §37 pour `#scorePanel`/`#tileUI`), donc les menus pre-game (champs pseudo/code de partie) restent sélectionnables normalement — seul le plateau de jeu proprement dit est concerné. `input`/`textarea`/`[contenteditable]` explicitement ré-autorisés par précaution. `cursors.css` n'est chargé que par `game.php`, jamais par la prez `index.php`.
+
+### f. TTS thème — préfixe "Thème " (prez + in-game)
+
+Le changement de thème via le sélecteur (prez `#themeSelect` et in-game `#gameThemeSelect`) annonçait juste le nom du thème ("Bleu sidéral") — préfixé désormais par le mot "Thème" traduit dans les 9 langues (`game.tts.themeChanged`, gabarit `{theme}`, ex. `"Thème {theme}"` en FR, `"Thème {theme}, mon chum"` en fr-CA). Côté in-game : nouvelle fonction `announceThemeChanged()` dans `ttsAnnouncer.js`. Côté prez : `resolveI18n(lang, 'game.tts.themeChanged')` réutilisé directement (même fichiers `json/languages/*.json` chargés en entier dans `I18N`).
+
+### g. Déplacement des assets — `/cursors` → `/vendor/cursors`
+
+Le dossier `cursors/kenney-cursor-pack/` déplacé sous `vendor/cursors/kenney-cursor-pack/` (cohérence avec les autres dépendances tierces déjà sous `vendor/`, ex. `three.module.js`, `wawa-vfx-vanilla.js`). Toutes les références adaptées : les 10 `cursor: url('../cursors/...')` de `css/cursors.css` → `'../vendor/cursors/...'`, et les 2 chemins `'cursors/...'` de `scene.js` (`TILE_HOVER_CURSOR_VALID`/`INVALID`) → `'vendor/cursors/...'`. Aucune autre référence dans le projet (préloader, PHP) ne pointait vers ce dossier. Vérifié en direct : les 2 thèmes, prez et in-game, curseurs statiques et animé de pose de tuile — tous chargent correctement depuis le nouveau chemin, aucun 404.
+
+### Bump
+
+`HEXISTENZ_VERSION` : `v0.9.4.3` → `v1.0.0` (demande explicite — première version "stable" du projet).

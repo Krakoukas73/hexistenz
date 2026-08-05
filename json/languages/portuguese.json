@@ -1045,7 +1045,7 @@
         },
         "bonusCells": {
           "title": "Casas bónus",
-          "text": "Entre 1 e 4 casas bónus são geradas na grelha. Não alteram nenhuma regra de colocação: se conseguires colocar uma peça sobre elas, desaparecem e rendem imediatamente +1500 pontos.",
+          "text": "Entre 1 e 4 casas bónus são geradas na grelha. Não alteram nenhuma regra de colocação: se conseguires colocar uma peça sobre elas, desaparecem e rendem imediatamente +500 pontos.",
           "label": "objetivo opcional, pontuação pura, zero armadilhas"
         },
         "blackCells": {
@@ -1208,7 +1208,8 @@
       "trainsCount": "Você tem {n} trens",
       "boatsCount": "Você tem {n} barcos",
       "cometsCount": "Você tem {n} cometas",
-      "languageChanged": "Língua portuguesa"
+      "languageChanged": "Língua portuguesa",
+      "themeChanged": "Tema {theme}"
     },
     "fpsAdjectives": {
       "disastrous": "Desastroso",

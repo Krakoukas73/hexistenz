@@ -18,7 +18,7 @@ import { EDA_BODY_HTML, wireEdaPanel } from './edaPanelWiring.js';
 import { getGameLang, setGameLang, registerLangRefresh, getLangFile, getLangVersion } from './gameLangReactive.js';
 import { getTheme, setTheme } from './themeManager.js';
 import { showCenterMessage } from './scorePopup.js';
-import { announceLanguageChanged, speak, resetTtsQueue, toggleTtsMute, isTtsMuted, announceVoiceOn, announceSoundOn } from './ttsAnnouncer.js';
+import { announceLanguageChanged, announceThemeChanged, speak, resetTtsQueue, toggleTtsMute, isTtsMuted, announceVoiceOn, announceSoundOn } from './ttsAnnouncer.js';
 import { toggleMute, isMuted } from './soundDesign.js';
 
 export { tickFps };
@@ -214,12 +214,12 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
     showCenterMessage(themeLabel);
     // 2026-07-29 — annonce vocale (TTS) du thème sélectionné, dans la langue en
     // cours. Réutilise directement `themeLabel` (déjà traduit via game.eda.themeNames,
-    // même texte que le popup visuel ci-dessus) — pas de nouvelle clé json nécessaire,
-    // contrairement à announceLanguageChanged qui a besoin d'une phrase dédiée
-    // (contrainte grammaticale, cf. §35 CONTEXT.md) : un simple nom de thème
-    // ("Bleu sidéral", "Médiéval") se prononce très bien tel quel.
-    resetTtsQueue();
-    speak(themeLabel);
+    // même texte que le popup visuel ci-dessus).
+    // 2026-08-05 — demande explicite : préfixer l'annonce vocale par "Thème "
+    // (ex. "Bleu sidéral" → "Thème Bleu sidéral") — announceThemeChanged()
+    // injecte `themeLabel` dans le gabarit game.tts.themeChanged de la langue
+    // courante (cf. ttsAnnouncer.js), au lieu d'un simple speak(themeLabel).
+    announceThemeChanged(themeLabel);
   });
 
   const fpsApi = initFpsHud(root);

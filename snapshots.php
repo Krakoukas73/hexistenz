@@ -71,7 +71,7 @@ if (is_dir($snapDir)) {
         }
     }
 }
-<?php
+
 // 2026-08-01 — demande explicite : sur mobile, préférer "bleu" à "ancien"
 // par défaut (cf. javascript/themeManager.js / index.php / game.php pour
 // l'explication complète) — juste pour éviter le flash visuel avant que le

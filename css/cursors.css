@@ -1,0 +1,344 @@
+/* 2026-08-05 (3e correctif) — demande explicite : léger drop shadow visible
+   sur TOUS les curseurs, tous thèmes confondus. `cursor: url()` ne supporte
+   aucun filtre CSS (`filter: drop-shadow()` n'a aucun effet sur une image de
+   curseur natif, contrairement à un <img> classique) — impossible d'ajouter
+   l'ombre en CSS pur sur gauntlet_open/point, door_exit, hand_open/point/
+   closed, target_round_b (tous posés via `cursor: url()`). Solution : ombre
+   PRÉ-CUITE dans le PNG lui-même, généré par script Python (PIL) à partir de
+   chaque asset original du pack Kenney — canvas élargi de 32×32 à 44×44 (+6px
+   de marge sur chaque bord pour laisser la place à l'ombre sans clipping),
+   calque d'ombre = silhouette de l'image originale (alpha en masque) en noir
+   semi-transparent (alpha 160/255), décalée de (2,2) et floutée
+   (GaussianBlur r=1.4), puis image originale recomposée par-dessus à son
+   emplacement (6,6). Fichiers `<nom>_shadow.png` à côté des originaux
+   (jamais modifiés — pack Kenney intact). Hotspot recalculé : ancien hotspot
+   + 6 (le décalage de marge) dans chaque règle ci-dessous.
+   Pour line_cross.png/disabled.png (curseur de pose de tuile, affiché via le
+   calque `<img>` #hzCursorFollower et non via `cursor: url()`, cf.
+   javascript/customCursor.js) : PAS besoin de PNG dédié, `filter:
+   drop-shadow()` fonctionne nativement sur un <img> — un simple ajout CSS
+   sur `#hzCursorFollower img` suffit et couvre aussi tout futur curseur
+   animé sans retouche d'asset (cf. règle plus bas). */
+/* 2026-08-04 — demande explicite : remplacer le curseur natif du navigateur
+   par un curseur custom, PARTOUT (prez index.php, menus pre-game, HUD
+   in-game). Premier essai de test, un seul curseur fixe pour valider le
+   pipeline avant d'aller plus loin (états hover/clic, curseurs animés...).
+
+   2026-08-04 (correctif) — demande explicite : uniquement en thème médiéval
+   ([data-theme="ancien"]) — le thème bleu garde le curseur natif du
+   navigateur. Scope ajouté sur le sélecteur (`[data-theme="ancien"] *` au
+   lieu de `*`) plutôt que sur un fichier séparé, pour ne pas dupliquer tout
+   le commentaire ci-dessous ni le mécanisme d'inclusion (index.php/game.php
+   chargent déjà ce fichier sur les 2 thèmes, comme tous les fichiers de
+   thème du projet — cf. medieval.css/bleu.css).
+
+   Pourquoi `*` + `!important` :
+   - De nombreux éléments interactifs (boutons, liens, <select>...) déclarent
+     déjà leur propre `cursor` explicite (le plus souvent `cursor: pointer`)
+     dans divers fichiers CSS du projet — un `cursor` explicite sur un
+     sélecteur de TYPE (ex. `button { cursor: pointer }`) a une spécificité
+     CSS strictement supérieure à `*` (sélecteur universel, spécificité
+     nulle), quel que soit l'ordre de chargement des feuilles. Sans
+     `!important`, ce reset global serait donc silencieusement ignoré sur
+     tout élément qui fixe déjà son propre curseur — exactement le même
+     piège de cascade que tous les bugs de fuite Enchanted-Land rencontrés
+     précédemment sur ce projet (héritage vs déclaration explicite).
+   - `!important` sur une seule règle, un seul fichier dédié : facile à
+     retirer/étendre plus tard (états spécifiques par exemple) sans devoir
+     chasser chaque déclaration `cursor` individuelle du reste du code.
+
+   Pourquoi PNG 32×32 :
+   - Poids négligeable (quelques centaines d'octets), aucune décompression
+     coûteuse contrairement à un GIF animé ou un gros PNG — aucun impact sur
+     la fluidité du curseur (rendu nativement par le moteur du navigateur,
+     pas de JS dans la boucle).
+   - 32×32 est la taille de référence historique `cursor: url()` — supportée
+     nativement et de façon fiable par TOUS les navigateurs modernes (Chrome,
+     Firefox, Safari, Edge), y compris les anciens. Des images plus grandes
+     (jusqu'à 128×128) fonctionnent aussi sur les moteurs récents, mais avec
+     un support plus inégal sur les vieux navigateurs/WebKit — 32×32 reste le
+     choix le plus universellement compatible.
+   - Fallback `, auto` après l'URL : si jamais le fichier ne charge pas (mauvais
+     chemin, 404...), le navigateur retombe sur son curseur natif au lieu de
+     rester invisible/cassé.
+
+   Hotspot `4 2` : approximation visuelle de la pointe du gant (doigt tendu
+   en haut à gauche de l'image 32×32) — à affiner si besoin après retour
+   visuel, la valeur n'affecte que le point de clic perçu, pas le rendu.
+
+   2026-08-04 (3e round) — demande explicite : le gant OUVERT
+   (gauntlet_open.png, sans doigt tendu) devient le curseur PAR DÉFAUT, et le
+   gant qui pointe (gauntlet_point.png, doigt tendu) ne s'affiche plus que
+   sur un élément réellement cliquable (lien, bouton...) — logique inversée
+   par rapport au 1er round. Implémenté avec 2 règles distinctes : celle-ci
+   (défaut, sélecteur `*`) pose gauntlet_open.png, la règle "cliquable"
+   plus bas (sélecteur ciblé : a, button, [role="button"]...) pose
+   gauntlet_point.png par-dessus — sa spécificité plus élevée (sélecteurs de
+   TYPE/attribut vs `*`) l'emporte automatiquement sur les éléments
+   concernés, même écrite après, sans avoir besoin de doubler le
+   `!important` en cascade manuelle. */
+[data-theme="ancien"] * {
+  cursor: url('../vendor/cursors/kenney-cursor-pack/PNG/Outline/Default/gauntlet_open_shadow.png') 10 8, auto !important;
+}
+/* 2026-08-04 (3e round) — demande explicite : gauntlet_point.png (doigt
+   tendu) dès que la souris survole un élément CLIQUABLE — liens, boutons,
+   éléments de formulaire interactifs, ou tout élément explicitement marqué
+   cliquable (role="button", ou déjà stylé `cursor:pointer` ailleurs dans le
+   projet). Liste volontairement large pour couvrir tous les patterns
+   d'interactivité déjà utilisés dans le codebase (eda.css, help.css,
+   highscore.css, multiplayerUi.css, postprocessHud.css, presentation.css,
+   snapshotGalleryOverlay.css, snapshots.css...) sans devoir lister chaque
+   sélecteur CSS un par un. Spécificité (sélecteur de type/attribut) >
+   `[data-theme="ancien"] *` ci-dessus → l'emporte automatiquement.
+
+   2026-08-04 (6e round) — demande explicite : les champs texte des menus
+   pre-game (pseudo, code de partie... cf. multiplayerRooms.js, générés
+   via `<input data-field="name">` SANS attribut `type` — le type HTML par
+   défaut d'un <input> est "text", donc `input[type="text"]` seul ne les
+   aurait PAS matchés) doivent eux aussi déclencher le curseur "cliquable
+   classique" (gauntlet_point.png), pas rester sur le curseur par défaut.
+   `input:not([type])` couvre ces champs sans type explicite ; les autres
+   sélecteurs `input[type="..."]` couvrent les champs texte qui déclarent
+   leur type explicitement ailleurs dans le projet. `textarea` ajouté par
+   cohérence (même famille de champ texte). */
+/* 2026-08-05 (2e correctif) — demande explicite : les checkbox de l'EDA
+   (rubriques Cinématique/God Rays/Tilt-shift/Bloom/Pixelisation/CRT/
+   Nuages/Vent/Forme du monde/Jour-Nuit..., cf. edaPanelWiring.js) suivent le
+   pattern classique "switch" : `<label class="pix-switch"><input
+   type="checkbox"/><span></span></label>` — le `<span>` est le rail/curseur
+   VISUEL du switch (stylé en CSS pour ressembler à un toggle), c'est LUI que
+   la souris survole en pratique, pas le petit `<input>` réel. Or ce `<label>`
+   n'a PAS d'attribut `for` (association implicite par imbrication, pas par
+   id) — le sélecteur `label[for]` utilisé jusqu'ici ne le matchait donc
+   JAMAIS, ni lui ni son `<span>` visuel (règle descendants ci-dessous), qui
+   retombaient sur le curseur par défaut. `label[for]` → `label` (sans
+   condition d'attribut) : un `<label>` est cliquable qu'il utilise `for` ou
+   l'imbrication, donc pas de raison de restreindre. */
+[data-theme="ancien"] a,
+[data-theme="ancien"] button,
+[data-theme="ancien"] input[type="button"],
+[data-theme="ancien"] input[type="submit"],
+[data-theme="ancien"] input[type="checkbox"],
+[data-theme="ancien"] input[type="radio"],
+[data-theme="ancien"] input[type="range"],
+[data-theme="ancien"] input:not([type]),
+[data-theme="ancien"] input[type="text"],
+[data-theme="ancien"] input[type="password"],
+[data-theme="ancien"] input[type="search"],
+[data-theme="ancien"] input[type="email"],
+[data-theme="ancien"] input[type="number"],
+[data-theme="ancien"] input[type="tel"],
+[data-theme="ancien"] input[type="url"],
+[data-theme="ancien"] textarea,
+[data-theme="ancien"] select,
+[data-theme="ancien"] label,
+[data-theme="ancien"] [role="button"],
+[data-theme="ancien"] [onclick],
+[data-theme="ancien"] .cursor-pointer {
+  cursor: url('../vendor/cursors/kenney-cursor-pack/PNG/Outline/Default/gauntlet_point_shadow.png') 10 8, auto !important;
+}
+/* 2026-08-05 — demande explicite : les boutons de preset d'ambiance de l'EDA
+   (.debug-light-preset-btn, cf. edaPanelWiring.js) contiennent du balisage
+   interne (<span class="preset-emoji">/<span class="preset-label">) — ces
+   descendants ne matchent AUCUN des sélecteurs "cliquable" ci-dessus (qui ne
+   ciblent que l'élément bouton/lien lui-même), donc ils retombaient sur la
+   règle par défaut `[data-theme="ancien"] *` (gauntlet_open.png) dès que la
+   souris passait du bouton à son texte. Règle dédiée, mêmes sélecteurs
+   racine mais suffixés `*` pour couvrir tous les descendants d'un élément
+   cliquable — spécificité identique à la règle ci-dessus (même nombre de
+   sélecteurs de type/attribut), donc pas de conflit d'ordre, elle s'applique
+   simplement à un ensemble d'éléments disjoint (les enfants, pas le parent). */
+[data-theme="ancien"] a *,
+[data-theme="ancien"] button *,
+[data-theme="ancien"] label *,
+[data-theme="ancien"] [role="button"] *,
+[data-theme="ancien"] [onclick] *,
+[data-theme="ancien"] .cursor-pointer * {
+  cursor: url('../vendor/cursors/kenney-cursor-pack/PNG/Outline/Default/gauntlet_point_shadow.png') 10 8, auto !important;
+}
+/* 2026-08-04 (3e round) — demande explicite : tous les boutons "Jouer" de la
+   prez (liens vers game.php — nav.play, hero.btn_play, multi.btn_create,
+   scores.try_luck, tous `<a href="game.php">`) reçoivent door_exit.png (une
+   porte qu'on franchit — cohérent avec l'action "quitter la prez pour
+   entrer en jeu") à la place du gauntlet_point.png générique ci-dessus.
+   Sélecteur d'attribut `a[href="game.php"]` : spécificité strictement
+   supérieure à `[data-theme="ancien"] a` (règle précédente), donc gagne
+   automatiquement sans avoir à réordonner quoi que ce soit d'autre. */
+[data-theme="ancien"] a[href="game.php"] {
+  cursor: url('../vendor/cursors/kenney-cursor-pack/PNG/Outline/Default/door_exit_shadow.png') 10 8, auto !important;
+}
+/* 2026-08-04 — demande explicite (2e round) — ERRATUM : le thème Bleu sidéral
+   devait lui aussi avoir SON PROPRE curseur custom (hand_point.png, même
+   dossier/format que le gauntlet), pas revenir au curseur natif du
+   navigateur comme précédemment corrigé par erreur — 2 curseurs globaux, un
+   par thème, chacun partout (même règle `*` + `!important`, mêmes raisons
+   détaillées ci-dessus). Hotspot `13 3` : pointe de l'index tendu, en haut
+   de l'image 32×32. */
+[data-theme="bleu"] * {
+  cursor: url('../vendor/cursors/kenney-cursor-pack/PNG/Outline/Default/hand_open_shadow.png') 19 9, auto !important;
+}
+/* 2026-08-04 (4e round) — demande explicite : même logique que le thème
+   Médiéval (défaut "ouvert" / cliquable "point") mais côté thème Bleu
+   sidéral, avec les curseurs de la main plutôt que du gant. Sélecteur
+   identique (a, button, [role="button"]...) à celui du thème Médiéval — cf.
+   commentaire détaillé plus haut pour la justification de la liste. */
+/* 2026-08-04 (6e round) — mêmes champs texte que côté Médiéval (cf.
+   commentaire détaillé plus haut) ajoutés ici aussi, curseur "cliquable
+   classique" hand_point.png. */
+[data-theme="bleu"] a,
+[data-theme="bleu"] button,
+[data-theme="bleu"] input[type="button"],
+[data-theme="bleu"] input[type="submit"],
+[data-theme="bleu"] input[type="checkbox"],
+[data-theme="bleu"] input[type="radio"],
+[data-theme="bleu"] input[type="range"],
+[data-theme="bleu"] input:not([type]),
+[data-theme="bleu"] input[type="text"],
+[data-theme="bleu"] input[type="password"],
+[data-theme="bleu"] input[type="search"],
+[data-theme="bleu"] input[type="email"],
+[data-theme="bleu"] input[type="number"],
+[data-theme="bleu"] input[type="tel"],
+[data-theme="bleu"] input[type="url"],
+[data-theme="bleu"] textarea,
+[data-theme="bleu"] select,
+[data-theme="bleu"] label,
+[data-theme="bleu"] [role="button"],
+[data-theme="bleu"] [onclick],
+[data-theme="bleu"] .cursor-pointer {
+  cursor: url('../vendor/cursors/kenney-cursor-pack/PNG/Outline/Default/hand_point_shadow.png') 19 9, auto !important;
+}
+/* 2026-08-05 — demande explicite : même correctif que côté Médiéval (cf.
+   commentaire détaillé plus haut, règle `[data-theme="ancien"] a *, ...`) —
+   les descendants (spans emoji/label des boutons de preset EDA, etc.)
+   reçoivent eux aussi hand_point.png au lieu de retomber sur hand_open.png. */
+[data-theme="bleu"] a *,
+[data-theme="bleu"] button *,
+[data-theme="bleu"] label *,
+[data-theme="bleu"] [role="button"] *,
+[data-theme="bleu"] [onclick] *,
+[data-theme="bleu"] .cursor-pointer * {
+  cursor: url('../vendor/cursors/kenney-cursor-pack/PNG/Outline/Default/hand_point_shadow.png') 19 9, auto !important;
+}
+/* 2026-08-04 (4e round) — demande explicite : les boutons "Jouer" de la prez
+   (mêmes 4 liens `a[href="game.php"]` que côté Médiéval) reçoivent
+   target_round_b.png en thème Bleu sidéral — une cible, cohérente avec
+   l'identité "sci-fi/arcade" du thème (le gant/porte médiévaux n'ont pas de
+   sens ici). Même mécanique de spécificité que la règle équivalente
+   Médiéval : `a[href="game.php"]` > `[data-theme="bleu"] a` générique. */
+[data-theme="bleu"] a[href="game.php"] {
+  cursor: url('../vendor/cursors/kenney-cursor-pack/PNG/Outline/Default/target_round_b_shadow.png') 22 22, auto !important;
+}
+/* 2026-08-04 (5e round) — demande explicite : bouton de souris enfoncé (tant
+   qu'il n'est pas relâché) → hand_closed.png, en thème Bleu sidéral
+   uniquement. Pseudo-classe `:active` plutôt que du JS mousedown/mouseup :
+   nativement gérée par le navigateur (zéro listener, zéro état à
+   synchroniser), et couvre TOUT élément cliqué, pas seulement les liens/
+   boutons — `:active` se propage nativement à l'élément pressé ET à tous
+   ses ancêtres (jusqu'à <html>/<body>), donc même un clic sur une zone
+   "vide" de la page déclenche cette règle via body:active/html:active.
+   Spécificité (`*` + `:active` = classe) > celle des règles "cliquable"
+   (type/attribut simple) ci-dessus → l'emporte automatiquement pendant
+   l'appui, quel que soit l'élément (lien, bouton, zone vide...). */
+[data-theme="bleu"] *:active {
+  cursor: url('../vendor/cursors/kenney-cursor-pack/PNG/Outline/Default/hand_closed_shadow.png') 19 9, auto !important;
+}
+/* 2026-08-04 — demande explicite : au survol du cadre décoratif (les 4
+   bandeaux #headerBanner/#footerBanner/#leftBanner/#rightBanner, thème
+   Médiéval uniquement, cf. CONTEXT.md §39), le gauntlet devient "ouvert"
+   (gauntlet_open.png — même gant, sans le doigt tendu du clic) plutôt que le
+   gauntlet_point.png par défaut.
+   2026-08-04 — CORRECTIF : la 1ère version ciblait directement les 4
+   sélecteurs `#headerBanner` etc., sans effet en pratique — ces 4 éléments
+   ont TOUS `pointer-events: none` (medieval.css, posé volontairement pour
+   que les clics traversent le cadre purement décoratif vers le contenu en
+   dessous, cf. §39 CONTEXT.md). `pointer-events: none` retire l'élément du
+   hit-testing du navigateur dans son ensemble — le curseur n'y "survole"
+   jamais vraiment, donc AUCUNE règle `cursor` posée dessus ne peut
+   s'appliquer, quelle que soit sa spécificité. Impossible de garder le
+   click-through ET un cursor CSS natif sur ces éléments en même temps.
+   Fix : détection de zone en JS (javascript/customCursor.js, suit la souris
+   de toute façon pour le socle "curseur animé") — dès que la position de la
+   souris tombe dans la bande de 85px sur un bord (même valeur que la
+   hauteur/largeur du cadre, cf. medieval.css), la classe `cadre-hover` est
+   posée sur <html> ; cette règle (classe + attribut, spécificité supérieure
+   à `[data-theme="ancien"] *` seul) prend alors le dessus. Aucun impact sur
+   le click-through : c'est un pur calcul de coordonnées, pointer-events
+   inchangé partout. */
+[data-theme="ancien"].cadre-hover * {
+  cursor: url('../vendor/cursors/kenney-cursor-pack/PNG/Outline/Default/gauntlet_open_shadow.png') 10 8, auto !important;
+}
+/* 2026-08-05 (4e correctif) — demande explicite : aucune sélection (texte ou
+   autre) à la souris UNIQUEMENT en jeu (pas sur la prez index.php, qui ne
+   charge d'ailleurs même pas ce fichier — cf. game.php seul consommateur de
+   cursors.css/base.css). Scope volontairement restreint à
+   `body:not(.game-not-started)` : cette classe est posée par défaut sur le
+   <body> de game.php et retirée UNIQUEMENT au lancement réel de la partie
+   (multiplayerRooms.js::startMultiplayerScene, cf. base.css §63 pour le même
+   pattern déjà utilisé sur scorePanel/tileUI/arcadeScore) — donc les menus
+   pre-game (formulaires pseudo/code de partie, avec de vrais champs texte où
+   la sélection doit rester possible) sont exclus automatiquement, seul le
+   plateau de jeu proprement dit est concerné. `input`/`textarea`/
+   `[contenteditable]` explicitement ré-autorisés par précaution (aucun de
+   ces éléments n'existe en jeu actuellement, mais évite un piège si un futur
+   champ texte in-game était ajouté sans y penser). */
+body:not(.game-not-started) {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+body:not(.game-not-started) input,
+body:not(.game-not-started) textarea,
+body:not(.game-not-started) [contenteditable] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+/* 2026-08-04 — limite technique incontournable, PAS un bug : la liste
+   DÉPLIÉE d'un <select> (au clic, l'espèce de "menu déroulant" natif) est
+   dessinée par le système d'exploitation, entièrement en dehors du DOM/CSS
+   de la page — aucune règle `cursor` ne peut l'atteindre, sur AUCUN site
+   web, quelle que soit la technique utilisée (idem pour la police/couleur/
+   taille des options, déjà documenté ailleurs dans le projet). Le <select>
+   fermé, lui, obéit normalement à la règle ci-dessus (vérifié en direct). */
+
+/* 2026-08-04 — demande explicite : socle pour curseurs ANIMÉS (GIF/APNG...),
+   cf. javascript/customCursor.js pour le détail complet (pourquoi un calque
+   JS est nécessaire ici — `cursor: url()` n'anime aucun format animé sur les
+   navigateurs modernes). Calque masqué par défaut (`opacity:0`, jamais
+   affiché tant que setAnimated() n'a pas été appelé explicitement) — sans
+   effet visuel ni de performance tant qu'aucun code du jeu ne l'utilise. */
+#hzCursorFollower {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  will-change: transform;
+}
+#hzCursorFollower img {
+  display: block;
+  /* 2026-08-05 (3e correctif) — même ombre légère que les curseurs natifs
+     (cf. commentaire en tête de fichier), mais via `filter: drop-shadow()`
+     CSS classique ici : ce calque est un vrai <img> du DOM (pas un curseur
+     `url()`), donc les filtres CSS s'appliquent normalement. Valeurs
+     calquées sur l'ombre pré-cuite des PNG (décalage 2px, flou ~1.5px, noir
+     semi-transparent) pour un rendu cohérent entre les 2 mécanismes. */
+  filter: drop-shadow(2px 2px 1.5px rgba(0, 0, 0, 0.55));
+}
+/* Le calque prend le relais du curseur CSS statique UNIQUEMENT quand
+   setAnimated() a posé cette classe sur <html> — reset du curseur natif ici
+   seulement (jamais globalement), pour ne jamais afficher 2 curseurs
+   superposés (l'image statique ET le calque animé) en même temps.
+   2026-08-05 — demande explicite : le curseur de pose de tuile (survol
+   valide/invalide en jeu, cf. scene.js) doit fonctionner dans LES DEUX
+   thèmes — règle dupliquée pour `[data-theme="bleu"]` (customCursor.js
+   n'est plus restreint au Médiéval, cf. son en-tête). */
+[data-theme="ancien"].cursor-animated-active *,
+[data-theme="bleu"].cursor-animated-active * {
+  cursor: none !important;
+}

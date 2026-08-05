@@ -344,7 +344,16 @@ nav {
 }
 .hero-inner {
   display: grid;
-  grid-template-columns: 1fr;
+  /* 2026-08-02 — minmax(0, 1fr) au lieu de 1fr nu : une grid-item a par défaut
+     min-width:auto (= la taille min-content de son contenu), qui PASSE OUTRE la
+     fraction 1fr dès qu'un run de texte insécable (ex. ⬡ HEXISTENZ + pastille de
+     version, cf. index.php) dépasse la largeur du track — tout .hero-text
+     (sous-titre, inspi, tagline, boutons, stats-bar) était alors forcé de
+     s'élargir avec lui et débordait sous le cadre médiéval en largeur réduite
+     (~920px). minmax(0, 1fr) retire ce plancher : le track respecte la fraction
+     réellement disponible, laissant le contenu wrap/scroller normalement à
+     l'intérieur plutôt que de faire déborder toute la colonne. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0;
   align-items: start;
 }
@@ -392,6 +401,21 @@ nav {
    Les resets background-clip/text-fill restent indispensables : .hero-title
    dessine son texte via background-clip:text (dégradé), sans quoi ce span
    hériterait du clip et deviendrait transparent. */
+/* 2026-08-03 — pastille + date regroupées dans un wrapper unique inline-block +
+   white-space:nowrap : garantit qu'elles restent toujours collées l'une à
+   l'autre sur la même ligne (la date se retrouvait seule sur une nouvelle
+   ligne, très en dessous, à cause du line-height géant hérité du titre h1
+   quand elle wrappait indépendamment de la pastille — même un espace
+   insécable entre les deux spans ne suffisait pas à les garder groupés).
+   Le wrapper reste lui-même libre de passer à la ligne (espace normal avant,
+   entre "HEXISTENZ" et lui) pour ne pas réintroduire le débordement horizontal
+   corrigé en #226. */
+.hero-version-wrap {
+  display: inline-block;
+  white-space: nowrap;
+  vertical-align: baseline;
+  font-size: 15px;
+}
 .hero-version {
   display: inline-block;
   font-family: var(--font-body);
@@ -898,6 +922,28 @@ nav {
 .audio-icon { font-size: 26px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
 .audio-name { font-family: var(--font-title); font-size: 17px; letter-spacing: 0.05em; margin-bottom: 6px; }
 .audio-desc { font-size: 11.5px; line-height: 1.6; }
+/* 2026-08-02 — demande explicite : "Une voix qui commente la partie" (clé
+   audio.voice) sort de .audio-grid pour devenir sa propre sous-rubrique, avec
+   un gros titre H2 (.section-title, cf. index.php).
+   2026-08-02 (v2) — 3 retours explicites sur la v1 (wrapper .audio-solo en
+   flex, icône 34px à côté du titre, section-sub plafonné à 640px) :
+   1) icône retirée — plus de .audio-solo-icon, plus de wrapper flex (le H2
+      .audio-solo-title ci-dessous porte directement la marge, comme
+      n'importe quel h2.section-title de rubrique) ;
+   2) le H2 doit avoir EXACTEMENT la même typo que les autres titres de
+      rubrique — la règle générique `.section-title` (presentation.css,
+      clamp(36px, 5vw, 60px)) suffit donc seule, plus d'override de
+      font-size/margin-bottom ici (la v1 réduisait à tort à 26-38px) ;
+   3) le paragraphe doit utiliser davantage la largeur de page — le plafond de
+      640px est retiré, `.section-sub` retrouve son max-width:100% générique
+      (presentation.css) comme le sous-titre principal de la rubrique
+      au-dessus.
+   2026-08-02 (v3) — demande explicite : la bordure haute séparant les 4
+   parchemins de ce titre est retirée (jugée superflue une fois le reste
+   validé) — seule la marge haute demeure pour l'espacement. */
+.audio-solo-title {
+  margin-top: 44px;
+}
 
 /* ─── GALLERY ────────────────────────────────────────────────── */
 .gallery-grid {
@@ -1442,4 +1488,12 @@ body.nav-compact .hero-content { padding-top: 56px; }
 .prez-toast--visible {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
+}
+/* 2026-08-03 — demande explicite : uniquement en thème médiéval, les popups
+   type "voix activée"/"voix désactivée" (#prez-toast) ne doivent avoir aucun
+   text-shadow — le glow clair EnchantedLand (hérité de `body`, pensé pour la
+   lisibilité sur le fond carte/parchemin) rend le texte flou/illisible ici,
+   posé sur son propre fond opaque (--bg-card) qui n'en a pas besoin. */
+[data-theme="ancien"] .prez-toast {
+  text-shadow: none;
 }

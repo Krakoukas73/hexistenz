@@ -58,6 +58,7 @@ $cssFilesGame = [
     __DIR__ . '/css/scorePopup.css',
     __DIR__ . '/css/themes/bleu.css',
     __DIR__ . '/css/themes/medieval.css',
+    __DIR__ . '/css/cursors.css',
 ];
 $cssVersion = time();
 $mtimesGame = array_filter(array_map(function ($f) { return file_exists($f) ? filemtime($f) : 0; }, $cssFilesGame));
@@ -114,6 +115,10 @@ $defaultTheme = $isMobileUA ? 'bleu' : 'ancien';
        .mode-panel (css/multiplayerUi.css) depuis le chantier précédent. -->
   <link rel="stylesheet" href="css/themes/bleu.css?v=<?= $cssVersion ?>" />
   <link rel="stylesheet" href="css/themes/medieval.css?v=<?= $cssVersion ?>" />
+  <!-- 2026-08-04 — demande explicite : curseur custom (test), remplace le
+       curseur natif du navigateur partout sur cette page (menus pre-game +
+       HUD in-game). cf. css/cursors.css pour le détail. -->
+  <link rel="stylesheet" href="css/cursors.css?v=<?= $cssVersion ?>" />
   <style>
     /* Harmonisation HUD/aide : village = nouvelles couleurs brun/gris terre battue + gravier. */
     .swatch.house {
@@ -164,7 +169,7 @@ $defaultTheme = $isMobileUA ? 'bleu' : 'ancien';
     })();
   </script>
 </head>
-<body>
+<body class="game-not-started">
   <canvas id="app"></canvas>
 
   <!-- 2026-08-01 — demande explicite : bannière décorative collée en bas de
@@ -353,7 +358,7 @@ $defaultTheme = $isMobileUA ? 'bleu' : 'ancien';
             <div><strong>+25</strong><span data-i18n="game.ui.help.objective.points.waterRail"><?= tr($t,'fr','game.ui.help.objective.points.waterRail') ?></span></div>
             <div><strong>+50</strong><span data-i18n="game.ui.help.objective.points.surround"><?= tr($t,'fr','game.ui.help.objective.points.surround') ?></span></div>
             <div><strong>+100</strong><span data-i18n="game.ui.help.objective.points.mission"><?= tr($t,'fr','game.ui.help.objective.points.mission') ?></span></div>
-            <div><strong>+1500</strong><span data-i18n="game.ui.help.objective.points.bonus"><?= tr($t,'fr','game.ui.help.objective.points.bonus') ?></span></div>
+            <div><strong>+500</strong><span data-i18n="game.ui.help.objective.points.bonus"><?= tr($t,'fr','game.ui.help.objective.points.bonus') ?></span></div>
           </div>
           <ul class="placement-list">
 <?php foreach (tr($t,'fr','game.ui.help.placement.items') as $i => $frItem): ?>
@@ -449,5 +454,10 @@ $defaultTheme = $isMobileUA ? 'bleu' : 'ancien';
   <!-- 2026-07-20 — variation aléatoire manuscrit.png/manuscrit-2.png (thème
        Médiéval), cf. javascript/parchmentVariant.js pour le détail. -->
   <script type="module" src="javascript/parchmentVariant.js"></script>
+  <!-- 2026-08-04 — socle curseur custom (thème Médiéval, cf. css/cursors.css) :
+       le curseur statique fonctionne en CSS pur sans ce script (déjà actif) ;
+       ce module ne fait qu'exposer window.hexistenzCursor.setAnimated()/reset()
+       pour un futur curseur ANIMÉ (aucun appelant actuel). -->
+  <script type="module" src="javascript/customCursor.js"></script>
 </body>
 </html>

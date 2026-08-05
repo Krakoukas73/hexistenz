@@ -1045,7 +1045,7 @@
         },
         "bonusCells": {
           "title": "Casillas bonus",
-          "text": "Entre 1 y 4 casillas bonus se generan en la cuadrícula. No cambian ninguna regla de colocación: si consigues colocar una loseta encima, desaparecen y otorgan de inmediato +1500 puntos.",
+          "text": "Entre 1 y 4 casillas bonus se generan en la cuadrícula. No cambian ninguna regla de colocación: si consigues colocar una loseta encima, desaparecen y otorgan de inmediato +500 puntos.",
           "label": "objetivo opcional, puntuación pura, sin riesgo"
         },
         "blackCells": {
@@ -1208,7 +1208,8 @@
       "trainsCount": "Tienes {n} trenes",
       "boatsCount": "Tienes {n} barcos",
       "cometsCount": "Tienes {n} cometas",
-      "languageChanged": "Idioma español"
+      "languageChanged": "Idioma español",
+      "themeChanged": "Tema {theme}"
     },
     "fpsAdjectives": {
       "disastrous": "Desastroso",

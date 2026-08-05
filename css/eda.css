@@ -856,8 +856,12 @@ html[data-theme="ancien"] {
   pointer-events: auto;
   /* box-sizing: border-box → width JS inclut padding + border, comme offsetWidth de #tileUI */
   box-sizing: border-box;
-  /* Largeur initiale : sera écrasée par JS (×2.8 de la largeur #tileUI — flux journal 3 col) */
-  width: min(620px, calc(100vw - 92px));
+  /* Largeur initiale : sera écrasée par JS (×1.56128 de la largeur #tileUI — flux
+     journal 2 col, cf. edaPanelWiring.js::LUT_WIDTH_FACTOR). 406px → 345px : même
+     réduction de 15% (3e round, même jour) appliquée ici pour que le flash initial
+     (avant le 1er requestAnimationFrame qui synchronise la largeur réelle) ne soit
+     pas plus large que la valeur finale. */
+  width: min(345px, calc(100vw - 92px));
   /* height (pas juste max-height) : avec le contenu réparti en onglets et un flux
      multi-column, la zone .debug-light-columns doit pouvoir scroller si le contenu
      dépasse la hauteur d'écran — d'où hauteur fixe (pas seulement max-height). */
@@ -940,8 +944,12 @@ html[data-theme="ancien"] {
   display: flex;
 }
 
-/* ── Flux "journal" 3 colonnes fluides (2026-07-08) ─────────────────────────
-   Chaque onglet remplit d'abord la colonne 1, puis la 2, puis la 3.
+/* ── Flux "journal" 2 colonnes fluides (2026-07-08, repassé à 2 colonnes le
+   2026-08-01, demande explicite : "les 3 onglets sont affichés sur 3 colonnes
+   type journal, tu devrais passer à deux colonnes" — cohérent avec la
+   réduction de largeur du panneau demandée dans la même série de retours,
+   cf. LUT_WIDTH_FACTOR dans edaPanelWiring.js). Chaque onglet remplit d'abord
+   la colonne 1, puis la 2.
    2026-07-20 — CORRECTIF root cause (scroll d'onglet "pas effectif" signalé à
    1920x1080) : cet élément avait sa PROPRE hauteur bornée (flex:1 1 auto, min-height:0)
    ET overflow-y:auto EN MÊME TEMPS que columns:3. Or le CSS multi-colonnes ne
@@ -957,9 +965,10 @@ html[data-theme="ancien"] {
    à sa hauteur naturelle de contenu (colonnes équilibrées, jamais de 4e colonne
    puisqu'aucune limite de hauteur ne le contraint), et c'est désormais SON PARENT
    (.debug-light-tab-panels, hauteur bornée + overflow-y:auto) qui scrolle
-   verticalement pour révéler l'intégralité du bloc 3-colonnes. */
+   verticalement pour révéler l'intégralité du bloc de colonnes (toujours
+   valable en 2 colonnes — même mécanisme, seul le compte de colonnes change). */
 .debug-light-columns {
-  columns: 3;
+  columns: 2;
   column-gap: 14px;
   padding-right: 4px;
 }
@@ -2242,6 +2251,25 @@ body.fps-hud-deployed .debug-light-btn-rows {
 [data-theme="ancien"] .debug-light-main-title {
   color: #332415;
   border-bottom: 1px solid rgba(74, 54, 35, 0.22);
+  /* 2026-08-03 — demande explicite : typo Enchanted-Land, 14px (>12px),
+     hérite déjà de Georgia via .debug-light-body — ne touche pas les titres
+     de rubrique voisins (.debug-light-pix-head/.lut-section-head, exclus). */
+  font-family: 'EnchantedLand', Georgia, "Times New Roman", serif;
+  /* demande explicite (même round) : plus de MAJUSCULES (override du
+     text-transform:uppercase de la règle de base plus haut dans ce fichier),
+     seule la 1ère lettre capitalisée — cf. .title (css/themes/medieval.css). */
+  text-transform: lowercase;
+  /* 2026-08-03 (round suivant) — cohérence avec les acquis de la prez :
+     aucun letter-spacing sur Enchanted-Land, reset du 0.14em hérité de la
+     règle de base non thémée (pensée pour l'ancienne typo monospace). */
+  letter-spacing: normal;
+  /* 2026-08-03 (round suivant) — jamais de gras sur Enchanted-Land : reset
+     du font-weight:900 hérité de la règle de base non thémée (pensée pour
+     l'ancienne typo condensée en capitales). */
+  font-weight: 400;
+}
+[data-theme="ancien"] .debug-light-main-title::first-letter {
+  text-transform: uppercase;
 }
 /* Titres de rubrique (CINÉMA/PIX/EAU/VENT/etc.) — retour utilisateur : encore
    bleutés en thème ancien malgré le fond sombre partagé. Le badge sombre reste
@@ -2258,6 +2286,17 @@ body.fps-hud-deployed .debug-light-btn-rows {
   color: #e8dcc0;
   background: rgba(0,0,0,0.40);
   border-left: 2px solid #6b4e10;
+}
+/* 2026-08-03 — demande explicite : ces titres héritaient du text-shadow clair
+   (rgba(255,250,235,...)) posé sur body pour les textes Enchanted-Land de la
+   prez — sur le fond sombre (rgba(0,0,0,0.55/0.40)) de ces badges, ce halo
+   clair produisait l'effet inverse de son intention (illisible au lieu de
+   lisible). Retiré explicitement, ces titres ne sont de toute façon jamais
+   passés en Enchanted-Land (règle "jamais sur les titres"). */
+[data-theme="ancien"] .debug-light-pix-head > span,
+[data-theme="ancien"] .lut-section-head,
+[data-theme="ancien"] .lut-section-head--nested {
+  text-shadow: none;
 }
 
 /* 2026-07-20 — bug signalé : en thème médiéval, les sliders des rubriques

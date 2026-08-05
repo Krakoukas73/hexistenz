@@ -43,6 +43,7 @@ $cssFiles = [
     __DIR__ . '/css/presentation.css',
     __DIR__ . '/css/themes/bleu.css',
     __DIR__ . '/css/themes/medieval.css',
+    __DIR__ . '/css/cursors.css',
 ];
 $cssVersion = time();
 $mtimes = array_filter(array_map(function ($f) { return file_exists($f) ? filemtime($f) : 0; }, $cssFiles));
@@ -207,6 +208,10 @@ function fmt_date($iso) {
        correspondant n'est pas sélectionné. -->
   <link rel="stylesheet" href="css/themes/bleu.css?v=<?= $cssVersion ?>" />
   <link rel="stylesheet" href="css/themes/medieval.css?v=<?= $cssVersion ?>" />
+  <!-- 2026-08-04 — demande explicite : curseur custom (test), remplace le
+       curseur natif du navigateur partout sur cette page. cf.
+       css/cursors.css pour le détail (spécificité, compatibilité, hotspot). -->
+  <link rel="stylesheet" href="css/cursors.css?v=<?= $cssVersion ?>" />
   <script id="i18n-data" type="application/json"><?= json_encode($t, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?></script>
 </head>
 <body>
@@ -275,7 +280,37 @@ function fmt_date($iso) {
   <div class="container">
     <div class="hero-inner">
       <div class="hero-text">
-        <h1 class="hero-title">⬡ HEXISTENZ<?php if ($version): ?><span class="hero-version"><?= htmlspecialchars($version) ?></span><?php endif; ?><?php if ($versionDate): ?><span class="hero-version-date" id="heroVersionDate"><?= htmlspecialchars($versionDate) ?></span><?php endif; ?></h1>
+        <?php /* 2026-08-02 — demande explicite : "en médiéval, à largeur faible (~920px),
+           les textes/images/sections... sont tronqués par le cadre, passent dessous et
+           sont illisibles". Cause réelle (pas la marge du cadre, déjà correcte cf. plus
+           bas) : ⬡ HEXISTENZ + la pastille de version + la date étaient concaténés SANS
+           aucun caractère d'espacement entre eux (uniquement séparés visuellement par du
+           margin-left CSS sur .hero-version/.hero-version-date) — un seul run de texte
+           insécable d'environ 824px à ce gabarit de police (clamp 78-160px), sans AUCUNE
+           opportunité de saut de ligne. `.hero-inner` étant en CSS Grid
+           (grid-template-columns: 1fr), le min-width:auto par défaut d'une grid-item
+           oblige toute la colonne (donc .hero-text et tout son contenu : sous-titre,
+           inspi, tagline, boutons, stats-bar) à s'élargir jusqu'à ce run insécable même
+           quand le track 1fr ne dispose que de ~673px — le surplus (~150px) déborde à
+           droite, sous le cadre (#prezRightBanner, z-index au-dessus). Invisible en thème
+           bleu (pas de cadre + body{overflow-x:hidden} masque silencieusement le même
+           débordement), d'où "médiéval uniquement". Fix : un espace insécable-cassable
+           normal (espace HTML standard) inséré entre chaque segment donne au navigateur
+           un point de rupture — la ligne peut désormais se replier normalement dans le
+           track 1fr sans le forcer à s'élargir. cf. aussi `.hero-inner` (presentation.css)
+           passé à `minmax(0, 1fr)` en défense contre ce type de débordement à l'avenir. */ ?>
+        <?php /* 2026-08-03 — <wbr> (point de rupture optionnel, largeur nulle) au lieu
+           d'un espace normal entre "HEXISTENZ" et la pastille : un espace classique
+           hérite ici de la taille de police géante du h1 (clamp jusqu'à 160px) et de
+           son letter-spacing, ce qui lui donne une largeur réelle de ~40-50px — assez
+           pour faire déborder le wrapper pastille+date d'une poignée de pixels et le
+           faire sauter seul à la ligne, MEME quand il y avait largement la place. <wbr>
+           conserve l'opportunité de rupture nécessaire aux largeurs étroites (cf. fix
+           historique plus haut, largeur ~920px) sans consommer cette largeur fantôme.
+           Espace interne pastille/date retiré pour la même raison (hérite aussi du
+           160px du h1, le wrapper n'ayant pas son propre font-size) : le margin-left
+           déjà présent sur .hero-version-date fournit l'espacement visuel à la place. */ ?>
+        <h1 class="hero-title">⬡ HEXISTENZ<?php if ($version): ?><wbr><span class="hero-version-wrap"><span class="hero-version"><?= htmlspecialchars($version) ?></span><?php if ($versionDate): ?><span class="hero-version-date" id="heroVersionDate"><?= htmlspecialchars($versionDate) ?></span><?php endif; ?></span><?php endif; ?></h1>
         <p class="hero-subtitle" data-i18n="hero.subtitle"><?= tr($t,'fr','hero.subtitle') ?></p>
 
         <p class="hero-inspi" data-i18n="hero.inspi_text"><?= tr($t,'fr','hero.inspi_text') ?></p>
@@ -451,7 +486,7 @@ function fmt_date($iso) {
           ['key' => 'surround', 'pts' => '+50'],
           ['key' => 'mission',  'pts' => '+100'],
           ['key' => 'comet',    'pts' => '+75'],
-          ['key' => 'bonus',    'pts' => '+1500'],
+          ['key' => 'bonus',    'pts' => '+500'],
         ];
         foreach ($pills as $pc): $k = $pc['key']; ?>
         <div class="score-pill"><div class="score-pill-pts"><?= $pc['pts'] ?></div><div class="score-pill-label" data-i18n="gameplay.pills.<?= $k ?>"><?= tr($t,'fr',"gameplay.pills.$k") ?></div></div>
@@ -658,14 +693,14 @@ function fmt_date($iso) {
 
     <div class="audio-grid">
       <?php
+      // 2026-08-02 — demande explicite : la carte 'voice' ("Une voix qui commente
+      // la partie") sort de cette grille pour devenir sa propre sous-rubrique
+      // avec un gros titre H2 (cf. bloc .audio-solo juste après ce foreach) — elle
+      // n'apparaît donc plus ici, $audioCards ne liste plus que les 4 autres.
       $audioCards = [
         ['key' => 'spatial',  'icon' => '🎧'],
         ['key' => 'chimai',   'icon' => '🎻'],
         ['key' => 'adaptive', 'icon' => '🎶'],
-        // 2026-07-31 — voix off (TTS, cf. CONTEXT.md §35) : points/missions/repères
-        // d'interface annoncés à voix haute, jingle .ogg devant chaque annonce de
-        // mission, dans les 9 langues du jeu.
-        ['key' => 'voice',    'icon' => '🗣️'],
         ['key' => 'silence',  'icon' => '🔇'],
       ];
       foreach ($audioCards as $ac): $k = $ac['key']; ?>
@@ -678,6 +713,20 @@ function fmt_date($iso) {
       </div></div>
       <?php endforeach; ?>
     </div>
+
+    <!-- 2026-08-02 — demande explicite : "Une voix qui commente la partie" (clé
+         audio.voice, cf. CONTEXT.md §35 pour le TTS ingame qu'elle documente)
+         sort de la grille des 4 autres cartes audio et devient sa propre
+         sous-rubrique, avec un gros titre H2 (.section-title, même classe que le
+         titre principal "Un monde qui s'entend" plus haut) — même procédé que
+         #multi (2 h2.section-title consécutifs) pour distinguer un sous-thème
+         important du reste d'une rubrique.
+         2026-08-02 (v2) — retours explicites : icône retirée (sans .audio-solo-icon
+         ci-dessous, présente en v1), plus de wrapper flex/colonne — le H2 et le
+         paragraphe suivent maintenant directement le flux normal du .container,
+         comme le titre+sous-titre principal de la rubrique juste au-dessus. -->
+    <h2 class="section-title audio-solo-title" data-i18n="audio.voice.name"><?= tr($t,'fr','audio.voice.name') ?></h2>
+    <p class="section-sub" data-i18n="audio.voice.desc"><?= tr($t,'fr','audio.voice.desc') ?></p>
   </div>
 </section>
 
@@ -1086,7 +1135,15 @@ function fmt_date($iso) {
 
   function speakPrez(text, langCode) {
     if (!text || !('speechSynthesis' in window)) return;
-    if (_prezTtsMuted) return;
+    // 2026-08-01 — demande explicite : "couper le son par la touche M doit
+    // rendre les TTS muets aussi (en particulier sur les sélecteurs de
+    // changement de langue ou thème), comme ingame". Ingame (ttsAnnouncer.js
+    // ::speak()), le garde-fou est `if (isMuted() || _ttsMuted) return;` — les
+    // 2 touches (M = son, T = voix) coupent chacune la voix, sans que M ne
+    // touche à _ttsMuted lui-même (l'état des 2 touches reste indépendant,
+    // T reactivée seule ne rétablit pas la voix si M est encore actif). Même
+    // double garde-fou repris ici pour speakPrez().
+    if (_prezSoundMuted || _prezTtsMuted) return;
     const locale = TTS_LOCALES_PREZ[langCode] ?? TTS_LOCALES_PREZ.fr;
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = locale;
@@ -1164,11 +1221,19 @@ function fmt_date($iso) {
     if (window.initParticles) window.initParticles(th);
     // 2026-07-29 — annonce vocale (TTS) du thème, dans la langue actuellement
     // affichée (pas liée au thème lui-même) — réutilise directement theme.bleu/
-    // theme.ancien, déjà traduit dans les 7 langues (mêmes clés que les <option>
+    // theme.ancien, déjà traduit dans les 9 langues (mêmes clés que les <option>
     // data-i18n ci-dessus).
+    // 2026-08-05 — demande explicite : préfixer l'annonce par "Thème " (ex.
+    // "Bleu sidéral" → "Thème Bleu sidéral"), même correctif que côté in-game
+    // (cf. ttsAnnouncer.js::announceThemeChanged). Gabarit game.tts.themeChanged
+    // (`{theme}`, ex. "Thème {theme}" en français) — même clé JSON réutilisée
+    // ici via resolveI18n puisque cette page charge les mêmes fichiers
+    // json/languages/*.json en entier dans I18N (cf. ensureLang ci-dessus).
     if (announce) {
       const currentLang = document.documentElement.dataset.lang || 'fr';
-      speakPrez(resolveI18n(currentLang, 'theme.' + th) ?? resolveI18n('fr', 'theme.' + th), currentLang);
+      const themeName = resolveI18n(currentLang, 'theme.' + th) ?? resolveI18n('fr', 'theme.' + th);
+      const themeTemplate = resolveI18n(currentLang, 'game.tts.themeChanged') ?? resolveI18n('fr', 'game.tts.themeChanged') ?? 'Thème {theme}';
+      speakPrez(themeTemplate.replace('{theme}', themeName), currentLang);
     }
   }
   const savedTheme = localStorage.getItem('hexistenz_theme');
@@ -1178,11 +1243,18 @@ function fmt_date($iso) {
   // Déjà documentées dans le bandeau clavier de cette page (gameplay.kbd.mute/
   // .mute_tts, cf. plus haut) mais jusqu'ici sans aucun effet ICI (elles ne
   // pilotaient que le jeu, game.php) — cf. CONTEXT.md §35 pour l'équivalent
-  // in-game (scene.js, key === 'm'/'t'). Même séparation stricte : M coupe/
-  // rétablit UNIQUEMENT la musique de fond (initPrezMusic plus bas dans le
-  // fichier, expose window.__prezMusicAudio), T coupe/rétablit UNIQUEMENT les
-  // annonces vocales (speakPrez, via _prezTtsMuted ci-dessus) — jamais l'un
-  // sans l'autre.
+  // in-game (scene.js, key === 'm'/'t'). M coupe/rétablit la musique de fond
+  // (initPrezMusic plus bas dans le fichier, expose window.__prezMusicAudio),
+  // T coupe/rétablit UNIQUEMENT les annonces vocales (_prezTtsMuted).
+  // 2026-08-01 — CORRECTIF (demande explicite : "couper le son par M doit
+  // rendre les TTS muets aussi, comme ingame") : les 2 touches restent bien
+  // des toggles indépendants (T seule ne touche jamais à _prezSoundMuted, et
+  // inversement), mais speakPrez() vérifie désormais _prezSoundMuted EN PLUS
+  // de _prezTtsMuted (double garde-fou, cf. speakPrez ci-dessus) — exactement
+  // comme ttsAnnouncer.js::speak() ingame (`isMuted() || _ttsMuted`). Concrètement :
+  // M coupé → plus aucune voix, y compris sur les sélecteurs langue/thème,
+  // jusqu'à ce que M soit réactivé (T seule ne suffit plus à faire revenir la
+  // voix si M est encore coupé).
   //
   // Erratum (même jour) : la 1ère version ne montrait RIEN à la coupure (pas de
   // popup central sur cette page, contrairement au jeu) et ne parlait qu'à la
@@ -1427,6 +1499,12 @@ window.initParticles(document.documentElement.dataset.theme === 'bleu' ? 'bleu' 
 <!-- 2026-07-20 — variation aléatoire manuscrit.png/manuscrit-2.png (thème Médiéval),
      cf. javascript/parchmentVariant.js pour le détail. -->
 <script type="module" src="javascript/parchmentVariant.js"></script>
+
+<!-- 2026-08-04 — socle curseur custom (thème Médiéval, cf. css/cursors.css) :
+     le curseur statique fonctionne en CSS pur sans ce script (déjà actif) ;
+     ce module ne fait qu'exposer window.hexistenzCursor.setAnimated()/reset()
+     pour un futur curseur ANIMÉ (aucun appelant actuel). -->
+<script type="module" src="javascript/customCursor.js"></script>
 
 <script>
 // ─── 2026-07-20 — musique de fond de la prez (aléatoire parmi les 2 pistes

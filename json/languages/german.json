@@ -1045,7 +1045,7 @@
         },
         "bonusCells": {
           "title": "Bonusfelder",
-          "text": "Zwischen 1 und 4 Bonusfelder werden auf dem Raster erzeugt. Sie ändern keine Platzierungsregel: gelingt es dir, eine Kachel darauf zu setzen, verschwinden sie und bringen sofort +1500 Punkte.",
+          "text": "Zwischen 1 und 4 Bonusfelder werden auf dem Raster erzeugt. Sie ändern keine Platzierungsregel: gelingt es dir, eine Kachel darauf zu setzen, verschwinden sie und bringen sofort +500 Punkte.",
           "label": "optionales Ziel, reiner Punktgewinn, keine Falle"
         },
         "blackCells": {
@@ -1208,7 +1208,8 @@
       "trainsCount": "Du hast {n} Züge",
       "boatsCount": "Du hast {n} Boote",
       "cometsCount": "Du hast {n} Kometen",
-      "languageChanged": "Deutsche Sprache"
+      "languageChanged": "Deutsche Sprache",
+      "themeChanged": "Thema {theme}"
     },
     "fpsAdjectives": {
       "disastrous": "Katastrophal",

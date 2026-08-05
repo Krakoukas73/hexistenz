@@ -331,7 +331,17 @@
   color: #332415;
 }
 [data-theme="ancien"] .missionList .mission-title { color: #4a3623; }
-[data-theme="ancien"] .missionList .mission-empty { color: rgba(74, 54, 35, 0.55); }
+/* 2026-08-03 — demande explicite : typo Enchanted-Land sur li.mission-empty
+   (message "aucune mission" — hérite déjà de Georgia via .missionsBox,
+   ≥12px). Les autres lignes de la liste (mission-title/cur/sep/goal/realised,
+   qui mêlent souvent des chiffres/progression) restent hors périmètre. */
+[data-theme="ancien"] .missionList .mission-empty {
+  color: rgba(74, 54, 35, 0.55);
+  font-family: 'EnchantedLand', Georgia, "Times New Roman", serif;
+  /* 2026-08-03 (round suivant) — jamais de gras sur Enchanted-Land : reset
+     du font-weight:500 hérité de la règle de base non thémée. */
+  font-weight: 400;
+}
 [data-theme="ancien"] .missionList .mission-cur,
 [data-theme="ancien"] .missionList .mission-sep,
 [data-theme="ancien"] .missionList .mission-goal { color: #332415; text-shadow: none; }

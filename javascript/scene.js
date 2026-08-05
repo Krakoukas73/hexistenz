@@ -59,6 +59,24 @@ import { pollRoom, updateCursor, updateRoomState } from './multiplayerClient.js'
 import { showScorePopup, showCenterMessage } from './scorePopup.js';
 import { announcePoints, toggleTtsMute, resetTtsQueue, announceNewMission, announceMissionCompleted, announceHelpOpened, announceStatsIfChanged, announceVoiceOn, announceSoundOn } from './ttsAnnouncer.js';
 import { applyTheme } from './themeManager.js';
+import { setAnimated as setAnimatedCursor, reset as resetAnimatedCursor } from './customCursor.js';
+
+// 2026-08-05 — demande explicite : survoler une case libre/valide pour la
+// pose de la tuile en cours affiche le curseur "réticule" (line_cross.png),
+// une case interdite/incompatible affiche "disabled.png" — dans LES DEUX
+// thèmes (Médiéval et Bleu sidéral, cf. customCursor.js désormais non
+// restreint au Médiéval). 32×32, hotspot centré (16,16) : contrairement aux
+// curseurs de clic (gauntlet/hand, pointe en coin), ces 2 icônes sont des
+// réticules symétriques — leur centre visuel doit coïncider avec la
+// position réelle de la souris.
+const TILE_HOVER_CURSOR_VALID   = 'vendor/cursors/kenney-cursor-pack/PNG/Outline/Default/line_cross.png';
+const TILE_HOVER_CURSOR_INVALID = 'vendor/cursors/kenney-cursor-pack/PNG/Outline/Default/disabled.png';
+function setTileHoverCursor(isValid) {
+  setAnimatedCursor({
+    src: isValid ? TILE_HOVER_CURSOR_VALID : TILE_HOVER_CURSOR_INVALID,
+    width: 32, height: 32, hotspotX: 16, hotspotY: 16,
+  });
+}
 
 // 2026-07-17 — reconfirme le thème graphique (data-theme) au chargement du module jeu.
 // Redondant avec le <script> inline de game.php (qui évite le flash avant paint) mais
@@ -1564,6 +1582,10 @@ export function initScene(options = {}) {
       updateHoveredSpecialCellVisibility(null);
       ghostTile.visible = false;
       setText(ui.placement, gameOver ? 'FIN DU DECK' : '-');
+      // 2026-08-05 — aucune tuile survolée : retour au curseur "cliquable
+      // classique" du thème (cf. css/cursors.css), pas de réticule ni de
+      // disabled.png hors du plateau.
+      resetAnimatedCursor();
       return;
     }
 
@@ -1574,6 +1596,7 @@ export function initScene(options = {}) {
       updateHoveredSpecialCellVisibility(null);
       ghostTile.visible = false;
       setText(ui.placement, gameOver ? 'FIN DU DECK' : '-');
+      resetAnimatedCursor();
       return;
     }
 
@@ -1814,6 +1837,13 @@ export function initScene(options = {}) {
     ghostTile.visible = true;
 
     setText(ui.placement, getPlacementLabel(status));
+    // 2026-08-05 — demande explicite : curseur réticule (valide) ou interdit
+    // (invalide) au survol d'une case cible — `rebuildGhost` est le seul
+    // point d'entrée qui (re)calcule `status.valid` pour le survol courant,
+    // qu'il soit appelé depuis updateHover (déplacement souris),
+    // rotateActiveTile (molette pendant le survol) ou undoLastPlacement
+    // (ré-évaluation après annulation) — un seul hook couvre les 3 cas.
+    setTileHoverCursor(status.valid);
   }
 
   function updateHoveredSpecialCellVisibility(hex) {
@@ -1905,6 +1935,7 @@ export function initScene(options = {}) {
     } else {
       ghostTile.visible = false;
       setText(ui.placement, '-');
+      resetAnimatedCursor();
     }
   }
 
@@ -1939,6 +1970,7 @@ export function initScene(options = {}) {
     refreshGridAvailability();
     updateHoveredSpecialCellVisibility(null);
     ghostTile.visible = false;
+    resetAnimatedCursor();
     rebuildHoverZoneOverlay(hoverZoneOverlay, hoveredHex, null, placedTiles, waterZoneOverlay);
     ui.abandonGame?.setAttribute('disabled', 'disabled');
     setText(ui.placement, label);
@@ -2192,6 +2224,7 @@ export function initScene(options = {}) {
         updateHover(hoveredHex, axialToWorld(hoveredHex.q, hoveredHex.r));
       } else {
         ghostTile.visible = false;
+        resetAnimatedCursor();
       }
     } finally {
       applyingRemoteState = false;

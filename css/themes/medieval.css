@@ -65,6 +65,253 @@
    sélecteur un par un. */
 [data-theme="ancien"] { --border: rgba(74, 54, 35, 0.35); }
 
+/* 2026-08-03 — TEST demande explicite : typo gothique moyen-âge (lisible)
+   pour les textes de CORPS de la prez en thème médiéval uniquement — PAS les
+   titres (restent en Bebas Neue via --font-title, inchangé), PAS les boutons
+   (.nav-cta/.btn-primary/.btn-secondary), PAS le bandeau nav ("menu-header").
+   Fichier fourni par l'utilisateur : fonts/Enchanted-Land.otf.
+   Mécanisme : presentation.css définit --font-body (var consommée par tout le
+   texte de corps de la prez) dans :root — jamais utilisée par game.php (qui
+   ne charge pas presentation.css et écrit ses font-family en dur), donc cette
+   redéfinition scopée [data-theme="ancien"] est sans effet sur le jeu/HUD.
+   Réservation explicite ci-dessous pour nav/boutons, qui consomment aussi
+   var(--font-body) et doivent rester en Space Mono malgré la redéfinition.
+   ANNULATION SI NON SATISFAISANT : supprimer ce bloc @font-face + la ligne
+   --font-body ci-dessous + le bloc de réservation nav/boutons juste après —
+   3 blocs, aucune autre dépendance ailleurs dans le code. */
+@font-face {
+  font-family: 'EnchantedLand';
+  src: url('../../fonts/Enchanted-Land.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  /* 2026-08-03 — demande explicite : "l'ensemble des textes en Enchanted-Land
+     sont trop petits -> augmente les dimensions de 100%". Cette police a un
+     em-carré natif plus petit que ses fallbacks (Georgia/Times), donc à
+     font-size égal elle rend visuellement plus petite — plutôt que de
+     doubler le font-size sur chaque sélecteur concerné (~15 blocs dispersés
+     dans ce fichier, valeurs toutes différentes), size-adjust rescale le
+     glyphe ET la métrique de ligne de CETTE police précisément, sans toucher
+     aux autres polices (Bebas Neue, Space Mono, Georgia du tooltip in-game)
+     ni à aucun sélecteur individuel.
+     2026-08-03 (2e round) — ERRATUM demande explicite "10% plus petite en
+     dimensions" : 200% × 0.9 = 180%. */
+  size-adjust: 180%;
+}
+[data-theme="ancien"] { --font-body: 'EnchantedLand', Georgia, 'Times New Roman', serif; }
+/* 2026-08-03 (2e round) — demande explicite, 4 réglages typographiques sur
+   TOUT texte rendu en EnchantedLand (hérité via var(--font-body), donc posé
+   ici une seule fois sur <html data-theme="ancien"> plutôt que sur chacun
+   des ~10 sélecteurs qui consomment la variable — ces propriétés sont
+   héritées en cascade CSS, comme --font-body lui-même) :
+   - mots plus espacés (word-spacing positif) ;
+   - moins gras "si possible" : un seul fichier statique (pas de graisse
+     alternative embarquée), donc font-weight:400 est le plancher réel —
+     posé explicitement pour écraser tout font-weight:700+ hérité qui
+     forcerait un gras synthétique (plus lourd visuellement) ;
+   - interligne augmenté (line-height).
+   2026-08-03 (10e round) — ERRATUM demande explicite : le letter-spacing
+   négatif (resserrement) est retiré entièrement (lettres à espacement
+   normal désormais, plus de valeur -0.015em nulle part). */
+[data-theme="ancien"] {
+  word-spacing: 0.16em;
+  line-height: 1.7;
+  font-weight: 400;
+}
+[data-theme="ancien"] strong,
+[data-theme="ancien"] b {
+  /* 2026-08-03 (6e round) — demande explicite : le gras devient illisible/
+     trop lourd avec EnchantedLand (police déjà dense visuellement) — le
+     <strong>/<b> perd son gras (même graisse que le texte environnant,
+     400 comme forcé plus haut) et gagne un soulignement à la place, pour
+     continuer à marquer l'emphase sans alourdir le rendu. */
+  font-weight: 400;
+  text-decoration: underline;
+}
+[data-theme="ancien"] nav,
+[data-theme="ancien"] .nav-cta,
+[data-theme="ancien"] .btn-primary,
+[data-theme="ancien"] .btn-secondary {
+  font-family: 'Space Mono', monospace;
+  word-spacing: normal;
+}
+/* 2026-08-03 (7e round) — text-shadow est une propriété héritée : le nouveau
+   text-shadow EnchantedLand posé plus bas sur `body` se propageait à
+   .nav-links a (aucune valeur propre) — reset sur `nav` seul (pas sur
+   .nav-cta/.btn-primary/.btn-secondary ci-dessus, qui ONT déjà chacun leur
+   propre text-shadow explicite en presentation.css — les toucher ici les
+   aurait écrasés par erreur). */
+[data-theme="ancien"] nav {
+  text-shadow: none;
+}
+/* 2026-08-03 (3e round, suite) — #theme-toggle select/#lang-toggle select
+   (sélecteurs de thème/langue) ont leur PROPRE font-family: var(--font-body)
+   scopé par ID (presentation.css) — spécificité ID > attribut, donc gagne
+   sur la règle "nav" ci-dessus malgré l'imbrication DOM réelle dans <nav>.
+   Reset dédié, demande explicite ("ni pour les sélecteurs de langue et
+   thème"). */
+[data-theme="ancien"] #theme-toggle select,
+[data-theme="ancien"] #lang-toggle select {
+  font-family: 'Space Mono', monospace;
+  word-spacing: normal;
+}
+/* 2026-08-03 (3e round) — demande explicite : liste d'éléments à exclure
+   d'EnchantedLand malgré l'héritage de var(--font-body) — pastilles version,
+   étiquette de biome, mot-clé + nom de preset de la galerie photo, liens du
+   footer. Revert au Space Mono d'origine (comme nav/boutons ci-dessus),
+   cohérent avec le reste de l'UI non narrative de la prez. */
+[data-theme="ancien"] .hero-version,
+[data-theme="ancien"] .hero-version-date,
+[data-theme="ancien"] .biome-tag,
+[data-theme="ancien"] .gallery-label span,
+[data-theme="ancien"] .footer-link {
+  font-family: 'Space Mono', monospace;
+  word-spacing: normal;
+}
+/* 2026-08-03 (7e round, suite) — même fuite par héritage que ci-dessus :
+   .biome-tag/.hero-version-date/.gallery-label span n'avaient PAS leur propre
+   text-shadow (contrairement à .hero-version et .footer-link, qui gardent le
+   leur — pas touchés ici, sinon écrasés). */
+[data-theme="ancien"] .biome-tag,
+[data-theme="ancien"] .hero-version-date,
+[data-theme="ancien"] .gallery-label span {
+  text-shadow: none;
+}
+[data-theme="ancien"] .hero-inspi-name,
+[data-theme="ancien"] .creature-name {
+  text-shadow: none;
+}
+[data-theme="ancien"] .faction-tag {
+  font-family: 'Space Mono', monospace;
+  word-spacing: normal;
+}
+[data-theme="ancien"] .faction-tag,
+[data-theme="ancien"] .biome-name {
+  text-shadow: none;
+}
+/* 2026-08-03 (3e round, suite) — .hs-card/.stats-bar/.kbd-strip/.room-demo
+   gardent leur font-family Georgia d'origine (cf. blocs plus bas, jamais
+   passés à EnchantedLand), mais word-spacing/line-height sont des propriétés
+   héritées : sans ce reset posé sur le CONTENEUR, les réglages EnchantedLand
+   ci-dessus (word-spacing élargi, interligne augmenté) se seraient quand même
+   propagés à leurs textes enfants qui ne déclarent pas leur propre valeur
+   (ex. .hs-date, .kbd-strip-item, .room-score-name). Posé sur le conteneur
+   plutôt que sur chaque enfant individuellement — la cascade fait le reste,
+   et les enfants qui ONT leur propre line-height explicite (.stat-num,
+   .room-code, tous deux à 1) restent inchangés (explicite > hérité). */
+[data-theme="ancien"] .hs-card,
+[data-theme="ancien"] .stats-bar,
+[data-theme="ancien"] .kbd-strip,
+[data-theme="ancien"] .room-demo {
+  word-spacing: normal;
+  line-height: normal;
+  /* 2026-08-03 (7e round) — même logique : text-shadow est hérité, le nouveau
+     text-shadow EnchantedLand posé sur `body` se propageait à leurs enfants
+     sans valeur propre (.hs-date, .stat-num, .kbd-strip kbd, .room-code...). */
+  text-shadow: none;
+}
+/* 2026-08-03 (4e round) — demande explicite : le contenu des <kbd> (rubrique
+   "Contrôles clavier") passait quand même par EnchantedLand malgré le revert
+   de .kbd-strip-item ci-dessus (autre round) — cause réelle : presentation.css
+   a une règle DÉDIÉE `.kbd-strip kbd { font-family: var(--font-body); ... }`
+   qui cible <kbd> directement (spécificité classe+type), donc plus prioritaire
+   que l'hérité de .kbd-strip-item. Reset ciblé ici. */
+[data-theme="ancien"] .kbd-strip kbd {
+  font-family: Georgia, "Times New Roman", serif;
+}
+/* 2026-08-03 (4e round, suite) — 3 exclusions supplémentaires demandées :
+   .section-label (petit sur-titre de rubrique) et .gameplay-ui-caption
+   (légende sous les mockups HUD) repassent en Space Mono, comme le reste de
+   l'UI non narrative déjà exclue plus haut. */
+[data-theme="ancien"] .section-label,
+[data-theme="ancien"] .gameplay-ui-caption {
+  font-family: 'Space Mono', monospace;
+  word-spacing: normal;
+}
+/* 2026-08-03 (4e round, suite) — demande explicite : les typos EnchantedLand
+   de taille 15px (ex. .hero-tagline) passent à 14px. */
+[data-theme="ancien"] .hero-tagline {
+  font-size: 14px;
+}
+/* 2026-08-03 (9e round) — demande explicite : les typos EnchantedLand de
+   11/11.5px passent à 12px (.mission-desc/.eda-showcase-desc/.hero-inspi/
+   .population-group-label à 11px, .audio-desc à 11.5px — grep exhaustif
+   `font-size: 11(\.5)?px` de presentation.css, filtré aux seuls sélecteurs
+   EnchantedLand non exclus : .nav-cta/.footer-link/.kbd-strip-item/.hs-score
+   sont à 11(.5)px aussi mais déjà exclus d'EnchantedLand plus haut, donc pas
+   concernés ; .footer-copy/.footer-sep sont à 11px et SONT EnchantedLand,
+   inclus ci-dessous). */
+[data-theme="ancien"] .mission-desc,
+[data-theme="ancien"] .audio-desc,
+[data-theme="ancien"] .eda-showcase-desc,
+[data-theme="ancien"] .hero-inspi,
+[data-theme="ancien"] .population-group-label,
+[data-theme="ancien"] .footer-copy,
+[data-theme="ancien"] .footer-sep {
+  font-size: 12px;
+}
+/* 2026-08-03 (4e/5e round) — demande explicite, ERRATUM x2 : "et d'autres !!!"
+   — le 1er passage (4e round) n'avait couvert que .biome-desc/.creature-desc/
+   .step-desc (seuls à 1.65 pile). Un grep exhaustif de TOUTES les valeurs
+   line-height du fichier (`line-height: 1\.`) montre qu'en réalité PRESQUE
+   CHAQUE sélecteur consommant var(--font-body) porte sa PROPRE valeur
+   explicite (1.55/1.6/1.7/1.75/1.8 selon les cas) — un texte qui déclare son
+   propre line-height n'hérite JAMAIS de celui d'un ancêtre (explicite >
+   hérité, quelle que soit la spécificité comparée), donc le réglage global
+   posé plus haut sur [data-theme="ancien"] (html) ne les atteignait pas.
+   Liste ci-dessous = TOUS les sélecteurs EnchantedLand restants avec leur
+   propre line-height (hors .biome-desc/.creature-desc/.step-desc déjà à 2.0
+   ci-dessus) : .mission-desc/.audio-desc/.daynight-list li (1.6/1.6/1.55),
+   .faction-desc (1.70), .eda-showcase-desc (1.55), .section-sub (1.75),
+   .hero-inspi/.population-note/.multi-feature-list li (1.6/1.6/1.55, jamais
+   passés à Space Mono — pas dans la liste d'exclusions demandée), plus
+   [data-theme="ancien"] body (1.6, presentation.css l.32, non scopé thème —
+   base de tout paragraphe SANS classe dédiée, ex. les paragraphes d'intro).
+   Tous unifiés à 2.0, comme .biome-desc/.creature-desc/.step-desc. */
+[data-theme="ancien"] body,
+[data-theme="ancien"] .biome-desc,
+[data-theme="ancien"] .creature-desc,
+[data-theme="ancien"] .step-desc,
+[data-theme="ancien"] .mission-desc,
+[data-theme="ancien"] .audio-desc,
+[data-theme="ancien"] .daynight-list li,
+[data-theme="ancien"] .faction-desc,
+[data-theme="ancien"] .eda-showcase-desc,
+[data-theme="ancien"] .section-sub,
+[data-theme="ancien"] .hero-tagline,
+[data-theme="ancien"] .hero-inspi,
+[data-theme="ancien"] .population-note,
+[data-theme="ancien"] .multi-feature-list li {
+  line-height: 2.0;
+}
+/* 2026-08-03 (7e round) — demande explicite : text-shadow correct pour la
+   lisibilité d'EnchantedLand sur fond parchemin clair, à appliquer à tout
+   texte EnchantedLand qui n'a pas déjà exactement cette valeur. Vérifié en
+   direct élément par élément (getComputedStyle) : .hero-subtitle l'avait
+   déjà (valeur d'origine, inchangée) ; .hero-tagline/.section-sub/
+   .population-note/.population-group-label/.multi-feature-list li avaient
+   une valeur single-layer différente (0 0 3px, alpha 0.75) ; .mission-desc/
+   .biome-desc/.faction-desc/.creature-desc/.audio-desc/.daynight-list li/
+   .step-desc/.eda-showcase-desc/.hero-inspi/body n'avaient AUCUN text-shadow
+   (`none`, encre sombre nue sur parchemin texturé, plus dur à lire). */
+[data-theme="ancien"] .mission-desc,
+[data-theme="ancien"] .biome-desc,
+[data-theme="ancien"] .faction-desc,
+[data-theme="ancien"] .creature-desc,
+[data-theme="ancien"] .audio-desc,
+[data-theme="ancien"] .daynight-list li,
+[data-theme="ancien"] .step-desc,
+[data-theme="ancien"] .eda-showcase-desc,
+[data-theme="ancien"] .section-sub,
+[data-theme="ancien"] .hero-tagline,
+[data-theme="ancien"] .hero-inspi,
+[data-theme="ancien"] .population-note,
+[data-theme="ancien"] .population-group-label,
+[data-theme="ancien"] .multi-feature-list li,
+[data-theme="ancien"] body {
+  text-shadow: 0 0 4px rgba(255, 250, 235, 0.8), 0 1px 2px rgba(255, 250, 235, 0.6);
+}
+
 /* 2026-07-19 (v3) — les lucioles restaient invisibles malgré la config JS
    recolorée : #particles-js et .bg-layer partagent tous deux z-index:0 en
    position:fixed (presentation.css), donc l'ordre du DOM tranche — .bg-layer
@@ -127,19 +374,26 @@
 [data-theme="ancien"] .hero-subtitle { color: #4a3623; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8), 0 1px 2px rgba(255, 250, 235, 0.6); }
 [data-theme="ancien"] .section-label { color: #6b4e10; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8); }
 [data-theme="ancien"] .section-title { color: #2a1c0f; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8); }
-[data-theme="ancien"] .section-sub { color: #4a3623; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
-[data-theme="ancien"] .section-sub--lead { color: #332415; opacity: 1; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+/* 2026-08-03 (7e round) — demande explicite : text-shadow uniforme pour
+   EnchantedLand (0 0 4px rgba(255,250,235,0.8), 0 1px 2px rgba(255,250,235,0.6),
+   comme .hero-subtitle ci-dessus) — ces 6 déclarations avaient l'ancienne
+   valeur single-layer (0 0 3px, alpha 0.75) ou aucune (.hero-inspi), et étant
+   PLUS BAS dans ce fichier que le reset générique posé plus haut (même
+   sélecteur, même spécificité => la dernière déclaration du fichier gagne),
+   elles doivent être corrigées ICI directement plutôt que là-haut. */
+[data-theme="ancien"] .section-sub { color: #4a3623; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8), 0 1px 2px rgba(255, 250, 235, 0.6); }
+[data-theme="ancien"] .section-sub--lead { color: #332415; opacity: 1; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8), 0 1px 2px rgba(255, 250, 235, 0.6); }
 [data-theme="ancien"] .ambiance-subtitle { color: #2a1c0f; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8); }
-[data-theme="ancien"] .multi-feature-list li { color: #4a3623; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .multi-feature-list li { color: #4a3623; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8), 0 1px 2px rgba(255, 250, 235, 0.6); }
 [data-theme="ancien"] .multi-feature-list li::before { color: #6b4e10; }
 [data-theme="ancien"] .faction-vs { color: #4a3623; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8); }
-[data-theme="ancien"] .hero-inspi { color: #4a3623; text-shadow: none; border-left-color: rgba(74, 54, 35, 0.4); }
+[data-theme="ancien"] .hero-inspi { color: #4a3623; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8), 0 1px 2px rgba(255, 250, 235, 0.6); border-left-color: rgba(74, 54, 35, 0.4); }
 [data-theme="ancien"] .hero-inspi em { color: #6b4e10; }
-[data-theme="ancien"] .hero-tagline { color: #4a3623; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .hero-tagline { color: #4a3623; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8), 0 1px 2px rgba(255, 250, 235, 0.6); }
 [data-theme="ancien"] .hero-inspi-buy { color: #4a3623; }
 [data-theme="ancien"] .hero-inspi-buy:hover { color: #2a1c0f; }
-[data-theme="ancien"] .population-group-label { color: #6b4e10; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
-[data-theme="ancien"] .population-note { color: #4a3623; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .population-group-label { color: #6b4e10; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8), 0 1px 2px rgba(255, 250, 235, 0.6); }
+[data-theme="ancien"] .population-note { color: #4a3623; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8), 0 1px 2px rgba(255, 250, 235, 0.6); }
 [data-theme="ancien"] .gameplay-ui-caption { color: #4a3623; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
 
 /* ─── BANDEAU HEADER FIXE (nav) — parchemin, cellules 4/6/7/8/9 du 9-slice
@@ -231,13 +485,58 @@
    1100px+marges, le padding de 24px ne suffit plus à dégager le cadre, qui
    passe par-dessus (z-index supérieur) et masque titres/images/sections.
    Fix scopé au thème médiéval uniquement (le thème bleu n'a pas de cadre,
-   confirmé "parfaitement niquel" par l'utilisateur) : padding porté à 100px
-   (85px de cadre + 15px de respiration), qui prime sur le padding générique
-   de presentation.css par la spécificité du sélecteur. Sur les grands écrans
-   ceci ne change rien visuellement : .container est de toute façon centré
-   par ses marges auto sous 1100px de large, seul le gouttière change. */
+   confirmé "parfaitement niquel" par l'utilisateur).
+   2026-08-02 — ERRATUM #1 (retour utilisateur : toujours tronqué/illisible à
+   ~920px malgré ce fix) : 100px (85px de cadre + 15px de respiration)
+   supposait que le motif cadre.png reste strictement contenu dans sa bande de
+   85px — FAUX, vérifié en direct par capture zoomée : les feuillages du motif
+   débordent visuellement par endroits selon la position du repeat-x vertical.
+   Buffer temporairement porté à 140px pour absorber cette irrégularité et
+   confirmer que le débordement était bien résolu.
+   2026-08-02 — ERRATUM #2 (retour utilisateur, même jour : "c'est presque
+   validé ! réduis les marges gauche/droite... on cherche le chevauchement
+   très léger du png du cadre avec le contenu") : 140px était en réalité bien
+   trop généreux — le but recherché n'est PAS d'éliminer tout contact visuel
+   avec le cadre, mais un chevauchement très léger et volontaire (esthétique),
+   assumé, entre les feuillages et le texte/images, sans que rien ne devienne
+   illisible. Padding réduit à 78px (en-deçà même de la bande stricte de 85px)
+   — vérifié en direct de 634px à 1030px de large : les feuillages effleurent
+   le texte par endroits sans jamais recouvrir de lettre.
+   2026-08-02 — ERRATUM #3 (retour utilisateur, même jour : "réduis encore les
+   marges gauche/droite avec le cadre de 20px dans toutes les résolutions") :
+   78px → 58px (−20px de chaque côté, demande explicite, toutes résolutions).
+   Prime sur le padding générique de presentation.css par la spécificité du
+   sélecteur. Sur les grands écrans ceci ne change rien visuellement :
+   .container est de toute façon centré par ses marges auto sous 1100px de
+   large, seul le gouttière change. */
 [data-theme="ancien"] .container {
-  padding: 0 100px;
+  padding: 0 58px;
+}
+/* 2026-08-02 — même chantier que ci-dessus : .hero-subtitle (presentation.css)
+   est en `white-space: nowrap`, repassé à `normal` seulement sous
+   `@media (max-width: 900px)` — un seuil calibré sur le padding du thème BLEU
+   (24px), qui reste différent du padding médiéval même après réduction à
+   78px ci-dessus. Plutôt que dupliquer/décaler le seuil partagé (risque de
+   régression sur le bleu), override inconditionnel ici : le sous-titre wrap
+   toujours en médiéval, quel que soit le viewport — un sous-titre sur 2
+   lignes n'a aucun inconvénient visuel, contrairement à un débordement
+   illisible sous le cadre. */
+[data-theme="ancien"] .hero-subtitle {
+  white-space: normal;
+}
+/* 2026-08-02 — même chantier : .steps-grid (presentation.css, 4 colonnes fixes
+   `repeat(4, 1fr)`) ne repasse à 2 colonnes qu'à `@media (max-width: 900px)`
+   — seuil calibré sur le padding de 24px du thème bleu, qui ne correspond pas
+   exactement au padding médiéval (58px ci-dessus, après le 2e round de
+   réduction du 2026-08-02). Mesuré en direct (4 colonnes forcées puis
+   recherche du point de rupture, méthode identique au 1er round) : la 4e
+   carte ("Gagnez en renom") déborde en-dessous de ~840px de large utile en
+   médiéval avec ce padding réduit — seuil recalculé et abaissé de 880px à
+   850px (840 + marge de sécurité) en conséquence. */
+@media (max-width: 850px) {
+  [data-theme="ancien"] .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 /* gap réduit (20px -> 8px) — nécessaire pour que les 11 liens tiennent sur
    une seule ligne malgré l'espace pris par le cadre 50px + la marge 30px
@@ -329,8 +628,18 @@
 [data-theme="ancien"] .faction-card:hover,
 [data-theme="ancien"] .daynight-card:hover { box-shadow: none; }
 [data-theme="ancien"] .footer-logo { color: #6b4e10; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+/* 2026-08-03 (8e round) — demande explicite : .footer-copy/.footer-sep
+   (texte EnchantedLand du bandeau .footer-inner) n'avaient pas le
+   text-shadow commun (ancienne valeur single-layer) — alignés ici. */
 [data-theme="ancien"] .footer-copy,
-[data-theme="ancien"] .footer-sep { color: #4a3623; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
+[data-theme="ancien"] .footer-sep { color: #4a3623; text-shadow: 0 0 4px rgba(255, 250, 235, 0.8), 0 1px 2px rgba(255, 250, 235, 0.6); }
+/* 2026-08-03 (8e round, suite) — demande explicite : .population-tag rend
+   flou avec le text-shadow commun (petites pastilles, texte 10.5px — le
+   flou du glow devient plus voyant que le texte lui-même à cette taille).
+   Retiré uniquement ici, la police EnchantedLand reste inchangée. */
+[data-theme="ancien"] .population-tag {
+  text-shadow: none;
+}
 [data-theme="ancien"] .footer-link { color: #6b4e10; text-shadow: 0 0 3px rgba(255, 250, 235, 0.75); }
 [data-theme="ancien"] .footer-link:hover { color: #2a1c0f; }
 
@@ -379,7 +688,7 @@
 [data-theme="ancien"] .mission-card,
 [data-theme="ancien"] .mission-name,
 [data-theme="ancien"] .mission-desc {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-body, Georgia, "Times New Roman", serif);
   color: #332415;
 }
 [data-theme="ancien"] .mission-desc {
@@ -413,7 +722,7 @@
    via border-image fill) a besoin de l'encre sombre + police serif. */
 [data-theme="ancien"] .biome-body,
 [data-theme="ancien"] .biome-desc {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-body, Georgia, "Times New Roman", serif);
   color: #4a3623;
 }
 /* Même règle que .mission-card ci-dessus : aucun padding dans la cellule
@@ -471,7 +780,7 @@
 }
 [data-theme="ancien"] .faction-name,
 [data-theme="ancien"] .faction-desc {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-body, Georgia, "Times New Roman", serif);
 }
 [data-theme="ancien"] .faction-desc { color: #4a3623; }
 /* Même traitement "cachet de cire" que .biome-tag : fond saturé sombre + texte
@@ -500,7 +809,7 @@
 [data-theme="ancien"] .creature-card[data-parchment-variant="2"] { border-image-source: url("../../images/manuscrit-2.png"); }
 [data-theme="ancien"] .creature-body { padding: 0; }
 [data-theme="ancien"] .creature-desc {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-body, Georgia, "Times New Roman", serif);
   color: #4a3623;
 }
 /* Même fix que .biome-banner ci-dessus : marge sous l'image pour ne pas coller
@@ -534,7 +843,7 @@
 [data-theme="ancien"] .audio-card,
 [data-theme="ancien"] .audio-name,
 [data-theme="ancien"] .audio-desc {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-body, Georgia, "Times New Roman", serif);
   color: #332415;
 }
 [data-theme="ancien"] .audio-desc { color: #4a3623; }
@@ -567,7 +876,7 @@
 [data-theme="ancien"] .daynight-card .parchment-picture { margin-bottom: 16px; }
 [data-theme="ancien"] .daynight-name,
 [data-theme="ancien"] .daynight-list li {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-body, Georgia, "Times New Roman", serif);
   color: #4a3623;
 }
 /* Une seule teinte d'encre pour les 3 variantes (jour/nuit/fumée) — le thème
@@ -768,7 +1077,7 @@
 [data-theme="ancien"] .step-card::before { color: rgba(74,54,35,0.25); }
 [data-theme="ancien"] .step-title,
 [data-theme="ancien"] .step-desc {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-body, Georgia, "Times New Roman", serif);
   color: #332415;
 }
 [data-theme="ancien"] .step-desc { color: #4a3623; }
@@ -914,7 +1223,7 @@
 [data-theme="ancien"] .eda-showcase-tab,
 [data-theme="ancien"] .eda-showcase-label,
 [data-theme="ancien"] .eda-showcase-desc {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-body, Georgia, "Times New Roman", serif);
   color: #332415;
 }
 [data-theme="ancien"] .eda-showcase-desc { color: #4a3623; }
@@ -1453,6 +1762,11 @@
   backdrop-filter: none;
   color: #f0e6d0;
   font-family: Georgia, "Times New Roman", serif;
+  /* 2026-08-03 — demande explicite : héritait du text-shadow clair posé sur
+     body pour les textes Enchanted-Land de la prez — sur le fond sombre de
+     cette bulle (#4a3623), ce halo clair rendait le texte illisible. Jamais
+     en Enchanted-Land de toute façon (aide contextuelle, hors périmètre). */
+  text-shadow: none;
 }
 
 /* 2026-08-01 — bannière footer.png : collée en bas de l'écran, uniquement ingame
@@ -1539,8 +1853,21 @@
      Direction vers le HAUT (vers le contenu, cette bande étant en bas).
      2026-08-01 — demande explicite : ombre plus diffuse sur les 4 côtés du
      cadre (jeu + prez, 8 règles au total) — flou +20% (3px→3.6px) et
-     intensité/opacité +20% (0.45→0.54), offset (distance) inchangé. */
-  filter: drop-shadow(0 -2px 3.6px rgba(0, 0, 0, 0.54));
+     intensité/opacité +20% (0.45→0.54), offset (distance) inchangé.
+     2026-08-02 — demande explicite : flou +10% (3.6px→3.96px) et
+     opacité −10% (0.54→0.486) sur ces mêmes 8 règles (4 côtés × jeu+prez),
+     offset toujours inchangé.
+     2026-08-02 — demande explicite (précision : "prez, menus pre-game et
+     ingame, bref partout en thème médiéval") : flou +10% supplémentaire
+     (3.96px→4.356px) et distance (offset) +20% (2px→2.4px) sur ces mêmes 8
+     règles, opacité inchangée. #headerBanner/#footerBanner/#leftBanner/
+     #rightBanner (game.php) sont des éléments fixes partagés entre l'écran
+     pre-game et le jeu en cours — aucune règle séparée n'existe pour le
+     pre-game, ces 8 règles couvrent donc déjà bien les 3 contextes cités.
+     2026-08-02 — demande explicite : "distance de flou" (rayon de flou du
+     drop-shadow, 3e valeur) +30% supplémentaire (4.356px→5.663px) sur ces
+     mêmes 8 règles, offset et opacité inchangés cette fois. */
+  filter: drop-shadow(0 -2.4px 5.663px rgba(0, 0, 0, 0.486));
 }
 
 /* 2026-08-01 — demande explicite : le footer devient un cadre ("frame")
@@ -1574,7 +1901,7 @@
   z-index: 99999;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 2px 3.6px rgba(0, 0, 0, 0.54));
+  filter: drop-shadow(0 2.4px 5.663px rgba(0, 0, 0, 0.486));
 }
 [data-theme="ancien"] #headerBanner::before {
   content: "";
@@ -1627,11 +1954,11 @@
 }
 [data-theme="ancien"] #leftBanner {
   left: 0;
-  filter: drop-shadow(2px 0 3.6px rgba(0, 0, 0, 0.54));
+  filter: drop-shadow(2.4px 0 5.663px rgba(0, 0, 0, 0.486));
 }
 [data-theme="ancien"] #rightBanner {
   right: 0;
-  filter: drop-shadow(-2px 0 3.6px rgba(0, 0, 0, 0.54));
+  filter: drop-shadow(-2.4px 0 5.663px rgba(0, 0, 0, 0.486));
 }
 [data-theme="ancien"] #leftBanner::before,
 [data-theme="ancien"] #rightBanner::before {
@@ -1690,7 +2017,7 @@
      le piège filter+transform rencontré plus haut (cf. commentaire
      détaillé sur #prezHeaderBanner). Mêmes valeurs de flou/opacité
      resserrées (2px, 3px, 0.45), offsetY négatif = vers le haut. */
-  filter: drop-shadow(0 -2px 3.6px rgba(0, 0, 0, 0.54));
+  filter: drop-shadow(0 -2.4px 5.663px rgba(0, 0, 0, 0.486));
 }
 /* 2026-08-01 — TEST demande explicite : effet d'ombre sur la bande TOP du
    cadre, prez uniquement pour l'instant (à généraliser si validé). Un
@@ -1724,7 +2051,7 @@
   /* 2026-08-01 — retour utilisateur : "encore trop diffuse, trop distante
      en px et trop floue" — resserré : offset 6px→2px, flou 10px→3px
      (opacité inchangée à 0.45). Ombre plus fine et plus collée au motif. */
-  filter: drop-shadow(0 2px 3.6px rgba(0, 0, 0, 0.54));
+  filter: drop-shadow(0 2.4px 5.663px rgba(0, 0, 0, 0.486));
 }
 [data-theme="ancien"] #prezHeaderBanner::before {
   content: "";
@@ -1765,11 +2092,11 @@
 }
 [data-theme="ancien"] #prezLeftBanner {
   left: 0;
-  filter: drop-shadow(2px 0 3.6px rgba(0, 0, 0, 0.54));
+  filter: drop-shadow(2.4px 0 5.663px rgba(0, 0, 0, 0.486));
 }
 [data-theme="ancien"] #prezRightBanner {
   right: 0;
-  filter: drop-shadow(-2px 0 3.6px rgba(0, 0, 0, 0.54));
+  filter: drop-shadow(-2.4px 0 5.663px rgba(0, 0, 0, 0.486));
 }
 [data-theme="ancien"] #prezLeftBanner::before,
 [data-theme="ancien"] #prezRightBanner::before {
@@ -1788,4 +2115,34 @@
 }
 [data-theme="ancien"] #prezRightBanner::before {
   transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+/* 2026-08-03 — demande explicite : typo "Enchanted-Land" sur .title (ingame,
+   partagée par .tileDeckBox : "TUILE ACTIVE/SUIVANTE/RESTANTES/POSÉES" et
+   .missionsBox : "MISSIONS EN COURS") — 12px, hérite déjà de Georgia via ses
+   2 conteneurs (deck.css/missions.css), remplacé ici seulement sur .title
+   pour ne toucher ni les valeurs numériques voisines (#deckRemaining,
+   #tilesPlaced, mission-item...) ni les boutons. Jamais en dessous de 12px
+   (c'est exactement le plancher) — le size-adjust:180% du @font-face,
+   déjà global plus haut dans ce fichier, s'applique automatiquement ici
+   aussi (mêmes dimensions que la prez, comme demandé). */
+[data-theme="ancien"] .title {
+  font-family: 'EnchantedLand', Georgia, "Times New Roman", serif;
+  /* 2026-08-03 — demande explicite : plus de MAJUSCULES sur les textes
+     Enchanted-Land (texte source ET text-transform:uppercase, base deck.css,
+     tout en capitales) — seule la 1ère lettre reste capitalisée. lowercase
+     ici + ::first-letter juste en dessous (::first-letter accepte
+     text-transform, contrairement à ::first-line pour cette propriété). */
+  text-transform: lowercase;
+  /* 2026-08-03 (round suivant) — cohérence avec les acquis de la prez :
+     AUCUN letter-spacing sur les textes Enchanted-Land (retiré partout côté
+     prez sur demande explicite) — reset du 0.18em hérité de la règle de base
+     non thémée (deck.css), pensée pour l'ancienne typo monospace. */
+  letter-spacing: normal;
+  /* même round — 12px jugé trop petit une fois rendu (contrairement aux
+     textes de la prez normalisés à 12px, celui-ci passe à 14px). */
+  font-size: 14px;
+}
+[data-theme="ancien"] .title::first-letter {
+  text-transform: uppercase;
 }

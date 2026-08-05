@@ -66,6 +66,14 @@ let _soundOnTemplate = _ttsLangData?.game?.sound?.on ?? 'Sons activés';
 // que game.langName déjà utilisé par le popup visuel (gameLangReactive.js::setGameLang),
 // mais formulé en phrase complète plutôt qu'un simple nom de langue.
 let _languageChangedTemplate = _ttsLangData?.game?.tts?.languageChanged ?? 'Langue française';
+// 2026-08-05 — demande explicite : le changement de thème via le sélecteur
+// (#gameThemeSelect, cf. edaPanelHost.js) doit préfixer le nom du thème par
+// "Thème " (ex. "Bleu sidéral" → "Thème Bleu sidéral") au lieu d'annoncer le
+// nom seul. Gabarit `{theme}` plutôt qu'une clé fixe par thème : le nom du
+// thème lui-même reste celui déjà traduit dans `game.eda.themeNames`
+// (cf. edaPanelHost.js::applyThemeOptionLabels), seul le mot "Thème" varie
+// par langue — même mécanique que `{n}` pour millsCount/trainsCount/etc.
+let _themeChangedTemplate = _ttsLangData?.game?.tts?.themeChanged ?? 'Thème {theme}';
 let _millsTemplate = _ttsLangData?.game?.tts?.millsCount ?? '{n} moulins';
 let _trainsTemplate = _ttsLangData?.game?.tts?.trainsCount ?? '{n} trains';
 let _boatsTemplate = _ttsLangData?.game?.tts?.boatsCount ?? '{n} bateaux';
@@ -80,6 +88,7 @@ registerLangRefresh((data) => {
   _voiceOnTemplate = data?.game?.tts?.voiceOn ?? 'Voix activée';
   _soundOnTemplate = data?.game?.sound?.on ?? 'Sons activés';
   _languageChangedTemplate = data?.game?.tts?.languageChanged ?? 'Langue française';
+  _themeChangedTemplate = data?.game?.tts?.themeChanged ?? 'Thème {theme}';
   _millsTemplate = data?.game?.tts?.millsCount ?? '{n} moulins';
   _trainsTemplate = data?.game?.tts?.trainsCount ?? '{n} trains';
   _boatsTemplate = data?.game?.tts?.boatsCount ?? '{n} bateaux';
@@ -465,6 +474,18 @@ export function announceSoundOn() {
 export function announceLanguageChanged() {
   resetTtsQueue();
   speak(_languageChangedTemplate);
+}
+
+/**
+ * Annonce vocale du changement de thème via le sélecteur du HUD in-game
+ * (#gameThemeSelect, cf. edaPanelHost.js). `themeLabel` = nom déjà traduit du
+ * thème (ex. "Bleu sidéral", "Médiéval", cf. game.eda.themeNames) — injecté
+ * dans le gabarit `{theme}` de la langue courante (game.tts.themeChanged,
+ * ex. "Thème {theme}" en français). 2026-08-05 — demande explicite.
+ */
+export function announceThemeChanged(themeLabel) {
+  resetTtsQueue();
+  speak(_themeChangedTemplate.replace('{theme}', themeLabel));
 }
 
 // ─── Annonces des compteurs du panneau STATISTIQUES DE LA PARTIE ──────────────

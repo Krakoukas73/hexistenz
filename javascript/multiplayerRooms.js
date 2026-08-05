@@ -194,6 +194,11 @@ function startMultiplayerScene(overlay, { roomCode, playerId, playerName, state 
   startIngameMusic();
   hideHelpTooltip();
   overlay.remove();
+  // 2026-08-03 — demande explicite : retire le masquage par défaut des HUD
+  // in-partie (cf. base.css body.game-not-started) exactement ici, au moment
+  // réel où la partie démarre — jamais avant (cf. commentaire détaillé dans
+  // base.css pour la raison du bug : fondu de sortie du preloader).
+  document.body.classList.remove('game-not-started');
   initScene({
     mode: 'multi',
     worldShapeMode,

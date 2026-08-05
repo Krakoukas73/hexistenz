@@ -116,7 +116,35 @@
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   padding: 0;
+  /* 2026-08-03 — demande explicite : typo "Enchanted-Land" sur les textes de
+     menus pre-game en thème médiéval (2e étape après la prez, cf. CONTEXT.md
+     §42) — mêmes règles de base que la prez : mêmes dimensions (le
+     size-adjust:180% du @font-face, déjà global dans css/themes/medieval.css,
+     s'applique automatiquement ici aussi), jamais en dessous de 12px, jamais
+     sur les boutons/titres/Bebas Neue, jamais sur formulaires/sélecteurs/
+     inputs/chiffres/scores/pourcentages (jeu doit rester lisible/jouable).
+     .mode-panel n'a pas de <h1> dans le HTML réel (startupMenu.js/
+     multiplayerRooms.js ne génèrent que des <p>/<label>/<input>/<select>/
+     <button> — le sélecteur `.mode-panel h1` plus haut dans ce fichier est un
+     reliquat sans effet actuel), donc aucune exclusion de titre nécessaire ici.
+     Reste donc : .mode-copy/.mode-shape-note (<p>, texte descriptif) passent
+     en Enchanted-Land par héritage de cette règle ; .multi-status l'a aussi
+     (demande explicite, malgré le code de partie qu'il peut contenir) — voir
+     règle dédiée plus bas. Boutons/labels/inputs/selects explicitement
+     exclus juste après (revert Georgia, leur apparence pré-Enchanted-Land
+     inchangée). */
+  font-family: 'EnchantedLand', Georgia, "Times New Roman", serif;
+}
+/* Exclusions : boutons (a déjà sa propre police monospace plus bas, mais
+   reset explicite ici par cohérence/défense), formulaires, sélecteurs —
+   reviennent à l'apparence Georgia d'avant ce changement, zéro régression
+   visuelle sur ces éléments jamais visés par la demande. */
+[data-theme="ancien"] .mode-panel label,
+[data-theme="ancien"] .mode-panel input,
+[data-theme="ancien"] .mode-panel select,
+[data-theme="ancien"] .mode-panel select option {
   font-family: Georgia, "Times New Roman", serif;
+  word-spacing: normal;
 }
 [data-theme="ancien"] .mode-panel[data-parchment-variant="2"] { border-image-source: url("../images/manuscrit-2.png"); }
 /* 2026-08-01 — demande explicite : réserve supplémentaire pour le cadre
@@ -165,7 +193,23 @@
 [data-theme="ancien"] .mode-panel label {
   color: #332415;
 }
-[data-theme="ancien"] .mode-panel p { color: #4a3623; }
+[data-theme="ancien"] .mode-panel p {
+  color: #4a3623;
+  /* 2026-08-03 — demande explicite : cohérence de taille/graisse avec les
+     autres textes Enchanted-Land (prez + HUD in-game, normalisés à 14px /
+     font-weight 400) — .mode-copy/.mode-shape-note (<p>) n'avaient jamais
+     reçu cet override et héritaient donc de la taille par défaut du
+     navigateur (~16px, hors convention) sans reset de graisse. */
+  font-size: 14px;
+  font-weight: 400;
+  /* 2026-08-03 (round suivant) — demande explicite : interligne partagé
+     avec la prez (line-height:2.0 sur body/.biome-desc/.creature-desc/etc.,
+     css/themes/medieval.css). La règle de base .mode-panel p (non thémée,
+     ligne ~31) impose line-height:1.45, explicite donc jamais écrasée par
+     l'héritage du html[data-theme="ancien"] (line-height:1.7 global, lui-
+     même pas assez de toute façon) — override dédié ici. */
+  line-height: 2.0;
+}
 [data-theme="ancien"] .mode-panel label { color: #4a3623; }
 /* Boutons/champs : même principe "cachet de cire" que les chips de la prez
    (.biome-tag/.faction-tag) — fond saturé sombre + texte clair, lisible sur
@@ -215,7 +259,14 @@
   background: rgba(255, 255, 255, 0.35);
   color: #332415;
 }
-[data-theme="ancien"] .multi-status { color: #6b4e10; }
+[data-theme="ancien"] .multi-status {
+  color: #6b4e10;
+  /* 2026-08-03 — même correctif que .mode-panel p ci-dessus : cohérence
+     avec la convention 14px / font-weight 400 des autres textes
+     Enchanted-Land (prez + HUD in-game). */
+  font-size: 14px;
+  font-weight: 400;
+}
 
 /* ─── .internal-parchment (2026-07-18) — même wrapper/marge négative que la
    prez (cf. css/themes/medieval.css), appliqué ici au menu pre-game unique
