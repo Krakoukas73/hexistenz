@@ -29,6 +29,9 @@ const TTS_LOCALES = {
   'fr-CA': 'fr-CA',
   de: 'de-DE',
   ru: 'ru-RU',
+  nl: 'nl-NL',
+  pl: 'pl-PL',
+  tr: 'tr-TR',
   // 2026-07-29 — 9e langue (français médiéval, XIIe siècle) : reste du français
   // contemporain enrichi de vocabulaire (cf. french-medieval.json), aucune
   // locale BCP47 dédiée n'existe pour ça → réutilise la voix française standard.

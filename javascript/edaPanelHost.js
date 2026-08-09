@@ -100,6 +100,9 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
             <option value="de">DE</option>
             <option value="ru">RU</option>
             <option value="fr-MED">XII</option>
+            <option value="nl">NL</option>
+            <option value="pl">PL</option>
+            <option value="tr">TR</option>
           </select>
           <select id="gameThemeSelect" class="debug-light-toggle debug-light-lang-select" tabindex="-1">
             <option value="bleu">BLEU SIDÉRAL</option>

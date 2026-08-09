@@ -1,0 +1,1223 @@
+{
+  "nav": {
+    "links": {
+      "factions": "Facties",
+      "biomes": "Biomen",
+      "missions": "Missies",
+      "gameplay": "Spelverloop",
+      "gallery": "Presets",
+      "creatures": "Wezens",
+      "audio": "Audio",
+      "daynnight": "Omgeving",
+      "eda": "Aanpassing",
+      "multi": "Multiplayer",
+      "scores": "Scorebord"
+    },
+    "play": "Nu spelen"
+  },
+  "theme": {
+    "bleu": "Astraal Blauw",
+    "ancien": "Middeleeuws"
+  },
+  "hero": {
+    "subtitle": "Een contemplatief hexagonaal spel gemaakt met liefde ❤️, Three.js, en een licht verontrustend aantal tegels",
+    "inspi_text": "Geïnspireerd door <em>Dorfromantik</em>, de landelijke ziel van <em>The Settlers</em> (Blue Byte, 1993)\n          en de wonderlijke werelden van <em>Heroes of Might and Magic</em> (3DO).",
+    "inspi_buy": {
+      "dorfromantik": "Dorfromantik op Steam",
+      "settlers": "The Settlers op Ubisoft",
+      "heroes3": "Heroes III op GOG"
+    },
+    "tagline": "<strong>Hexistenz is een contemplatief spel</strong>, gemaakt voor spelers die het geduldig zien ontstaan van een\n          wereld en haar details waarderen — er is geen klok, en eerlijk gezegd ook geen haast.<br><br><strong>Plaats hexagonale tegels</strong> en\n          zie hoe een landschap voor je ogen vorm krijgt: uitgestrekte bossen vol dennen en berken, wuivende korenvelden\n          met verdacht goed onderhouden molens, middeleeuwse dorpen met rokende daken, uitgebreide spoornetwerken, en brede rivieren\n          waarop je bootjes varen, meestal zonder incidenten.<br><br>Voltooi missies, onderschep kometen, omsingel je tegels, en bouw geleidelijk\n          een levende wereld op, tegel voor tegel — geen straf voor twintig minuten staren naar een mooie heuvel.<br><br><strong>Speel solo of multiplayer</strong>, hervat een\n          opgeslagen spel wanneer je maar wilt, <strong>leg je mooiste momenten vast in de galerij</strong>, en herbeleef\n          je spellen versneld met downloadbare online replays.<br><br>Het spel is nu al speelbaar en volledig vertaald in 9 talen, waaronder 12e-eeuws Oudfrans — voor spelers die hun middeleeuwse dorpjes taalkundig kloppend willen hebben.<br><br>Het spel is gratis, zonder registratie, zonder pay-to-win en zonder in-game aankopen: kortom, puur gemaakt uit nostalgie en een koppige weigering om zeshoeken te gelde te maken.",
+    "btn_play": "Nu spelen",
+    "btn_how": "Hoe speel je?",
+    "stats": {
+      "biomes_label": "Biomen",
+      "games_label": "Partijen",
+      "factions_label": "Facties",
+      "langs_label": "Talen",
+      "themes_label": "Grafische thema's"
+    }
+  },
+  "factions": {
+    "label": "Twee manieren om de wereld te zien",
+    "title1": "Platte-aarders en bol-gelovigen",
+    "title2": "Twee onverzoenlijke facties",
+    "sub": "Hexistenz verdeelt zijn bouwers in <strong>twee onverzoenlijke facties</strong>. Officieel een visuele optie,\n      onofficieel een levensovertuiging. Kies je kant — vriendschappen hebben erger overleefd.",
+    "flat": {
+      "tag": "Platte modus",
+      "name": "🪨 De Platte Wereld",
+      "desc": "Het raster strekt zich vlak en ordelijk uit. Elke tegel voegt zich bij een volmaakt egaal plateau,\n            precies zoals de ouden het altijd al wisten.\n            Voor wie zijn eigen ogen vertrouwt."
+    },
+    "globe": {
+      "tag": "Bolmodus",
+      "name": "🌍 De Bolvormige Wereld",
+      "desc": "De kromming van de wereld onthult zich naarmate het raster groeit — verre tegels\n            buigen mee naar de horizon, want sommigen van ons accepteren de wetenschap nu eenmaal op grote schaal. Een real-time GPU-effect dat elke\n            partij adembenemende diepte geeft."
+    },
+    "vs": "Het debat is niet beslecht. Dat zal het ook nooit worden."
+  },
+  "biomes": {
+    "label": "De biomen",
+    "title": "Zes biomen om te verbinden",
+    "sub": "Elke tegel heeft zes driehoekige sectoren. <strong>Verbind gelijke biomen</strong> om zones te vormen, je score te maximaliseren, en je even een stedenbouwkundige te wanen.",
+    "grass": {
+      "name": "Weide",
+      "desc": "Grasvlaktes waar elke grasspriet meetrilt in de wind, bezaaid met wilde bloemen, rotsen, herten en struiken. Neutraal terrein tussen de grote netwerken — het Zwitserland van de biomen.",
+      "tag": "Neutraal bioom"
+    },
+    "field": {
+      "name": "Akker",
+      "desc": "Wiegend koren, procedurele molens en hooibalen. Het chi-mai-thema speelt zodra de camera langs de aren scheert — probeer niet te janken.",
+      "tag": "Landbouwzone"
+    },
+    "forest": {
+      "name": "Bos",
+      "desc": "Dennen, berken en populieren als InstancedMesh, hun kronen wuivend in de wind tot in het kreupelhout. Paddenstoelen, houtstapels, herten — tot 22 miljoen driehoeken op het scherm, elk zalig onwetend van de rest.",
+      "tag": "Dicht woud"
+    },
+    "house": {
+      "name": "Dorp",
+      "desc": "Middeleeuwse huizen met volumetrische rook, wachttorens, fonteinen, geanimeerde karren, honden en paarden — geen van allen ooit een klacht ingediend over de rook.",
+      "tag": "Menselijke nederzetting"
+    },
+    "water": {
+      "name": "Water",
+      "desc": "Doorlopend wateroppervlak met een organische kustlijn, geanimeerde golven en schuim in aquarelstijl. Geanimeerde bootjes met kielzog, procedurele stranden en zonehalo's — zwemles niet inbegrepen.",
+      "tag": "Waternetwerk ⛵"
+    },
+    "rail": {
+      "name": "Spoorweg",
+      "desc": "Procedurele rails, dwarsliggers, ballastbed. Treinen met wagons, eindstations en locomotiefrook — en een dienstregeling die nog nooit iemand écht heeft gezien.",
+      "tag": "Spoornetwerk 🚂"
+    }
+  },
+  "missions": {
+    "label": "Doelstellingen",
+    "title": "Missies",
+    "sub": "Elke partij genereert automatische doelen gekoppeld aan biomen en netwerken. Een missie voltooien levert <strong>100 punten op en, belangrijker nog, 3 nieuwe tegels aan de trekstapel toe</strong> — theoretisch eindeloos speelbaar, praktisch begrensd door je geduld.",
+    "zone": {
+      "name": "Bioomzone",
+      "desc": "Bereik een minimumoppervlak in een gegeven bioom: <em>\"bos van 8 sectoren\"</em>, <em>\"weide van 12 sectoren\"</em>…"
+    },
+    "rail": {
+      "name": "Spoorlijn",
+      "desc": "Leg een vereist aantal spoorsectoren aan. Elke geplaatste rail-driehoek telt mee voor deze missie — geen locomotief vereist, alleen rails."
+    },
+    "trains": {
+      "name": "Treinen",
+      "desc": "Bouw een vereist aantal actieve treinlijnen — elke lijn verbindt twee stations via ononderbroken rails. Onderbrekingen zijn niet onderhandelbaar, vraag het maar aan een conducteur."
+    },
+    "water": {
+      "name": "Waterweg",
+      "desc": "Vorm een waterzone van een minimumoppervlak. Elke geplaatste waterdriehoek telt mee voor deze missie."
+    },
+    "boats": {
+      "name": "Bootjes",
+      "desc": "Laat een vereist aantal bootjes op het raster verschijnen. Een bootje verschijnt automatisch op elk meer dat door landtegels wordt omsloten — geen vaarbewijs vereist."
+    },
+    "comets": {
+      "name": "Kometen",
+      "desc": "Kometen schieten in real time over de hemel. Klik erop om ze te laten ontploffen en punten te scoren — reflexen en waakzaamheid vereist."
+    },
+    "village": {
+      "name": "Bloeiend dorp",
+      "desc": "Bouw een dicht dorp: cluster genoeg aangrenzende huissectoren om de vereiste drempel te bereiken. Bestemmingsplannen zijn, gelukkig, fictief."
+    },
+    "fields": {
+      "name": "Bebouwd land",
+      "desc": "Breid akkers uit tot aaneengesloten zones. Molens verschijnen pas als de zone groot genoeg is om ze te herbergen — ze zijn nu eenmaal verlegen."
+    },
+    "mills": {
+      "name": "Windmolens",
+      "desc": "Bouw grote korenveldzones om windmolens te laten verschijnen. Een molen verschijnt automatisch in het midden van elke voldoende grote akkerzone."
+    }
+  },
+  "gameplay": {
+    "label": "Spelmechanieken",
+    "title": "Hoe speel je",
+    "sub": "Een simpele cirkel, <strong>oneindige diepte</strong>. Elke geplaatste tegel verandert de wereld — geen ongedaan-maken-knop voor het echte leven, maar hier wel.",
+    "ui_caption": "Huidige tegel · Volgende tegel · Resterende tegels",
+    "steps": {
+      "draw": {
+        "title": "Trek",
+        "desc": "Er verschijnt een hexagonale tegel — zes driehoekige sectoren, elk een bioom. Kijk vooruit naar de volgende, of niet, en leef gevaarlijk."
+      },
+      "orient": {
+        "title": "Draai",
+        "desc": "Draai de tegel om de randen uit te lijnen. Water en spoor vereisen continuïteit — een verkeerde plaatsing kan het netwerk breken, en je stille zelfvertrouwen ook."
+      },
+      "place": {
+        "title": "Plaats",
+        "desc": "Kies een plek op het axiale raster. Een tegel omringen met zes buren levert een flinke directe bonus op — het dichtste bij applaus dat dit spel te bieden heeft."
+      },
+      "score": {
+        "title": "Scoor",
+        "desc": "Voltooi missies en zones, onderschep kometen, en dien vervolgens je beste score in bij het wereldwijde scorebord, zodat vreemden er in stilte over kunnen oordelen."
+      }
+    },
+    "score_label": "Scoresysteem",
+    "pills": {
+      "place": "Tegel geplaatst",
+      "edge": "Rand overeenkomend",
+      "network": "Netwerk verbonden",
+      "surround": "Tegel omsingeld",
+      "mission": "Missie voltooid",
+      "comet": "Komeet onderschept",
+      "bonus": "Bonusveld bedekt"
+    },
+    "kbd_title": "TOETSENBORDBESTURING",
+    "kbd": {
+      "camera_label": "camera",
+      "left_click_kbd": "Linkerklik",
+      "left_click_desc": "camera verplaatsen",
+      "right_click_kbd": "Rechterklik",
+      "right_click_desc": "camera draaien",
+      "wheel_kbd": "Scrollwiel",
+      "space_kbd": "Spatie",
+      "wheel_desc": "zoomen",
+      "reset_cam": "camera resetten",
+      "zoom": "in-/uitzoomen",
+      "shift_kbd": "SHIFT",
+      "speed_up": "versnelt beweging/zoom",
+      "undo": "ongedaan maken",
+      "customization": "aanpassing",
+      "perf_hud": "prestatie-HUD",
+      "snapshot": "Screenshot",
+      "gallery": "Screenshotgalerij",
+      "replay": "Spelreplay",
+      "immersive": "immersieve modus",
+      "super_immersive": "super-immersieve modus",
+      "mute": "dempen",
+      "mute_tts": "stem dempen",
+      "help": "hulp"
+    }
+  },
+  "gallery": {
+    "label": "Visuele presets",
+    "title1": "Meerdere sferen",
+    "title2": "Oneindige aanpassingen",
+    "sub": "Talrijke kant-en-klare visuele presets — maar elk is een startpunt: kleur-LUT, cinematische effecten (chromatische aberratie, filmkorrel, tilt-shift), retro-pixelisatie, EGA- en Amiga-esthetiek, volumetrische rook, procedurele hemel… <strong>Honderden combinaties</strong> om de hele wereld naar jouw smaak te vormen, of naar iets waar jouw smaak fel bezwaar tegen zou maken. Elke aanpassing kan met één klik geëxporteerd en met andere spelers gedeeld worden.",
+    "preset_word": "Preset",
+    "presets": {
+      "autumn": "Herfst",
+      "summer": "Levendige zomer",
+      "nordic": "Noords",
+      "amiga": "Amiga",
+      "ega": "EGA 16 kleuren",
+      "cga": "CGA 320×200 4 kleuren",
+      "apple2": "Apple II",
+      "psyche": "Psyché-LSD"
+    }
+  },
+  "creatures": {
+    "label": "Het leven van de wereld",
+    "title": "Een wereld vol wezens",
+    "sub": "De wereld bestaat niet alleen — <strong>ze ademt</strong>. Dieren, vogels en bewoners brengen elk bioom tot leven door de seizoenen heen, volkomen onaangedaan door je bouwvolgorde.",
+    "sheep": {
+      "name": "Schapen",
+      "desc": "Kuddes grazen vredig in de weides, meedeinend met het door de wind bewogen gras, zalig onwetend dat ze op een scoremechanisme staan."
+    },
+    "crows": {
+      "name": "Kraaien",
+      "desc": "Zwermen kraaien cirkelen boven de korenvelden, op zoek naar een onbewaakt plekje — beschouw ze als de minst subtiele controleurs ter wereld."
+    },
+    "farmer": {
+      "name": "Boer",
+      "desc": "Hooivork in de hand, verzorgt de boer zijn koren, komend en gaand op het ritme van de seizoenen, eeuwig één akker verwijderd van een vrije dag."
+    },
+    "druid": {
+      "name": "Druïde",
+      "desc": "Een eenzame figuur dwaalt tussen de bomen, een stille wachter over de bossen en hun geheimen — vooral het geheim van waar alle paddenstoelen zijn gebleven."
+    },
+    "witch": {
+      "name": "Heks",
+      "desc": "In sommige bossen zouden heksen, als de nacht valt, tussen de bomen dwalen, aangetrokken door de stilte en de gloed van vergeten kampvuren. Weinigen krijgen haar te zien — nog minder durven te volgen, en niemand heeft ooit een klacht ingediend."
+    },
+    "moon": {
+      "name": "Méliès-maan",
+      "desc": "In nachtmodus draagt de maan het iconische gezicht uit Méliès' A Trip to the Moon — een knipoog naar de stomme film, weggestopt in de sterrenhemel, en zichtbaar onder de indruk van geen enkele van je tegelplaatsingen."
+    },
+    "seagulls": {
+      "name": "Meeuwen",
+      "desc": "Kleine groepen meeuwen cirkelen boven de grootste watervlaktes, met af en toe een eenling die afdwaalt om zijn eigen bezigheden na te jagen."
+    },
+    "fireflies": {
+      "name": "Vuurvliegjes",
+      "desc": "Als de nacht valt, drijven zwermen fonkelende vuurvliegjes vlak boven de grond, warme lichtpuntjes die zachtjes rond de camera zweven alsof ze ergens naartoe moeten."
+    },
+    "population": {
+      "villages_label": "Dorpen",
+      "forests_label": "Bossen",
+      "fields_label": "Korenvelden",
+      "water_label": "Water",
+      "meadows_label": "Weides",
+      "tags": {
+        "village_women": "Dorpsvrouwen",
+        "village_men": "Dorpsmannen",
+        "farmer": "Boer",
+        "blacksmith": "Smid",
+        "merchant": "Handelaar",
+        "innkeeper": "Herbergier",
+        "guard": "Wachter",
+        "soldier": "Soldaat",
+        "knight": "Ridder",
+        "archer": "Boogschutter",
+        "warriors": "Krijgers",
+        "mage": "Magiër",
+        "monk": "Monnik",
+        "witch": "Heks",
+        "crows": "Kraaien",
+        "windmill": "Windmolen",
+        "scarecrow": "Vogelverschrikker",
+        "boat": "Bootje",
+        "rowboats": "Roeibootjes",
+        "seagulls": "Meeuwen",
+        "deer": "Herten",
+        "wildflowers": "Wilde bloemen"
+      }
+    },
+    "note": "22 verschillende gezichten bevolken dorpen en bossen, elk met een eigen silhouet, kostuum en rol. Geen kopieer-plak-figuranten — een echte bevolking, tegel na tegel, in geest vakbondslid, in praktijk niet."
+  },
+  "audio": {
+    "label": "Sounddesign",
+    "title": "Een wereld die je kunt horen",
+    "sub": "Geluid volgt de camera <strong>in real time</strong> — elk bioom, elke trein en elk bootje heeft een eigen stem, die aanzwelt en vervaagt met de afstand, als een zeer geduldig orkest.",
+    "spatial": {
+      "name": "3D ruimtelijk geluid",
+      "desc": "Dorpssfeer, vogelgezang in bos en weide, kraaien boven de akkers, golfslag aan de kust, treinen en bootjes — het volume van elke bron volgt zijn werkelijke afstand en richting, dus rondzwerven wordt vanzelf beloond."
+    },
+    "chimai": {
+      "name": "Chi Mai, het verborgen thema",
+      "desc": "Breng de camera laag boven een korenveld en een verborgen melodisch thema zet in — de muziek en andere geluiden vervagen om er ruimte voor te maken. Ja, het is precies zo dramatisch als het klinkt."
+    },
+    "adaptive": {
+      "name": "Adaptieve muziek",
+      "desc": "Intro-, spel- en eindtracks vervagen soepel in elkaar, geput uit verschillende varianten zodat geen twee partijen precies hetzelfde klinken — geen twee, maar een verdacht groot aantal zal je bekend voorkomen."
+    },
+    "voice": {
+      "name": "Een stem die het spel becommentarieert",
+      "desc": "Een gesproken verteller (browsereigen tekst-naar-spraak, geen externe dienst) roept live je punten, missies en belangrijke interfacemomenten om — een kort belletje gaat vooraf aan elke nieuwe en elke voltooide missie. Beschikbaar in alle 9 talen van het spel, met een automatisch gekozen mannenstem voor Duits en Russisch, want blijkbaar vond iemand dat belangrijk. De T-toets dempt alleen deze stem, zonder de rest van de soundtrack aan te raken — voor als de aanmoediging je te veel wordt."
+    },
+    "silence": {
+      "name": "Stilte op afroep",
+      "desc": "De M-toets zet in één klap de hele soundtrack uit en weer aan, muziek inbegrepen — handig voor een rustige partij tijdens een telefoontje of een vergadering waarvan je baas denkt dat je volledige aandacht erbij is."
+    }
+  },
+  "daynnight": {
+    "label": "Sfeer van de wereld",
+    "title": "Omgeving",
+    "sub": "<strong>Eén schakelaar verandert alles</strong>. Zon, wolken en blauwe hemel maken plaats voor sterren, maan en kometen — geen vergadering vereist.",
+    "day": {
+      "name": "Dagmodus",
+      "list": [
+        "🌤 Zon draaiend op zijn eigen renderlaag",
+        "⛅ Procedurele volumetrische hemel met geanimeerde FBM-wolken",
+        "🔵 Zenit/horizongradiënt in warme blauwtinten",
+        "🚫 Kometen verborgen — te veel licht voor ze, ze zijn verlegen"
+      ]
+    },
+    "night": {
+      "name": "Nachtmodus",
+      "list": [
+        "🌙 Maan, diepe nachtelijke zenit/horizongradiënt",
+        "✨ Fonkelende sterren op een eigen sfeer",
+        "☄️ Rakende kometen — klik om ze te laten ontploffen",
+        "🌑 Donkere atmosfeer, dorpsrook beter zichtbaar, slapeloosheid onveranderd"
+      ]
+    },
+    "smoke": {
+      "name": "Rook",
+      "list": [
+        "🏠 Tot 48 gelijktijdige rookkolommen, in real time ray-marched boven schoorstenen en locomotieven",
+        "🌬️ 4-octaafs turbulentie die met de hoogte meebeweegt — elke kolom is uniek, als een vingerafdruk van roet",
+        "🎲 Slechts één op de drie huizen rookt, willekeurig bepaald bij het genereren van de tegel — de andere twee zijn blijkbaar het vuur vergeten aan te steken",
+        "🌙 Nog sfeervoller zodra de nacht valt"
+      ]
+    },
+    "godrays": {
+      "name": "Godsstralen",
+      "list": [
+        "☀️ Volumetrische lichtbundels die uit de zon of de maan opstijgen",
+        "🌲 Doorboren gebladerte, torens en wolken voor cinematografische belichting",
+        "🎚️ Lengte, diffusie en drempel instelbaar via de art-directioneditor, voor de cameraman in jezelf"
+      ]
+    },
+    "rain": {
+      "name": "Regen",
+      "list": [
+        "💧 Dynamische buien die je vlot vanuit de Weer-HUD kunt oproepen, paraplu niet vereist",
+        "⛈️ Gaat vanzelf over in onweer en bliksem",
+        "🎬 Sfeer versterkt door het cinematische vignet en de filmkorrel"
+      ]
+    },
+    "mist": {
+      "name": "Ochtendnevel",
+      "list": [
+        "🌫️ Lage sluier die afstanden dempt en silhouetten verzacht",
+        "☀️ Trekt geleidelijk op naarmate de minuten verstrijken, zoals de meeste ochtendraadsels",
+        "🎚️ Mistdichtheid en -kleur instelbaar in de art-directioneditor"
+      ]
+    },
+    "storm": {
+      "name": "Onweer en natuurbranden",
+      "list": [
+        "⚡ Bliksem slaat in onder het onweersdek en kan een tegel in brand zetten — de natuur redigeert zo je layout",
+        "🔥 Bomen, huizen, torens en molens branden op hun echte hoogte, blakeren zwart en groeien terug, ogenschijnlijk onaangedaan",
+        "🌬️ De brand drijft mee met de wind, slaat over naar buren en stopt hard bij de waterkant, die eindelijk zijn nut bewijst",
+        "🌧️ Regen vertraagt de verspreiding en dooft het vuur soms compleet"
+      ]
+    }
+  },
+  "eda": {
+    "label": "Art-directioneditor (EDA)",
+    "title": "Extreme aanpassing",
+    "sub": "Naast de vele presets biedt de EDA <strong>tientallen realtime aanpasbare parameters</strong>, verdeeld over 3 tabbladen — LUT, Cinematisch, Omgeving. Elke schuifregelaar reageert direct, geen herlaadbeurt nodig, en de hele configuratie wordt gekopieerd/geëxporteerd als JSON om af te spelen, te delen of stilletjes te betreuren.",
+    "lut": {
+      "label": "LUT",
+      "desc": "Mist, lichtbron, volledige kleurgradatie (RGB-curves, gamma, niveaus) en per-bioompalet — genoeg knoppen om een weide in een plaats delict te veranderen als je niet oplet."
+    },
+    "cinematic": {
+      "label": "Cinematisch",
+      "desc": "Godsstralen, tilt-shift, bloom, retro-pixelisatie en schermkromming — om de wereld te filmen in plaats van er alleen naar te kijken."
+    },
+    "environment": {
+      "label": "Omgeving",
+      "desc": "Wolken en wolkendekking, wind (koren, gras, bomen), dynamisch weer (mist, vuurvliegjes, regen), wereldvorm (bol/plat), Dag/Nacht-schakelaar en kwaliteits-/dichtheidspresets — het hele klimaat, aan de leiband."
+    }
+  },
+  "multi": {
+    "title1": "Multiplayer",
+    "title2": "Samen bouwen",
+    "sub": "Sluit je aan bij of maak een kamer met een 6-letterige code. Het raster wordt <strong>in real time gedeeld</strong> — elke speler plaatst zijn tegels en ziet de zetten van anderen live gebeuren, in voor- en tegenspoed.",
+    "features": [
+      "Alle partijen worden opgeslagen — hervat of herbekijk ze op elk moment",
+      "Kamers op elk moment te betreden, zelfs midden in een partij, geen toestemmingsbriefje nodig",
+      "Real-time synchronisatie · PHP + JSON-backend, dat alles met stille waardigheid bij elkaar houdt",
+      "De kaart groeit collaboratief, tegel na tegel, ruzie na ruzie"
+    ],
+    "gallery_title": "DEEL JE SCREENSHOTS",
+    "gallery_promo": "Vereeuwig je beste partijen: de 📷-knop legt de wereld vast zonder HUD, en de 🖼️-knop opent de <strong>gedeelde galerij, zichtbaar voor elke speler</strong> — pochrechten inbegrepen",
+    "replay_title": "Neem je partijen op als video",
+    "replay_promo": "Met één klik <strong>speel je je hele partij versneld af</strong> en download je hem als video, rechtstreeks vanuit je browser — geen montagevaardigheden vereist, alleen een beetje ijdelheid.",
+    "btn_create": "Maak een partij",
+    "room_title": "Kamercode",
+    "room_status": "Partij bezig · 3 spelers",
+    "tiles_placed_label": "Geplaatste tegels"
+  },
+  "scores": {
+    "label": "Wereldwijd scorebord",
+    "title": "De meest efficiënte bouwers",
+    "empty": "Nog geen scores — het scorebord is een lege hexagonale leegte, wachtend op een held.",
+    "try_luck": "Probeer je geluk →",
+    "headline_stat": "geplaatste tegels",
+    "pts_suffix": "pt",
+    "trains_s": "lijn",
+    "trains_p": "lijnen",
+    "boats_s": "bootje",
+    "boats_p": "bootjes",
+    "mills_s": "molen",
+    "mills_p": "molens",
+    "comets_s": "komeet",
+    "comets_p": "kometen",
+    "largest_zone": "grootste zone",
+    "biome_labels": {
+      "forest": {
+        "s": "boom",
+        "p": "bomen"
+      },
+      "water": {
+        "s": "water",
+        "p": "water"
+      },
+      "house": {
+        "s": "huis",
+        "p": "huizen"
+      },
+      "field": {
+        "s": "korenveld",
+        "p": "korenvelden"
+      },
+      "grass": {
+        "s": "weide",
+        "p": "weides"
+      },
+      "rail": {
+        "s": "spoorweg",
+        "p": "spoorwegen"
+      }
+    }
+  },
+  "footer": {
+    "copy": "Een contemplatief hexagonaal spel gemaakt met liefde ❤️, Three.js, en een onredelijk aantal tegels",
+    "github": "GitHub"
+  },
+  "game": {
+    "gallery": {
+      "title": "Screenshotgalerij",
+      "empty": "Nog geen screenshots. Je meesterwerk wacht — druk in-game op 📷 om er een te maken.",
+      "close": "Sluiten",
+      "loading": "Laden…",
+      "tilesCount": "Partij met {n} tegels",
+      "modeBouliste": "Bolmodus",
+      "modePlatiste": "Platte modus",
+      "captured": "Screenshot gemaakt! Het nageslacht dankt je."
+    },
+    "sound": {
+      "on": "Geluid aan",
+      "off": "Geluid uit"
+    },
+    "replay": {
+      "restart": "Terug naar begin",
+      "playPause": "Afspelen / Pauzeren",
+      "close": "Replay sluiten"
+    },
+    "eda": {
+      "mainTitle": "Art-directioneditor",
+      "ambiances": "PRESETS",
+      "ambiancePrefix": "preset",
+      "tabs": {
+        "lut": "LUT",
+        "cinematic": "Cinematisch",
+        "environment": "Omgeving"
+      },
+      "headers": {
+        "lutFog": "1. Mist",
+        "lutSun": "2. Lichtbron",
+        "lutGrading": "3. Kleurgradatie",
+        "lutPalette": "4. Bioompalet",
+        "cinema1": "1. CINEMATISCH",
+        "godRays": "2. Godsstralen",
+        "tiltShift": "3. Tilt-shift",
+        "bloom": "4. Bloom",
+        "pixelisation": "5. PIXELISATIE",
+        "crt": "6. SCHERMKROMMING",
+        "nuages": "3. WOLKEN",
+        "vent": "4. WIND",
+        "worldShape": "5. Wereldvorm",
+        "dayNight": "6. Dag / Nacht",
+        "quality": "7. Kwaliteit / dichtheid",
+        "weather": "8. Weer",
+        "waterFoam": "1. Schuim",
+        "waterWake": "2. Kielzog",
+        "windWheat": "4.1 Koren-aren",
+        "windGrass": "4.2 Grassprieten",
+        "windTree": "4.3 Bomen"
+      },
+      "toggleTitles": {
+        "lutGrading": "Kleurgradatie in-/uitschakelen",
+        "lutPalette": "Bioompalet in-/uitschakelen",
+        "cinema1": "Cinematische effecten in-/uitschakelen",
+        "godRays": "Godsstralen in-/uitschakelen",
+        "tiltShift": "Tilt-shift in-/uitschakelen",
+        "bloom": "Bloom in-/uitschakelen (de gloed, niet de bloesem)",
+        "pixelisation": "Pixelisatie in-/uitschakelen",
+        "crt": "Schermkromming in-/uitschakelen",
+        "nuages": "Wolken in-/uitschakelen",
+        "vent": "Alle wind in-/uitschakelen (koren, gras, bomen)",
+        "worldShape": "Wisselen tussen bolvormige (bol) en platte wereld — geen internationaal verdrag vereist",
+        "dayNight": "Wisselen tussen dag en nacht",
+        "waterFoam": "Schuim in-/uitschakelen",
+        "waterWake": "Kielzog in-/uitschakelen"
+      },
+      "modeActuel": "Huidige modus",
+      "preregalages": "Presets",
+      "presetNames": {
+        "default": "Standaard",
+        "mist": "Nevel",
+        "autumn": "Herfst",
+        "summerVivid": "Levendige zomer",
+        "winter": "Winter",
+        "sepia": "Sepia",
+        "nordic": "Noords",
+        "desert": "Woestijn",
+        "pong": "Pong",
+        "appleII": "Apple II",
+        "cga": "CGA",
+        "ega": "EGA",
+        "amiga": "Amiga",
+        "psyche": "Psychedelisch"
+      },
+      "themeNames": {
+        "bleu": "Astraal Blauw",
+        "ancien": "Middeleeuws"
+      },
+      "modes": {
+        "bouliste": "Bol",
+        "platiste": "Plat",
+        "jour": "Dag",
+        "nuit": "Nacht"
+      },
+      "quality": {
+        "faible": "Laag",
+        "moyen": "Gemiddeld",
+        "eleve": "Hoog",
+        "max": "Max"
+      },
+      "qualityTooltip": "{label} dichtheid ({value})",
+      "weatherStopAll": "⏹ Alles stoppen",
+      "weatherStopAllTitle": "Stopt alle momenteel actieve weersgebeurtenissen. Eindelijk rust.",
+      "weatherGroups": {
+        "morningMist": "🌫️ Ochtendnevel",
+        "fireflies": "✨ Vuurvliegjes",
+        "clouds": "☁️ Regenwolken",
+        "rain": "🌧️ Regen",
+        "storm": "⛈️ Onweer",
+        "lightning": "⚡ Bliksem",
+        "fire": "🔥 Vuur",
+        "panic": "🐑 Dierenpaniek"
+      },
+      "weatherRequires": "(vereist {label})",
+      "weatherSwitchTitle": "In-/uitschakelen",
+      "weatherCloudsSwitchTitle": "Wolken in-/uitschakelen",
+      "weatherResetTitle": "Resetten",
+      "presetTooltipApply": "Pas preset \"{name}\" toe",
+      "presetTooltipDefault": "Terug naar standaardwaarden (maak je slechtste beslissingen ongedaan)",
+      "footer": {
+        "copy": "📋 Kopiëren",
+        "copyTitle": "Kopieer alle huidige LUT + PIX + WATER + CINEMA + WIND + CLOUDS + wereldvorm + Dag/Nacht + dichtheid + weerinstellingen als JSON (basis voor een toekomstige sfeerpreset met vooraf ingestelde weerseffecten) — een klein archief van je twijfelachtige smaak",
+        "copied": "✓ Gekopieerd!",
+        "undo": "↩ Ongedaan maken",
+        "undoTitle": "Maak de laatste wijziging ongedaan — geen oordeel",
+        "redo": "↪ Opnieuw",
+        "redoTitle": "Herstel de ongedaan gemaakte wijziging, als je van gedachten bent veranderd over van gedachten veranderen",
+        "reset": "Resetten",
+        "resetTitle": "Terug naar standaardwaarden. Een schone lei, een nieuwe start, een kans om alles opnieuw fout te doen",
+        "compare": "Vergelijken",
+        "compareBack": "⟳ Terug",
+        "compareTitle": "Schakel tussen huidige instellingen en de laatst toegepaste preset, voor twijfelen in alle comfort",
+        "lastPresetTitle": "Laatst toegepaste preset"
+      },
+      "labels": {
+        "environment": {
+          "fogDensity": "Exp. dichtheid",
+          "fogNear": "Start (lineair)",
+          "fogFar": "Einde (lineair)",
+          "skyColor": "Hemel",
+          "fogColor": "Mistkleur",
+          "domeColorTop": "Koepel boven",
+          "domeColorBottom": "Koepel onder"
+        },
+        "renderer": {
+          "toneMappingExposure": "Globale belichting"
+        },
+        "lights": {
+          "hemisphereIntensity": "Hemisfeer-intensiteit",
+          "sunIntensity": "Intensiteit",
+          "sunOrbitRadius": "Baanstraal",
+          "sunOrbitHeight": "Baanhoogte",
+          "sunOrbitSpeed": "Baansnelheid",
+          "sunVisualScale": "Grootte",
+          "fillIntensity": "Invullicht",
+          "hemisphereSkyColor": "Hemisfeer lucht",
+          "hemisphereGroundColor": "Hemisfeer grond",
+          "sunColor": "Zon",
+          "fillColor": "Invulkleur"
+        },
+        "grading": {
+          "brightness": "Helderheid",
+          "contrast": "Contrast",
+          "saturation": "Verzadiging",
+          "vibrance": "Levendigheid",
+          "hue": "Kleurtoon",
+          "gamma": "Gamma",
+          "blackLevel": "Zwartniveau",
+          "whiteLevel": "Witniveau",
+          "red": "Roodkanaal",
+          "green": "Groenkanaal",
+          "blue": "Blauwkanaal",
+          "redCurve": "Roodcurve",
+          "greenCurve": "Groencurve",
+          "blueCurve": "Blauwcurve"
+        },
+        "palette": {
+          "strength": "Paletsterkte",
+          "saturation": "Verzadiging",
+          "contrast": "Contrast",
+          "warmShift": "Warm / koel",
+          "targets": {
+            "field": "Akkers",
+            "forest": "Bossen",
+            "grass": "Weides",
+            "house": "Dorpen",
+            "rail": "Spoorwegen",
+            "water": "Water"
+          }
+        },
+        "water": {
+          "foamWidth": "Bereik",
+          "foamScale": "Fijnheid",
+          "foamDensity": "Kustdichtheid",
+          "foamAmbient": "Oppervlak",
+          "foamSharp": "Scherpte",
+          "foamSpeed": "Snelheid",
+          "deepDistance": "Gradiënt — bereik",
+          "opacity": "Water — dekking"
+        },
+        "wake": {
+          "armWidth": "Armbreedte",
+          "spread": "V-spreiding",
+          "length": "Lengte",
+          "scale": "Fijnheid",
+          "density": "Dichtheid",
+          "opacity": "Dekking"
+        },
+        "wind": {
+          "wheat": {
+            "strength": "Amplitude",
+            "speed": "Snelheid"
+          },
+          "grass": {
+            "strength": "Amplitude",
+            "speed": "Snelheid",
+            "sway": "Wiegen"
+          },
+          "tree": {
+            "strength": "Amplitude",
+            "speed": "Snelheid",
+            "frequency": "Frequentie",
+            "turbulence": "Turbulentie",
+            "gustStrength": "Windvlagen",
+            "detailStrength": "Detail"
+          }
+        },
+        "cloud": {
+          "coverage": "Dekking",
+          "scale": "Patroonschaal",
+          "speed": "Driftsnelheid"
+        },
+        "quality": {
+          "density": "Dichtheid"
+        },
+        "cin": {
+          "vignette": "Vignet",
+          "grain": "Filmkorrel",
+          "chromatic": "Chromatische aberratie",
+          "halation": "Halo-effect",
+          "barrel": "Tonvervorming",
+          "scanLines": "Scanlijnen",
+          "scanLinesIntensity": "Scanlijnintensiteit",
+          "godRays": "Intensiteit",
+          "godRaysLength": "Lengte",
+          "godRaysDiffusion": "Diffusie",
+          "godRaysThreshold": "Helderheidsdrempel",
+          "godRaysLayers": "Gelaagdheid",
+          "tilt": "Intensiteit",
+          "focusCenter": "Focuscentrum",
+          "focusBand": "Scherpe zone",
+          "bloomIntensity": "Intensiteit",
+          "bloomThreshold": "Drempel",
+          "bloomRadius": "Straal",
+          "bloomSoftness": "Zachtheid",
+          "crtCurvature": "Schermkromming",
+          "crtMask": "Zwarte randen",
+          "crtCornerDark": "CRT-hoekverduistering"
+        },
+        "pix": {
+          "pixelSize": "Straal (pixels)",
+          "normalEdge": "Reliëfcontour",
+          "depthEdge": "Dieptecontour"
+        },
+        "vfx": {
+          "mist": {
+            "densite": "Dichtheid",
+            "compacite": "Compactheid",
+            "elevation": "Hoogte"
+          },
+          "fireflies": {
+            "densite": "Dichtheid",
+            "taille": "Grootte",
+            "vagabondage": "Zwerfgedrag",
+            "scintillement": "Getwinkel"
+          },
+          "rain": {
+            "densite": "Dichtheid",
+            "tailleGoutte": "Druppelgrootte",
+            "impactSol": "Grondinslag"
+          },
+          "cloud": {
+            "densite": "Dichtheid",
+            "altitude": "Hoogte",
+            "epaisseur": "Dikte"
+          },
+          "storm": {
+            "frequenceEclairs": "Bliksemfrequentie",
+            "luminositeEclair": "Bliksemhelderheid",
+            "intensitePluie": "Regenintensiteit",
+            "altitudeChape": "Dekhoogte",
+            "opaciteChape": "Dekdekking"
+          },
+          "fire": {
+            "probaAllumage": "Ontstekingskans",
+            "densiteFlammes": "Vlamdichtheid",
+            "duree": "Duur",
+            "taille": "Grootte",
+            "propagation": "Verspreiding"
+          }
+        }
+      }
+    },
+    "help": {
+      "topbar.fps": "Toon/verberg de geavanceerde prestatie-HUD, voor de nieuwsgierigen en de bezorgden onder ons",
+      "topbar.eda": "Open of sluit het renderpaneel — tientallen knoppen, geen toezicht van een volwassene",
+      "topbar.snapshot": "Screenshot (zonder HUD)",
+      "topbar.gallery": "Screenshotgalerij",
+      "topbar.replay": "Spelreplay",
+      "topbar.lang": "Taal",
+      "topbar.theme": "Grafisch thema (Blauw / Vintage)",
+      "topbar.mute": "Geluid dempen / activeren",
+      "topbar.muteVoice": "Stem dempen / activeren (TTS)",
+      "renderer.toneMappingExposure": "Globale belichting van de renderer (ACESFilmic). Bepaalt hoeveel licht de \"sensor\" bereikt vóór enige kleurgradatie.\nWaarden < 1 verduisteren de hele scène, > 2 kan hooglichten laten uitbranden.\nTypisch: 1,2–1,8 voor een natuurlijke look, tenzij je een verhoorkamer-esthetiek nastreeft.",
+      "environment.fogDensity": "Dichtheid van de exponentiële mist (FogExp2). Alleen actief wanneer \"Lineair einde\" op 0 staat.\nZichtbaarheid neemt heel snel af: bij 0,07 is de scène bijna ondoorzichtig.\nVoor een beheerst zichtbereik, gebruik liever de lineaire modus via \"Start\" en \"Einde\".",
+      "environment.fogNear": "Afstand in 3D-eenheden waar lineaire mist begint.\nZodra \"Einde\" > 0, schakelt automatisch van FogExp2 naar THREE.Fog(near, far).\nBij 0: mist begint meteen op de voorgrond. Bij 5: nabije objecten blijven scherp.",
+      "environment.fogFar": "Afstand waarop lineaire mist volledig ondoorzichtig is.\nZet op 0 om terug te keren naar exponentiële modus.\nVoorbeeld: Start = 3, Einde = 18 → een zichtbereik van 15 eenheden — sfeervol zonder alles te verdrinken.",
+      "lights.hemisphereIntensity": "Intensiteit van het hemisferisch licht (lucht + grond).\nVerlicht vlakken die niet direct aan de zon blootstaan.\nTe hoog: platte schaduwen en verlies van diepte. Te laag: achterkanten vallen in totale duisternis.",
+      "lights.sunIntensity": "Kracht van het gerichte licht (zon).\nBepaalt de hardheid van schaduwen en het reliëfcontrast.\nWaarden > 5 kunnen lichte oppervlakken laten uitbranden als de globale belichting ook hoog staat.",
+      "lights.sunOrbitRadius": "Straal van de cirkelvormige baan van de zon rond het middelpunt van de scène.\nEen kleine straal (< 5) geeft sterk hoekig licht vanuit het midden; een grote (> 20) geeft schamperder licht vanaf de randen.",
+      "lights.sunOrbitHeight": "Verticale hoogte van de zon boven het scènevlak.\nHoog = korte schaduwen, licht van bovenaf. Laag = lange, schampende schaduwen (gouden uur of zonsondergang).",
+      "lights.sunOrbitSpeed": "Hoeksnelheid van de zon in radialen/seconde.\nBij 0,06 duurt een volledige omwenteling ≈ 100 seconden. Bij 0: vaste zon. Bij 1: snel draaiende schaduwen.",
+      "lights.sunVisualScale": "Schijnbare grootte van de zonneschijf aan de hemel.\nPuur visueel — beïnvloedt noch lichtkracht, noch schaduwen. Een IJdelheidswaarde, eigenlijk.",
+      "lights.fillIntensity": "Intensiteit van een zacht invullicht, tegenover de zon.\nOpent harde schaduwgebieden. Nuttig om volledig zwarte plekken onder overhangen of aan de schaduwzijde van heuvels te vermijden, waar dorpelingen blijkbaar niet durven komen.",
+      "grading.brightness": "Extra helderheidsverschuiving toegepast na het renderen.\nVoegt een constante waarde toe aan alle kanalen.\nVerschilt van belichting: versterkt geen hooglichten, verandert geen tonemapping.",
+      "grading.contrast": "Globaal contrast via draaiing rond 50% grijs.\n> 1: duwt donker en licht uit elkaar (cinematische look). < 1: comprimeert (vlakke/verwassen look).\nBij extremen → effen zwart of wit.",
+      "grading.saturation": "Globale verzadiging. Mengt de grijswaardenversie (luma) met de originele kleur.\n0 = grijstinten. 1 = normaal. > 1 = oververzadigd.\nBij zeer hoge waarden (3+) clippen kleuren en kunnen ze omslaan — een snelle route naar een hoofdpijnwereld.",
+      "grading.vibrance": "Slimme levendigheid: versterkt doffe kleuren terwijl reeds verzadigde tinten gespaard blijven.\nZachter dan pure verzadiging voor natuurlijke groentinten.\nNegatief: dempt levendige kleuren als eerste, voor de emotioneel uitgeputten.",
+      "grading.hue": "Globale rotatie van alle kleurtonen rond het kleurenwiel.\n±0,5 = halve draai (rood ↔ cyaan). Subtiel bij lage waarden.\nHandig om een kleurzweem te corrigeren of een eigenzinnig palet te creëren waar niemand om vroeg maar iedereen zich herinnert.",
+      "grading.gamma": "Gammacorrectie toegepast op middentonen.\n< 1 = lichtere middentonen; > 1 = donkerder.\nWerkt niet lineair op de uitersten (pure zwarten/witten).",
+      "grading.blackLevel": "Zwartpuntniveau. Tilt pure zwarten op naar grijs.\nCreëert een \"verwassen filmische\" of \"opgetilde zwarten\"-look.\nTe hoog = verlies van diepte en dichtheid in schaduwen.",
+      "grading.whiteLevel": "Witpuntniveau. Comprimeert hooglichten onder 1,0.\nBij 0,871: pure witten worden crèmekleurig, niets clipt.\nHandig voor een zachte look, een subtiele \"S-curve\".",
+      "grading.red": "Vermenigvuldigende versterking van het roodkanaal na kleurgradatie.\n> 1 verwarmt de scène (oranje/amber tint). < 1 koelt af.\nGecombineerd met groen en blauw, mogelijk om de witbalans fijn te corrigeren.",
+      "grading.green": "Vermenigvuldigende versterking van het groenkanaal.\nGroen domineert de waargenomen helderheid (≈ 59%).\nDit kanaal verlagen geeft een paars/magenta-effect; verhogen vergroent het beeld en verlicht het perceptueel.",
+      "grading.blue": "Vermenigvuldigende versterking van het blauwkanaal.\nVerhogen geeft een koude/nachtelijke sfeer. Verlagen droogt het blauw uit voor een warme of sepia-look.",
+      "grading.redCurve": "Roodtooncurve: past een machtsfunctie toe op het kanaal.\n< 1 = convexe curve (tilt rode middentonen op). > 1 = graaft in de middentonen.\nToegepast na de roodversterking.",
+      "grading.greenCurve": "Groentooncurve. Vormt de respons van het groenkanaal in de middentonen.\nHandig om het waargenomen contrast fijn af te stellen zonder de uitersten aan te raken.",
+      "grading.blueCurve": "Blauwtooncurve. Vormt de sfeer in de middentonen.\nCurve < 1 = dichtere blauwtinten in de hooglichten. > 1 = uitgeholde blauwtinten (warme look in de middentonen).",
+      "palette.strength": "Totale sterkte van paletharmonisatie op de betreffende texturen.\n0: geen effect. 1: texturen worden volledig herkleurd naar hun doelkleur.\nWerkt door GLB-materiaalnamen te matchen — stilletjes, achter de schermen, als een zeer nauwgezette binnenhuisarchitect.",
+      "palette.saturation": "Verzadiging toegepast na paletharmonisatie.\n< 1: kalmeert herkleurde texturen. > 1: intensiveert ze.\nHiermee stel je bij zonder de doelkleuren aan te raken.",
+      "palette.contrast": "Contrast toegepast op kleuren na harmonisatie.\nEen lichte verhoging (1,05–1,2) verbetert de leesbaarheid van herkleurde texturen.",
+      "palette.warmShift": "Globale warm/koud-verschuiving toegepast op het hele bioompalet.\nNegatief → koelere/blauwere tinten. Positief → warmere/gouden tinten.",
+      "environment.skyColor": "Achtergrondkleur van de renderer, zichtbaar voorbij de koepel en objecten.\nOver het algemeen donker zodat hij niet doorschemert achter het decor.",
+      "environment.fogColor": "Kleur van de mist, exponentieel of lineair.\nObjecten vervagen naar deze tint naarmate de afstand toeneemt.\nMoet overeenkomen met de hemelkleur voor een coherente horizon.",
+      "environment.domeColorTop": "Kleur van de bovenkant van de bolvormige atmosferische koepel.\nZichtbaar in de hemel boven objecten (als domeOpacity > 0).",
+      "environment.domeColorBottom": "Kleur van de basis van de atmosferische koepel.\nSimuleert de horizon of een lage nevel op grondniveau.",
+      "lights.hemisphereSkyColor": "Tint van de \"lucht\"-component van het hemisferisch licht.\nKleurt naar boven gerichte oppervlakken (daken, vlakke oppervlakken).",
+      "lights.hemisphereGroundColor": "Tint van de \"grond\"-component van het hemisferisch licht.\nKleurt naar beneden gerichte oppervlakken (onderkant van bruggen, buiken van huizen).",
+      "lights.sunColor": "Kleur van het gerichte zonlicht.\nOranje bij zonsondergang, wit op het middaguur, blauwig onder een bewolkte hemel.\nBeïnvloedt sterk de kleur van geworpen schaduwen.",
+      "lights.fillColor": "Kleur van het invullicht.\nOver het algemeen complementair aan de zon om schaduwen in balans te brengen.",
+      "palette.targets.field": "Doelkleur voor het harmoniseren van akkertexturen.",
+      "palette.targets.forest": "Doelkleur voor bos- en boomtexturen.",
+      "palette.targets.grass": "Doelkleur voor weides en gras.",
+      "palette.targets.house": "Doelkleur voor huizen en dorpsgebouwen.",
+      "palette.targets.rail": "Doelkleur voor rails en spoorinfrastructuur.",
+      "palette.targets.water": "Doelkleur voor water (meren, rivieren, zee).",
+      "pix.pixelSize": "Grootte van één pixel in schermeenheden. Bij 1: native resolutie. Bij 8: sterk gepixeleerd, 8-bit-achtig beeld.\nHoge waarden verlagen de GPU-belasting (minder fragmenten om te berekenen) en versterken de retro-look.\nGecombineerd met randen, geeft dit een lowpoly + contour-stijl.",
+      "pix.normalEdge": "Intensiteit van randen gebaseerd op oppervlaktenormalen.\nDetecteert grenzen tussen anders georiënteerde vlakken (bijv. een dakrand, een muurhoek).\n0 = geen randen op basis van normalen. 1 = sterke contouren bij elke geometrische overgang.",
+      "pix.depthEdge": "Intensiteit van randen gebaseerd op diepte (z-buffer).\nTraceert silhouetten tussen objecten op verschillende afstanden.\nVult de normaal-gebaseerde randen aan: samen geven ze een cartoon- of stripboeklook.",
+      "pix.worldShape": "Kiest de schijnbare kromming van de wereld.\n\"Bol\": de wereld is een bol, de horizon buigt — mini-planeeteffect, voor de verlichten.\n\"Plat\": geen kromming, traditioneel vlak beeld — klassieke isometrische look, voor de rechtgeaarden.",
+      "env.dayNight": "Wisselt tussen dag en nacht.\nVerandert het zichtbare hemellichaam (zon/maan), de lucht, omgevingskleuren, en laat kometen 's nachts verschijnen. Geen jetlag inbegrepen.",
+      "quality.density": "Globale contentdichtheidsvermenigvuldiger (0,15 tot 1,0).\nVermindert het aantal natuurlijke decorstukken, grassprieten en schapen om de scenegraaf te ontlasten en 60 FPS te halen op zwakkere machines.\nBeïnvloedt geen terrein, water, gebouwen of personages (spelverloop en systemen zijn al apart geoptimaliseerd). Bouwt de content bij elke wijziging opnieuw op — de schapenpopulatie voelt de bezuinigingen als eerste.",
+      "cin.tilt": "Intensiteit van het tilt-shift-effect: geleidelijke vervaging boven- en onderaan het beeld.\nSimuleert een kantellens die de scherptediepte in het midden vermindert.\nGeeft de illusie van een miniatuurmodel — zeer sterk bij 1.",
+      "cin.focusCenter": "Verticale positie van de scherpe focusband van de tilt-shift.\n0 = boven het beeld, 0,5 = midden, 1 = onderaan.\nNaar beneden verplaatsen brengt elementen op grondniveau in focus.",
+      "cin.focusBand": "Breedte van de scherpe band van de tilt-shift (als fractie van de hoogte).\n0,1 = zeer dunne band, 0,5 = halve beeld scherp, 1 = alles scherp (effect uitgeschakeld).",
+      "cin.vignette": "Verduistering van de randen en hoeken van het beeld.\nSimuleert lichtafname aan de randen van een groothoeklens.\nVersterkt het gevoel van diepte en trekt het oog naar het midden.\nLoopt op tot 2: boven 1 worden de randen bijna volledig zwart.",
+      "cin.grain": "Hoeveelheid filmkorrel toegevoegd bovenop de render.\nSimuleert de onvolkomenheden van zilverhalogenidefilm of een gevoelige sensor.\nSubtiel bij 0,2, alomtegenwoordig bij 1 — vanaf dat punt kijk je eigenlijk naar ruis met een verhaal.",
+      "cin.chromatic": "Chromatische aberratie: zijdelingse verschuiving van de kleurkanalen naar de randen.\nSimuleert de gebreken van een imperfecte lens die niet alle golflengten op hetzelfde punt scherpstelt.\nSubtiel bij 0,2, psychedelisch voorbij 0,7.",
+      "cin.halation": "Gloeiende halo rond zeer heldere gebieden, typisch voor zilverhalogenidefilm.\nSterk licht \"bloedt\" licht uit naar naburige donkere gebieden.\nVoegt warmte en een organisch gevoel toe — prachtig op zonsondergangen, vergevingsgezind op al de rest.",
+      "cin.barrel": "Tonvervorming: de randen van het beeld worden naar buiten geduwd.\nSimuleert fisheye- of groothoeklenzen. Versterkt een \"bewakingscamera\"- of lo-fi-look.\nBij 1 bolt het beeld zo sterk dat je je persoonlijk bespied voelt.",
+      "cin.scanLines": "Geïnterlinieerde donkere horizontale lijnen, ter nabootsing van een CRT-monitor of een oude tv.\n0 = geen scanlijnen. 6 = zeer uitgesproken lijnen, retro-tv-look.\nKrachtig in combinatie met een CGA/EGA-palet voor een vintage esthetiek die je ouders zullen herkennen.",
+      "cin.scanLinesIntensity": "Zwartdiepte van de scanlijnen. 0 = transparant (geen verduistering, zelfs met\nactieve scanlijnen). 1 = volledig zwart. Geen effect als Scanlijnen op 0 staat.",
+      "cin.godRays": "Intensiteit van de schemerstralen (godsstralen) die uit de schermpositie van de zon komen.\nLicht schermruimte-effect, geen extra renderpas — vooral zichtbaar\nnabij de horizon of wanneer de zon deels achter een boom of een toren schuilgaat.\n0 = uitgeschakeld (geen GPU-kosten).",
+      "cin.godRaysLength": "Reikwijdte van de stralen, als fractie van het scherm, tussen de weergegeven pixel en de zon.\nLaag = korte stralen gelokaliseerd rond de zon. Hoog = stralen die zich uitstrekken over\neen groot deel van het beeld.",
+      "cin.godRaysDiffusion": "Afname van de stralen langs hun pad naar de zon.\nLaag = korte, scherpe stralen. Hoog = lange, zachte stralen die zich\nver van de lichtbron uitstrekken.",
+      "cin.godRaysThreshold": "Helderheidsdrempel waarboven een pixel als lichtbron wordt behandeld\n(lucht, zon) en bijdraagt aan de stralen. Laag = meer gebieden dragen bij (stralen\nzijn meer aanwezig). Hoog = alleen de helderste gebieden (de zon zelf) genereren ze.",
+      "cin.godRaysLayers": "Breekt de vloeiende straalgradiënt op in gestapelde dichtheidslagen — een gelaagd,\ntranslucent-sluiereffect (millefeuille) in plaats van een continue halo.\n0 = klassieke vloeiende gradiënt. 1 = uitgesproken gelaagdheid, zichtbaar gestratificeerde stralen.",
+      "cin.bloomIntensity": "Bloom-intensiteit: een zachte gloeiende halo rond hooglichten (zon, maan,\nsterren, verlichte ramen, HUD-elementen). Beïnvloedt alleen pixels boven de\nonderstaande drempel — vervaagt nooit het hele beeld.\n0 = uitgeschakeld (geen GPU-kosten).",
+      "cin.bloomThreshold": "Helderheidsdrempel waarboven een pixel bijdraagt aan de bloom.\nLaag = meer gebieden (zelfs matig heldere) genereren een halo.\nHoog = alleen de intensiefste bronnen (zon, lampen) genereren er een.",
+      "cin.bloomRadius": "Straal van de vervaging toegepast rond bloom-bronpixels, in schermpixels.\nLaag = strakke, scherpe halo. Hoog = bredere, diffusere halo.",
+      "cin.bloomSoftness": "Zachtheid van de overgang bij de bloomdrempel.\nLaag = scherpe afsnijding tussen \"draagt bij\" en \"draagt niet bij\".\nHoog = geleidelijke overgang, zachtere halo aan de rand van bronnen.",
+      "cin.crtCurvature": "CRT-stijl schermkromming: vervormt het beeld alsof het werd weergegeven\nop een gebogen oppervlak. Onafhankelijk van de tonvervorming (lens)\nhierboven. 0 = geen vervorming (geen GPU-kosten).",
+      "cin.crtMask": "Maskeert de gebieden die buiten het beeld vallen zodra schermkromming is toegepast\n(zwarte randen) in plaats van ze uit te rekken. 0 = uitgerekte randen (geen masker),\n1 = randen buiten beeld volledig zwart gemaskeerd. Geen effect als kromming op 0 staat.",
+      "cin.crtCornerDark": "Extra verduistering van de schermhoeken, typisch voor een CRT-buis.\n0 = geen verduistering. Geen effect als schermkromming op 0 staat.",
+      "water.foamWidth": "Bereik van de schuimband nabij de kust (in meters).\n0 = geen kustschuim. Hoge waarden = een brede witte zoom langs de hele kustlijn.",
+      "water.foamScale": "Schaal van de schuimtextuur. Hoe hoger de waarde, hoe fijner en dichter het schuimpatroon.\nLaag = grote vlekken, hoog = fijne, schuimachtige korrel.",
+      "water.foamDensity": "Triggerdrempel voor kustschuim. Hoe hoger de waarde, hoe meer oppervlak het schuim nabij de rand bedekt.",
+      "water.foamAmbient": "Drempel voor omgevingsschuim, zichtbaar over het hele wateroppervlak (niet alleen de kust).\n0 = perfect glad oppervlak op open water. Hoge waarden = overal verspreide schuimkoppen.",
+      "water.foamSharp": "Scherpte van de schuimrand. Laag = zachte, diffuse overgang. Hoog = scherpe, uitgesneden contour.",
+      "water.foamSpeed": "Animatiesnelheid van het schuim (patroonverschuiving in de tijd). 0 = bevroren, statisch schuim.",
+      "water.deepDistance": "Afstand van kust tot open water waarover de gradiënt van ondiep naar diep water zich uitstrekt.\nLaag = strakke overgang nabij de rand. Hoog = gradiënt verspreid over een groot gebied.",
+      "water.opacity": "Basisdekking van het wateroppervlak. Laag = doorschijnend water dat de bodem toont. Hoog = ondoorzichtig water.",
+      "wake.armWidth": "Halve breedte van elke arm van het V-vormige kielzog achter de boot.",
+      "wake.spread": "Divergentie van de V: hoe snel de twee armen uit elkaar wijken naarmate ze zich van de boot verwijderen.",
+      "wake.length": "Lengte waarover het kielzog vervaagt achter de boot voordat het verdwijnt.",
+      "wake.scale": "Schaal van het schuimpatroon van het kielzog. Hoe hoger de waarde, hoe fijner de korrel.",
+      "wake.density": "Schuimdekking van het kielzog. Laag = discreet kielzog, hoog = dicht schuimspoor.",
+      "wake.opacity": "Maximale dekking van het kielzog, het sterkst vlak achter de boot en dan vervagend met de lengte.",
+      "wind.wheat.strength": "Amplitude van het wiegen van de korenaren. 0 = stil.",
+      "wind.wheat.speed": "Oscillatiesnelheid van het koren in de wind.",
+      "wind.grass.strength": "Amplitude van het wiegen van de grassprieten.",
+      "wind.grass.speed": "Oscillatiesnelheid van het gras in de wind.",
+      "wind.grass.sway": "Extra sinusoïdale wiegbeweging van elke spriet, onafhankelijk van de windruis.",
+      "wind.tree.strength": "Amplitude van het wiegen van de boomkronen. Het wijzigen van deze instelling hercompileert de shaders van reeds geplante bomen (een korte hapering is mogelijk).",
+      "wind.tree.speed": "Oscillatiesnelheid van de bomen in de wind.",
+      "wind.tree.frequency": "Ruimtelijke frequentie van de hoofdwindgolf langs stam/gebladerte.",
+      "wind.tree.turbulence": "Intensiteit van de windvlagen en secundaire details toegevoegd aan de hoofdwindgolf.",
+      "wind.tree.gustStrength": "Gewicht van de windvlagen (tragere, bredere variatie) in de totale beweging.",
+      "wind.tree.detailStrength": "Gewicht van het fijne detail (snelle rimpeling) in de totale beweging.",
+      "cloud.coverage": "Wolkendekking aan de horizon. 0 = heldere hemel, 1 = bewolkte hemel.",
+      "cloud.scale": "Schaal van het wolkenpatroon. Hoge waarde = kleinere, fijnere wolken; lage waarde = brede massa's.",
+      "cloud.speed": "Driftsnelheid van de wolken aan de horizon.",
+      "stats.drawCalls": "Totaal aantal renderaanroepen (draw calls) door Three.js in dit frame.\nElk zichtbaar object kost minstens 1 draw call — schaduwen voegen er meer toe.\n> 200 dc: let op de prestaties op mobiele GPU's, die hun best doen.",
+      "stats.trackedDc": "Draw calls toegeschreven aan gevolgde objectcategorieën (tegels, bomen, rails…).\nHet verschil met het totaal = niet-gecategoriseerde draw calls (UI, hulpmiddelen, skybox…) — de rommella van de GPU.",
+      "stats.shadows": "Geschatte draw calls gebruikt voor schaduwrendering (shadow map).\nElk schaduwwerpend object rendert de scène opnieuw vanuit het perspectief van de zon.\nVerminder shadowMapSize of het aantal schaduwwerpers om deze kosten te verlagen.",
+      "stats.triangles": "Totaal aantal gerenderde driehoeken in dit frame.\nEen indicator voor geometrische complexiteit — schaduwen verdubbelen dit cijfer.\nLOD-meshes (level of detail) verminderen dit aantal op afstand, en vereenvoudigen de wereld stilletjes wanneer je niet goed kijkt.",
+      "stats.objects": "Totaal aantal 3D-objecten (Mesh, Group…) gevolgd in de scène.\nKomt niet exact overeen met draw calls: één object kan meerdere passes genereren.",
+      "stats.textures": "Aantal actieve texturen in GPU-geheugen.\nEen niet-vrijgegeven textuur blijft in VRAM. Het bekijken waard na het laden van nieuwe tegels — VRAM heeft ook gevoelens.",
+      "stats.shaders": "Aantal gecompileerde en actieve shaderprogramma's (GLSL).\nElke materiaal + defines-combinatie = één shader. Te veel varianten = hapering bij het eerste frame, het GPU-equivalent van plankenkoorts.",
+      "game.tiles": "Totaal aantal tegels geplaatst op het bord sinds het begin van de partij.\nElke tegel kan tot een of meer biomen behoren, afhankelijk van zijn samenstelling.",
+      "game.score": "De score: de punten die je in deze partij hebt verdiend. Het enige getal dat er naar verluidt toe doet.",
+      "game.efficiency": "Efficiëntie = score ÷ geplaatste tegels, verlaagd zolang er te weinig tegels zijn geplaatst om betekenisvol te zijn.\nDe wereldranglijst (sectie Scorebord van de site) is gebaseerd op DEZE efficiëntie, niet op de ruwe score! Kwaliteit boven kwantiteit, zoals je oma altijd zei.",
+      "game.mills": "Aantal molens aanwezig op het raster.\nEen molen verschijnt automatisch in het midden van elke grote korenveldzone, onaangedaan door bestemmingsplannen.",
+      "game.trains": "Gevormde treinlijnen: één lijn = twee stations verbonden door ononderbroken rails.\nHoe langer de lijn, hoe hoger de scorepunten.",
+      "game.boats": "Actieve bootjes: een bootje verschijnt op elke watervlakte omringd door land.\nElk bootje genereert punten zolang het \"drijvende\" blijft — vaarverzekering niet inbegrepen.",
+      "game.comets": "Onderschepte kometen: willekeurige gebeurtenissen die over het bord schieten.\nEen tegel op de voorspelde plek op het juiste moment plaatsen laat je ze onderscheppen. Sterrenkunde-huiswerk, maar dan leuk.",
+      "game.grass": "Totaal aantal geplaatste weidetegels.\nMax. oppervlak = grootste aaneengesloten weidezone (aangrenzende tegels van hetzelfde bioom).",
+      "game.largestGrass": "Grootste aaneengesloten weidezone (in aantal verbonden tegels).\nEen grote aaneengesloten zone levert meer punten op aan het einde van de partij.",
+      "game.field": "Totaal aantal geplaatste korenveldtegels.\nAkkers naast dorpen of rivieren geven bonussen.",
+      "game.largestField": "Grootste aaneengesloten akkerzone. Bepaalt de uiteindelijke oogstbonus.",
+      "game.forest": "Totaal aantal geplaatste bostegels.\nDichte bossen (grote zones) zijn wildreservaten en leveren meer op.",
+      "game.largestForest": "Grootste aaneengesloten bos. Bossen > 7 tegels triggeren soms speciale gebeurtenissen.",
+      "game.house": "Totaal aantal geplaatste dorpstegels.\nGeïsoleerde huizen zijn weinig waard; een dicht dorp goed verbonden met het spoornetwerk levert veel op. Vastgoedlogica, hexagonale editie.",
+      "game.largestHouse": "Grootste aaneengesloten dorp. Een dorp = aangrenzende huizen.\nTalrijke, dichte dorpen maximaliseren de stedelijke bonus.",
+      "game.water": "Totaal aantal geplaatste watertegels (meren, rivieren, zee).\nWater grenzend aan andere biomen creëert gewaardeerde kustzones.",
+      "game.largestWater": "Grootste aaneengesloten watervlakte. Een meer > 5 tegels kan extra bootjes herbergen.",
+      "game.rail": "Totaal aantal geplaatste spoortegels.\nRails alleen leveren niets op — het is de verbinding tussen twee stations die een lijn creëert.",
+      "game.largestRail": "Langste aaneengesloten spoorweg (in tegels). Een indicator van het maximale bereik van het netwerk.",
+      "game.activeTile": "De tegel die je hierna gaat plaatsen.\nVerplaats de cursor met Z/Q/S/D, draai met het scrollwiel, en plaats met SPATIE.\nElk vlak van de tegel komt overeen met een bioom — plan je verbindingen!",
+      "game.nextTile": "De volgende tegel die in het spel komt nadat je de huidige plaatst.\nAnticipeer op zijn vorm om de beste plek voor te bereiden — een beetje vooruitdenken helpt enorm, anders dan in het echte leven.",
+      "game.deckRemaining": "Aantal resterende tegels in de trekstapel.\nHet spel eindigt wanneer de stapel leeg is — laat elke plaatsing tellen!",
+      "hs.summary": "Spelsamenvatting: geplaatste tegels, treinlijnen, bootjes, onderschepte kometen.",
+      "hs.grass": "Weide — totaal tegels / grootste aaneengesloten zone.",
+      "hs.field": "Korenveld — totaal tegels / grootste aaneengesloten zone.",
+      "hs.forest": "Bos — totaal tegels / grootste aaneengesloten zone.",
+      "hs.house": "Dorp — totaal tegels / grootste aaneengesloten zone.",
+      "hs.water": "Water — totaal tegels / grootste aaneengesloten watervlakte.",
+      "hs.rail": "Spoorweg — totaal tegels / langste aaneengesloten lijn.",
+      "fps.fps": "Frames per seconde gerenderd door de Three.js-engine.\n60 FPS = vloeiende weergave, framebudget gerespecteerd. < 30 FPS = merkbare vertragingen.\nDe waarde wordt rood wanneer het framebudget (16,7 ms) consistent wordt overschreden — de manier van de engine om hoorbaar te zuchten.",
+      "fps.adj": "Kwalitatieve beoordeling van de huidige vloeiendheid.\nGroen (Uitstekend / Vloeiend): alles in orde. Oranje (Redelijk / Oké): acceptabel maar houd het in de gaten.\nRood (Gespannen / Zwoegend / Op volle toeren): de engine staat onder druk — zoek het knelpunt, en misschien minder schapen.",
+      "fps.cpu": "Percentage van het framebudget (16,7 ms) verbruikt door de JavaScript-thread.\nOmvat spellogica, overlay-updates, animaties en GC-pauzes.\n> 80%: de CPU is het knelpunt — verlaag de updatefrequentie of het aantal actieve overlays.",
+      "fps.gpu": "Percentage van het framebudget verbruikt door GPU-rendering.\nGemeten via een echte, asynchrone GPU-timingquery (EXT_disjoint_timer_query_webgl2) —\nde weergegeven waarde kan 1 tot enkele frames achterlopen. Als de extensie niet beschikbaar is op deze\ndriver/browser, valt terug op een CPU-indieningstimer (voorvoegsel \"≈\", minder betrouwbaar, maar doet zijn best).\n> 80%: de GPU is verzadigd — verlaag driehoeken/fragmenten (vegetatie, post-processing), draw calls, of schaduwen.",
+      "menu.solo": "Solomodus — speel alleen, in je eigen tempo, aan niemand verantwoording verschuldigd.\nJe scores worden ingediend bij het wereldwijde scorebord zodra de partij eindigt.",
+      "menu.multi": "Multiplayermodus — speel in real time met andere spelers.\nMaak een kamer aan en deel de code, of sluit je aan bij een bestaande partij.",
+      "menu.platiste": "Platte geometrie — het raster rust op een horizontaal vlak.\nBetere leesbaarheid en voorspelbaar gedrag: aanbevolen voor zowel beginners als traditionalisten.",
+      "menu.bouliste": "Bolvormige geometrie — de tegels volgen de kromming van een planeet.\nEen meeslepender aanzicht, maar het gebogen raster kan in het begin verwarrend zijn — de wetenschap was nooit bedoeld om makkelijk te zijn.",
+      "menu.confirm": "Bevestig en ga naar de volgende stap.",
+      "menu.create": "Maak een nieuwe multiplayerkamer aan.\nEr wordt automatisch een unieke code gegenereerd — deel die met andere spelers zodat ze zich bij je kunnen aansluiten.",
+      "menu.join": "Sluit je aan bij een bestaande kamer met de hierboven getoonde code.",
+      "menu.back": "Terug naar het startscherm.",
+      "game.gridPercent": "Aantal tegels geplaatst op het raster sinds het begin van de partij.\nElke plaatsing verhoogt deze teller, ook in multiplayermodus.",
+      "game.lastScore": "Punten verdiend bij de laatste plaatsing.\nOmvat de zonebonus als de tegel een aaneengesloten zone liet groeien of sloot, plus eventuele missiebonussen.",
+      "game.newGame": "Start een nieuwe partij.\nDe huidige partij blijft actief en speelbaar — je kunt er op elk moment naar terugkeren vanuit het menu, geen hard feelings.",
+      "game.abandonGame": "Verlaat de huidige partij.\nDe partij wordt permanent gesloten: je kunt hem niet opnieuw spelen of een nieuwe score indienen. Kies verstandig — dit is definitief."
+    },
+    "missionHelp": {
+      "forest": "Plaats tegels met bossectoren 🌲.\nElke geplaatste bosdriehoek brengt deze missie vooruit.\nDichte zones leveren meer punten op aan het einde van de partij — de bomen waarderen het gezelschap.",
+      "house": "Plaats tegels met dorpssectoren 🛖.\nElke geplaatste huisdriehoek brengt deze missie vooruit.\nDorpen verbonden met het spoornetwerk zijn bijzonder winstgevend — locatie, locatie, locatie.",
+      "rail": "Plaats tegels met rails 🛤️.\nElke geplaatste spoordriehoek brengt deze missie vooruit.\nRails alleen leveren niets op zonder een station aan elk uiteinde — ambitie heeft een bestemming nodig.",
+      "water": "Plaats tegels met watersectoren 💧.\nElke geplaatste waterdriehoek brengt deze missie vooruit.\nGrote watervlaktes kunnen bootjes herbergen.",
+      "grass": "Plaats tegels met weidesectoren 🌿.\nElke geplaatste weidedriehoek brengt deze missie vooruit.\nGrote aaneengesloten weidezones leveren een oppervlaktebonus op.",
+      "field": "Plaats tegels met korenveldsectoren 🌾.\nElke geplaatste akkerdriehoek brengt deze missie vooruit.\nAkkers nabij dorpen of rivieren geven bonussen — goede buren lonen.",
+      "train": "Verbind twee stations met ononderbroken rails 🚂.\nElke nieuw voltooide treinlijn brengt deze missie vooruit.\nHoe langer de lijn, hoe hoger de score.",
+      "boat": "Creëer watervlaktes omringd door land ⛵.\nEen bootje verschijnt automatisch op elk meer omsloten door landtegels.\nElk nieuw bootje brengt deze missie vooruit — geen doopplechtigheid nodig.",
+      "mill": "Bouw grote korenveldzones ⚙️.\nEen molen verschijnt automatisch in het midden van elke voldoende grote akkerzone.\nElke nieuwe molen brengt deze missie vooruit."
+    },
+    "missionTitles": {
+      "forest": {
+        "one": "Kweek een bos van {target} bomen",
+        "other": "Kweek een bos van {target} bomen"
+      },
+      "house": {
+        "one": "Bouw een dorp van {target} huizen",
+        "other": "Bouw een dorp van {target} huizen"
+      },
+      "rail": {
+        "one": "Leg een spoorweg van {target} rails aan",
+        "other": "Leg een spoorweg van {target} rails aan"
+      },
+      "water": {
+        "one": "Verbind een waterweg van {target} tegels",
+        "other": "Verbind een waterweg van {target} tegels"
+      },
+      "grass": {
+        "one": "Breid een weide uit met {target} tegels",
+        "other": "Breid een weide uit met {target} tegels"
+      },
+      "field": {
+        "one": "Bebouw {target} korenveldtegel",
+        "other": "Bebouw {target} korenveldtegels"
+      },
+      "train": {
+        "one": "Laat {target} trein rijden",
+        "other": "Laat {target} treinen rijden"
+      },
+      "boat": {
+        "one": "Zet {target} bootje uit",
+        "other": "Zet {target} bootjes uit"
+      },
+      "mill": {
+        "one": "Laat {target} molen draaien",
+        "other": "Laat {target} molens draaien"
+      }
+    },
+    "ui": {
+      "modals": {
+        "scoreEnd": {
+          "kicker": "Spel afgelopen — eindscore",
+          "save": "Opslaan"
+        },
+        "abandon": {
+          "kicker": "Partij verlaten?",
+          "sub": "Deze partij kan daarna niet meer worden hervat.",
+          "cancel": "ANNULEREN",
+          "confirm": "VERLATEN"
+        }
+      },
+      "hud": {
+        "player": "SPELER",
+        "room": "KAMER",
+        "abandon": "VERLATEN",
+        "newGame": "NIEUWE PARTIJ",
+        "statsTitle": "SPELSTATISTIEKEN",
+        "mills": "Molens",
+        "trains": "Treinen",
+        "boats": "Bootjes",
+        "comets": "Kometen",
+        "total": "Totaal",
+        "grassMax": "Aaneengesloten",
+        "fieldMax": "Aaneengesloten",
+        "forestMax": "Aaneengesloten",
+        "houseMax": "Aaneengesloten",
+        "waterMax": "Aaneengesloten",
+        "railMax": "Aaneengesloten",
+        "biomes": {
+          "grass": "Weide",
+          "field": "Korenveld",
+          "forest": "Bos",
+          "house": "Dorp",
+          "water": "Water",
+          "rail": "Spoorweg"
+        },
+        "activeTileTitle": "HUIDIGE TEGEL",
+        "nextTileTitle": "VOLGENDE TEGEL",
+        "deckRemaining": "RESTEREND",
+        "tilesPlaced": "GEPLAATST",
+        "missionsTitle": "ACTIEVE MISSIES",
+        "noMission": "Geen missie",
+        "efficiencyLabel": "Efficiëntie",
+        "scoreLabel": "Score"
+      },
+      "help": {
+        "title": "Hulp",
+        "closeAria": "Hulp sluiten",
+        "objective": {
+          "title": "Basisregels",
+          "text": "Plaats hexagonale tegels, verbind gelijke texturen en voltooi missies. Elke goed uitgelijnde rand loont; water en rails lonen nog meer — de wereld beloont wie vooruit plant, af en toe.",
+          "points": {
+            "tile": "per geplaatste tegel",
+            "edge": "per overeenkomende rand met een aangrenzende tegel",
+            "waterRail": "per water/water- of spoor/spoorverbinding",
+            "surround": "bonus wanneer een tegel aan alle 6 zijden omringd is",
+            "mission": "per voltooide missie",
+            "bonus": "als je een tegel op een bonusveld plaatst"
+          }
+        },
+        "placement": {
+          "title": "Plaatsing",
+          "items": [
+            "Het spel begint met 50 tegels.",
+            "De eerste mag overal geplaatst worden; latere moeten een geplaatste tegel raken — geen zwevende dorpjes, sorry.",
+            "Het spel eindigt wanneer de trekstapel leeg is.",
+            "Het speelbare gebied breidt zich uit met elke plaatsing."
+          ]
+        },
+        "waterRail": {
+          "title": "Water en rails",
+          "text": "Water en spoor zijn strikte netwerken en lastiger te plaatsen. In ruil daarvoor levert elke correcte verbinding meer punten op — hoog risico, hoge beloning, weinig tolerantie voor doodlopende einden.",
+          "water": "verbindt alleen met water: +25",
+          "rail": "verbindt alleen met spoor: +25"
+        },
+        "bonusCells": {
+          "title": "Bonusvelden",
+          "text": "Tussen de 1 en 4 bonusvelden worden op het raster gegenereerd. Ze veranderen geen enkele plaatsingsregel: als het je lukt er een tegel op te plaatsen, verdwijnt het bonusveld en levert het meteen +500 punten op. Het dichtste bij gratis geld dat dit spel te bieden heeft.",
+          "label": "optioneel doel, pure score, geen risico"
+        },
+        "blackCells": {
+          "title": "Zwarte velden",
+          "text": "Zwarte velden zijn speciale tegels die al op het raster aanwezig zijn. Ze fungeren als jokers: ze vullen aan wat eromheen ontbreekt en accepteren verbindingen met elke aangrenzende textuur — de diplomaten van de hexwereld.",
+          "label": "telt als compatibel met elke aangrenzende rand"
+        },
+        "textures": {
+          "title": "Texturen & waarden",
+          "field": {
+            "label": "Korenveld",
+            "code": "1-2 schoven"
+          },
+          "forest": {
+            "label": "Bos",
+            "code": "1-6 bomen"
+          },
+          "grass": {
+            "label": "Weide",
+            "code": "1"
+          },
+          "house": {
+            "label": "Dorp",
+            "code": "1-4 huizen"
+          },
+          "water": {
+            "label": "Water",
+            "code": "1"
+          },
+          "rail": {
+            "label": "Spoor",
+            "code": "1"
+          }
+        },
+        "missions": {
+          "title": "Missies",
+          "text1": "Elke keer dat een nieuwe huidige tegel verschijnt, is er 20% kans op een nieuwe missie. Die kan vragen om bos, dorp, spoorweg, waterweg, weide, korenveld, zichtbare treinen, bootjes of molens — de eisen van de wereld, willekeurig geleverd.",
+          "text2": "Beloning: +100 punten en +3 tegels. Doelen tellen per type; een voltooide missie blijft 5 beurten zichtbaar, badend in eigen glorie. De werkelijke waarden tellen: weide/water/spoor = 1; korenveld = 1-2; huis = 1-4; bos = 1-6 bomen. Molens ⚙️ tellen het aantal actieve grote akkerzones."
+        },
+        "controls": {
+          "title": "Besturing",
+          "moveCamera": "Camera verplaatsen",
+          "resetCamera": "Camera resetten",
+          "zoom": "In-/uitzoomen",
+          "undo": "Laatste zet ongedaan maken",
+          "toggleHelp": "Deze hulp tonen / verbergen",
+          "muteSound": "Alle geluid dempen / activeren",
+          "muteVoice": "Stemmeldingen dempen / activeren",
+          "immersive": "Immersieve modus",
+          "superImmersive": "Super-immersieve modus",
+          "speedUp": "Versnelt beweging en zoom",
+          "wheelZoomRotate": "Zoomen of draaien indien beschikbaar",
+          "rightClick": "Camera draaien",
+          "perfHud": "FPS-HUD tonen / verbergen",
+          "eda": "EDA-HUD tonen / verbergen",
+          "snapshot": "Screenshot maken",
+          "gallery": "Screenshotgalerij openen",
+          "replay": "Spelreplay-HUD tonen / verbergen",
+          "wheelKbd": "Scrollwiel",
+          "leftClickKbd": "Linkerklik",
+          "rightClickKbd": "Rechterklik",
+          "spaceKbd": "SPATIE",
+          "shiftSpaceKbd": "SHIFT+SPATIE"
+        }
+      }
+    },
+    "highscore": {
+      "saving": "Opslaan...",
+      "saved": "Score opgeslagen! Terug naar menu...",
+      "error": "Fout bij highscore.",
+      "defaultName": "Speler"
+    },
+    "multiplayerRooms": {
+      "modeCopy": "Maak een nieuwe partij aan of sluit je aan bij een bestaande met een code.",
+      "nameLabel": "Bijnaam",
+      "namePlaceholder": "Je bijnaam",
+      "codeLabel": "Spelcode",
+      "codePlaceholder": "bijv. 377EA7",
+      "availableRoomsLabel": "Beschikbare partijen / back-ups",
+      "loadingRooms": "Partijen laden...",
+      "btnCreate": "AANMAKEN",
+      "btnJoin": "DEELNEMEN",
+      "btnBack": "TERUG",
+      "selectExisting": "Selecteer een bestaande partij",
+      "noRoomsFound": "Geen partijen gevonden in /json/games",
+      "listUnavailable": "Lijst niet beschikbaar - PHP-server stil",
+      "roomsCount": {
+        "one": "{count} partij beschikbaar / back-ups",
+        "other": "{count} partijen beschikbaar / back-ups"
+      },
+      "unknownDate": "onbekende datum",
+      "playerWord": {
+        "one": "speler",
+        "other": "spelers"
+      },
+      "tileWord": {
+        "one": "tegel",
+        "other": "tegels"
+      },
+      "creatingRoom": "Partij {code} wordt aangemaakt...",
+      "missingCode": "Spelcode ontbreekt.",
+      "joiningRoom": "Verbinden met partij {code}...",
+      "roomNotFound": "Partij {code} gevonden, maar snapshot ontbreekt. Verouderde JSON geweigerd.",
+      "defaultNamePrefix": "Speler"
+    },
+    "startupMenu": {
+      "nameChoice": {
+        "title": "Wat is je naam?",
+        "label": "Je voornaam (of bijnaam)",
+        "placeholder": "bijv. Alex",
+        "confirm": "VERDER →"
+      },
+      "home": {
+        "title": "Kies de spelmodus: solo of multiplayer.",
+        "solo": "SOLO",
+        "multi": "MULTI"
+      },
+      "worldShape": {
+        "title": "Kies de geometrie van je planeet:",
+        "flat": "PLAT",
+        "globe": "BOL",
+        "note": "We raden \"<i>plat</i>\" aan om te beginnen. Je kunt op elk moment in het spel van factie wisselen, want zelfs planeten hebben recht op een identiteitscrisis."
+      }
+    },
+    "preloader": {
+      "loading": "Hexagonen worden opgeroepen…",
+      "loadingPct": "Hexagonen worden opgeroepen… {pct} %",
+      "loadingCount": "{loaded} bestanden / {total} bestanden · {loadedMB} MB / {totalMB} MB — bijna klaar, waarschijnlijk"
+    },
+    "placementOverlay": {
+      "ok": "OK",
+      "outOfGrid": "BUITEN RASTER",
+      "forbidden": "VERBODEN",
+      "incompatibleNetwork": "ONVERENIGBAAR NETWERK",
+      "edgeTypes": {
+        "field": "korenveld",
+        "forest": "bos",
+        "water": "water",
+        "rail": "spoor",
+        "house": "dorp",
+        "grass": "weide"
+      }
+    },
+    "multiplayerClient": {
+      "unreadableResponse": "Onleesbaar serverantwoord ({status}): {text}",
+      "serverError": "Serverfout {status}"
+    },
+    "kbdHint": "H of ESC&nbsp;→ hulp &nbsp;|&nbsp; M&nbsp;→ dempen &nbsp;|&nbsp; T&nbsp;→ stem dempen &nbsp;|&nbsp; SPATIE&nbsp;→ immersief &nbsp;|&nbsp; SHIFT+SPATIE&nbsp;→ super-immersief",
+    "superImmersifExitHint": "SPATIE om super-immersieve modus te verlaten",
+    "langName": "Nederlands",
+    "tts": {
+      "pointsAnnounce": "{n} punten!",
+      "voiceOn": "Stem aan",
+      "voiceOff": "Stem uit",
+      "newMission": "Nieuwe missie: {title}",
+      "missionCompleted": "Goed gedaan! Missie voltooid! De wereld keurt het goed.",
+      "edaOpened": "Art-directioneditor",
+      "helpOpened": "Hulp",
+      "millsCount": "Je hebt {n} molens",
+      "trainsCount": "Je hebt {n} treinen",
+      "boatsCount": "Je hebt {n} bootjes",
+      "cometsCount": "Je hebt {n} kometen",
+      "languageChanged": "Nederlandse taal",
+      "themeChanged": "Thema {theme}"
+    },
+    "fpsAdjectives": {
+      "disastrous": "Rampzalig",
+      "bad": "Slecht",
+      "mediocre": "Matig",
+      "passable": "Redelijk",
+      "good": "Goed",
+      "splendid": "Uitstekend"
+    }
+  }
+}

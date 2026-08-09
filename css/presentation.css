@@ -410,6 +410,11 @@ nav {
    Le wrapper reste lui-même libre de passer à la ligne (espace normal avant,
    entre "HEXISTENZ" et lui) pour ne pas réintroduire le débordement horizontal
    corrigé en #226. */
+/* 2026-08-08 — pastille #prezVersionBadge (bas-gauche, par-dessus le cadre)
+   ajoutée puis RETIRÉE le même jour sur demande explicite ("c'était une
+   erreur") : la version reste affichée uniquement en ligne dans .hero-title
+   via .hero-version-wrap ci-dessous (repli sur le comportement d'origine). */
+
 .hero-version-wrap {
   display: inline-block;
   white-space: nowrap;

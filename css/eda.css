@@ -2259,10 +2259,13 @@ body.fps-hud-deployed .debug-light-btn-rows {
      text-transform:uppercase de la règle de base plus haut dans ce fichier),
      seule la 1ère lettre capitalisée — cf. .title (css/themes/medieval.css). */
   text-transform: lowercase;
-  /* 2026-08-03 (round suivant) — cohérence avec les acquis de la prez :
-     aucun letter-spacing sur Enchanted-Land, reset du 0.14em hérité de la
-     règle de base non thémée (pensée pour l'ancienne typo monospace). */
+  /* 2026-08-08 — demande explicite : 14px (hérité de la règle de base non
+     thémée, .debug-light-main-title plus haut dans ce fichier) → 15px ICI,
+     en médiéval UNIQUEMENT (le thème Bleu garde 14px via la règle non
+     thémée). Letter-spacing resserré (-0.07em) tenté puis annulé sur
+     demande explicite ("moche et illisible") — repassé à "normal". */
   letter-spacing: normal;
+  font-size: 15px;
   /* 2026-08-03 (round suivant) — jamais de gras sur Enchanted-Land : reset
      du font-weight:900 hérité de la règle de base non thémée (pensée pour
      l'ancienne typo condensée en capitales). */

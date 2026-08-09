@@ -229,9 +229,14 @@
   word-spacing: normal;
 }
 /* 2026-08-03 (4e round, suite) — demande explicite : les typos EnchantedLand
-   de taille 15px (ex. .hero-tagline) passent à 14px. */
+   de taille 15px (ex. .hero-tagline) passent à 14px.
+   2026-08-08 — ERRATUM (nouvelle demande explicite, générale cette fois) :
+   toutes les typos Enchanted-Land à 14px remontent à 15px — .hero-tagline
+   revient donc à sa taille d'origine.
+   2026-08-08 (même jour, 2e erratum) : le letter-spacing resserré (-0.07em)
+   tenté ci-dessus a été annulé sur demande explicite ("moche et illisible"). */
 [data-theme="ancien"] .hero-tagline {
-  font-size: 14px;
+  font-size: 15px;
 }
 /* 2026-08-03 (9e round) — demande explicite : les typos EnchantedLand de
    11/11.5px passent à 12px (.mission-desc/.eda-showcase-desc/.hero-inspi/
@@ -1061,6 +1066,55 @@
   color: #332415;
 }
 [data-theme="ancien"] .stat-label { color: #4a3623; }
+/* 2026-08-08 — demande explicite : .stat-num ne doit jamais être souligné en
+   thème Médiéval. Root cause initiale identifiée : [data-theme="ancien"]
+   strong { text-decoration: underline; } (6e round, ligne ~129) peint un
+   soulignement qui traverse visuellement les descendants inline d'un
+   <strong>, même si text-decoration n'est pas une propriété héritée au sens
+   strict CSS. Cette 1re passe couvrait .stat-num imbriqué dans un <strong>
+   (cf. .stats-metrics strong .stat-num en base.css). ERRATUM (2026-08-08,
+   2e round, demande explicite "3e") : le VRAI HUD visé par la demande —
+   "Stats de partie" (#statsPanel, cf. game.php ~l.259-295) — n'utilise PAS
+   la classe .stat-num du tout : ses chiffres sont directement les <strong>
+   eux-mêmes (<strong id="statGrass">, id="statLargestGrass", etc., à
+   l'intérieur de .stats-metrics). La règle .stat-num ci-dessus ne les
+   matchait donc jamais — d'où le soulignement resté visible malgré la 1re
+   correction. Ajout ciblé de .stats-metrics strong pour couvrir ce HUD
+   précisément, sans toucher au soulignement du <strong>/<b> ailleurs
+   (toujours voulu comme marqueur d'emphase, cf. 6e round). */
+[data-theme="ancien"] .stat-num,
+[data-theme="ancien"] .stats-metrics strong,
+/* 2026-08-08 (3e round, demande explicite) : les 4 compteurs moulins/trains/
+   bateaux/comètes (.stats-summary-row, game.php ~l.262-263) utilisent un
+   conteneur différent — .stats-num-group strong, PAS .stats-metrics strong —
+   donc restés soulignés par la règle générique [data-theme="ancien"] strong
+   malgré la 2e correction ci-dessus, qui ne couvrait que .stats-metrics. */
+[data-theme="ancien"] .stats-num-group strong,
+/* 2026-08-08 (4e round, demande explicite, "problème récurrent") : le HUD
+   "Aide" (touches H/ESC, game.php ~l.352-362), rubrique règles de base —
+   les nombres de bonus (+2, +10, +25, +50, +100, +500) sont des <strong>
+   nus dans .score-strip, un 3e conteneur différent des deux précédents
+   (.stats-metrics et .stats-num-group), donc toujours ratés par les 2
+   premières corrections et toujours soulignés par la règle générique
+   [data-theme="ancien"] strong. */
+[data-theme="ancien"] .score-strip strong,
+/* 2026-08-08 (5e round, demande explicite, audit complet) : après un 3e
+   signalement du même bug récurrent, recherche exhaustive de tous les
+   <strong>/<b> statiques (game.php/index.php) et générés dynamiquement en JS
+   (grep sur tout le projet). Deux derniers conteneurs affectés trouvés :
+   1) le panneau debug HUD FPS (touche F, javascript/hud_fps.js — chiffres
+      draw calls/triangles/FPS générés en template string, 54 éléments
+      .fps-hud-row strong / .fps-hud-cat-count, jamais couverts) ;
+   2) .rule-line strong (HUD Aide : libellés "Eau"/"Rail"/"Bonus"/"Joker",
+      game.php ~l.374-389) — soulignement qui était le comportement ORIGINAL
+      voulu du 6e round (marqueur d'emphase remplaçant le gras illisible en
+      EnchantedLand), mais retiré ici sur demande explicite pour uniformiser :
+      plus aucun soulignement en thème Médiéval, nulle part. */
+[data-theme="ancien"] .fps-hud-row strong,
+[data-theme="ancien"] .fps-hud-cat-count,
+[data-theme="ancien"] .rule-line strong {
+  text-decoration: none;
+}
 
 /* ─── .step-card (rubrique "Comment jouer", 4) — même effet 9-slice ─── */
 [data-theme="ancien"] .step-card {
@@ -1794,6 +1848,34 @@
    d'au moins 50% par rapport au dernier réglage (38px) → 19px de haut. Largeur
    recalculée automatiquement (background-size: auto 19px), motif toujours
    seamless (fichier source inchangé, seul le CSS scale). */
+/* 2026-08-08 — ERRATUM (2e demande, "toujours pas visible") : la surcharge
+   brun foncé posée ci-dessous au 1er round partait d'une hypothèse fausse
+   ("parchemin clair du cadre médiéval") — vérifié aux captures d'écran, le
+   COIN bas-droit précis où vit la pastille (position:fixed right/bottom) est
+   en réalité la partie SOMBRE du cadre (pierre + lierre foncé, pas le
+   parchemin), donc du texte brun à 50% d'opacité y devenait invisible —
+   confirmé en testant une couleur criarde au même endroit (parfaitement
+   visible). Retrait de la surcharge : la pastille hérite désormais du blanc
+   translucide + text-shadow sombre de css/base.css, qui fonctionne aussi
+   bien sur ce coin sombre médiéval que sur le fond spatial du thème Bleu. */
+
+/* 2026-08-08 — demande explicite, thème médiéval UNIQUEMENT : la pastille
+   version+date (#gameVersionBadge, texte nu par-dessus le cadre depuis
+   l'erratum ci-dessus) passe dans un petit conteneur à coins arrondis, fond
+   sombre légèrement translucide — cohérent avec le reste des panneaux HUD
+   médiévaux (parchemin/pierre foncé), sans revenir sur la couleur du texte
+   qui reste blanc translucide (le fond sombre propre garantit maintenant le
+   contraste, plus besoin de compter sur celui du cadre en dessous). Non
+   demandé pour le thème Bleu — pas de règle équivalente hors [data-theme=
+   "ancien"], la pastille y reste un texte nu comme avant. */
+[data-theme="ancien"] #gameVersionBadge {
+  /* 2026-08-08 — demande explicite : opacité réduite de 20% (0.55 → 0.44)
+     pour rester subtile. */
+  background: rgba(20, 14, 8, 0.44);
+  border-radius: 8px;
+  padding: 3px 9px;
+}
+
 [data-theme="ancien"] #footerBanner {
   display: block;
   position: fixed;
@@ -2134,14 +2216,11 @@
      ici + ::first-letter juste en dessous (::first-letter accepte
      text-transform, contrairement à ::first-line pour cette propriété). */
   text-transform: lowercase;
-  /* 2026-08-03 (round suivant) — cohérence avec les acquis de la prez :
-     AUCUN letter-spacing sur les textes Enchanted-Land (retiré partout côté
-     prez sur demande explicite) — reset du 0.18em hérité de la règle de base
-     non thémée (deck.css), pensée pour l'ancienne typo monospace. */
+  /* 2026-08-08 — demande explicite : 14px → 15px (letter-spacing resserré
+     tenté puis annulé sur demande explicite, "moche et illisible" — retour
+     au "aucun letter-spacing" du round du 2026-08-03). */
   letter-spacing: normal;
-  /* même round — 12px jugé trop petit une fois rendu (contrairement aux
-     textes de la prez normalisés à 12px, celui-ci passe à 14px). */
-  font-size: 14px;
+  font-size: 15px;
 }
 [data-theme="ancien"] .title::first-letter {
   text-transform: uppercase;

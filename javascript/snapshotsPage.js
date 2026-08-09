@@ -6,7 +6,7 @@
 // galerie hérite simplement de la langue courante du jeu.
 import { getGameLang, getLangFile, getLangVersion } from './gameLangReactive.js';
 
-const LOCALES = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA', de: 'de-DE', ru: 'ru-RU', 'fr-MED': 'fr-FR' };
+const LOCALES = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA', de: 'de-DE', ru: 'ru-RU', 'fr-MED': 'fr-FR', nl: 'nl-NL', pl: 'pl-PL', tr: 'tr-TR' };
 const BATCH_SIZE = 30;
 
 async function loadTexts() {

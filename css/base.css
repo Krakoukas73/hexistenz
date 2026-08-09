@@ -30,6 +30,46 @@ body::after {
   display: none;
 }
 
+/* 2026-08-08 — demande explicite : pastille de version ingame, par-dessus le
+   cadre médiéval (le cadre décoratif #footerBanner/#headerBanner/#leftBanner/
+   #rightBanner monte à z-index 99999, cf. css/themes/medieval.css — donc
+   100000 ici pour rester visible au-dessus). pointer-events:none pour ne
+   jamais gêner un clic dans ce coin. Thème-agnostique : même style dans les
+   2 thèmes (la surcharge brun foncé du 1er round, retirée depuis, partait
+   d'une hypothèse fausse sur la couleur du coin du cadre — cf. erratum plus
+   bas dans medieval.css).
+   2026-08-08 (2e round, demande explicite, "toujours pas lisible en
+   médiéval") : contraste et taille encore augmentés — opacité 0.45 → 0.75,
+   text-shadow renforcé (double couche pour un halo plus épais), pas
+   seulement une ombre fine.
+   2026-08-08 (3e round, demande explicite) : repositionnée en bas à GAUCHE
+   (au lieu de bas à droite) dans LES DEUX thèmes — le coin bas-droit est
+   déjà occupé par les menus principaux (.debug-light-panel, les 9 boutons +
+   HUD FPS/EDA) et s'y superposait. Taille de police +15% (10px → 11.5px). */
+#gameVersionBadge {
+  position: fixed;
+  left: 6px;
+  bottom: 4px;
+  z-index: 100000;
+  font-family: monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 2026-08-08 — demande explicite : date de la dernière release à côté de la
+   version (#gameVersionDate, cf. game.php) — même traitement que
+   .hero-version-date sur la prez (css/presentation.css) : légèrement plus
+   discrète que le numéro de version lui-même (opacité réduite, italique),
+   sans pastille propre. */
+#gameVersionDate {
+  opacity: 0.75;
+  font-style: italic;
+}
+
 #app {
   position: fixed;
   inset: 0;
@@ -879,14 +919,13 @@ body.grid-only-mode .help-overlay {
      lettre capitalisée — cf. .title (css/themes/medieval.css) pour le détail
      de la technique lowercase + ::first-letter. */
   text-transform: lowercase;
-  /* 2026-08-03 (round suivant) — cohérence avec les acquis de la prez :
-     aucun letter-spacing sur Enchanted-Land, reset du 0.18em hérité de la
-     règle de base non thémée (pensée pour l'ancienne typo monospace). */
+  /* 2026-08-08 — demande explicite : les typos Enchanted-Land à 14px passent
+     à 15px (lisibilité).
+     ERRATUM (même jour) : le resserrement de letter-spacing (-0.07em) tenté
+     un temps a été annulé sur demande explicite ("moche et illisible") —
+     retour au "aucun letter-spacing" (normal) du round du 2026-08-03. */
   letter-spacing: normal;
-  /* 2026-08-03 (round suivant) — cohérence de taille avec .title
-     (css/themes/medieval.css, 14px) : 12px ne partageait pas les dimensions
-     établies pendant les essais prez/pré-partie. */
-  font-size: 14px;
+  font-size: 15px;
 }
 [data-theme="ancien"] .score-title::first-letter {
   text-transform: uppercase;
@@ -921,15 +960,11 @@ body.grid-only-mode .help-overlay {
      capitalisée — cf. .title (css/themes/medieval.css) pour la technique. */
   font-family: 'EnchantedLand', Georgia, "Times New Roman", serif;
   text-transform: lowercase;
-  /* 2026-08-03 (round suivant) — cohérence avec les acquis de la prez :
-     aucun letter-spacing sur Enchanted-Land, reset du 0.16em hérité de la
-     règle de base non thémée (pensée pour l'ancienne typo monospace). */
+  /* 2026-08-08 — demande explicite : 14px → 15px.
+     ERRATUM (même jour) : letter-spacing resserré (-0.07em) annulé sur
+     demande explicite ("moche et illisible") — retour à "normal". */
   letter-spacing: normal;
-  /* 2026-08-03 (round suivant) — cohérence de taille avec .title
-     (css/themes/medieval.css, 14px) : la police héritée était plus petite
-     et ne partageait pas les dimensions établies pendant les essais prez/
-     pré-partie. */
-  font-size: 14px;
+  font-size: 15px;
   /* 2026-08-03 (round suivant) — jamais de gras sur Enchanted-Land : reset
      du font-weight:900 hérité de la règle de base non thémée (pensée pour
      l'ancienne typo condensée en capitales). */
@@ -946,12 +981,11 @@ body.grid-only-mode .help-overlay {
   color: #4a3623;
   /* 2026-08-03 — demande explicite : typo Enchanted-Land sur les titres des
      DIV du HUD statistiques (moulins/convois/nefs/comètes) — même convention
-     que les autres titres HUD (.title/.score-title/.stats-title) : 14px,
-     jamais de gras, aucun letter-spacing, casse "1ère lettre seulement" (pas
-     de MAJUSCULES malgré text-transform:uppercase hérité de la règle de base
-     non thémée, pensée pour l'ancienne typo Space Mono). */
+     que les autres titres HUD (.title/.score-title/.stats-title).
+     2026-08-08 — 14px → 15px (letter-spacing resserré tenté puis annulé sur
+     demande explicite, "moche et illisible" — retour à "normal"). */
   font-family: 'EnchantedLand', Georgia, "Times New Roman", serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 400;
   letter-spacing: normal;
   text-transform: lowercase;
@@ -1006,7 +1040,10 @@ body.grid-only-mode .help-overlay {
    ::first-letter sans problème. */
 [data-theme="ancien"] .stats-card-head span:not(.stats-icon) {
   font-family: 'EnchantedLand', Georgia, "Times New Roman", serif;
-  font-size: 14px;
+  /* 2026-08-08 — demande explicite : 14px → 15px (letter-spacing resserré
+     tenté puis annulé sur demande explicite, "moche et illisible" — retour
+     à "normal"). */
+  font-size: 15px;
   font-weight: 400;
   letter-spacing: normal;
   text-transform: lowercase;

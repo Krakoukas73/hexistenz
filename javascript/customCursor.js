@@ -94,6 +94,20 @@ const CLICKABLE_SELECTOR = [
   // par imbrication plutôt que par attribut `for` — cf. commentaire détaillé
   // dans css/cursors.css pour le même correctif côté CSS.
   'label',
+  // 2026-08-08 — demande explicite : "survoler un menu doit immédiatement
+  // déclencher le curseur par défaut". Jusqu'ici, seuls les éléments
+  // RÉELLEMENT cliquables (bouton, lien, input...) suspendaient le curseur
+  // animé de gameplay (line_cross.png/disabled.png, cf. scene.js
+  // setTileHoverCursor) — en quittant une tuile disponible pour survoler la
+  // zone NON-cliquable d'un panneau HUD (padding, texte, fond d'un menu),
+  // e.target ne matchait aucun de ces sélecteurs, donc le curseur de tuile
+  // restait affiché par-dessus le menu au lieu de repasser en curseur par
+  // défaut. Fix : ajout des conteneurs de HUD/menus eux-mêmes (pas
+  // seulement leurs boutons) — un survol N'IMPORTE OÙ à l'intérieur suspend
+  // désormais le curseur animé, quelle que soit la zone précise survolée.
+  '#scorePanel', '#statsPanel', '.tileDeckBox', '.missionsBox',
+  '#helpOverlay', '.debug-light-panel', '#highscoreModal',
+  '#abandonConfirmModal',
 ].join(', ');
 
 let followerEl = null;

@@ -1,0 +1,8 @@
+[2026-08-08T18:05:19+00:00] GD indisponible ou sans support JPEG (extension_loaded=0) — tentative Imagick
+[2026-08-08T18:05:19+00:00] Imagick également indisponible — tentative binaire externe
+[2026-08-08T18:05:19+00:00] binaire externe "convert" en échec (exitCode=4) : Param�tre non valide - -auto-orient
+[2026-08-08T18:05:19+00:00] binaire externe "magick" en échec (exitCode=1) : 'magick' n'est pas reconnu en tant que commande interne
+[2026-08-08T18:05:19+00:00] binaire externe "gm" en échec (exitCode=1) : 'gm' n'est pas reconnu en tant que commande interne
+[2026-08-08T18:05:21+00:00] binaire externe "ffmpeg" en échec (exitCode=-22) : ffmpeg version 8.1-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers
+[2026-08-08T18:05:21+00:00] aucun binaire externe utilisable (convert/magick/gm/ffmpeg absents ou en échec) pour hexistenz_20260808_180519_0209c6.jpg
+[2026-08-08T18:05:21+00:00] aucune voie de génération disponible (GD/Imagick/binaire externe) pour hexistenz_20260808_180519_0209c6.jpg — repli sur image pleine résolution

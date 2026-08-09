@@ -20,14 +20,14 @@
     "ancien": "Mittelalterlich"
   },
   "hero": {
-    "subtitle": "Kontemplatives Hexagon-Spiel, gemacht mit Nostalgie und Liebe ❤️ Three.js und jeder Menge Kacheln",
+    "subtitle": "Kontemplatives Hexagon-Spiel, gebaut aus Nostalgie, Liebe ❤️ Three.js und einem Kachelstapel, der einfach nicht kleiner werden will",
     "inspi_text": "Inspiriert von <em>Dorfromantik</em>, der pastoralen Seele von <em>The Settlers</em> (Blue Byte, 1993)\n          und den wundervollen Welten von <em>Heroes of Might and Magic</em> (3DO).",
     "inspi_buy": {
       "dorfromantik": "Dorfromantik auf Steam",
       "settlers": "The Settlers bei Ubisoft",
       "heroes3": "Heroes III auf GOG"
     },
-    "tagline": "<strong>Hexistenz ist ein kontemplatives Spiel</strong>, gemacht für Spieler, die es lieben, eine Welt\n          und ihre Details lange zu betrachten, ohne sich um die verstreichende Zeit zu kümmern.<br><br><strong>Setze\n          hexagonale Kacheln</strong> und beobachte, wie vor deinen Augen ein Territorium Gestalt annimmt: weite\n          Wälder aus Tannen und Birken, wogende Weizenfelder mit Mühlen dazwischen, mittelalterliche Dörfer mit\n          rauchenden Dächern, lange Eisenbahnnetze und breite Flüsse, auf denen deine Boote fahren.<br><br>Erfülle\n          Missionen, fange Kometen ab, umgib deine Kacheln vollständig, und errichte nach und nach eine lebendige\n          Welt, Kachel für Kachel.<br><br><strong>Spiele allein oder im Mehrspielermodus</strong>, nimm eine\n          gespeicherte Partie wieder auf, wann immer du Lust hast, <strong>halte deine schönsten Momente in der\n          Screenshot-Galerie fest</strong> und erlebe deine Partien im Zeitraffer dank herunterladbarer\n          Online-Replays noch einmal.<br><br>Das Spiel ist schon jetzt spielbar und vollständig in 9 Sprachen übersetzt, darunter ein Altfranzösisch aus dem 12. Jahrhundert.<br><br>Das Spiel ist kostenlos, ohne Registrierung, ohne Pay-to-Win und ohne Ingame-Käufe: kurzum, einzig und allein für die Nostalgie gemacht.",
+    "tagline": "<strong>Hexistenz ist ein kontemplatives Spiel</strong>, gemacht für Spieler, die es lieben, eine Welt\n          und ihre Details lange zu betrachten, ohne sich um die verstreichende Zeit zu kümmern.<br><br><strong>Setze\n          hexagonale Kacheln</strong> und beobachte, wie vor deinen Augen ein Territorium Gestalt annimmt: weite\n          Wälder aus Tannen und Birken, wogende Weizenfelder mit Mühlen dazwischen, mittelalterliche Dörfer mit\n          rauchenden Dächern, lange Eisenbahnnetze und breite Flüsse, auf denen deine Boote fahren.<br><br>Erfülle\n          Missionen, fange Kometen ab, umgib deine Kacheln vollständig, und errichte nach und nach eine lebendige\n          Welt, Kachel für Kachel.<br><br><strong>Spiele allein oder im Mehrspielermodus</strong>, nimm eine\n          gespeicherte Partie wieder auf, wann immer du Lust hast, <strong>halte deine schönsten Momente in der\n          Screenshot-Galerie fest</strong> und erlebe deine Partien im Zeitraffer dank herunterladbarer\n          Online-Replays noch einmal.<br><br>Das Spiel ist schon jetzt spielbar und vollständig in 9 Sprachen übersetzt, darunter ein Altfranzösisch aus dem 12. Jahrhundert, für den Fall, dass gerade Ritterromantik gefragt ist.<br><br>Das Spiel ist kostenlos, ohne Registrierung, ohne Pay-to-Win und ohne Ingame-Käufe: kurzum, ein Spiel, das nichts von dir will außer ein bisschen Zeit.",
     "btn_play": "Jetzt spielen",
     "btn_how": "Wie spielt man?",
     "stats": {
@@ -42,7 +42,7 @@
     "label": "Zwei Arten, die Welt zu sehen",
     "title1": "Flachweltler und Kugelweltler",
     "title2": "Zwei unversöhnliche Fraktionen",
-    "sub": "Hexistenz teilt die Baumeister in <strong>zwei unversöhnliche Fraktionen</strong>. Eine visuelle Option,\n      ein philosophisches Bekenntnis. Auf welcher Seite stehst du&nbsp;?",
+    "sub": "Hexistenz teilt die Baumeister in <strong>zwei unversöhnliche Fraktionen</strong>. Eine visuelle Option,\n      ein philosophisches Bekenntnis, ein potenzieller Streit beim nächsten Spieleabend. Auf welcher Seite stehst du&nbsp;?",
     "flat": {
       "tag": "Flachwelt-Modus",
       "name": "🪨 Die flache Welt",
@@ -51,9 +51,9 @@
     "globe": {
       "tag": "Kugelwelt-Modus",
       "name": "🌍 Die sphärische Welt",
-      "desc": "Die Krümmung der Welt zeigt sich, während das Raster wächst — entfernte Kacheln\n            biegen sich zum Horizont hin. Ein Echtzeit-GPU-Effekt, der jeder Partie eine\n            schwindelerregende Tiefe verleiht."
+      "desc": "Die Krümmung der Welt zeigt sich, während das Raster wächst — entfernte Kacheln\n            biegen sich zum Horizont hin. Ein Echtzeit-GPU-Effekt, der jeder Partie eine\n            schwindelerregende Tiefe verleiht, ganz zum Ärger der anderen Fraktion."
     },
-    "vs": "Die Debatte ist noch nicht beendet."
+    "vs": "Die Debatte ist noch nicht beendet. Beide Seiten haben Argumente. Keine hat Beweise."
   },
   "biomes": {
     "label": "Die Biome",
@@ -61,32 +61,32 @@
     "sub": "Jede Kachel besteht aus sechs dreieckigen Sektoren. <strong>Verbinde gleiche Biome</strong>, um Zonen zu bilden und deinen Punktestand zu maximieren.",
     "grass": {
       "name": "Wiese",
-      "desc": "Grasflächen, deren Halme im Wind zittern, durchsetzt mit Wildblumen, Felsen, Hirschen und Büschen. Neutrales Gelände zwischen den großen Netzwerken.",
+      "desc": "Grasflächen, deren Halme im Wind zittern, durchsetzt mit Wildblumen, Felsen, Hirschen und Büschen. Neutrales Gelände zwischen den großen Netzwerken — die Schweiz der Biome.",
       "tag": "Neutrales Biom"
     },
     "field": {
       "name": "Feld",
-      "desc": "Weizen im Wind, prozedurale Mühlen und Heuballen. Das Chi-Mai-Thema erklingt, wenn die Kamera die Ähren streift.",
+      "desc": "Weizen im Wind, prozedurale Mühlen und Heuballen. Das Chi-Mai-Thema erklingt, wenn die Kamera die Ähren streift — offenbar hat das Feld einen eigenen Soundtrack-Vertrag.",
       "tag": "Landwirtschaftliches Netzwerk"
     },
     "forest": {
       "name": "Wald",
-      "desc": "Tannen, Birken, Pappeln als InstancedMesh, deren Laubkronen sich im Wind bis in das Unterholz wiegen. Pilze, Holzstapel, Hirsche — bis zu 22 Millionen Dreiecke.",
+      "desc": "Tannen, Birken, Pappeln als InstancedMesh, deren Laubkronen sich im Wind bis in das Unterholz wiegen. Pilze, Holzstapel, Hirsche — bis zu 22 Millionen Dreiecke, von denen sich keines beschwert.",
       "tag": "Dichter Wald"
     },
     "house": {
       "name": "Dorf",
-      "desc": "Mittelalterliche Häuser mit volumetrischem Rauch, Wachtürmen, Brunnen, Karren, animierten Hunden und Pferden.",
+      "desc": "Mittelalterliche Häuser mit volumetrischem Rauch, Wachtürmen, Brunnen, Karren, animierten Hunden und Pferden, die alle offensichtlich mehr Freizeit haben als du.",
       "tag": "Menschlicher Lebensraum"
     },
     "water": {
       "name": "Wasser",
-      "desc": "Zusammenhängende Wasserfläche mit organischem Ufer, animierte Wellen und Gischt im Aquarell-Stil. Animierte Boote mit Kielwasser, prozedurale Strände und Zonen-Halos.",
+      "desc": "Zusammenhängende Wasserfläche mit organischem Ufer, animierte Wellen und Gischt im Aquarell-Stil. Animierte Boote mit Kielwasser, prozedurale Strände und Zonen-Halos, für alle, die im Homeoffice heimlich vom Meer träumen.",
       "tag": "Flussnetzwerk ⛵"
     },
     "rail": {
       "name": "Eisenbahn",
-      "desc": "Prozedurale Schienen, Schwellen und Schotter. Züge mit Waggons, Endbahnhöfen und Lokomotivrauch.",
+      "desc": "Prozedurale Schienen, Schwellen und Schotter. Züge mit Waggons, Endbahnhöfen und Lokomotivrauch — pünktlicher als jede echte Bahn.",
       "tag": "Eisenbahnnetzwerk 🚂"
     }
   },
@@ -104,7 +104,7 @@
     },
     "trains": {
       "name": "Züge",
-      "desc": "Bilde eine Anzahl aktiver Zuglinien — jede Linie verbindet zwei Bahnhöfe über durchgängige, unterbrechungsfreie Schienen."
+      "desc": "Bilde eine Anzahl aktiver Zuglinien — jede Linie verbindet zwei Bahnhöfe über durchgängige, unterbrechungsfreie Schienen. Streik ist hier nicht vorgesehen."
     },
     "water": {
       "name": "Wasserweg",
@@ -116,11 +116,11 @@
     },
     "comets": {
       "name": "Kometen",
-      "desc": "Kometen ziehen in Echtzeit über den Himmel. Klicke auf sie, um sie zur Explosion zu bringen und Punkte zu sammeln — Reflexe und Aufmerksamkeit gefragt."
+      "desc": "Kometen ziehen in Echtzeit über den Himmel. Klicke auf sie, um sie zur Explosion zu bringen und Punkte zu sammeln — Trödeln kostet hier buchstäblich den Kometen."
     },
     "village": {
       "name": "Blühendes Dorf",
-      "desc": "Bilde ein dichtes Dorf: gruppiere genug angrenzende Wohnsektoren, um die festgelegte Schwelle zu erreichen."
+      "desc": "Bilde ein dichtes Dorf: gruppiere genug angrenzende Wohnsektoren, um die festgelegte Schwelle zu erreichen. Baugenehmigungen werden hier keine gebraucht."
     },
     "fields": {
       "name": "Bewirtschaftetes Land",
@@ -128,7 +128,7 @@
     },
     "mills": {
       "name": "Windmühlen",
-      "desc": "Baue große Weizenfeldzonen, damit dort Mühlen erscheinen. Eine Mühle entsteht automatisch in der Mitte jeder großen Feldzone."
+      "desc": "Baue große Weizenfeldzonen, damit dort Mühlen erscheinen. Eine Mühle entsteht automatisch in der Mitte jeder großen Feldzone — ganz ohne Bauantrag."
     }
   },
   "gameplay": {
@@ -143,7 +143,7 @@
       },
       "orient": {
         "title": "Ausrichten",
-        "desc": "Drehe die Kachel, um ihre Kanten anzugleichen. Wasser und Schiene erfordern Kontinuität — eine falsche Platzierung blockiert das Netzwerk."
+        "desc": "Drehe die Kachel, um ihre Kanten anzugleichen. Wasser und Schiene erfordern Kontinuität — eine falsche Platzierung blockiert das Netzwerk, und Stau mag hier niemand, nicht mal am Fluss."
       },
       "place": {
         "title": "Platzieren",
@@ -214,19 +214,19 @@
     "sub": "Die Welt existiert nicht einfach nur: <strong>sie atmet</strong>. Tiere, Vögel und Bewohner beleben jedes Biom im Wandel der Jahreszeiten.",
     "sheep": {
       "name": "Schafe",
-      "desc": "Herden weiden ruhig auf den Wiesen und bewegen sich mit den im Wind wogenden Gräsern."
+      "desc": "Herden weiden ruhig auf den Wiesen und bewegen sich mit den im Wind wogenden Gräsern — bemerkenswert gelassen für Tiere, die den ganzen Tag nur grasen."
     },
     "crows": {
       "name": "Krähen",
-      "desc": "Krähenschwärme kreisen über den Weizenfeldern und lauern auf jede unbewachte Parzelle."
+      "desc": "Krähenschwärme kreisen über den Weizenfeldern und lauern auf jede unbewachte Parzelle, professionell und ohne jedes Gewissen."
     },
     "farmer": {
       "name": "Bauer",
-      "desc": "Mit der Mistgabel in der Hand wacht der Bauer über seinen Weizen und kommt und geht im Rhythmus der landwirtschaftlichen Jahreszeiten."
+      "desc": "Mit der Mistgabel in der Hand wacht der Bauer über seinen Weizen und kommt und geht im Rhythmus der landwirtschaftlichen Jahreszeiten, meist mit dem festen Blick eines Mannes, der weiß, was seine Krähen im Schilde führen."
     },
     "druid": {
       "name": "Druide",
-      "desc": "Eine einsame Gestalt wandert zwischen den Bäumen umher, stiller Wächter der Wälder und ihrer Geheimnisse."
+      "desc": "Eine einsame Gestalt wandert zwischen den Bäumen umher, stiller Wächter der Wälder und ihrer Geheimnisse — Smalltalk ist nicht seine Stärke."
     },
     "witch": {
       "name": "Hexe",
@@ -238,7 +238,7 @@
     },
     "seagulls": {
       "name": "Möwen",
-      "desc": "Kleine Möwengruppen kreisen über den größten Wasserflächen, wobei sich einzelne Tiere manchmal vom Rest der Gruppe absetzen."
+      "desc": "Kleine Möwengruppen kreisen über den größten Wasserflächen, wobei sich einzelne Tiere manchmal vom Rest der Gruppe absetzen — vermutlich um über ihr Leben nachzudenken."
     },
     "fireflies": {
       "name": "Glühwürmchen",
@@ -275,7 +275,7 @@
         "wildflowers": "Wildblumen"
       }
     },
-    "note": "22 verschiedene Gesichter bevölkern Dörfer und Wälder, jedes mit eigener Silhouette, eigenem Kostüm, eigener Rolle. Keine kopierten Statisten — eine echte Bevölkerung, Kachel für Kachel."
+    "note": "22 verschiedene Gesichter bevölkern Dörfer und Wälder, jedes mit eigener Silhouette, eigenem Kostüm, eigener Rolle. Keine kopierten Statisten — eine echte Bevölkerung, Kachel für Kachel, jede mit einer Backstory, die wir ihr nie erzählen werden."
   },
   "audio": {
     "label": "Klangkulisse",
@@ -283,7 +283,7 @@
     "sub": "Der Klang folgt der Kamera <strong>in Echtzeit</strong> — jedes Biom, jeder Zug, jedes Boot hat seine eigene Stimme, die mit der Entfernung anschwillt und verklingt.",
     "spatial": {
       "name": "3D-Raumklang",
-      "desc": "Dorfstimmung, Vogelgesang aus Wald und Wiese, Krähen über den Feldern, Wellenrauschen an den Stränden, Züge und Boote — jede Quelle variiert in der Lautstärke je nach tatsächlicher Entfernung und Richtung."
+      "desc": "Dorfstimmung, Vogelgesang aus Wald und Wiese, Krähen über den Feldern, Wellenrauschen an den Stränden, Züge und Boote — jede Quelle variiert in der Lautstärke je nach tatsächlicher Entfernung und Richtung. Kein einziger Lautsprecher wurde dafür bewegt."
     },
     "chimai": {
       "name": "Chi Mai, das versteckte Thema",
@@ -291,15 +291,15 @@
     },
     "adaptive": {
       "name": "Adaptive Musik",
-      "desc": "Intro-, Spiel- und Ausklangstücke, die sanft ineinander überblenden, aus mehreren Varianten geschöpft, damit es sich nie zweimal gleich anhört."
+      "desc": "Intro-, Spiel- und Ausklangstücke, die sanft ineinander überblenden, aus mehreren Varianten geschöpft, damit es sich nie zweimal gleich anhört und dein Ohr nie ganz genau weiß, warum."
     },
     "voice": {
       "name": "Eine Stimme, die die Partie kommentiert",
-      "desc": "Ein Sprecher (Text-to-Speech direkt im Browser, kein externer Dienst) meldet live deine Punkte, Missionen und wichtige Momente der Oberfläche — ein kurzer Klang geht jeder neuen und jeder abgeschlossenen Mission voraus. Verfügbar in allen 9 Sprachen des Spiels, mit automatisch gewählter männlicher Stimme für Deutsch und Russisch. Die Taste T schaltet nur sie stumm, ohne den Rest der Klangkulisse zu berühren."
+      "desc": "Ein Sprecher (Text-to-Speech direkt im Browser, kein externer Dienst) meldet live deine Punkte, Missionen und wichtige Momente der Oberfläche — ein kurzer Klang geht jeder neuen und jeder abgeschlossenen Mission voraus. Verfügbar in allen 9 Sprachen des Spiels, mit automatisch gewählter männlicher Stimme für Deutsch und Russisch. Wer die Ansagen lieber nicht hört, drückt einfach T — ein dezenter Protest gegen den eigenen Erfolg, ohne den Rest der Klangkulisse zu berühren."
     },
     "silence": {
       "name": "Stille auf Knopfdruck",
-      "desc": "Die Taste M schaltet die gesamte Klangkulisse einschließlich Musik sofort ab und wieder ein — praktisch für eine ruhige Partie im Meeting oder in der Videokonferenz."
+      "desc": "Die Taste M schaltet die gesamte Klangkulisse einschließlich Musik sofort ab und wieder ein — praktisch für eine ruhige Partie im Meeting oder in der Videokonferenz, falls gerade der Chef hereinkommt."
     }
   },
   "daynnight": {
@@ -329,7 +329,7 @@
       "list": [
         "🏠 Bis zu 48 gleichzeitige Rauchsäulen, in Echtzeit raytraced über Schornsteinen und Lokomotiven",
         "🌬️ Vier-Oktaven-Turbulenz, die mit der Höhe abdriftet — jede Säule ist einzigartig",
-        "🎲 Nur jedes dritte Haus raucht, zufällig bei der Kachelerzeugung bestimmt",
+        "🎲 Nur jedes dritte Haus raucht, zufällig bei der Kachelerzeugung bestimmt — offenbar raucht nicht jeder Haushalt gleich viel Pfeife",
         "🌙 Noch geheimnisvoller bei Einbruch der Nacht"
       ]
     },
@@ -363,17 +363,17 @@
         "⚡ Der Blitz schlägt unter der Gewitterdecke ein und kann eine Kachel entzünden",
         "🔥 Bäume, Häuser, Türme und Mühlen brennen in ihrer echten Höhe, verkohlen und wachsen wieder nach",
         "🌬️ Der Brandherd treibt im Wind, greift auf Nachbarn über und stoppt abrupt am Wasser",
-        "🌧️ Regen bremst die Ausbreitung und erstickt das Feuer bisweilen ganz"
+        "🌧️ Regen bremst die Ausbreitung und erstickt das Feuer bisweilen ganz — der einzige Feuerwehrmann, der nie Überstunden verlangt"
       ]
     }
   },
   "eda": {
     "label": "Editor für künstlerische Leitung (EKL)",
     "title": "Extreme Personalisierung",
-    "sub": "Über die zahlreichen Presets hinaus eröffnet der EKL <strong>Dutzende in Echtzeit anpassbarer Werte</strong>, verteilt auf 3 Tabs — LUT, Kinematik, Umgebung. Jeder Regler reagiert sofort, ohne Neuladen, und alles lässt sich als JSON kopieren/exportieren, um es erneut abzuspielen oder zu teilen.",
+    "sub": "Über die zahlreichen Presets hinaus eröffnet der EKL <strong>Dutzende in Echtzeit anpassbarer Werte</strong>, verteilt auf 3 Tabs — LUT, Kinematik, Umgebung. Jeder Regler reagiert sofort, ohne Neuladen, und alles lässt sich als JSON kopieren/exportieren, um es erneut abzuspielen, zu teilen oder einfach damit anzugeben.",
     "lut": {
       "label": "LUT",
-      "desc": "Nebel, Lichtgestirn, vollständige Farbkalibrierung (RGB-Kurven, Gamma, Werte) und Palette pro Biom."
+      "desc": "Nebel, Lichtgestirn, vollständige Farbkalibrierung (RGB-Kurven, Gamma, Werte) und Palette pro Biom — für alle, die aus einer harmlosen Wiese eine violette Traumlandschaft machen wollen. Kein Urteil."
     },
     "cinematic": {
       "label": "Kinematik",
@@ -381,13 +381,13 @@
     },
     "environment": {
       "label": "Umgebung",
-      "desc": "Wolken und Bewölkung, Wind (Weizen, Gräser, Bäume), dynamisches Wetter (Nebel, Glühwürmchen, Regen), Weltform (Kugel-/Flachwelt), Tag/Nacht-Umschaltung und Qualitäts-/Dichte-Presets."
+      "desc": "Wolken und Bewölkung, Wind (Weizen, Gräser, Bäume), dynamisches Wetter (Nebel, Glühwürmchen, Regen), Weltform (Kugel-/Flachwelt), Tag/Nacht-Umschaltung und Qualitäts-/Dichte-Presets — die Kommandozentrale für Meteorologen im Ruhestand."
     }
   },
   "multi": {
     "title1": "Mehrspieler",
     "title2": "Gemeinsam bauen",
-    "sub": "Tritt einem Raum mit einem 6-stelligen Code bei oder erstelle einen. Das Raster wird <strong>in Echtzeit geteilt</strong> — jeder Spieler setzt seine Kacheln und sieht die Platzierungen der anderen fortlaufend.",
+    "sub": "Tritt einem Raum mit einem 6-stelligen Code bei oder erstelle einen. Das Raster wird <strong>in Echtzeit geteilt</strong> — jeder Spieler setzt seine Kacheln und sieht die Platzierungen der anderen fortlaufend, samt gelegentlichem stillen Kopfschütteln über fremde Entscheidungen.",
     "features": [
       "Alle Partien werden gespeichert — jederzeit fortsetzen oder erneut spielen",
       "Räumen jederzeit beitreten, auch mitten in einer laufenden Partie",
@@ -406,7 +406,7 @@
   "scores": {
     "label": "Weltrangliste",
     "title": "Die effizientesten Baumeister",
-    "empty": "Noch kein Score erfasst — sei der Erste, der seine Kachel setzt.",
+    "empty": "Noch kein Score erfasst — die Bestenliste wartet gelangweilt auf ihren ersten Helden.",
     "try_luck": "Versuch dein Glück →",
     "headline_stat": "gesetzte Kacheln",
     "pts_suffix": "Pkt.",
@@ -447,13 +447,13 @@
     }
   },
   "footer": {
-    "copy": "Kontemplatives Hexagon-Spiel, gemacht mit Nostalgie und Liebe ❤️ Three.js und jeder Menge Kacheln",
+    "copy": "Kontemplatives Hexagon-Spiel, gemacht mit Nostalgie und Liebe ❤️ Three.js und mehr Kacheln, als für ein Brettspiel eigentlich gesund ist",
     "github": "GitHub"
   },
   "game": {
     "gallery": {
       "title": "Screenshot-Galerie",
-      "empty": "Noch keine Aufnahme. Drücke 📷 im Spiel, um eine zu erstellen.",
+      "empty": "Noch keine Aufnahme. Die Galerie ist so leer wie ein Museum um Mitternacht — drücke 📷 im Spiel, um das zu ändern.",
       "close": "Schließen",
       "loading": "Wird geladen…",
       "tilesCount": "Partie mit {n} Kacheln",
@@ -554,7 +554,7 @@
       },
       "qualityTooltip": "Dichte {label} ({value})",
       "weatherStopAll": "⏹ Alles stoppen",
-      "weatherStopAllTitle": "Stoppt alle laufenden Umgebungsereignisse",
+      "weatherStopAllTitle": "Stoppt alle laufenden Umgebungsereignisse — Ordnung im Chaos, auf Knopfdruck",
       "weatherGroups": {
         "morningMist": "🌫️ Morgennebel",
         "fireflies": "✨ Glühwürmchen",
@@ -573,14 +573,14 @@
       "presetTooltipDefault": "Zurück zu den Standardwerten",
       "footer": {
         "copy": "📋 Kopieren",
-        "copyTitle": "Alle aktuellen Parameter LUT + PIX + WASSER + KINEMATIK + WIND + WOLKEN + Weltform + Tag/Nacht + Dichte + Wetter als JSON kopieren (Grundlage für ein künftiges Stimmungs-Preset mit vorkonfigurierten Wettereffekten)",
+        "copyTitle": "Alle aktuellen Parameter LUT + PIX + WASSER + KINEMATIK + WIND + WOLKEN + Weltform + Tag/Nacht + Dichte + Wetter als JSON kopieren (Grundlage für ein künftiges Stimmungs-Preset mit vorkonfigurierten Wettereffekten — und für angeberische JSON-Dateien, die du am Ende doch niemandem zeigst)",
         "copied": "✓ Kopiert!",
         "undo": "↩ Rückgängig",
-        "undoTitle": "Letzte Änderung rückgängig machen (Undo)",
+        "undoTitle": "Letzte Änderung rückgängig machen (Undo) — für spontane Reue",
         "redo": "↪ Wiederholen",
         "redoTitle": "Rückgängig gemachte Änderung wiederherstellen (Redo)",
         "reset": "Zurücksetzen",
-        "resetTitle": "Auf Standardwerte zurücksetzen",
+        "resetTitle": "Auf Standardwerte zurücksetzen — der Neustart-Knopf für kalte Füße",
         "compare": "Vergleichen",
         "compareBack": "⟳ Zurück",
         "compareTitle": "Zwischen aktuellen Parametern und letzter Stimmung wechseln",
@@ -756,7 +756,7 @@
       }
     },
     "help": {
-      "topbar.fps": "Erweitertes Performance-HUD ein-/ausblenden",
+      "topbar.fps": "Erweitertes Performance-HUD ein-/ausblenden — für alle, die ihrer Grafikkarte beim Schwitzen zusehen wollen",
       "topbar.eda": "Rendering-Panel öffnen oder schließen",
       "topbar.snapshot": "Bildschirmfoto (ohne HUD)",
       "topbar.gallery": "Screenshot-Galerie",
@@ -765,12 +765,12 @@
       "topbar.theme": "Grafisches Thema (Blau / Mittelalterlich)",
       "topbar.mute": "Ton stummschalten / aktivieren",
       "topbar.muteVoice": "Stimme stummschalten / aktivieren (TTS)",
-      "renderer.toneMappingExposure": "Globale Belichtung des Renderers (ACESFilmic). Steuert, wie viel Licht vor jeder Kalibrierung den „Sensor“ erreicht.\nWerte < 1 verdunkeln das Gesamtbild, > 2 können die Lichter überstrahlen.\nTypisch: 1,2–1,8 für ein natürliches Ergebnis.",
-      "environment.fogDensity": "Dichte des exponentiellen Nebels (FogExp2). Nur aktiv, wenn „Ende linear“ auf 0 steht.\nDie Sicht nimmt sehr schnell ab: bei 0,07 ist die Szene fast undurchsichtig.\nFür ein kontrolliertes Sichtfeld besser den linearen Modus über „Beginn“ und „Ende“ verwenden.",
+      "renderer.toneMappingExposure": "Globale Belichtung des Renderers (ACESFilmic). Steuert, wie viel Licht vor jeder Kalibrierung den „Sensor“ erreicht.\nWerte < 1 verdunkeln das Gesamtbild, > 2 können die Lichter überstrahlen.\nTypisch: 1,2–1,8 für ein natürliches Ergebnis, alles darüber für ein Zeugnis in Nahtoderfahrung.",
+      "environment.fogDensity": "Dichte des exponentiellen Nebels (FogExp2). Nur aktiv, wenn „Ende linear“ auf 0 steht.\nDie Sicht nimmt sehr schnell ab: bei 0,07 ist die Szene fast undurchsichtig, ein Traum für Flacherdler mit Bühnenlampenfieber.\nFür ein kontrolliertes Sichtfeld besser den linearen Modus über „Beginn“ und „Ende“ verwenden.",
       "environment.fogNear": "Entfernung in 3D-Einheiten, ab der der lineare Nebel beginnt.\nSobald „Ende“ > 0 ist, wird automatisch von FogExp2 zu THREE.Fog(near, far) gewechselt.\nBei 0: Nebel schon im Vordergrund. Bei 5: nahe Objekte bleiben scharf.",
       "environment.fogFar": "Entfernung, ab der der lineare Nebel vollständig undurchsichtig ist.\nAuf 0 setzen, um zum exponentiellen Modus zurückzukehren.\nBeispiel: Beginn = 3, Ende = 18 → Sichtfeld von 15 Einheiten — immersiv, ohne alles zu verschlucken.",
       "lights.hemisphereIntensity": "Intensität des Hemisphärenlichts (Himmel + Boden).\nBeleuchtet Flächen, die nicht direktem Sonnenlicht ausgesetzt sind.\nZu hoch: flacht Schatten ab und nimmt dem Relief die Tiefe. Zu niedrig: Rückflächen liegen im völligen Dunkel.",
-      "lights.sunIntensity": "Stärke des Richtungslichts (Sonne).\nBestimmt die Härte der Schatten und den Reliefkontrast.\nWerte > 5 können helle Flächen überstrahlen, wenn auch die Belichtung hoch ist.",
+      "lights.sunIntensity": "Stärke des Richtungslichts (Sonne).\nBestimmt die Härte der Schatten und den Reliefkontrast.\nWerte > 5 können helle Flächen überstrahlen, wenn auch die Belichtung hoch ist — die Kugelweltler werden es dir nicht danken.",
       "lights.sunOrbitRadius": "Radius der kreisförmigen Sonnenbahn um das Szenenzentrum.\nEin kleiner Radius (< 5) ergibt sehr geneigtes Licht aus der Mitte; ein großer (> 20) ergibt flacheres Licht von den Rändern her.",
       "lights.sunOrbitHeight": "Vertikale Höhe der Sonne über der Szenenebene.\nHoch = kurze Schatten, zenitales Licht. Niedrig = lange, flache Schatten (goldene Stunde oder Sonnenuntergang).",
       "lights.sunOrbitSpeed": "Winkelgeschwindigkeit der Sonne in Radiant/Sekunde.\nBei 0,06 dauert eine ganze Umrundung ≈ 100 Sekunden. Bei 0: Sonne fixiert. Bei 1: schnell rotierende Schatten.",
@@ -778,11 +778,11 @@
       "lights.fillIntensity": "Intensität eines sanften Aufhelllichts (Fill Light), der Sonne gegenüber.\nHellt harte Schattenbereiche auf. Nützlich, um völlig schwarze Bereiche unter Überhängen oder auf der Rückseite von Hügeln zu vermeiden.",
       "grading.brightness": "Zusätzliche Helligkeitsverschiebung nach dem Rendering.\nAddiert einen konstanten Wert zu allen Kanälen.\nUnterscheidet sich von der Belichtung: verstärkt keine Lichter, ändert nicht das Tonemapping.",
       "grading.contrast": "Globaler Kontrast durch Drehung um das 50%-Grau.\n> 1: spreizt Schatten und Lichter (filmischer Look). < 1: komprimiert (matter/blasser Look).\nAn den Extremen → flaches Schwarz oder Weiß.",
-      "grading.saturation": "Globale Sättigung. Mischt die Graustufenversion (Luma) mit der Originalfarbe.\n0 = Graustufen. 1 = normal. > 1 = übersättigt.\nBei sehr hohen Werten (3+) laufen Farben über und können kippen.",
+      "grading.saturation": "Globale Sättigung. Mischt die Graustufenversion (Luma) mit der Originalfarbe.\n0 = Graustufen. 1 = normal. > 1 = übersättigt.\nBei sehr hohen Werten (3+) laufen Farben über und können kippen — willkommen im Psyche-LSD-Preset.",
       "grading.vibrance": "Intelligente Vibrance: verstärkt matte Farben, während bereits gesättigte Töne geschont werden.\nSanfter als reine Sättigung bei natürlichem Grün.\nNegativ: schwächt lebendige Farben vorrangig ab.",
       "grading.hue": "Globale Drehung aller Farbtöne auf dem Farbkreis.\n±0,5 = halbe Drehung (Rot ↔ Cyan). Bei niedrigem Wert dezent.\nNützlich, um einen Farbstich zu korrigieren oder eine verschobene Palette zu erzeugen.",
       "grading.gamma": "Gammakorrektur auf die Mitteltöne.\n< 1 = hellere Mitteltöne; > 1 = dunklere.\nWirkt nicht linear auf die Extreme (reines Schwarz/Weiß).",
-      "grading.blackLevel": "Schwarzpunkt-Niveau. Hebt reines Schwarz zu Grau an.\nErzeugt einen „ausgewaschenen filmischen“ oder „lifted blacks“-Look.\nZu hoch = Verlust an Tiefe und Dichte in den Schatten.",
+      "grading.blackLevel": "Schwarzpunkt-Niveau. Hebt reines Schwarz zu Grau an.\nErzeugt einen „ausgewaschenen filmischen“ oder „lifted blacks“-Look, ideal für alle, die ihrer Welt einen leichten Weltschmerz verpassen wollen.\nZu hoch = Verlust an Tiefe und Dichte in den Schatten.",
       "grading.whiteLevel": "Weißpunkt-Niveau. Komprimiert die Lichter unter 1,0.\nBei 0,871: reines Weiß wird cremefarben, nirgends „knallt“ es.\nNützlich für einen sanften, dezenten „S-Kurven“-Look.",
       "grading.red": "Multiplikativer Gain des Rotkanals nach der Kalibrierung.\n> 1 erwärmt die Szene (orange/bernsteinfarbener Ton). < 1 kühlt sie ab.\nKombiniert mit Grün und Blau ermöglicht es eine feine Weißabgleich-Korrektur.",
       "grading.green": "Multiplikativer Gain des Grünkanals.\nGrün dominiert die wahrgenommene Leuchtdichte (≈ 59 %).\nDiesen Kanal zu senken ergibt einen violett/magentafarbenen Effekt; ihn zu erhöhen macht das Bild grüner und wahrnehmbar heller.",
@@ -790,7 +790,7 @@
       "grading.redCurve": "Tonkurve von Rot: wendet eine Potenz auf den Kanal an.\n< 1 = konvexe Kurve (hebt rote Mitteltöne an). > 1 = drückt Mitteltöne ein.\nWirkt nach dem Rot-Gain.",
       "grading.greenCurve": "Tonkurve von Grün. Formt die Reaktion des Grünkanals in den Mitteltönen.\nNützlich, um den wahrgenommenen Kontrast zu verfeinern, ohne die Extreme zu berühren.",
       "grading.blueCurve": "Tonkurve von Blau. Ermöglicht, die Stimmung in den mittleren Tönen zu formen.\nKurve < 1 = dichteres Blau in den hellen Tönen. > 1 = eingedrücktes Blau (warmer Look in den Mitten).",
-      "palette.strength": "Globale Stärke der Palettenharmonisierung auf den Zieltexturen.\n0: kein Effekt. 1: die Texturen werden vollständig zu ihrer Zielfarbe umgefärbt.\nFunktioniert über den Abgleich von GLB-Materialnamen.",
+      "palette.strength": "Globale Stärke der Palettenharmonisierung auf den Zieltexturen.\n0: kein Effekt. 1: die Texturen werden vollständig zu ihrer Zielfarbe umgefärbt — deine Wälder tragen dann Uniform.\nFunktioniert über den Abgleich von GLB-Materialnamen.",
       "palette.saturation": "Sättigung nach der Palettenharmonisierung.\n< 1: beruhigt die umgefärbten Texturen. > 1: verstärkt sie.\nErmöglicht eine Anpassung, ohne die Zielfarben selbst zu ändern.",
       "palette.contrast": "Kontrast, angewendet auf die Farben nach der Harmonisierung.\nEine leichte Verstärkung (1,05–1,2) verbessert die Lesbarkeit umgefärbter Texturen.",
       "palette.warmShift": "Globale Warm/Kalt-Verschiebung, angewendet auf die gesamte Biom-Palette.\nNegativ → kühlere/bläulichere Töne. Positiv → wärmere/goldenere Töne.",
@@ -808,18 +808,18 @@
       "palette.targets.house": "Zielfarbe für Häuser und Dorfgebäude.",
       "palette.targets.rail": "Zielfarbe für Schienen und Eisenbahninfrastruktur.",
       "palette.targets.water": "Zielfarbe für Wasser (Seen, Flüsse, Meer).",
-      "pix.pixelSize": "Größe eines Pixels in Bildschirmeinheiten. Bei 1: native Auflösung. Bei 8: stark pixeliges 8-Bit-Aussehen.\nHohe Werte reduzieren die GPU-Last (weniger zu berechnende Fragmente) und verstärken den Retro-Look.\nKombiniert mit den Konturen ergibt sich ein Lowpoly-plus-Outline-Stil.",
+      "pix.pixelSize": "Größe eines Pixels in Bildschirmeinheiten. Bei 1: native Auflösung. Bei 8: stark pixeliges 8-Bit-Aussehen, als hätte man den Zeitgeist der 80er direkt geladen.\nHohe Werte reduzieren die GPU-Last (weniger zu berechnende Fragmente) und verstärken den Retro-Look.\nKombiniert mit den Konturen ergibt sich ein Lowpoly-plus-Outline-Stil.",
       "pix.normalEdge": "Intensität der auf Oberflächennormalen basierenden Konturen.\nErkennt Kanten zwischen Flächen unterschiedlicher Ausrichtung (z. B. Dachrand, Wandecke).\n0 = keine Normalkontur. 1 = starke Konturen bei allen geometrischen Übergängen.",
       "pix.depthEdge": "Intensität der auf der Tiefe (Z-Buffer) basierenden Konturen.\nZeichnet Silhouetten zwischen unterschiedlich weit entfernten Objekten.\nErgänzt die Normalkontur: zusammen ergeben sie einen Cartoon- oder Comic-Look.",
-      "pix.worldShape": "Wählt die scheinbare Krümmung der Welt.\n„Kugelwelt“: die Erde ist eine Kugel, der Horizont ist gekrümmt — Mini-Planeten-Effekt.\n„Flachwelt“: keine Krümmung, klassisch flache Ansicht — traditioneller isometrischer Look.",
-      "env.dayNight": "Wechselt zwischen Tag und Nacht.\nÄndert das sichtbare Gestirn (Sonne/Mond), den Himmel, die Umgebungsfarben und lässt nachts Kometen erscheinen.",
-      "quality.density": "Globaler Multiplikator für die Inhaltsdichte (0,15 bis 1,0).\nReduziert die Anzahl natürlicher Requisiten, Grashalme und Schafe, um die Grafenverarbeitung zu entlasten und 60 FPS auf schwächeren Rechnern anzustreben.\nBetrifft nicht Gelände, Wasser, Gebäude oder Figuren (Gameplay und Systeme sind bereits separat optimiert). Baut den Inhalt bei jeder Änderung neu auf.",
+      "pix.worldShape": "Wählt die scheinbare Krümmung der Welt.\n„Kugelwelt“: die Erde ist eine Kugel, der Horizont ist gekrümmt — Mini-Planeten-Effekt.\n„Flachwelt“: keine Krümmung, klassisch flache Ansicht — traditioneller isometrischer Look. Diese Einstellung löst die philosophische Debatte übrigens nicht.",
+      "env.dayNight": "Wechselt zwischen Tag und Nacht.\nÄndert das sichtbare Gestirn (Sonne/Mond), den Himmel, die Umgebungsfarben und lässt nachts Kometen erscheinen — der schnellste Sonnenuntergang, den du je gesehen hast, ganz ohne Wartezeit.",
+      "quality.density": "Globaler Multiplikator für die Inhaltsdichte (0,15 bis 1,0).\nReduziert die Anzahl natürlicher Requisiten, Grashalme und Schafe, um die Grafenverarbeitung zu entlasten und 60 FPS auf schwächeren Rechnern anzustreben. Die Schafe verzeihen es, versprochen.\nBetrifft nicht Gelände, Wasser, Gebäude oder Figuren (Gameplay und Systeme sind bereits separat optimiert). Baut den Inhalt bei jeder Änderung neu auf.",
       "cin.tilt": "Intensität des Tilt-Shift-Effekts: fortschreitende Unschärfe oben und unten im Bild.\nSimuliert eine Shift-Optik, die die Schärfentiefe in der Mitte verringert.\nErzeugt die Illusion eines Miniaturmodells — bei 1 sehr stark.",
       "cin.focusCenter": "Vertikale Position des Schärfezentrums des Tilt-Shift.\n0 = oben im Bild, 0,5 = Mitte, 1 = unten.\nEine Verschiebung nach unten legt die Schärfe auf die Elemente am Boden.",
       "cin.focusBand": "Breite des scharfen Bandes des Tilt-Shift (als Bruchteil der Höhe).\n0,1 = sehr schmales Band, 0,5 = halbes Bild scharf, 1 = alles scharf (Effekt deaktiviert).",
       "cin.vignette": "Verdunklung der Bildränder und -ecken.\nSimuliert den Lichtabfall an den Rändern eines Weitwinkelobjektivs.\nVerstärkt den Eindruck von Tiefe und lenkt den Blick zur Mitte.\nGeht bis 2: jenseits von 1 werden die Ränder nahezu vollständig schwarz.",
       "cin.grain": "Menge des filmischen Rauschens, das über das Rendering gelegt wird.\nSimuliert die Unvollkommenheiten eines analogen Films oder eines empfindlichen Sensors.\nDezent bei 0,2, allgegenwärtig bei 1.",
-      "cin.chromatic": "Chromatische Aberration: seitliche Verschiebung der Farbkanäle zu den Rändern hin.\nSimuliert die Fehler eines unvollkommenen Objektivs, das nicht alle Wellenlängen im selben Punkt fokussiert.\nDezent bei 0,2, psychedelisch jenseits von 0,7.",
+      "cin.chromatic": "Chromatische Aberration: seitliche Verschiebung der Farbkanäle zu den Rändern hin.\nSimuliert die Fehler eines unvollkommenen Objektivs, das nicht alle Wellenlängen im selben Punkt fokussiert.\nDezent bei 0,2, psychedelisch jenseits von 0,7 — dort trifft sich das Rendering mit dem Psyche-LSD-Preset.",
       "cin.halation": "Lichthalo um sehr helle Bereiche, typisch für analogen Film.\nStarkes Licht „blutet“ leicht in benachbarte dunkle Bereiche.\nVerleiht Wärme und Organik — schön bei Sonnenuntergängen.",
       "cin.barrel": "Tonnenverzerrung: die Bildränder werden nach außen gedrückt.\nSimuliert Fischaugen- oder Weitwinkelobjektive. Verstärkt den „Überwachungskamera“- oder Lo-Fi-Look.\nBei 1 ist das Bild stark gewölbt.",
       "cin.scanLines": "Dunkle horizontale Linien im Zeilensprungverfahren, wie bei einem CRT-Monitor oder alten Fernseher.\n0 = keine Scanlines. 6 = sehr ausgeprägte Linien, Retro-TV-Look.\nStark in Kombination mit einer CGA/EGA-Palette für die Vintage-Ästhetik.",
@@ -833,7 +833,7 @@
       "cin.bloomThreshold": "Helligkeitsschwelle, ab der ein Pixel zum Bloom beiträgt.\nNiedrig = mehr Bereiche (selbst mäßig helle) erzeugen einen Halo.\nHoch = nur die intensivsten Quellen (Sonne, Lampen) erzeugen einen.",
       "cin.bloomRadius": "Radius der Weichzeichnung um die Bloom-Quellpixel, in Bildschirmpixeln.\nNiedrig = enger, scharfer Halo. Hoch = breiterer, diffuserer Halo.",
       "cin.bloomSoftness": "Weichheit des Übergangs an der Bloom-Schwelle.\nNiedrig = scharfer Schnitt zwischen „trägt bei“ und „trägt nicht bei“.\nHoch = allmählicher Übergang, weicherer Halo an den Quellrändern.",
-      "cin.crtCurvature": "Bildschirmkrümmung nach Art einer Kathodenstrahlröhre (CRT): verzerrt das Bild, als würde es\nauf einer gewölbten Fläche angezeigt. Parameter unabhängig von der oben\ngenannten Tonnenverzerrung (Objektiv). 0 = keine Verformung (keine GPU-Kosten).",
+      "cin.crtCurvature": "Bildschirmkrümmung nach Art einer Kathodenstrahlröhre (CRT): verzerrt das Bild, als würde es\nauf einer gewölbten Fläche angezeigt — ein kleiner Gruß an die Kugelweltler, direkt im Bildschirm. Parameter unabhängig von der oben\ngenannten Tonnenverzerrung (Objektiv). 0 = keine Verformung (keine GPU-Kosten).",
       "cin.crtMask": "Maskiert die Bereiche, die nach Anwendung der Bildschirmkrümmung aus dem Rahmen fallen\n(schwarze Ränder), anstatt sie zu strecken. 0 = gedehnte Ränder (keine Maske),\n1 = außerhalb liegende Ränder vollständig schwarz maskiert. Ohne Wirkung, wenn die Krümmung 0 ist.",
       "cin.crtCornerDark": "Zusätzliche Verdunklung der Bildschirmecken, typisch für eine Kathodenstrahlröhre.\n0 = keine Verdunklung. Ohne Wirkung, wenn die Bildschirmkrümmung 0 ist.",
       "water.foamWidth": "Reichweite des Gischtstreifens am Ufer (in Metern).\n0 = keine Uferrgischt. Hohe Werte = breiter weißer Saum entlang der gesamten Küste.",
@@ -864,10 +864,10 @@
       "cloud.coverage": "Wolkenbedeckung am Horizont. 0 = klarer Himmel, 1 = bedeckter Himmel.",
       "cloud.scale": "Skalierung des Wolkenmusters. Hoher Wert = kleinere, feinere Wolken; niedriger Wert = große Massen.",
       "cloud.speed": "Driftgeschwindigkeit der Wolken am Horizont.",
-      "stats.drawCalls": "Gesamtzahl der von Three.js in diesem Frame ausgegebenen Rendering-Aufrufe (Draw Calls).\nJedes sichtbare Objekt kostet mindestens 1 Draw Call — Schatten fügen weitere hinzu.\n> 200 dc: Vorsicht bei der Performance auf mobilen GPUs.",
+      "stats.drawCalls": "Gesamtzahl der von Three.js in diesem Frame ausgegebenen Rendering-Aufrufe (Draw Calls).\nJedes sichtbare Objekt kostet mindestens 1 Draw Call — Schatten fügen weitere hinzu.\n> 200 dc: Vorsicht bei der Performance auf mobilen GPUs, die ohnehin schon genug zu tun haben.",
       "stats.trackedDc": "Draw Calls, die den erfassten Objektkategorien zugeordnet sind (Kacheln, Bäume, Schienen …).\nDie Differenz zur Gesamtzahl = nicht kategorisierte Draw Calls (UI, Helfer, Skybox …).",
       "stats.shadows": "Geschätzte Draw Calls für das Rendering der Schatten (Shadow Map).\nJedes „schattenwerfende“ Objekt rendert die Szene erneut aus der Perspektive der Sonne.\nDie shadowMapSize oder die Anzahl der Schattenwerfer reduzieren, um diese Kosten zu senken.",
-      "stats.triangles": "Gesamtzahl der in diesem Frame gerenderten Dreiecke.\nIndikator für geometrische Komplexität — Schatten verdoppeln diese Zahl.\nLOD-Meshes (Detailgrad) reduzieren diese Zahl in der Ferne.",
+      "stats.triangles": "Gesamtzahl der in diesem Frame gerenderten Dreiecke.\nIndikator für geometrische Komplexität — Schatten verdoppeln diese Zahl.\nLOD-Meshes (Detailgrad) reduzieren diese Zahl in der Ferne, denn niemand zählt Baumnadeln am Horizont nach.",
       "stats.objects": "Gesamtzahl der in der Szene erfassten 3D-Objekte (Mesh, Group …).\nEntspricht nicht exakt den Draw Calls: ein Objekt kann mehrere Durchgänge erzeugen.",
       "stats.textures": "Anzahl der im GPU-Speicher aktiven Texturen.\nEine nicht freigegebene Textur bleibt im VRAM. Nach dem Laden neuer Kacheln überwachen.",
       "stats.shaders": "Anzahl der kompilierten und aktiven Shader-Programme (GLSL).\nJede Kombination aus Material + Defines = ein Shader. Zu viele Varianten = Ruckler beim ersten Frame.",
@@ -900,22 +900,22 @@
       "hs.house": "Dorf — Kacheln insgesamt / größte zusammenhängende Zone.",
       "hs.water": "Wasser — Kacheln insgesamt / größte zusammenhängende Fläche.",
       "hs.rail": "Eisenbahn — Kacheln insgesamt / längste zusammenhängende Strecke.",
-      "fps.fps": "Vom Three.js-Engine gerenderte Bilder pro Sekunde.\n60 FPS = flüssige Darstellung und eingehaltenes Frame-Budget. < 30 FPS = spürbare Ruckler.\nDer Wert färbt sich rot, wenn das Frame-Budget (16,7 ms) durchgehend überschritten wird.",
-      "fps.adj": "Qualitative Bewertung der aktuellen Flüssigkeit.\nGrün (Exzellent / Flüssig): alles läuft gut. Orange (Solide / Ordentlich): akzeptabel, aber im Auge behalten.\nRot (Angespannt / Ächzend / Am Limit): die Engine steht unter Druck — den Flaschenhals suchen.",
+      "fps.fps": "Vom Three.js-Engine gerenderte Bilder pro Sekunde.\n60 FPS = flüssige Darstellung und eingehaltenes Frame-Budget. < 30 FPS = spürbare Ruckler.\nDer Wert färbt sich rot, wenn das Frame-Budget (16,7 ms) durchgehend überschritten wird — die Engine schreit dann leise um Hilfe.",
+      "fps.adj": "Qualitative Bewertung der aktuellen Flüssigkeit.\nGrün (Exzellent / Flüssig): alles läuft gut. Orange (Solide / Ordentlich): akzeptabel, aber im Auge behalten.\nRot (Angespannt / Ächzend / Am Limit): die Engine steht unter Druck — den Flaschenhals suchen, bevor sie um Gnade bittet.",
       "fps.cpu": "Prozentsatz des Frame-Budgets (16,7 ms), der vom JavaScript-Thread verbraucht wird.\nUmfasst Spiellogik, Overlay-Aktualisierungen, Animationen und GC-Pausen.\n> 80 %: die CPU ist der Flaschenhals — die Update-Häufigkeit oder die Anzahl aktiver Overlays reduzieren.",
       "fps.gpu": "Prozentsatz des Frame-Budgets, der vom GPU-Rendering verbraucht wird.\nGemessen über eine echte GPU-Timing-Abfrage (EXT_disjoint_timer_query_webgl2), asynchron —\nder angezeigte Wert kann 1 bis mehrere Frames alt sein. Ist die Erweiterung auf diesem\nTreiber/Browser nicht verfügbar, wird auf eine CPU-Sendezeitmessung zurückgegriffen (mit „≈“ gekennzeichnet, weniger zuverlässig).\n> 80 %: die GPU ist ausgelastet — Dreiecke/Fragmente (Vegetation, Nachbearbeitung), Draw Calls oder Schatten reduzieren.",
-      "menu.solo": "Solomodus — spiele allein, in deinem eigenen Tempo.\nDeine Scores werden nach Ende der Partie in die globale Rangliste eingetragen.",
+      "menu.solo": "Solomodus — spiele allein, in deinem eigenen Tempo, ganz ohne jemandem deine Kachelwahl erklären zu müssen.\nDeine Scores werden nach Ende der Partie in die globale Rangliste eingetragen.",
       "menu.multi": "Mehrspielermodus — spiele in Echtzeit mit anderen Spielern.\nErstelle einen Raum und teile den Code, oder tritt einer bestehenden Partie bei.",
-      "menu.platiste": "Flache Geometrie — das Raster liegt auf einer horizontalen Ebene.\nBessere Lesbarkeit und vorhersehbares Verhalten: für Einsteiger empfohlen.",
-      "menu.bouliste": "Sphärische Geometrie — die Kacheln folgen der Krümmung eines Planeten.\nImmersivere Ansicht, aber das gekrümmte Raster kann anfangs verwirren.",
+      "menu.platiste": "Flache Geometrie — das Raster liegt auf einer horizontalen Ebene.\nBessere Lesbarkeit und vorhersehbares Verhalten: für Einsteiger empfohlen, und für alle, die es einfach schon immer wussten.",
+      "menu.bouliste": "Sphärische Geometrie — die Kacheln folgen der Krümmung eines Planeten.\nImmersivere Ansicht, aber das gekrümmte Raster kann anfangs verwirren — die Erde hat schließlich auch Jahrhunderte gebraucht, um überzeugend zu wirken.",
       "menu.confirm": "Bestätigen und zum nächsten Schritt übergehen.",
       "menu.create": "Einen neuen Mehrspielerraum erstellen.\nEin eindeutiger Code wird automatisch generiert — teile ihn den anderen Spielern mit, damit sie dir beitreten können.",
       "menu.join": "Einem bestehenden Raum mit dem oben angegebenen Code beitreten.",
       "menu.back": "Zurück zum Startbildschirm.",
       "game.gridPercent": "Anzahl der seit Beginn der Partie auf dem Raster platzierten Kacheln.\nJede Platzierung erhöht diesen Zähler, auch im Mehrspielermodus.",
       "game.lastScore": "Bei der letzten Platzierung erzielte Punkte.\nEnthält den Zonenbonus, falls die Kachel eine zusammenhängende Zone vergrößert oder geschlossen hat, sowie eventuelle Missionsboni.",
-      "game.newGame": "Eine neue Partie starten.\nDie laufende Partie bleibt aktiv und spielbar — du kannst jederzeit über das Menü dorthin zurückkehren.",
-      "game.abandonGame": "Die laufende Partie aufgeben.\nDie Partie wird endgültig geschlossen: du kannst weder weiterspielen noch einen neuen Score einreichen."
+      "game.newGame": "Eine neue Partie starten.\nDie laufende Partie bleibt aktiv und spielbar — du kannst jederzeit über das Menü dorthin zurückkehren, falls dein Gewissen es verlangt.",
+      "game.abandonGame": "Die laufende Partie aufgeben.\nDie Partie wird endgültig geschlossen: du kannst weder weiterspielen noch einen neuen Score einreichen. Deine Kacheln werden es überleben."
     },
     "missionHelp": {
       "forest": "Setze Kacheln mit Waldsektoren 🌲.\nJedes gesetzte Walddreieck bringt diese Mission voran.\nDichte Zonen bringen am Ende der Partie mehr Punkte.",
@@ -924,7 +924,7 @@
       "water": "Setze Kacheln mit Wassersektoren 💧.\nJedes gesetzte Wasserdreieck bringt diese Mission voran.\nGroße Wasserflächen können Boote aufnehmen.",
       "grass": "Setze Kacheln mit Wiesensektoren 🌿.\nJedes gesetzte Wiesendreieck bringt diese Mission voran.\nGroße zusammenhängende Wiesenzonen bringen einen Flächenbonus.",
       "field": "Setze Kacheln mit Weizenfeldsektoren 🌾.\nJedes gesetzte Felddreieck bringt diese Mission voran.\nFelder in der Nähe von Dörfern oder Flüssen geben Boni.",
-      "train": "Verbinde zwei Bahnhöfe mit durchgängigen Schienen 🚂.\nJede neu vervollständigte Zuglinie bringt diese Mission voran.\nJe länger die Linie, desto höher der Punktestand.",
+      "train": "Verbinde zwei Bahnhöfe mit durchgängigen Schienen 🚂.\nJede neu vervollständigte Zuglinie bringt diese Mission voran.\nJe länger die Linie, desto höher der Punktestand — und garantiert pünktlicher als jeder Anschlusszug im echten Leben.",
       "boat": "Erzeuge von Land umgebene Wasserflächen ⛵.\nAuf jedem von Landkacheln geschlossenen See erscheint automatisch ein Boot.\nJedes neue Boot bringt diese Mission voran.",
       "mill": "Baue große Weizenfeldzonen ⚙️.\nEine Mühle erscheint automatisch in der Mitte jeder ausreichend großen Feldzone.\nJede neue Mühle bringt diese Mission voran."
     },
@@ -1018,7 +1018,7 @@
         "closeAria": "Hilfe schließen",
         "objective": {
           "title": "Grundregeln",
-          "text": "Setze die hexagonalen Kacheln, verbinde gleiche Texturen und erfülle die Missionen. Jede korrekt ausgerichtete Kante zahlt sich aus; Wasser und Schienen zahlen mehr.",
+          "text": "Setze die hexagonalen Kacheln, verbinde gleiche Texturen und erfülle die Missionen. Jede korrekt ausgerichtete Kante zahlt sich aus; Wasser und Schienen zahlen mehr, weil sie es sich einfach nicht nehmen lassen, kompliziert zu sein.",
           "points": {
             "tile": "pro gesetzter Kachel",
             "edge": "pro identischer Kante gegenüber einer Nachbarkachel",
@@ -1032,25 +1032,25 @@
           "title": "Platzierung",
           "items": [
             "Spielbeginn mit 50 Kacheln.",
-            "Die erste Kachel darf frei platziert werden; die folgenden müssen eine gesetzte Kachel berühren.",
+            "Die erste Kachel darf frei platziert werden; die folgenden müssen eine gesetzte Kachel berühren — Einzelgängertum wird nur einmal geduldet.",
             "Das Spiel endet, wenn der Stapel leer ist.",
             "Mit jeder Platzierung erweitert sich das spielbare Gebiet."
           ]
         },
         "waterRail": {
           "title": "Wasser und Schienen",
-          "text": "Wasser und Schienen sind strenge Netzwerke und schwieriger zu platzieren. Im Gegenzug bringt jede korrekte Verbindung mehr Punkte.",
+          "text": "Wasser und Schienen sind strenge Netzwerke und schwieriger zu platzieren — Disziplin, made in Germany. Im Gegenzug bringt jede korrekte Verbindung mehr Punkte.",
           "water": "verbindet sich nur mit Wasser: +25",
           "rail": "verbindet sich nur mit Schiene: +25"
         },
         "bonusCells": {
           "title": "Bonusfelder",
-          "text": "Zwischen 1 und 4 Bonusfelder werden auf dem Raster erzeugt. Sie ändern keine Platzierungsregel: gelingt es dir, eine Kachel darauf zu setzen, verschwinden sie und bringen sofort +500 Punkte.",
+          "text": "Zwischen 1 und 4 Bonusfelder werden auf dem Raster erzeugt. Sie ändern keine Platzierungsregel: gelingt es dir, eine Kachel darauf zu setzen, verschwinden sie und bringen sofort +500 Punkte — quasi ein kleines Trinkgeld des Rasters.",
           "label": "optionales Ziel, reiner Punktgewinn, keine Falle"
         },
         "blackCells": {
           "title": "Schwarze Zellen",
-          "text": "Schwarze Zellen sind spezielle Kacheln, die bereits auf dem Raster vorhanden sind. Sie fungieren als Joker: sie ersetzen, was um sie herum fehlt, und akzeptieren Verbindungen mit allen angrenzenden Texturen.",
+          "text": "Schwarze Zellen sind spezielle Kacheln, die bereits auf dem Raster vorhanden sind. Sie fungieren als Joker: sie ersetzen, was um sie herum fehlt, und akzeptieren Verbindungen mit allen angrenzenden Texturen — die Diplomaten unter den Kacheln.",
           "label": "gilt als kompatibel mit jeder Nachbarkante"
         },
         "textures": {
@@ -1082,7 +1082,7 @@
         },
         "missions": {
           "title": "Missionen",
-          "text1": "Bei jeder neuen aktuellen Kachel besteht eine 20%ige Chance auf eine zusätzliche Mission. Sie kann Wald, Dorf, Eisenbahn, Wasserweg, Wiese, Weizenfeld, sichtbare Züge, Boote oder Mühlen verlangen.",
+          "text1": "Bei jeder neuen aktuellen Kachel besteht eine 20%ige Chance auf eine zusätzliche Mission. Sie kann Wald, Dorf, Eisenbahn, Wasserweg, Wiese, Weizenfeld, sichtbare Züge, Boote oder Mühlen verlangen — das Raster hat immer eine Wunschliste.",
           "text2": "Belohnung: +100 Punkte und +3 Kacheln. Die Ziele schreiten nach Typ voran, eine abgeschlossene Mission bleibt 5 Runden sichtbar. Die realen Werte zählen: Wiese/Wasser/Schiene = 1; Weizenfeld = 1-2; Haus = 1-4; Wald = 1-6 Bäume. Die Mühlen ⚙️ zählen die Anzahl aktiver großer Feldzonen."
         },
         "controls": {
@@ -1130,7 +1130,7 @@
       "btnJoin": "BEITRETEN",
       "btnBack": "ZURÜCK",
       "selectExisting": "Eine bestehende Partie auswählen",
-      "noRoomsFound": "Keine Partie in /json/games gefunden",
+      "noRoomsFound": "Keine Partie in /json/games gefunden — gähnende Leere",
       "listUnavailable": "Liste nicht verfügbar - PHP-Server stumm",
       "roomsCount": {
         "one": "{count} verfügbare Partie / Backups",
@@ -1171,7 +1171,7 @@
       }
     },
     "preloader": {
-      "loading": "Wird geladen…",
+      "loading": "Wird geladen… Geduld, gleich warten Hunderte Kacheln auf dich",
       "loadingPct": "Wird geladen… {pct} %",
       "loadingCount": "{loaded} Dateien / {total} Dateien · {loadedMB} MB / {totalMB} MB"
     },
@@ -1201,7 +1201,7 @@
       "voiceOn": "Stimme aktiviert",
       "voiceOff": "Stimme stumm",
       "newMission": "Neue Mission: {title}",
-      "missionCompleted": "Bravo! Mission abgeschlossen!",
+      "missionCompleted": "Bravo! Mission abgeschlossen, ganz nebenbei!",
       "edaOpened": "Editor für künstlerische Leitung",
       "helpOpened": "Hilfe",
       "millsCount": "Du hast {n} Mühlen",

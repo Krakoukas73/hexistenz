@@ -20,14 +20,14 @@
     "ancien": "Medievale"
   },
   "hero": {
-    "subtitle": "Gioco esagonale contemplativo fatto con nostalgia e amore ❤️ Three.js e tante tessere",
-    "inspi_text": "Ispirato a <em>Dorfromantik</em>, all'anima pastorale di <em>The Settlers</em> (Blue Byte, 1993)\n          e ai mondi meravigliosi di <em>Heroes of Might and Magic</em> (3DO).",
+    "subtitle": "Gioco esagonale contemplativo fatto con nostalgia, amore ❤️ Three.js e un numero imprecisato di tessere",
+    "inspi_text": "Ispirato a <em>Dorfromantik</em>, all'anima pastorale di <em>The Settlers</em> (Blue Byte, 1993)\n          e ai mondi meravigliosi di <em>Heroes of Might and Magic</em> (3DO) — tre debiti di riconoscenza mai davvero saldati.",
     "inspi_buy": {
       "dorfromantik": "Dorfromantik su Steam",
       "settlers": "The Settlers su Ubisoft",
       "heroes3": "Heroes III su GOG"
     },
-    "tagline": "<strong>Hexistenz è un gioco contemplativo</strong>, pensato per chi ama osservare a lungo un\n          mondo e i suoi dettagli, senza preoccuparsi del tempo.<br><br><strong>Posiziona tessere esagonali</strong>\n          e guarda un territorio prendere forma sotto i tuoi occhi: vaste foreste di abeti e betulle, campi di\n          grano ondeggianti con i loro mulini, villaggi medievali dai tetti fumanti, reti ferroviarie e ampi fiumi\n          dove navigano le tue barche.<br><br>Completa missioni, intercetta comete, circonda le tue tessere, e\n          costruisci poco a poco un mondo vivo, tessera dopo tessera.<br><br><strong>Gioca da solo o in\n          multiplayer</strong>, riprendi una partita salvata quando vuoi, <strong>cattura i tuoi momenti migliori\n          nella galleria delle catture</strong>, e rivivi le tue partite in accelerato con i replay online scaricabili.<br><br>Il gioco è già giocabile ed è interamente tradotto in 9 lingue, compreso un francese antico del XII secolo.<br><br>Il gioco è gratuito, senza registrazione, senza pay-to-win e senza acquisti in-game: insomma, fatto solo per nostalgia.",
+    "tagline": "<strong>Hexistenz è un gioco contemplativo</strong>, pensato per chi ama osservare a lungo un\n          mondo e i suoi dettagli, senza preoccuparsi del tempo — né di sensi di colpa per averlo perso.<br><br><strong>Posiziona tessere esagonali</strong>\n          e guarda un territorio prendere forma sotto i tuoi occhi: vaste foreste di abeti e betulle, campi di\n          grano ondeggianti con i loro mulini, villaggi medievali dai tetti fumanti (i camini, non gli abitanti, tranquilli), reti ferroviarie e ampi fiumi\n          dove navigano le tue barche.<br><br>Completa missioni, intercetta comete, circonda le tue tessere, e\n          costruisci poco a poco un mondo vivo, tessera dopo tessera — senza fretta, è un gioco contemplativo, ce lo siamo già detti.<br><br><strong>Gioca da solo o in\n          multiplayer</strong>, riprendi una partita salvata quando vuoi, <strong>cattura i tuoi momenti migliori\n          nella galleria delle catture</strong>, e rivivi le tue partite in accelerato con i replay online scaricabili.<br><br>Il gioco è già giocabile ed è interamente tradotto in 9 lingue, compreso un francese antico del XII secolo — per i tre giocatori che lo capiranno.<br><br>Il gioco è gratuito, senza registrazione, senza pay-to-win e senza acquisti in-game: insomma, fatto solo per nostalgia (la nostra, soprattutto).",
     "btn_play": "Gioca ora",
     "btn_how": "Come si gioca?",
     "stats": {
@@ -42,7 +42,7 @@
     "label": "Due modi di vedere il mondo",
     "title1": "Piattisti e globisti",
     "title2": "Due fazioni inconciliabili",
-    "sub": "Hexistenz divide i costruttori in <strong>due fazioni inconciliabili</strong>. Una scelta visiva,\n      un impegno filosofico. Da che parte stai&nbsp;?",
+    "sub": "Hexistenz divide i costruttori in <strong>due fazioni inconciliabili</strong>. Una scelta visiva,\n      un impegno filosofico, potenzialmente un argomento da evitare a cena. Da che parte stai&nbsp;?",
     "flat": {
       "tag": "Modalità Piattista",
       "name": "🪨 Il Mondo Piatto",
@@ -51,60 +51,60 @@
     "globe": {
       "tag": "Modalità Globista",
       "name": "🌍 Il Mondo Sferico",
-      "desc": "La curvatura del mondo si rivela man mano che la griglia cresce — le tessere\n            lontane si incurvano verso l'orizzonte. Un effetto GPU in tempo reale che dona\n            una profondità vertiginosa a ogni partita."
+      "desc": "La curvatura del mondo si rivela man mano che la griglia cresce — le tessere\n            lontane si incurvano verso l'orizzonte. Un effetto GPU in tempo reale che dona\n            una profondità vertiginosa a ogni partita, e la tranquilla soddisfazione di chi ha ragione."
     },
-    "vs": "Il dibattito non è chiuso."
+    "vs": "Il dibattito non è chiuso. E, ad essere onesti, non lo sarà mai."
   },
   "biomes": {
     "label": "I biomi",
     "title": "Sei biomi da collegare",
-    "sub": "Ogni tessera è composta da sei settori triangolari. <strong>Unisci i biomi identici</strong> per formare zone e massimizzare il punteggio.",
+    "sub": "Ogni tessera è composta da sei settori triangolari. <strong>Unisci i biomi identici</strong> per formare zone e massimizzare il punteggio — la geometria non perdona, ma applaude.",
     "grass": {
       "name": "Prateria",
-      "desc": "Distese erbose dove ogni filo d'erba freme al vento, punteggiate di fiori selvatici, rocce, cervi e cespugli. Terreno neutro tra le grandi reti.",
+      "desc": "Distese erbose dove ogni filo d'erba freme al vento, punteggiate di fiori selvatici, rocce, cervi e cespugli. Terreno neutro tra le grandi reti — la Svizzera dei biomi.",
       "tag": "Bioma neutro"
     },
     "field": {
       "name": "Campo",
-      "desc": "Grano mosso dal vento, mulini procedurali e balle di fieno. Il chi-mai risuona quando la telecamera sfiora le spighe.",
+      "desc": "Grano mosso dal vento, mulini procedurali e balle di fieno. Il chi-mai risuona quando la telecamera sfiora le spighe — l'unico posto dove \"fare grano\" è alla portata di tutti.",
       "tag": "Rete agricola"
     },
     "forest": {
       "name": "Foresta",
-      "desc": "Abeti, betulle, pioppi in InstancedMesh, le cui chiome ondeggiano al vento fino al sottobosco. Funghi, cataste di legna, cervi — fino a 22 milioni di triangoli.",
+      "desc": "Abeti, betulle, pioppi in InstancedMesh, le cui chiome ondeggiano al vento fino al sottobosco. Funghi, cataste di legna, cervi — fino a 22 milioni di triangoli, contati uno per uno (quasi).",
       "tag": "Foresta fitta"
     },
     "house": {
       "name": "Villaggio",
-      "desc": "Case medievali con fumo volumetrico, torri di guardia, fontane, carretti, cani e cavalli animati.",
+      "desc": "Case medievali con fumo volumetrico, torri di guardia, fontane, carretti, cani e cavalli animati — nessuno dei quali paga l'IMU.",
       "tag": "Insediamento umano"
     },
     "water": {
       "name": "Acqua",
-      "desc": "Superficie continua dalla riva organica, onde e schiuma animate in stile acquarello. Barche animate con scia, spiagge procedurali e aloni di zona.",
+      "desc": "Superficie continua dalla riva organica, onde e schiuma animate in stile acquarello. Barche animate con scia, spiagge procedurali e aloni di zona — manca solo l'ombrellone.",
       "tag": "Rete fluviale ⛵"
     },
     "rail": {
       "name": "Ferrovia",
-      "desc": "Binari procedurali, traversine e massicciata. Treni con vagoni, stazioni capolinea e fumo delle locomotive.",
+      "desc": "Binari procedurali, traversine e massicciata. Treni con vagoni, stazioni capolinea e fumo delle locomotive, puntuali qui più che nella realtà.",
       "tag": "Rete ferroviaria 🚂"
     }
   },
   "missions": {
     "label": "Obiettivi",
     "title": "Le missioni",
-    "sub": "Ogni partita genera obiettivi automatici legati ai biomi e alle reti. Completarli frutta <strong>100 punti e soprattutto 3 nuove tessere nel mazzo</strong> — il che garantisce teoricamente partite infinite.",
+    "sub": "Ogni partita genera obiettivi automatici legati ai biomi e alle reti. Completarli frutta <strong>100 punti e soprattutto 3 nuove tessere nel mazzo</strong> — il che garantisce teoricamente partite infinite, e praticamente qualche notte insonne.",
     "zone": {
       "name": "Zona bioma",
       "desc": "Raggiungere una superficie minima in un dato bioma: <em>«&nbsp;Foresta di 8 settori&nbsp;»</em>, <em>«&nbsp;Prateria di 12 settori&nbsp;»</em>…"
     },
     "rail": {
       "name": "Ferrovia",
-      "desc": "Posare un numero imposto di settori ferrovia. Ogni triangolo di ferrovia posato fa progredire questa missione."
+      "desc": "Posare un numero imposto di settori ferrovia. Ogni triangolo di ferrovia posato fa progredire questa missione — nessuno sciopero previsto."
     },
     "trains": {
       "name": "Treni",
-      "desc": "Costituire un numero di linee ferroviarie attive — ogni linea collega due stazioni tramite binari continui senza interruzione."
+      "desc": "Costituire un numero di linee ferroviarie attive — ogni linea collega due stazioni tramite binari continui senza interruzione (e senza ritardo, per una volta)."
     },
     "water": {
       "name": "Via d'acqua",
@@ -112,11 +112,11 @@
     },
     "boats": {
       "name": "Barche",
-      "desc": "Far comparire un numero di barche sulla griglia. Una barca nasce automaticamente su ogni lago chiuso da tessere terrestri."
+      "desc": "Far comparire un numero di barche sulla griglia. Una barca nasce automaticamente su ogni lago chiuso da tessere terrestri — niente patente nautica richiesta."
     },
     "comets": {
       "name": "Comete",
-      "desc": "Comete attraversano il cielo in tempo reale. Cliccale per farle esplodere e guadagnare punti — riflessi e vigilanza richiesti."
+      "desc": "Comete attraversano il cielo in tempo reale. Cliccale per farle esplodere e guadagnare punti — riflessi e vigilanza richiesti, la calma un po' meno."
     },
     "village": {
       "name": "Villaggio prospero",
@@ -128,7 +128,7 @@
     },
     "mills": {
       "name": "Mulini a vento",
-      "desc": "Costruire grandi zone di campi di grano per far comparire dei mulini. Un mulino nasce automaticamente al centro di ogni vasta zona di campo."
+      "desc": "Costruire grandi zone di campi di grano per far comparire dei mulini. Un mulino nasce automaticamente al centro di ogni vasta zona di campo — nessun cavaliere errante incluso nel prezzo."
     }
   },
   "gameplay": {
@@ -139,19 +139,19 @@
     "steps": {
       "draw": {
         "title": "Pesca",
-        "desc": "Appare una tessera esagonale — sei settori triangolari, ciascuno di un bioma. Osserva la successiva per anticipare."
+        "desc": "Appare una tessera esagonale — sei settori triangolari, ciascuno di un bioma. Osserva la successiva per anticipare, o non farlo, e vivi pericolosamente."
       },
       "orient": {
         "title": "Orienta",
-        "desc": "Ruota la tessera per allineare i suoi bordi. Acqua e ferrovia impongono continuità — una posa sbagliata blocca la rete."
+        "desc": "Ruota la tessera per allineare i suoi bordi. Acqua e ferrovia impongono continuità — una posa sbagliata blocca la rete, e la tua dignità con essa."
       },
       "place": {
         "title": "Posiziona",
-        "desc": "Scegli la posizione sulla griglia assiale. Circondare una tessera con sei vicine frutta un grosso bonus immediato."
+        "desc": "Scegli la posizione sulla griglia assiale. Circondare una tessera con sei vicine frutta un grosso bonus immediato — la vera vittoria sociale di questo gioco."
       },
       "score": {
         "title": "Segna",
-        "desc": "Completa missioni e zone, intercetta comete, invia il tuo miglior punteggio alla classifica mondiale."
+        "desc": "Completa missioni e zone, intercetta comete, invia il tuo miglior punteggio alla classifica mondiale, e fingi indifferenza quando qualcuno ti supera."
       }
     },
     "score_label": "Sistema di punteggio",
@@ -195,7 +195,7 @@
     "label": "Atmosfere visive",
     "title1": "Molteplici atmosfere",
     "title2": "Un'infinità di personalizzazioni",
-    "sub": "Numerosi preset visivi pronti all'uso — ma ognuno è una base: LUT colorimetrica, effetti cinematografici (aberrazione cromatica, grana pellicola, tilt-shift), pixelizzazione retrò, atmosfere EGA e Amiga, fumo volumetrico, cielo procedurale… <strong>Centinaia di combinazioni</strong> per trasformare l'intero mondo a proprio gusto. Ogni personalizzazione si esporta con un clic e può essere condivisa con altri giocatori.",
+    "sub": "Numerosi preset visivi pronti all'uso — ma ognuno è una base: LUT colorimetrica, effetti cinematografici (aberrazione cromatica, grana pellicola, tilt-shift), pixelizzazione retrò, atmosfere EGA e Amiga, fumo volumetrico, cielo procedurale… <strong>Centinaia di combinazioni</strong> per trasformare l'intero mondo a proprio gusto, o a proprio capriccio del momento. Ogni personalizzazione si esporta con un clic e può essere condivisa con altri giocatori, per gloria eterna o dibattiti accesi.",
     "preset_word": "Preset",
     "presets": {
       "autumn": "Autunno",
@@ -211,38 +211,38 @@
   "creatures": {
     "label": "La vita del mondo",
     "title": "Un mondo di creature",
-    "sub": "Il mondo non si limita a esistere: <strong>respira</strong>. Animali, uccelli e abitanti animano ogni bioma nel corso delle stagioni.",
+    "sub": "Il mondo non si limita a esistere: <strong>respira</strong>, e a volte bela. Animali, uccelli e abitanti animano ogni bioma nel corso delle stagioni.",
     "sheep": {
       "name": "Pecore",
-      "desc": "Greggi pascolano tranquillamente nelle praterie, spostandosi al ritmo delle erbe che ondeggiano al vento."
+      "desc": "Greggi pascolano tranquillamente nelle praterie, spostandosi al ritmo delle erbe che ondeggiano al vento — le uniche abitanti del mondo con zero ambizioni di carriera."
     },
     "crows": {
       "name": "Corvi",
-      "desc": "Stormi di corvi volteggiano sopra i campi di grano, in cerca della minima parcella lasciata incustodita."
+      "desc": "Stormi di corvi volteggiano sopra i campi di grano, in cerca della minima parcella lasciata incustodita. Il contadino li conosce per nome, e non affettuosamente."
     },
     "farmer": {
       "name": "Contadino",
-      "desc": "Forca in mano, il contadino veglia sul suo grano e va e viene al ritmo delle stagioni agricole."
+      "desc": "Forca in mano, il contadino veglia sul suo grano e va e viene al ritmo delle stagioni agricole, e di una faida non dichiarata con i corvi di cui sopra."
     },
     "druid": {
       "name": "Druido",
-      "desc": "Una sagoma solitaria vaga tra gli alberi, guardiana discreta delle foreste e dei loro segreti."
+      "desc": "Una sagoma solitaria vaga tra gli alberi, guardiana discreta delle foreste e dei loro segreti — non chiedetegli indicazioni, ha altro per la testa."
     },
     "witch": {
       "name": "Strega",
-      "desc": "In alcune foreste, al calar della notte, si dice che streghe si aggirino tra gli alberi, attratte dal silenzio e dal bagliore dei fuochi da campo dimenticati. Pochi le avvistano — ancora meno osano seguirle."
+      "desc": "In alcune foreste, al calar della notte, si dice che streghe si aggirino tra gli alberi, attratte dal silenzio e dal bagliore dei fuochi da campo dimenticati. Pochi le avvistano — ancora meno osano seguirle, e nessuno chiede loro un selfie."
     },
     "moon": {
       "name": "Luna di Méliès",
-      "desc": "In modalità notte, la luna sfoggia il volto emblematico del Viaggio nella Luna di Méliès — un omaggio al cinema muto annidato nel cuore del cielo stellato."
+      "desc": "In modalità notte, la luna sfoggia il volto emblematico del Viaggio nella Luna di Méliès — un omaggio al cinema muto annidato nel cuore del cielo stellato, che sopporta le tessere ferroviarie con notevole stoicismo."
     },
     "seagulls": {
       "name": "Gabbiani",
-      "desc": "Piccoli gruppi di gabbiani volteggiano sopra le più grandi distese d'acqua, con alcuni individui che a volte si staccano dal resto dello stormo."
+      "desc": "Piccoli gruppi di gabbiani volteggiano sopra le più grandi distese d'acqua, con alcuni individui che a volte si staccano dal resto dello stormo — questioni di famiglia, presumibilmente."
     },
     "fireflies": {
       "name": "Lucciole",
-      "desc": "Al calar della notte, sciami di lucciole scintillanti vagano rasente al suolo, disegnando punti di luce calda che derivano dolcemente intorno alla telecamera."
+      "desc": "Al calar della notte, sciami di lucciole scintillanti vagano rasente al suolo, disegnando punti di luce calda che derivano dolcemente intorno alla telecamera, come piccole guide turistiche senza alcun senso dell'orientamento."
     },
     "population": {
       "villages_label": "Villaggi",
@@ -275,44 +275,44 @@
         "wildflowers": "Fiori selvatici"
       }
     },
-    "note": "22 volti diversi popolano villaggi e foreste, ciascuno con la propria sagoma, il proprio costume, il proprio ruolo. Nessuna comparsa copiata e incollata: una vera popolazione, tessera dopo tessera."
+    "note": "22 volti diversi popolano villaggi e foreste, ciascuno con la propria sagoma, il proprio costume, il proprio ruolo. Nessuna comparsa copiata e incollata: una vera popolazione, tessera dopo tessera — con più personalità della maggior parte dei giochi tripla A."
   },
   "audio": {
     "label": "Atmosfera sonora",
     "title": "Un mondo che si sente",
-    "sub": "Il suono segue la telecamera <strong>in tempo reale</strong> — ogni bioma, ogni treno, ogni barca ha la propria voce, che sale e svanisce con la distanza.",
+    "sub": "Il suono segue la telecamera <strong>in tempo reale</strong> — ogni bioma, ogni treno, ogni barca ha la propria voce, che sale e svanisce con la distanza, come un vicino discreto.",
     "spatial": {
       "name": "Suono spaziale 3D",
-      "desc": "Atmosfere di villaggio, canti di uccelli di foresta e prateria, corvi sopra i campi, risacca delle spiagge, treni e barche — ogni sorgente varia in volume secondo la sua distanza e direzione reali."
+      "desc": "Atmosfere di villaggio, canti di uccelli di foresta e prateria, corvi sopra i campi, risacca delle spiagge, treni e barche — ogni sorgente varia in volume secondo la sua distanza e direzione reali, senza bisogno di cuffie da 300 euro."
     },
     "chimai": {
       "name": "Chi Mai, il tema nascosto",
-      "desc": "Abbassa la telecamera rasente a un campo di grano e un tema melodico segreto si attiva — la musica e gli altri suoni svaniscono dolcemente per lasciargli tutto lo spazio."
+      "desc": "Abbassa la telecamera rasente a un campo di grano e un tema melodico segreto si attiva — la musica e gli altri suoni svaniscono dolcemente per lasciargli tutto lo spazio. Ai puristi del cinema italiano, questo effetto risulterà stranamente familiare."
     },
     "adaptive": {
       "name": "Musica adattiva",
-      "desc": "Tracce di intro, di gioco e di fine che si susseguono in dissolvenza morbida, pescate tra diverse varianti per non suonare mai uguali da una partita all'altra."
+      "desc": "Tracce di intro, di gioco e di fine che si susseguono in dissolvenza morbida, pescate tra diverse varianti per non suonare mai uguali da una partita all'altra — anche il compositore si stupisce ogni volta."
     },
     "voice": {
       "name": "Una voce che commenta la partita",
-      "desc": "Una voce narrante (sintesi vocale nativa del browser, nessun servizio esterno) annuncia in diretta i tuoi punti, le missioni e i momenti chiave dell'interfaccia — un breve segnale sonoro precede ogni nuova missione e ogni missione completata. Disponibile nelle 9 lingue del gioco, con una voce maschile scelta automaticamente per il tedesco e il russo. Il tasto T la silenzia da sola, senza toccare il resto della colonna sonora."
+      "desc": "Una voce narrante (sintesi vocale nativa del browser, nessun servizio esterno) annuncia in diretta i tuoi punti, le missioni e i momenti chiave dell'interfaccia — un breve segnale sonoro precede ogni nuova missione e ogni missione completata. Disponibile nelle 9 lingue del gioco, con una voce maschile scelta automaticamente per il tedesco e il russo (per ragioni che restano un mistero anche per noi). Il tasto T la silenzia da sola, senza toccare il resto della colonna sonora."
     },
     "silence": {
       "name": "Silenzio a richiesta",
-      "desc": "Il tasto M interrompe e ripristina istantaneamente l'intera colonna sonora, musica compresa — utile per una partita tranquilla in riunione o in videochiamata."
+      "desc": "Il tasto M interrompe e ripristina istantaneamente l'intera colonna sonora, musica compresa — utile per una partita tranquilla in riunione o in videochiamata, quando fingi di ascoltare qualcun altro."
     }
   },
   "daynnight": {
     "label": "Atmosfera del mondo",
     "title": "Ambiente",
-    "sub": "<strong>Un solo interruttore cambia tutto</strong>. Il sole, le nuvole e il cielo blu lasciano spazio a stelle, luna e comete.",
+    "sub": "<strong>Un solo interruttore cambia tutto</strong>. Il sole, le nuvole e il cielo blu lasciano spazio a stelle, luna e comete — nessun canto del gallo richiesto.",
     "day": {
       "name": "Modalità Giorno",
       "list": [
         "🌤 Sole in orbita sul proprio livello di rendering",
         "⛅ Cielo volumetrico procedurale con nuvole FBM animate",
         "🔵 Gradiente zenit/orizzonte dalle tonalità blu calde",
-        "🚫 Comete nascoste — troppa luce per loro"
+        "🚫 Comete nascoste — troppa luce per loro, timide di natura"
       ]
     },
     "night": {
@@ -321,15 +321,15 @@
         "🌙 Luna, gradiente zenit/orizzonte notturno profondo",
         "✨ Stelle scintillanti su una sfera dedicata",
         "☄️ Comete che filano — clicca per farle esplodere",
-        "🌑 Atmosfera cupa, fumo dei villaggi più visibile"
+        "🌑 Atmosfera cupa, fumo dei villaggi più visibile (e più inquietante)"
       ]
     },
     "smoke": {
       "name": "Fumo",
       "list": [
         "🏠 Fino a 48 colonne di fumo simultanee, ray-marchate in tempo reale sopra i camini e le locomotive",
-        "🌬️ Turbolenza a 4 ottave che deriva con l'altezza — ogni colonna è unica",
-        "🎲 Solo una casa su tre fuma, estratta a caso alla generazione della tessera",
+        "🌬️ Turbolenza a 4 ottave che deriva con l'altezza — ogni colonna è unica, come le impronte digitali",
+        "🎲 Solo una casa su tre fuma, estratta a caso alla generazione della tessera — le altre due risparmiano sulla legna",
         "🌙 Ancora più misteriosa al calar della notte"
       ]
     },
@@ -338,13 +338,13 @@
       "list": [
         "☀️ Raggi di luce volumetrici che emergono dal sole o dalla luna",
         "🌲 Attraversano chiome, torri e nuvole per un'illuminazione cinematografica",
-        "🎚️ Lunghezza, diffusione e soglia regolabili tramite l'editor di direzione artistica"
+        "🎚️ Lunghezza, diffusione e soglia regolabili tramite l'editor di direzione artistica — per il regista che c'è in te"
       ]
     },
     "rain": {
       "name": "Pioggia",
       "list": [
-        "💧 Acquazzone dinamico attivabile al volo dall'HUD Meteo",
+        "💧 Acquazzone dinamico attivabile al volo dall'HUD Meteo, senza bisogno di una danza propiziatoria",
         "⛈️ Si concatena naturalmente con temporale e fulmini",
         "🎬 Atmosfera rafforzata dalla vignettatura e dalla grana pellicola della cinematica"
       ]
@@ -353,51 +353,51 @@
       "name": "Nebbia mattutina",
       "list": [
         "🌫️ Velo basso che soffoca le distanze e addolcisce le sagome",
-        "☀️ Si dissolve progressivamente col passare dei minuti",
+        "☀️ Si dissolve progressivamente col passare dei minuti, come ogni buon proposito",
         "🎚️ Densità e colore della nebbia regolabili nell'editor di direzione artistica"
       ]
     },
     "storm": {
       "name": "Temporali e incendi",
       "list": [
-        "⚡ Il fulmine cade sotto la coltre temporalesca e può incendiare una tessera",
-        "🔥 Alberi, case, torri e mulini bruciano alla loro altezza reale, anneriscono e poi rinascono",
+        "⚡ Il fulmine cade sotto la coltre temporalesca e può incendiare una tessera — la natura non fa sconti",
+        "🔥 Alberi, case, torri e mulini bruciano alla loro altezza reale, anneriscono e poi rinascono, più resilienti di certe start-up",
         "🌬️ Il focolaio deriva col vento, si propaga alle vicine e si arresta netto sul bordo dell'acqua",
-        "🌧️ La pioggia rallenta il contagio e talvolta soffoca del tutto il rogo"
+        "🌧️ La pioggia rallenta il contagio e talvolta soffoca del tutto il rogo — l'unico pompiere gratuito del gioco"
       ]
     }
   },
   "eda": {
     "label": "Editor di direzione artistica (EDA)",
     "title": "Personalizzazione estrema",
-    "sub": "Oltre ai numerosi preset, l'EDA apre <strong>decine di parametri regolabili in tempo reale</strong>, suddivisi in 3 schede — LUT, Cinematica, Ambiente. Ogni cursore risponde istantaneamente, senza ricaricamento, e l'insieme si copia/esporta in JSON per essere rigiocato o condiviso.",
+    "sub": "Oltre ai numerosi preset, l'EDA apre <strong>decine di parametri regolabili in tempo reale</strong>, suddivisi in 3 schede — LUT, Cinematica, Ambiente. Ogni cursore risponde istantaneamente, senza ricaricamento, e l'insieme si copia/esporta in JSON per essere rigiocato o condiviso — o perso per sempre in una cartella Download, come da tradizione.",
     "lut": {
       "label": "LUT",
-      "desc": "Nebbia, astro luminoso, calibrazione colorimetrica completa (curve RGB, gamma, livelli) e palette per bioma."
+      "desc": "Nebbia, astro luminoso, calibrazione colorimetrica completa (curve RGB, gamma, livelli) e palette per bioma — di che far impallidire un colorista professionista."
     },
     "cinematic": {
       "label": "Cinematica",
-      "desc": "God rays, tilt-shift, bloom, pixelizzazione retrò e curvatura schermo — per filmare il mondo anziché limitarsi a guardarlo."
+      "desc": "God rays, tilt-shift, bloom, pixelizzazione retrò e curvatura schermo — per filmare il mondo anziché limitarsi a guardarlo, con tutto l'ego di un vero regista."
     },
     "environment": {
       "label": "Ambiente",
-      "desc": "Nuvole e copertura nuvolosa, vento (grano, erba, alberi), meteo dinamico (nebbia, lucciole, pioggia), forma del mondo (globista/piattista), interruttore Giorno/Notte e preset di qualità/densità."
+      "desc": "Nuvole e copertura nuvolosa, vento (grano, erba, alberi), meteo dinamico (nebbia, lucciole, pioggia), forma del mondo (globista/piattista), interruttore Giorno/Notte e preset di qualità/densità — il tempo, letteralmente, nelle tue mani."
     }
   },
   "multi": {
     "title1": "Multiplayer",
     "title2": "Costruite insieme",
-    "sub": "Unisciti o crea una stanza con un codice di 6 lettere. La griglia è <strong>condivisa in tempo reale</strong> — ogni giocatore posa le sue tessere e vede i piazzamenti degli altri man mano.",
+    "sub": "Unisciti o crea una stanza con un codice di 6 lettere. La griglia è <strong>condivisa in tempo reale</strong> — ogni giocatore posa le sue tessere e vede i piazzamenti degli altri man mano, comprese le scelte discutibili.",
     "features": [
-      "Tutte le partite sono salvate — riprendi o rigioca in qualsiasi momento",
+      "Tutte le partite sono salvate — riprendi o rigioca in qualsiasi momento, anche per rimpiangere una posa",
       "Stanze raggiungibili in qualsiasi momento, anche a partita in corso",
-      "Sincronizzazione in tempo reale · PHP + JSON",
-      "La mappa si costruisce collaborativamente, tessera dopo tessera"
+      "Sincronizzazione in tempo reale · PHP + JSON, senza fronzoli e senza sorprese",
+      "La mappa si costruisce collaborativamente, tessera dopo tessera — la diplomazia è a discrezione dei giocatori"
     ],
     "gallery_title": "CONDIVIDI LE TUE CATTURE",
-    "gallery_promo": "Immortala le tue partite migliori: il pulsante 📷 cattura il mondo senza HUD, e il pulsante 🖼️ apre la <strong>galleria condivisa con tutti i giocatori</strong>",
+    "gallery_promo": "Immortala le tue partite migliori: il pulsante 📷 cattura il mondo senza HUD, e il pulsante 🖼️ apre la <strong>galleria condivisa con tutti i giocatori</strong>, pronta per i confronti impietosi",
     "replay_title": "Registra le tue partite in video",
-    "replay_promo": "Con un clic, <strong>rivivi tutta la partita in accelerato</strong> e scaricala in video, direttamente dal tuo browser.",
+    "replay_promo": "Con un clic, <strong>rivivi tutta la partita in accelerato</strong> e scaricala in video, direttamente dal tuo browser — nessuna regia richiesta.",
     "btn_create": "Crea una partita",
     "room_title": "Codice stanza",
     "room_status": "Partita in corso · 3 giocatori",
@@ -406,7 +406,7 @@
   "scores": {
     "label": "Classifica mondiale",
     "title": "I costruttori più efficienti",
-    "empty": "Nessun punteggio registrato — sii il primo a posare la tua tessera.",
+    "empty": "Nessun punteggio registrato — la classifica è vuota quanto imbarazzante. Sii il primo a posare la tua tessera.",
     "try_luck": "Tenta la fortuna →",
     "headline_stat": "tessere posate",
     "pts_suffix": "pt",
@@ -447,19 +447,19 @@
     }
   },
   "footer": {
-    "copy": "Gioco esagonale contemplativo fatto con nostalgia e amore ❤️ Three.js e tante tessere",
+    "copy": "Gioco esagonale contemplativo fatto con nostalgia, amore ❤️ Three.js e un numero imprecisato di tessere",
     "github": "GitHub"
   },
   "game": {
     "gallery": {
       "title": "Galleria delle catture",
-      "empty": "Nessuna cattura per ora. Premi 📷 in gioco per crearne una.",
+      "empty": "Nessuna cattura per ora — la galleria attende, pazientemente. Premi 📷 in gioco per crearne una.",
       "close": "Chiudi",
-      "loading": "Caricamento…",
+      "loading": "Si recuperano i ricordi…",
       "tilesCount": "Partita di {n} tessere",
       "modeBouliste": "Modalità Globo",
       "modePlatiste": "Modalità Piatto",
-      "captured": "Cattura effettuata!"
+      "captured": "Cattura effettuata! Il mondo posa volentieri."
     },
     "sound": {
       "on": "Audio attivato",
@@ -554,7 +554,7 @@
       },
       "qualityTooltip": "Densità {label} ({value})",
       "weatherStopAll": "⏹ Ferma tutto",
-      "weatherStopAllTitle": "Ferma tutti gli eventi ambientali in corso",
+      "weatherStopAllTitle": "Ferma tutti gli eventi ambientali in corso — pioggia, fulmini e panico ovino compresi",
       "weatherGroups": {
         "morningMist": "🌫️ Nebbia mattutina",
         "fireflies": "✨ Lucciole",
@@ -565,25 +565,25 @@
         "fire": "🔥 Fuoco",
         "panic": "🐑 Panico animale"
       },
-      "weatherRequires": "(richiede {label})",
+      "weatherRequires": "(richiede {label} — la meteorologia ha le sue regole)",
       "weatherSwitchTitle": "Attiva / disattiva",
       "weatherCloudsSwitchTitle": "Attiva / disattiva le nuvole",
       "weatherResetTitle": "Reimposta",
-      "presetTooltipApply": "Applica l'ambiente «{name}»",
-      "presetTooltipDefault": "Torna ai valori predefiniti",
+      "presetTooltipApply": "Applica l'ambiente «{name}» — un clic, zero rimpianti",
+      "presetTooltipDefault": "Torna ai valori predefiniti, quelli sensati",
       "footer": {
         "copy": "📋 Copia",
-        "copyTitle": "Copia tutti i parametri LUT + PIX + ACQUA + CINEMA + VENTO + NUVOLE + Forma del mondo + Giorno/Notte + Densità + Meteo correnti in JSON (base per un futuro preset di ambiente con effetti meteo preconfigurati)",
+        "copyTitle": "Copia tutti i parametri LUT + PIX + ACQUA + CINEMA + VENTO + NUVOLE + Forma del mondo + Giorno/Notte + Densità + Meteo correnti in JSON (base per un futuro preset di ambiente con effetti meteo preconfigurati) — un souvenir tecnico del tuo capolavoro",
         "copied": "✓ Copiato!",
         "undo": "↩ Annulla",
-        "undoTitle": "Annulla l'ultima modifica",
+        "undoTitle": "Annulla l'ultima modifica — a nessuno importerà mai",
         "redo": "↪ Ripeti",
-        "redoTitle": "Ripeti la modifica annullata",
+        "redoTitle": "Ripeti la modifica annullata, se in fondo aveva ragione lei",
         "reset": "Reset",
-        "resetTitle": "Reimposta ai valori predefiniti",
+        "resetTitle": "Reimposta ai valori predefiniti, quando l'esperimento è andato troppo oltre",
         "compare": "Confronta",
         "compareBack": "⟳ Indietro",
-        "compareTitle": "Alterna tra i parametri correnti e l'ultimo ambiente applicato",
+        "compareTitle": "Alterna tra i parametri correnti e l'ultimo ambiente applicato, per capire se hai davvero migliorato le cose",
         "lastPresetTitle": "Ultimo ambiente applicato"
       },
       "labels": {
@@ -756,84 +756,84 @@
       }
     },
     "help": {
-      "topbar.fps": "Mostra/nascondi l'HUD prestazioni avanzato",
-      "topbar.eda": "Apri o chiudi il pannello di rendering",
+      "topbar.fps": "Mostra/nascondi l'HUD prestazioni avanzato, per chi vuole sapere esattamente quanto soffre la sua GPU",
+      "topbar.eda": "Apri o chiudi il pannello di rendering, dove ogni cursore diventa una tentazione",
       "topbar.snapshot": "Cattura schermo (senza HUD)",
       "topbar.gallery": "Galleria delle catture",
       "topbar.replay": "Replay della partita",
       "topbar.lang": "Lingua",
       "topbar.theme": "Tema grafico (Blu / Medievale)",
       "topbar.mute": "Disattiva / riattiva l'audio",
-      "topbar.muteVoice": "Disattiva / riattiva la voce (TTS)",
-      "renderer.toneMappingExposure": "Esposizione globale del renderer (ACESFilmic). Controlla la quantità di luce che raggiunge il \"sensore\" prima di qualsiasi calibrazione.\nValori < 1 scuriscono l'insieme, > 2 possono saturare le alte luci.\nTipico: 1.2–1.8 per una resa naturale.",
-      "environment.fogDensity": "Densità della nebbia esponenziale (FogExp2). Attiva solo quando \"Fine lineare\" è a 0.\nLa visibilità cala molto rapidamente: a 0.07 la scena è quasi opaca.\nPer un campo visivo controllato, preferire la modalità lineare tramite \"Inizio\" e \"Fine\".",
+      "topbar.muteVoice": "Disattiva / riattiva la voce (TTS), quando ha già detto abbastanza",
+      "renderer.toneMappingExposure": "Esposizione globale del renderer (ACESFilmic). Controlla la quantità di luce che raggiunge il \"sensore\" prima di qualsiasi calibrazione.\nValori < 1 scuriscono l'insieme, > 2 possono saturare le alte luci.\nTipico: 1.2–1.8 per una resa naturale. Oltre, benvenuti nel Sole.",
+      "environment.fogDensity": "Densità della nebbia esponenziale (FogExp2). Attiva solo quando \"Fine lineare\" è a 0.\nLa visibilità cala molto rapidamente: a 0.07 la scena è quasi opaca.\nPer un campo visivo controllato, preferire la modalità lineare tramite \"Inizio\" e \"Fine\". A 1, benvenuti a Londra nel 1952.",
       "environment.fogNear": "Distanza in unità 3D dove inizia la nebbia lineare.\nAppena \"Fine\" > 0, passa automaticamente da FogExp2 a THREE.Fog(near, far).\nA 0: nebbia fin dal primo piano. A 5: gli oggetti vicini restano nitidi.",
       "environment.fogFar": "Distanza dove la nebbia lineare è completamente opaca.\nImposta a 0 per tornare alla modalità esponenziale.\nEsempio: Inizio = 3, Fine = 18 → campo visivo di 15 unità — immersivo senza annegare tutto.",
-      "lights.hemisphereIntensity": "Intensità della luce emisferica (cielo + suolo).\nIllumina le facce non esposte al sole diretto.\nTroppo alta: appiattisce le ombre e sopprime il rilievo. Troppo bassa: facce posteriori nel buio totale.",
-      "lights.sunIntensity": "Potenza della luce direzionale (sole).\nDetermina la durezza delle ombre e il contrasto del rilievo.\nValori > 5 possono bruciare le superfici chiare se anche l'esposizione globale è elevata.",
+      "lights.hemisphereIntensity": "Intensità della luce emisferica (cielo + suolo).\nIllumina le facce non esposte al sole diretto.\nTroppo alta: appiattisce le ombre e sopprime il rilievo. Troppo bassa: facce posteriori nel buio totale, stile grotta.",
+      "lights.sunIntensity": "Potenza della luce direzionale (sole).\nDetermina la durezza delle ombre e il contrasto del rilievo.\nValori > 5 possono bruciare le superfici chiare se anche l'esposizione globale è elevata — protezione solare non inclusa.",
       "lights.sunOrbitRadius": "Raggio dell'orbita circolare del sole attorno al centro della scena.\nUn raggio piccolo (< 5) dà una luce molto inclinata dal centro; grande (> 20): luce più radente dai bordi.",
       "lights.sunOrbitHeight": "Altezza verticale del sole sopra il piano della scena.\nAlto = ombre corte, luce zenitale. Basso = ombre lunghe e radenti (ora dorata o tramonto).",
-      "lights.sunOrbitSpeed": "Velocità angolare del sole in radianti/secondo.\nA 0.06, un giro completo dura ≈ 100 secondi. A 0: sole fisso. A 1: ombre che ruotano rapidamente.",
-      "lights.sunVisualScale": "Dimensione apparente del disco solare nel cielo.\nPuramente visivo — non influisce né sulla potenza luminosa né sulle ombre.",
+      "lights.sunOrbitSpeed": "Velocità angolare del sole in radianti/secondo.\nA 0.06, un giro completo dura ≈ 100 secondi. A 0: sole fisso. A 1: ombre che ruotano così in fretta da far girare la testa.",
+      "lights.sunVisualScale": "Dimensione apparente del disco solare nel cielo.\nPuramente visivo — non influisce né sulla potenza luminosa né sulle ombre. Vanità pura, insomma.",
       "lights.fillIntensity": "Intensità di una luce di riempimento morbida (fill light), opposta al sole.\nSchiarisce le zone d'ombra dure. Utile per evitare parti interamente nere sotto gli sporti o sul retro delle colline.",
       "grading.brightness": "Scostamento di luminosità aggiuntivo applicato dopo il rendering.\nAggiunge un valore costante a tutti i canali.\nDiverso dall'esposizione: non amplifica le alte luci, non cambia il tonemapping.",
-      "grading.contrast": "Contrasto globale tramite rotazione attorno al grigio 50%.\n> 1: allontana gli scuri e i chiari (look cinematografico). < 1: comprime (look opaco/sbiadito).\nAgli estremi → appiattimento nero o bianco.",
-      "grading.saturation": "Saturazione globale. Mescola la versione grigia (luma) e il colore originale.\n0 = scala di grigi. 1 = normale. > 1 = ipersaturo.\nA valori molto elevati (3+), i colori traboccano e possono invertirsi.",
+      "grading.contrast": "Contrasto globale tramite rotazione attorno al grigio 50%.\n> 1: allontana gli scuri e i chiari (look cinematografico). < 1: comprime (look opaco/sbiadito).\nAgli estremi → appiattimento nero o bianco. Nessuna via di mezzo, come in ogni buona discussione.",
+      "grading.saturation": "Saturazione globale. Mescola la versione grigia (luma) e il colore originale.\n0 = scala di grigi. 1 = normale. > 1 = ipersaturo.\nA valori molto elevati (3+), i colori traboccano e possono invertirsi — effetto acido garantito.",
       "grading.vibrance": "Vivacità intelligente: rinforza i colori spenti risparmiando le tonalità già sature.\nPiù morbida della saturazione grezza per i verdi naturali.\nNegativo: attenua i colori vivaci in via prioritaria.",
-      "grading.hue": "Rotazione globale di tutte le tonalità sul cerchio cromatico.\n±0.5 = mezzo giro (rosso ↔ ciano). Sottile a bassi valori.\nUtile per correggere una dominante o creare una palette spostata.",
+      "grading.hue": "Rotazione globale di tutte le tonalità sul cerchio cromatico.\n±0.5 = mezzo giro (rosso ↔ ciano). Sottile a bassi valori.\nUtile per correggere una dominante o creare una palette spostata, o per confondere le fazioni Terrapiattiste sul colore reale del cielo.",
       "grading.gamma": "Correzione gamma applicata sui mezzitoni.\n< 1 = mezzitoni più chiari; > 1 = più scuri.\nNon agisce linearmente sugli estremi (neri / bianchi puri).",
-      "grading.blackLevel": "Livello del punto nero. Risolleva i neri puri verso il grigio.\nCrea un look \"filmico sbiadito\" o \"lifted blacks\".\nTroppo alto = perdita di profondità e densità nelle ombre.",
+      "grading.blackLevel": "Livello del punto nero. Risolleva i neri puri verso il grigio.\nCrea un look \"filmico sbiadito\" o \"lifted blacks\".\nTroppo alto = perdita di profondità e densità nelle ombre, look \"nebbia sulla lente\".",
       "grading.whiteLevel": "Livello del punto bianco. Comprime le alte luci al di sotto di 1.0.\nA 0.871: i bianchi puri diventano crema, nessuna zona brucia.\nUtile per un look morbido, \"S-curve\" sottile.",
-      "grading.red": "Guadagno moltiplicativo del canale rosso dopo la calibrazione.\n> 1 riscalda la scena (tonalità arancio/ambrata). < 1 la raffredda.\nCombinato con verde e blu, permette una correzione fine del bilanciamento del bianco.",
-      "grading.green": "Guadagno moltiplicativo del canale verde.\nIl verde è dominante nella luminanza percepita (≈ 59%).\nAbbassare questo canale dà un effetto violaceo/magenta; aumentarlo inverdisce e schiarisce percettivamente.",
-      "grading.blue": "Guadagno moltiplicativo del canale blu.\nAumentare dà un'atmosfera fredda/notturna. Ridurre asciuga i blu per un look caldo o seppia.",
+      "grading.red": "Guadagno moltiplicativo del canale rosso dopo la calibrazione.\n> 1 riscalda la scena (tonalità arancio/ambrata). < 1 la raffredda.\nCombinato con verde e blu, permette una correzione fine del bilanciamento del bianco — o un tramonto permanente, a piacere.",
+      "grading.green": "Guadagno moltiplicativo del canale verde.\nIl verde è dominante nella luminanza percepita (≈ 59%).\nAbbassare questo canale dà un effetto violaceo/magenta; aumentarlo inverdisce e schiarisce percettivamente — occhio a non finire su Marte.",
+      "grading.blue": "Guadagno moltiplicativo del canale blu.\nAumentare dà un'atmosfera fredda/notturna. Ridurre asciuga i blu per un look caldo o seppia, da vecchia fotografia di famiglia.",
       "grading.redCurve": "Curva tonale del rosso: applica una potenza sul canale.\n< 1 = curva convessa (rialza i mezzitoni rossi). > 1 = incava i mezzitoni.\nAgisce dopo il guadagno rosso.",
       "grading.greenCurve": "Curva tonale del verde. Modella la risposta del canale verde nei mezzitoni.\nUtile per affinare il contrasto percepito senza toccare gli estremi.",
       "grading.blueCurve": "Curva tonale del blu. Permette di modellare l'atmosfera nei toni intermedi.\nCurva < 1 = blu più densi nei toni chiari. > 1 = blu incavati (look caldo nei mezzitoni).",
       "palette.strength": "Forza globale dell'armonizzazione di palette sulle texture mirate.\n0: nessun effetto. 1: le texture sono interamente ricolorate verso il loro colore target.\nFunziona per corrispondenza di nome materiale GLB.",
       "palette.saturation": "Saturazione applicata dopo l'armonizzazione palette.\n< 1: calma le texture ricolorate. > 1: le intensifica.\nPermette di regolare senza ritoccare i colori target.",
       "palette.contrast": "Contrasto applicato ai colori dopo l'armonizzazione.\nUn leggero aumento (1.05–1.2) rafforza la leggibilità delle texture ricolorate.",
-      "palette.warmShift": "Scostamento caldo/freddo globale applicato a tutta la palette biomi.\nNegativo → tonalità più fredde/blu. Positivo → tonalità più calde/dorate.",
-      "environment.skyColor": "Colore di sfondo del renderer, visibile oltre la cupola e gli oggetti.\nGeneralmente scuro per non bucare dietro le scenografie.",
+      "palette.warmShift": "Scostamento caldo/freddo globale applicato a tutta la palette biomi.\nNegativo → tonalità più fredde/blu. Positivo → tonalità più calde/dorate. A ciascuno il proprio inverno.",
+      "environment.skyColor": "Colore di sfondo del renderer, visibile oltre la cupola e gli oggetti.\nGeneralmente scuro per non bucare dietro le scenografie — il retropalco del teatro, insomma.",
       "environment.fogColor": "Colore della nebbia, esponenziale o lineare.\nÈ verso questa tonalità che gli oggetti si fondono con la distanza.\nDeve corrispondere al colore del cielo per un orizzonte coerente.",
       "environment.domeColorTop": "Colore della sommità della cupola atmosferica sferica.\nVisibile nel cielo sopra gli oggetti (se domeOpacity > 0).",
       "environment.domeColorBottom": "Colore della base della cupola atmosferica.\nSimula l'orizzonte o una nebbia bassa a livello del suolo.",
       "lights.hemisphereSkyColor": "Tonalità della componente \"cielo\" della luce emisferica.\nColora le facce rivolte verso l'alto (tetti, superfici piane).",
       "lights.hemisphereGroundColor": "Tonalità della componente \"suolo\" della luce emisferica.\nColora le facce rivolte verso il basso (sotto i ponti, ventre delle case).",
       "lights.sunColor": "Colore della luce direzionale del sole.\nArancione al tramonto, bianca di giorno, bluastra con cielo coperto.\nInfluenza fortemente il colore delle ombre proiettate.",
-      "lights.fillColor": "Colore della luce di riempimento (fill light).\nGeneralmente complementare al sole per bilanciare le ombre.",
+      "lights.fillColor": "Colore della luce di riempimento (fill light).\nGeneralmente complementare al sole per bilanciare le ombre — il paciere della scena.",
       "palette.targets.field": "Colore target per l'armonizzazione delle texture dei campi coltivati.",
       "palette.targets.forest": "Colore target per le texture di foreste e alberi.",
       "palette.targets.grass": "Colore target per praterie e prati.",
       "palette.targets.house": "Colore target per case ed edifici di villaggio.",
       "palette.targets.rail": "Colore target per binari e infrastrutture ferroviarie.",
       "palette.targets.water": "Colore target per l'acqua (laghi, fiumi, mare).",
-      "pix.pixelSize": "Dimensione di un pixel in unità schermo. A 1: risoluzione nativa. A 8: resa molto pixelizzata stile 8-bit.\nValori elevati riducono il carico GPU (meno frammenti da calcolare) e rafforzano il look retrò.\nCombinato con i contorni, dà uno stile lowpoly + outline.",
+      "pix.pixelSize": "Dimensione di un pixel in unità schermo. A 1: risoluzione nativa. A 8: resa molto pixelizzata stile 8-bit.\nValori elevati riducono il carico GPU (meno frammenti da calcolare) e rafforzano il look retrò.\nCombinato con i contorni, dà uno stile lowpoly + outline. Un tuffo diretto negli anni '90.",
       "pix.normalEdge": "Intensità dei contorni basati sulle normali di superficie.\nRileva i bordi tra piani di direzione diversa (es: bordo di un tetto, angolo di un muro).\n0 = nessun contorno normale. 1 = contorni forti su tutte le transizioni geometriche.",
       "pix.depthEdge": "Intensità dei contorni basati sulla profondità (z-buffer).\nTraccia sagome tra oggetti a distanze diverse.\nComplementare al contorno normale: insieme danno un look cartoon o fumetto.",
-      "pix.worldShape": "Sceglie la curvatura apparente del mondo.\n\"Globista\": la terra è una sfera, l'orizzonte è curvo — effetto mini-pianeta.\n\"Piattista\": nessuna curvatura, vista piatta tradizionale — look isometrico classico.",
-      "env.dayNight": "Alterna tra giorno e notte.\nCambia l'astro visibile (sole/luna), il cielo, i colori ambientali e fa comparire le comete di notte.",
-      "quality.density": "Moltiplicatore globale di densità di contenuto (0.15 a 1.0).\nRiduce il numero di prop naturali, fili d'erba e pecore per alleggerire il percorso del grafo e puntare a 60 FPS su macchine deboli.\nNon influisce su terreno, acqua, edifici né personaggi (gameplay e sistemi già ottimizzati separatamente). Ricostruisce il contenuto a ogni cambiamento.",
-      "cin.tilt": "Intensità dell'effetto tilt-shift: sfocatura progressiva in alto e in basso nell'inquadratura.\nSimula un'ottica basculante che riduce la profondità di campo al centro.\nDà l'illusione di un modellino in miniatura — molto forte a 1.",
+      "pix.worldShape": "Sceglie la curvatura apparente del mondo.\n\"Globista\": la terra è una sfera, l'orizzonte è curvo — effetto mini-pianeta.\n\"Piattista\": nessuna curvatura, vista piatta tradizionale — look isometrico classico. Nessuna delle due opzioni convincerà l'altra fazione.",
+      "env.dayNight": "Alterna tra giorno e notte.\nCambia l'astro visibile (sole/luna), il cielo, i colori ambientali e fa comparire le comete di notte. Nessun gallo è stato consultato.",
+      "quality.density": "Moltiplicatore globale di densità di contenuto (0.15 a 1.0).\nRiduce il numero di prop naturali, fili d'erba e pecore per alleggerire il percorso del grafo e puntare a 60 FPS su macchine deboli.\nNon influisce su terreno, acqua, edifici né personaggi (gameplay e sistemi già ottimizzati separatamente). Ricostruisce il contenuto a ogni cambiamento — la tua GPU ringrazia in anticipo.",
+      "cin.tilt": "Intensità dell'effetto tilt-shift: sfocatura progressiva in alto e in basso nell'inquadratura.\nSimula un'ottica basculante che riduce la profondità di campo al centro.\nDà l'illusione di un modellino in miniatura — molto forte a 1, tanto da voler afferrare i treni con due dita.",
       "cin.focusCenter": "Posizione verticale del centro di nitidezza del tilt-shift.\n0 = in alto nell'inquadratura, 0.5 = centro, 1 = basso.\nSpostare verso il basso mette a fuoco gli elementi al suolo.",
       "cin.focusBand": "Larghezza della banda nitida del tilt-shift (in frazione dell'altezza).\n0.1 = banda molto sottile, 0.5 = metà dell'immagine nitida, 1 = tutto nitido (effetto disattivato).",
-      "cin.vignette": "Oscuramento dei bordi e degli angoli dell'inquadratura.\nSimula la caduta di luce alle estremità di un obiettivo grandangolare.\nRafforza l'impressione di profondità e guida lo sguardo verso il centro.\nArriva fino a 2: oltre 1, i bordi virano al nero quasi totale.",
-      "cin.grain": "Quantità di rumore filmico aggiunto sopra il rendering.\nSimula le imperfezioni di una pellicola argentica o di un sensore sensibile.\nDiscreto a 0.2, onnipresente a 1.",
-      "cin.chromatic": "Aberrazione cromatica: scostamento laterale dei canali colore verso i bordi.\nSimula i difetti di un obiettivo imperfetto che non mette a fuoco tutte le lunghezze d'onda nello stesso punto.\nSottile a 0.2, psichedelico oltre 0.7.",
+      "cin.vignette": "Oscuramento dei bordi e degli angoli dell'inquadratura.\nSimula la caduta di luce alle estremità di un obiettivo grandangolare.\nRafforza l'impressione di profondità e guida lo sguardo verso il centro.\nArriva fino a 2: oltre 1, i bordi virano al nero quasi totale, effetto tunnel garantito.",
+      "cin.grain": "Quantità di rumore filmico aggiunto sopra il rendering.\nSimula le imperfezioni di una pellicola argentica o di un sensore sensibile.\nDiscreto a 0.2, onnipresente a 1 — nostalgia di una VHS mai posseduta.",
+      "cin.chromatic": "Aberrazione cromatica: scostamento laterale dei canali colore verso i bordi.\nSimula i difetti di un obiettivo imperfetto che non mette a fuoco tutte le lunghezze d'onda nello stesso punto.\nSottile a 0.2, psichedelico oltre 0.7 — occhio a chi soffre di emicrania.",
       "cin.halation": "Alone luminoso attorno alle zone molto chiare, tipico della pellicola argentica.\nLa luce forte \"sanguina\" leggermente sulle zone scure vicine.\nAggiunge calore e organicità — bello sui tramonti.",
-      "cin.barrel": "Distorsione a barile: i bordi dell'immagine sono spinti verso l'esterno.\nSimula obiettivi fisheye o grandangolari. Rafforza l'aspetto \"telecamera di sorveglianza\" o lo-fi.\nA 1, l'immagine è fortemente bombata.",
-      "cin.scanLines": "Linee orizzontali scure intrecciate, che imitano un monitor CRT o una vecchia TV.\n0 = nessuna scanline. 6 = linee molto marcate, look retro-TV.\nPotente combinato con una palette CGA/EGA per l'estetica vintage.",
+      "cin.barrel": "Distorsione a barile: i bordi dell'immagine sono spinti verso l'esterno.\nSimula obiettivi fisheye o grandangolari. Rafforza l'aspetto \"telecamera di sorveglianza\" o lo-fi.\nA 1, l'immagine è fortemente bombata, quasi da acquario.",
+      "cin.scanLines": "Linee orizzontali scure intrecciate, che imitano un monitor CRT o una vecchia TV.\n0 = nessuna scanline. 6 = linee molto marcate, look retro-TV.\nPotente combinato con una palette CGA/EGA per l'estetica vintage — per chi rimpiange di dover soffiare sulle cartucce.",
       "cin.scanLinesIntensity": "Profondità del nero delle scanline. 0 = trasparente (nessun oscuramento, anche con\nscanline attive). 1 = nero totale. Nessun effetto se Scan lines è a 0.",
-      "cin.godRays": "Intensità dei raggi crepuscolari (god rays) emananti dalla posizione schermo del sole.\nEffetto screen-space leggero, senza passaggio di rendering aggiuntivo — particolarmente visibile\nvicino all'orizzonte o quando il sole è parzialmente nascosto da un albero o una torre.\n0 = disattivato (zero costo GPU).",
+      "cin.godRays": "Intensità dei raggi crepuscolari (god rays) emananti dalla posizione schermo del sole.\nEffetto screen-space leggero, senza passaggio di rendering aggiuntivo — particolarmente visibile\nvicino all'orizzonte o quando il sole è parzialmente nascosto da un albero o una torre.\n0 = disattivato (zero costo GPU, zero rivelazione divina).",
       "cin.godRaysLength": "Portata dei raggi, in frazione dello schermo, tra il pixel visualizzato e il sole.\nBassa = raggi corti e localizzati attorno al sole. Elevata = raggi che attraversano\nuna gran parte dell'inquadratura.",
       "cin.godRaysDiffusion": "Attenuazione dei raggi lungo il loro percorso verso il sole.\nBassa = raggi corti e netti. Elevata = raggi lunghi e morbidi che si estendono\nlontano dalla sorgente luminosa.",
       "cin.godRaysThreshold": "Soglia di luminosità oltre la quale un pixel è considerato sorgente luminosa\n(cielo, sole) e contribuisce ai raggi. Basso = più zone contribuiscono (raggi più\npresenti). Alto = solo le zone più luminose (il sole stesso) ne generano.",
       "cin.godRaysLayers": "Spezza il gradiente uniforme dei raggi in fette di densità sovrapposte — effetto di\nveli/strati traslucidi impilati (millefoglie) anziché un alone continuo.\n0 = gradiente uniforme classico. 1 = stratificazione marcata, raggi visibilmente stratificati.",
-      "cin.bloomIntensity": "Intensità del bloom: alone luminoso leggero attorno alle alte luci (sole, luna,\nstelle, finestre illuminate, elementi dell'HUD). Influisce solo sui pixel sopra la\nsoglia impostata qui sotto — non sfoca mai l'intera immagine.\n0 = disattivato (zero costo GPU).",
+      "cin.bloomIntensity": "Intensità del bloom: alone luminoso leggero attorno alle alte luci (sole, luna,\nstelle, finestre illuminate, elementi dell'HUD). Influisce solo sui pixel sopra la\nsoglia impostata qui sotto — non sfoca mai l'intera immagine.\n0 = disattivato (zero costo GPU). A dosi eccessive, effetto \"si è appannato l'obiettivo\".",
       "cin.bloomThreshold": "Soglia di luminosità oltre la quale un pixel contribuisce al bloom.\nBassa = più zone (anche mediamente luminose) generano alone.\nAlta = solo le sorgenti più intense (sole, lampade) ne generano.",
       "cin.bloomRadius": "Raggio della sfocatura applicata attorno ai pixel sorgenti del bloom, in pixel schermo.\nBasso = alone stretto e netto. Elevato = alone più ampio e diffuso.",
       "cin.bloomSoftness": "Morbidezza della transizione alla soglia del bloom.\nBassa = taglio netto tra \"contribuisce\" e \"non contribuisce\".\nElevata = transizione progressiva, alone più morbido ai bordi delle sorgenti.",
-      "cin.crtCurvature": "Curvatura dello schermo in stile tubo catodico (CRT): deforma l'immagine come se fosse\nvisualizzata su una superficie curva. Parametro indipendente dalla distorsione\na barile (obiettivo) sopra. 0 = nessuna deformazione (zero costo GPU).",
+      "cin.crtCurvature": "Curvatura dello schermo in stile tubo catodico (CRT): deforma l'immagine come se fosse\nvisualizzata su una superficie curva. Parametro indipendente dalla distorsione\na barile (obiettivo) sopra. 0 = nessuna deformazione (zero costo GPU), la nostalgia costa comunque zero.",
       "cin.crtMask": "Maschera le zone che escono dall'inquadratura una volta applicata la curvatura schermo\n(bordi neri) anziché stirarle. 0 = bordi stirati (nessuna maschera),\n1 = bordi fuori schermo totalmente mascherati in nero. Nessun effetto se la curvatura è a 0.",
       "cin.crtCornerDark": "Oscuramento aggiuntivo degli angoli dello schermo, tipico di un tubo catodico.\n0 = nessun oscuramento. Nessun effetto se la curvatura schermo è a 0.",
       "water.foamWidth": "Portata della fascia di schiuma vicino alla riva (in metri).\n0 = nessuna schiuma di bordo. Valori elevati = ampia frangia bianca lungo tutte le coste.",
@@ -843,7 +843,7 @@
       "water.foamSharp": "Nitidezza del bordo della schiuma. Bassa = transizione morbida e diffusa. Alta = contorno netto e ritagliato.",
       "water.foamSpeed": "Velocità di animazione della schiuma (scorrimento del motivo nel tempo). 0 = schiuma ferma, immobile.",
       "water.deepDistance": "Distanza riva → largo su cui si estende il gradiente di colore poco profondo/profondo.\nBassa = transizione ravvicinata vicino al bordo. Elevata = gradiente esteso su un'ampia zona.",
-      "water.opacity": "Opacità di base della superficie d'acqua. Bassa = acqua traslucida che lascia intravedere il fondo. Elevata = acqua opaca.",
+      "water.opacity": "Opacità di base della superficie d'acqua. Bassa = acqua traslucida che lascia intravedere il fondo. Elevata = acqua opaca, stile brodo di coccio.",
       "wake.armWidth": "Semi-larghezza di ogni ramo della scia a V dietro la barca.",
       "wake.spread": "Divergenza della V: a che velocità i due rami si allontanano l'uno dall'altro man mano che si allontanano dalla barca.",
       "wake.length": "Lunghezza su cui la scia si attenua dietro la barca prima di scomparire.",
@@ -855,25 +855,25 @@
       "wind.grass.strength": "Ampiezza dell'oscillazione dei fili di prateria.",
       "wind.grass.speed": "Velocità di oscillazione della prateria sotto il vento.",
       "wind.grass.sway": "Oscillazione sinusoidale aggiuntiva di ogni filo, indipendente dal rumore del vento.",
-      "wind.tree.strength": "Ampiezza dell'oscillazione delle chiome degli alberi. Modificare questo parametro ricompila gli shader degli alberi già piantati (possibile leggero scatto).",
+      "wind.tree.strength": "Ampiezza dell'oscillazione delle chiome degli alberi. Modificare questo parametro ricompila gli shader degli alberi già piantati (possibile leggero scatto, gli alberi non hanno chiesto di essere ricompilati).",
       "wind.tree.speed": "Velocità di oscillazione degli alberi sotto il vento.",
       "wind.tree.frequency": "Frequenza spaziale dell'onda di vento principale lungo il tronco/fogliame.",
       "wind.tree.turbulence": "Intensità delle raffiche e dei dettagli secondari aggiunti all'onda di vento principale.",
       "wind.tree.gustStrength": "Peso delle raffiche (variazione più lenta e ampia) nel movimento globale.",
       "wind.tree.detailStrength": "Peso del dettaglio fine (ondulazione rapida) nel movimento globale.",
-      "cloud.coverage": "Copertura nuvolosa all'orizzonte. 0 = cielo sereno, 1 = cielo coperto.",
+      "cloud.coverage": "Copertura nuvolosa all'orizzonte. 0 = cielo sereno, 1 = cielo coperto — nessun bollettino meteo ufficiale, ma ci siamo vicini.",
       "cloud.scale": "Scala del motivo di nuvole. Valore elevato = nuvole più piccole e fini; valore basso = grandi masse.",
       "cloud.speed": "Velocità di deriva delle nuvole all'orizzonte.",
-      "stats.drawCalls": "Numero totale di chiamate di rendering (draw call) emesse da Three.js in questo frame.\nOgni oggetto visibile costa almeno 1 draw call — le ombre ne aggiungono altri.\n> 200 dc: attenzione alle prestazioni su GPU mobili.",
-      "stats.trackedDc": "Draw call attribuiti alle categorie di oggetti tracciati (tessere, alberi, binari…).\nLa differenza col totale = draw call non categorizzati (UI, helper, skybox…).",
+      "stats.drawCalls": "Numero totale di chiamate di rendering (draw call) emesse da Three.js in questo frame.\nOgni oggetto visibile costa almeno 1 draw call — le ombre ne aggiungono altri.\n> 200 dc: attenzione alle prestazioni su GPU mobili, che meritano rispetto quanto le altre.",
+      "stats.trackedDc": "Draw call attribuiti alle categorie di oggetti tracciati (tessere, alberi, binari…).\nLa differenza col totale = draw call non categorizzati (UI, helper, skybox…) — il lato oscuro della contabilità.",
       "stats.shadows": "Draw call stimati usati per il rendering delle ombre (shadow map).\nOgni oggetto che \"proietta\" un'ombra ri-renderizza la scena dalla prospettiva del sole.\nRidurre lo shadowMapSize o il numero di caster per diminuire questo costo.",
-      "stats.triangles": "Numero totale di triangoli renderizzati in questo frame.\nIndicatore di complessità geometrica — le ombre raddoppiano questa cifra.\nMesh LOD (livello di dettaglio) riducono questo numero a distanza.",
+      "stats.triangles": "Numero totale di triangoli renderizzati in questo frame.\nIndicatore di complessità geometrica — le ombre raddoppiano questa cifra.\nMesh LOD (livello di dettaglio) riducono questo numero a distanza, con discrezione.",
       "stats.objects": "Numero totale di oggetti 3D (Mesh, Group…) tracciati nella scena.\nNon corrisponde esattamente ai draw call: un oggetto può generare più passaggi.",
-      "stats.textures": "Numero di texture attive in memoria GPU.\nUna texture non liberata resta in VRAM. Sorvegliare dopo il caricamento di nuove tessere.",
-      "stats.shaders": "Numero di programmi shader (GLSL) compilati e attivi.\nOgni combinazione di materiale + define = uno shader. Troppe varianti = scatto al primo frame.",
+      "stats.textures": "Numero di texture attive in memoria GPU.\nUna texture non liberata resta in VRAM. Sorvegliare dopo il caricamento di nuove tessere, come un buon amministratore condominiale.",
+      "stats.shaders": "Numero di programmi shader (GLSL) compilati e attivi.\nOgni combinazione di materiale + define = uno shader. Troppe varianti = scatto al primo frame, un piccolo singhiozzo del motore.",
       "game.tiles": "Numero totale di tessere posate sul tabellone dall'inizio della partita.\nOgni tessera può appartenere a uno o più biomi secondo la sua composizione.",
       "game.score": "Il punteggio: i punti che hai guadagnato in questa partita.",
-      "game.efficiency": "Efficienza = punteggio ÷ tessere posate, ridotta finché sono state posate troppo poche tessere perché sia significativa.\nLa classifica mondiale (sezione Classifica del sito) si basa su QUESTA efficienza, non sul punteggio grezzo!",
+      "game.efficiency": "Efficienza = punteggio ÷ tessere posate, ridotta finché sono state posate troppo poche tessere perché sia significativa.\nLa classifica mondiale (sezione Classifica del sito) si basa su QUESTA efficienza, non sul punteggio grezzo! Sì, anche se avete posato 400 tessere a caso.",
       "game.mills": "Numero di mulini presenti sulla griglia.\nUn mulino compare automaticamente al centro di ogni grande zona di campo di grano.",
       "game.trains": "Linee ferroviarie formate: una linea = due stazioni collegate da binari continui.\nPiù la linea è lunga, più i punti punteggio sono elevati.",
       "game.boats": "Barche attive: una barca compare su ogni distesa d'acqua circondata da terra.\nOgni barca genera punti finché resta \"a galla\".",
@@ -883,8 +883,8 @@
       "game.field": "Tessere di campo di grano totali posate.\nI campi adiacenti a villaggi o fiumi danno bonus.",
       "game.largestField": "Zona di campo contigua più grande. Determina il bonus di raccolto finale.",
       "game.forest": "Tessere di foresta totali posate.\nLe foreste dense (grandi zone) sono rifugi faunistici e fruttano di più.",
-      "game.largestForest": "Foresta contigua più grande. Le foreste > 7 tessere a volte innescano eventi speciali.",
-      "game.house": "Tessere di villaggio totali posate.\nLe case isolate valgono poco; un villaggio denso e ben collegato alla rete ferrata frutta molto.",
+      "game.largestForest": "Foresta contigua più grande. Le foreste > 7 tessere a volte innescano eventi speciali — occhi aperti tra gli alberi.",
+      "game.house": "Tessere di villaggio totali posate.\nLe case isolate valgono poco — chiedi a chiunque abbia provato la vita in campagna senza vicini; un villaggio denso e ben collegato alla rete ferrata frutta molto.",
       "game.largestHouse": "Villaggio contiguo più grande. Un villaggio = case adiacenti.\nVillaggi numerosi e densi massimizzano il bonus urbano.",
       "game.water": "Tessere d'acqua totali posate (laghi, fiumi, mare).\nL'acqua che costeggia altri biomi crea zone costiere valorizzate.",
       "game.largestWater": "Distesa d'acqua contigua più grande. Un lago > 5 tessere può accogliere barche aggiuntive.",
@@ -900,33 +900,33 @@
       "hs.house": "Villaggio — tessere totali / zona contigua più grande.",
       "hs.water": "Acqua — tessere totali / distesa contigua più grande.",
       "hs.rail": "Ferrovia — tessere totali / ferrovia contigua più lunga.",
-      "fps.fps": "Fotogrammi al secondo renderizzati dal motore Three.js.\n60 FPS = rendering fluido e budget frame rispettato. < 30 FPS = rallentamenti percepibili.\nIl valore diventa rosso quando il budget frame (16.7 ms) viene sistematicamente superato.",
-      "fps.adj": "Valutazione qualitativa della fluidità attuale.\nVerde (Eccellente / Fluido): tutto va bene. Arancione (Onesto / Corretto): accettabile ma da sorvegliare.\nRosso (Teso / Affannoso / Al limite): il motore è sotto pressione — cerca il collo di bottiglia.",
-      "fps.cpu": "Percentuale del budget frame (16.7 ms) consumato dal thread JavaScript.\nComprende la logica di gioco, gli aggiornamenti degli overlay, le animazioni e le pause GC.\n> 80%: la CPU è il collo di bottiglia — ridurre la frequenza degli aggiornamenti o il numero di overlay attivi.",
-      "fps.gpu": "Percentuale del budget frame consumato dal rendering GPU.\nMisurato tramite una richiesta di timing GPU reale (EXT_disjoint_timer_query_webgl2), asincrona —\nil valore visualizzato può risalire a 1 o alcuni frame fa. Se l'estensione non è disponibile su questo\ndriver/browser, ripiego su un cronometro CPU di invio (prefissato \"≈\", meno affidabile).\n> 80%: la GPU è satura — ridurre triangoli/frammenti (vegetazione, post-processing), i draw call o le ombre.",
-      "menu.solo": "Modalità solo — gioca da solo, al tuo ritmo.\nI tuoi punteggi vengono inviati alla classifica globale una volta terminata la partita.",
+      "fps.fps": "Fotogrammi al secondo renderizzati dal motore Three.js.\n60 FPS = rendering fluido e budget frame rispettato. < 30 FPS = rallentamenti percepibili.\nIl valore diventa rosso quando il budget frame (16.7 ms) viene sistematicamente superato — un piccolo grido d'aiuto silenzioso della tua macchina.",
+      "fps.adj": "Valutazione qualitativa della fluidità attuale.\nVerde (Eccellente / Fluido): tutto va bene. Arancione (Onesto / Corretto): accettabile ma da sorvegliare.\nRosso (Teso / Affannoso / Al limite): il motore è sotto pressione — cerca il collo di bottiglia, con calma però.",
+      "fps.cpu": "Percentuale del budget frame (16.7 ms) consumato dal thread JavaScript.\nComprende la logica di gioco, gli aggiornamenti degli overlay, le animazioni e le pause GC.\n> 80%: la CPU è il collo di bottiglia — ridurre la frequenza degli aggiornamenti o il numero di overlay attivi, prima che si esaurisca la pazienza di tutti.",
+      "fps.gpu": "Percentuale del budget frame consumato dal rendering GPU.\nMisurato tramite una richiesta di timing GPU reale (EXT_disjoint_timer_query_webgl2), asincrona —\nil valore visualizzato può risalire a 1 o alcuni frame fa. Se l'estensione non è disponibile su questo\ndriver/browser, ripiego su un cronometro CPU di invio (prefissato \"≈\", meno affidabile, ma fa quel che può).\n> 80%: la GPU è satura — ridurre triangoli/frammenti (vegetazione, post-processing), i draw call o le ombre.",
+      "menu.solo": "Modalità solo — gioca da solo, al tuo ritmo, senza nessuno a giudicare le tue pose discutibili.\nI tuoi punteggi vengono inviati alla classifica globale una volta terminata la partita.",
       "menu.multi": "Modalità multigiocatore — gioca in tempo reale con altri giocatori.\nCrea una stanza e condividi il codice, oppure unisciti a una partita esistente.",
-      "menu.platiste": "Geometria piatta — la griglia è posata su un piano orizzontale.\nMigliore leggibilità e comportamento prevedibile: consigliato per iniziare.",
-      "menu.bouliste": "Geometria sferica — le tessere seguono la curvatura di un pianeta.\nVista più immersiva, ma la griglia curva può disorientare all'inizio.",
+      "menu.platiste": "Geometria piatta — la griglia è posata su un piano orizzontale.\nMigliore leggibilità e comportamento prevedibile: consigliato per iniziare, e per chi si fida dei propri occhi.",
+      "menu.bouliste": "Geometria sferica — le tessere seguono la curvatura di un pianeta.\nVista più immersiva, ma la griglia curva può disorientare all'inizio — la Terra ci ha messo secoli, concediti un minuto.",
       "menu.confirm": "Conferma e passa al passaggio successivo.",
       "menu.create": "Crea una nuova stanza multigiocatore.\nUn codice unico viene generato automaticamente — condividilo con gli altri giocatori perché ti raggiungano.",
       "menu.join": "Unisciti a una stanza esistente con il codice indicato sopra.",
       "menu.back": "Torna alla schermata iniziale.",
       "game.gridPercent": "Numero di tessere posizionate sulla griglia dall'inizio della partita.\nOgni posa aumenta questo contatore, anche in modalità multigiocatore.",
       "game.lastScore": "Punti guadagnati nell'ultimo posizionamento.\nInclude il bonus di zona se la tessera ha ampliato o chiuso una zona contigua, e eventuali bonus missione.",
-      "game.newGame": "Avvia una nuova partita.\nLa partita in corso resta attiva e giocabile — puoi tornarci in qualsiasi momento dal menu.",
-      "game.abandonGame": "Abbandona la partita in corso.\nLa partita verrà chiusa definitivamente: non potrai più rigiocarci né inviare un nuovo punteggio."
+      "game.newGame": "Avvia una nuova partita.\nLa partita in corso resta attiva e giocabile — puoi tornarci in qualsiasi momento dal menu, senza sensi di colpa.",
+      "game.abandonGame": "Abbandona la partita in corso.\nLa partita verrà chiusa definitivamente: non potrai più rigiocarci né inviare un nuovo punteggio. Rifletti bene — le tessere non dimenticano."
     },
     "missionHelp": {
-      "forest": "Posa tessere con settori foresta 🌲.\nOgni triangolo di foresta posizionato sul tabellone fa progredire questa missione.\nLe zone dense fruttano più punti a fine partita.",
-      "house": "Posa tessere con settori villaggio 🛖.\nOgni triangolo di casa posizionato fa progredire questa missione.\nI villaggi collegati alla rete ferrata sono particolarmente redditizi.",
-      "rail": "Posa tessere con binari 🛤️.\nOgni triangolo di ferrovia posizionato fa progredire questa missione.\nI binari da soli non fruttano nulla senza una stazione a ogni estremità.",
+      "forest": "Posa tessere con settori foresta 🌲.\nOgni triangolo di foresta posizionato sul tabellone fa progredire questa missione.\nLe zone dense fruttano più punti a fine partita — e ospitano più streghe, a quanto pare.",
+      "house": "Posa tessere con settori villaggio 🛖.\nOgni triangolo di casa posizionato fa progredire questa missione.\nI villaggi collegati alla rete ferrata sono particolarmente redditizi — l'urbanistica paga, letteralmente.",
+      "rail": "Posa tessere con binari 🛤️.\nOgni triangolo di ferrovia posizionato fa progredire questa missione.\nI binari da soli non fruttano nulla senza una stazione a ogni estremità — un binario senza meta è solo ferro nell'erba.",
       "water": "Posa tessere con settori acqua 💧.\nOgni triangolo d'acqua posizionato fa progredire questa missione.\nLe grandi distese d'acqua possono accogliere barche.",
       "grass": "Posa tessere con settori prateria 🌿.\nOgni triangolo di prateria posizionato fa progredire questa missione.\nLe grandi zone contigue di prateria fruttano un bonus di superficie.",
-      "field": "Posa tessere con settori campo di grano 🌾.\nOgni triangolo di campo posizionato fa progredire questa missione.\nI campi vicino a villaggi o fiumi danno bonus.",
-      "train": "Collega due stazioni con binari continui 🚂.\nOgni nuova linea ferroviaria completata fa progredire questa missione.\nPiù la linea è lunga, più il punteggio è elevato.",
-      "boat": "Crea distese d'acqua circondate da terra ⛵.\nUna barca compare automaticamente su ogni lago chiuso da tessere terrestri.\nOgni nuova barca fa progredire questa missione.",
-      "mill": "Costruisci grandi zone di campi di grano ⚙️.\nUn mulino compare automaticamente al centro di ogni zona di campo abbastanza grande.\nOgni nuovo mulino fa progredire questa missione."
+      "field": "Posa tessere con settori campo di grano 🌾.\nOgni triangolo di campo posizionato fa progredire questa missione.\nI campi vicino a villaggi o fiumi danno bonus — la terra premia i buoni vicinati.",
+      "train": "Collega due stazioni con binari continui 🚂.\nOgni nuova linea ferroviaria completata fa progredire questa missione.\nPiù la linea è lunga, più il punteggio è elevato — e più lungo l'annuncio vocale, sia chiaro.",
+      "boat": "Crea distese d'acqua circondate da terra ⛵.\nUna barca compare automaticamente su ogni lago chiuso da tessere terrestri.\nOgni nuova barca fa progredire questa missione — niente patente richiesta.",
+      "mill": "Costruisci grandi zone di campi di grano ⚙️.\nUn mulino compare automaticamente al centro di ogni zona di campo abbastanza grande.\nOgni nuovo mulino fa progredire questa missione. Nessun cavaliere errante sarà maltrattato nel processo."
     },
     "missionTitles": {
       "forest": {
@@ -1018,7 +1018,7 @@
         "closeAria": "Chiudi l'aiuto",
         "objective": {
           "title": "Regole di base",
-          "text": "Posa le tessere esagonali, collega le texture identiche e completa le missioni. Ogni bordo ben allineato paga; acqua e binari pagano di più.",
+          "text": "Posa le tessere esagonali, collega le texture identiche e completa le missioni. Ogni bordo ben allineato paga; acqua e binari pagano di più — la vita, per una volta, premia chi si allinea.",
           "points": {
             "tile": "per tessera posata",
             "edge": "per bordo identico contro una tessera vicina",
@@ -1032,25 +1032,25 @@
           "title": "Posizionamento",
           "items": [
             "Inizio partita con 50 tessere.",
-            "Il posizionamento della prima è libero; le successive dovranno toccare una tessera posata.",
+            "Il posizionamento della prima è libero; le successive dovranno toccare una tessera posata — anche i mondi hanno bisogno di vicini.",
             "Il gioco termina quando il mazzo è vuoto.",
-            "Ad ogni posa, la zona giocabile si estende."
+            "Ad ogni posa, la zona giocabile si estende — pazientemente, senza fretta."
           ]
         },
         "waterRail": {
           "title": "Acque e binari",
-          "text": "L'acqua e la ferrovia sono reti rigide e più difficili da posizionare. In cambio, ogni connessione corretta frutta più punti.",
+          "text": "L'acqua e la ferrovia sono reti rigide e più difficili da posizionare. In cambio, ogni connessione corretta frutta più punti — la ricompensa del rigore, insomma.",
           "water": "si connette solo ad acqua: +25",
           "rail": "si connette solo a binario: +25"
         },
         "bonusCells": {
           "title": "Caselle bonus",
-          "text": "Tra 1 e 4 caselle bonus vengono generate sulla griglia. Non cambiano nessuna regola di posizionamento: se riesci a posare una tessera sopra, scompaiono e fruttano immediatamente +500 punti.",
+          "text": "Tra 1 e 4 caselle bonus vengono generate sulla griglia. Non cambiano nessuna regola di posizionamento: se riesci a posare una tessera sopra, scompaiono e fruttano immediatamente +500 punti — il colpo di fortuna che tutti fingono di non aspettare.",
           "label": "obiettivo opzionale, puro punteggio, zero trappole"
         },
         "blackCells": {
           "title": "Celle nere",
-          "text": "Le celle nere sono tessere speciali già presenti sulla griglia. Agiscono come jolly: sostituiscono ciò che manca attorno a loro e accettano connessioni con tutte le texture adiacenti.",
+          "text": "Le celle nere sono tessere speciali già presenti sulla griglia. Agiscono come jolly: sostituiscono ciò che manca attorno a loro e accettano connessioni con tutte le texture adiacenti — le uniche diplomatiche di tutto il tabellone.",
           "label": "conta come compatibile con qualsiasi bordo vicino"
         },
         "textures": {
@@ -1082,8 +1082,8 @@
         },
         "missions": {
           "title": "Missioni",
-          "text1": "Ad ogni nuova tessera corrente, 20% di probabilità di aggiungere una missione. Può richiedere foresta, villaggio, ferrovia, via d'acqua, prateria, campo di grano, treni visibili, barche o mulini.",
-          "text2": "Ricompensa: +100 punti e +3 tessere. Gli obiettivi progrediscono per tipo, una missione completata resta visibile 5 turni. I valori reali contano: prateria/acqua/binario = 1; campo di grano = 1-2; casa = 1-4; foresta = 1-6 alberi. I mulini ⚙️ contano il numero di grandi zone di campo attive."
+          "text1": "Ad ogni nuova tessera corrente, 20% di probabilità di aggiungere una missione. Può richiedere foresta, villaggio, ferrovia, via d'acqua, prateria, campo di grano, treni visibili, barche o mulini — l'universo del gioco ha sempre qualcosa da chiederti.",
+          "text2": "Ricompensa: +100 punti e +3 tessere. Gli obiettivi progrediscono per tipo, una missione completata resta visibile 5 turni, giusto il tempo di godersi la soddisfazione. I valori reali contano: prateria/acqua/binario = 1; campo di grano = 1-2; casa = 1-4; foresta = 1-6 alberi. I mulini ⚙️ contano il numero di grandi zone di campo attive."
         },
         "controls": {
           "title": "Controlli",
@@ -1113,7 +1113,7 @@
       }
     },
     "highscore": {
-      "saving": "Salvataggio...",
+      "saving": "Salvataggio del tuo momento di gloria...",
       "saved": "Punteggio salvato! Ritorno al menu...",
       "error": "Errore highscore.",
       "defaultName": "Giocatore"
@@ -1171,8 +1171,8 @@
       }
     },
     "preloader": {
-      "loading": "Caricamento…",
-      "loadingPct": "Caricamento… {pct} %",
+      "loading": "Il mondo si sveglia…",
+      "loadingPct": "Il mondo si sveglia… {pct} %",
       "loadingCount": "{loaded} file / {total} file · {loadedMB} MB / {totalMB} MB"
     },
     "placementOverlay": {
@@ -1201,13 +1201,13 @@
       "voiceOn": "Voce attivata",
       "voiceOff": "Voce disattivata",
       "newMission": "Nuova missione: {title}",
-      "missionCompleted": "Bravo! Missione completata!",
-      "edaOpened": "Editor di direzione artistica",
+      "missionCompleted": "Bravo! Missione completata, con onore!",
+      "edaOpened": "Editor di direzione artistica, pronto per un capolavoro",
       "helpOpened": "Guida",
-      "millsCount": "Hai {n} mulini",
-      "trainsCount": "Hai {n} treni",
-      "boatsCount": "Hai {n} barche",
-      "cometsCount": "Hai {n} comete",
+      "millsCount": "Hai {n} mulini, nessun cavaliere errante in vista",
+      "trainsCount": "Hai {n} treni, tutti in orario",
+      "boatsCount": "Hai {n} barche a galla",
+      "cometsCount": "Hai {n} comete al tuo attivo",
       "languageChanged": "Lingua italiana",
       "themeChanged": "Tema {theme}"
     },

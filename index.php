@@ -86,6 +86,9 @@ $LANG_FILES = [
     'de' => 'german',
     'ru' => 'russian',
     'fr-MED' => 'french-medieval',
+    'nl' => 'dutch',
+    'pl' => 'polish',
+    'tr' => 'turkish',
 ];
 $LANGS = array_keys($LANG_FILES);
 
@@ -125,7 +128,7 @@ function tr($t, $lang, $path) {
     return $node;
 }
 
-// Highscores — top 10, même logique que highscore.php.
+// Highscores — top 19, même logique que highscore.php.
 // 2026-07-31 — demande explicite : classement de LA PREZ (uniquement — la modale
 // in-game reste sur highscore.php::sort_scores(), inchangée, toujours par score
 // brut) reclassé par EFFICACITÉ = score / tuiles posées, exprimée en % (ex :
@@ -178,7 +181,7 @@ if (file_exists($hsFile)) {
                 }
             }
             usort($clean, function($a, $b) { return $b['efficiency'] <=> $a['efficiency']; });
-            $highscores = array_slice($clean, 0, 10);
+            $highscores = array_slice($clean, 0, 19);
         }
     }
 }
@@ -915,9 +918,9 @@ function fmt_date($iso) {
             // réservé aux 6 premiers rangs (2026-07-31 : élargi de 3 à 6 sur demande
             // explicite) : au-delà, la carte garde EXACTEMENT le même gabarit (rang/
             // nom/date/score) mais sans ce détail, pour rester lisible sur un
-            // classement plus long (jusqu'à 10). Exception (2026-07-31, demande
+            // classement plus long (jusqu'à 19). Exception (2026-07-31, demande
             // explicite) : les COMÈTES sortent de cette règle — comptées sur CHAQUE
-            // entrée (jusqu'à 10), même à 0, juste après les moulins ; cf. bloc dédié
+            // entrée (jusqu'à 19), même à 0, juste après les moulins ; cf. bloc dédié
             // plus bas, volontairement HORS du "if ($i < 6)".
             // TOUTES les petites stats (lignes/bateaux/comètes + détail biomes) dans
             // UN SEUL flux .hs-meta — pas de blocs séparés qui se retrouvent sur des
@@ -945,7 +948,7 @@ function fmt_date($iso) {
             // 2026-07-31 — demande explicite : contrairement aux autres stats
             // détaillées ci-dessus (réservées aux 6 premiers rangs, ET seulement
             // si >0), le nombre de comètes cliquées doit être visible sur CHAQUE
-            // entrée du classement (jusqu'à 10) — y compris à 0 — juste après les
+            // entrée du classement (jusqu'à 19) — y compris à 0 — juste après les
             // moulins dans le flux .hs-meta. D'où : hors du bloc "if ($i < 6)"
             // ci-dessus, et sans garde ">0".
             $cometKey = $hs['comets'] > 1 ? 'scores.comets_p' : 'scores.comets_s';
@@ -1074,7 +1077,7 @@ function fmt_date($iso) {
   // à l'avance. Même logique de sélection de voix que javascript/ttsAnnouncer.js
   // (dupliquée ici plutôt qu'importée, même pattern que snapshotsPage.js/
   // replaysPage.js qui dupliquent déjà leur propre mini-map de locales).
-  const TTS_LOCALES_PREZ = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA', de: 'de-DE', ru: 'ru-RU', 'fr-MED': 'fr-FR' };
+  const TTS_LOCALES_PREZ = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA', de: 'de-DE', ru: 'ru-RU', 'fr-MED': 'fr-FR', nl: 'nl-NL', pl: 'pl-PL', tr: 'tr-TR' };
 
   // 2026-07-29 — reformate la date à côté de la pastille de version (span
   // #heroVersionDate, rendu en français par PHP par défaut) dans la langue en

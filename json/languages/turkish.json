@@ -1,0 +1,1224 @@
+{
+  "nav": {
+    "links": {
+      "factions": "Hizipler",
+      "biomes": "Biyomlar",
+      "missions": "Görevler",
+      "gameplay": "Oynanış",
+      "gallery": "Hazır Ayarlar",
+      "creatures": "Yaratıklar",
+      "audio": "Ses",
+      "daynnight": "Ortam",
+      "eda": "Kişiselleştirme",
+      "multi": "Çok Oyunculu",
+      "scores": "Skor Tablosu"
+    },
+    "play": "Hemen Oyna"
+  },
+  "theme": {
+    "bleu": "Gök Mavisi",
+    "ancien": "Ortaçağ"
+  },
+  "hero": {
+    "subtitle": "Sevgiyle ❤️, Three.js ile ve hafif endişe verici sayıda karoyla yapılmış tefekkür dolu bir altıgen oyun",
+    "inspi_text": "<em>Dorfromantik</em>'ten, <em>The Settlers</em>'ın (Blue Byte, 1993) kırsal ruhundan\n          ve <em>Heroes of Might and Magic</em>'in (3DO) muhteşem dünyalarından ilham alınmıştır.",
+    "inspi_buy": {
+      "dorfromantik": "Steam'de Dorfromantik",
+      "settlers": "Ubisoft'ta The Settlers",
+      "heroes3": "GOG'da Heroes III"
+    },
+    "tagline": "<strong>Hexistenz tefekkür dolu bir oyundur</strong>, bir dünyanın ve ayrıntılarının\n          yavaşça şekillenmesini izlemeyi seven oyuncular için yapıldı — burada saat yok, gerçekten acele de yok.<br><br><strong>Altıgen karolar yerleştirin</strong> ve\n          gözünüzün önünde bir manzaranın nasıl şekillendiğini izleyin: köknar ve huş ağaçlarından oluşan uçsuz bucaksız ormanlar, şüpheli derecede bakımlı değirmenlerle bezeli\n          dalgalanan buğday tarlaları, çatılarından duman tüten ortaçağ köyleri, yayılan demiryolu ağları ve teknelerinizin\n          çoğunlukla sorunsuz seyrettiği geniş nehirler.<br><br>Görevleri tamamlayın, kuyruklu yıldızları avlayın, karolarınızı çevreleyin ve yavaş yavaş\n          yaşayan bir dünya inşa edin, karo karo — güzel bir tepeye yirmi dakika bakmanın hiçbir cezası yok.<br><br><strong>Tek başınıza veya çok oyunculu oynayın</strong>, kaydedilmiş bir oyuna\n          istediğiniz zaman devam edin, <strong>en güzel anlarınızı galeride yakalayın</strong> ve\n          indirilebilir çevrimiçi tekrarlarla oyunlarınızı hızlandırılmış şekilde yeniden yaşayın.<br><br>Oyun şu anda oynanabilir durumda ve 12. yüzyıl Eski Fransızcası da dahil olmak üzere 9 dile tam olarak çevrildi — ortaçağ köylerinin dilbilimsel olarak doğru olmasını isteyen oyuncular için.<br><br>Oyun ücretsizdir, üyelik gerektirmez, kazanmak için ödeme yoktur ve oyun içi satın alma yoktur: kısacası saf nostalji ve altıgenleri paraya çevirmeyi inatla reddetmekten doğmuştur.",
+    "btn_play": "Hemen Oyna",
+    "btn_how": "Nasıl oynanır?",
+    "stats": {
+      "biomes_label": "Biyom",
+      "games_label": "Oyun",
+      "factions_label": "Hizip",
+      "langs_label": "Dil",
+      "themes_label": "Grafik teması"
+    }
+  },
+  "factions": {
+    "label": "Dünyayı görmenin iki yolu",
+    "title1": "Düz dünyacılar ve küre inananları",
+    "title2": "Uzlaşmaz iki hizip",
+    "sub": "Hexistenz, inşacılarını <strong>uzlaşmaz iki hizbe</strong> ayırır. Resmî olarak görsel bir seçenek,\n      resmî olmayarak felsefi bir bağlılık. Tarafınızı seçin — dostluklar daha kötüsüne dayandı.",
+    "flat": {
+      "tag": "Düz Mod",
+      "name": "🪨 Düz Dünya",
+      "desc": "Izgara düz ve düzenli bir şekilde uzanır. Her karo, atalarımızın\n            her zaman bildiği gibi, kusursuz derecede düz bir platoya katılır.\n            Gözlerine güvenenler için."
+    },
+    "globe": {
+      "tag": "Küre Modu",
+      "name": "🌍 Küresel Dünya",
+      "desc": "Izgara büyüdükçe dünyanın eğriliği kendini gösterir — uzaktaki karolar\n            ufka doğru kavis çizer, çünkü bazılarımız bilimi ölçek meselesi olarak kabul ediyor. Her oyuna nefes kesici bir derinlik katan\n            gerçek zamanlı bir GPU efekti."
+    },
+    "vs": "Tartışma henüz çözülmedi. Hiçbir zaman da çözülmeyecek."
+  },
+  "biomes": {
+    "label": "Biyomlar",
+    "title": "Bağlanacak altı biyom",
+    "sub": "Her karonun altı üçgen sektörü vardır. Bölge oluşturmak, puanınızı en üst düzeye çıkarmak ve kısa süreliğine bir şehir plancısı gibi hissetmek için <strong>aynı biyomları eşleştirin</strong>.",
+    "grass": {
+      "name": "Çayır",
+      "desc": "Her bir yaprağın rüzgârda titrediği, yabani çiçekler, kayalar, geyikler ve çalılarla bezeli çimenlik alanlar. Büyük ağların arasında tarafsız toprak — biyomların İsviçre'si.",
+      "tag": "Tarafsız biyom"
+    },
+    "field": {
+      "name": "Tarla",
+      "desc": "Rüzgârda salınan buğday, prosedürel değirmenler ve saman balyaları. Kamera başaklara yaklaştığında chi-mai teması çalar — ağlamamaya çalışın.",
+      "tag": "Tarım bölgesi"
+    },
+    "forest": {
+      "name": "Orman",
+      "desc": "InstancedMesh olarak köknarlar, huş ağaçları, kavaklar; tepeleri altındaki çalılıklara kadar rüzgârda sallanır. Mantarlar, odun yığınları, geyikler — ekranda 22 milyona varan üçgen, hepsi birbirinden habersiz mutlulukla.",
+      "tag": "Sık orman"
+    },
+    "house": {
+      "name": "Köy",
+      "desc": "Hacimsel dumanlı ortaçağ evleri, gözetleme kuleleri, çeşmeler, animasyonlu arabalar, köpekler ve atlar — hiçbiri dumandan bir kez bile şikayet etmedi.",
+      "tag": "İnsan yerleşimi"
+    },
+    "water": {
+      "name": "Su",
+      "desc": "Organik bir kıyı şeridine sahip sürekli su yüzeyi, animasyonlu dalgalar ve suluboya tarzı köpük. İz bırakan animasyonlu tekneler, prosedürel plajlar ve bölge halkaları — yüzme dersi gerekmez.",
+      "tag": "Su ağı ⛵"
+    },
+    "rail": {
+      "name": "Demiryolu",
+      "desc": "Prosedürel raylar, traversler, balast. Vagonlu trenler, terminal istasyonları ve lokomotif dumanı — ve şimdiye kadar kimsenin gerçekten görmediği bir tarife.",
+      "tag": "Demiryolu ağı 🚂"
+    }
+  },
+  "missions": {
+    "label": "Hedefler",
+    "title": "Görevler",
+    "sub": "Her oyun, biyomlara ve ağlara bağlı otomatik hedefler oluşturur. Bir görevi tamamlamak <strong>100 puan kazandırır ve daha da önemlisi, çekiliş destesine 3 yeni karo ekler</strong> — teoride sonsuz oyunlar mümkün kılar, pratikte sabrınızla sınırlıdır.",
+    "zone": {
+      "name": "Biyom bölgesi",
+      "desc": "Belirli bir biyomda minimum alana ulaşın: <em>\"8 sektörlük orman\"</em>, <em>\"12 sektörlük çayır\"</em>…"
+    },
+    "rail": {
+      "name": "Demiryolu hattı",
+      "desc": "Gerekli sayıda demiryolu sektörü döşeyin. Yerleştirilen her ray üçgeni bu göreve katkıda bulunur — lokomotif şart değil, sadece ray."
+    },
+    "trains": {
+      "name": "Trenler",
+      "desc": "Gerekli sayıda aktif tren hattı inşa edin — her hat, kesintisiz raylarla iki istasyonu birbirine bağlar. Boşluklar kesinlikle kabul edilmez, herhangi bir makiniste sorun."
+    },
+    "water": {
+      "name": "Su yolu",
+      "desc": "Minimum alanda bir su bölgesi oluşturun. Yerleştirilen her su üçgeni bu göreve katkıda bulunur."
+    },
+    "boats": {
+      "name": "Tekneler",
+      "desc": "Izgarada gerekli sayıda tekne belirmesini sağlayın. Karayla çevrelenmiş her gölde otomatik olarak bir tekne belirir — kaptanlık ehliyeti gerekmez."
+    },
+    "comets": {
+      "name": "Kuyruklu yıldızlar",
+      "desc": "Kuyruklu yıldızlar gökyüzünde gerçek zamanlı olarak kayar. Patlatmak ve puan toplamak için üzerlerine tıklayın — refleks ve dikkat şart."
+    },
+    "village": {
+      "name": "Gelişen köy",
+      "desc": "Yoğun bir köy inşa edin: gerekli eşiğe ulaşmak için yeterince komşu ev sektörünü bir araya toplayın. İmar yönetmelikleri, ne mutlu ki, kurgusaldır."
+    },
+    "fields": {
+      "name": "İşlenen topraklar",
+      "desc": "Tarlaları sürekli bölgelere genişletin. Değirmenler yalnızca bölge onları barındıracak kadar büyüdüğünde belirir — bu konuda biraz çekingenler."
+    },
+    "mills": {
+      "name": "Yel değirmenleri",
+      "desc": "Yel değirmenlerinin belirmesi için büyük buğday tarlası bölgeleri inşa edin. Yeterince büyük her tarla bölgesinin merkezinde otomatik olarak bir değirmen belirir."
+    }
+  },
+  "gameplay": {
+    "label": "Oyun mekanikleri",
+    "title": "Nasıl oynanır",
+    "sub": "Basit bir döngü, <strong>sonsuz derinlik</strong>. Yerleştirilen her karo dünyayı dönüştürür — gerçek hayatta geri al düğmesi yok, ama burada var.",
+    "ui_caption": "Mevcut karo · Sıradaki karo · Kalan karolar",
+    "steps": {
+      "draw": {
+        "title": "Çek",
+        "desc": "Bir altıgen karo belirir — altı üçgen sektör, her biri bir biyom. Önden plan yapmak için sıradakine bakın, ya da bakmayın ve tehlikeli yaşayın."
+      },
+      "orient": {
+        "title": "Yönlendir",
+        "desc": "Kenarlarını hizalamak için karoyu döndürün. Su ve demiryolu süreklilik gerektirir — kötü bir yerleşim ağı ve sakin özgüveninizin serisini bozabilir."
+      },
+      "place": {
+        "title": "Yerleştir",
+        "desc": "Eksen ızgarasında bir nokta seçin. Bir karoyu altı komşuyla çevrelemek büyük bir anında bonus kazandırır — oyunun sunduğu alkışa en yakın şey."
+      },
+      "score": {
+        "title": "Puanla",
+        "desc": "Görevleri ve bölgeleri tamamlayın, kuyruklu yıldızları avlayın, ardından yabancıların sessizce yargılaması için en iyi puanınızı küresel skor tablosuna gönderin."
+      }
+    },
+    "score_label": "Puanlama sistemi",
+    "pills": {
+      "place": "Karo yerleştirildi",
+      "edge": "Eşleşen kenar",
+      "network": "Ağ bağlandı",
+      "surround": "Karo çevrelendi",
+      "mission": "Görev tamamlandı",
+      "comet": "Kuyruklu yıldız avlandı",
+      "bonus": "Bonus hücre kaplandı"
+    },
+    "kbd_title": "KLAVYE KONTROLLERİ",
+    "kbd": {
+      "camera_label": "kamera",
+      "left_click_kbd": "Sol tık",
+      "left_click_desc": "kamerayı hareket ettir",
+      "right_click_kbd": "Sağ tık",
+      "right_click_desc": "kamerayı döndür",
+      "wheel_kbd": "Tekerlek",
+      "space_kbd": "Boşluk",
+      "wheel_desc": "yakınlaştır",
+      "reset_cam": "kamerayı sıfırla",
+      "zoom": "yakınlaştır / uzaklaştır",
+      "shift_kbd": "SHIFT",
+      "speed_up": "hareketi/yakınlaştırmayı hızlandırır",
+      "undo": "geri al",
+      "customization": "kişiselleştirme",
+      "perf_hud": "performans göstergesi",
+      "snapshot": "Ekran görüntüsü",
+      "gallery": "Ekran görüntüsü galerisi",
+      "replay": "Oyun tekrarı",
+      "immersive": "sürükleyici mod",
+      "super_immersive": "süper sürükleyici mod",
+      "mute": "sesi kapat",
+      "mute_tts": "sesli anlatımı kapat",
+      "help": "yardım"
+    }
+  },
+  "gallery": {
+    "label": "Görsel hazır ayarlar",
+    "title1": "Birden fazla atmosfer",
+    "title2": "Sonsuz kişiselleştirme",
+    "sub": "Kullanıma hazır birçok görsel ön ayar — ama her biri bir başlangıç noktası: renk LUT'u, sinematik efektler (kromatik sapma, film tanesi, tilt-shift), retro pikselleştirme, EGA ve Amiga estetiği, hacimsel duman, prosedürel gökyüzü… <strong>Yüzlerce kombinasyon</strong> tüm dünyayı zevkinize göre dönüştürmek için, ya da zevkinizin şiddetle itiraz edeceği bir şeye dönüştürmek için. Her kişiselleştirme tek tıkla dışa aktarılabilir ve diğer oyuncularla paylaşılabilir.",
+    "preset_word": "Ön ayar",
+    "presets": {
+      "autumn": "Sonbahar",
+      "summer": "Canlı Yaz",
+      "nordic": "İskandinav",
+      "amiga": "Amiga",
+      "ega": "EGA 16 renk",
+      "cga": "CGA 320×200 4 renk",
+      "apple2": "Apple II",
+      "psyche": "Psychedelic-LSD"
+    }
+  },
+  "creatures": {
+    "label": "Dünyanın canlıları",
+    "title": "Yaratıklarla dolu bir dünya",
+    "sub": "Dünya yalnızca var olmuyor — <strong>nefes alıyor</strong>. Hayvanlar, kuşlar ve sakinler mevsimler boyunca her biyomu canlandırır, inşa sıranızdan hiç etkilenmeden.",
+    "sheep": {
+      "name": "Koyunlar",
+      "desc": "Sürüler çayırlarda huzur içinde otlar, rüzgârda dalgalanan çimlerle birlikte sürüklenir, bir puanlama mekanizmasının üzerinde durduklarından mutlu mesut habersizdirler."
+    },
+    "crows": {
+      "name": "Kargalar",
+      "desc": "Karga sürüleri buğday tarlalarının üzerinde döner, korunmasız her bir alanı gözler — dünyanın en az sinsi denetçileri diyebilirsiniz."
+    },
+    "farmer": {
+      "name": "Çiftçi",
+      "desc": "Elinde dirgeniyle çiftçi, tarım mevsimlerinin ritmiyle gelip giderek buğdayına bakar, izinli bir güne sonsuza dek bir tarla uzaklıktadır."
+    },
+    "druid": {
+      "name": "Druid",
+      "desc": "Ağaçlar arasında yalnız bir figür dolaşır, ormanların ve sırlarının sessiz bekçisi — çoğunlukla tüm mantarların nereye gittiği sırrının."
+    },
+    "witch": {
+      "name": "Cadı",
+      "desc": "Bazı ormanlarda, gece çöktüğünde, cadıların sessizlikle ve unutulmuş kamp ateşlerinin parıltısıyla çekilerek ağaçlar arasında dolaştığı söylenir. Onları görebilenler azdır — peşlerinden gitmeye cesaret edenler daha da az, ve hiç kimse resmi şikayette bulunmamıştır."
+    },
+    "moon": {
+      "name": "Méliès Ayı",
+      "desc": "Gece modunda ay, Méliès'in Aya Seyahat filmindeki ikonik yüzü taşır — yıldızlı gökyüzüne gizlenmiş sessiz sinema dönemine bir selam, ve tüm karo yerleşimlerinizden görünürde hiç etkilenmemiş."
+    },
+    "seagulls": {
+      "name": "Martılar",
+      "desc": "Küçük martı sürüleri en büyük su kütlelerinin üzerinde döner, ara sıra bir geride kalan grup arasından kendi işine bakmak üzere uzaklaşır."
+    },
+    "fireflies": {
+      "name": "Ateş böcekleri",
+      "desc": "Gece çöktüğünde, pırıl pırıl ateş böceği sürüleri yere yakın süzülür, gidecek bir yerleri varmış gibi kamera etrafında yumuşakça dolanan sıcak ışık noktaları çizer."
+    },
+    "population": {
+      "villages_label": "Köyler",
+      "forests_label": "Ormanlar",
+      "fields_label": "Buğday tarlaları",
+      "water_label": "Su",
+      "meadows_label": "Çayırlar",
+      "tags": {
+        "village_women": "Köylü kadınlar",
+        "village_men": "Köylü erkekler",
+        "farmer": "Çiftçi",
+        "blacksmith": "Demirci",
+        "merchant": "Tüccar",
+        "innkeeper": "Hancı",
+        "guard": "Muhafız",
+        "soldier": "Asker",
+        "knight": "Şövalye",
+        "archer": "Okçu",
+        "warriors": "Savaşçılar",
+        "mage": "Büyücü",
+        "monk": "Keşiş",
+        "witch": "Cadı",
+        "crows": "Kargalar",
+        "windmill": "Yel değirmeni",
+        "scarecrow": "Korkuluk",
+        "boat": "Tekne",
+        "rowboats": "Kayıklar",
+        "seagulls": "Martılar",
+        "deer": "Geyik",
+        "wildflowers": "Yabani çiçekler"
+      }
+    },
+    "note": "22 farklı yüz köyleri ve ormanları doldurur, her birinin kendi silueti, kıyafeti ve rolü vardır. Kopyala-yapıştır figüranlar yok — karo be karo, ruhen sendikalı sayılabilecek gerçek bir nüfus."
+  },
+  "audio": {
+    "label": "Ses tasarımı",
+    "title": "Duyabileceğiniz bir dünya",
+    "sub": "Ses <strong>gerçek zamanlı</strong> olarak kamerayı takip eder — her biyomun, trenin ve teknenin kendine has bir sesi vardır, mesafeyle birlikte yükselir ve söner, tıpkı çok sabırlı bir orkestra gibi.",
+    "spatial": {
+      "name": "3D uzamsal ses",
+      "desc": "Köy ambiyansı, orman ve çayır kuş sesleri, tarlaların üzerindeki kargalar, kıyıdaki dalgalar, trenler ve tekneler — her kaynağın ses düzeyi gerçek mesafesini ve yönünü takip eder, böylece dolaşmak kendi başına bir ödül olur."
+    },
+    "chimai": {
+      "name": "Chi Mai, gizli tema",
+      "desc": "Kamerayı bir buğday tarlasının üzerine alçaltın, gizli bir melodik tema devreye girer — müzik ve diğer sesler ona yer açmak için söner. Evet, kulağa geldiği kadar dramatik."
+    },
+    "adaptive": {
+      "name": "Uyarlanabilir müzik",
+      "desc": "Giriş, oyun içi ve bitiş parçaları birbirine yumuşakça geçiş yapar, birkaç varyanttan seçilir, böylece hiçbir iki oyun tam olarak aynı çalmaz — hiçbiri aynı değil, ama şüpheli sayıda tanıdık gelecek."
+    },
+    "voice": {
+      "name": "Oyunu anlatan bir ses",
+      "desc": "Sözlü bir anlatıcı (tarayıcı tabanlı metin-okuma, harici hizmet yok) puanlarınızı, görevlerinizi ve önemli arayüz anlarını canlı olarak duyurur — her yeni ve tamamlanan görevden önce kısa bir çan sesi çalar. Oyunun tüm 9 dilinde mevcuttur, Almanca ve Rusça için otomatik olarak erkek bir ses seçilir, çünkü görünüşe göre birileri bunun önemli olduğuna karar verdi. T tuşu, geri kalan müziğe dokunmadan sadece onu susturur — teşvik biraz fazla geldiğinde işinize yarar."
+    },
+    "silence": {
+      "name": "İstek üzerine sessizlik",
+      "desc": "M tuşu, müzik dahil tüm ses parçasını anında keser ve geri getirir — bir görüşme sırasında ya da patronunuzun tam odaklandığınızı sandığı bir toplantıda sessiz bir oyun için işe yarar."
+    }
+  },
+  "daynnight": {
+    "label": "Dünya atmosferi",
+    "title": "Ortam",
+    "sub": "<strong>Tek bir düğme her şeyi değiştirir</strong>. Güneş, bulutlar ve mavi gökyüzü yerini yıldızlara, aya ve kuyruklu yıldızlara bırakır — hiçbir kurul toplantısı gerekmez.",
+    "day": {
+      "name": "Gündüz Modu",
+      "list": [
+        "🌤 Kendi render katmanında yörüngede dönen güneş",
+        "⛅ Animasyonlu FBM bulutlarıyla prosedürel hacimsel gökyüzü",
+        "🔵 Sıcak mavi tonlarda zenit/ufuk gradyanı",
+        "🚫 Kuyruklu yıldızlar gizli — onlar için fazla aydınlık, çekingenler"
+      ]
+    },
+    "night": {
+      "name": "Gece Modu",
+      "list": [
+        "🌙 Ay, derin gece zenit/ufuk gradyanı",
+        "✨ Özel bir küre üzerinde pırıldayan yıldızlar",
+        "☄️ Kayan kuyruklu yıldızlar — patlatmak için tıklayın",
+        "🌑 Karanlık atmosfer, köy dumanı daha görünür, uykusuzluk etkilenmez"
+      ]
+    },
+    "smoke": {
+      "name": "Duman",
+      "list": [
+        "🏠 Bacalar ve lokomotiflerin üzerinde gerçek zamanlı ışın izleme ile aynı anda 48'e varan duman sütunu",
+        "🌬️ Yükseklikle birlikte sürüklenen 4 oktavlı türbülans — her sütun, kurumdan yapılmış bir parmak izi gibi benzersizdir",
+        "🎲 Karo üretildiğinde rastgele seçilen üç evden yalnızca biri tüter — diğer ikisi görünüşe göre ateşi yakmayı unutmuş",
+        "🌙 Gece çöktüğünde daha da atmosferik"
+      ]
+    },
+    "godrays": {
+      "name": "Güneş Işınları",
+      "list": [
+        "☀️ Güneşten veya aydan yükselen hacimsel ışık demetleri",
+        "🌲 Sinematik aydınlatma için yapraklardan, kulelerden ve bulutlardan süzülür",
+        "🎚️ Uzunluk, yayılım ve eşik değerleri, içinizdeki yönetmen için sanat yönetimi editöründen ayarlanabilir"
+      ]
+    },
+    "rain": {
+      "name": "Yağmur",
+      "list": [
+        "💧 Hava Durumu göstergesinden anlık olarak tetikleyebileceğiniz dinamik sağanaklar, şemsiye gerekmez",
+        "⛈️ Doğal olarak fırtınalara ve yıldırımlara bağlanır",
+        "🎬 Sinematik vinyet ve film tanesi ile güçlendirilmiş atmosfer"
+      ]
+    },
+    "mist": {
+      "name": "Sabah sisi",
+      "list": [
+        "🌫️ Mesafeleri boğan ve siluetleri yumuşatan alçak bir perde",
+        "☀️ Dakikalar geçtikçe, çoğu sabah gizemi gibi yavaş yavaş kalkar",
+        "🎚️ Sis yoğunluğu ve rengi sanat yönetimi editöründen ayarlanabilir"
+      ]
+    },
+    "storm": {
+      "name": "Fırtınalar ve orman yangınları",
+      "list": [
+        "⚡ Fırtına örtüsünün altında yıldırımlar çakar ve bir karoyu ateşe verebilir — doğanın yerleşiminizi düzenleme biçimi",
+        "🔥 Ağaçlar, evler, kuleler ve değirmenler gerçek yüksekliklerinde yanar, kömürleşir, sonra görünüşe göre hiç umursamadan yeniden büyür",
+        "🌬️ Alevler rüzgârla sürüklenir, komşulara yayılır ve suyun kıyısında tam anlamıyla durur — bu da nihayet suyun işe yaradığı an",
+        "🌧️ Yağmur yayılmayı yavaşlatır ve bazen ateşi doğrudan söndürür"
+      ]
+    }
+  },
+  "eda": {
+    "label": "Sanat yönetimi editörü (EDA)",
+    "title": "Aşırı kişiselleştirme",
+    "sub": "Çok sayıda hazır ayarın ötesinde, EDA 3 sekmeye yayılmış <strong>gerçek zamanlı ayarlanabilir düzinelerce metrik</strong> sunar — LUT, Sinematik, Ortam. Her kaydırıcı anında yanıt verir, yeniden yükleme yok, ve tüm yapılandırma, tekrar oynatılmak, paylaşılmak veya sessizce pişman olunmak üzere JSON olarak kopyalanır/dışa aktarılır.",
+    "lut": {
+      "label": "LUT",
+      "desc": "Sis, ışık kaynağı, tam renk derecelendirmesi (RGB eğrileri, gama, seviyeler) ve biyom başına palet — dikkatli olmazsanız bir çayırı suç mahalline çevirmeye yetecek kadar düğme."
+    },
+    "cinematic": {
+      "label": "Sinematik",
+      "desc": "Güneş ışınları, tilt-shift, bloom, retro pikselleştirme ve ekran eğriliği — dünyayı sadece izlemek yerine filme almak için."
+    },
+    "environment": {
+      "label": "Ortam",
+      "desc": "Bulutlar ve bulut örtüsü, rüzgâr (buğday, çim, ağaçlar), dinamik hava durumu (sis, ateş böcekleri, yağmur), dünya şekli (küre/düz), Gündüz/Gece anahtarı ve kalite/yoğunluk ön ayarları — tüm iklim, tasmalı halde."
+    }
+  },
+  "multi": {
+    "title1": "Çok Oyunculu",
+    "title2": "Birlikte inşa edin",
+    "sub": "6 harfli bir kodla bir odaya katılın veya oda oluşturun. Izgara <strong>gerçek zamanlı olarak paylaşılır</strong> — her oyuncu kendi karolarını yerleştirir ve diğerlerinin hamlelerini oldukları gibi görür, iyi ya da kötü.",
+    "features": [
+      "Tüm oyunlar kaydedilir — istediğiniz zaman devam edin veya yeniden izleyin",
+      "Odalara oyun ortasında bile istediğiniz zaman katılabilirsiniz, izin belgesi gerekmez",
+      "Gerçek zamanlı senkronizasyon · PHP + JSON arka ucu, her şeyi sessiz bir onurla bir arada tutuyor",
+      "Harita karo karo, tartışma tartışma, iş birliğiyle büyür"
+    ],
+    "gallery_title": "GÖRÜNTÜLERİNİZİ PAYLAŞIN",
+    "gallery_promo": "En iyi oyunlarınızı ölümsüzleştirin: 📷 düğmesi dünyayı arayüz olmadan yakalar, ve 🖼️ düğmesi <strong>her oyuncunun görebildiği paylaşılan galeriyi</strong> açar — övünme hakkı dahildir",
+    "replay_title": "Oyunlarınızı video olarak kaydedin",
+    "replay_promo": "Tek tıkla, <strong>tüm oyununuzu yüksek hızda yeniden izleyin</strong> ve doğrudan tarayıcınızdan video olarak indirin — kurgu becerisi gerekmez, sadece hafif bir kibir.",
+    "btn_create": "Bir oyun oluştur",
+    "room_title": "Oda kodu",
+    "room_status": "Oyun devam ediyor · 3 oyuncu",
+    "tiles_placed_label": "Yerleştirilen karolar"
+  },
+  "scores": {
+    "label": "Küresel skor tablosu",
+    "title": "En verimli inşacılar",
+    "empty": "Henüz skor yok — skor tablosu bir kahramanı bekleyen boş bir altıgen boşluk.",
+    "try_luck": "Şansını dene →",
+    "headline_stat": "yerleştirilen karo",
+    "pts_suffix": "puan",
+    "trains_s": "hat",
+    "trains_p": "hat",
+    "boats_s": "tekne",
+    "boats_p": "tekne",
+    "mills_s": "değirmen",
+    "mills_p": "değirmen",
+    "comets_s": "kuyruklu yıldız",
+    "comets_p": "kuyruklu yıldız",
+    "largest_zone": "en büyük bölge",
+    "biome_labels": {
+      "forest": {
+        "s": "ağaç",
+        "p": "ağaç"
+      },
+      "water": {
+        "s": "su",
+        "p": "su"
+      },
+      "house": {
+        "s": "ev",
+        "p": "ev"
+      },
+      "field": {
+        "s": "buğday tarlası",
+        "p": "buğday tarlası"
+      },
+      "grass": {
+        "s": "çayır",
+        "p": "çayır"
+      },
+      "rail": {
+        "s": "demiryolu",
+        "p": "demiryolu"
+      }
+    }
+  },
+  "footer": {
+    "copy": "Sevgiyle ❤️, Three.js ile ve mantıksız sayıda karoyla yapılmış tefekkür dolu bir altıgen oyun",
+    "github": "GitHub"
+  },
+  "game": {
+    "gallery": {
+      "title": "Ekran görüntüsü galerisi",
+      "empty": "Henüz ekran görüntüsü yok. Başyapıtınız sizi bekliyor — oyun içinde 📷'ye basarak bir tane çekin.",
+      "close": "Kapat",
+      "loading": "Yükleniyor…",
+      "tilesCount": "{n} karolu oyun",
+      "modeBouliste": "Küre modu",
+      "modePlatiste": "Düz mod",
+      "captured": "Görüntü kaydedildi! Gelecek nesiller size teşekkür ediyor."
+    },
+    "sound": {
+      "on": "Ses açık",
+      "off": "Ses kapalı"
+    },
+    "replay": {
+      "restart": "Başa dön",
+      "playPause": "Oynat / Duraklat",
+      "close": "Tekrarı kapat"
+    },
+    "eda": {
+      "mainTitle": "Sanat yönetimi editörü",
+      "ambiances": "ÖN AYARLAR",
+      "ambiancePrefix": "ön ayar",
+      "tabs": {
+        "lut": "LUT",
+        "cinematic": "Sinematik",
+        "environment": "Ortam"
+      },
+      "headers": {
+        "lutFog": "1. Sis",
+        "lutSun": "2. Işık kaynağı",
+        "lutGrading": "3. Derecelendirme",
+        "lutPalette": "4. Biyom paleti",
+        "cinema1": "1. SİNEMATİK",
+        "godRays": "2. Güneş Işınları",
+        "tiltShift": "3. Tilt-shift",
+        "bloom": "4. Bloom",
+        "pixelisation": "5. PİKSELLEŞTİRME",
+        "crt": "6. EKRAN EĞRİLİĞİ",
+        "nuages": "3. BULUTLAR",
+        "vent": "4. RÜZGÂR",
+        "worldShape": "5. Dünya şekli",
+        "dayNight": "6. Gündüz / Gece",
+        "quality": "7. Kalite / yoğunluk",
+        "weather": "8. Hava durumu",
+        "waterFoam": "1. Köpük",
+        "waterWake": "2. Tekne izi",
+        "windWheat": "4.1 Buğday başakları",
+        "windGrass": "4.2 Çim yaprakları",
+        "windTree": "4.3 Ağaçlar"
+      },
+      "toggleTitles": {
+        "lutGrading": "Derecelendirmeyi etkinleştir / devre dışı bırak",
+        "lutPalette": "Biyom paletini etkinleştir / devre dışı bırak",
+        "cinema1": "Sinematik efektleri etkinleştir / devre dışı bırak",
+        "godRays": "Güneş ışınlarını etkinleştir / devre dışı bırak",
+        "tiltShift": "Tilt-shift'i etkinleştir / devre dışı bırak",
+        "bloom": "Bloom'u etkinleştir / devre dışı bırak (parlama efekti, çiçekler değil)",
+        "pixelisation": "Pikselleştirmeyi etkinleştir / devre dışı bırak",
+        "crt": "Ekran eğriliğini etkinleştir / devre dışı bırak",
+        "nuages": "Bulutları etkinleştir / devre dışı bırak",
+        "vent": "Tüm rüzgârı etkinleştir / devre dışı bırak (buğday, çim, ağaçlar)",
+        "worldShape": "Küresel (küre) ve düz dünya arasında geçiş yap — uluslararası anlaşma gerekmez",
+        "dayNight": "Gündüz ve gece arasında geçiş yap",
+        "waterFoam": "Köpüğü etkinleştir / devre dışı bırak",
+        "waterWake": "Tekne izini etkinleştir / devre dışı bırak"
+      },
+      "modeActuel": "Geçerli mod",
+      "preregalages": "Ön ayarlar",
+      "presetNames": {
+        "default": "Varsayılan",
+        "mist": "Sis",
+        "autumn": "Sonbahar",
+        "summerVivid": "Canlı yaz",
+        "winter": "Kış",
+        "sepia": "Sepya",
+        "nordic": "İskandinav",
+        "desert": "Çöl",
+        "pong": "Pong",
+        "appleII": "Apple II",
+        "cga": "CGA",
+        "ega": "EGA",
+        "amiga": "Amiga",
+        "psyche": "Psychedelic"
+      },
+      "themeNames": {
+        "bleu": "Gök Mavisi",
+        "ancien": "Ortaçağ"
+      },
+      "modes": {
+        "bouliste": "Küre",
+        "platiste": "Düz",
+        "jour": "Gündüz",
+        "nuit": "Gece"
+      },
+      "quality": {
+        "faible": "Düşük",
+        "moyen": "Orta",
+        "eleve": "Yüksek",
+        "max": "Maks"
+      },
+      "qualityTooltip": "{label} yoğunluğu ({value})",
+      "weatherStopAll": "⏹ Tümünü durdur",
+      "weatherStopAllTitle": "Şu anda çalışan tüm çevresel olayları durdurur. Nihayet huzur.",
+      "weatherGroups": {
+        "morningMist": "🌫️ Sabah sisi",
+        "fireflies": "✨ Ateş böcekleri",
+        "clouds": "☁️ Yağmur bulutları",
+        "rain": "🌧️ Yağmur",
+        "storm": "⛈️ Fırtına",
+        "lightning": "⚡ Yıldırım",
+        "fire": "🔥 Ateş",
+        "panic": "🐑 Hayvan paniği"
+      },
+      "weatherRequires": "({label} gerektirir)",
+      "weatherSwitchTitle": "Etkinleştir / devre dışı bırak",
+      "weatherCloudsSwitchTitle": "Bulutları etkinleştir / devre dışı bırak",
+      "weatherResetTitle": "Sıfırla",
+      "presetTooltipApply": "\"{name}\" ön ayarını uygula",
+      "presetTooltipDefault": "Varsayılan değerlere dön (en kötü kararlarınızı geri alın)",
+      "footer": {
+        "copy": "📋 Kopyala",
+        "copyTitle": "Tüm geçerli LUT + PİKSEL + SU + SİNEMA + RÜZGÂR + BULUTLAR + Dünya şekli + Gündüz/Gece + Yoğunluk + Hava durumu ayarlarını JSON olarak kopyala (önceden yapılandırılmış hava efektleriyle gelecekteki bir ön ayarın temeli) — şüpheli zevkinizin küçük bir arşivi",
+        "copied": "✓ Kopyalandı!",
+        "undo": "↩ Geri al",
+        "undoTitle": "Son değişikliği geri al — yargılama yok",
+        "redo": "↪ Yinele",
+        "redoTitle": "Geri alınan değişikliği yinele, eğer fikrinizi değiştirme konusunda fikrinizi değiştirdiyseniz",
+        "reset": "Sıfırla",
+        "resetTitle": "Varsayılan değerlere sıfırla. Temiz bir sayfa, yeni bir başlangıç, her şeyi yine yanlış yapma şansı",
+        "compare": "Karşılaştır",
+        "compareBack": "⟳ Geri",
+        "compareTitle": "Geçerli ayarlar ile son uygulanan ön ayar arasında geçiş yap, rahatça tereddüt etmek için",
+        "lastPresetTitle": "Son uygulanan ön ayar"
+      },
+      "labels": {
+        "environment": {
+          "fogDensity": "Üstel yoğunluk",
+          "fogNear": "Başlangıç (doğrusal)",
+          "fogFar": "Bitiş (doğrusal)",
+          "skyColor": "Gökyüzü",
+          "fogColor": "Sis rengi",
+          "domeColorTop": "Kubbe üstü",
+          "domeColorBottom": "Kubbe altı"
+        },
+        "renderer": {
+          "toneMappingExposure": "Genel pozlama"
+        },
+        "lights": {
+          "hemisphereIntensity": "Yarımküre yoğunluğu",
+          "sunIntensity": "Yoğunluk",
+          "sunOrbitRadius": "Yörünge yarıçapı",
+          "sunOrbitHeight": "Yörünge yüksekliği",
+          "sunOrbitSpeed": "Yörünge hızı",
+          "sunVisualScale": "Boyut",
+          "fillIntensity": "Dolgu ışığı",
+          "hemisphereSkyColor": "Yarımküre gökyüzü",
+          "hemisphereGroundColor": "Yarımküre zemin",
+          "sunColor": "Güneş",
+          "fillColor": "Dolgu"
+        },
+        "grading": {
+          "brightness": "Parlaklık",
+          "contrast": "Kontrast",
+          "saturation": "Doygunluk",
+          "vibrance": "Canlılık",
+          "hue": "Renk tonu kayması",
+          "gamma": "Gama",
+          "blackLevel": "Siyah seviyeleri",
+          "whiteLevel": "Beyaz seviyeleri",
+          "red": "Kırmızı kanal",
+          "green": "Yeşil kanal",
+          "blue": "Mavi kanal",
+          "redCurve": "Kırmızı eğrisi",
+          "greenCurve": "Yeşil eğrisi",
+          "blueCurve": "Mavi eğrisi"
+        },
+        "palette": {
+          "strength": "Palet gücü",
+          "saturation": "Doygunluk",
+          "contrast": "Kontrast",
+          "warmShift": "Sıcak / soğuk",
+          "targets": {
+            "field": "Tarlalar",
+            "forest": "Ormanlar",
+            "grass": "Çayırlar",
+            "house": "Köyler",
+            "rail": "Demiryolları",
+            "water": "Su"
+          }
+        },
+        "water": {
+          "foamWidth": "Erişim",
+          "foamScale": "İncelik",
+          "foamDensity": "Kıyı yoğunluğu",
+          "foamAmbient": "Yüzey",
+          "foamSharp": "Keskinlik",
+          "foamSpeed": "Hız",
+          "deepDistance": "Gradyan — erişim",
+          "opacity": "Su — opaklık"
+        },
+        "wake": {
+          "armWidth": "Kol genişliği",
+          "spread": "V yayılımı",
+          "length": "Uzunluk",
+          "scale": "İncelik",
+          "density": "Yoğunluk",
+          "opacity": "Opaklık"
+        },
+        "wind": {
+          "wheat": {
+            "strength": "Genlik",
+            "speed": "Hız"
+          },
+          "grass": {
+            "strength": "Genlik",
+            "speed": "Hız",
+            "sway": "Salınım"
+          },
+          "tree": {
+            "strength": "Genlik",
+            "speed": "Hız",
+            "frequency": "Frekans",
+            "turbulence": "Türbülans",
+            "gustStrength": "Rüzgâr esintileri",
+            "detailStrength": "Ayrıntı"
+          }
+        },
+        "cloud": {
+          "coverage": "Kapsama",
+          "scale": "Desen ölçeği",
+          "speed": "Sürüklenme hızı"
+        },
+        "quality": {
+          "density": "Yoğunluk"
+        },
+        "cin": {
+          "vignette": "Vinyet",
+          "grain": "Film tanesi",
+          "chromatic": "Kromatik sapma",
+          "halation": "Halasyon",
+          "barrel": "Fıçı bozulması",
+          "scanLines": "Tarama çizgileri",
+          "scanLinesIntensity": "Tarama çizgisi yoğunluğu",
+          "godRays": "Yoğunluk",
+          "godRaysLength": "Uzunluk",
+          "godRaysDiffusion": "Yayılım",
+          "godRaysThreshold": "Parlaklık eşiği",
+          "godRaysLayers": "Katmanlama",
+          "tilt": "Yoğunluk",
+          "focusCenter": "Odak merkezi",
+          "focusBand": "Keskin bölge",
+          "bloomIntensity": "Yoğunluk",
+          "bloomThreshold": "Eşik",
+          "bloomRadius": "Yarıçap",
+          "bloomSoftness": "Yumuşaklık",
+          "crtCurvature": "Ekran eğriliği",
+          "crtMask": "Siyah kenarlar",
+          "crtCornerDark": "CRT köşe kararması"
+        },
+        "pix": {
+          "pixelSize": "Yarıçap (piksel)",
+          "normalEdge": "Kabartma kenarı",
+          "depthEdge": "Derinlik kenarı"
+        },
+        "vfx": {
+          "mist": {
+            "densite": "Yoğunluk",
+            "compacite": "Sıkılık",
+            "elevation": "Yükseklik"
+          },
+          "fireflies": {
+            "densite": "Yoğunluk",
+            "taille": "Boyut",
+            "vagabondage": "Dolaşma",
+            "scintillement": "Pırıltı"
+          },
+          "rain": {
+            "densite": "Yoğunluk",
+            "tailleGoutte": "Damla boyutu",
+            "impactSol": "Zemin etkisi"
+          },
+          "cloud": {
+            "densite": "Yoğunluk",
+            "altitude": "Yükseklik",
+            "epaisseur": "Kalınlık"
+          },
+          "storm": {
+            "frequenceEclairs": "Yıldırım sıklığı",
+            "luminositeEclair": "Yıldırım parlaklığı",
+            "intensitePluie": "Yağmur yoğunluğu",
+            "altitudeChape": "Örtü yüksekliği",
+            "opaciteChape": "Örtü opaklığı"
+          },
+          "fire": {
+            "probaAllumage": "Tutuşma olasılığı",
+            "densiteFlammes": "Alev yoğunluğu",
+            "duree": "Süre",
+            "taille": "Boyut",
+            "propagation": "Yayılma"
+          }
+        }
+      }
+    },
+    "help": {
+      "topbar.fps": "Gelişmiş performans göstergesini göster/gizle, hem meraklılar hem de endişeliler için",
+      "topbar.eda": "Render panelini aç veya kapat — düzinelerce düğme, yetişkin denetimi yok",
+      "topbar.snapshot": "Ekran görüntüsü (arayüz olmadan)",
+      "topbar.gallery": "Ekran görüntüsü galerisi",
+      "topbar.replay": "Oyun tekrarı",
+      "topbar.lang": "Dil",
+      "topbar.theme": "Grafik teması (Mavi / Vintage)",
+      "topbar.mute": "Sesi kapat / aç",
+      "topbar.muteVoice": "Sesli anlatımı kapat / aç (TTS)",
+      "renderer.toneMappingExposure": "Genel render pozlaması (ACESFilmic). Herhangi bir derecelendirmeden önce ne kadar ışığın \"sensöre\" ulaştığını denetler.\n1'in altındaki değerler tüm sahneyi karartır, 2'nin üzerindekiler parlak alanları yakabilir.\nTipik: doğal bir görünüm için 1,2–1,8, sorgu odası şıklığı hedeflemiyorsanız tabii.",
+      "environment.fogDensity": "Üstel sisin yoğunluğu (FogExp2). Yalnızca \"Doğrusal Bitiş\" 0 olduğunda etkindir.\nGörüş mesafesi çok hızlı düşer: 0,07'de sahne neredeyse opaktır.\nDenetimli bir görüş mesafesi için \"Başlangıç\" ve \"Bitiş\" ile doğrusal modu tercih edin.",
+      "environment.fogNear": "Doğrusal sisin başladığı 3D birim cinsinden mesafe.\n\"Bitiş\" > 0 olur olmaz, otomatik olarak FogExp2'den THREE.Fog(near, far)'a geçilir.\n0'da: sis hemen ön planda başlar. 5'te: yakın nesneler keskin kalır.",
+      "environment.fogFar": "Doğrusal sisin tamamen opak olduğu mesafe.\nÜstel moda dönmek için 0'a ayarlayın.\nÖrnek: Başlangıç = 3, Bitiş = 18 → her şeyi boğmadan atmosferik, 15 birimlik bir görüş mesafesi.",
+      "lights.hemisphereIntensity": "Yarımküre ışığının yoğunluğu (gökyüzü + zemin).\nGüneşe doğrudan maruz kalmayan yüzeyleri aydınlatır.\nÇok yüksek: gölgeleri düzleştirir ve derinliği kaldırır. Çok düşük: arka yüzler tamamen karanlığa gömülür.",
+      "lights.sunIntensity": "Yönlü ışığın (güneş) gücü.\nGölge sertliğini ve kabartma kontrastını belirler.\n5'in üzerindeki değerler, genel pozlama da yüksekse aydınlık yüzeyleri yakabilir.",
+      "lights.sunOrbitRadius": "Güneşin sahnenin merkezi etrafındaki dairesel yörüngesinin yarıçapı.\nKüçük bir yarıçap (< 5) merkezden dik açılı ışık verir; büyük bir yarıçap (> 20) kenarlardan daha yatık ışık verir.",
+      "lights.sunOrbitHeight": "Güneşin sahne düzleminin üzerindeki dikey yüksekliği.\nYüksek = kısa gölgeler, tepeden ışık. Düşük = uzun, yatık gölgeler (altın saat ya da gün batımı).",
+      "lights.sunOrbitSpeed": "Güneşin saniyedeki radyan cinsinden açısal hızı.\n0,06'da, tam bir tur yaklaşık 100 saniye sürer. 0'da: sabit güneş. 1'de: gölgeler hızla döner.",
+      "lights.sunVisualScale": "Gökyüzündeki güneş diskinin görünen boyutu.\nSaf olarak görsel — ışık gücünü de gölgeleri de etkilemez. Temelde bir kibir metriği.",
+      "lights.fillIntensity": "Güneşin karşısında yumuşak bir dolgu ışığının yoğunluğu.\nSert gölge alanlarını açar. Çıkıntıların altında ya da köylülerin görünüşe göre gitmekten çekindiği tepelerin arka tarafında tamamen siyah lekelerden kaçınmak için kullanışlıdır.",
+      "grading.brightness": "Render sonrası uygulanan ek parlaklık dengelemesi.\nTüm kanallara sabit bir değer ekler.\nPozlamadan farkı: parlak alanları güçlendirmez, ton eşlemeyi değiştirmez.",
+      "grading.contrast": "%50 gri etrafında dönerek elde edilen genel kontrast.\n> 1: koyu ve açık tonları birbirinden ayırır (sinematik görünüm). < 1: sıkıştırır (soluk/düz görünüm).\nUç değerlerde → tamamen siyah veya beyaz.",
+      "grading.saturation": "Genel doygunluk. Gri tonlamalı (parlaklık) versiyonu orijinal renkle harmanlar.\n0 = gri tonlama. 1 = normal. > 1 = aşırı doygun.\nÇok yüksek değerlerde (3+), renkler kırpılır ve tersine dönebilir — baş ağrısına giden hızlı bir yol.",
+      "grading.vibrance": "Akıllı canlılık: zaten doygun tonları koruyarak sönük renkleri güçlendirir.\nDoğal yeşiller için ham doygunluktan daha yumuşaktır.\nNegatif: canlı renkleri önce söndürür, duygusal olarak yorgunlar için.",
+      "grading.hue": "Tüm renk tonlarının renk çemberi etrafında genel döndürülmesi.\n±0,5 = yarım tur (kırmızı ↔ camgöbeği). Düşük değerlerde ince bir etki.\nBir renk sapmasını düzeltmek ya da kimsenin istemediği ama herkesin hatırlayacağı sıra dışı bir palet yaratmak için kullanışlıdır.",
+      "grading.gamma": "Orta tonlara uygulanan gama düzeltmesi.\n< 1 = daha parlak orta tonlar; > 1 = daha koyu.\nUç noktalarda (saf siyah/beyaz) doğrusal etki göstermez.",
+      "grading.blackLevel": "Siyah nokta seviyesi. Saf siyahları griye doğru kaldırır.\n\"Solgun filmik\" ya da \"kalkık siyahlar\" görünümü yaratır.\nÇok yüksek = gölgelerde derinlik ve yoğunluk kaybı.",
+      "grading.whiteLevel": "Beyaz nokta seviyesi. Parlak alanları 1,0'ın altına sıkıştırır.\n0,871'de: saf beyazlar kremsi olur, hiçbir şey kırpılmaz.\nYumuşak bir görünüm, ince bir \"S eğrisi\" için kullanışlıdır.",
+      "grading.red": "Derecelendirme sonrası kırmızı kanalın çarpımsal kazancı.\n> 1 sahneyi ısıtır (turuncu/kehribar tonu). < 1 soğutur.\nYeşil ve mavi ile birlikte, ince beyaz dengesi düzeltmesine olanak tanır.",
+      "grading.green": "Yeşil kanalın çarpımsal kazancı.\nYeşil, algılanan parlaklığa hakimdir (≈ %59).\nBu kanalı düşürmek morumsu/macenta bir etki verir; yükseltmek görüntüyü yeşillendirir ve algısal olarak parlatır.",
+      "grading.blue": "Mavi kanalın çarpımsal kazancı.\nArtırmak soğuk/gece havası verir. Azaltmak sıcak ya da sepya bir görünüm için mavileri kurutur.",
+      "grading.redCurve": "Kırmızı ton eğrisi: kanala bir üstel fonksiyon uygular.\n< 1 = dışbükey eğri (kırmızı orta tonları kaldırır). > 1 = orta tonlara gömülür.\nKırmızı kazancından sonra uygulanır.",
+      "grading.greenCurve": "Yeşil ton eğrisi. Orta tonlarda yeşil kanalın tepkisini şekillendirir.\nUç noktalara dokunmadan algılanan kontrastı ince ayar yapmak için kullanışlıdır.",
+      "grading.blueCurve": "Mavi ton eğrisi. Orta tonlardaki havayı şekillendirir.\nEğri < 1 = parlak alanlarda daha yoğun maviler. > 1 = gömülü maviler (orta tonlarda sıcak görünüm).",
+      "palette.strength": "Hedeflenen dokular üzerinde palet uyumlaştırmasının genel gücü.\n0: etki yok. 1: dokular tamamen hedef renklerine yeniden renklendirilir.\nGLB malzeme adlarını eşleştirerek çalışır — sessizce, sahne arkasında, çok titiz bir dekoratör gibi.",
+      "palette.saturation": "Palet uyumlaştırmasından sonra uygulanan doygunluk.\n< 1: yeniden renklendirilmiş dokuları sakinleştirir. > 1: yoğunlaştırır.\nHedef renklere dokunmadan ayarlamanıza olanak tanır.",
+      "palette.contrast": "Uyumlaştırmadan sonra renklere uygulanan kontrast.\nHafif bir artış (1,05–1,2) yeniden renklendirilmiş dokuların okunabilirliğini iyileştirir.",
+      "palette.warmShift": "Tüm biyom paletine uygulanan genel sıcak/soğuk kayması.\nNegatif → daha soğuk/mavi tonlar. Pozitif → daha sıcak/altın tonlar.",
+      "environment.skyColor": "Kubbenin ve nesnelerin ötesinde görünen render arka plan rengi.\nSahnenin arkasından sızmaması için genellikle koyudur.",
+      "environment.fogColor": "Sisin rengi, üstel ya da doğrusal.\nNesneler mesafe arttıkça bu tona karışır.\nTutarlı bir ufuk için gökyüzü rengiyle eşleşmelidir.",
+      "environment.domeColorTop": "Küresel atmosferik kubbenin üst rengi.\nNesnelerin üzerindeki gökyüzünde görünür (domeOpacity > 0 ise).",
+      "environment.domeColorBottom": "Atmosferik kubbenin taban rengi.\nUfku ya da zemin seviyesindeki hafif pusu simüle eder.",
+      "lights.hemisphereSkyColor": "Yarımküre ışığının \"gökyüzü\" bileşeninin tonu.\nYukarı bakan yüzeyleri (çatılar, düz yüzeyler) renklendirir.",
+      "lights.hemisphereGroundColor": "Yarımküre ışığının \"zemin\" bileşeninin tonu.\nAşağı bakan yüzeyleri (köprü altları, ev karınları) renklendirir.",
+      "lights.sunColor": "Güneşin yönlü ışığının rengi.\nGün batımında turuncu, öğlen beyaz, kapalı gökyüzünde mavimsi.\nDüşen gölgelerin rengini güçlü şekilde etkiler.",
+      "lights.fillColor": "Dolgu ışığının rengi.\nGölgeleri dengelemek için genellikle güneşle tamamlayıcıdır.",
+      "palette.targets.field": "İşlenen tarla dokularını uyumlaştırmak için hedef renk.",
+      "palette.targets.forest": "Orman ve ağaç dokuları için hedef renk.",
+      "palette.targets.grass": "Çayırlar ve çimen için hedef renk.",
+      "palette.targets.house": "Evler ve köy binaları için hedef renk.",
+      "palette.targets.rail": "Raylar ve demiryolu altyapısı için hedef renk.",
+      "palette.targets.water": "Su için hedef renk (göller, nehirler, deniz).",
+      "pix.pixelSize": "Ekran birimi cinsinden bir pikselin boyutu. 1'de: yerel çözünürlük. 8'de: yoğun pikselli, 8-bit tarzı render.\nYüksek değerler GPU yükünü azaltır (hesaplanacak daha az fragman) ve retro görünümü güçlendirir.\nKenarlarla birleştirildiğinde, lowpoly + anahat stili verir.",
+      "pix.normalEdge": "Yüzey normallerine dayalı kenarların yoğunluğu.\nFarklı yönlere sahip düzlemler arasındaki sınırları algılar (örn. bir çatı kenarı, bir duvar köşesi).\n0 = normal tabanlı kenar yok. 1 = her geometrik geçişte güçlü anahatlar.",
+      "pix.depthEdge": "Derinliğe dayalı kenarların yoğunluğu (z-buffer).\nFarklı mesafelerdeki nesneler arasındaki silüetleri izler.\nNormal tabanlı kenarları tamamlar: birlikte çizgi film ya da çizgi roman görünümü verirler.",
+      "pix.worldShape": "Dünyanın görünen eğriliğini seçer.\n\"Küre\": dünya bir küredir, ufuk kavis çizer — aydınlanmışlar için mini-gezegen efekti.\n\"Düz\": eğrilik yok, geleneksel düz görünüm — kural tanıyanlar için klasik izometrik görünüm."
+      ,
+      "env.dayNight": "Gündüz ve gece arasında geçiş yapar.\nGörünür gök cismini (güneş/ay), gökyüzünü, ortam renklerini değiştirir ve geceleri kuyruklu yıldızları ortaya çıkarır. Jet lag söz konusu değil.",
+      "quality.density": "Genel içerik yoğunluğu çarpanı (0,15 ile 1,0 arası).\nDaha zayıf makinelerde sahne grafiği taramasını hafifletmek ve 60 FPS hedeflemek için doğal aksesuar, çim yaprağı ve koyun sayısını azaltır.\nAraziyi, suyu, binaları ya da karakterleri etkilemez (oynanış ve sistemler zaten ayrı olarak optimize edilmiştir). Her değişiklikte içeriği yeniden oluşturur — bütçe kısıntılarını ilk hisseden koyun nüfusu olur.",
+      "cin.tilt": "Tilt-shift efektinin yoğunluğu: kadrajın üstünde ve altında kademeli bulanıklık.\nMerkezdeki alan derinliğini azaltan bir tilt lensi simüle eder.\nMinyatür bir model yanılsaması verir — 1'de çok güçlü.",
+      "cin.focusCenter": "Tilt-shift'in keskin odak bandının dikey konumu.\n0 = kadrajın üstü, 0,5 = merkez, 1 = alt.\nAşağı taşımak, zemin seviyesindeki öğeleri odağa getirir.",
+      "cin.focusBand": "Tilt-shift'in keskin bandının genişliği (yüksekliğin bir kesri olarak).\n0,1 = çok ince bant, 0,5 = görüntünün yarısı odakta, 1 = her şey keskin (efekt devre dışı).",
+      "cin.vignette": "Kadrajın kenarlarının ve köşelerinin kararması.\nGeniş açılı bir lensin kenarlarındaki ışık kaybını simüle eder.\nDerinlik hissini güçlendirir ve gözü merkeze çeker.\n2'ye kadar çıkar: 1'in üzerinde kenarlar neredeyse tamamen siyah olur.",
+      "cin.grain": "Render üzerine eklenen film tanesi miktarı.\nGümüş halojenürlü film ya da hassas bir sensörün kusurlarını simüle eder.\n0,2'de ince, 1'de her yeri kaplar — bu noktada aslında hikayeli bir parazite bakıyorsunuz demektir.",
+      "cin.chromatic": "Kromatik sapma: renk kanallarının kenarlara doğru yanal kayması.\nTüm dalga boylarını aynı noktada odaklamayan kusurlu bir lensin hatalarını simüle eder.\n0,2'de ince, 0,7'nin üzerinde psychedelic.",
+      "cin.halation": "Çok parlak alanların etrafında parlayan bir hale, gümüş halojenürlü filmin tipik özelliği.\nGüçlü ışık, komşu koyu alanlara hafifçe \"sızar\".\nSıcaklık ve organik bir his katar — gün batımlarında güzel, geri kalan her şeyde hoşgörülü.",
+      "cin.barrel": "Fıçı bozulması: görüntünün kenarları dışa doğru itilir.\nBalık gözü ya da geniş açılı lensleri simüle eder. \"Güvenlik kamerası\" ya da lo-fi görünümü güçlendirir.\n1'de, görüntü kişisel olarak izleniyormuşsunuz hissi verecek kadar güçlü şekilde şişer.",
+      "cin.scanLines": "Bir CRT monitörü ya da eski bir televizyonu taklit eden, iç içe geçmiş koyu yatay çizgiler.\n0 = tarama çizgisi yok. 6 = çok belirgin çizgiler, retro TV görünümü.\nEbeveynlerinizin tanıyacağı vintage bir estetik için bir CGA/EGA paletiyle birleştirildiğinde etkilidir.",
+      "cin.scanLinesIntensity": "Tarama çizgilerinin siyahlık derinliği. 0 = saydam (tarama çizgileri\naktif olsa bile kararma yok). 1 = tamamen siyah. Tarama çizgileri 0'daysa etkisi yoktur.",
+      "cin.godRays": "Güneşin ekrandaki konumundan yayılan alacakaranlık ışınlarının (güneş ışınları) yoğunluğu.\nHafif bir ekran-uzayı efekti, ek render geçişi yok — özellikle\nufka yakın ya da güneş kısmen bir ağacın ya da bir kulenin arkasına gizlendiğinde görünür.\n0 = devre dışı (sıfır GPU maliyeti).",
+      "cin.godRaysLength": "Ekranın bir kesri olarak, görüntülenen piksel ile güneş arasındaki ışınların erişimi.\nDüşük = güneş etrafında yerelleşmiş kısa ışınlar. Yüksek = kadrajın\nbüyük bir kısmına yayılan ışınlar.",
+      "cin.godRaysDiffusion": "Işınların güneşe doğru yolundaki sönümlenmesi.\nDüşük = kısa, keskin ışınlar. Yüksek = ışık kaynağından uzağa\nyayılan uzun, yumuşak ışınlar.",
+      "cin.godRaysThreshold": "Bir pikselin ışık kaynağı (gökyüzü, güneş) olarak kabul edilip ışınlara\nkatkıda bulunduğu parlaklık eşiği. Düşük = daha fazla alan katkıda bulunur\n(ışınlar daha belirgin). Yüksek = yalnızca en parlak alanlar (güneşin kendisi) onları üretir.",
+      "cin.godRaysLayers": "Pürüzsüz ışın gradyanını üst üste yığılmış yoğunluk dilimlerine böler — sürekli bir hale yerine\nkatmanlı, yarı saydam örtüler (mille-feuille) efekti.\n0 = klasik pürüzsüz gradyan. 1 = belirgin katmanlanma, görünür şekilde tabakalı ışınlar.",
+      "cin.bloomIntensity": "Bloom yoğunluğu: parlak alanların (güneş, ay,\nyıldızlar, aydınlatılmış pencereler, arayüz öğeleri) etrafında yumuşak, parlayan bir hale. Yalnızca aşağıda ayarlanan\neşiğin üzerindeki pikselleri etkiler — görüntünün tamamını asla bulanıklaştırmaz.\n0 = devre dışı (sıfır GPU maliyeti).",
+      "cin.bloomThreshold": "Bir pikselin bloom'a katkıda bulunduğu parlaklık eşiği.\nDüşük = daha fazla alan (orta derecede parlak olanlar bile) bir hale üretir.\nYüksek = yalnızca en yoğun kaynaklar (güneş, lambalar) bir tane üretir.",
+      "cin.bloomRadius": "Bloom kaynak pikselleri etrafında uygulanan bulanıklığın ekran pikseli cinsinden yarıçapı.\nDüşük = sıkı, keskin hale. Yüksek = daha geniş, daha dağınık hale.",
+      "cin.bloomSoftness": "Bloom eşiğindeki geçişin yumuşaklığı.\nDüşük = \"katkıda bulunur\" ve \"bulunmaz\" arasında keskin bir kesim.\nYüksek = kademeli geçiş, kaynakların kenarında daha yumuşak bir hale.",
+      "cin.crtCurvature": "CRT tarzı ekran eğriliği: görüntüyü kavisli bir yüzeyde gösteriliyormuş\ngibi büker. Yukarıdaki fıçı (lens) bozulmasından bağımsızdır.\n0 = deformasyon yok (sıfır GPU maliyeti).",
+      "cin.crtMask": "Ekran eğriliği uygulandıktan sonra kadrajın dışında kalan alanları\ngermek yerine maskeler (siyah kenarlar). 0 = gerilmiş kenarlar (maske yok),\n1 = ekran dışı kenarlar tamamen siyaha maskelenir. Eğrilik 0'daysa etkisi yoktur.",
+      "cin.crtCornerDark": "Bir CRT tüpünün tipik özelliği olan, ekran köşelerinin ek olarak kararması.\n0 = kararma yok. Ekran eğriliği 0'daysa etkisi yoktur.",
+      "water.foamWidth": "Kıyıya yakın köpük şeridinin erişimi (metre cinsinden).\n0 = kıyı köpüğü yok. Yüksek değerler = kıyı boyunca geniş bir beyaz şerit.",
+      "water.foamScale": "Köpük dokusunun ölçeği. Değer ne kadar yüksekse, köpük desenleri o kadar ince ve yoğun olur.\nDüşük = büyük lekeler, yüksek = ince, köpük benzeri tane.",
+      "water.foamDensity": "Kıyı köpüğü için tetikleme eşiği. Değer ne kadar yüksekse, köpük kenara yakın o kadar fazla yüzeyi kaplar.",
+      "water.foamAmbient": "Tüm su yüzeyinde görünen (sadece kıyıda değil) ortam köpüğü için eşik.\n0 = açık denizde kusursuz pürüzsüz yüzey. Yüksek değerler = her yerde dağılmış köpüklü dalgalar.",
+      "water.foamSharp": "Köpük kenarının keskinliği. Düşük = yumuşak, dağınık geçiş. Yüksek = keskin, kesilmiş hatlı anahat.",
+      "water.foamSpeed": "Köpüğün animasyon hızı (zaman içinde kayan desen). 0 = dondurulmuş, statik köpük.",
+      "water.deepDistance": "Sığ/derin renk gradyanının yayıldığı, kıyıdan açık suya olan mesafe.\nDüşük = kenara yakın sıkı geçiş. Yüksek = geniş bir alana yayılan gradyan.",
+      "water.opacity": "Su yüzeyinin temel opaklığı. Düşük = dibi gösteren yarı saydam su. Yüksek = opak su.",
+      "wake.armWidth": "Teknenin arkasındaki V şeklindeki izin her bir kolunun yarı genişliği.",
+      "wake.spread": "V'nin ıraksaması: iki kolun tekneden uzaklaştıkça birbirinden ne kadar hızlı ayrıldığı.",
+      "wake.length": "İzin, kaybolmadan önce teknenin arkasında sönümlendiği uzunluk.",
+      "wake.scale": "İzin köpük deseninin ölçeği. Değer ne kadar yüksekse, tane o kadar ince olur.",
+      "wake.density": "İzin köpük kaplaması. Düşük = göze çarpmayan iz, yüksek = yoğun köpük izi.",
+      "wake.opacity": "İzin maksimum opaklığı, teknenin hemen arkasında en güçlü, sonra uzunlukla birlikte söner.",
+      "wind.wheat.strength": "Buğday başaklarının salınımının genliği. 0 = hareketsiz.",
+      "wind.wheat.speed": "Buğdayın rüzgârdaki salınım hızı.",
+      "wind.grass.strength": "Çim yapraklarının salınımının genliği.",
+      "wind.grass.speed": "Çimin rüzgârdaki salınım hızı.",
+      "wind.grass.sway": "Rüzgâr gürültüsünden bağımsız, her bir yaprağın ek sinüzoidal sallanması.",
+      "wind.tree.strength": "Ağaç tepelerinin salınımının genliği. Bu ayarı değiştirmek, zaten dikilmiş ağaçların gölgelendiricilerini yeniden derler (kısa bir takılma olabilir).",
+      "wind.tree.speed": "Ağaçların rüzgârdaki salınım hızı.",
+      "wind.tree.frequency": "Gövde/yaprak boyunca ana rüzgâr dalgasının uzamsal frekansı.",
+      "wind.tree.turbulence": "Ana rüzgâr dalgasına eklenen esintilerin ve ikincil ayrıntının yoğunluğu.",
+      "wind.tree.gustStrength": "Genel harekette esintilerin (daha yavaş, daha geniş varyasyon) ağırlığı.",
+      "wind.tree.detailStrength": "Genel harekette ince ayrıntının (hızlı dalgalanma) ağırlığı.",
+      "cloud.coverage": "Ufuktaki bulut örtüsü. 0 = açık gökyüzü, 1 = kapalı gökyüzü.",
+      "cloud.scale": "Bulut deseninin ölçeği. Yüksek değer = daha küçük, daha ince bulutlar; düşük değer = geniş kütleler.",
+      "cloud.speed": "Bulutların ufuktaki sürüklenme hızı.",
+      "stats.drawCalls": "Three.js'in bu karede yaptığı toplam render çağrısı (draw call) sayısı.\nHer görünür nesne en az 1 draw call'a mal olur — gölgeler daha fazlasını ekler.\n> 200 dc: ellerinden geleni yapan mobil GPU'larda performansı izleyin.",
+      "stats.trackedDc": "İzlenen nesne kategorilerine (karolar, ağaçlar, raylar…) atfedilen draw call'lar.\nToplamdan farkı = kategorize edilmemiş draw call'lar (arayüz, yardımcılar, gökyüzü kutusu…) — GPU'nun karışık çekmecesi.",
+      "stats.shadows": "Gölge render etme (gölge haritası) için kullanılan tahmini draw call sayısı.\nGölge \"düşüren\" her nesne, sahneyi güneşin bakış açısından yeniden render eder.\nBu maliyeti düşürmek için shadowMapSize'ı ya da gölge düşüren nesne sayısını azaltın.",
+      "stats.triangles": "Bu karede render edilen toplam üçgen sayısı.\nGeometrik karmaşıklığın bir göstergesi — gölgeler bu rakamı ikiye katlar.\nLOD (ayrıntı seviyesi) mesh'leri, siz yakından bakmadığınızda dünyayı sessizce sadeleştirerek mesafede bu sayıyı azaltır.",
+      "stats.objects": "Sahnede izlenen toplam 3D nesne (Mesh, Group…) sayısı.\nDraw call'larla tam olarak eşleşmez: bir nesne birden fazla geçiş üretebilir.",
+      "stats.textures": "GPU belleğinde aktif doku sayısı.\nSerbest bırakılmamış bir doku VRAM'de kalır. Yeni karolar yüklendikten sonra izlemeye değer — VRAM'in de duyguları var.",
+      "stats.shaders": "Derlenmiş ve aktif gölgelendirici programı (GLSL) sayısı.\nHer malzeme + define kombinasyonu = bir gölgelendirici. Çok fazla varyant = ilk karede takılma, GPU'nun sahne korkusu eşdeğeri.",
+      "game.tiles": "Oyunun başından beri tahtaya yerleştirilen toplam karo sayısı.\nHer karo, bileşimine bağlı olarak bir ya da daha fazla biyoma ait olabilir.",
+      "game.score": "Skor: bu oyunda kazandığınız puanlar. İddiaya göre önemli olan tek sayı.",
+      "game.efficiency": "Verimlilik = skor ÷ yerleştirilen karo, anlamlı olması için çok az karo yerleştirildiğinde azaltılır.\nDünya sıralaması (sitenin Skor Tablosu bölümü) HAM skora değil BU verimliliğe dayanır! Büyükannenizin her zaman söylediği gibi, nicelikten önce nitelik.",
+      "game.mills": "Izgarada bulunan değirmen sayısı.\nHer büyük buğday tarlası bölgesinin merkezinde, imar iznine hiç aldırmadan otomatik olarak bir değirmen belirir.",
+      "game.trains": "Oluşturulan tren hatları: bir hat = kesintisiz raylarla bağlanan iki istasyon.\nHat ne kadar uzunsa, skor puanı o kadar yüksektir.",
+      "game.boats": "Aktif tekneler: karayla çevrelenmiş her su kütlesinde bir tekne belirir.\nHer tekne \"yüzer\" kaldığı sürece puan üretir — deniz sigortası dahil değildir.",
+      "game.comets": "Avlanan kuyruklu yıldızlar: tahta boyunca kayan rastgele olaylar.\nDoğru anda tahmin edilen noktaya bir karo yerleştirmek onları avlamanızı sağlar. Oyunlaştırılmış astronomi ödevi.",
+      "game.grass": "Yerleştirilen toplam çayır karosu.\nMaks. alan = en büyük bitişik çayır bölgesi (aynı biyoma sahip komşu karolar).",
+      "game.largestGrass": "En büyük bitişik çayır bölgesi (bağlı karo sayısı olarak).\nBüyük bitişik bir bölge, oyun sonunda daha fazla puan kazandırır.",
+      "game.field": "Yerleştirilen toplam buğday tarlası karosu.\nKöylere ya da nehirlere komşu tarlalar bonus verir.",
+      "game.largestField": "En büyük bitişik tarla bölgesi. Nihai hasat bonusunu belirler.",
+      "game.forest": "Yerleştirilen toplam orman karosu.\nSık ormanlar (büyük bölgeler) yaban hayatı sığınaklarıdır ve daha fazla puan kazandırır.",
+      "game.largestForest": "En büyük bitişik orman. 7 karodan büyük ormanlar bazen özel olayları tetikler.",
+      "game.house": "Yerleştirilen toplam köy karosu.\nİzole evler az değerlidir; demiryolu ağına iyi bağlanmış yoğun bir köy çok kazandırır. Emlak mantığı, altıgen sürümü.",
+      "game.largestHouse": "En büyük bitişik köy. Bir köy = komşu evler.\nSayıca çok ve yoğun köyler kentsel bonusu en üst düzeye çıkarır.",
+      "game.water": "Yerleştirilen toplam su karosu (göller, nehirler, deniz).\nDiğer biyomlarla sınırı olan su, değerli kıyı bölgeleri yaratır.",
+      "game.largestWater": "En büyük bitişik su kütlesi. 5 karodan büyük bir göl ekstra tekneleri barındırabilir.",
+      "game.rail": "Yerleştirilen toplam ray karosu.\nRaylar tek başına hiçbir şey kazandırmaz — bir hat yaratan şey iki istasyon arasındaki bağlantıdır.",
+      "game.largestRail": "En uzun bitişik demiryolu (karo cinsinden). Ağın maksimum erişiminin bir göstergesi.",
+      "game.activeTile": "Sıradaki yerleştireceğiniz karo.\nİmleci Z/Q/S/D ile hareket ettirin, fare tekerleğiyle döndürün ve BOŞLUK ile yerleştirin.\nKaronun her yüzü bir biyoma karşılık gelir — bağlantılarınızı planlayın!",
+      "game.nextTile": "Mevcut karoyu yerleştirdikten sonra oyuna girecek sıradaki karo.\nOnun için en iyi noktayı hazırlamak üzere şeklini önceden tahmin edin — gerçek hayatın aksine, biraz öngörü uzun bir yol kat eder.",
+      "game.deckRemaining": "Çekiliş destesinde kalan karo sayısı.\nDeste boşaldığında oyun sona erer — her yerleşimi değerli kılın!",
+      "hs.summary": "Oyun özeti: yerleştirilen karolar, tren hatları, tekneler, avlanan kuyruklu yıldızlar.",
+      "hs.grass": "Çayır — toplam karo / en büyük bitişik bölge.",
+      "hs.field": "Buğday tarlası — toplam karo / en büyük bitişik bölge.",
+      "hs.forest": "Orman — toplam karo / en büyük bitişik bölge.",
+      "hs.house": "Köy — toplam karo / en büyük bitişik bölge.",
+      "hs.water": "Su — toplam karo / en büyük bitişik kütle.",
+      "hs.rail": "Demiryolu — toplam karo / en uzun bitişik hat.",
+      "fps.fps": "Three.js motoru tarafından render edilen saniyedeki kare sayısı.\n60 FPS = akıcı render, kare bütçesine uyulmuş. < 30 FPS = fark edilir yavaşlamalar.\nKare bütçesi (16,7 ms) sürekli aşıldığında değer kırmızıya döner — motorun duyulabilir şekilde iç çekme yöntemi.",
+      "fps.adj": "Geçerli akıcılığın niteliksel değerlendirmesi.\nYeşil (Mükemmel / Akıcı): her şey yolunda. Turuncu (İdare Eder / Kabul Edilebilir): kabul edilebilir ama göz kulak olun.\nKırmızı (Zorlanıyor / Zorda / Sınırda): motor baskı altında — darboğazı arayın, belki daha az koyun.",
+      "fps.cpu": "JavaScript iş parçacığı tarafından tüketilen kare bütçesinin (16,7 ms) yüzdesi.\nOyun mantığını, katman güncellemelerini, animasyonları ve GC duraklamalarını içerir.\n> %80: darboğaz CPU'dur — güncelleme sıklığını ya da aktif katman sayısını azaltın.",
+      "fps.gpu": "GPU render etme tarafından tüketilen kare bütçesinin yüzdesi.\nGerçek, asenkron bir GPU zamanlama sorgusu (EXT_disjoint_timer_query_webgl2) ile ölçülür —\ngörüntülenen değer 1 ile birkaç kare arasında gecikebilir. Bu uzantı bu\nsürücüde/tarayıcıda kullanılamıyorsa, ellerinden geleni yapan, daha az güvenilir bir CPU gönderim zamanlayıcısına (\"≈\" önekiyle) geri döner.\n> %80: GPU doymuş — üçgenleri/fragmanları (bitki örtüsü, son işleme), draw call'ları ya da gölgeleri azaltın.",
+      "menu.solo": "Tek kişilik mod — yalnız başınıza, kendi hızınızda, kimseye hesap vermeden oynayın.\nOyun bittiğinde skorlarınız küresel skor tablosuna gönderilir.",
+      "menu.multi": "Çok oyunculu mod — diğer oyuncularla gerçek zamanlı oynayın.\nBir oda oluşturup kodu paylaşın, ya da mevcut bir oyuna katılın.",
+      "menu.platiste": "Düz geometri — ızgara yatay bir düzlem üzerinde durur.\nDaha iyi okunabilirlik ve öngörülebilir davranış: hem yeni başlayanlar hem de gelenekçiler için önerilir.",
+      "menu.bouliste": "Küresel geometri — karolar bir gezegenin eğriliğini takip eder.\nDaha sürükleyici bir görünüm, ama kavisli ızgara ilk başta kafa karıştırıcı olabilir — bilim hiçbir zaman kolay olmak üzere tasarlanmadı.",
+      "menu.confirm": "Onaylayın ve sonraki adıma geçin.",
+      "menu.create": "Yeni bir çok oyunculu oda oluşturun.\nBenzersiz bir kod otomatik olarak oluşturulur — size katılabilmeleri için diğer oyuncularla paylaşın.",
+      "menu.join": "Yukarıda gösterilen kodla mevcut bir odaya katılın.",
+      "menu.back": "Ana ekrana dön.",
+      "game.gridPercent": "Oyunun başından beri ızgaraya yerleştirilen karo sayısı.\nHer yerleşim bu sayacı artırır, çok oyunculu modda da dahil.",
+      "game.lastScore": "Son yerleşimde kazanılan puanlar.\nKaro bitişik bir bölgeyi büyüttüyse ya da kapattıysa bölge bonusunu, artı görev bonuslarını içerir.",
+      "game.newGame": "Yeni bir oyun başlatın.\nGeçerli oyun aktif ve oynanabilir kalır — menüden istediğiniz zaman ona geri dönebilirsiniz, gücenmek yok.",
+      "game.abandonGame": "Geçerli oyunu terk edin.\nOyun kalıcı olarak kapatılacaktır: onu tekrar oynayamayacak ya da yeni bir skor gönderemeyeceksiniz. Akıllıca seçin — bu geri dönüşü olmayan bir karar."
+    },
+    "missionHelp": {
+      "forest": "Orman 🌲 sektörlü karolar yerleştirin.\nTahtaya yerleştirilen her orman üçgeni bu görevi ilerletir.\nYoğun bölgeler oyun sonunda daha fazla puan kazandırır — ağaçlar arkadaşlığı takdir ediyor.",
+      "house": "Köy 🛖 sektörlü karolar yerleştirin.\nYerleştirilen her ev üçgeni bu görevi ilerletir.\nDemiryolu ağına bağlı köyler özellikle kârlıdır — konum, konum, konum.",
+      "rail": "Ray 🛤️ sektörlü karolar yerleştirin.\nYerleştirilen her demiryolu üçgeni bu görevi ilerletir.\nRaylar, her iki ucunda bir istasyon olmadan tek başına hiçbir şey kazandırmaz — hırsın bir varış noktasına ihtiyacı vardır.",
+      "water": "Su 💧 sektörlü karolar yerleştirin.\nYerleştirilen her su üçgeni bu görevi ilerletir.\nBüyük su kütleleri tekneleri barındırabilir.",
+      "grass": "Çayır 🌿 sektörlü karolar yerleştirin.\nYerleştirilen her çayır üçgeni bu görevi ilerletir.\nBüyük bitişik çayır bölgeleri alan bonusu kazandırır.",
+      "field": "Buğday tarlası 🌾 sektörlü karolar yerleştirin.\nYerleştirilen her tarla üçgeni bu görevi ilerletir.\nKöylere ya da nehirlere yakın tarlalar bonus verir — iyi komşuluk kazandırır.",
+      "train": "Kesintisiz raylarla 🚂 iki istasyonu birbirine bağlayın.\nHer yeni tamamlanan tren hattı bu görevi ilerletir.\nHat ne kadar uzunsa, skor o kadar yüksektir.",
+      "boat": "Karayla çevrelenmiş su kütleleri oluşturun ⛵.\nKarayla çevrelenmiş her gölde otomatik olarak bir tekne belirir.\nHer yeni tekne bu görevi ilerletir — lansman töreni gerekmez.",
+      "mill": "Büyük buğday tarlası bölgeleri inşa edin ⚙️.\nYeterince büyük her tarla bölgesinin merkezinde otomatik olarak bir değirmen belirir.\nHer yeni değirmen bu görevi ilerletir."
+    },
+    "missionTitles": {
+      "forest": {
+        "one": "{target} ağaçlık bir orman yetiştir",
+        "other": "{target} ağaçlık bir orman yetiştir"
+      },
+      "house": {
+        "one": "{target} evlik bir köy inşa et",
+        "other": "{target} evlik bir köy inşa et"
+      },
+      "rail": {
+        "one": "{target} raylık bir demiryolu uzat",
+        "other": "{target} raylık bir demiryolu uzat"
+      },
+      "water": {
+        "one": "{target} karolik bir su yolu bağla",
+        "other": "{target} karolik bir su yolu bağla"
+      },
+      "grass": {
+        "one": "{target} karolik bir çayır genişlet",
+        "other": "{target} karolik bir çayır genişlet"
+      },
+      "field": {
+        "one": "{target} buğday tarlası karosu ek",
+        "other": "{target} buğday tarlası karosu ek"
+      },
+      "train": {
+        "one": "{target} tren işlet",
+        "other": "{target} tren işlet"
+      },
+      "boat": {
+        "one": "{target} tekne suya indir",
+        "other": "{target} tekne suya indir"
+      },
+      "mill": {
+        "one": "{target} değirmen döndür",
+        "other": "{target} değirmen döndür"
+      }
+    },
+    "ui": {
+      "modals": {
+        "scoreEnd": {
+          "kicker": "Oyun bitti — nihai skor",
+          "save": "Kaydet"
+        },
+        "abandon": {
+          "kicker": "Oyunu terk et?",
+          "sub": "Bu oyuna daha sonra devam edilemez.",
+          "cancel": "İPTAL",
+          "confirm": "TERK ET"
+        }
+      },
+      "hud": {
+        "player": "OYUNCU",
+        "room": "ODA",
+        "abandon": "TERK ET",
+        "newGame": "YENİ OYUN",
+        "statsTitle": "OYUN İSTATİSTİKLERİ",
+        "mills": "Değirmenler",
+        "trains": "Trenler",
+        "boats": "Tekneler",
+        "comets": "Kuyruklu yıldızlar",
+        "total": "Toplam",
+        "grassMax": "Bitişik",
+        "fieldMax": "Bitişik",
+        "forestMax": "Bitişik",
+        "houseMax": "Bitişik",
+        "waterMax": "Bitişik",
+        "railMax": "Bitişik",
+        "biomes": {
+          "grass": "Çayır",
+          "field": "Buğday tarlası",
+          "forest": "Orman",
+          "house": "Köy",
+          "water": "Su",
+          "rail": "Demiryolu"
+        },
+        "activeTileTitle": "MEVCUT KARO",
+        "nextTileTitle": "SIRADAKİ KARO",
+        "deckRemaining": "KALAN",
+        "tilesPlaced": "YERLEŞTİRİLEN",
+        "missionsTitle": "AKTİF GÖREVLER",
+        "noMission": "Görev yok",
+        "efficiencyLabel": "Verimlilik",
+        "scoreLabel": "Skor"
+      },
+      "help": {
+        "title": "Yardım",
+        "closeAria": "Yardımı kapat",
+        "objective": {
+          "title": "Temel kurallar",
+          "text": "Altıgen karolar yerleştirin, eşleşen dokuları bağlayın ve görevleri tamamlayın. İyi hizalanmış her kenar kazandırır; su ve demiryolu daha da fazla kazandırır — dünya, arada bir de olsa önden plan yapanları ödüllendirir.",
+          "points": {
+            "tile": "yerleştirilen her karo için",
+            "edge": "komşu bir karoya karşı eşleşen her kenar için",
+            "waterRail": "her su/su ya da ray/ray bağlantısı için",
+            "surround": "bir karo 6 tarafından çevrelendiğinde bonus",
+            "mission": "tamamlanan her görev için",
+            "bonus": "bir bonus hücreye karo yerleştirirseniz"
+          }
+        },
+        "placement": {
+          "title": "Yerleşim",
+          "items": [
+            "Oyun 50 karoyla başlar.",
+            "İlki herhangi bir yere yerleştirilebilir; sonrakiler yerleştirilmiş bir karoya değmelidir — havada asılı köy yok, kusura bakmayın.",
+            "Deste boşaldığında oyun sona erer.",
+            "Oynanabilir alan her yerleşimle genişler."
+          ]
+        },
+        "waterRail": {
+          "title": "Su ve demiryolu",
+          "text": "Su ve demiryolu katı ağlardır ve yerleştirilmesi daha zordur. Karşılığında, her doğru bağlantı daha fazla puan kazandırır — yüksek risk, yüksek ödül, çıkmaz sokaklara sıfır tolerans.",
+          "water": "yalnızca suya bağlanır: +25",
+          "rail": "yalnızca raya bağlanır: +25"
+        },
+        "bonusCells": {
+          "title": "Bonus hücreler",
+          "text": "Izgarada 1 ile 4 arasında bonus hücre oluşturulur. Herhangi bir yerleşim kuralını değiştirmezler: birine karo yerleştirmeyi başarırsanız, kaybolur ve anında +500 puan kazandırır. Bu oyundaki bedava paraya en yakın şey.",
+          "label": "isteğe bağlı hedef, saf puan, sıfır risk"
+        },
+        "blackCells": {
+          "title": "Siyah hücreler",
+          "text": "Siyah hücreler, ızgarada zaten bulunan özel karolardır. Joker gibi davranırlar: çevrelerinde eksik olan her şeyi tamamlarlar ve komşu herhangi bir dokuyla bağlantıyı kabul ederler — altıgen dünyasının diplomatları.",
+          "label": "herhangi bir komşu kenarla uyumlu sayılır"
+        },
+        "textures": {
+          "title": "Dokular ve değerler",
+          "field": {
+            "label": "Buğday tarlası",
+            "code": "1-2 demet"
+          },
+          "forest": {
+            "label": "Orman",
+            "code": "1-6 ağaç"
+          },
+          "grass": {
+            "label": "Çayır",
+            "code": "1"
+          },
+          "house": {
+            "label": "Köy",
+            "code": "1-4 ev"
+          },
+          "water": {
+            "label": "Su",
+            "code": "1"
+          },
+          "rail": {
+            "label": "Ray",
+            "code": "1"
+          }
+        },
+        "missions": {
+          "title": "Görevler",
+          "text1": "Her yeni mevcut karo belirdiğinde, bir görev eklenme ihtimali %20'dir. Orman, köy, demiryolu, su yolu, çayır, buğday tarlası, görünür trenler, tekneler ya da değirmenler isteyebilir — dünyanın rastgele dağıtılan talepleri.",
+          "text2": "Ödül: +100 puan ve +3 karo. Hedefler türe göre ilerler; tamamlanan bir görev kendi şanına bürünerek 5 tur boyunca görünür kalır. Gerçek değerler önemlidir: çayır/su/ray = 1; buğday tarlası = 1-2; ev = 1-4; orman = 1-6 ağaç. Değirmenler ⚙️ aktif büyük tarla bölgelerinin sayısını sayar."
+        },
+        "controls": {
+          "title": "Kontroller",
+          "moveCamera": "Kamerayı hareket ettir",
+          "resetCamera": "Kamerayı sıfırla",
+          "zoom": "Yakınlaştır / uzaklaştır",
+          "undo": "Son hamleyi geri al",
+          "toggleHelp": "Bu yardımı göster / gizle",
+          "muteSound": "Tüm sesleri kapat / aç",
+          "muteVoice": "Sesli duyuruları kapat / aç",
+          "immersive": "Sürükleyici mod",
+          "superImmersive": "Süper sürükleyici mod",
+          "speedUp": "Hareketi ve yakınlaştırmayı hızlandırır",
+          "wheelZoomRotate": "Mevcutsa yakınlaştır ya da döndür",
+          "rightClick": "Kamerayı döndür",
+          "perfHud": "FPS göstergesini göster / gizle",
+          "eda": "EDA göstergesini göster / gizle",
+          "snapshot": "Ekran görüntüsü al",
+          "gallery": "Ekran görüntüsü galerisini aç",
+          "replay": "Oyun tekrarı göstergesini göster / gizle",
+          "wheelKbd": "Tekerlek",
+          "leftClickKbd": "Sol tık",
+          "rightClickKbd": "Sağ tık",
+          "spaceKbd": "BOŞLUK",
+          "shiftSpaceKbd": "SHIFT+BOŞLUK"
+        }
+      }
+    },
+    "highscore": {
+      "saving": "Kaydediliyor...",
+      "saved": "Skor kaydedildi! Menüye dönülüyor...",
+      "error": "Yüksek skor hatası.",
+      "defaultName": "Oyuncu"
+    },
+    "multiplayerRooms": {
+      "modeCopy": "Yeni bir oyun oluşturun ya da bir kodla mevcut bir oyuna katılın.",
+      "nameLabel": "Takma ad",
+      "namePlaceholder": "Takma adınız",
+      "codeLabel": "Oyun kodu",
+      "codePlaceholder": "örn. 377EA7",
+      "availableRoomsLabel": "Mevcut oyunlar / yedekler",
+      "loadingRooms": "Oyunlar yükleniyor...",
+      "btnCreate": "OLUŞTUR",
+      "btnJoin": "KATIL",
+      "btnBack": "GERİ",
+      "selectExisting": "Mevcut bir oyun seçin",
+      "noRoomsFound": "/json/games içinde oyun bulunamadı",
+      "listUnavailable": "Liste kullanılamıyor - PHP sunucusu sessiz",
+      "roomsCount": {
+        "one": "{count} oyun mevcut / yedek",
+        "other": "{count} oyun mevcut / yedek"
+      },
+      "unknownDate": "bilinmeyen tarih",
+      "playerWord": {
+        "one": "oyuncu",
+        "other": "oyuncu"
+      },
+      "tileWord": {
+        "one": "karo",
+        "other": "karo"
+      },
+      "creatingRoom": "{code} oyunu oluşturuluyor...",
+      "missingCode": "Oyun kodu eksik.",
+      "joiningRoom": "{code} oyununa bağlanılıyor...",
+      "roomNotFound": "{code} oyunu bulundu, ama anlık görüntü eksik. Bayat JSON reddedildi.",
+      "defaultNamePrefix": "Oyuncu"
+    },
+    "startupMenu": {
+      "nameChoice": {
+        "title": "Adınız nedir?",
+        "label": "Adınız (ya da takma adınız)",
+        "placeholder": "örn. Ahmet",
+        "confirm": "DEVAM →"
+      },
+      "home": {
+        "title": "Oyun modunu seçin: tek kişilik ya da çok oyunculu.",
+        "solo": "TEK KİŞİLİK",
+        "multi": "ÇOK OYUNCULU"
+      },
+      "worldShape": {
+        "title": "Gezegeninizin geometrisini seçin:",
+        "flat": "DÜZ",
+        "globe": "KÜRE",
+        "note": "Başlamak için \"<i>düz</i>\"ü öneririz. Hizipleri oyun içinde istediğiniz zaman değiştirebilirsiniz, çünkü gezegenler bile kimlik krizine hak kazanır."
+      }
+    },
+    "preloader": {
+      "loading": "Altıgenler çağrılıyor…",
+      "loadingPct": "Altıgenler çağrılıyor… %{pct}",
+      "loadingCount": "{loaded} dosya / {total} dosya · {loadedMB} MB / {totalMB} MB — neredeyse tamam, muhtemelen"
+    },
+    "placementOverlay": {
+      "ok": "TAMAM",
+      "outOfGrid": "IZGARA DIŞI",
+      "forbidden": "YASAK",
+      "incompatibleNetwork": "UYUMSUZ AĞ",
+      "edgeTypes": {
+        "field": "tarla",
+        "forest": "orman",
+        "water": "su",
+        "rail": "ray",
+        "house": "ev",
+        "grass": "çayır"
+      }
+    },
+    "multiplayerClient": {
+      "unreadableResponse": "Okunamayan sunucu yanıtı ({status}): {text}",
+      "serverError": "Sunucu hatası {status}"
+    },
+    "kbdHint": "H veya ESC&nbsp;→ yardım &nbsp;|&nbsp; M&nbsp;→ sessiz &nbsp;|&nbsp; T&nbsp;→ sesi kapat &nbsp;|&nbsp; BOŞLUK&nbsp;→ sürükleyici &nbsp;|&nbsp; SHIFT+BOŞLUK&nbsp;→ süper sürükleyici",
+    "superImmersifExitHint": "Süper sürükleyici moddan çıkmak için BOŞLUK",
+    "langName": "Türkçe",
+    "tts": {
+      "pointsAnnounce": "{n} puan!",
+      "voiceOn": "Ses açık",
+      "voiceOff": "Ses kapalı",
+      "newMission": "Yeni görev: {title}",
+      "missionCompleted": "Aferin! Görev tamamlandı! Dünya onaylıyor.",
+      "edaOpened": "Sanat yönetimi editörü",
+      "helpOpened": "Yardım",
+      "millsCount": "{n} değirmeniniz var",
+      "trainsCount": "{n} treniniz var",
+      "boatsCount": "{n} tekneniz var",
+      "cometsCount": "{n} kuyruklu yıldızınız var",
+      "languageChanged": "Türkçe dili",
+      "themeChanged": "{theme} teması"
+    },
+    "fpsAdjectives": {
+      "disastrous": "Felaket",
+      "bad": "Kötü",
+      "mediocre": "Vasat",
+      "passable": "İdare eder",
+      "good": "İyi",
+      "splendid": "Mükemmel"
+    }
+  }
+}

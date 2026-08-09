@@ -25,7 +25,7 @@ const _jsonCache = {}; // { fr: {...}, en: {...}, es: {...} } — évite de re-f
 // réduit toute 3e langue à 'fr'. Centralisé ici : LANG_FILES est la SEULE source de vérité
 // pour la liste des langues supportées et leur fichier JSON associé. Ajouter une langue =
 // une ligne ici (+ une <option> dans le <select> du HUD), rien d'autre à toucher.
-export const LANG_FILES = { fr: 'french', en: 'english', es: 'spanish', it: 'italian', pt: 'portuguese', 'fr-CA': 'fr-CA', de: 'german', ru: 'russian', 'fr-MED': 'french-medieval' };
+export const LANG_FILES = { fr: 'french', en: 'english', es: 'spanish', it: 'italian', pt: 'portuguese', 'fr-CA': 'fr-CA', de: 'german', ru: 'russian', 'fr-MED': 'french-medieval', nl: 'dutch', pl: 'polish', tr: 'turkish' };
 
 export function getGameLang() {
   try {

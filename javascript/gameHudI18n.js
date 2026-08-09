@@ -33,8 +33,49 @@ function applyGameI18n(data) {
   });
 }
 
+// 2026-08-08 — demande explicite : date de la dernière release à côté de la
+// pastille de version ingame (#gameVersionBadge, cf. css/base.css + game.php),
+// reformatée dans la langue en cours — MÊME logique que #heroVersionDate sur
+// la prez (index.php::updateVersionDate), dupliquée ici plutôt qu'importée
+// (index.php n'est pas dans le graphe de modules ES du jeu, même raison que
+// TTS_LOCALES dupliquée dans ttsAnnouncer.js/snapshotsPage.js/replaysPage.js).
+// BCP-47 le plus proche pour chaque code de langue interne du jeu.
+const GAME_VERSION_DATE_LOCALES = {
+  fr: 'fr-FR',
+  en: 'en-US',
+  es: 'es-ES',
+  it: 'it-IT',
+  pt: 'pt-PT',
+  'fr-CA': 'fr-CA',
+  de: 'de-DE',
+  ru: 'ru-RU',
+  nl: 'nl-NL',
+  pl: 'pl-PL',
+  tr: 'tr-TR',
+  // Pas de locale BCP47 dédiée pour le français médiéval → repli sur le
+  // français standard, même choix que TTS_LOCALES (ttsAnnouncer.js).
+  'fr-MED': 'fr-FR',
+};
+
+function updateGameVersionDate(lang = getGameLang()) {
+  const el = document.getElementById('gameVersionDate');
+  if (!el || !window.HEXISTENZ_VARS_MTIME) return;
+  const locale = GAME_VERSION_DATE_LOCALES[lang] ?? GAME_VERSION_DATE_LOCALES.fr;
+  try {
+    el.textContent = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' })
+      .format(new Date(window.HEXISTENZ_VARS_MTIME));
+  } catch (_) {
+    // Locale non reconnue par le moteur JS (cas limite navigateur) — on garde
+    // le texte déjà affiché (rendu FR initial ou dernière langue valide)
+    // plutôt que de planter le reste du callback de rafraîchissement.
+  }
+}
+
 // S'enregistre auprès de gameLangReactive.js : appelé à chaque setGameLang() en jeu.
-registerLangRefresh(applyGameI18n);
+registerLangRefresh((data) => {
+  applyGameI18n(data);
+  updateGameVersionDate();
+});
 
 function _loadCurrentLangData() {
   const lang = getGameLang();
@@ -49,6 +90,11 @@ if (_initialLang !== 'fr') {
   _loadCurrentLangData()
     .then(applyGameI18n)
     .catch(err => console.error('[gameHudI18n] Impossible de charger la langue initiale', err));
+  // #gameVersionDate est rendu en FR par PHP (repli) — reformaté ici pour la
+  // langue initiale si elle diffère, même logique que le bloc data-i18n
+  // ci-dessus mais indépendante du fetch JSON (Intl.DateTimeFormat n'a besoin
+  // que du code de langue, pas du contenu traduit).
+  updateGameVersionDate(_initialLang);
 }
 
 // Exporté pour les modules qui construisent du DOM [data-i18n] APRÈS ce premier

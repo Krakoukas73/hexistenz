@@ -64,6 +64,33 @@ $cssVersion = time();
 $mtimesGame = array_filter(array_map(function ($f) { return file_exists($f) ? filemtime($f) : 0; }, $cssFilesGame));
 if ($mtimesGame) { $cssVersion = max($mtimesGame); }
 
+// 2026-08-08 — demande explicite : afficher la version du jeu en jeu (jusqu'ici
+// réservée à la prez, cf. index.php l.1-23, même pattern de lecture regex
+// exacte repris ici). Petite pastille discrète en bas à gauche, par-dessus le
+// cadre médiéval (z-index, cf. css/base.css).
+// 2026-08-08 (2e demande, "après la version en bas à gauche") : date de la
+// dernière release ajoutée à côté, MÊME logique que la pastille de la prez
+// (index.php l.1-34) — $varsMtimeGame lu ici (mtime de variables.js), rendu
+// PHP initial en français (repli, comme partout ailleurs dans ce fichier),
+// puis reformaté réactivement dans la langue en cours côté JS via
+// Intl.DateTimeFormat (cf. gameHudI18n.js::updateGameVersionDate — même
+// pattern que index.php::updateVersionDate, dupliqué plutôt qu'importé car
+// index.php n'est pas dans le graphe de modules ES du jeu).
+$gameVersion = '';
+$gameVersionDate = '';
+$varsFileGame = __DIR__ . '/javascript/variables.js';
+$varsMtimeGame = null;
+if (file_exists($varsFileGame)) {
+    $jsVars = file_get_contents($varsFileGame);
+    if (preg_match("/HEXISTENZ_VERSION\s*=\s*'([^']+)'/", $jsVars, $mVer)) {
+        $gameVersion = $mVer[1];
+    }
+    $varsMtimeGame = filemtime($varsFileGame);
+    $frMonthsGame = [1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril', 5 => 'mai', 6 => 'juin',
+                     7 => 'juillet', 8 => 'août', 9 => 'septembre', 10 => 'octobre', 11 => 'novembre', 12 => 'décembre'];
+    $gameVersionDate = (int)date('j', $varsMtimeGame) . ' ' . $frMonthsGame[(int)date('n', $varsMtimeGame)] . ' ' . date('Y', $varsMtimeGame);
+}
+
 // 2026-08-01 — demande explicite : sur mobile, préférer "bleu" (léger) à
 // "ancien"/Médiéval (cadre décoratif 4 côtés, lourd en pixels sur petit
 // écran) — uniquement quand aucun thème n'a jamais été choisi par le
@@ -201,6 +228,18 @@ $defaultTheme = $isMobileUA ? 'bleu' : 'ancien';
        ingame-only que footerBanner/headerBanner. -->
   <div id="leftBanner" aria-hidden="true"></div>
   <div id="rightBanner" aria-hidden="true"></div>
+
+  <!-- 2026-08-08 — demande explicite : pastille de version ingame (jusqu'ici
+       réservée à la prez), en bas à gauche (2e demande : déplacée de la droite,
+       qui chevauchait les menus principaux), par-dessus le cadre médiéval
+       (z-index, cf. #gameVersionBadge en css/base.css).
+       2026-08-08 (3e demande) : date de la dernière release juste après,
+       rendue en français par PHP par défaut (repli), reformatée dans la
+       langue en cours côté JS (cf. gameHudI18n.js::updateGameVersionDate,
+       même principe que #heroVersionDate sur la prez, index.php). -->
+  <?php if ($gameVersion): ?>
+  <div id="gameVersionBadge" aria-hidden="true"><?= htmlspecialchars($gameVersion) ?><?php if ($gameVersionDate): ?> • <span id="gameVersionDate"><?= htmlspecialchars($gameVersionDate) ?></span><?php endif; ?></div>
+  <?php endif; ?>
 
   <div id="scorePopup" aria-hidden="true"></div>
 
@@ -449,6 +488,10 @@ $defaultTheme = $isMobileUA ? 'bleu' : 'ancien';
   </section>
 
   <script>window.HEXISTENZ_LANG_VERSION = <?= json_encode((string) $langVersion) ?>;</script>
+  <!-- 2026-08-08 — mtime de variables.js (ms), même rôle que HEXISTENZ_VARS_MTIME
+       dans index.php : lu par gameHudI18n.js::updateGameVersionDate() pour
+       reformater #gameVersionDate selon la langue en cours. -->
+  <script>window.HEXISTENZ_VARS_MTIME = <?= $varsMtimeGame ? ((int)$varsMtimeGame * 1000) : 'null' ?>;</script>
   <script type="module" src="javascript/main.js"></script>
   <script type="module" src="javascript/gameHudI18n.js"></script>
   <!-- 2026-07-20 — variation aléatoire manuscrit.png/manuscrit-2.png (thème

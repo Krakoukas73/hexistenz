@@ -1931,3 +1931,96 @@ Le dossier `cursors/kenney-cursor-pack/` déplacé sous `vendor/cursors/kenney-c
 ### Bump
 
 `HEXISTENZ_VERSION` : `v0.9.4.3` → `v1.0.0` (demande explicite — première version "stable" du projet).
+
+## 46. Classement prez à 19, pastille version+date ingame, polish curseur/typo médiéval, clarification captures/replays — chantier clos (2026-08-08, v1.0.0 → v1.0.2.4)
+
+Série de petites demandes ponctuelles du même jour, sans lien architectural entre elles hormis leur cible commune (prez `index.php` et/ou HUD in-game en thème médiéval). Toutes vérifiées en direct sur `http://192.168.0.41/hexistenz/` (jamais sur `hexistenz.world`).
+
+### a. Cap du classement de la prez — 10 → 19 entrées
+
+`index.php` : `$highscores = array_slice($clean, 0, 10)` → `array_slice($clean, 0, 19)` (~l.181), commentaire d'en-tête "top 19" (~l.127) et 3 commentaires internes mentionnant "jusqu'à 19" (~l.918, ~l.920, ~l.948). `json/highscores.json` ne contenait que 6 entrées réelles au moment de la vérification — pas un bug, juste peu de parties soumises au classement à ce jour (à ne pas confondre avec `/json/games/room_*.json`, cf. point f ci-dessous).
+
+### b. Soulignement `<strong>`/`<b>` en thème médiéval — bug récurrent, 5 rounds
+
+`[data-theme="ancien"] strong, [data-theme="ancien"] b { text-decoration: underline; }` (`css/themes/medieval.css` ~l.129, préexistant, posé comme marqueur d'emphase volontaire) peint un soulignement qui s'étend visuellement à travers les descendants inline d'un `<strong>`/`<b>` même si ceux-ci déclarent leur propre `text-decoration` — `text-decoration` n'est pourtant pas héritée au sens strict CSS, d'où plusieurs faux diagnostics en cours de route. Corrigé en 5 rounds successifs (3 signalements utilisateur, dont un explicitement qualifié de "problème récurrent"), chaque fois en élargissant une règle d'exception `text-decoration: none` construite autour de `[data-theme="ancien"] .stat-num` (`css/themes/medieval.css` ~l.1063-1116) :
+- **Round 1** : `.stat-num` seul — insuffisant, le HUD "Stats de partie" (`#statsPanel .stats-metrics`) n'utilise pas cette classe, ses chiffres sont directement des `<strong id="statGrass">` etc.
+- **Round 2** : ajout `.stats-metrics strong` — couvre enfin ce HUD.
+- **Round 3** : ajout `.stats-num-group strong` — les 4 compteurs moulins/trains/bateaux/comètes (`.stats-summary-row`) utilisent un conteneur différent, toujours ratés.
+- **Round 4** ("3e signalement") : ajout `.score-strip strong` — les nombres de bonus (+2/+10/+25/+50/+100/+500) de l'aide (touche H) sont des `<strong>` nus dans un 3e conteneur distinct.
+- **Round 5** (audit exhaustif demandé explicitement — "vérifie que d'autres conteneurs ne sont pas affectés... demande mon avis si modif") : grep de tous les `<strong>`/`<b>` statiques et générés en JS sur tout le projet → ajout `.fps-hud-row strong`/`.fps-hud-cat-count` (HUD FPS, touche F, 54 éléments générés en template string) et `.rule-line strong` (libellés Eau/Rail/Bonus/Joker du HUD Aide) — ce dernier acceptant de retirer un soulignement qui était à l'origine l'emphase intentionnelle posée au round de conception initial de `medieval.css`, sur demande explicite d'uniformiser à zéro soulignement.
+
+**Leçon consignée dans le CSS lui-même** (commentaires ~l.1069-1112) : face à un bug visuel "un conteneur avec du texte en gras", grep exhaustif dès le 1er signalement plutôt que de patcher container par container au fil de signalements répétés — c'est ce pattern qui a produit 3 allers-retours frustrants.
+
+### c. Curseur animé de pose de tuile actif au survol des menus/HUD
+
+`javascript/customCursor.js`, `CLICKABLE_SELECTOR` (~l.85-111, partagé entre la suspension du survol du cadre et le curseur animé tuile disponible/indisponible de `scene.js::setTileHoverCursor`) — jusque-là ne listait que des éléments réellement cliquables (bouton, lien, input…) ; en quittant une tuile disponible pour survoler la zone non cliquable d'un panneau (padding, texte, fond de menu), aucun sélecteur ne matchait et le curseur de pose restait affiché par-dessus le HUD. Fix : ajout de sélecteurs de CONTENEURS entiers — `#scorePanel`, `#statsPanel`, `.tileDeckBox`, `.missionsBox`, `#helpOverlay`, `.debug-light-panel`, `#highscoreModal`, `#abandonConfirmModal`. Vérifié via dispatch d'événements `mousemove` synthétiques sur chaque conteneur.
+
+### d. Pastille version + date ingame (`#gameVersionBadge`, `game.php` ~l.241)
+
+Ajout d'une pastille discrète affichant `$gameVersion` (regex sur `HEXISTENZ_VERSION`) + date de dernière release, en plusieurs rounds :
+- **Position/contraste** — d'abord bas-DROITE, invisible en thème médiéval : diagnostic initial erroné ("texte brun sur parchemin clair"), erratum après vérification aux captures — le coin bas-droit où vit la pastille est en réalité la partie SOMBRE du cadre (pierre/lierre foncé), pas le parchemin. Couleur unifiée sur les 2 thèmes (blanc translucide + double `text-shadow`), la surcharge brune médiévale spécifique retirée. Puis contraste/taille encore accentués sur retour "toujours pas lisible" (opacité 0.45 → 0.75, `text-shadow` renforcé). Repositionnée bas-GAUCHE (le bas-droit est pris par `.debug-light-panel`, les 9 boutons + HUD FPS/EDA). Taille finale +15% (10px → 11.5px), `css/base.css` ~l.49-61.
+- **Date** — `#gameVersionDate` (span), calculée côté PHP (`filemtime()` sur `variables.js`, mois en français, `game.php` ~l.80-91) puis reformatée côté JS par langue via `Intl.DateTimeFormat` dans `javascript/gameHudI18n.js::updateGameVersionDate()` (appelée à chaque `registerLangRefresh` + au chargement initial si langue ≠ fr) — même pattern que `#heroVersionDate`/`updateVersionDate()` déjà existant sur la prez (`index.php` ~l.1083), dupliqué plutôt qu'importé (le jeu et la prez ne partagent pas le même graphe de modules ES). Séparateur " • " ajouté entre version et date sur demande explicite.
+- **Conteneur en thème médiéval uniquement** (`[data-theme="ancien"] #gameVersionBadge`, `css/themes/medieval.css` ~l.1871-1877) — coins arrondis (`border-radius:8px`), fond sombre translucide `rgba(20, 14, 8, 0.44)` (posé à 0.55 puis réduit de 20% sur demande explicite "doit rester subtile"). Le thème Bleu garde le texte nu sans fond.
+- **Tentative équivalente sur la prez EXPLICITEMENT ANNULÉE** : une pastille `#prezVersionBadge` (bas-gauche, par-dessus le cadre médiéval prez) avait été ajoutée à `index.php` + `css/presentation.css`, câblée sur `updateVersionDate()`, puis entièrement retirée le même jour sur demande explicite ("c'était une erreur" — commentaire laissé en trace, `css/presentation.css` ~l.413-416). La prez garde donc seulement sa version en ligne dans le titre (`.hero-version-wrap`/`#heroVersionDate`), pas de pastille en coin — **ne pas la réintroduire par erreur** dans un futur round.
+
+### e. Typographie Enchanted-Land médiévale — 14px → 15px, resserrement tenté puis annulé
+
+9 sélecteurs `[data-theme="ancien"]` en police `EnchantedLand` passés de `font-size: 14px` à `15px` : `.score-title`, `.stats-title`, `.stats-summary-card span:not(.stats-emoji)`, `.stats-card-head span:not(.stats-icon)` (`css/base.css`) ; `.title`, `.hero-tagline` (`css/themes/medieval.css`) ; `.debug-light-main-title` (surcharge dans le bloc `[data-theme="ancien"]`, `css/eda.css` — le thème Bleu reste à 14px) ; `.mode-panel p`, `.multi-status` (`css/multiplayerUi.css`).
+
+Un resserrement `letter-spacing: -0.07em` (-7%), tenté en compensation de l'agrandissement sur les 9 mêmes sélecteurs, a été **entièrement annulé** sur retour utilisateur explicite ("moche et illisible") — tous repassés à `letter-spacing: normal`, conformément à la convention déjà établie de longue date ("aucun letter-spacing sur Enchanted-Land", posée au round du 2026-08-03, cf. §42/§43). Leçon : cette police (`size-adjust:180%` dans le `@font-face`, §42) a un rendu qui ne supporte pas le tracking négatif — toujours vérifier en live avant de figer ce type de compensation typographique "logique sur le papier".
+
+### f. Clarification `/json/games` vs `highscores.json` (question factuelle, pas un bug)
+
+`/json/games/room_CODE.json` (~50 fichiers au moment de l'audit) est la source de vérité de `multiplayer.php` (reprise de chronique via le menu "chroniques ouvertes/backups", `?multi=CODE`) **et** de la galerie de replays (`replays.php`/`replaysPage.js`, qui scanne ce dossier via `multiplayer.php?action=listall`). `highscore.php` ne touche **que** `json/highscores.json`, jamais `/json/games`. Donc : supprimer de vieux fichiers `/json/games/room_*.json` ne casse jamais le classement, mais rend la chronique correspondante définitivement non-reprenable et la retire de la galerie de replays. Aucun nom de fichier n'est codé en dur (`room_NEW.json`/`room_DEBUG.json`/`room_REPLAY.json` vus dans le dossier sont d'anciens codes de chronique saisis manuellement, pas des fichiers système).
+
+### Bump
+
+`HEXISTENZ_VERSION`, en 6 paliers successifs au fil des demandes du jour : `v1.0.0` → `v1.0.1` (lot de corrections soulignement) → `v1.0.2` (fixes de visibilité de la pastille version) → `v1.0.2.1` (schéma à 4 segments, demandé tel quel) → `v1.0.2.2` (retrait pastille prez) → `v1.0.2.3` (séparateur + conteneur arrondi médiéval + opacité -20%) → `v1.0.2.4` (agrandissement typo Enchanted-Land + annulation letter-spacing). Chaque bump validé via `node --check --input-type=module < javascript/variables.js`.
+
+---
+
+## 47. Passe d'humour sur les 9 fichiers de langue — chantier clos (2026-08-08, v1.0.2.4 → v1.0.2.5)
+
+Demande explicite : "davantage d'humour dans les 9 traductions de tous les texte, en particulier sur les versions FR, canadiennes et surtout XIIème siècle". Décisions produit validées par l'utilisateur avant exécution (`AskUserQuestion`) :
+- Le panneau technique EDA (réglages LUT/bloom/GPU/FPS/météo) reçoit désormais AUSSI de l'humour — **inverse la règle établie au §32/§43** qui l'imposait volontairement sobre/clair dans toutes les langues, y compris `fr-MED`, pour rester utilisable. Cette règle antérieure est donc caduque à partir de ce round.
+- Les libellés d'UI purement fonctionnels (boutons d'action, messages d'erreur bruts, labels de formulaire, raccourcis clavier bruts) restent SANS humour — doivent rester lisibles/actionnables en une fraction de seconde.
+- Les 6 langues étrangères (EN/ES/IT/PT/DE/RU) adaptent l'ESPRIT de l'humour à leur propre registre comique plutôt que de traduire littéralement les blagues françaises (un jeu de mots FR ne survit pas à la traduction mot à mot).
+
+**Exécution** : 9 agents en parallèle, un par fichier `json/languages/*.json`, chacun avec un brief dédié (contexte du jeu, calibrage du ton sur l'exemple déjà en place `factions.flat.desc`/`factions.globe.desc` — humour pince-sans-rire, jamais lourd), rappel des contraintes techniques (préserver clés/placeholders/balises HTML/`\n` à l'identique, ne jamais toucher aux libellés fonctionnels, valider via `python3 -c "import json; json.load(...)"` après coup). Les 9 fichiers validés syntaxiquement, structure de clés inchangée (vérifié par comparaison avant/après sur plusieurs fichiers), et vérification live sur 192.168.0.41 (fetch direct des JSON servis) confirmant le nouveau contenu.
+
+**Priorités respectées** (env. 70-250 textes retouchés par fichier selon la langue, jamais les libellés fonctionnels) :
+- **`french-medieval.json`** (priorité n°1 explicite) — le panneau EDA passe entièrement dans une métaphore de scriptorium/atelier de moine enlumineur (`eda.label` : "Éditeur de direction artistique (EDA)" → "Atelier du moine enlumineur (EDA)" ; en-têtes d'onglets, tooltips FPS/draw calls/bloom réécrits dans le même registre). Toujours orthographe strictement moderne (contrainte TTS, cf. §1/§46) — l'humour vient du décalage de registre (chroniqueur grave narrant des banalités modernes), jamais d'un archaïsme orthographique forcé.
+- **`fr-CA.json`** — humour québécois amplifié (ex. `scores.empty` : "Y'a encore rien pantoute au palmarès — sois le premier à poser une tuile.").
+- **`french.json`** — référence/base, humour dense sur tout le contenu narratif + panneau EDA (ex. `factions.globe.desc` : ajout de "Pour ceux qui font confiance à la NASA.", en écho à `factions.flat.desc` déjà existant).
+- **6 langues restantes** — passes dédiées avec humour réinventé dans le registre propre à chaque langue (ex. DE : blague classique sur la ponctualité des trains allemands appliquée au biome `rail` ; RU : "милосердно для овец" sur le bouton d'arrêt météo global).
+
+**Mémoire à jour** : la règle "jamais de fantaisie sur les termes techniques EDA en `fr-MED`" (posée au §43) est explicitement remplacée par celle-ci — ne pas la réintroduire par erreur dans un futur round sans redemander confirmation, le produit a changé d'avis sciemment.
+
+### Bump
+
+`v1.0.2.4` → **`v1.0.2.5`** (passe d'humour 9 langues). Validé via `node --check --input-type=module < javascript/variables.js`.
+
+## 48. 3 nouvelles langues — Néerlandais, Polonais, Turc (10e/11e/12e) — chantier clos (2026-08-09, v1.0.2.5 → v1.0.2.6)
+
+Demande explicite, ajoutée en 3 temps : d'abord le néerlandais seul ("D'abord Néerlandais, ensuite on vérifie et enfin polonais"), vérifié en direct, puis le polonais, puis dans un round suivant le turc. Chacune des 3 langues suit strictement le même processus, calqué sur celui du 9e ajout (`fr-MED`, §46) : fichier `json/languages/*.json` traduit par un agent dédié à partir de `english.json` (choisi comme base plutôt que `french.json` — déjà passé par la passe d'humour du §47, culturellement plus proche des 3 langues cibles que le français), avec humour PARTOUT (y compris le panneau technique EDA, règle en vigueur depuis le §47) sauf sur les libellés purement fonctionnels (boutons, erreurs brutes, raccourcis clavier, labels de slider), adapté à l'esprit comique propre à chaque langue plutôt que traduit mot à mot.
+
+**8 points de raccordement, identiques pour les 3 langues** (checklist établie au §46, reconfirmée à l'identique) :
+1. `json/languages/<nom>.json` — traduction complète, clés identiques à `english.json` (validé par diff récursif Python, 0 manquante/0 en trop, pour les 3 fichiers).
+2. `javascript/gameLangReactive.js` — `LANG_FILES` (code → fichier).
+3. `javascript/edaPanelHost.js` — `<option>` dans `#gameLangSelect` (sélecteur EDA in-game).
+4. `index.php` — `$LANG_FILES` PHP (le `<select>` de la prez est auto-généré, rien d'autre à toucher côté prez).
+5. `index.php` — `TTS_LOCALES_PREZ` (JS inline).
+6. `javascript/ttsAnnouncer.js` — `TTS_LOCALES` (`nl-NL` / `pl-PL` / `tr-TR`, pas de hint de voix genrée ajouté, comme pour le néerlandais — à ajouter seulement si un besoin réel est identifié en test).
+7. `javascript/gameHudI18n.js` — `GAME_VERSION_DATE_LOCALES` (formatage `Intl.DateTimeFormat` de la date de la pastille version).
+8. `javascript/snapshotsPage.js` + `javascript/replaysPage.js` — `LOCALES` (formatage date galeries captures/replays).
+
+**Fichiers sources des traductions** : chaque `*.json` créé par un agent dédié avec brief complet (ton, règle EDA-avec-humour, contrainte clés/placeholders identiques). Exemples de ton retenu :
+- **Néerlandais** (`dutch.json`, 1223 lignes) — registre sec/pince-sans-rire ; ex. `audio.silence.desc` compare le silence sonore à "une réunion où ton patron pense que tu es pleinement attentif".
+- **Polonais** (`polish.json`, 1223 lignes) — même registre pince-sans-rire ; ex. `game.help.game.efficiency` conclut par "la qualité avant la quantité, comme ta grand-mère l'a toujours dit."
+- **Turc** (`turkish.json`, 1224 lignes) — ex. `hero.tagline` prolonge la blague du "vieux français du XIIe siècle" ; `game.help.quality.density` garde la blague "le cheptel de moutons sent les coupes budgétaires en premier" dans le tooltip technique FPS/densité.
+
+**Validation** : `node --check --input-type=module` OK sur les 6 fichiers JS touchés (communs aux 3 langues) ; `python3 -c "import json; json.load(...)"` OK sur les 3 nouveaux JSON. Vérification live sur 192.168.0.41 pour chaque langue : cache HTTP des modules JS parfois périmé en cours de session de test (fetch avec `{cache:'reload'}` sur les 6 fichiers JS avant re-navigation pour forcer le rafraîchissement — pas un bug de prod, juste un artefact de cache navigateur pendant les tests successifs) — une fois la cache purgée, confirmé pour chacune des 3 langues : sélecteur EDA + sélecteur prez affichent le nouveau code (NL/PL/TR), `setGameLang()` traduit tout le HUD (`[data-i18n]`), pastille de date formatée dans la bonne locale (ex. néerlandais "9 augustus 2026", polonais "9 sierpnia 2026", turc "9 Ağustos 2026"), fichier JSON accessible et `game.langName` correct ("Nederlands"/"Polski"/"Türkçe"), locale TTS câblée.
+
+### Bump
+
+`v1.0.2.5` → **`v1.0.2.6`** (10e/11e/12e langues : néerlandais, polonais, turc). Validé via `node --check --input-type=module < javascript/variables.js`.

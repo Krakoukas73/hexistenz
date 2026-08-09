@@ -199,9 +199,14 @@
      autres textes Enchanted-Land (prez + HUD in-game, normalisés à 14px /
      font-weight 400) — .mode-copy/.mode-shape-note (<p>) n'avaient jamais
      reçu cet override et héritaient donc de la taille par défaut du
-     navigateur (~16px, hors convention) sans reset de graisse. */
-  font-size: 14px;
+     navigateur (~16px, hors convention) sans reset de graisse.
+     2026-08-08 — demande explicite : 14px → 15px. Letter-spacing resserré
+     (-0.07em) tenté puis annulé sur demande explicite ("moche et
+     illisible") — repassé à "normal" (explicite ici, plutôt que de laisser
+     hériter, pour tracer la décision). */
+  font-size: 15px;
   font-weight: 400;
+  letter-spacing: normal;
   /* 2026-08-03 (round suivant) — demande explicite : interligne partagé
      avec la prez (line-height:2.0 sur body/.biome-desc/.creature-desc/etc.,
      css/themes/medieval.css). La règle de base .mode-panel p (non thémée,
@@ -263,9 +268,13 @@
   color: #6b4e10;
   /* 2026-08-03 — même correctif que .mode-panel p ci-dessus : cohérence
      avec la convention 14px / font-weight 400 des autres textes
-     Enchanted-Land (prez + HUD in-game). */
-  font-size: 14px;
+     Enchanted-Land (prez + HUD in-game).
+     2026-08-08 — demande explicite : 14px → 15px. Letter-spacing resserré
+     (-0.07em) tenté puis annulé sur demande explicite ("moche et
+     illisible") — repassé à "normal". */
+  font-size: 15px;
   font-weight: 400;
+  letter-spacing: normal;
 }
 
 /* ─── .internal-parchment (2026-07-18) — même wrapper/marge négative que la
