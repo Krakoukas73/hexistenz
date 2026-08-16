@@ -41,16 +41,21 @@ function applyGameI18n(data) {
 // TTS_LOCALES dupliquée dans ttsAnnouncer.js/snapshotsPage.js/replaysPage.js).
 // BCP-47 le plus proche pour chaque code de langue interne du jeu.
 const GAME_VERSION_DATE_LOCALES = {
+  da: 'da-DK',
+  el: 'el-GR',
   fr: 'fr-FR',
   en: 'en-US',
   es: 'es-ES',
+  fi: 'fi-FI',
   it: 'it-IT',
   pt: 'pt-PT',
   'fr-CA': 'fr-CA',
   de: 'de-DE',
   ru: 'ru-RU',
   nl: 'nl-NL',
+  no: 'nb-NO',
   pl: 'pl-PL',
+  sv: 'sv-SE',
   tr: 'tr-TR',
   // Pas de locale BCP47 dédiée pour le français médiéval → repli sur le
   // français standard, même choix que TTS_LOCALES (ttsAnnouncer.js).

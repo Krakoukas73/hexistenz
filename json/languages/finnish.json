@@ -1,0 +1,1225 @@
+{
+  "nav": {
+    "links": {
+      "factions": "Ryhmät",
+      "biomes": "Biomit",
+      "missions": "Tehtävät",
+      "gameplay": "Pelattavuus",
+      "gallery": "Esiasetukset",
+      "creatures": "Olennot",
+      "audio": "Ääni",
+      "daynnight": "Ympäristö",
+      "eda": "Muokkaus",
+      "multi": "Moninpeli",
+      "scores": "Pisteet"
+    },
+    "play": "Pelaa nyt"
+  },
+  "theme": {
+    "bleu": "Tähtien sininen",
+    "ancien": "Keskiaika"
+  },
+  "hero": {
+    "subtitle": "Mietiskelevä kuusikulmiopeli, tehty rakkaudella ❤️, Three.js:llä ja lievästi huolestuttavalla määrällä laattoja",
+    "inspi_text": "Inspiraationa <em>Dorfromantik</em>, <em>The Settlersin</em> (Blue Byte, 1993) pastoraalinen sielu\n          ja <em>Heroes of Might and Magicin</em> (3DO) ihmeelliset maailmat.",
+    "inspi_buy": {
+      "dorfromantik": "Dorfromantik Steamissa",
+      "settlers": "The Settlers Ubisoftilla",
+      "heroes3": "Heroes III GOG:ssa"
+    },
+    "tagline": "<strong>Hexistenz on mietiskelevä peli</strong>, tehty pelaajille, jotka rakastavat katsella maailman\n          ja sen yksityiskohtien avautuvan hitaasti — kelloa ei ole, eikä oikeastaan mitään kiirettä.<br><br><strong>Aseta kuusikulmaisia laattoja</strong> ja\n          katso maiseman muotoutuvan silmiesi edessä: laajoja kuusi- ja koivumetsiä, tuulessa huojuvia vehnäpeltoja,\n          joilla on epäilyttävän hyvin hoidettuja myllyjä, keskiaikaisia kyliä savuavine kattoineen, laajoja rautatieverkkoja ja leveitä jokia,\n          joilla veneesi purjehtivat, enimmäkseen ilman välikohtauksia.<br><br>Suorita tehtäviä, siepatkaa komeettoja, ympäröi laattojasi ja rakenna vähitellen\n          elävä maailma, laatta kerrallaan — ei rangaistusta siitä, että tuijottaa nättiä mäkeä kaksikymmentä minuuttia.<br><br><strong>Pelaa yksin tai moninpelinä</strong>, jatka\n          tallennettua peliä milloin haluat, <strong>tallenna parhaat hetkesi galleriaan</strong> ja koe\n          pelisi uudelleen nopeutettuna ladattavien verkkotoistojen avulla.<br><br>Peli on pelattavissa juuri nyt ja käännetty täysin 17 kielelle, mukaan lukien 1100-luvun vanha ranska — pelaajille, jotka haluavat keskiaikaiset kylänsä kielellisesti tarkoiksi.<br><br>Peli on ilmainen, ei rekisteröitymistä, ei maksamalla voittamista eikä pelin sisäisiä ostoksia: lyhyesti sanottuna tehty puhtaasti nostalgiasta ja itsepäisestä kieltäytymisestä rahastaa kuusikulmioilla.",
+    "btn_play": "Pelaa nyt",
+    "btn_how": "Miten pelataan?",
+    "stats": {
+      "biomes_label": "Biomia",
+      "games_label": "Peliä",
+      "factions_label": "Ryhmää",
+      "langs_label": "Kieltä",
+      "themes_label": "Graafista teemaa"
+    }
+  },
+  "factions": {
+    "label": "Kaksi tapaa nähdä maailma",
+    "title1": "Litteän maan kannattajat ja pallon uskovaiset",
+    "title2": "Kaksi sovittamatonta ryhmää",
+    "sub": "Hexistenz jakaa rakentajansa <strong>kahteen sovittamattomaan ryhmään</strong>. Virallisesti visuaalinen valinta,\n      epävirallisesti filosofinen kannanotto. Valitse puolesi — ystävyydet ovat kestäneet pahempaakin.",
+    "flat": {
+      "tag": "Litteä tila",
+      "name": "🪨 Litteä maailma",
+      "desc": "Ruudukko levittäytyy tasaisena ja järjestyksessä. Jokainen laatta liittyy täysin\n            tasaiseen tasankoon,\n            aivan kuten muinaiset ovat aina tienneet.\n            Niille, jotka luottavat silmiinsä."
+    },
+    "globe": {
+      "tag": "Pallotila",
+      "name": "🌍 Pallomainen maailma",
+      "desc": "Maailman kaarevuus paljastuu ruudukon kasvaessa — kaukaiset laatat\n            kaartuvat kohti horisonttia, koska osa meistä hyväksyy tieteen suuressa mittakaavassa. Reaaliaikainen GPU-efekti, joka tuo huimaavaa syvyyttä\n            jokaiseen peliin."
+    },
+    "vs": "Väittely ei ole ratkennut. Se ei koskaan ratkea."
+  },
+  "biomes": {
+    "label": "Biomit",
+    "title": "Kuusi yhdistettävää biomia",
+    "sub": "Jokaisessa laatassa on kuusi kolmion muotoista sektoria. <strong>Yhdistä samat biomit</strong> muodostaaksesi alueita, maksimoidaksesi pisteesi ja tuntemaan hetken kaupunkisuunnittelijaksi.",
+    "grass": {
+      "name": "Niitty",
+      "desc": "Ruohoisia laajuuksia, joissa jokainen korsi väreilee tuulessa, kirjailtuna kukilla, kivillä, peuroilla ja pensailla. Neutraalia maastoa suurten verkkojen välissä — biomien Sveitsi.",
+      "tag": "Neutraali biomi"
+    },
+    "field": {
+      "name": "Pelto",
+      "desc": "Tuulessa huojuva vehnä, proseduraaliset myllyt ja heinäpaalit. Chi-mai-teema soi, kun kamera hipoo tähkiä — yritä olla itkemättä.",
+      "tag": "Maatalousalue"
+    },
+    "forest": {
+      "name": "Metsä",
+      "desc": "Kuuset, koivut ja haavat InstancedMesh-tekniikalla, latvukset huojuvat tuulessa aina aluskasvillisuuteen asti. Sieniä, halkopinoja, peuroja — jopa 22 miljoonaa kolmiota ruudulla, jokainen autuaan tietämätön toisistaan.",
+      "tag": "Tiheä metsikkö"
+    },
+    "house": {
+      "name": "Kylä",
+      "desc": "Keskiaikaisia taloja volumetrisella savulla, vartiotorneja, suihkulähteitä, animoituja kärryjä, koiria ja hevosia — joista yksikään ei ole koskaan valittanut savusta.",
+      "tag": "Ihmisasutus"
+    },
+    "water": {
+      "name": "Vesi",
+      "desc": "Yhtenäinen vesiala orgaanisella rantaviivalla, animoiduilla aalloilla ja vesiväritaiteellisella vaahdolla. Animoituja veneitä perävanoineen, proseduraalisia rantoja ja aluehaloja — uimataitoa ei vaadita.",
+      "tag": "Vesiverkko ⛵"
+    },
+    "rail": {
+      "name": "Rautatie",
+      "desc": "Proseduraaliset kiskot, ratapölkyt, sepeli. Junia vaunuineen, päätepysäkkejä ja veturinsavua — sekä aikataulu, jota kukaan ei ole koskaan oikeasti nähnyt.",
+      "tag": "Rataverkko 🚂"
+    }
+  },
+  "missions": {
+    "label": "Tavoitteet",
+    "title": "Tehtävät",
+    "sub": "Jokainen peli luo automaattisia tavoitteita, jotka liittyvät biomeihin ja verkkoihin. Yhden suorittaminen antaa <strong>100 pistettä ja mikä tärkeintä, lisää 3 uutta laattaa nostopakkaan</strong> — teoriassa mahdollistaen loputtomat pelit, käytännössä kärsivällisyytesi rajoittamana.",
+    "zone": {
+      "name": "Biomialue",
+      "desc": "Saavuta vähimmäispinta-ala tietyssä biomissa: <em>\"8 sektorin metsä\"</em>, <em>\"12 sektorin niitty\"</em>…"
+    },
+    "rail": {
+      "name": "Rautatielinja",
+      "desc": "Rakenna vaadittu määrä rautatiesektoreita. Jokainen asetettu rautatiekolmio lasketaan tähän tehtävään — veturia ei tarvita, pelkkä rata riittää."
+    },
+    "trains": {
+      "name": "Junat",
+      "desc": "Rakenna vaadittu määrä aktiivisia junalinjoja — jokainen linja yhdistää kaksi asemaa keskeytymättömillä kiskoilla. Aukoista ei neuvotella, kysy keneltä tahansa konduktööriltä."
+    },
+    "water": {
+      "name": "Vesiväylä",
+      "desc": "Muodosta vähimmäispinta-alan vesialue. Jokainen asetettu vesikolmio lasketaan tähän tehtävään."
+    },
+    "boats": {
+      "name": "Veneet",
+      "desc": "Synnytä vaadittu määrä veneitä ruudukkoon. Vene ilmestyy automaattisesti jokaiseen maalaattojen ympäröimään järveen — kapteeninkirjaa ei vaadita."
+    },
+    "comets": {
+      "name": "Komeetat",
+      "desc": "Komeetat viiltävät taivaan poikki reaaliajassa. Napsauta niitä saadaksesi ne räjähtämään ja keräämään pisteitä — refleksejä ja valppautta vaaditaan."
+    },
+    "village": {
+      "name": "Kukoistava kylä",
+      "desc": "Rakenna tiheä kylä: kokoa tarpeeksi vierekkäisiä talosektoreita vaaditun kynnysarvon saavuttamiseksi. Kaavoituslait ovat onneksi keksittyjä."
+    },
+    "fields": {
+      "name": "Viljellyt maat",
+      "desc": "Laajenna peltoja yhtenäisiksi alueiksi. Myllyt ilmestyvät vasta, kun alue on tarpeeksi suuri isännöimään niitä — ne ovat siinä asiassa ujoja."
+    },
+    "mills": {
+      "name": "Tuulimyllyt",
+      "desc": "Rakenna suuria vehnäpeltoalueita synnyttääksesi tuulimyllyjä. Mylly ilmestyy automaattisesti jokaisen tarpeeksi suuren peltoalueen keskelle."
+    }
+  },
+  "gameplay": {
+    "label": "Pelimekaniikka",
+    "title": "Miten pelataan",
+    "sub": "Yksinkertainen kierto, <strong>loputon syvyys</strong>. Jokainen asetettu laatta muuttaa maailmaa — oikeassa elämässä ei ole peru-nappia, mutta täällä on.",
+    "ui_caption": "Nykyinen laatta · Seuraava laatta · Jäljellä olevat laatat",
+    "steps": {
+      "draw": {
+        "title": "Nosto",
+        "desc": "Kuusikulmainen laatta ilmestyy — kuusi kolmion muotoista sektoria, kukin oma biominsa. Katso seuraavaa suunnitellaksesi etukäteen, tai älä ja elä vaarallisesti."
+      },
+      "orient": {
+        "title": "Suuntaus",
+        "desc": "Käännä laattaa kohdistaaksesi sen reunat. Vesi ja rautatie vaativat jatkuvuutta — huono sijoitus voi katkaista verkon ja rauhallisen itseluottamuksesi."
+      },
+      "place": {
+        "title": "Sijoitus",
+        "desc": "Valitse paikka aksiaalisesta ruudukosta. Laatan ympäröiminen kuudella naapurilla tuo suuren välittömän bonuksen — lähimpänä mitä tämä peli tarjoaa aplodeja."
+      },
+      "score": {
+        "title": "Pisteet",
+        "desc": "Suorita tehtäviä ja alueita, siepatkaa komeettoja ja lähetä sitten paras tuloksesi maailmanlaajuiseen tulostauluun tuntemattomien hiljaisesti arvioitavaksi."
+      }
+    },
+    "score_label": "Pistejärjestelmä",
+    "pills": {
+      "place": "Laatta asetettu",
+      "edge": "Reuna täsmää",
+      "network": "Verkko yhdistetty",
+      "surround": "Laatta ympäröity",
+      "mission": "Tehtävä suoritettu",
+      "comet": "Komeetta siepattu",
+      "bonus": "Bonusruutu peitetty"
+    },
+    "kbd_title": "NÄPPÄIMISTÖOHJAUS",
+    "kbd": {
+      "camera_label": "kamera",
+      "left_click_kbd": "Vasen klikkaus",
+      "left_click_desc": "siirrä kameraa",
+      "right_click_kbd": "Oikea klikkaus",
+      "right_click_desc": "pyöritä kameraa",
+      "wheel_kbd": "Rulla",
+      "space_kbd": "Välilyönti",
+      "wheel_desc": "zoomaus",
+      "reset_cam": "nollaa kamera",
+      "zoom": "lähennä / loitonna",
+      "shift_kbd": "SHIFT",
+      "speed_up": "nopeuttaa liikettä/zoomausta",
+      "undo": "kumoa",
+      "customization": "muokkaus",
+      "perf_hud": "suorituskyvyn HUD",
+      "snapshot": "Kuvakaappaus",
+      "gallery": "Kuvakaappausgalleria",
+      "replay": "Pelin toisto",
+      "immersive": "immersiivinen tila",
+      "super_immersive": "super-immersiivinen tila",
+      "mute": "mykistä",
+      "mute_tts": "mykistä ääni",
+      "help": "ohje"
+    }
+  },
+  "gallery": {
+    "label": "Visuaaliset esiasetukset",
+    "title1": "Useita tunnelmia",
+    "title2": "Loputon muokattavuus",
+    "sub": "Lukuisia käyttövalmiita visuaalisia esiasetuksia — mutta jokainen on vain lähtökohta: väri-LUT, elokuvamaiset efektit (kromaattinen aberraatio, filmirakeisuus, tilt-shift), retro-pikselöinti, EGA- ja Amiga-tyylit, volumetrinen savu, proseduraalinen taivas… <strong>Satoja yhdistelmiä</strong> koko maailman muokkaamiseksi makusi mukaan, tai johonkin, mitä makusi vastustaisi voimakkaasti. Jokainen muokkaus voidaan viedä yhdellä klikkauksella ja jakaa muiden pelaajien kanssa.",
+    "preset_word": "Esiasetus",
+    "presets": {
+      "autumn": "Syksy",
+      "summer": "Elävä kesä",
+      "nordic": "Pohjoismainen",
+      "amiga": "Amiga",
+      "ega": "EGA 16 väriä",
+      "cga": "CGA 320×200 4 väriä",
+      "apple2": "Apple II",
+      "psyche": "Psyyke-LSD"
+    }
+  },
+  "creatures": {
+    "label": "Maailman elämä",
+    "title": "Olentoja täynnä oleva maailma",
+    "sub": "Maailma ei vain ole olemassa — <strong>se hengittää</strong>. Eläimet, linnut ja asukkaat tuovat jokaisen biomin eloon vuodenaikojen mukana, täysin piittaamatta rakennusjärjestyksestäsi.",
+    "sheep": {
+      "name": "Lampaat",
+      "desc": "Laumat laiduntavat rauhassa niityillä, ajelehtien tuulessa huojuvan ruohon mukana, autuaan tietämättöminä siitä, että seisovat pistemekanismin päällä."
+    },
+    "crows": {
+      "name": "Varikset",
+      "desc": "Variksien parvet kiertelevät vehnäpeltojen yllä tähyillen vartioimattomia laikkuja — ajattele niitä maailman vähiten hienovaraisina tarkastajina."
+    },
+    "farmer": {
+      "name": "Maanviljelijä",
+      "desc": "Talikko kädessä maanviljelijä hoitaa vehnäänsä, tulee ja menee maatalouskausien rytmissä, ikuisesti yhden pellon päässä vapaapäivästä."
+    },
+    "druid": {
+      "name": "Druidi",
+      "desc": "Yksinäinen hahmo vaeltaa puiden keskellä, metsien ja niiden salaisuuksien hiljainen vartija — enimmäkseen sen salaisuuden, minne kaikki sienet katosivat."
+    },
+    "witch": {
+      "name": "Noita",
+      "desc": "Tietyissä metsissä yön laskeutuessa noitien kerrotaan vaeltavan puiden keskellä, hiljaisuuden ja unohdettujen leiritulien hehkun houkuttelemina. Harva näkee heitä koskaan — vielä harvempi uskaltaa seurata, eikä kukaan ole jättänyt asiasta virallista valitusta."
+    },
+    "moon": {
+      "name": "Méliès'n kuu",
+      "desc": "Yötilassa kuu kantaa ikonista kasvoa Méliès'n Matkasta kuuhun -elokuvasta — kumarrus mykkäelokuvan aikakaudelle tähtitaivaalle piilotettuna, ja näkyvästi vaikuttumaton kaikista laattojesi sijoituksista."
+    },
+    "seagulls": {
+      "name": "Lokit",
+      "desc": "Pienet lokkiparvet kiertelevät suurimpien vesialueiden yllä, ja silloin tällöin joku eksynyt lähtee joukosta ajamaan omia asioitaan."
+    },
+    "fireflies": {
+      "name": "Tulikärpäset",
+      "desc": "Yön laskeutuessa tuikkivien tulikärpästen parvet ajelehtivat lähellä maata jäljittäen lämpimiä valopisteitä, jotka leijuvat pehmeästi kameran ympärillä ikään kuin niillä olisi kiire jonnekin."
+    },
+    "population": {
+      "villages_label": "Kylät",
+      "forests_label": "Metsät",
+      "fields_label": "Vehnäpellot",
+      "water_label": "Vesi",
+      "meadows_label": "Niityt",
+      "tags": {
+        "village_women": "Kylän naiset",
+        "village_men": "Kylän miehet",
+        "farmer": "Maanviljelijä",
+        "blacksmith": "Seppä",
+        "merchant": "Kauppias",
+        "innkeeper": "Majatalonisäntä",
+        "guard": "Vartija",
+        "soldier": "Sotilas",
+        "knight": "Ritari",
+        "archer": "Jousiampuja",
+        "warriors": "Soturit",
+        "mage": "Velho",
+        "monk": "Munkki",
+        "witch": "Noita",
+        "crows": "Varikset",
+        "windmill": "Tuulimylly",
+        "scarecrow": "Variksenpelätin",
+        "boat": "Vene",
+        "rowboats": "Soutuveneet",
+        "seagulls": "Lokit",
+        "deer": "Peurat",
+        "wildflowers": "Kukat"
+      }
+    },
+    "note": "22 erilaista kasvoa asuttaa kyliä ja metsiä, jokaisella oma siluettinsa, pukunsa ja roolinsa. Ei kopioitu-liimattuja statisteja — aito väestö, laatta laatalta, ammattiyhdistyksellinen ainakin hengeltään, vaikka ei käytännössä."
+  },
+  "audio": {
+    "label": "Äänisuunnittelu",
+    "title": "Maailma, jota voi kuulla",
+    "sub": "Ääni seuraa kameraa <strong>reaaliajassa</strong> — jokaisella biomilla, junalla ja veneellä on oma äänensä, joka nousee ja hälvenee etäisyyden mukaan, kuin hyvin kärsivällinen orkesteri.",
+    "spatial": {
+      "name": "3D-tilaääni",
+      "desc": "Kylän tunnelma, metsän ja niityn linnunlaulu, variset peltojen yllä, aallot rannalla, junat ja veneet — jokaisen äänilähteen voimakkuus seuraa sen todellista etäisyyttä ja suuntaa, joten harhailu palkitsee itsensä."
+    },
+    "chimai": {
+      "name": "Chi Mai, piilotettu teema",
+      "desc": "Laske kamera matalalle vehnäpellon yllä, ja piilotettu melodinen teema käynnistyy — musiikki ja muut äänet väistyvät antaakseen sille tilaa. Kyllä, se on juuri niin dramaattista kuin miltä kuulostaa."
+    },
+    "adaptive": {
+      "name": "Mukautuva musiikki",
+      "desc": "Alku-, peli- ja loppukappaleet risteytyvät sulavasti, poimittuina useista variaatioista, joten mitkään kaksi peliä eivät kuulosta täsmälleen samalta — mutta epäilyttävän monta niistä tuntuu tutulta."
+    },
+    "voice": {
+      "name": "Ääni, joka kommentoi peliä",
+      "desc": "Puhuva kertoja (selaimen sisäänrakennettu puhesyntetisaattori, ei ulkoista palvelua) ilmoittaa pisteesi, tehtäväsi ja tärkeät käyttöliittymän hetket suorassa lähetyksessä — lyhyt kellonääni edeltää jokaista uutta ja jokaista suoritettua tehtävää. Saatavilla kaikilla pelin 9 kielellä, ja miesääni valitaan automaattisesti saksalle ja venäjälle, koska joku ilmeisesti päätti sen olevan tärkeää. T-näppäin mykistää sen yksinään koskematta muuhun äänimaisemaan — silloin kun kannustus käy liialliseksi."
+    },
+    "silence": {
+      "name": "Hiljaisuus tarvittaessa",
+      "desc": "M-näppäin katkaisee ja palauttaa koko äänimaiseman heti, musiikki mukaan lukien — kätevää rauhalliseen peliin puhelun tai kokouksen aikana, jossa pomosi luulee saavansa täyden huomiosi."
+    }
+  },
+  "daynnight": {
+    "label": "Maailman tunnelma",
+    "title": "Ympäristö",
+    "sub": "<strong>Yksi kytkin muuttaa kaiken</strong>. Aurinko, pilvet ja sininen taivas väistyvät tähtien, kuun ja komeettojen tieltä — ilman kokouksia asiasta.",
+    "day": {
+      "name": "Päivätila",
+      "list": [
+        "🌤 Aurinko kiertää omalla renderöintikerroksellaan",
+        "⛅ Proseduraalinen volumetrinen taivas animoiduilla FBM-pilvillä",
+        "🔵 Zeniitin ja horisontin liukuväri lämpimissä sinisissä sävyissä",
+        "🚫 Komeetat piilossa — liikaa valoa niille, ne ovat ujoja"
+      ]
+    },
+    "night": {
+      "name": "Yötila",
+      "list": [
+        "🌙 Kuu, syvä yöllinen zeniitin ja horisontin liukuväri",
+        "✨ Tuikkivat tähdet omalla pallollaan",
+        "☄️ Viiltäviä komeettoja — klikkaa saadaksesi ne räjähtämään",
+        "🌑 Pimeä tunnelma, kylän savu näkyvämpää, unettomuuteen ei vaikutusta"
+      ]
+    },
+    "smoke": {
+      "name": "Savu",
+      "list": [
+        "🏠 Jopa 48 samanaikaista savupatsasta, ray-march-tekniikalla laskettuna reaaliajassa savupiippujen ja veturien yllä",
+        "🌬️ 4-oktaavinen turbulenssi, joka ajelehtii korkeuden mukana — jokainen patsas on ainutlaatuinen, kuin noesta tehty sormenjälki",
+        "🎲 Vain joka kolmas talo savuaa, satunnaisesti valittuna laatan luonnin yhteydessä — muut kaksi ilmeisesti unohtivat sytyttää tulen",
+        "🌙 Vieläkin tunnelmallisempaa yön laskeuduttua"
+      ]
+    },
+    "godrays": {
+      "name": "Jumalan säteet",
+      "list": [
+        "☀️ Volumetrisia valokeiloja auringosta tai kuusta",
+        "🌲 Lävistävät lehvästön, tornit ja pilvet elokuvamaista valaistusta varten",
+        "🎚️ Pituus, hajonta ja kynnysarvo säädettävissä taidesuunnan editorista, sisäistä elokuvaajaasi varten"
+      ]
+    },
+    "rain": {
+      "name": "Sade",
+      "list": [
+        "💧 Dynaamisia sadekuuroja, jotka voit laukaista lennossa sääpaneelista, ei sateenvarjoa tarvita",
+        "⛈️ Ketjuuntuu luonnollisesti myrskyiksi ja salamoiksi",
+        "🎬 Tunnelmaa vahvistaa elokuvamainen vinjetti ja filmirakeisuus"
+      ]
+    },
+    "mist": {
+      "name": "Aamusumu",
+      "list": [
+        "🌫️ Matala huntu, joka vaimentaa etäisyyksiä ja pehmentää siluetteja",
+        "☀️ Hälvenee vähitellen minuuttien myötä, kuten useimmat aamun mysteerit",
+        "🎚️ Sumun tiheys ja väri säädettävissä taidesuunnan editorista"
+      ]
+    },
+    "storm": {
+      "name": "Myrskyt ja metsäpalot",
+      "list": [
+        "⚡ Salamat iskevät myrskykannen alla ja voivat sytyttää laatan tuleen — luonnon tapa muokata pohjapiirrostasi",
+        "🔥 Puut, talot, tornit ja tuulimyllyt palavat oikeassa korkeudessaan, hiiltyvät mustiksi ja kasvavat sitten takaisin, näennäisen piittaamattomina",
+        "🌬️ Palo ajelehtii tuulen mukana, leviää naapureihin ja pysähtyy tyystin veden reunaan, joka vihdoin ansaitsee paikkansa",
+        "🌧️ Sade hidastaa leviämistä ja joskus sammuttaa tulen kokonaan"
+      ]
+    }
+  },
+  "eda": {
+    "label": "Taidesuunnan editori (EDA)",
+    "title": "Äärimmäinen muokattavuus",
+    "sub": "Lukuisten esiasetusten lisäksi EDA paljastaa <strong>kymmeniä reaaliajassa säädettäviä mittareita</strong>, jaettuna 3 välilehteen — LUT, Elokuvallisuus, Ympäristö. Jokainen liukusäädin reagoi välittömästi, ei uudelleenlatausta, ja koko asetuskokonaisuus kopioituu/viedään JSON-muodossa toistettavaksi, jaettavaksi tai hiljaisesti kaduttavaksi.",
+    "lut": {
+      "label": "LUT",
+      "desc": "Sumu, valonlähde, täysi värimäärittely (RGB-käyrät, gamma, tasot) ja biomikohtainen väripaletti — tarpeeksi säätimiä muuttamaan niitty rikospaikaksi, jos ei ole varovainen."
+    },
+    "cinematic": {
+      "label": "Elokuvallisuus",
+      "desc": "Jumalan säteet, tilt-shift, hehku (bloom), retro-pikselöinti ja ruudun kaareutuminen — maailman filmaamiseen, ei pelkkään katseluun."
+    },
+    "environment": {
+      "label": "Ympäristö",
+      "desc": "Pilvet ja pilvipeite, tuuli (vehnä, ruoho, puut), dynaaminen sää (sumu, tulikärpäset, sade), maailman muoto (pallo/litteä), päivä/yö-kytkin ja laatu/tiheys-esiasetukset — koko ilmasto, hihnassa."
+    }
+  },
+  "multi": {
+    "title1": "Moninpeli",
+    "title2": "Rakenna yhdessä",
+    "sub": "Liity huoneeseen tai luo sellainen 6-kirjaimisella koodilla. Ruudukko on <strong>jaettu reaaliajassa</strong> — jokainen pelaaja asettaa laattojaan ja näkee muiden siirrot tapahtuessaan, hyvässä ja pahassa.",
+    "features": [
+      "Kaikki pelit tallennetaan — jatka tai toista milloin tahansa",
+      "Huoneisiin voi liittyä milloin tahansa, jopa kesken pelin, ilman lupalappua",
+      "Reaaliaikainen synkronointi · PHP + JSON -taustajärjestelmä, joka pitää kaiken kasassa hiljaisella arvokkuudella",
+      "Kartta kasvaa yhteistyössä, laatta laatalta, väittely väittelyltä"
+    ],
+    "gallery_title": "JAA KUVAKAAPPAUKSESI",
+    "gallery_promo": "Ikuista parhaat pelisi: 📷-painike tallentaa maailman ilman HUD:ia, ja 🖼️-painike avaa <strong>jaetun gallerian, jonka kaikki pelaajat näkevät</strong> — kehuskeluoikeudet sisältyvät hintaan",
+    "replay_title": "Tallenna pelisi videona",
+    "replay_promo": "Yhdellä klikkauksella <strong>toista koko pelisi nopeutettuna</strong> ja lataa se videona suoraan selaimestasi — ei editointitaitoja, vain lievää turhamaisuutta.",
+    "btn_create": "Luo peli",
+    "room_title": "Huoneen koodi",
+    "room_status": "Peli käynnissä · 3 pelaajaa",
+    "tiles_placed_label": "Laattoja asetettu"
+  },
+  "scores": {
+    "label": "Maailmanlaajuinen tulostaulu",
+    "title": "Tehokkaimmat rakentajat",
+    "empty": "Ei vielä pisteitä — tulostaulu on tyhjä kuusikulmainen tyhjiö, sankaria odottamassa.",
+    "try_luck": "Kokeile onneasi →",
+    "headline_stat": "laattaa asetettu",
+    "pts_suffix": "p",
+    "trains_s": "linja",
+    "trains_p": "linjaa",
+    "boats_s": "vene",
+    "boats_p": "venettä",
+    "mills_s": "mylly",
+    "mills_p": "myllyä",
+    "comets_s": "komeetta",
+    "comets_p": "komeettaa",
+    "largest_zone": "suurin alue",
+    "biome_labels": {
+      "forest": {
+        "s": "puu",
+        "p": "puuta"
+      },
+      "water": {
+        "s": "vesi",
+        "p": "vettä"
+      },
+      "house": {
+        "s": "talo",
+        "p": "taloa"
+      },
+      "field": {
+        "s": "vehnäpelto",
+        "p": "vehnäpeltoa"
+      },
+      "grass": {
+        "s": "niitty",
+        "p": "niittyä"
+      },
+      "rail": {
+        "s": "rautatie",
+        "p": "rautatietä"
+      }
+    }
+  },
+  "footer": {
+    "copy": "Mietiskelevä kuusikulmiopeli, tehty rakkaudella ❤️, Three.js:llä ja kohtuuttomalla määrällä laattoja",
+    "github": "GitHub"
+  },
+  "game": {
+    "gallery": {
+      "title": "Kuvakaappausgalleria",
+      "empty": "Ei vielä kuvakaappauksia. Mestariteoksesi odottaa — paina 📷 pelissä ottaaksesi sellaisen.",
+      "close": "Sulje",
+      "loading": "Ladataan…",
+      "tilesCount": "Peli, {n} laattaa",
+      "modeBouliste": "Pallotila",
+      "modePlatiste": "Litteä tila",
+      "captured": "Kuvakaappaus otettu! Jälkipolvet kiittävät."
+    },
+    "sound": {
+      "on": "Ääni päällä",
+      "off": "Ääni pois"
+    },
+    "replay": {
+      "restart": "Takaisin alkuun",
+      "playPause": "Toista / Tauko",
+      "close": "Sulje toisto"
+    },
+    "eda": {
+      "mainTitle": "Taidesuunnan editori",
+      "ambiances": "ESIASETUKSET",
+      "ambiancePrefix": "esiasetus",
+      "tabs": {
+        "lut": "LUT",
+        "cinematic": "Elokuvallisuus",
+        "environment": "Ympäristö"
+      },
+      "headers": {
+        "lutFog": "1. Sumu",
+        "lutSun": "2. Valonlähde",
+        "lutGrading": "3. Värimäärittely",
+        "lutPalette": "4. Biomipaletti",
+        "cinema1": "1. ELOKUVALLISUUS",
+        "godRays": "2. Jumalan säteet",
+        "tiltShift": "3. Tilt-shift",
+        "bloom": "4. Hehku (Bloom)",
+        "pixelisation": "5. PIKSELÖINTI",
+        "crt": "6. RUUDUN KAAREUTUMINEN",
+        "nuages": "3. PILVET",
+        "vent": "4. TUULI",
+        "worldShape": "5. Maailman muoto",
+        "dayNight": "6. Päivä / Yö",
+        "quality": "7. Laatu / tiheys",
+        "weather": "8. Sää",
+        "waterFoam": "1. Vaahto",
+        "waterWake": "2. Veneen perävana",
+        "windWheat": "4.1 Vehnän tähkät",
+        "windGrass": "4.2 Ruohonkorret",
+        "windTree": "4.3 Puut"
+      },
+      "toggleTitles": {
+        "lutGrading": "Ota käyttöön / poista käytöstä värimäärittely",
+        "lutPalette": "Ota käyttöön / poista käytöstä biomipaletti",
+        "cinema1": "Ota käyttöön / poista käytöstä elokuvalliset efektit",
+        "godRays": "Ota käyttöön / poista käytöstä jumalan säteet",
+        "tiltShift": "Ota käyttöön / poista käytöstä tilt-shift",
+        "bloom": "Ota käyttöön / poista käytöstä hehku (kirkkauden loiste, ei kukkia)",
+        "pixelisation": "Ota käyttöön / poista käytöstä pikselöinti",
+        "crt": "Ota käyttöön / poista käytöstä ruudun kaareutuminen",
+        "nuages": "Ota käyttöön / poista käytöstä pilvet",
+        "vent": "Ota käyttöön / poista käytöstä kaikki tuuli (vehnä, ruoho, puut)",
+        "worldShape": "Vaihda pallomaisen (pallo) ja litteän maailman välillä — ei vaadi kansainvälistä sopimusta",
+        "dayNight": "Vaihda päivän ja yön välillä",
+        "waterFoam": "Ota käyttöön / poista käytöstä vaahto",
+        "waterWake": "Ota käyttöön / poista käytöstä veneen perävana"
+      },
+      "modeActuel": "Nykyinen tila",
+      "preregalages": "Esiasetukset",
+      "presetNames": {
+        "default": "Oletus",
+        "mist": "Sumu",
+        "autumn": "Syksy",
+        "summerVivid": "Elävä kesä",
+        "winter": "Talvi",
+        "sepia": "Seepia",
+        "nordic": "Pohjoismainen",
+        "desert": "Aavikko",
+        "pong": "Pong",
+        "appleII": "Apple II",
+        "cga": "CGA",
+        "ega": "EGA",
+        "amiga": "Amiga",
+        "psyche": "Psykedeelinen"
+      },
+      "themeNames": {
+        "bleu": "Tähtien sininen",
+        "ancien": "Keskiaika"
+      },
+      "modes": {
+        "bouliste": "Pallo",
+        "platiste": "Litteä",
+        "jour": "Päivä",
+        "nuit": "Yö"
+      },
+      "quality": {
+        "faible": "Matala",
+        "moyen": "Keskitaso",
+        "eleve": "Korkea",
+        "max": "Maksimi"
+      },
+      "qualityTooltip": "{label} tiheys ({value})",
+      "weatherStopAll": "⏹ Pysäytä kaikki",
+      "weatherStopAllTitle": "Pysäyttää kaikki tällä hetkellä käynnissä olevat ympäristötapahtumat. Rauha, vihdoinkin.",
+      "weatherGroups": {
+        "morningMist": "🌫️ Aamusumu",
+        "fireflies": "✨ Tulikärpäset",
+        "clouds": "☁️ Sadepilvet",
+        "rain": "🌧️ Sade",
+        "storm": "⛈️ Myrsky",
+        "lightning": "⚡ Salama",
+        "fire": "🔥 Tuli",
+        "panic": "🐑 Eläinten paniikki"
+      },
+      "weatherRequires": "(vaatii: {label})",
+      "weatherSwitchTitle": "Ota käyttöön / poista käytöstä",
+      "weatherCloudsSwitchTitle": "Ota käyttöön / poista käytöstä pilvet",
+      "weatherResetTitle": "Nollaa",
+      "presetTooltipApply": "Käytä esiasetusta \"{name}\"",
+      "presetTooltipDefault": "Palaa oletusarvoihin (kumoa huonoimmat päätöksesi)",
+      "footer": {
+        "copy": "📋 Kopioi",
+        "copyTitle": "Kopioi kaikki nykyiset LUT + PIX + WATER + CINEMA + WIND + CLOUDS + maailman muoto + päivä/yö + tiheys + sää-asetukset JSON-muodossa (pohjana tulevalle esiasetukselle valmiiksi määritetyillä sääefekteillä) — pieni arkisto kyseenalaisesta mausta",
+        "copied": "✓ Kopioitu!",
+        "undo": "↩ Kumoa",
+        "undoTitle": "Kumoa viimeisin muutos — ei tuomita",
+        "redo": "↪ Tee uudelleen",
+        "redoTitle": "Tee uudelleen kumottu muutos, jos muutit mielesi mielen muuttamisesta",
+        "reset": "Nollaa",
+        "resetTitle": "Palauta oletusarvot. Puhdas pöytä, uusi alku, tilaisuus tehdä kaikki väärin uudelleen",
+        "compare": "Vertaa",
+        "compareBack": "⟳ Takaisin",
+        "compareTitle": "Vaihda nykyisten asetusten ja viimeksi käytetyn esiasetuksen välillä, epäilyjen puntarointiin mukavasti",
+        "lastPresetTitle": "Viimeksi käytetty esiasetus"
+      },
+      "labels": {
+        "environment": {
+          "fogDensity": "Eksp. tiheys",
+          "fogNear": "Alku (lineaarinen)",
+          "fogFar": "Loppu (lineaarinen)",
+          "skyColor": "Taivas",
+          "fogColor": "Sumun väri",
+          "domeColorTop": "Kuvun yläosa",
+          "domeColorBottom": "Kuvun alaosa"
+        },
+        "renderer": {
+          "toneMappingExposure": "Yleisvalotus"
+        },
+        "lights": {
+          "hemisphereIntensity": "Taivaanvalon voimakkuus",
+          "sunIntensity": "Voimakkuus",
+          "sunOrbitRadius": "Kiertoradan säde",
+          "sunOrbitHeight": "Kiertoradan korkeus",
+          "sunOrbitSpeed": "Kiertonopeus",
+          "sunVisualScale": "Koko",
+          "fillIntensity": "Täytevalo",
+          "hemisphereSkyColor": "Taivaanvalon taivas",
+          "hemisphereGroundColor": "Taivaanvalon maa",
+          "sunColor": "Aurinko",
+          "fillColor": "Täyte"
+        },
+        "grading": {
+          "brightness": "Kirkkaus",
+          "contrast": "Kontrasti",
+          "saturation": "Kylläisyys",
+          "vibrance": "Elävyys",
+          "hue": "Sävynsiirto",
+          "gamma": "Gamma",
+          "blackLevel": "Mustan taso",
+          "whiteLevel": "Valkoisen taso",
+          "red": "Punainen kanava",
+          "green": "Vihreä kanava",
+          "blue": "Sininen kanava",
+          "redCurve": "Punainen käyrä",
+          "greenCurve": "Vihreä käyrä",
+          "blueCurve": "Sininen käyrä"
+        },
+        "palette": {
+          "strength": "Paletin voimakkuus",
+          "saturation": "Kylläisyys",
+          "contrast": "Kontrasti",
+          "warmShift": "Lämmin / viileä",
+          "targets": {
+            "field": "Pellot",
+            "forest": "Metsät",
+            "grass": "Niityt",
+            "house": "Kylät",
+            "rail": "Rautatiet",
+            "water": "Vesi"
+          }
+        },
+        "water": {
+          "foamWidth": "Ulottuvuus",
+          "foamScale": "Hienous",
+          "foamDensity": "Rannan tiheys",
+          "foamAmbient": "Pinta",
+          "foamSharp": "Terävyys",
+          "foamSpeed": "Nopeus",
+          "deepDistance": "Liukuväri — ulottuvuus",
+          "opacity": "Vesi — läpinäkymättömyys"
+        },
+        "wake": {
+          "armWidth": "Haaran leveys",
+          "spread": "V-hajonta",
+          "length": "Pituus",
+          "scale": "Hienous",
+          "density": "Tiheys",
+          "opacity": "Läpinäkymättömyys"
+        },
+        "wind": {
+          "wheat": {
+            "strength": "Amplitudi",
+            "speed": "Nopeus"
+          },
+          "grass": {
+            "strength": "Amplitudi",
+            "speed": "Nopeus",
+            "sway": "Huojunta"
+          },
+          "tree": {
+            "strength": "Amplitudi",
+            "speed": "Nopeus",
+            "frequency": "Taajuus",
+            "turbulence": "Turbulenssi",
+            "gustStrength": "Puuskat",
+            "detailStrength": "Yksityiskohta"
+          }
+        },
+        "cloud": {
+          "coverage": "Peittävyys",
+          "scale": "Kuvion mittakaava",
+          "speed": "Ajelehtimisnopeus"
+        },
+        "quality": {
+          "density": "Tiheys"
+        },
+        "cin": {
+          "vignette": "Vinjetti",
+          "grain": "Filmirakeisuus",
+          "chromatic": "Kromaattinen aberraatio",
+          "halation": "Halaatio",
+          "barrel": "Tynnyrivääristymä",
+          "scanLines": "Kuvajuovat",
+          "scanLinesIntensity": "Kuvajuovien voimakkuus",
+          "godRays": "Voimakkuus",
+          "godRaysLength": "Pituus",
+          "godRaysDiffusion": "Hajonta",
+          "godRaysThreshold": "Kirkkauden kynnysarvo",
+          "godRaysLayers": "Kerroksellisuus",
+          "tilt": "Voimakkuus",
+          "focusCenter": "Fokuksen keskikohta",
+          "focusBand": "Terävä alue",
+          "bloomIntensity": "Voimakkuus",
+          "bloomThreshold": "Kynnysarvo",
+          "bloomRadius": "Säde",
+          "bloomSoftness": "Pehmeys",
+          "crtCurvature": "Ruudun kaareutuminen",
+          "crtMask": "Mustat reunat",
+          "crtCornerDark": "CRT-nurkkien tummennus"
+        },
+        "pix": {
+          "pixelSize": "Säde (pikseliä)",
+          "normalEdge": "Reliefin ääriviiva",
+          "depthEdge": "Syvyyden ääriviiva"
+        },
+        "vfx": {
+          "mist": {
+            "densite": "Tiheys",
+            "compacite": "Tiiviys",
+            "elevation": "Korkeus"
+          },
+          "fireflies": {
+            "densite": "Tiheys",
+            "taille": "Koko",
+            "vagabondage": "Vaeltelu",
+            "scintillement": "Tuikinta"
+          },
+          "rain": {
+            "densite": "Tiheys",
+            "tailleGoutte": "Pisaran koko",
+            "impactSol": "Maahan osuma"
+          },
+          "cloud": {
+            "densite": "Tiheys",
+            "altitude": "Korkeus",
+            "epaisseur": "Paksuus"
+          },
+          "storm": {
+            "frequenceEclairs": "Salamien taajuus",
+            "luminositeEclair": "Salaman kirkkaus",
+            "intensitePluie": "Sateen voimakkuus",
+            "altitudeChape": "Kannen korkeus",
+            "opaciteChape": "Kannen läpinäkymättömyys"
+          },
+          "fire": {
+            "probaAllumage": "Syttymistodennäköisyys",
+            "densiteFlammes": "Liekkien tiheys",
+            "duree": "Kesto",
+            "taille": "Koko",
+            "propagation": "Leviäminen"
+          }
+        }
+      }
+    },
+    "help": {
+      "topbar.fps": "Näytä/piilota edistynyt suorituskyvyn HUD, uteliaille ja huolestuneille yhtä lailla",
+      "topbar.eda": "Avaa tai sulje renderöintipaneeli — kymmeniä säätimiä, ei aikuisten valvontaa",
+      "topbar.snapshot": "Kuvakaappaus (ei HUD:ia)",
+      "topbar.gallery": "Kuvakaappausgalleria",
+      "topbar.replay": "Pelin toisto",
+      "topbar.lang": "Kieli",
+      "topbar.theme": "Graafinen teema (Sininen / Vintage)",
+      "topbar.mute": "Mykistä / poista mykistys äänestä",
+      "topbar.muteVoice": "Mykistä / poista mykistys äänestä (TTS)",
+      "renderer.toneMappingExposure": "Renderöijän yleisvalotus (ACESFilmic). Määrittää, kuinka paljon valoa saavuttaa \"sensorin\" ennen värimäärittelyä.\nArvot < 1 tummentavat koko kohtauksen, > 2 voivat ylivalottaa korkeimmat valot.\nTyypillinen: 1,2–1,8 luonnolliseen ilmeeseen, ellei tavoitteena ole kuulustelukoppien tyyli.",
+      "environment.fogDensity": "Eksponentiaalisen sumun (FogExp2) tiheys. Aktiivinen vain, kun \"Lineaarinen loppu\" on 0.\nNäkyvyys putoaa hyvin nopeasti: arvolla 0,07 kohtaus on lähes läpinäkymätön.\nHallitumpaa näkyvyysaluetta varten suosi lineaarista tilaa \"Alku\"- ja \"Loppu\"-arvoilla.",
+      "environment.fogNear": "Etäisyys 3D-yksiköinä, jossa lineaarinen sumu alkaa.\nHeti kun \"Loppu\" > 0, vaihtuu automaattisesti FogExp2:sta THREE.Fog(near, far) -tilaan.\nArvolla 0: sumu alkaa aivan etualalta. Arvolla 5: lähiobjektit pysyvät terävinä.",
+      "environment.fogFar": "Etäisyys, jossa lineaarinen sumu on täysin läpinäkymätön.\nAseta 0 palataksesi eksponentiaaliseen tilaan.\nEsimerkki: Alku = 3, Loppu = 18 → 15 yksikön näkyvyysalue — tunnelmallinen mutta ei hukuta kaikkea.",
+      "lights.hemisphereIntensity": "Taivaanvalon (taivas + maa) voimakkuus.\nValaisee pinnat, jotka eivät ole suoraan auringon alla.\nLiian korkea: latistaa varjot ja poistaa syvyyden. Liian matala: taustapinnat vajoavat täydelliseen pimeyteen.",
+      "lights.sunIntensity": "Suuntavalon (auringon) teho.\nMäärittää varjojen kovuuden ja reliefin kontrastin.\nArvot > 5 voivat ylivalottaa vaaleat pinnat, jos yleisvalotus on myös korkea.",
+      "lights.sunOrbitRadius": "Auringon ympyränmuotoisen kiertoradan säde kohtauksen keskipisteen ympärillä.\nPieni säde (< 5) antaa jyrkästi kulmassa olevan valon keskeltä; suuri (> 20) antaa loivemman valon reunoilta.",
+      "lights.sunOrbitHeight": "Auringon pystysuora korkeus kohtaustason yläpuolella.\nKorkea = lyhyet varjot, yläpuolinen valo. Matala = pitkät, loivat varjot (kultainen tunti tai auringonlasku).",
+      "lights.sunOrbitSpeed": "Auringon kulmanopeus radiaaneina sekunnissa.\nArvolla 0,06 täysi kierros kestää ≈ 100 sekuntia. Arvolla 0: paikallaan oleva aurinko. Arvolla 1: varjot pyörivät nopeasti.",
+      "lights.sunVisualScale": "Auringonkiekon näennäinen koko taivaalla.\nPuhtaasti visuaalinen — ei vaikuta valon tehoon eikä varjoihin. Turhamaisuusmittari, periaatteessa.",
+      "lights.fillIntensity": "Pehmeän täytevalon voimakkuus, auringon vastakkaisella puolella.\nAvaa kovia varjoalueita. Hyödyllinen välttämään täysin mustia laikkuja katosten alla tai mäkien varjopuolella, minne kyläläiset ilmeisesti eivät uskalla.",
+      "grading.brightness": "Renderöinnin jälkeen sovellettu lisäkirkkauden siirtymä.\nLisää vakioarvon kaikkiin kanaviin.\nEroaa valotuksesta: ei vahvista korkeimpia valoja, ei muuta sävykartoitusta.",
+      "grading.contrast": "Yleiskontrasti kääntyen 50 % harmaan ympäri.\n> 1: erottaa tummat ja vaaleat sävyt (elokuvamainen ilme). < 1: puristaa yhteen (litteä/haalea ilme).\nÄärimmillään → täysin musta tai valkoinen.",
+      "grading.saturation": "Yleinen kylläisyys. Sekoittaa harmaasävyn (luma) alkuperäiseen väriin.\n0 = harmaasävy. 1 = normaali. > 1 = ylikylläinen.\nHyvin korkeilla arvoilla (3+) värit leikkautuvat ja voivat kääntyä — pikatie päänsärkyä aiheuttavaan maailmaan.",
+      "grading.vibrance": "Älykäs elävyys: tehostaa himmeitä värejä säästäen jo kylläisiä sävyjä.\nHillitympi kuin raaka kylläisyys luonnollisille vihreille.\nNegatiivinen: vaimentaa ensin voimakkaat värit, henkisesti uupuneille.",
+      "grading.hue": "Kaikkien sävyjen yleinen kierto väriympyrällä.\n±0,5 = puoli kierrosta (punainen ↔ syaani). Hienovarainen matalilla arvoilla.\nHyödyllinen värivirheen korjaamiseen tai omintakeisen paletin luomiseen, jota kukaan ei pyytänyt mutta kaikki muistavat.",
+      "grading.gamma": "Keskisävyihin sovellettu gammakorjaus.\n< 1 = vaaleammat keskisävyt; > 1 = tummemmat.\nEi vaikuta lineaarisesti ääripäihin (puhdas musta/valkoinen).",
+      "grading.blackLevel": "Mustan pisteen taso. Nostaa puhtaan mustan kohti harmaata.\nLuo \"haalean filmimäisen\" tai \"nostetun mustan\" ilmeen.\nLiian korkea = syvyyden ja tiheyden menetys varjoissa.",
+      "grading.whiteLevel": "Valkoisen pisteen taso. Puristaa korkeimmat valot alle 1,0:n.\nArvolla 0,871: puhdas valkoinen muuttuu kermanväriseksi, mikään ei leikkaudu.\nHyödyllinen pehmeään ilmeeseen, hienovaraiseen \"S-käyrään\".",
+      "grading.red": "Punaisen kanavan kertova vahvistus värimäärittelyn jälkeen.\n> 1 lämmittää kohtausta (oranssi/meripihka-sävy). < 1 viilentää sitä.\nYhdistettynä vihreään ja siniseen mahdollistaa tarkan valkotasapainon korjauksen.",
+      "grading.green": "Vihreän kanavan kertova vahvistus.\nVihreä hallitsee koettua kirkkautta (≈ 59 %).\nTämän kanavan laskeminen antaa violetin/magentan sävyn; nostaminen vihertää kuvaa ja kirkastaa sitä koetusti.",
+      "grading.blue": "Sinisen kanavan kertova vahvistus.\nNostaminen antaa kylmän/yöllisen tunnelman. Vähentäminen kuivattaa siniset lämpimän tai seepian ilmeen saamiseksi.",
+      "grading.redCurve": "Punainen sävykäyrä: soveltaa potenssifunktion kanavaan.\n< 1 = kupera käyrä (nostaa punaisia keskisävyjä). > 1 = syventää keskisävyjä.\nSovelletaan punaisen vahvistuksen jälkeen.",
+      "grading.greenCurve": "Vihreä sävykäyrä. Muotoilee vihreän kanavan vastetta keskisävyissä.\nHyödyllinen koetun kontrastin hienosäätöön koskematta ääripäihin.",
+      "grading.blueCurve": "Sininen sävykäyrä. Muotoilee tunnelmaa keskisävyissä.\nKäyrä < 1 = tiheämmät siniset korkeimmissa valoissa. > 1 = syvennetyt siniset (lämmin ilme keskisävyissä).",
+      "palette.strength": "Paletin harmonisoinnin kokonaisvoimakkuus kohdennetuilla tekstuureilla.\n0: ei vaikutusta. 1: tekstuurit värjätään täysin uudelleen kohdeväriä kohti.\nToimii vertaamalla GLB-materiaalinimiä — hiljaa, kulissien takana, kuin hyvin tarkka sisustaja.",
+      "palette.saturation": "Paletin harmonisoinnin jälkeen sovellettu kylläisyys.\n< 1: rauhoittaa uudelleenvärjättyjä tekstuureja. > 1: voimistaa niitä.\nMahdollistaa säädön koskematta kohdeväreihin.",
+      "palette.contrast": "Harmonisoinnin jälkeen väreihin sovellettu kontrasti.\nPieni korotus (1,05–1,2) parantaa uudelleenvärjättyjen tekstuurien luettavuutta.",
+      "palette.warmShift": "Koko biomipalettiin sovellettu yleinen lämmin/viileä siirtymä.\nNegatiivinen → viileämmät/sinisemmät sävyt. Positiivinen → lämpimämmät/kultaiset sävyt.",
+      "environment.skyColor": "Renderöijän taustaväri, näkyvissä kuvun ja objektien takana.\nYleensä tumma, jotta se ei pilkota lavasteiden läpi.",
+      "environment.fogColor": "Sumun väri, eksponentiaalinen tai lineaarinen.\nObjektit sulautuvat tähän sävyyn etäisyyden kasvaessa.\nTulisi vastata taivaan väriä yhtenäisen horisontin saamiseksi.",
+      "environment.domeColorTop": "Pallomaisen ilmakehäkuvun yläosan väri.\nNäkyvissä taivaalla objektien yläpuolella (jos domeOpacity > 0).",
+      "environment.domeColorBottom": "Ilmakehäkuvun alaosan väri.\nSimuloi horisonttia tai matalaa maantasoista usvaa.",
+      "lights.hemisphereSkyColor": "Taivaanvalon \"taivas\"-komponentin sävy.\nVärittää ylöspäin osoittavat pinnat (katot, tasaiset pinnat).",
+      "lights.hemisphereGroundColor": "Taivaanvalon \"maa\"-komponentin sävy.\nVärittää alaspäin osoittavat pinnat (siltojen aluspinnat, talojen alaosat).",
+      "lights.sunColor": "Auringon suuntavalon väri.\nOranssi auringonlaskussa, valkoinen keskipäivällä, sinertävä pilvisellä säällä.\nVaikuttaa voimakkaasti heitettyjen varjojen väriin.",
+      "lights.fillColor": "Täytevalon väri.\nYleensä auringon vastaväri varjojen tasapainottamiseksi.",
+      "palette.targets.field": "Viljeltyjen peltojen tekstuurien harmonisoinnin kohdeväri.",
+      "palette.targets.forest": "Metsän ja puiden tekstuurien kohdeväri.",
+      "palette.targets.grass": "Niittyjen ja ruohon kohdeväri.",
+      "palette.targets.house": "Talojen ja kylärakennusten kohdeväri.",
+      "palette.targets.rail": "Kiskojen ja rautatieinfrastruktuurin kohdeväri.",
+      "palette.targets.water": "Veden (järvet, joet, meri) kohdeväri.",
+      "pix.pixelSize": "Yhden pikselin koko ruutuyksikköinä. Arvolla 1: natiiviresoluutio. Arvolla 8: voimakkaasti pikselöity, 8-bittisen tyylinen renderöinti.\nKorkeat arvot vähentävät GPU-kuormaa (vähemmän laskettavia fragmentteja) ja vahvistavat retro-ilmettä.\nYhdistettynä ääriviivoihin antaa lowpoly + ääriviiva -tyylin.",
+      "pix.normalEdge": "Pintanormaaleihin perustuvien ääriviivojen voimakkuus.\nHavaitsee rajat eri suuntiin osoittavien tasojen välillä (esim. katon reuna, seinän kulma).\n0 = ei normaaliperustaisia ääriviivoja. 1 = vahvat ääriviivat joka geometrisessä siirtymässä.",
+      "pix.depthEdge": "Syvyyteen (z-puskuriin) perustuvien ääriviivojen voimakkuus.\nJäljittää siluetit eri etäisyyksillä olevien objektien välillä.\nTäydentää normaaliperustaisia ääriviivoja: yhdessä ne antavat sarjakuvamaisen ilmeen.",
+      "pix.worldShape": "Valitsee maailman näennäisen kaarevuuden.\n\"Pallo\": maailma on pallo, horisontti kaartuu — mini-planeettaefekti, valaistuneille.\n\"Litteä\": ei kaarevuutta, perinteinen tasonäkymä — klassinen isometrinen ilme, oikeaoppisille."
+      ,
+      "env.dayNight": "Vaihtaa päivän ja yön välillä.\nMuuttaa näkyvän taivaankappaleen (aurinko/kuu), taivaan, ympäristön värit ja tuo esiin komeetat yöllä. Ei aikaeromatkustuksen sivuoireita.",
+      "quality.density": "Yleinen sisällön tiheyskerroin (0,15–1,0).\nVähentää luonnollisten esineiden, ruohonkorsien ja lampaiden määrää keventääkseen kohtausgraafin läpikäyntiä ja tavoittaakseen 60 FPS heikommilla koneilla.\nEi vaikuta maastoon, veteen, rakennuksiin tai hahmoihin (pelattavuus ja järjestelmät on jo optimoitu erikseen). Rakentaa sisällön uudelleen jokaisella muutoksella — lampaiden määrä on ensimmäinen, joka tuntee budjettileikkaukset.",
+      "cin.tilt": "Tilt-shift-efektin voimakkuus: asteittainen sumennus kuvan ylä- ja alareunassa.\nSimuloi kallistusobjektiivia, joka vähentää syväterävyyttä keskustassa.\nAntaa pienoismallin illuusion — hyvin voimakas arvolla 1.",
+      "cin.focusCenter": "Tilt-shiftin terävän fokuskaistan pystysuora sijainti.\n0 = kuvan yläreuna, 0,5 = keskikohta, 1 = alareuna.\nAlaspäin siirtäminen tuo maantasoiset elementit fokukseen.",
+      "cin.focusBand": "Tilt-shiftin terävän kaistan leveys (osuutena korkeudesta).\n0,1 = hyvin ohut kaista, 0,5 = puolet kuvasta fokuksessa, 1 = kaikki terävää (efekti pois käytöstä).",
+      "cin.vignette": "Kuvan reunojen ja kulmien tummennus.\nSimuloi valon heikkenemistä laajakulmaobjektiivin reunoilla.\nVahvistaa syvyysvaikutelmaa ja ohjaa katseen kohti keskustaa.\nUlottuu arvoon 2 asti: yli 1:n reunat muuttuvat lähes täysin mustiksi.",
+      "cin.grain": "Renderöinnin päälle lisätyn filmirakeisuuden määrä.\nSimuloi hopeahalidifilmin tai herkän anturin epätäydellisyyksiä.\nHienovarainen arvolla 0,2, kaikkialla läsnä arvolla 1 — jolloin katsot periaatteessa kohinaa, jolla on juoni.",
+      "cin.chromatic": "Kromaattinen aberraatio: väri­kanavien sivuttaissiirtymä kohti reunoja.\nSimuloi epätäydellisen objektiivin virheitä, joka ei tarkenna kaikkia aallonpituuksia samaan pisteeseen.\nHienovarainen arvolla 0,2, psykedeelinen yli 0,7:n.",
+      "cin.halation": "Hehkuva halo hyvin kirkkaiden alueiden ympärillä, tyypillistä hopeahalidifilmille.\nVoimakas valo \"vuotaa\" hieman viereisille tummille alueille.\nLisää lämpöä ja orgaanista tuntua — kaunista auringonlaskuissa, antaa anteeksi kaiken muun.",
+      "cin.barrel": "Tynnyrivääristymä: kuvan reunat työntyvät ulospäin.\nSimuloi kalansilmä- tai laajakulmaobjektiiveja. Vahvistaa \"valvontakameran\" tai lo-fi-ilmeen.\nArvolla 1 kuva pullistuu niin voimakkaasti, että tuntuu henkilökohtaisesti tarkkailtavalta.",
+      "cin.scanLines": "Lomitetut tummat vaakaviivat, jäljittelevät CRT-näyttöä tai vanhaa televisiota.\n0 = ei kuvajuovia. 6 = hyvin voimakkaat viivat, retro-TV-ilme.\nTehokas yhdistettynä CGA/EGA-paletin kanssa vintage-tunnelmaan, jonka vanhempasi tunnistavat.",
+      "cin.scanLinesIntensity": "Kuvajuovien mustuuden syvyys. 0 = läpinäkyvä (ei tummennusta, vaikka\nkuvajuovat olisivat käytössä). 1 = täysin musta. Ei vaikutusta, jos kuvajuovat on 0:ssa.",
+      "cin.godRays": "Auringon ruutuasemasta lähtevien iltahämärän säteiden (god rays) voimakkuus.\nKevyt ruutuavaruusefekti, ei ylimääräistä renderöintivaihetta — erityisen näkyvä\nhorisontin lähellä tai kun aurinko on osittain puun tai tornin takana.\n0 = pois käytöstä (nolla GPU-kustannus).",
+      "cin.godRaysLength": "Säteiden ulottuvuus, osuutena ruudusta, näytetyn pikselin ja auringon välillä.\nMatala = lyhyet, auringon lähelle rajoittuneet säteet. Korkea = säteet, jotka venyvät\nsuureen osaan kuvaa.",
+      "cin.godRaysDiffusion": "Säteiden vaimeneminen matkallaan kohti aurinkoa.\nMatala = lyhyet, terävät säteet. Korkea = pitkät, pehmeät säteet, jotka ulottuvat\nkauas valonlähteestä.",
+      "cin.godRaysThreshold": "Kirkkauskynnys, jonka yläpuolella pikseliä käsitellään valonlähteenä\n(taivas, aurinko) ja se osallistuu säteisiin. Matala = useammat alueet osallistuvat (säteitä\non enemmän läsnä). Korkea = vain kirkkaimmat alueet (aurinko itse) tuottavat niitä.",
+      "cin.godRaysLayers": "Pilkkoo sulavan sädeliukuvärin pinottuihin tiheyskerroksiin — kerroksellinen,\nläpikuultavien huntujen efekti (mille-feuille) yhtenäisen halon sijaan.\n0 = klassinen sulava liukuväri. 1 = voimakas kerroksellisuus, näkyvästi kerrostuneet säteet.",
+      "cin.bloomIntensity": "Hehkun (bloom) voimakkuus: pehmeä hehkuva halo korkeimpien valojen ympärillä (aurinko, kuu,\ntähdet, valaistut ikkunat, HUD-elementit). Vaikuttaa vain pikseleihin, jotka ylittävät\nalla asetetun kynnysarvon — ei koskaan sumenna koko kuvaa.\n0 = pois käytöstä (nolla GPU-kustannus).",
+      "cin.bloomThreshold": "Kirkkauskynnys, jonka yläpuolella pikseli osallistuu hehkuun.\nMatala = useammat alueet (jopa kohtalaisen kirkkaat) tuottavat halon.\nKorkea = vain voimakkaimmat lähteet (aurinko, lamput) tuottavat sellaisen.",
+      "cin.bloomRadius": "Hehkun lähdepikseleiden ympärille sovelletun sumennuksen säde, ruutupikseleinä.\nMatala = tiivis, terävä halo. Korkea = laajempi, hajanaisempi halo.",
+      "cin.bloomSoftness": "Siirtymän pehmeys hehkun kynnysarvolla.\nMatala = terävä raja \"osallistuu\" ja \"ei osallistu\" välillä.\nKorkea = asteittainen siirtymä, pehmeämpi halo lähteiden reunalla.",
+      "cin.crtCurvature": "CRT-tyylinen ruudun kaareutuminen: vääristää kuvan ikään kuin se näkyisi\nkaarevalla pinnalla. Riippumaton yllä olevasta tynnyri- (objektiivi-) vääristymästä.\n0 = ei vääristymää (nolla GPU-kustannus).",
+      "cin.crtMask": "Peittää alueet, jotka jäävät kuvan ulkopuolelle ruudun kaareutumisen soveltamisen jälkeen\n(mustat reunat) sen sijaan, että venyttäisi niitä. 0 = venytetyt reunat (ei peittoa),\n1 = ruudun ulkopuoliset reunat täysin mustana. Ei vaikutusta, jos kaareutuminen on 0:ssa.",
+      "cin.crtCornerDark": "CRT-putkelle tyypillinen ruudun kulmien lisätummennus.\n0 = ei tummennusta. Ei vaikutusta, jos ruudun kaareutuminen on 0:ssa.",
+      "water.foamWidth": "Rantavaahtokaistan ulottuvuus (metreinä).\n0 = ei rantavaahtoa. Korkeat arvot = leveä valkoinen reunus koko rannikon pituudelta.",
+      "water.foamScale": "Vaahtotekstuurin mittakaava. Mitä korkeampi arvo, sitä hienompaa ja tiheämpää vaahtokuvio on.\nMatala = suuria laikkuja, korkea = hienoa, vaahtomaista rakeisuutta.",
+      "water.foamDensity": "Rantavaahdon laukaisukynnys. Mitä korkeampi arvo, sitä enemmän vaahto peittää pintaa reunan lähellä.",
+      "water.foamAmbient": "Koko vesipinnalla näkyvän ympäröivän vaahdon kynnys (ei vain rannalla).\n0 = täysin sileä pinta ulapalla. Korkeat arvot = valkopäisiä aaltoja/pärskettä kaikkialla.",
+      "water.foamSharp": "Vaahdon reunan terävyys. Matala = pehmeä, hajanainen siirtymä. Korkea = terävä, leikattu ääriviiva.",
+      "water.foamSpeed": "Vaahdon animaationopeus (kuvion vieriminen ajan myötä). 0 = jäätynyt, paikallaan pysyvä vaahto.",
+      "water.deepDistance": "Rannalta avoveteen ulottuva etäisyys, jolla matalan/syvän veden liukuväri levittäytyy.\nMatala = tiivis siirtymä reunan lähellä. Korkea = liukuväri levittäytyy laajalle alueelle.",
+      "water.opacity": "Vesialan peruslapinäkymättömyys. Matala = läpikuultava vesi, joka näyttää pohjan. Korkea = läpinäkymätön vesi.",
+      "wake.armWidth": "Veneen takana olevan V-muotoisen perävanan kummankin haaran puolileveys.",
+      "wake.spread": "V:n hajonta: kuinka nopeasti kaksi haaraa erkanevat toisistaan veneestä kauemmas mentäessä.",
+      "wake.length": "Matka, jolla perävana haalistuu veneen takana ennen katoamistaan.",
+      "wake.scale": "Perävanan vaahtokuvion mittakaava. Mitä korkeampi arvo, sitä hienompi rakeisuus.",
+      "wake.density": "Perävanan vaahdon peittävyys. Matala = huomaamaton vana, korkea = tiheä vaahtojälki.",
+      "wake.opacity": "Perävanan enimmäisläpinäkymättömyys, voimakkaimmillaan aivan veneen takana ja haalistuen sitten matkan myötä.",
+      "wind.wheat.strength": "Vehnän tähkien huojunnan amplitudi. 0 = liikkumaton.",
+      "wind.wheat.speed": "Vehnän värähtelynopeus tuulessa.",
+      "wind.grass.strength": "Ruohonkorsien huojunnan amplitudi.",
+      "wind.grass.speed": "Ruohon värähtelynopeus tuulessa.",
+      "wind.grass.sway": "Jokaisen korren lisäsinihuojunta, riippumaton tuulen kohinasta.",
+      "wind.tree.strength": "Latvusten huojunnan amplitudi. Tämän asetuksen muuttaminen kääntää jo istutettujen puiden shaderit uudelleen (lyhyt nykäys mahdollinen).",
+      "wind.tree.speed": "Puiden värähtelynopeus tuulessa.",
+      "wind.tree.frequency": "Pääasiallisen tuuliaallon spatiaalinen taajuus rungon/lehvästön suunnassa.",
+      "wind.tree.turbulence": "Puuskien ja pääasialliseen tuuliaaltoon lisätyn toissijaisen yksityiskohdan voimakkuus.",
+      "wind.tree.gustStrength": "Puuskien (hitaampi, laajempi vaihtelu) painoarvo kokonaisliikkeessä.",
+      "wind.tree.detailStrength": "Hienon yksityiskohdan (nopea väreily) painoarvo kokonaisliikkeessä.",
+      "cloud.coverage": "Pilvipeite horisontissa. 0 = kirkas taivas, 1 = pilvinen taivas.",
+      "cloud.scale": "Pilvikuvion mittakaava. Korkea arvo = pienempiä, hienompia pilviä; matala arvo = laajoja massoja.",
+      "cloud.speed": "Pilvien ajelehtimisnopeus horisontissa.",
+      "stats.drawCalls": "Three.js:n tänä ruutuna antamien renderöintikutsujen (draw calls) kokonaismäärä.\nJokainen näkyvä objekti maksaa vähintään 1 renderöintikutsun — varjot lisäävät niitä.\n> 200 dc: seuraa suorituskykyä mobiili-GPU:illa, jotka yrittävät parhaansa.",
+      "stats.trackedDc": "Seurattuihin objektiluokkiin (laatat, puut, kiskot…) kohdistetut renderöintikutsut.\nErotus kokonaismäärästä = luokittelemattomat renderöintikutsut (käyttöliittymä, apuvälineet, taivaslaatikko…) — GPU:n roskalaatikko.",
+      "stats.shadows": "Varjojen renderöintiin (shadow map) käytettyjen renderöintikutsujen arvio.\nJokainen varjon \"heittävä\" objekti renderöi kohtauksen uudelleen auringon näkökulmasta.\nVähennä shadowMapSize-arvoa tai heittäjien määrää pienentääksesi tätä kustannusta.",
+      "stats.triangles": "Tänä ruutuna renderöityjen kolmioiden kokonaismäärä.\nGeometrisen monimutkaisuuden indikaattori — varjot kaksinkertaistavat tämän luvun.\nLOD (yksityiskohtaisuuden taso) -verkot vähentävät tätä lukua etäisyydellä, yksinkertaistaen maailmaa hiljaa, kun et katso tarkkaan.",
+      "stats.objects": "Kohtauksessa seurattujen 3D-objektien (Mesh, Group…) kokonaismäärä.\nEi täsmää tarkalleen renderöintikutsuihin: yksi objekti voi tuottaa useita vaiheita.",
+      "stats.textures": "GPU-muistissa aktiivisten tekstuurien määrä.\nVapauttamaton tekstuuri jää VRAM-muistiin. Kannattaa seurata uusien laattojen lataamisen jälkeen — VRAM:illakin on tunteensa.",
+      "stats.shaders": "Käännettyjen ja aktiivisten shader-ohjelmien (GLSL) määrä.\nJokainen materiaali + define-yhdistelmä = yksi shader. Liian monta varianttia = nykäys ensimmäisellä ruudulla, GPU:n vastine lavajännitykselle.",
+      "game.tiles": "Lautaan pelin alusta lähtien asetettujen laattojen kokonaismäärä.\nJokainen laatta voi kuulua yhteen tai useampaan biomiin koostumuksensa mukaan.",
+      "game.score": "Pisteet: tässä pelissä ansaitut pisteet. Ainoa luku, jolla väitetään olevan merkitystä.",
+      "game.efficiency": "Tehokkuus = pisteet ÷ asetetut laatat, alennettuna kun laattoja on asetettu liian vähän, jotta luku olisi merkityksellinen.\nMaailmanlaajuinen sijoitus (sivuston Tulostaulu-osio) perustuu TÄHÄN tehokkuuteen, ei raakapisteisiin! Laatu ennen määrää, kuten mummosi aina sanoi.",
+      "game.mills": "Ruudukossa olevien myllyjen määrä.\nMylly ilmestyy automaattisesti jokaisen suuren vehnäpeltoalueen keskelle, piittaamatta rakennusluvista.",
+      "game.trains": "Muodostetut junalinjat: yksi linja = kaksi asemaa yhdistettynä keskeytymättömillä kiskoilla.\nMitä pidempi linja, sitä korkeammat pisteet.",
+      "game.boats": "Aktiiviset veneet: vene ilmestyy jokaiseen maan ympäröimään vesialueeseen.\nJokainen vene tuottaa pisteitä niin kauan kuin se pysyy \"pinnalla\" — merivakuutusta ei sisälly.",
+      "game.comets": "Siepatut komeetat: satunnaistapahtumia, jotka viiltävät laudan poikki.\nLaatan asettaminen ennustettuun paikkaan oikealla hetkellä mahdollistaa niiden sieppaamisen. Tähtitieteen kotitehtävä, pelillistettynä.",
+      "game.grass": "Asetettujen niittylaattojen kokonaismäärä.\nSuurin pinta-ala = laajin yhtenäinen niittyalue (vierekkäiset saman biomin laatat).",
+      "game.largestGrass": "Laajin yhtenäinen niittyalue (yhdistettyjen laattojen määränä).\nSuuri yhtenäinen alue tuottaa enemmän pisteitä pelin lopussa.",
+      "game.field": "Asetettujen vehnäpeltolaattojen kokonaismäärä.\nKyliä tai jokia lähellä olevat pellot antavat bonuksia.",
+      "game.largestField": "Laajin yhtenäinen peltoalue. Määrittää lopullisen sadonkorjuubonuksen.",
+      "game.forest": "Asetettujen metsälaattojen kokonaismäärä.\nTiheät metsät (laajat alueet) ovat eläinten suojapaikkoja ja tuottavat enemmän.",
+      "game.largestForest": "Laajin yhtenäinen metsä. Metsät, jotka ovat > 7 laattaa, laukaisevat joskus erikoistapahtumia.",
+      "game.house": "Asetettujen kylälaattojen kokonaismäärä.\nErilliset talot ovat vähän arvoisia; tiheä, rautatieverkkoon hyvin yhdistetty kylä tuottaa paljon. Kiinteistölogiikka, kuusikulmiolaitos.",
+      "game.largestHouse": "Laajin yhtenäinen kylä. Kylä = vierekkäiset talot.\nLukuisat, tiheät kylät maksimoivat kaupunkibonuksen.",
+      "game.water": "Asetettujen vesilaattojen kokonaismäärä (järvet, joet, meri).\nMuihin biomeihin rajoittuva vesi luo arvokkaita rannikkoalueita.",
+      "game.largestWater": "Laajin yhtenäinen vesialue. Yli 5 laatan järvi voi isännöidä lisäveneitä.",
+      "game.rail": "Asetettujen rautatielaattojen kokonaismäärä.\nPelkät kiskot eivät tuota mitään — kahden aseman välinen yhteys luo linjan.",
+      "game.largestRail": "Pisin yhtenäinen rautatie (laattoina). Verkon maksimiulottuvuuden indikaattori.",
+      "game.activeTile": "Laatta, jonka olet asettamassa seuraavaksi.\nSiirrä kohdistinta Z/Q/S/D-näppäimillä, käännä hiiren rullalla ja aseta VÄLILYÖNNILLÄ.\nJokainen laatan sivu vastaa yhtä biomia — suunnittele yhteytesi!",
+      "game.nextTile": "Seuraava laatta, joka tulee peliin, kun asetat nykyisen.\nEnnakoi sen muoto valmistellaksesi sille parhaan paikan — hieman ennakointia vie pitkälle, toisin kuin oikeassa elämässä.",
+      "game.deckRemaining": "Nostopakassa jäljellä olevien laattojen määrä.\nPeli päättyy, kun pakka on tyhjä — käytä jokainen sijoitus hyvin!",
+      "hs.summary": "Pelin yhteenveto: asetetut laatat, junalinjat, veneet, siepatut komeetat.",
+      "hs.grass": "Niitty — laattoja yhteensä / laajin yhtenäinen alue.",
+      "hs.field": "Vehnäpelto — laattoja yhteensä / laajin yhtenäinen alue.",
+      "hs.forest": "Metsä — laattoja yhteensä / laajin yhtenäinen alue.",
+      "hs.house": "Kylä — laattoja yhteensä / laajin yhtenäinen alue.",
+      "hs.water": "Vesi — laattoja yhteensä / laajin yhtenäinen alue.",
+      "hs.rail": "Rautatie — laattoja yhteensä / pisin yhtenäinen linja.",
+      "fps.fps": "Three.js-moottorin renderöimät ruudut sekunnissa.\n60 FPS = sulava renderöinti, ruutubudjetti kunnioitettu. < 30 FPS = huomattavia hidastumia.\nArvo muuttuu punaiseksi, kun ruutubudjetti (16,7 ms) ylittyy jatkuvasti — moottorin tapa huokaista kuuluvasti.",
+      "fps.adj": "Nykyisen sulavuuden laadullinen arvio.\nVihreä (Erinomainen / Sulava): kaikki hyvin. Oranssi (Kohtalainen / Ok): hyväksyttävä, mutta pidä silmällä.\nPunainen (Tiukka / Rasittunut / Täydessä kuormassa): moottori on paineen alla — etsi pullonkaula, ehkä myös vähemmän lampaita.",
+      "fps.cpu": "Prosenttiosuus ruutubudjetista (16,7 ms), jonka JavaScript-säie kuluttaa.\nSisältää pelilogiikan, päällekuvapäivitykset, animaatiot ja GC-tauot.\n> 80 %: CPU on pullonkaula — vähennä päivitystaajuutta tai aktiivisten päällekuvien määrää.",
+      "fps.gpu": "Prosenttiosuus ruutubudjetista, jonka GPU-renderöinti kuluttaa.\nMitattu todellisella, asynkronisella GPU-ajastuskyselyllä (EXT_disjoint_timer_query_webgl2) —\nnäytetty arvo voi viivästyä 1–muutamalla ruudulla. Jos laajennus ei ole käytettävissä tällä\najurilla/selaimella, siirrytään CPU-lähetysajastimeen (etuliite \"≈\", vähemmän luotettava, mutta yrittää parhaansa).\n> 80 %: GPU on kyllästynyt — vähennä kolmioita/fragmentteja (kasvillisuus, jälkikäsittely), renderöintikutsuja tai varjoja.",
+      "menu.solo": "Yksinpeli — pelaa yksin, omaan tahtiisi, vastaamatta kenellekään.\nPisteesi lähetetään maailmanlaajuiseen tulostauluun pelin päätyttyä.",
+      "menu.multi": "Moninpeli — pelaa reaaliajassa muiden pelaajien kanssa.\nLuo huone ja jaa koodi, tai liity olemassa olevaan peliin.",
+      "menu.platiste": "Litteä geometria — ruudukko lepää vaakatasossa.\nParempi luettavuus ja ennustettava käyttäytyminen: suositellaan sekä aloittelijoille että perinteitä kunnioittaville.",
+      "menu.bouliste": "Pallomainen geometria — laatat seuraavat planeetan kaarevuutta.\nMukaansatempaavampi näkymä, mutta kaareva ruudukko voi olla aluksi hämmentävä — tiedettä ei ole koskaan tarkoitettu helpoksi.",
+      "menu.confirm": "Vahvista ja siirry seuraavaan vaiheeseen.",
+      "menu.create": "Luo uusi moninpelihuone.\nYksilöllinen koodi luodaan automaattisesti — jaa se muille pelaajille, jotta he voivat liittyä sinuun.",
+      "menu.join": "Liity olemassa olevaan huoneeseen yllä näkyvällä koodilla.",
+      "menu.back": "Palaa aloitusnäyttöön.",
+      "game.gridPercent": "Ruudukkoon pelin alusta lähtien asetettujen laattojen määrä.\nJokainen sijoitus kasvattaa tätä laskuria, myös moninpelitilassa.",
+      "game.lastScore": "Viimeisimmästä sijoituksesta ansaitut pisteet.\nSisältää aluebonuksen, jos laatta kasvatti tai sulki yhtenäisen alueen, sekä mahdolliset tehtäväbonukset.",
+      "game.newGame": "Aloita uusi peli.\nNykyinen peli pysyy aktiivisena ja pelattavana — voit palata siihen milloin tahansa valikosta, ei kovia tunteita.",
+      "game.abandonGame": "Hylkää nykyinen peli.\nPeli suljetaan pysyvästi: et voi enää pelata sitä uudelleen etkä lähettää uutta pistettä. Valitse harkiten — tämä on lopullinen."
+    },
+    "missionHelp": {
+      "forest": "Aseta laattoja metsäsektoreilla 🌲.\nJokainen laudalle asetettu metsäkolmio edistää tätä tehtävää.\nTiheät alueet tuottavat enemmän pisteitä pelin lopussa — puut arvostavat seuraa.",
+      "house": "Aseta laattoja kyläsektoreilla 🛖.\nJokainen asetettu talokolmio edistää tätä tehtävää.\nRautatieverkkoon yhdistetyt kylät ovat erityisen kannattavia — sijainti, sijainti, sijainti.",
+      "rail": "Aseta laattoja kiskoilla 🛤️.\nJokainen asetettu rautatiekolmio edistää tätä tehtävää.\nPelkät kiskot eivät tuota mitään ilman asemaa kummassakin päässä — kunnianhimo tarvitsee määränpään.",
+      "water": "Aseta laattoja vesisektoreilla 💧.\nJokainen asetettu vesikolmio edistää tätä tehtävää.\nSuuret vesialueet voivat isännöidä veneitä.",
+      "grass": "Aseta laattoja niittysektoreilla 🌿.\nJokainen asetettu niittykolmio edistää tätä tehtävää.\nLaajat yhtenäiset niittyalueet tuottavat pinta-alabonuksen.",
+      "field": "Aseta laattoja vehnäpeltosektoreilla 🌾.\nJokainen asetettu peltokolmio edistää tätä tehtävää.\nKyliä tai jokia lähellä olevat pellot antavat bonuksia — hyvistä naapureista on hyötyä.",
+      "train": "Yhdistä kaksi asemaa keskeytymättömillä kiskoilla 🚂.\nJokainen uusi valmistunut junalinja edistää tätä tehtävää.\nMitä pidempi linja, sitä korkeammat pisteet.",
+      "boat": "Luo maan ympäröimiä vesialueita ⛵.\nVene ilmestyy automaattisesti jokaiseen maalaattojen ympäröimään järveen.\nJokainen uusi vene edistää tätä tehtävää — vesillelaskujuhlaa ei tarvita.",
+      "mill": "Rakenna suuria vehnäpeltoalueita ⚙️.\nMylly ilmestyy automaattisesti jokaisen tarpeeksi suuren peltoalueen keskelle.\nJokainen uusi mylly edistää tätä tehtävää."
+    },
+    "missionTitles": {
+      "forest": {
+        "one": "Kasvata {target} puun metsä",
+        "other": "Kasvata {target} puun metsä"
+      },
+      "house": {
+        "one": "Rakenna {target} talon kylä",
+        "other": "Rakenna {target} talon kylä"
+      },
+      "rail": {
+        "one": "Laajenna {target} kiskon rautatietä",
+        "other": "Laajenna {target} kiskon rautatietä"
+      },
+      "water": {
+        "one": "Yhdistä {target} laatan vesiväylä",
+        "other": "Yhdistä {target} laatan vesiväylä"
+      },
+      "grass": {
+        "one": "Laajenna {target} laatan niitty",
+        "other": "Laajenna {target} laatan niitty"
+      },
+      "field": {
+        "one": "Viljele {target} vehnäpeltolaattaa",
+        "other": "Viljele {target} vehnäpeltolaattaa"
+      },
+      "train": {
+        "one": "Aja {target} juna",
+        "other": "Aja {target} junaa"
+      },
+      "boat": {
+        "one": "Laske {target} vene vesille",
+        "other": "Laske {target} venettä vesille"
+      },
+      "mill": {
+        "one": "Pyöritä {target} myllyä",
+        "other": "Pyöritä {target} myllyä"
+      }
+    },
+    "ui": {
+      "modals": {
+        "scoreEnd": {
+          "kicker": "Peli päättyi — lopputulos",
+          "save": "Tallenna"
+        },
+        "abandon": {
+          "kicker": "Hylätäänkö peli?",
+          "sub": "Tätä peliä ei voi jatkaa sen jälkeen.",
+          "cancel": "PERUUTA",
+          "confirm": "HYLKÄÄ"
+        }
+      },
+      "hud": {
+        "player": "PELAAJA",
+        "room": "HUONE",
+        "abandon": "HYLKÄÄ",
+        "newGame": "UUSI PELI",
+        "statsTitle": "PELITILASTOT",
+        "mills": "Myllyt",
+        "trains": "Junat",
+        "boats": "Veneet",
+        "comets": "Komeetat",
+        "total": "Yhteensä",
+        "grassMax": "Yhtenäinen",
+        "fieldMax": "Yhtenäinen",
+        "forestMax": "Yhtenäinen",
+        "houseMax": "Yhtenäinen",
+        "waterMax": "Yhtenäinen",
+        "railMax": "Yhtenäinen",
+        "biomes": {
+          "grass": "Niitty",
+          "field": "Vehnäpelto",
+          "forest": "Metsä",
+          "house": "Kylä",
+          "water": "Vesi",
+          "rail": "Rautatie"
+        },
+        "activeTileTitle": "NYKYINEN LAATTA",
+        "nextTileTitle": "SEURAAVA LAATTA",
+        "deckRemaining": "JÄLJELLÄ",
+        "tilesPlaced": "ASETETTU",
+        "missionsTitle": "AKTIIVISET TEHTÄVÄT",
+        "noMission": "Ei tehtävää",
+        "efficiencyLabel": "Tehokkuus",
+        "scoreLabel": "Pisteet"
+      },
+      "help": {
+        "title": "Ohje",
+        "closeAria": "Sulje ohje",
+        "objective": {
+          "title": "Perussäännöt",
+          "text": "Aseta kuusikulmaisia laattoja, yhdistä täsmäävät tekstuurit ja suorita tehtäviä. Jokainen hyvin kohdistettu reuna kannattaa; vesi ja kiskot kannattavat vielä enemmän — maailma palkitsee ne, jotka suunnittelevat etukäteen, silloin tällöin.",
+          "points": {
+            "tile": "per asetettu laatta",
+            "edge": "per täsmäävä reuna naapurilaattaa vasten",
+            "waterRail": "per vesi/vesi- tai rautatie/rautatie-yhteys",
+            "surround": "bonus, kun laatta on ympäröity kaikilta 6 sivulta",
+            "mission": "per suoritettu tehtävä",
+            "bonus": "jos asetat laatan bonusruudulle"
+          }
+        },
+        "placement": {
+          "title": "Sijoittelu",
+          "items": [
+            "Peli alkaa 50 laatalla.",
+            "Ensimmäisen voi asettaa minne tahansa; myöhempien on kosketettava asetettua laattaa — ei leijuvia kyliä, valitettavasti.",
+            "Peli päättyy, kun pakka on tyhjä.",
+            "Pelattava alue laajenee jokaisella sijoituksella."
+          ]
+        },
+        "waterRail": {
+          "title": "Vesi ja kiskot",
+          "text": "Vesi ja rautatie ovat tiukkoja verkkoja ja vaikeampia sijoittaa. Vastineeksi jokainen oikea yhteys tuottaa enemmän pisteitä — suuri riski, suuri palkkio, ei sietokykyä umpikujille.",
+          "water": "yhdistyy vain veteen: +25",
+          "rail": "yhdistyy vain kiskoon: +25"
+        },
+        "bonusCells": {
+          "title": "Bonusruudut",
+          "text": "Ruudukkoon luodaan 1–4 bonusruutua. Ne eivät muuta mitään sijoittelusääntöä: jos onnistut asettamaan laatan sellaiselle, se katoaa ja tuottaa heti +500 pistettä. Lähimpänä ilmaista rahaa mitä tämä peli tarjoaa."
+          ,
+          "label": "valinnainen tavoite, puhtaita pisteitä, nolla riskiä"
+        },
+        "blackCells": {
+          "title": "Mustat ruudut",
+          "text": "Mustat ruudut ovat erikoislaattoja, jotka ovat jo valmiiksi ruudukossa. Ne toimivat jokereina: ne täyttävät mitä tahansa niiden ympärillä puuttuu ja hyväksyvät yhteydet mihin tahansa viereiseen tekstuuriin — kuusikulmiomaailman diplomaatit.",
+          "label": "lasketaan yhteensopivaksi minkä tahansa naapurireunan kanssa"
+        },
+        "textures": {
+          "title": "Tekstuurit ja arvot",
+          "field": {
+            "label": "Vehnäpelto",
+            "code": "1–2 tähkää"
+          },
+          "forest": {
+            "label": "Metsä",
+            "code": "1–6 puuta"
+          },
+          "grass": {
+            "label": "Niitty",
+            "code": "1"
+          },
+          "house": {
+            "label": "Kylä",
+            "code": "1–4 taloa"
+          },
+          "water": {
+            "label": "Vesi",
+            "code": "1"
+          },
+          "rail": {
+            "label": "Rautatie",
+            "code": "1"
+          }
+        },
+        "missions": {
+          "title": "Tehtävät",
+          "text1": "Joka kerta kun uusi nykyinen laatta ilmestyy, on 20 % mahdollisuus lisätä tehtävä. Se voi pyytää metsää, kylää, rautatietä, vesiväylää, niittyä, vehnäpeltoa, näkyviä junia, veneitä tai myllyjä — maailman vaatimukset, satunnaisesti toimitettuna.",
+          "text2": "Palkinto: +100 pistettä ja +3 laattaa. Tavoitteet edistyvät tyypeittäin; suoritettu tehtävä pysyy näkyvissä 5 vuoroa, hehkuen omassa kunniassaan. Todelliset arvot lasketaan: niitty/vesi/rautatie = 1; vehnäpelto = 1–2; talo = 1–4; metsä = 1–6 puuta. Myllyt ⚙️ laskevat aktiivisten suurten peltoalueiden määrän."
+        },
+        "controls": {
+          "title": "Ohjaimet",
+          "moveCamera": "Siirrä kameraa",
+          "resetCamera": "Nollaa kamera",
+          "zoom": "Lähennä / loitonna",
+          "undo": "Kumoa viimeisin siirto",
+          "toggleHelp": "Näytä / piilota tämä ohje",
+          "muteSound": "Mykistä / poista mykistys kaikista äänistä",
+          "muteVoice": "Mykistä / poista mykistys ääni-ilmoituksista",
+          "immersive": "Immersiivinen tila",
+          "superImmersive": "Super-immersiivinen tila",
+          "speedUp": "Nopeuttaa liikettä ja zoomausta",
+          "wheelZoomRotate": "Zoomaa tai pyöritä, jos saatavilla",
+          "rightClick": "Pyöritä kameraa",
+          "perfHud": "Näytä / piilota FPS-HUD",
+          "eda": "Näytä / piilota EDA-HUD",
+          "snapshot": "Ota kuvakaappaus",
+          "gallery": "Avaa kuvakaappausgalleria",
+          "replay": "Näytä / piilota pelin toisto-HUD",
+          "wheelKbd": "Rulla",
+          "leftClickKbd": "Vasen klikkaus",
+          "rightClickKbd": "Oikea klikkaus",
+          "spaceKbd": "VÄLILYÖNTI",
+          "shiftSpaceKbd": "SHIFT+VÄLILYÖNTI"
+        }
+      }
+    },
+    "highscore": {
+      "saving": "Tallennetaan...",
+      "saved": "Pisteet tallennettu! Palataan valikkoon...",
+      "error": "Virhe pisteiden tallennuksessa.",
+      "defaultName": "Pelaaja"
+    },
+    "multiplayerRooms": {
+      "modeCopy": "Luo uusi peli tai liity olemassa olevaan koodilla.",
+      "nameLabel": "Nimimerkki",
+      "namePlaceholder": "Nimimerkkisi",
+      "codeLabel": "Pelikoodi",
+      "codePlaceholder": "esim. 377EA7",
+      "availableRoomsLabel": "Saatavilla olevat pelit / varmuuskopiot",
+      "loadingRooms": "Ladataan pelejä...",
+      "btnCreate": "LUO",
+      "btnJoin": "LIITY",
+      "btnBack": "TAKAISIN",
+      "selectExisting": "Valitse olemassa oleva peli",
+      "noRoomsFound": "Pelejä ei löytynyt kansiosta /json/games",
+      "listUnavailable": "Luettelo ei saatavilla - PHP-palvelin hiljaa",
+      "roomsCount": {
+        "one": "{count} peli saatavilla / varmuuskopio",
+        "other": "{count} peliä saatavilla / varmuuskopiota"
+      },
+      "unknownDate": "tuntematon päivämäärä",
+      "playerWord": {
+        "one": "pelaaja",
+        "other": "pelaajaa"
+      },
+      "tileWord": {
+        "one": "laatta",
+        "other": "laattaa"
+      },
+      "creatingRoom": "Luodaan peliä {code}...",
+      "missingCode": "Pelikoodi puuttuu.",
+      "joiningRoom": "Yhdistetään peliin {code}...",
+      "roomNotFound": "Peli {code} löytyi, mutta tallenne puuttuu. Vanhentunut JSON hylätty.",
+      "defaultNamePrefix": "Pelaaja"
+    },
+    "startupMenu": {
+      "nameChoice": {
+        "title": "Mikä on nimesi?",
+        "label": "Etunimesi (tai nimimerkkisi)",
+        "placeholder": "esim. Aleksi",
+        "confirm": "JATKA →"
+      },
+      "home": {
+        "title": "Valitse pelitila: yksin tai moninpeli.",
+        "solo": "YKSIN",
+        "multi": "MONINPELI"
+      },
+      "worldShape": {
+        "title": "Valitse planeettasi geometria:",
+        "flat": "LITTEÄ",
+        "globe": "PALLO",
+        "note": "Suosittelemme aloittamaan tilasta \"<i>litteä</i>\". Voit vaihtaa ryhmää milloin tahansa pelin aikana, sillä myös planeetoilla on oikeus identiteettikriisiin."
+      }
+    },
+    "preloader": {
+      "loading": "Kutsutaan kuusikulmioita paikalle…",
+      "loadingPct": "Kutsutaan kuusikulmioita paikalle… {pct} %",
+      "loadingCount": "{loaded} tiedostoa / {total} tiedostoa · {loadedMB} Mt / {totalMB} Mt — melkein perillä, luultavasti"
+    },
+    "placementOverlay": {
+      "ok": "OK",
+      "outOfGrid": "RUUDUKON ULKOPUOLELLA",
+      "forbidden": "KIELLETTY",
+      "incompatibleNetwork": "YHTEENSOPIMATON VERKKO",
+      "edgeTypes": {
+        "field": "pelto",
+        "forest": "metsä",
+        "water": "vesi",
+        "rail": "rautatie",
+        "house": "talo",
+        "grass": "niitty"
+      }
+    },
+    "multiplayerClient": {
+      "unreadableResponse": "Palvelimen vastausta ei voitu lukea ({status}): {text}",
+      "serverError": "Palvelinvirhe {status}"
+    },
+    "kbdHint": "H tai ESC&nbsp;→ ohje &nbsp;|&nbsp; M&nbsp;→ mykistä &nbsp;|&nbsp; T&nbsp;→ mykistä ääni &nbsp;|&nbsp; VÄLILYÖNTI&nbsp;→ immersiivinen &nbsp;|&nbsp; SHIFT+VÄLILYÖNTI&nbsp;→ super-immersiivinen",
+    "superImmersifExitHint": "VÄLILYÖNTI poistuaksesi super-immersiivisestä tilasta",
+    "langName": "Suomi",
+    "tts": {
+      "pointsAnnounce": "{n} pistettä!",
+      "voiceOn": "Ääni päällä",
+      "voiceOff": "Ääni pois",
+      "newMission": "Uusi tehtävä: {title}",
+      "missionCompleted": "Hienoa työtä! Tehtävä suoritettu! Maailma nyökkää hyväksyvästi.",
+      "edaOpened": "Taidesuunnan editori",
+      "helpOpened": "Ohje",
+      "millsCount": "Sinulla on {n} myllyä",
+      "trainsCount": "Sinulla on {n} junaa",
+      "boatsCount": "Sinulla on {n} venettä",
+      "cometsCount": "Sinulla on {n} komeettaa",
+      "languageChanged": "Suomen kieli",
+      "themeChanged": "Teema {theme}"
+    },
+    "fpsAdjectives": {
+      "disastrous": "Katastrofaalinen",
+      "bad": "Huono",
+      "mediocre": "Keskinkertainen",
+      "passable": "Kelvollinen",
+      "good": "Hyvä",
+      "splendid": "Loistava"
+    }
+  }
+}

@@ -2024,3 +2024,76 @@ Demande explicite, ajoutée en 3 temps : d'abord le néerlandais seul ("D'abord 
 ### Bump
 
 `v1.0.2.5` → **`v1.0.2.6`** (10e/11e/12e langues : néerlandais, polonais, turc). Validé via `node --check --input-type=module < javascript/variables.js`.
+
+## 49. Tri alphabétique des 2 sélecteurs de langue — chantier clos (2026-08-09, sans bump)
+
+Demande explicite : "dans les deux sélecteurs de langue (dans la prez et ingame), tu trieras simplement les langues par ordre alphabétique". Tri appliqué par code de langue (pas par libellé affiché, qui diffère entre les deux sélecteurs — ex. `fr-CA` s'affiche "QC" côté EDA in-game mais "FR-CA" côté prez, cf. §46) : `de, en, es, fr, fr-CA, fr-MED, it, nl, pl, pt, ru, tr` à l'époque (12 langues). Reflété aux 3 endroits qui déterminent l'ordre :
+1. `javascript/gameLangReactive.js::LANG_FILES` — pilote l'ordre du `<select>` prez (auto-généré via `array_keys($LANG_FILES)`, cf. §46).
+2. `index.php::$LANG_FILES` (PHP, même ordre que 1, dupliqué car hors du graphe de modules ES).
+3. `javascript/edaPanelHost.js` — `<option>` du sélecteur EDA in-game, réordonnées manuellement (pas auto-générées, cf. checklist §46 point 3).
+
+Toute langue ajoutée par la suite doit être insérée à sa place alphabétique dans ces 3 endroits (plutôt qu'en fin de liste comme c'était le cas avant ce round) — nouvelle règle pour les ajouts futurs.
+
+## 50. Pastille version+date sur la prez, visible uniquement en thème médiéval — chantier clos (2026-08-09, v1.0.2.6 → v1.0.2.7)
+
+Demande explicite : "le container en bas à gauche qui affiche 'ingame' la version et la date de dernière release par dessus le cadre, doit etre aussi visible dans la prez en theme medieval". Un `#prezVersionBadge` avait déjà existé une fois (2026-08-08) puis avait été explicitement retiré ("c'était une erreur", cf. §46) — cette fois la demande est différente et volontairement limitée : visible **seulement** en thème médiéval, jamais sur le thème Bleu (contrairement à la 1ère tentative qui ne distinguait pas les thèmes).
+
+Implémentation, reprenant `#gameVersionBadge` (game.php) à l'identique :
+- `index.php` — nouveau bloc `<div id="prezVersionBadge">` (structure identique à game.php : séparateur " • " littéral entre version et `<span id="prezVersionDate">`), réutilisant les variables PHP `$version`/`$versionDate` déjà utilisées par `.hero-version-wrap`.
+- `index.php::updateVersionDate(l)` — étendue pour reformater `#prezVersionDate` EN PLUS de `#heroVersionDate` (même mtime, même locale `TTS_LOCALES_PREZ`), donc la pastille se retraduit à chaque changement de langue.
+- `css/presentation.css` — `#prezVersionBadge { display: none; }` par défaut (thème Bleu), avec commentaire remplaçant l'ancien vestige "ajoutée puis retirée" pour documenter le changement de décision.
+- `css/themes/medieval.css` — `[data-theme="ancien"] #prezVersionBadge` reprend EXACTEMENT le style de `[data-theme="ancien"] #gameVersionBadge` (position fixed bas-gauche, fond `rgba(20, 14, 8, 0.44)` arrondi 8px, `z-index: 100000` — au-dessus du cadre prez `#prezFooterBanner`/`#prezLeftBanner` à 99999/99998, cf. §46).
+
+Vérifié en direct : masqué par défaut (thème Bleu), visible avec le bon style/z-index en thème médiéval, texte correct ("v1.0.2.7 • 9 août 2026"), retraduction de la date confirmée en changeant de langue (FR→NL : "9 augustus 2026" identique sur `#heroVersionDate` et `#prezVersionDate`).
+
+### Bump
+
+`v1.0.2.6` → **`v1.0.2.7`**. Validé via `node --check --input-type=module < javascript/variables.js`.
+
+## 51. 3 langues scandinaves — Suédois, Danois, Norvégien (13e/14e/15e) — chantier clos (2026-08-09, v1.0.2.7 → v1.0.2.8)
+
+Demande explicite, une par une avec validation à chaque étape ("On les fais un par un... et on valide à chaque step"), avec rappel exprès de conserver l'humour caractéristique du jeu ("toujours avec l'humour caractéristique de Hexistenz dans les traductions" pour le norvégien). Même processus que le round précédent (§48), avec le tri alphabétique du §49 appliqué à chaque insertion (donc PAS ajoutées en fin de liste) :
+- **Suédois** (`sv`) inséré entre `ru` et `tr`.
+- **Danois** (`da`) inséré en tête, avant `de`.
+- **Norvégien** (`no`, bokmål) inséré entre `nl` et `pl`.
+
+**8 points de raccordement** : identiques à la checklist §46/§48 (LANG_FILES, `<option>` EDA, `$LANG_FILES` PHP, `TTS_LOCALES_PREZ`, `TTS_LOCALES`, `GAME_VERSION_DATE_LOCALES`, `LOCALES` snapshots/replays), avec locale `sv-SE` / `da-DK` / `nb-NO` (bokmål — pas de code `nb` séparé introduit, le code interne du jeu reste `no` à 2 lettres comme les autres, seule la locale BCP-47 utilise le préfixe `nb`).
+
+**Erratum en cours de route** : le fichier `danish.json` généré par l'agent contenait une coquille sur le bouton fonctionnel "Annuler" — `"cancel": "ANNULLÉR"` avec un accent aigu français incongru au lieu du danois correct `"ANNULLER"`. Repéré en relecture avant vérification live, corrigé immédiatement. Leçon retenue et appliquée en amont pour le round norvégien suivant (brief de l'agent explicitement enrichi d'une consigne de relecture des libellés fonctionnels pour ce type de faute) — aucune coquille trouvée sur `norwegian.json` (une seule, `diskré`→`diskret` dans un tooltip EDA, également corrigée par l'agent lui-même avant livraison).
+
+**Ton retenu**, volontairement différencié malgré la proximité des 3 langues (chaque agent avait pour consigne explicite de ne pas recopier les blagues des langues scandinaves déjà faites, mais de retraduire depuis l'esprit de l'anglais) :
+- **Suédois** (`swedish.json`, 1223 lignes) — registre "lagom"/pince-sans-rire ; ex. `game.help.game.efficiency` : "Kvalitet före kvantitet, som mormor alltid sa."
+- **Danois** (`danish.json`, 1223 lignes) — un peu plus mordant/sarcastique ; ex. `factions.vs` : "Debatten er ikke afgjort. Det bliver den heller aldrig."
+- **Norvégien** (`norwegian.json`, 1223 lignes) — ex. `stats.shaders` : "For mange varianter = hakking på første ramme, GPU-ens versjon av sceneskrekk."
+
+Humour maintenu partout y compris le panneau technique EDA (règle en vigueur depuis §47), fonctionnel resté sobre.
+
+**Validation** : `node --check --input-type=module` OK sur les 6 fichiers JS communs à chaque langue ; `python3 -c "import json; json.load(...)"` OK sur les 3 JSON, diff récursif de clés 0/0 pour chacun (script Python dédié par agent). Vérification live sur 192.168.0.41 après chaque langue (cache HTTP des modules JS purgé via `fetch(url, {cache:'reload'})` avant re-navigation, même artefact de test que §48, pas un bug de prod) : sélecteur EDA + sélecteur prez affichent le nouveau code à la bonne place alphabétique, HUD traduit, pastille de date correcte (suédois "9 augusti 2026", danois "9. august 2026", norvégien "9. august 2026" — même graphie que le danois pour cette date précise), `game.langName` correct ("Svenska"/"Dansk"/"Norsk"), locale TTS câblée.
+
+Hexistenz est désormais traduit en **15 langues**.
+
+### Bump
+
+`v1.0.2.7` → **`v1.0.2.8`** (13e/14e/15e langues : suédois, danois, norvégien). Validé via `node --check --input-type=module < javascript/variables.js`.
+
+## 52. 2 nouvelles langues — Finnois, Grec (16e/17e) — chantier clos (2026-08-09, v1.0.2.8 → v1.0.2.9)
+
+Demande explicite, à nouveau une par une avec validation à chaque étape, rappel exprès de l'humour à chaque round ("go avec humour dans les traductions (as usual)" pour le grec). Suggestions faites en amont par moi-même (question "d'autres langues faciles à intégrer ?") : finnois retenu comme complément naturel du groupe nordique (§51), grec retenu malgré l'alphabet différent (non-latin, non-cyrillique) car sans difficulté de mise en page particulière (pas de RTL, contrairement à l'arabe qui avait été écarté dans la même discussion).
+
+**8 points de raccordement** : identiques à la checklist §46/§48/§51, avec tri alphabétique du §49 respecté à l'insertion — `fi` entre `es` et `fr`, `el` entre `de` et `en` (ordre final des 17 codes : `da, de, el, en, es, fi, fr, fr-CA, fr-MED, it, nl, no, pl, pt, ru, sv, tr`). Locale TTS/date : `fi-FI`, `el-GR`.
+
+**Ton retenu** :
+- **Finnois** (`finnish.json`, 1225 lignes) — registre minimaliste/pince-sans-rire avec une pointe de "sisu" (autodérision) ; ex. `biomes.field.desc` : "...yritä olla itkemättä" (essaie de ne pas pleurer).
+- **Grec** (`greek.json`, 1223 lignes, alphabet grec complet avec accentuation — τόνοι — correcte, aucune translittération latine) ; ex. `game.help.stats.textures` : "...και η VRAM έχει αισθήματα" (même la VRAM a des sentiments).
+
+Humour maintenu partout y compris le panneau technique EDA (règle §47), fonctionnel resté sobre pour les deux — relecture systématique des libellés fonctionnels demandée à chaque agent depuis l'erratum du §51 (danois), aucune coquille trouvée sur ces 2 langues.
+
+**Validation** : `node --check --input-type=module` OK sur les 6 fichiers JS communs ; `python3 -c "import json; json.load(...)"` OK sur les 2 JSON, diff récursif de clés 0/0 + vérification des placeholders (accolades latines préservées telles quelles dans le texte grec, jamais traduites). Vérification live sur 192.168.0.41 : sélecteur EDA + sélecteur prez à la bonne place alphabétique, HUD traduit, pastille de date correcte ("9. elokuuta 2026" / "9 Αυγούστου 2026"), `game.langName` correct ("Suomi"/"Ελληνικά"), locale TTS câblée.
+
+**Point soulevé par l'utilisateur après coup** ("pourquoi pas de chime TTS pour EL ?") : investigué en direct — le code est correctement câblé (`el: 'el-GR'` dans `TTS_LOCALES`, même mécanisme que toutes les langues), mais le navigateur de test (192.168.0.41 via l'extension Chrome) n'a tout simplement AUCUNE voix installée pour el/sv/da/no/fi/tr (confirmé par `speechSynthesis.getVoices()` : seulement 22 voix Google/Microsoft, limitées à fr/en/es/it/de/nl/pl/pt-BR/ru/hi/id/ja/ko/zh). C'est un problème d'environnement de test (voix système/navigateur), pas un bug Hexistenz — `_pickVoice()` ne trouve aucune correspondance et `utter.voice` reste non défini, le navigateur retombe sur sa voix par défaut pour lire le texte dans la bonne langue de toute façon (`utter.lang` reste correctement fixé). Sur un poste avec ces voix installées, elles seront automatiquement utilisées sans rien changer au code. À garder en tête pour les prochaines langues : ne pas s'inquiéter d'un "silence" en test sur ce poste, ce n'est pas révélateur d'un bug de câblage.
+
+Hexistenz est désormais traduit en **17 langues**.
+
+### Bump
+
+`v1.0.2.8` → **`v1.0.2.9`** (16e/17e langues : finnois, grec). Validé via `node --check --input-type=module < javascript/variables.js`.

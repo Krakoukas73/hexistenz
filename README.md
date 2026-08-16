@@ -34,8 +34,8 @@ No install · No login · Just play
 >
 > 🇬🇧 Hexistenz is a hex tile-placement game playable **directly in your browser** — nothing to install, nothing to download. Inspired by **Dorfromantik** and the spirit of **The Settlers (Blue Byte, 1993)**, it invites you to patiently build a coherent world: meadows, forests, fields, villages, railways, rivers and coastlines come together tile by tile in a real-time 3D low-poly universe.
 
-🇫🇷 Le jeu est **entièrement traduit en 12 langues** — 🇫🇷 français, 🇬🇧 anglais, 🇪🇸 espagnol, 🇮🇹 italien, 🇵🇹 portugais, 🇩🇪 allemand, 🇷🇺 russe, 🇳🇱 néerlandais, 🇵🇱 polonais, 🇹🇷 turc, 🇨🇦 **canadien** (québécois, easter egg 100% jouable, glissé là surtout pour troller les Français) et ⚜️ **français médiéval** (XIIᵉ siècle : « Or oyez : le héraut a pris la parole » — chroniques, quêtes et besace, mais en orthographe moderne pour rester lisible et bien prononcé) — sélecteur de langue accessible à tout moment en jeu, sans recharger la page. Les annonces vocales (TTS, Web Speech API) suivent la langue choisie, avec sélection automatique d'une voix masculine pour l'allemand et le russe.
-🇬🇧 The game is **fully translated into 12 languages** — 🇫🇷 French, 🇬🇧 English, 🇪🇸 Spanish, 🇮🇹 Italian, 🇵🇹 Portuguese, 🇩🇪 German, 🇷🇺 Russian, 🇳🇱 Dutch, 🇵🇱 Polish, 🇹🇷 Turkish, 🇨🇦 **Canadian** (Québécois, a fully playable easter egg, mostly there to troll the French) and ⚜️ **Medieval French** (12th century chronicler's voice — quests, chronicles and satchels, in modern spelling so it stays readable and speaks well) — with a language selector available at any time in-game, no page reload needed. Voice announcements (TTS, Web Speech API) follow the selected language, automatically preferring a male voice for German and Russian.
+🇫🇷 Le jeu est **entièrement traduit en 17 langues** — 🇫🇷 français, 🇬🇧 anglais, 🇪🇸 espagnol, 🇮🇹 italien, 🇵🇹 portugais, 🇩🇪 allemand, 🇷🇺 russe, 🇳🇱 néerlandais, 🇵🇱 polonais, 🇹🇷 turc, 🇸🇪 suédois, 🇩🇰 danois, 🇳🇴 norvégien, 🇫🇮 finnois, 🇬🇷 grec, 🇨🇦 **canadien** (québécois, easter egg 100% jouable, glissé là surtout pour troller les Français) et ⚜️ **français médiéval** (XIIᵉ siècle : « Or oyez : le héraut a pris la parole » — chroniques, quêtes et besace, mais en orthographe moderne pour rester lisible et bien prononcé) — sélecteur de langue accessible à tout moment en jeu, sans recharger la page, trié par ordre alphabétique. Les annonces vocales (TTS, Web Speech API) suivent la langue choisie et dépendent des voix installées sur le poste (avec sélection automatique d'une voix masculine pour l'allemand et le russe quand plusieurs sont disponibles).
+🇬🇧 The game is **fully translated into 17 languages** — 🇫🇷 French, 🇬🇧 English, 🇪🇸 Spanish, 🇮🇹 Italian, 🇵🇹 Portuguese, 🇩🇪 German, 🇷🇺 Russian, 🇳🇱 Dutch, 🇵🇱 Polish, 🇹🇷 Turkish, 🇸🇪 Swedish, 🇩🇰 Danish, 🇳🇴 Norwegian, 🇫🇮 Finnish, 🇬🇷 Greek, 🇨🇦 **Canadian** (Québécois, a fully playable easter egg, mostly there to troll the French) and ⚜️ **Medieval French** (12th century chronicler's voice — quests, chronicles and satchels, in modern spelling so it stays readable and speaks well) — with a language selector available at any time in-game, no page reload needed, sorted alphabetically. Voice announcements (TTS, Web Speech API) follow the selected language and depend on the voices installed on the device (automatically preferring a male voice for German and Russian when several are available).
 
 🇫🇷 **Deux thèmes graphiques** habillent l'intégralité de l'interface — **Bleu classique** (l'identité visuelle d'origine, fonds sombres et liserés lumineux) et **Médiéval** (habillage parchemin, texture 9-slice, encre sombre et typographie serif) — sélecteur de thème accessible depuis la présentation comme en jeu, sans recharger la page. Chaque thème va jusqu'au curseur de la souris : un gantelet en Médiéval, une main en Bleu sidéral, avec leurs propres variantes au survol d'un lien, sur les boutons "Jouer" et pendant un clic maintenu.
 🇬🇧 **Two graphic themes** dress the entire interface — **Classic Blue** (the original look, dark backgrounds and glowing edges) and **Medieval** (a parchment skin, 9-slice texture, dark ink and serif typography) — theme selector available from the landing page and in-game, no page reload needed. Each theme extends down to the mouse cursor itself: a gauntlet in Medieval, a hand in Classic Blue, each with its own hover, "Play" button, and click-and-hold variants.
@@ -263,23 +263,10 @@ Shaders GLSL dédiés : eau · herbe · blé · ciel · étoiles · fumée · ci
 
 ---
 
-<img width="1699" height="1258" alt="bouliste" src="https://github.com/user-attachments/assets/3d1f5bd5-144f-44b4-8643-5a2097c49d75" />
-<img width="1703" height="1199" alt="platiste" src="https://github.com/user-attachments/assets/0cb58cd4-20b7-4869-b9dd-9a2cb0121d6c" />
-
+<img width="1699" height="1258" alt="bouliste" src="https://github.com/user-attachments/assets/00508169-fbb7-4824-bdf2-08bba168a349" />
 <img width="1713" height="1268" alt="amiga" src="https://github.com/user-attachments/assets/59ab76a1-4c9e-4a34-8d0d-26ac4367e532" />
 <img width="1717" height="1267" alt="ete-vif" src="https://github.com/user-attachments/assets/aded7d15-75a5-42f0-aa30-160bac9f3583" />
 <img width="1709" height="1262" alt="jour" src="https://github.com/user-attachments/assets/356d4a56-cad0-457d-8695-b9f1cbcbca76" />
-<img width="1699" height="1177" alt="ega" src="https://github.com/user-attachments/assets/185674f6-e184-4b71-a6f1-7172cf162ae5" />
-<img width="1712" height="1265" alt="cga" src="https://github.com/user-attachments/assets/b9e04554-2e8f-460c-9083-ff870ef45399" />
-<img width="1529" height="1165" alt="godrays" src="https://github.com/user-attachments/assets/47c2e723-dc82-4264-817c-0c75726e205f" />
-<img width="1711" height="1261" alt="foret-nordique" src="https://github.com/user-attachments/assets/176c18c9-8661-4925-b00a-e30090bc43e1" />
-<img width="1706" height="1262" alt="pluie" src="https://github.com/user-attachments/assets/20cae80d-a4af-4eb4-b993-7d891fb4a6a0" />
-<img width="1296" height="878" alt="orage" src="https://github.com/user-attachments/assets/da3a16c6-9918-4428-95ec-f7f23395d92a" />
-
-<img width="978" height="873" alt="eda-3" src="https://github.com/user-attachments/assets/ce2ab571-a174-4ba5-bd3b-bc86e9c44db1" />
-<img width="977" height="424" alt="eda-2" src="https://github.com/user-attachments/assets/87692a97-05bc-4e89-8f23-84aa7f39d50a" />
-<img width="978" height="534" alt="eda-1" src="https://github.com/user-attachments/assets/c7e5e6a6-00b3-4d39-ad68-c8b50d124104" />
-
 
 ---
 

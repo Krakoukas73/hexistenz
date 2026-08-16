@@ -1,0 +1,1223 @@
+{
+  "nav": {
+    "links": {
+      "factions": "Fraktioner",
+      "biomes": "Biomer",
+      "missions": "Uppdrag",
+      "gameplay": "Spelmekanik",
+      "gallery": "Presets",
+      "creatures": "Varelser",
+      "audio": "Ljud",
+      "daynnight": "Miljö",
+      "eda": "Anpassning",
+      "multi": "Flerspelare",
+      "scores": "Topplista"
+    },
+    "play": "Spela nu"
+  },
+  "theme": {
+    "bleu": "Astralblått",
+    "ancien": "Medeltida"
+  },
+  "hero": {
+    "subtitle": "Ett kontemplativt hexagonalt spel gjort med kärlek ❤️, Three.js, och ett lätt oroväckande antal brickor",
+    "inspi_text": "Inspirerat av <em>Dorfromantik</em>, den lantliga själen i <em>The Settlers</em> (Blue Byte, 1993)\n          och de underbara världarna i <em>Heroes of Might and Magic</em> (3DO).",
+    "inspi_buy": {
+      "dorfromantik": "Dorfromantik på Steam",
+      "settlers": "The Settlers på Ubisoft",
+      "heroes3": "Heroes III på GOG"
+    },
+    "tagline": "<strong>Hexistenz är ett kontemplativt spel</strong>, gjort för spelare som älskar att se en\n          värld och dess detaljer sakta ta form — det finns ingen klocka, och ärligt talat ingen brådska heller.<br><br><strong>Placera hexagonala brickor</strong> och\n          se ett landskap ta form framför dina ögon: vidsträckta skogar av gran och björk, vajande vetefält\n          med misstänkt välskötta väderkvarnar, medeltida byar med rykande tak, vidsträckta järnvägsnät och breda floder\n          där dina båtar seglar, för det mesta utan incidenter.<br><br>Slutför uppdrag, avvärj kometer, omge dina brickor, och bygg gradvis\n          upp en levande värld, en bricka i taget — inget straff för att stirra på en fin kulle i tjugo minuter.<br><br><strong>Spela solo eller flerspelare</strong>, återuppta ett\n          sparat parti när du vill, <strong>föreviga dina bästa stunder i galleriet</strong>, och återuppleva\n          dina partier i förhöjd hastighet med nedladdningsbara repriser online.<br><br>Spelet går att spela redan nu och är fullt översatt till 17 språk, inklusive 1100-talets fornfranska — för spelare som vill ha sina medeltida byar språkligt korrekta.<br><br>Spelet är gratis, utan registrering, utan pay-to-win och utan köp i spelet: kort sagt, gjort av ren nostalgi och ett envist motstånd mot att tjäna pengar på hexagoner.",
+    "btn_play": "Spela nu",
+    "btn_how": "Hur spelar man?",
+    "stats": {
+      "biomes_label": "Biomer",
+      "games_label": "Partier",
+      "factions_label": "Fraktioner",
+      "langs_label": "Språk",
+      "themes_label": "Grafiska teman"
+    }
+  },
+  "factions": {
+    "label": "Två sätt att se världen",
+    "title1": "Jordplattister och globtroende",
+    "title2": "Två oförsonliga fraktioner",
+    "sub": "Hexistenz delar sina byggare i <strong>två oförsonliga fraktioner</strong>. Officiellt ett visuellt val,\n      inofficiellt en livsåskådning. Välj sida — vänskaper har överlevt värre.",
+    "flat": {
+      "tag": "Platt läge",
+      "name": "🪨 Den Platta Världen",
+      "desc": "Rutnätet breder ut sig platt och ordnat. Varje bricka ansluter sig till en fullständigt jämn platå,\n            precis som de gamla alltid visste.\n            För den som litar på sina ögon."
+    },
+    "globe": {
+      "tag": "Globläge",
+      "name": "🌍 Den Sfäriska Världen",
+      "desc": "Världens krökning avslöjar sig i takt med att rutnätet växer — avlägsna brickor\n            böjer sig mot horisonten, för vissa av oss accepterar vetenskapen i stor skala. En realtids-GPU-effekt som ger varje\n            parti hisnande djup."
+    },
+    "vs": "Debatten är inte avgjord. Det kommer den aldrig att bli."
+  },
+  "biomes": {
+    "label": "Biomerna",
+    "title": "Sex biomer att koppla samman",
+    "sub": "Varje bricka har sex triangulära sektorer. <strong>Matcha identiska biomer</strong> för att bilda zoner, maximera din poäng, och känn dig som stadsplanerare i några korta sekunder.",
+    "grass": {
+      "name": "Äng",
+      "desc": "Gräsvidder där varje strå darrar i vinden, prydda med vildblommor, stenar, hjortar och buskar. Neutral mark mellan de stora näten — biomernas Schweiz.",
+      "tag": "Neutralt biom"
+    },
+    "field": {
+      "name": "Åker",
+      "desc": "Vindpinat vete, procedurella kvarnar och höbalar. Chi-mai-temat spelas upp när kameran snuddar vid axen — försök att inte tåras.",
+      "tag": "Jordbrukszon"
+    },
+    "forest": {
+      "name": "Skog",
+      "desc": "Granar, björkar, poppel som InstancedMesh, deras kronor vajar i vinden ända ner till undervegetationen. Svampar, vedtravar, hjortar — upp till 22 miljoner trianglar på skärmen, var och en saligt ovetande om de andra.",
+      "tag": "Tät skogsmark"
+    },
+    "house": {
+      "name": "By",
+      "desc": "Medeltida hus med volymetrisk rök, vakttorn, brunnar, animerade kärror, hundar och hästar — ingen av dem har någonsin klagat på röken.",
+      "tag": "Mänsklig bosättning"
+    },
+    "water": {
+      "name": "Vatten",
+      "desc": "Sammanhängande vattenyta med en organisk strandlinje, animerade vågor och skum i vattenfärgsstil. Animerade båtar med kölvatten, procedurella stränder och zonhalos — simskola ingår inte.",
+      "tag": "Vattennät ⛵"
+    },
+    "rail": {
+      "name": "Järnväg",
+      "desc": "Procedurella spår, syllar, ballast. Tåg med vagnar, ändstationer och lokrök — och en tidtabell som ingen någonsin faktiskt har sett.",
+      "tag": "Järnvägsnät 🚂"
+    }
+  },
+  "missions": {
+    "label": "Mål",
+    "title": "Uppdrag",
+    "sub": "Varje parti genererar automatiska mål kopplade till biomer och nätverk. Att slutföra ett ger <strong>100 poäng och, viktigare, 3 nya brickor till dragstapeln</strong> — teoretiskt möjliggör det oändliga partier, praktiskt begränsat av ditt tålamod.",
+    "zone": {
+      "name": "Biomzon",
+      "desc": "Nå en minsta yta i ett givet biom: <em>\"skog på 8 sektorer\"</em>, <em>\"äng på 12 sektorer\"</em>…"
+    },
+    "rail": {
+      "name": "Järnvägslinje",
+      "desc": "Lägg ett nödvändigt antal järnvägssektorer. Varje placerad rälstriangel räknas till detta uppdrag — inget lok krävs, bara spår."
+    },
+    "trains": {
+      "name": "Tåg",
+      "desc": "Bygg ett nödvändigt antal aktiva tåglinjer — varje linje förbinder två stationer via sammanhängande, obrutna spår. Luckor är inte förhandlingsbara, fråga vilken konduktör som helst."
+    },
+    "water": {
+      "name": "Vattenled",
+      "desc": "Bilda en vattenzon med en minsta yta. Varje placerad vattentriangel räknas till detta uppdrag."
+    },
+    "boats": {
+      "name": "Båtar",
+      "desc": "Låt ett nödvändigt antal båtar dyka upp på rutnätet. En båt dyker automatiskt upp på varje sjö som omges av landbrickor — inget båtkörkort krävs."
+    },
+    "comets": {
+      "name": "Kometer",
+      "desc": "Kometer far över himlen i realtid. Klicka på dem för att få dem att explodera och samla poäng — reflexer och vaksamhet krävs."
+    },
+    "village": {
+      "name": "Blomstrande by",
+      "desc": "Bygg en tät by: klunga ihop tillräckligt många angränsande hussektorer för att nå tröskeln. Detaljplaner är, lyckligtvis, påhittade."
+    },
+    "fields": {
+      "name": "Odlad mark",
+      "desc": "Utvidga åkrar till sammanhängande zoner. Kvarnar dyker bara upp när zonen är stor nog att hysa dem — de är blyga så."
+    },
+    "mills": {
+      "name": "Väderkvarnar",
+      "desc": "Bygg stora vetefältszoner för att få väderkvarnar att dyka upp. En kvarn dyker automatiskt upp i mitten av varje tillräckligt stor åkerzon."
+    }
+  },
+  "gameplay": {
+    "label": "Spelmekanik",
+    "title": "Hur man spelar",
+    "sub": "En enkel loop, <strong>oändligt djup</strong>. Varje placerad bricka förvandlar världen — ingen ångra-knapp för det verkliga livet, men här finns det en.",
+    "ui_caption": "Aktuell bricka · Nästa bricka · Återstående brickor",
+    "steps": {
+      "draw": {
+        "title": "Dra",
+        "desc": "En hexagonal bricka dyker upp — sex triangulära sektorer, var och en ett biom. Titta på nästa bricka för att planera framåt, eller låt bli och lev farligt."
+      },
+      "orient": {
+        "title": "Rikta",
+        "desc": "Rotera brickan för att rikta in kanterna. Vatten och järnväg kräver kontinuitet — en dålig placering kan bryta nätverket och ditt lugna självförtroende med det."
+      },
+      "place": {
+        "title": "Placera",
+        "desc": "Välj en plats på det axiala rutnätet. Att omge en bricka med sex grannar ger en stor omedelbar bonus — det närmaste applåder det här spelet erbjuder."
+      },
+      "score": {
+        "title": "Poängsätt",
+        "desc": "Slutför uppdrag och zoner, avvärj kometer, och skicka sedan in ditt bästa resultat till den globala topplistan, så att främlingar kan döma dig i all tysthet."
+      }
+    },
+    "score_label": "Poängsystem",
+    "pills": {
+      "place": "Bricka placerad",
+      "edge": "Matchande kant",
+      "network": "Nätverk anslutet",
+      "surround": "Bricka omgiven",
+      "mission": "Uppdrag slutfört",
+      "comet": "Komet avvärjd",
+      "bonus": "Bonusruta täckt"
+    },
+    "kbd_title": "TANGENTBORDSKONTROLLER",
+    "kbd": {
+      "camera_label": "kamera",
+      "left_click_kbd": "Vänsterklick",
+      "left_click_desc": "flytta kameran",
+      "right_click_kbd": "Högerklick",
+      "right_click_desc": "rotera kameran",
+      "wheel_kbd": "Scrollhjul",
+      "space_kbd": "Mellanslag",
+      "wheel_desc": "zooma",
+      "reset_cam": "återställ kameran",
+      "zoom": "zooma in/ut",
+      "shift_kbd": "SHIFT",
+      "speed_up": "ökar hastigheten för rörelse/zoom",
+      "undo": "ångra",
+      "customization": "anpassning",
+      "perf_hud": "prestanda-HUD",
+      "snapshot": "Skärmdump",
+      "gallery": "Skärmdumpsgalleri",
+      "replay": "Spelrepris",
+      "immersive": "immersivt läge",
+      "super_immersive": "superimmersivt läge",
+      "mute": "tysta",
+      "mute_tts": "tysta rösten",
+      "help": "hjälp"
+    }
+  },
+  "gallery": {
+    "label": "Visuella presets",
+    "title1": "Flera stämningar",
+    "title2": "Oändliga anpassningar",
+    "sub": "Många färdiga visuella presets — men var och en är bara en startpunkt: färg-LUT, filmiska effekter (kromatisk aberration, filmkorn, tilt-shift), retropixling, EGA- och Amiga-estetik, volymetrisk rök, procedurell himmel… <strong>Hundratals kombinationer</strong> för att förvandla hela världen efter din smak, eller till något din smak skulle protestera högljutt emot. Varje anpassning kan exporteras med ett klick och delas med andra spelare.",
+    "preset_word": "Preset",
+    "presets": {
+      "autumn": "Höst",
+      "summer": "Levande sommar",
+      "nordic": "Nordisk",
+      "amiga": "Amiga",
+      "ega": "EGA 16 färger",
+      "cga": "CGA 320×200 4 färger",
+      "apple2": "Apple II",
+      "psyche": "Psyke-LSD"
+    }
+  },
+  "creatures": {
+    "label": "Världens liv",
+    "title": "En värld full av varelser",
+    "sub": "Världen finns inte bara till — <strong>den andas</strong>. Djur, fåglar och invånare ger liv åt varje biom genom årstiderna, fullständigt oberörda av din byggordning.",
+    "sheep": {
+      "name": "Får",
+      "desc": "Flockar betar fredligt på ängarna, driver med det vindsvajande gräset, saligt ovetande om att de står på en poängmekanik."
+    },
+    "crows": {
+      "name": "Kråkor",
+      "desc": "Kråksvärmar cirklar över vetefälten och spanar efter obevakade fläckar — betrakta dem som världens minst subtila revisorer."
+    },
+    "farmer": {
+      "name": "Bonde",
+      "desc": "Med högaffeln i hand sköter bonden sitt vete, kommer och går i takt med jordbruksårets rytm, för evigt en åker ifrån en ledig dag."
+    },
+    "druid": {
+      "name": "Druid",
+      "desc": "En ensam gestalt vandrar mellan träden, en tyst väktare av skogarna och deras hemligheter — mest hemligheten om var alla svamparna tog vägen."
+    },
+    "witch": {
+      "name": "Häxa",
+      "desc": "I vissa skogar sägs häxor, när natten faller, vandra mellan träden, lockade av tystnaden och glöden från bortglömda lägereldar. Få får någonsin syn på dem — ännu färre vågar följa efter, och ingen har någonsin lämnat in en formell anmälan."
+    },
+    "moon": {
+      "name": "Méliès måne",
+      "desc": "I nattläge bär månen det ikoniska ansiktet från Méliès Resan till månen — en nick till stumfilmseran gömd i stjärnhimlen, och synbart oimponerad av alla dina brickplaceringar."
+    },
+    "seagulls": {
+      "name": "Måsar",
+      "desc": "Små flockar måsar cirklar över de största vattenytorna, med den enstaka eftersläntraren som driver iväg för att sköta sina egna angelägenheter."
+    },
+    "fireflies": {
+      "name": "Eldflugor",
+      "desc": "När natten faller driver svärmar av glittrande eldflugor nära marken, ritar varma ljuspunkter som mjukt vandrar runt kameran som om de hade någonstans att vara."
+    },
+    "population": {
+      "villages_label": "Byar",
+      "forests_label": "Skogar",
+      "fields_label": "Vetefält",
+      "water_label": "Vatten",
+      "meadows_label": "Ängar",
+      "tags": {
+        "village_women": "Bykvinnor",
+        "village_men": "Bymän",
+        "farmer": "Bonde",
+        "blacksmith": "Smed",
+        "merchant": "Handlare",
+        "innkeeper": "Krögare",
+        "guard": "Vakt",
+        "soldier": "Soldat",
+        "knight": "Riddare",
+        "archer": "Bågskytt",
+        "warriors": "Krigare",
+        "mage": "Magiker",
+        "monk": "Munk",
+        "witch": "Häxa",
+        "crows": "Kråkor",
+        "windmill": "Väderkvarn",
+        "scarecrow": "Fågelskrämma",
+        "boat": "Båt",
+        "rowboats": "Roddbåtar",
+        "seagulls": "Måsar",
+        "deer": "Hjortar",
+        "wildflowers": "Vildblommor"
+      }
+    },
+    "note": "22 olika ansikten befolkar byar och skogar, var och en med egen siluett, dräkt och roll. Inga copy-pastade statister — en genuin befolkning, bricka för bricka, fackligt anslutna i anda om inte i praktiken."
+  },
+  "audio": {
+    "label": "Ljuddesign",
+    "title": "En värld du kan höra",
+    "sub": "Ljudet följer kameran <strong>i realtid</strong> — varje biom, tåg och båt har sin egen röst, som stiger och tonar bort med avståndet, som en mycket tålmodig orkester.",
+    "spatial": {
+      "name": "3D-rumsljud",
+      "desc": "Bystämning, fågelsång i skog och äng, kråkor över fälten, vågskvalp vid stranden, tåg och båtar — varje källas volym följer dess verkliga avstånd och riktning, så att vandra bort är sin egen belöning."
+    },
+    "chimai": {
+      "name": "Chi Mai, det dolda temat",
+      "desc": "För kameran lågt över ett vetefält och ett dolt melodiskt tema sätter in — musiken och andra ljud tonar bort för att göra plats. Ja, det är precis så dramatiskt som det låter."
+    },
+    "adaptive": {
+      "name": "Adaptiv musik",
+      "desc": "Intro-, spel- och slutspår tonar smidigt över i varandra, hämtade från flera varianter så att inga två partier låter riktigt likadant — inga två, men ett misstänkt stort antal av dem kommer att kännas bekanta."
+    },
+    "voice": {
+      "name": "En röst som kommenterar spelet",
+      "desc": "En talande berättare (webbläsarens inbyggda text-till-tal, ingen extern tjänst) ropar ut dina poäng, uppdrag och viktiga gränssnittsögonblick live — en kort klocksignal föregår varje nytt och varje avslutat uppdrag. Tillgänglig på alla 9 språk i spelet, med en manlig röst som automatiskt väljs för tyska och ryska, för uppenbarligen ansåg någon att det var viktigt. T-tangenten tystar bara den, utan att röra resten av ljudspåret — för när uppmuntran blir för mycket."
+    },
+    "silence": {
+      "name": "Tystnad på begäran",
+      "desc": "M-tangenten stänger av och sätter på hela ljudspåret momentant, musik inräknat — praktiskt för ett tyst parti under ett samtal eller ett möte som din chef tror har din fulla uppmärksamhet."
+    }
+  },
+  "daynnight": {
+    "label": "Världens stämning",
+    "title": "Miljö",
+    "sub": "<strong>En omkopplare ändrar allt</strong>. Sol, moln och blå himmel viker undan för stjärnor, måne och kometer — inget möte krävs.",
+    "day": {
+      "name": "Dagläge",
+      "list": [
+        "🌤 Sol som kretsar på sitt eget renderingslager",
+        "⛅ Procedurell volymetrisk himmel med animerade FBM-moln",
+        "🔵 Zenit-/horisontgradient i varma blåtoner",
+        "🚫 Kometer dolda — för mycket ljus för dem, de är blyga"
+      ]
+    },
+    "night": {
+      "name": "Nattläge",
+      "list": [
+        "🌙 Måne, djup nattlig zenit-/horisontgradient",
+        "✨ Blinkande stjärnor på en egen sfär",
+        "☄️ Kometer som far förbi — klicka för att spränga dem",
+        "🌑 Mörk atmosfär, byrök mer synlig, sömnlöshet opåverkad"
+      ]
+    },
+    "smoke": {
+      "name": "Rök",
+      "list": [
+        "🏠 Upp till 48 samtidiga rökpelare, ray-marchade i realtid ovanför skorstenar och lok",
+        "🌬️ 4-oktavs turbulens som driver med höjden — varje pelare är unik, som ett fingeravtryck av sot",
+        "🎲 Bara ett av tre hus ryker, slumpmässigt utvalt när brickan genereras — de andra två har tydligen glömt att tända elden",
+        "🌙 Ännu mer stämningsfullt när natten faller"
+      ]
+    },
+    "godrays": {
+      "name": "Gudastrålar",
+      "list": [
+        "☀️ Volymetriska ljusstrålar som strömmar från solen eller månen",
+        "🌲 Genomborrar lövverk, torn och moln för filmisk belysning",
+        "🎚️ Längd, diffusion och tröskel justerbara via art direction-redigeraren, för filmfotografen i dig"
+      ]
+    },
+    "rain": {
+      "name": "Regn",
+      "list": [
+        "💧 Dynamiska skurar du kan utlösa direkt från väder-HUD:en, inget paraply krävs",
+        "⛈️ Övergår naturligt i oväder och blixtar",
+        "🎬 Stämning förstärkt av den filmiska vinjetten och filmkornet"
+      ]
+    },
+    "mist": {
+      "name": "Morgondimma",
+      "list": [
+        "🌫️ Låg slöja som dämpar avstånd och mjukar upp siluetter",
+        "☀️ Lättar gradvis när minuterna går, som de flesta morgonmysterier",
+        "🎚️ Dimtäthet och färg justerbara i art direction-redigeraren"
+      ]
+    },
+    "storm": {
+      "name": "Oväder och skogsbränder",
+      "list": [
+        "⚡ Blixtar slår ner under ovädrets tak och kan sätta en bricka i brand — naturens sätt att redigera din layout",
+        "🔥 Träd, hus, torn och kvarnar brinner i sin verkliga höjd, blir kolsvarta och växer sedan tillbaka, tydligen fullständigt oberörda",
+        "🌬️ Branden driver med vinden, sprider sig till grannarna och stannar tvärt vid vattnets kant, som äntligen får visa sitt värde",
+        "🌧️ Regn saktar ner spridningen och släcker ibland elden helt"
+      ]
+    }
+  },
+  "eda": {
+    "label": "Art direction-redigerare (EDA)",
+    "title": "Extrem anpassning",
+    "sub": "Utöver de många presets erbjuder EDA <strong>dussintals mätvärden justerbara i realtid</strong>, fördelade på 3 flikar — LUT, Filmiskt, Miljö. Varje reglage svarar direkt, ingen omladdning krävs, och hela konfigurationen kopieras/exporteras som JSON för att spelas upp igen, delas, eller tyst ångras.",
+    "lut": {
+      "label": "LUT",
+      "desc": "Dimma, ljuskälla, fullständig färggradering (RGB-kurvor, gamma, nivåer) och biompalett — nog med reglage för att förvandla en äng till en brottsplats om du inte är försiktig."
+    },
+    "cinematic": {
+      "label": "Filmiskt",
+      "desc": "Gudastrålar, tilt-shift, bloom, retropixling och skärmkrökning — för att filma världen i stället för att bara titta på den."
+    },
+    "environment": {
+      "label": "Miljö",
+      "desc": "Moln och molntäcke, vind (vete, gräs, träd), dynamiskt väder (dimma, eldflugor, regn), världsform (glob/platt), Dag/natt-omkopplare och kvalitets-/täthetspresets — hela klimatet, kopplat i koppel."
+    }
+  },
+  "multi": {
+    "title1": "Flerspelare",
+    "title2": "Bygg tillsammans",
+    "sub": "Gå med i eller skapa ett rum med en 6-bokstavskod. Rutnätet är <strong>delat i realtid</strong> — varje spelare placerar sina brickor och ser andras drag i samma stund som de sker, i med- och motgång.",
+    "features": [
+      "Alla partier sparas — återuppta eller spela upp när som helst",
+      "Rum går att gå med i när som helst, även mitt i partiet, inget tillstånd krävs",
+      "Realtidssynk · PHP + JSON-backend, som håller ihop alltsammans med tyst värdighet",
+      "Kartan växer gemensamt, bricka för bricka, gräl för gräl"
+    ],
+    "gallery_title": "DELA DINA SKÄRMDUMPAR",
+    "gallery_promo": "Föreviga dina bästa partier: 📷-knappen fångar världen utan HUD, och 🖼️-knappen öppnar det <strong>delade galleriet, synligt för alla spelare</strong> — skryträtt ingår",
+    "replay_title": "Spela in dina partier som video",
+    "replay_promo": "Med ett klick <strong>spelar du upp hela ditt parti i hög hastighet</strong> och laddar ner det som video, direkt från din webbläsare — inga redigeringskunskaper krävs, bara lite fåfänga.",
+    "btn_create": "Skapa ett parti",
+    "room_title": "Rumskod",
+    "room_status": "Parti pågår · 3 spelare",
+    "tiles_placed_label": "Placerade brickor"
+  },
+  "scores": {
+    "label": "Global topplista",
+    "title": "De mest effektiva byggarna",
+    "empty": "Inga poäng ännu — topplistan är en tom hexagonal tomhet, som väntar på en hjälte.",
+    "try_luck": "Pröva lyckan →",
+    "headline_stat": "placerade brickor",
+    "pts_suffix": "p",
+    "trains_s": "linje",
+    "trains_p": "linjer",
+    "boats_s": "båt",
+    "boats_p": "båtar",
+    "mills_s": "kvarn",
+    "mills_p": "kvarnar",
+    "comets_s": "komet",
+    "comets_p": "kometer",
+    "largest_zone": "största zonen",
+    "biome_labels": {
+      "forest": {
+        "s": "träd",
+        "p": "träd"
+      },
+      "water": {
+        "s": "vatten",
+        "p": "vatten"
+      },
+      "house": {
+        "s": "hus",
+        "p": "hus"
+      },
+      "field": {
+        "s": "vetefält",
+        "p": "vetefält"
+      },
+      "grass": {
+        "s": "äng",
+        "p": "ängar"
+      },
+      "rail": {
+        "s": "järnväg",
+        "p": "järnvägar"
+      }
+    }
+  },
+  "footer": {
+    "copy": "Ett kontemplativt hexagonalt spel gjort med kärlek ❤️, Three.js, och ett orimligt antal brickor",
+    "github": "GitHub"
+  },
+  "game": {
+    "gallery": {
+      "title": "Skärmdumpsgalleri",
+      "empty": "Inga skärmdumpar än. Ditt mästerverk väntar — tryck på 📷 i spelet för att ta en.",
+      "close": "Stäng",
+      "loading": "Laddar…",
+      "tilesCount": "Parti med {n} brickor",
+      "modeBouliste": "Globläge",
+      "modePlatiste": "Platt läge",
+      "captured": "Skärmdump tagen! Eftervärlden tackar dig."
+    },
+    "sound": {
+      "on": "Ljud på",
+      "off": "Ljud av"
+    },
+    "replay": {
+      "restart": "Tillbaka till början",
+      "playPause": "Spela / Pausa",
+      "close": "Stäng repris"
+    },
+    "eda": {
+      "mainTitle": "Art direction-redigerare",
+      "ambiances": "PRESETS",
+      "ambiancePrefix": "preset",
+      "tabs": {
+        "lut": "LUT",
+        "cinematic": "Filmiskt",
+        "environment": "Miljö"
+      },
+      "headers": {
+        "lutFog": "1. Dimma",
+        "lutSun": "2. Ljuskälla",
+        "lutGrading": "3. Färggradering",
+        "lutPalette": "4. Biompalett",
+        "cinema1": "1. FILMISKT",
+        "godRays": "2. Gudastrålar",
+        "tiltShift": "3. Tilt-shift",
+        "bloom": "4. Bloom",
+        "pixelisation": "5. PIXLING",
+        "crt": "6. SKÄRMKRÖKNING",
+        "nuages": "3. MOLN",
+        "vent": "4. VIND",
+        "worldShape": "5. Världsform",
+        "dayNight": "6. Dag / Natt",
+        "quality": "7. Kvalitet / täthet",
+        "weather": "8. Väder",
+        "waterFoam": "1. Skum",
+        "waterWake": "2. Kölvatten",
+        "windWheat": "4.1 Vetestrån",
+        "windGrass": "4.2 Grässtrån",
+        "windTree": "4.3 Träd"
+      },
+      "toggleTitles": {
+        "lutGrading": "Aktivera/inaktivera färggradering",
+        "lutPalette": "Aktivera/inaktivera biompalett",
+        "cinema1": "Aktivera/inaktivera filmiska effekter",
+        "godRays": "Aktivera/inaktivera gudastrålar",
+        "tiltShift": "Aktivera/inaktivera tilt-shift",
+        "bloom": "Aktivera/inaktivera bloom (glöden, inte blommorna)",
+        "pixelisation": "Aktivera/inaktivera pixling",
+        "crt": "Aktivera/inaktivera skärmkrökning",
+        "nuages": "Aktivera/inaktivera moln",
+        "vent": "Aktivera/inaktivera all vind (vete, gräs, träd)",
+        "worldShape": "Växla mellan sfärisk (glob) och platt värld — inget internationellt fördrag krävs",
+        "dayNight": "Växla mellan dag och natt",
+        "waterFoam": "Aktivera/inaktivera skum",
+        "waterWake": "Aktivera/inaktivera kölvatten"
+      },
+      "modeActuel": "Aktuellt läge",
+      "preregalages": "Presets",
+      "presetNames": {
+        "default": "Standard",
+        "mist": "Dimma",
+        "autumn": "Höst",
+        "summerVivid": "Levande sommar",
+        "winter": "Vinter",
+        "sepia": "Sepia",
+        "nordic": "Nordisk",
+        "desert": "Öken",
+        "pong": "Pong",
+        "appleII": "Apple II",
+        "cga": "CGA",
+        "ega": "EGA",
+        "amiga": "Amiga",
+        "psyche": "Psykedelisk"
+      },
+      "themeNames": {
+        "bleu": "Astralblått",
+        "ancien": "Medeltida"
+      },
+      "modes": {
+        "bouliste": "Glob",
+        "platiste": "Platt",
+        "jour": "Dag",
+        "nuit": "Natt"
+      },
+      "quality": {
+        "faible": "Låg",
+        "moyen": "Medel",
+        "eleve": "Hög",
+        "max": "Max"
+      },
+      "qualityTooltip": "{label} täthet ({value})",
+      "weatherStopAll": "⏹ Stoppa allt",
+      "weatherStopAllTitle": "Stoppar alla just nu pågående miljöhändelser. Äntligen ro.",
+      "weatherGroups": {
+        "morningMist": "🌫️ Morgondimma",
+        "fireflies": "✨ Eldflugor",
+        "clouds": "☁️ Regnmoln",
+        "rain": "🌧️ Regn",
+        "storm": "⛈️ Oväder",
+        "lightning": "⚡ Blixt",
+        "fire": "🔥 Eld",
+        "panic": "🐑 Djurpanik"
+      },
+      "weatherRequires": "(kräver {label})",
+      "weatherSwitchTitle": "Aktivera/inaktivera",
+      "weatherCloudsSwitchTitle": "Aktivera/inaktivera moln",
+      "weatherResetTitle": "Återställ",
+      "presetTooltipApply": "Tillämpa presetet \"{name}\"",
+      "presetTooltipDefault": "Återgå till standardvärden (ångra dina sämsta beslut)",
+      "footer": {
+        "copy": "📋 Kopiera",
+        "copyTitle": "Kopiera alla aktuella LUT + PIX + WATER + CINEMA + WIND + CLOUDS + världsform + Dag/natt + täthet + väderinställningar som JSON (grund för en framtida stämningspreset med förkonfigurerade väderffekter) — ett litet arkiv över din tvivelaktiga smak",
+        "copied": "✓ Kopierat!",
+        "undo": "↩ Ångra",
+        "undoTitle": "Ångra senaste ändringen — inga fördomar",
+        "redo": "↪ Gör om",
+        "redoTitle": "Gör om den ångrade ändringen, om du har ändrat dig om att ändra dig",
+        "reset": "Återställ",
+        "resetTitle": "Återställ till standardvärden. Ett rent blad, en nystart, en chans att göra allt fel igen",
+        "compare": "Jämför",
+        "compareBack": "⟳ Tillbaka",
+        "compareTitle": "Växla mellan aktuella inställningar och senast tillämpade preset, för bekvämt tvivel",
+        "lastPresetTitle": "Senast tillämpade preset"
+      },
+      "labels": {
+        "environment": {
+          "fogDensity": "Exp. täthet",
+          "fogNear": "Start (linjär)",
+          "fogFar": "Slut (linjär)",
+          "skyColor": "Himmel",
+          "fogColor": "Dimfärg",
+          "domeColorTop": "Kupol topp",
+          "domeColorBottom": "Kupol botten"
+        },
+        "renderer": {
+          "toneMappingExposure": "Global exponering"
+        },
+        "lights": {
+          "hemisphereIntensity": "Hemisfärintensitet",
+          "sunIntensity": "Intensitet",
+          "sunOrbitRadius": "Omloppsradie",
+          "sunOrbitHeight": "Omloppshöjd",
+          "sunOrbitSpeed": "Omloppshastighet",
+          "sunVisualScale": "Storlek",
+          "fillIntensity": "Fyllnadsljus",
+          "hemisphereSkyColor": "Hemisfär himmel",
+          "hemisphereGroundColor": "Hemisfär mark",
+          "sunColor": "Sol",
+          "fillColor": "Fyllnadsfärg"
+        },
+        "grading": {
+          "brightness": "Ljusstyrka",
+          "contrast": "Kontrast",
+          "saturation": "Mättnad",
+          "vibrance": "Livfullhet",
+          "hue": "Nyansförskjutning",
+          "gamma": "Gamma",
+          "blackLevel": "Svartnivå",
+          "whiteLevel": "Vitnivå",
+          "red": "Röd kanal",
+          "green": "Grön kanal",
+          "blue": "Blå kanal",
+          "redCurve": "Röd kurva",
+          "greenCurve": "Grön kurva",
+          "blueCurve": "Blå kurva"
+        },
+        "palette": {
+          "strength": "Palettstyrka",
+          "saturation": "Mättnad",
+          "contrast": "Kontrast",
+          "warmShift": "Varm / kall",
+          "targets": {
+            "field": "Åkrar",
+            "forest": "Skogar",
+            "grass": "Ängar",
+            "house": "Byar",
+            "rail": "Järnvägar",
+            "water": "Vatten"
+          }
+        },
+        "water": {
+          "foamWidth": "Räckvidd",
+          "foamScale": "Finhet",
+          "foamDensity": "Kusttäthet",
+          "foamAmbient": "Yta",
+          "foamSharp": "Skärpa",
+          "foamSpeed": "Hastighet",
+          "deepDistance": "Gradient — räckvidd",
+          "opacity": "Vatten — opacitet"
+        },
+        "wake": {
+          "armWidth": "Armbredd",
+          "spread": "V-spridning",
+          "length": "Längd",
+          "scale": "Finhet",
+          "density": "Täthet",
+          "opacity": "Opacitet"
+        },
+        "wind": {
+          "wheat": {
+            "strength": "Amplitud",
+            "speed": "Hastighet"
+          },
+          "grass": {
+            "strength": "Amplitud",
+            "speed": "Hastighet",
+            "sway": "Vaggning"
+          },
+          "tree": {
+            "strength": "Amplitud",
+            "speed": "Hastighet",
+            "frequency": "Frekvens",
+            "turbulence": "Turbulens",
+            "gustStrength": "Vindbyar",
+            "detailStrength": "Detalj"
+          }
+        },
+        "cloud": {
+          "coverage": "Täckning",
+          "scale": "Mönsterskala",
+          "speed": "Drivhastighet"
+        },
+        "quality": {
+          "density": "Täthet"
+        },
+        "cin": {
+          "vignette": "Vinjett",
+          "grain": "Filmkorn",
+          "chromatic": "Kromatisk aberration",
+          "halation": "Halo-effekt",
+          "barrel": "Tunndistorsion",
+          "scanLines": "Skanlinjer",
+          "scanLinesIntensity": "Skanlinjeintensitet",
+          "godRays": "Intensitet",
+          "godRaysLength": "Längd",
+          "godRaysDiffusion": "Diffusion",
+          "godRaysThreshold": "Ljusstyrketröskel",
+          "godRaysLayers": "Lagerdelning",
+          "tilt": "Intensitet",
+          "focusCenter": "Fokuscentrum",
+          "focusBand": "Skarpt band",
+          "bloomIntensity": "Intensitet",
+          "bloomThreshold": "Tröskel",
+          "bloomRadius": "Radie",
+          "bloomSoftness": "Mjukhet",
+          "crtCurvature": "Skärmkrökning",
+          "crtMask": "Svarta kanter",
+          "crtCornerDark": "CRT-hörnförmörkning"
+        },
+        "pix": {
+          "pixelSize": "Radie (pixlar)",
+          "normalEdge": "Reliefkontur",
+          "depthEdge": "Djupkontur"
+        },
+        "vfx": {
+          "mist": {
+            "densite": "Täthet",
+            "compacite": "Kompakthet",
+            "elevation": "Höjd"
+          },
+          "fireflies": {
+            "densite": "Täthet",
+            "taille": "Storlek",
+            "vagabondage": "Vandring",
+            "scintillement": "Glittrande"
+          },
+          "rain": {
+            "densite": "Täthet",
+            "tailleGoutte": "Droppstorlek",
+            "impactSol": "Markpåverkan"
+          },
+          "cloud": {
+            "densite": "Täthet",
+            "altitude": "Höjd",
+            "epaisseur": "Tjocklek"
+          },
+          "storm": {
+            "frequenceEclairs": "Blixtfrekvens",
+            "luminositeEclair": "Blixtens ljusstyrka",
+            "intensitePluie": "Regnintensitet",
+            "altitudeChape": "Takhöjd",
+            "opaciteChape": "Takopacitet"
+          },
+          "fire": {
+            "probaAllumage": "Antändningssannolikhet",
+            "densiteFlammes": "Lågtäthet",
+            "duree": "Varaktighet",
+            "taille": "Storlek",
+            "propagation": "Spridning"
+          }
+        }
+      }
+    },
+    "help": {
+      "topbar.fps": "Visa/dölj den avancerade prestanda-HUD:en, för de nyfikna och de oroliga bland oss",
+      "topbar.eda": "Öppna eller stäng renderingspanelen — dussintals reglage, ingen vuxen övervakning",
+      "topbar.snapshot": "Skärmdump (ingen HUD)",
+      "topbar.gallery": "Skärmdumpsgalleri",
+      "topbar.replay": "Spelrepris",
+      "topbar.lang": "Språk",
+      "topbar.theme": "Grafiskt tema (Blått / Vintage)",
+      "topbar.mute": "Tysta/aktivera ljud",
+      "topbar.muteVoice": "Tysta/aktivera röst (TTS)",
+      "renderer.toneMappingExposure": "Global renderingsexponering (ACESFilmic). Styr hur mycket ljus som når \"sensorn\" innan någon gradering.\nVärden < 1 mörkar hela scenen, > 2 kan bränna ut högdagrar.\nTypiskt: 1,2–1,8 för ett naturligt utseende, om du inte siktar på förhörsrumsstil.",
+      "environment.fogDensity": "Täthet för den exponentiella dimman (FogExp2). Endast aktiv när \"Linjärt slut\" är 0.\nSikten avtar mycket snabbt: vid 0,07 är scenen nästan ogenomskinlig.\nFör ett kontrollerat siktavstånd, föredra linjärt läge via \"Start\" och \"Slut\".",
+      "environment.fogNear": "Avstånd i 3D-enheter där linjär dimma börjar.\nSå fort \"Slut\" > 0 växlas automatiskt från FogExp2 till THREE.Fog(near, far).\nVid 0: dimman börjar precis i förgrunden. Vid 5: närliggande objekt förblir skarpa.",
+      "environment.fogFar": "Avstånd där linjär dimma är helt ogenomskinlig.\nSätt till 0 för att återgå till exponentiellt läge.\nExempel: Start = 3, Slut = 18 → ett siktavstånd på 15 enheter — atmosfäriskt utan att dränka allt.",
+      "lights.hemisphereIntensity": "Intensitet för hemisfärljuset (himmel + mark).\nBelyser ytor som inte är direkt exponerade för solen.\nFör högt: plattar ut skuggor och tar bort djup. För lågt: baksidor faller i totalt mörker.",
+      "lights.sunIntensity": "Styrkan hos det riktade ljuset (solen).\nAvgör skuggornas hårdhet och reliefkontrast.\nVärden > 5 kan bränna ut ljusa ytor om den globala exponeringen också är hög.",
+      "lights.sunOrbitRadius": "Radie för solens cirkulära bana runt scenens mittpunkt.\nEn liten radie (< 5) ger brant vinklat ljus från mitten; en stor (> 20) ger mer strykande ljus från kanterna.",
+      "lights.sunOrbitHeight": "Solens vertikala höjd över scenplanet.\nHögt = korta skuggor, ljus rakt uppifrån. Lågt = långa, strykande skuggor (gyllene timmen eller solnedgång).",
+      "lights.sunOrbitSpeed": "Solens vinkelhastighet i radianer/sekund.\nVid 0,06 tar ett fullt varv ≈ 100 sekunder. Vid 0: fast sol. Vid 1: skuggorna roterar snabbt.",
+      "lights.sunVisualScale": "Solskivans skenbara storlek på himlen.\nRent visuellt — påverkar varken ljusstyrka eller skuggor. Ett rent fåfängemått.",
+      "lights.fillIntensity": "Intensitet för ett mjukt fyllnadsljus, mitt emot solen.\nÖppnar upp hårda skuggpartier. Användbart för att undvika helsvarta fläckar under utskjut eller på kullarnas skuggsida, dit byborna tydligen inte vågar sig.",
+      "grading.brightness": "Extra ljusstyrkeförskjutning som appliceras efter rendering.\nLägger till ett konstant värde till alla kanaler.\nSkiljer sig från exponering: förstärker inte högdagrar, ändrar inte tonmappningen.",
+      "grading.contrast": "Global kontrast via pivotering kring 50 % grått.\n> 1: skjuter isär mörker och ljus (filmiskt utseende). < 1: komprimerar (platt/urtvättat utseende).\nVid ytterlägen → helt svart eller vitt.",
+      "grading.saturation": "Global mättnad. Blandar gråskaleversionen (luma) med originalfärgen.\n0 = gråskala. 1 = normalt. > 1 = övermättad.\nVid mycket höga värden (3+) klipper färgerna och kan invertera — en snabb väg till en huvudvärksframkallande värld.",
+      "grading.vibrance": "Smart livfullhet: förstärker matta färger utan att röra redan mättade nyanser.\nMildare än rå mättnad för naturliga gröna toner.\nNegativt: dämpar starka färger först, för den känslomässigt uttömda.",
+      "grading.hue": "Global rotation av alla nyanser runt färghjulet.\n±0,5 = ett halvt varv (röd ↔ cyan). Subtilt vid låga värden.\nAnvändbart för att korrigera en färgton eller skapa en udda palett som ingen bad om men alla kommer ihåg.",
+      "grading.gamma": "Gammakorrigering applicerad på mellantoner.\n< 1 = ljusare mellantoner; > 1 = mörkare.\nPåverkar inte ytterlägena (rena svarta/vita toner) linjärt.",
+      "grading.blackLevel": "Svartpunktsnivå. Lyfter rent svart mot grått.\nSkapar ett \"urtvättat filmiskt\" eller \"lyft svart\"-utseende.\nFör högt = förlust av djup och densitet i skuggorna.",
+      "grading.whiteLevel": "Vitpunktsnivå. Komprimerar högdagrar under 1,0.\nVid 0,871: rent vitt blir krämfärgat, inget klipper.\nAnvändbart för ett mjukt utseende, en subtil \"S-kurva\".",
+      "grading.red": "Multiplikativ förstärkning av den röda kanalen efter gradering.\n> 1 värmer upp scenen (orange/bärnstensfärgad ton). < 1 kyler ner den.\nKombinerat med grönt och blått möjliggör det finjustering av vitbalansen.",
+      "grading.green": "Multiplikativ förstärkning av den gröna kanalen.\nGrönt dominerar den upplevda luminansen (≈ 59 %).\nAtt sänka denna kanal ger en lila/magentaeffekt; att höja den gör bilden grönare och gör den upplevt ljusare.",
+      "grading.blue": "Multiplikativ förstärkning av den blå kanalen.\nAtt öka ger en kall/nattlig stämning. Att minska torkar ut blått för ett varmt eller sepiafärgat utseende.",
+      "grading.redCurve": "Röd tonkurva: applicerar en potensfunktion på kanalen.\n< 1 = konvex kurva (lyfter röda mellantoner). > 1 = fördjupar mellantoner.\nAppliceras efter den röda förstärkningen.",
+      "grading.greenCurve": "Grön tonkurva. Formar den gröna kanalens respons i mellantonerna.\nAnvändbar för att finjustera upplevd kontrast utan att röra ytterlägena.",
+      "grading.blueCurve": "Blå tonkurva. Formar stämningen i mellantonerna.\nKurva < 1 = tätare blått i högdagrarna. > 1 = urgröpt blått (varmt utseende i mellantonerna).",
+      "palette.strength": "Övergripande styrka för palettharmonisering på utvalda texturer.\n0: ingen effekt. 1: texturerna omfärgas helt mot sin målfärg.\nFungerar genom att matcha GLB-materialnamn — tyst, i bakgrunden, som en mycket noggrann inredare.",
+      "palette.saturation": "Mättnad applicerad efter palettharmonisering.\n< 1: lugnar ner omfärgade texturer. > 1: intensifierar dem.\nLåter dig justera utan att röra målfärgerna.",
+      "palette.contrast": "Kontrast applicerad på färgerna efter harmonisering.\nEn liten ökning (1,05–1,2) förbättrar läsbarheten hos omfärgade texturer.",
+      "palette.warmShift": "Global varm/kall-förskjutning applicerad på hela biompaletten.\nNegativt → kallare/blåare toner. Positivt → varmare/gyllene toner.",
+      "environment.skyColor": "Bakgrundsfärg för renderaren, synlig bortom kupolen och objekten.\nVanligtvis mörk så att den inte sticker fram bakom scenen.",
+      "environment.fogColor": "Dimmans färg, exponentiell eller linjär.\nObjekt tonar in i denna nyans i takt med ökande avstånd.\nBör matcha himmelsfärgen för en sammanhängande horisont.",
+      "environment.domeColorTop": "Färg på toppen av den sfäriska atmosfäriska kupolen.\nSynlig på himlen ovanför objekten (om domeOpacity > 0).",
+      "environment.domeColorBottom": "Färg på basen av den atmosfäriska kupolen.\nSimulerar horisonten eller en låg dis nära marken.",
+      "lights.hemisphereSkyColor": "Ton på hemisfärljusets \"himmel\"-komponent.\nFärgar uppåtvända ytor (tak, plana ytor).",
+      "lights.hemisphereGroundColor": "Ton på hemisfärljusets \"mark\"-komponent.\nFärgar nedåtvända ytor (undersidan av broar, husens buk).",
+      "lights.sunColor": "Färg på solens riktade ljus.\nOrange vid solnedgång, vit vid middagstid, blåaktig under molntäckt himmel.\nPåverkar starkt kastade skuggors färg.",
+      "lights.fillColor": "Färg på fyllnadsljuset.\nVanligtvis komplementär till solen för att balansera skuggorna.",
+      "palette.targets.field": "Målfärg för harmonisering av odlade fälts texturer.",
+      "palette.targets.forest": "Målfärg för skogs- och trädtexturer.",
+      "palette.targets.grass": "Målfärg för ängar och gräs.",
+      "palette.targets.house": "Målfärg för hus och bybyggnader.",
+      "palette.targets.rail": "Målfärg för räls och järnvägsinfrastruktur.",
+      "palette.targets.water": "Målfärg för vatten (sjöar, floder, hav).",
+      "pix.pixelSize": "Storlek på en pixel i skärmenheter. Vid 1: nativ upplösning. Vid 8: kraftigt pixlad, 8-bitars-stilrendering.\nHöga värden minskar GPU-belastningen (färre fragment att beräkna) och förstärker det retro utseendet.\nKombinerat med konturer ger det en lowpoly + konturstil.",
+      "pix.normalEdge": "Intensitet för konturer baserade på ytnormaler.\nUpptäcker gränser mellan olika riktade plan (t.ex. en takkant, ett hörn på en vägg).\n0 = inga normalbaserade konturer. 1 = starka konturer vid varje geometrisk övergång.",
+      "pix.depthEdge": "Intensitet för konturer baserade på djup (z-buffert).\nSpårar siluetter mellan objekt på olika avstånd.\nKompletterar de normalbaserade konturerna: tillsammans ger de ett tecknat eller serietidningsutseende.",
+      "pix.worldShape": "Väljer världens skenbara krökning.\n\"Glob\": världen är en sfär, horisonten kröker sig — miniplaneteffekt, för de upplysta.\n\"Platt\": ingen krökning, traditionell platt vy — klassisk isometrisk stil, för de rättrogna.",
+      "env.dayNight": "Växlar mellan dag och natt.\nÄndrar synlig himlakropp (sol/måne), himlen, omgivningsfärger, och tar fram kometer på natten. Ingen jetlag inblandad.",
+      "quality.density": "Global innehållstäthetsmultiplikator (0,15 till 1,0).\nMinskar antalet naturliga prydnadsobjekt, gräshalmstrån och får för att lätta scengrafens genomlöpning och sikta på 60 FPS på svagare maskiner.\nPåverkar inte terräng, vatten, byggnader eller karaktärer (spelmekanik och system redan optimerade separat). Bygger om innehållet vid varje ändring — fårpopulationen är först att känna av budgetnedskärningarna.",
+      "cin.tilt": "Intensitet för tilt-shift-effekten: progressiv oskärpa upptill och nedtill i bilden.\nSimulerar en tiltlins som minskar skärpedjupet i mitten.\nGer illusionen av en miniatyrmodell — mycket stark vid 1.",
+      "cin.focusCenter": "Vertikal position för tilt-shiftens skarpa fokusband.\n0 = bildens topp, 0,5 = mitten, 1 = botten.\nAtt flytta den nedåt sätter markelement i fokus.",
+      "cin.focusBand": "Bredd på tilt-shiftens skarpa band (som andel av höjden).\n0,1 = mycket smalt band, 0,5 = halva bilden i fokus, 1 = allt skarpt (effekten avstängd).",
+      "cin.vignette": "Mörkläggning av bildens kanter och hörn.\nSimulerar ljusfall i kanterna på ett vidvinkelobjektiv.\nFörstärker djupkänslan och drar blicken mot mitten.\nGår upp till 2: bortom 1 blir kanterna nästan helt svarta.",
+      "cin.grain": "Mängd filmkorn tillagt ovanpå renderingen.\nSimulerar ofullkomligheterna hos silverhalogenidfilm eller en känslig sensor.\nSubtilt vid 0,2, genomgripande vid 1 — då tittar du i princip på brus med en handling.",
+      "cin.chromatic": "Kromatisk aberration: lateral förskjutning av färgkanalerna mot kanterna.\nSimulerar felen hos ett ofullkomligt objektiv som inte fokuserar alla våglängder på samma punkt.\nSubtilt vid 0,2, psykedeliskt bortom 0,7.",
+      "cin.halation": "Glödande halo runt mycket ljusa partier, typisk för silverhalogenidfilm.\nStarkt ljus \"blöder\" lätt över på angränsande mörka partier.\nTillför värme och en organisk känsla — vackert på solnedgångar, förlåtande på allt annat.",
+      "cin.barrel": "Tunnformsdistorsion: bildens kanter trycks utåt.\nSimulerar fisköga- eller vidvinkelobjektiv. Förstärker ett \"övervakningskamera\"- eller lo-fi-utseende.\nVid 1 buktar bilden så mycket att man känner sig personligen övervakad.",
+      "cin.scanLines": "Sammanflätade mörka horisontella linjer, som efterliknar en CRT-skärm eller en gammal TV.\n0 = inga skanlinjer. 6 = mycket tydliga linjer, retro-TV-utseende.\nKraftfullt i kombination med en CGA/EGA-palett för en vintage-estetik dina föräldrar känner igen.",
+      "cin.scanLinesIntensity": "Skanlinjernas mörkhetsdjup. 0 = genomskinliga (ingen mörkläggning, även med\nskanlinjer aktiverade). 1 = helt svarta. Ingen effekt om Skanlinjer är 0.",
+      "cin.godRays": "Intensitet för skymningsstrålarna (gudastrålar) som utgår från solens skärmposition.\nLättviktig skärmrymdseffekt, ingen extra renderingspassering — särskilt synlig\nnära horisonten eller när solen delvis skyms av ett träd eller ett torn.\n0 = avstängd (noll GPU-kostnad).",
+      "cin.godRaysLength": "Strålarnas räckvidd, som andel av skärmen, mellan den visade pixeln och solen.\nLågt = korta strålar lokaliserade kring solen. Högt = strålar som sträcker sig över\nen stor del av bilden.",
+      "cin.godRaysDiffusion": "Strålarnas avtagande längs sin väg mot solen.\nLågt = korta, skarpa strålar. Högt = långa, mjuka strålar som sträcker sig\nlångt från ljuskällan.",
+      "cin.godRaysThreshold": "Ljusstyrketröskel över vilken en pixel behandlas som en ljuskälla\n(himmel, sol) och bidrar till strålarna. Lågt = fler områden bidrar (strålarna\när mer framträdande). Högt = bara de allra ljusaste områdena (solen själv) genererar dem.",
+      "cin.godRaysLayers": "Bryter upp den mjuka strålgradienten i staplade densitetsskikt — en lagrad,\ngenomskinlig slöjeffekt (mille-feuille) snarare än en kontinuerlig halo.\n0 = klassisk mjuk gradient. 1 = uttalad lagring, synligt skiktade strålar.",
+      "cin.bloomIntensity": "Bloomintensitet: en mjuk glödande halo runt högdagrar (sol, måne,\nstjärnor, upplysta fönster, HUD-element). Påverkar bara pixlar över\ntröskeln nedan — suddar aldrig ut hela bilden.\n0 = avstängd (noll GPU-kostnad).",
+      "cin.bloomThreshold": "Ljusstyrketröskel över vilken en pixel bidrar till bloomen.\nLågt = fler områden (även måttligt ljusa) genererar en halo.\nHögt = bara de intensivaste källorna (sol, lampor) genererar en.",
+      "cin.bloomRadius": "Radie för oskärpan applicerad runt bloomkällpixlar, i skärmpixlar.\nLågt = tät, skarp halo. Högt = bredare, mer diffus halo.",
+      "cin.bloomSoftness": "Mjukhet för övergången vid bloomtröskeln.\nLågt = skarp gräns mellan \"bidrar\" och \"bidrar inte\".\nHögt = gradvis övergång, mjukare halo vid källornas kant.",
+      "cin.crtCurvature": "CRT-stil skärmkrökning: förvrider bilden som om den visades\npå en krökt yta. Oberoende av tunnformsdistorsionen (objektivet)\novan. 0 = ingen deformation (noll GPU-kostnad).",
+      "cin.crtMask": "Maskerar de områden som hamnar utanför bilden när skärmkrökning appliceras\n(svarta kanter) i stället för att sträcka ut dem. 0 = utsträckta kanter (ingen mask),\n1 = kanter utanför skärmen helt maskerade i svart. Ingen effekt om krökningen är 0.",
+      "cin.crtCornerDark": "Ytterligare mörkläggning av skärmens hörn, typisk för ett CRT-rör.\n0 = ingen mörkläggning. Ingen effekt om skärmkrökningen är 0.",
+      "water.foamWidth": "Räckvidd för skumbandet nära stranden (i meter).\n0 = inget strandskum. Höga värden = en bred vit fransar längs hela kusterna.",
+      "water.foamScale": "Skala för skumtexturen. Ju högre värde, desto finare och tätare skummönster.\nLågt = stora fläckar, högt = fin, skumliknande textur.",
+      "water.foamDensity": "Utlösningströskel för strandskum. Ju högre värdet, desto mer yta täcker skummet nära kanten.",
+      "water.foamAmbient": "Tröskel för omgivande skum, synligt över hela vattenytan (inte bara stranden).\n0 = perfekt slät yta ute på vattnet. Höga värden = vitkammar/krusningar diffusa överallt.",
+      "water.foamSharp": "Skärpa på skumkanten. Lågt = mjuk, diffus övergång. Högt = skarp, utstansad kontur.",
+      "water.foamSpeed": "Animationshastighet för skummet (mönstret rullar över tid). 0 = fruset, statiskt skum.",
+      "water.deepDistance": "Avstånd från strand till öppet vatten över vilket gradienten mellan grunt/djupt sträcker sig.\nLågt = snäv övergång nära kanten. Högt = gradient utspridd över ett stort område.",
+      "water.opacity": "Vattenytans grundopacitet. Lågt = genomskinligt vatten som visar botten. Högt = ogenomskinligt vatten.",
+      "wake.armWidth": "Halva bredden på varje arm av det V-formade kölvattnet bakom båten.",
+      "wake.spread": "V-formens divergens: hur snabbt de två armarna sprider sig ifrån varandra längre bort från båten.",
+      "wake.length": "Längden över vilken kölvattnet tonar bort bakom båten innan det försvinner.",
+      "wake.scale": "Skala för kölvattnets skummönster. Ju högre värdet, desto finare textur.",
+      "wake.density": "Skumtäckning för kölvattnet. Lågt = diskret kölvatten, högt = tätt skumspår.",
+      "wake.opacity": "Maximal opacitet för kölvattnet, starkast precis bakom båten och sedan avtagande med längden.",
+      "wind.wheat.strength": "Amplitud för vetestrånas svajning. 0 = stilla.",
+      "wind.wheat.speed": "Svängningshastighet för vetet i vinden.",
+      "wind.grass.strength": "Amplitud för grässtrånas svajning.",
+      "wind.grass.speed": "Svängningshastighet för gräset i vinden.",
+      "wind.grass.sway": "Ytterligare sinusformad vaggning för varje strå, oberoende av vindbruset.",
+      "wind.tree.strength": "Amplitud för trädkronornas svajning. Att ändra denna inställning kompilerar om shaders för redan planterade träd (ett kort hack kan förekomma).",
+      "wind.tree.speed": "Svängningshastighet för träden i vinden.",
+      "wind.tree.frequency": "Rumslig frekvens för huvudvindvågen längs stam/lövverk.",
+      "wind.tree.turbulence": "Intensitet för vindbyarna och sekundärdetaljerna som läggs till huvudvindvågen.",
+      "wind.tree.gustStrength": "Vikt för vindbyarna (långsammare, bredare variation) i den totala rörelsen.",
+      "wind.tree.detailStrength": "Vikt för finmönstret (snabb krusning) i den totala rörelsen.",
+      "cloud.coverage": "Molntäcke vid horisonten. 0 = klar himmel, 1 = mulen himmel.",
+      "cloud.scale": "Skala för molnmönstret. Högt värde = mindre, finare moln; lågt värde = breda massor.",
+      "cloud.speed": "Drivhastighet för molnen vid horisonten.",
+      "stats.drawCalls": "Totalt antal renderingsanrop (draw calls) utfärdade av Three.js denna bildruta.\nVarje synligt objekt kostar minst 1 draw call — skuggor lägger till fler.\n> 200 dc: håll koll på prestandan på mobila GPU:er, som gör sitt bästa.",
+      "stats.trackedDc": "Draw calls tillskrivna spårade objektkategorier (brickor, träd, räls…).\nSkillnaden mot totalen = okategoriserade draw calls (UI, hjälpobjekt, himmelssfär…) — GPU:ns skräplåda.",
+      "stats.shadows": "Uppskattat antal draw calls använda för skuggrendering (shadow map).\nVarje objekt som \"kastar\" skugga renderar om scenen från solens perspektiv.\nMinska shadowMapSize eller antalet skuggkastare för att sänka denna kostnad.",
+      "stats.triangles": "Totalt antal trianglar renderade denna bildruta.\nEn indikator på geometrisk komplexitet — skuggor fördubblar denna siffra.\nLOD-meshar (level of detail) minskar denna siffra på avstånd, och förenklar tyst världen när du inte tittar noga.",
+      "stats.objects": "Totalt antal 3D-objekt (Mesh, Group…) spårade i scenen.\nMatchar inte exakt draw calls: ett objekt kan generera flera passeringar.",
+      "stats.textures": "Antal aktiva texturer i GPU-minnet.\nEn oreleaserad textur stannar kvar i VRAM. Värt att hålla koll på efter att nya brickor laddats — även VRAM har känslor.",
+      "stats.shaders": "Antal kompilerade och aktiva shaderprogram (GLSL).\nVarje material + defines-kombination = en shader. För många varianter = hack vid första bildrutan, GPU:ns motsvarighet till scenskräck.",
+      "game.tiles": "Totalt antal brickor placerade på brädet sedan spelets start.\nVarje bricka kan tillhöra ett eller flera biomer beroende på dess sammansättning.",
+      "game.score": "Poängen: de poäng du tjänat i detta parti. Det enda talet som spelar roll, påstås det.",
+      "game.efficiency": "Effektivitet = poäng ÷ placerade brickor, nedjusterad medan för få brickor placerats för att det ska vara meningsfullt.\nVärldsrankningen (Topplista-avsnittet på sidan) baseras på DENNA effektivitet, inte råpoängen! Kvalitet före kvantitet, som mormor alltid sa.",
+      "game.mills": "Antal kvarnar på rutnätet.\nEn kvarn dyker automatiskt upp i mitten av varje stor vetefältszon, obekymrad av bygglov.",
+      "game.trains": "Bildade tåglinjer: en linje = två stationer förbundna med sammanhängande räls.\nJu längre linjen, desto högre poäng.",
+      "game.boats": "Aktiva båtar: en båt dyker upp på varje vattensamling omgiven av land.\nVarje båt genererar poäng så länge den håller sig \"flytande\" — ingen sjöförsäkring ingår.",
+      "game.comets": "Avvärjda kometer: slumpmässiga händelser som far över brädet.\nAtt placera en bricka på den förutspådda platsen i rätt ögonblick låter dig avvärja dem. Astronomiläxa, förvandlad till spel.",
+      "game.grass": "Totalt antal placerade ängsbrickor.\nMax yta = största sammanhängande ängszon (angränsande brickor av samma biom).",
+      "game.largestGrass": "Största sammanhängande ängszon (i antal sammankopplade brickor).\nEn stor sammanhängande zon ger fler poäng i slutet av partiet.",
+      "game.field": "Totalt antal placerade vetefältsbrickor.\nÅkrar intill byar eller floder ger bonusar.",
+      "game.largestField": "Största sammanhängande åkerzon. Avgör den slutliga skördebonusen.",
+      "game.forest": "Totalt antal placerade skogsbrickor.\nTäta skogar (stora zoner) är viltrefuger och ger mer poäng.",
+      "game.largestForest": "Största sammanhängande skog. Skogar > 7 brickor utlöser ibland speciella händelser.",
+      "game.house": "Totalt antal placerade bybrickor.\nIsolerade hus är värda lite; en tät by väl ansluten till järnvägsnätet ger mycket. Fastighetslogik, hexagonal version.",
+      "game.largestHouse": "Största sammanhängande by. En by = angränsande hus.\nTalrika, täta byar maximerar stadsbonusen.",
+      "game.water": "Totalt antal placerade vattenbrickor (sjöar, floder, hav).\nVatten som gränsar till andra biomer skapar värdefulla kustzoner.",
+      "game.largestWater": "Största sammanhängande vattensamling. En sjö > 5 brickor kan hysa extra båtar.",
+      "game.rail": "Totalt antal placerade rälsbrickor.\nRäls ensamt ger ingenting — det är förbindelsen mellan två stationer som skapar en linje.",
+      "game.largestRail": "Längsta sammanhängande järnväg (i brickor). En indikator på nätets maximala räckvidd.",
+      "game.activeTile": "Brickan du är på väg att placera härnäst.\nFlytta markören med Z/Q/S/D, rotera med scrollhjulet, och placera med MELLANSLAG.\nVarje sida på brickan motsvarar ett biom — planera dina förbindelser!",
+      "game.nextTile": "Nästa bricka som kommer in i spel efter att du placerat den aktuella.\nFörutse dess form för att förbereda den bästa platsen — lite framförhållning kommer långt, till skillnad från i verkliga livet.",
+      "game.deckRemaining": "Antal brickor kvar i dragstapeln.\nSpelet slutar när stapeln är tom — se till att varje placering räknas!",
+      "hs.summary": "Partisammanfattning: placerade brickor, tåglinjer, båtar, avvärjda kometer.",
+      "hs.grass": "Äng — totalt antal brickor / största sammanhängande zon.",
+      "hs.field": "Vetefält — totalt antal brickor / största sammanhängande zon.",
+      "hs.forest": "Skog — totalt antal brickor / största sammanhängande zon.",
+      "hs.house": "By — totalt antal brickor / största sammanhängande zon.",
+      "hs.water": "Vatten — totalt antal brickor / största sammanhängande vattensamling.",
+      "hs.rail": "Järnväg — totalt antal brickor / längsta sammanhängande linje.",
+      "fps.fps": "Bildrutor per sekund renderade av Three.js-motorn.\n60 FPS = mjuk rendering, bildrutebudgeten hålls. < 30 FPS = märkbara nedsaktningar.\nVärdet blir rött när bildrutebudgeten (16,7 ms) konsekvent överskrids — motorns sätt att sucka högt.",
+      "fps.adj": "Kvalitativ bedömning av aktuell mjukhet.\nGrönt (Utmärkt/Mjukt): allt bra. Orange (OK/Godtagbart): acceptabelt men håll ett öga på det.\nRött (Ansträngt/Kämpar/Maxat): motorn är under press — leta efter flaskhalsen, och kanske färre får.",
+      "fps.cpu": "Andel av bildrutebudgeten (16,7 ms) som förbrukas av JavaScript-tråden.\nInkluderar spellogik, overlay-uppdateringar, animationer och GC-pauser.\n> 80 %: CPU:n är flaskhalsen — minska uppdateringsfrekvensen eller antalet aktiva overlays.",
+      "fps.gpu": "Andel av bildrutebudgeten som förbrukas av GPU-rendering.\nMätt via en riktig, asynkron GPU-timingfråga (EXT_disjoint_timer_query_webgl2) —\nvisat värde kan släpa efter med 1 till några bildrutor. Om tillägget inte är tillgängligt på denna\ndrivrutin/webbläsare, faller det tillbaka på en CPU-inlämningstimer (prefix \"≈\", mindre tillförlitlig, men gör sitt bästa).\n> 80 %: GPU:n är mättad — minska trianglar/fragment (vegetation, efterbehandling), draw calls, eller skuggor.",
+      "menu.solo": "Sololäge — spela ensam, i din egen takt, utan att svara inför någon.\nDina poäng skickas till den globala topplistan när partiet är slut.",
+      "menu.multi": "Flerspelarläge — spela i realtid med andra spelare.\nSkapa ett rum och dela koden, eller gå med i ett befintligt parti.",
+      "menu.platiste": "Platt geometri — rutnätet ligger på ett horisontellt plan.\nBättre läsbarhet och förutsägbart beteende: rekommenderas för både nybörjare och traditionalister.",
+      "menu.bouliste": "Sfärisk geometri — brickorna följer en planets krökning.\nEn mer uppslukande vy, men det krökta rutnätet kan vara desorienterande till en början — vetenskap var aldrig menad att vara lätt.",
+      "menu.confirm": "Bekräfta och gå vidare till nästa steg.",
+      "menu.create": "Skapa ett nytt flerspelarrum.\nEn unik kod genereras automatiskt — dela den med andra spelare så att de kan gå med.",
+      "menu.join": "Gå med i ett befintligt rum med koden ovan.",
+      "menu.back": "Återgå till startskärmen.",
+      "game.gridPercent": "Antal brickor placerade på rutnätet sedan spelets start.\nVarje placering ökar denna räknare, även i flerspelarläge.",
+      "game.lastScore": "Poäng intjänade vid senaste placeringen.\nInkluderar zonbonusen om brickan förstorade eller slöt en sammanhängande zon, plus eventuella uppdragsbonusar.",
+      "game.newGame": "Starta ett nytt parti.\nDet aktuella partiet förblir aktivt och spelbart — du kan återgå till det när som helst från menyn, inga hårda känslor.",
+      "game.abandonGame": "Överge det aktuella partiet.\nPartiet stängs permanent: du kommer inte kunna spela det igen eller skicka in ett nytt resultat. Välj klokt — det här är slutgiltigt."
+    },
+    "missionHelp": {
+      "forest": "Placera brickor med skogssektorer 🌲.\nVarje skogstriangel som placeras på brädet för detta uppdrag framåt.\nTäta zoner ger mer poäng i slutet av partiet — träden uppskattar sällskapet.",
+      "house": "Placera brickor med bysektorer 🛖.\nVarje hustriangel som placeras för uppdraget framåt.\nByar anslutna till järnvägsnätet är särskilt lönsamma — läge, läge, läge.",
+      "rail": "Placera brickor med räls 🛤️.\nVarje rälstriangel som placeras för uppdraget framåt.\nRäls ensamt ger ingenting utan en station i varje ände — ambition behöver ett mål.",
+      "water": "Placera brickor med vattensektorer 💧.\nVarje vattentriangel som placeras för uppdraget framåt.\nStora vattensamlingar kan hysa båtar.",
+      "grass": "Placera brickor med ängssektorer 🌿.\nVarje ängstriangel som placeras för uppdraget framåt.\nStora sammanhängande ängszoner ger en ytbonus.",
+      "field": "Placera brickor med vetefältssektorer 🌾.\nVarje åkertriangel som placeras för uppdraget framåt.\nÅkrar nära byar eller floder ger bonusar — goda grannar lönar sig.",
+      "train": "Förbind två stationer med sammanhängande räls 🚂.\nVarje ny färdigställd tåglinje för uppdraget framåt.\nJu längre linjen, desto högre poäng.",
+      "boat": "Skapa vattensamlingar omgivna av land ⛵.\nEn båt dyker automatiskt upp på varje sjö omsluten av landbrickor.\nVarje ny båt för uppdraget framåt — ingen sjösättningsceremoni krävs.",
+      "mill": "Bygg stora vetefältszoner ⚙️.\nEn kvarn dyker automatiskt upp i mitten av varje tillräckligt stor åkerzon.\nVarje ny kvarn för uppdraget framåt."
+    },
+    "missionTitles": {
+      "forest": {
+        "one": "Odla en skog med {target} träd",
+        "other": "Odla en skog med {target} träd"
+      },
+      "house": {
+        "one": "Bygg en by med {target} hus",
+        "other": "Bygg en by med {target} hus"
+      },
+      "rail": {
+        "one": "Förläng en järnväg med {target} räls",
+        "other": "Förläng en järnväg med {target} räls"
+      },
+      "water": {
+        "one": "Anslut en vattenled med {target} brickor",
+        "other": "Anslut en vattenled med {target} brickor"
+      },
+      "grass": {
+        "one": "Utvidga en äng med {target} brickor",
+        "other": "Utvidga en äng med {target} brickor"
+      },
+      "field": {
+        "one": "Odla {target} vetefältsbrickor",
+        "other": "Odla {target} vetefältsbrickor"
+      },
+      "train": {
+        "one": "Kör {target} tåg",
+        "other": "Kör {target} tåg"
+      },
+      "boat": {
+        "one": "Sjösätt {target} båt",
+        "other": "Sjösätt {target} båtar"
+      },
+      "mill": {
+        "one": "Snurra {target} kvarn",
+        "other": "Snurra {target} kvarnar"
+      }
+    },
+    "ui": {
+      "modals": {
+        "scoreEnd": {
+          "kicker": "Spelet är slut — slutresultat",
+          "save": "Spara"
+        },
+        "abandon": {
+          "kicker": "Överge partiet?",
+          "sub": "Detta parti kan inte återupptas efteråt.",
+          "cancel": "AVBRYT",
+          "confirm": "ÖVERGE"
+        }
+      },
+      "hud": {
+        "player": "SPELARE",
+        "room": "RUM",
+        "abandon": "ÖVERGE",
+        "newGame": "NYTT PARTI",
+        "statsTitle": "SPELSTATISTIK",
+        "mills": "Kvarnar",
+        "trains": "Tåg",
+        "boats": "Båtar",
+        "comets": "Kometer",
+        "total": "Totalt",
+        "grassMax": "Sammanhängande",
+        "fieldMax": "Sammanhängande",
+        "forestMax": "Sammanhängande",
+        "houseMax": "Sammanhängande",
+        "waterMax": "Sammanhängande",
+        "railMax": "Sammanhängande",
+        "biomes": {
+          "grass": "Äng",
+          "field": "Vetefält",
+          "forest": "Skog",
+          "house": "By",
+          "water": "Vatten",
+          "rail": "Järnväg"
+        },
+        "activeTileTitle": "AKTUELL BRICKA",
+        "nextTileTitle": "NÄSTA BRICKA",
+        "deckRemaining": "KVAR",
+        "tilesPlaced": "PLACERADE",
+        "missionsTitle": "AKTIVA UPPDRAG",
+        "noMission": "Inget uppdrag",
+        "efficiencyLabel": "Effektivitet",
+        "scoreLabel": "Poäng"
+      },
+      "help": {
+        "title": "Hjälp",
+        "closeAria": "Stäng hjälp",
+        "objective": {
+          "title": "Grundregler",
+          "text": "Placera hexagonala brickor, koppla samman matchande texturer, och slutför uppdrag. Varje väljusterad kant lönar sig; vatten och räls lönar sig ännu mer — världen belönar dem som planerar i förväg, ibland.",
+          "points": {
+            "tile": "per placerad bricka",
+            "edge": "per matchande kant mot en angränsande bricka",
+            "waterRail": "per vatten/vatten- eller räls/räls-förbindelse",
+            "surround": "bonus när en bricka omges på alla 6 sidor",
+            "mission": "per slutfört uppdrag",
+            "bonus": "om du placerar en bricka på en bonusruta"
+          }
+        },
+        "placement": {
+          "title": "Placering",
+          "items": [
+            "Spelet börjar med 50 brickor.",
+            "Den första kan placeras var som helst; senare brickor måste ligga intill en placerad bricka — inga svävande byar, tyvärr.",
+            "Spelet slutar när stapeln är tom.",
+            "Det spelbara området växer med varje placering."
+          ]
+        },
+        "waterRail": {
+          "title": "Vatten och räls",
+          "text": "Vatten och räls är strikta nätverk och svårare att placera. I gengäld ger varje korrekt förbindelse fler poäng — hög risk, hög belöning, låg tolerans för återvändsgränder.",
+          "water": "ansluter endast till vatten: +25",
+          "rail": "ansluter endast till räls: +25"
+        },
+        "bonusCells": {
+          "title": "Bonusrutor",
+          "text": "Mellan 1 och 4 bonusrutor genereras på rutnätet. De ändrar inga placeringsregler: om du lyckas placera en bricka på en, försvinner den och ger omedelbart +500 poäng. Det närmaste gratis pengar det finns i det här spelet.",
+          "label": "valfritt mål, ren poäng, noll risk"
+        },
+        "blackCells": {
+          "title": "Svarta rutor",
+          "text": "Svarta rutor är speciella brickor som redan finns på rutnätet. De fungerar som jokrar: de fyller i vad som helst som saknas runt omkring dem och accepterar förbindelser med vilken angränsande textur som helst — hexvärldens diplomater.",
+          "label": "räknas som kompatibel med vilken angränsande kant som helst"
+        },
+        "textures": {
+          "title": "Texturer och värden",
+          "field": {
+            "label": "Vetefält",
+            "code": "1-2 kärvar"
+          },
+          "forest": {
+            "label": "Skog",
+            "code": "1-6 träd"
+          },
+          "grass": {
+            "label": "Äng",
+            "code": "1"
+          },
+          "house": {
+            "label": "By",
+            "code": "1-4 hus"
+          },
+          "water": {
+            "label": "Vatten",
+            "code": "1"
+          },
+          "rail": {
+            "label": "Räls",
+            "code": "1"
+          }
+        },
+        "missions": {
+          "title": "Uppdrag",
+          "text1": "Varje gång en ny aktuell bricka dyker upp finns det 20 % chans att ett uppdrag läggs till. Det kan efterfråga skog, by, järnväg, vattenled, äng, vetefält, synliga tåg, båtar eller kvarnar — världens krav, levererade slumpmässigt.",
+          "text2": "Belöning: +100 poäng och +3 brickor. Målen framskrider per typ; ett slutfört uppdrag förblir synligt i 5 drag, badande i sin egen ära. Faktiska värden räknas: äng/vatten/räls = 1; vetefält = 1-2; hus = 1-4; skog = 1-6 träd. Kvarnar ⚙️ räknar antalet aktiva stora åkerzoner."
+        },
+        "controls": {
+          "title": "Kontroller",
+          "moveCamera": "Flytta kameran",
+          "resetCamera": "Återställ kameran",
+          "zoom": "Zooma in/ut",
+          "undo": "Ångra senaste draget",
+          "toggleHelp": "Visa/dölj denna hjälp",
+          "muteSound": "Tysta/aktivera alla ljud",
+          "muteVoice": "Tysta/aktivera röstmeddelanden",
+          "immersive": "Immersivt läge",
+          "superImmersive": "Superimmersivt läge",
+          "speedUp": "Ökar hastigheten för rörelse och zoom",
+          "wheelZoomRotate": "Zooma eller rotera om tillgängligt",
+          "rightClick": "Rotera kameran",
+          "perfHud": "Visa/dölj FPS-HUD:en",
+          "eda": "Visa/dölj EDA-HUD:en",
+          "snapshot": "Ta en skärmdump",
+          "gallery": "Öppna skärmdumpsgalleriet",
+          "replay": "Visa/dölj spelreprisens HUD",
+          "wheelKbd": "Hjul",
+          "leftClickKbd": "Vänsterklick",
+          "rightClickKbd": "Högerklick",
+          "spaceKbd": "MELLANSLAG",
+          "shiftSpaceKbd": "SHIFT+MELLANSLAG"
+        }
+      }
+    },
+    "highscore": {
+      "saving": "Sparar...",
+      "saved": "Resultat sparat! Återgår till menyn...",
+      "error": "Fel vid resultatsparning.",
+      "defaultName": "Spelare"
+    },
+    "multiplayerRooms": {
+      "modeCopy": "Skapa ett nytt parti eller gå med i ett befintligt med en kod.",
+      "nameLabel": "Smeknamn",
+      "namePlaceholder": "Ditt smeknamn",
+      "codeLabel": "Spelkod",
+      "codePlaceholder": "t.ex. 377EA7",
+      "availableRoomsLabel": "Tillgängliga partier / säkerhetskopior",
+      "loadingRooms": "Laddar partier...",
+      "btnCreate": "SKAPA",
+      "btnJoin": "GÅ MED",
+      "btnBack": "TILLBAKA",
+      "selectExisting": "Välj ett befintligt parti",
+      "noRoomsFound": "Inga partier hittades i /json/games",
+      "listUnavailable": "Listan är inte tillgänglig - PHP-servern är tyst",
+      "roomsCount": {
+        "one": "{count} parti tillgängligt / säkerhetskopior",
+        "other": "{count} partier tillgängliga / säkerhetskopior"
+      },
+      "unknownDate": "okänt datum",
+      "playerWord": {
+        "one": "spelare",
+        "other": "spelare"
+      },
+      "tileWord": {
+        "one": "bricka",
+        "other": "brickor"
+      },
+      "creatingRoom": "Skapar parti {code}...",
+      "missingCode": "Spelkod saknas.",
+      "joiningRoom": "Ansluter till parti {code}...",
+      "roomNotFound": "Parti {code} hittat, men ögonblicksbild saknas. Inaktuell JSON avvisad.",
+      "defaultNamePrefix": "Spelare"
+    },
+    "startupMenu": {
+      "nameChoice": {
+        "title": "Vad heter du?",
+        "label": "Ditt förnamn (eller smeknamn)",
+        "placeholder": "t.ex. Alex",
+        "confirm": "FORTSÄTT →"
+      },
+      "home": {
+        "title": "Välj spelläge: solo eller flerspelare.",
+        "solo": "SOLO",
+        "multi": "MULTI"
+      },
+      "worldShape": {
+        "title": "Välj din planets geometri:",
+        "flat": "PLATT",
+        "globe": "GLOB",
+        "note": "Vi rekommenderar \"<i>platt</i>\" för att börja. Du kan byta fraktion när som helst under spelets gång, för även planeter har rätt till en identitetskris."
+      }
+    },
+    "preloader": {
+      "loading": "Frammanar hexagoner…",
+      "loadingPct": "Frammanar hexagoner… {pct} %",
+      "loadingCount": "{loaded} filer / {total} filer · {loadedMB} MB / {totalMB} MB — snart klart, förmodligen"
+    },
+    "placementOverlay": {
+      "ok": "OK",
+      "outOfGrid": "UTANFÖR RUTNÄTET",
+      "forbidden": "FÖRBJUDET",
+      "incompatibleNetwork": "OFÖRENLIGT NÄTVERK",
+      "edgeTypes": {
+        "field": "åker",
+        "forest": "skog",
+        "water": "vatten",
+        "rail": "räls",
+        "house": "hus",
+        "grass": "äng"
+      }
+    },
+    "multiplayerClient": {
+      "unreadableResponse": "Oläsbart serversvar ({status}): {text}",
+      "serverError": "Serverfel {status}"
+    },
+    "kbdHint": "H eller ESC&nbsp;→ hjälp &nbsp;|&nbsp; M&nbsp;→ tysta &nbsp;|&nbsp; T&nbsp;→ tysta röst &nbsp;|&nbsp; MELLANSLAG&nbsp;→ immersivt &nbsp;|&nbsp; SHIFT+MELLANSLAG&nbsp;→ superimmersivt",
+    "superImmersifExitHint": "MELLANSLAG för att lämna superimmersivt läge",
+    "langName": "Svenska",
+    "tts": {
+      "pointsAnnounce": "{n} poäng!",
+      "voiceOn": "Röst på",
+      "voiceOff": "Röst av",
+      "newMission": "Nytt uppdrag: {title}",
+      "missionCompleted": "Bra jobbat! Uppdrag slutfört! Världen godkänner.",
+      "edaOpened": "Art direction-redigerare",
+      "helpOpened": "Hjälp",
+      "millsCount": "Du har {n} kvarnar",
+      "trainsCount": "Du har {n} tåg",
+      "boatsCount": "Du har {n} båtar",
+      "cometsCount": "Du har {n} kometer",
+      "languageChanged": "Svenska språket",
+      "themeChanged": "Tema {theme}"
+    },
+    "fpsAdjectives": {
+      "disastrous": "Katastrofalt",
+      "bad": "Dåligt",
+      "mediocre": "Medelmåttigt",
+      "passable": "Godkänt",
+      "good": "Bra",
+      "splendid": "Utmärkt"
+    }
+  }
+}

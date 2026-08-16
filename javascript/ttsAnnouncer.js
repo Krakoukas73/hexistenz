@@ -21,16 +21,21 @@ import { formatMissionTitle } from './missionLabels.js';
 // SpeechSynthesisUtterance.lang (le moteur du navigateur peut alors retomber sur
 // une voix par défaut pour cette langue si aucune voix locale ne matche pile).
 const TTS_LOCALES = {
+  da: 'da-DK',
+  el: 'el-GR',
   fr: 'fr-FR',
   en: 'en-US',
   es: 'es-ES',
+  fi: 'fi-FI',
   it: 'it-IT',
   pt: 'pt-PT',
   'fr-CA': 'fr-CA',
   de: 'de-DE',
   ru: 'ru-RU',
   nl: 'nl-NL',
+  no: 'nb-NO',
   pl: 'pl-PL',
+  sv: 'sv-SE',
   tr: 'tr-TR',
   // 2026-07-29 — 9e langue (français médiéval, XIIe siècle) : reste du français
   // contemporain enrichi de vocabulaire (cf. french-medieval.json), aucune

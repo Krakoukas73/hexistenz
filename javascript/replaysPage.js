@@ -6,7 +6,7 @@
 // dupliqué côté PHP, une seule source de vérité (multiplayer.php).
 import { getGameLang, getLangFile, getLangVersion } from './gameLangReactive.js';
 
-const LOCALES = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA', de: 'de-DE', ru: 'ru-RU', 'fr-MED': 'fr-FR', nl: 'nl-NL', pl: 'pl-PL', tr: 'tr-TR' };
+const LOCALES = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA', de: 'de-DE', ru: 'ru-RU', 'fr-MED': 'fr-FR', nl: 'nl-NL', pl: 'pl-PL', sv: 'sv-SE', tr: 'tr-TR', da: 'da-DK', no: 'nb-NO', fi: 'fi-FI', el: 'el-GR' };
 
 async function loadTexts() {
   const file = getLangFile(getGameLang());

@@ -91,17 +91,22 @@ export function createDebugLightUI({ visualEnvironment, postprocess, forestOverl
           <button id="ttsMuteBtn" class="debug-light-toggle" type="button" tabindex="-1"><span class="tts-emoji">😃</span></button>
           <button id="soundMuteBtn" class="debug-light-toggle" type="button" tabindex="-1"><span class="sound-emoji">🔊</span></button>
           <select id="gameLangSelect" class="debug-light-toggle debug-light-lang-select" tabindex="-1">
-            <option value="fr">FR</option>
+            <option value="da">DA</option>
+            <option value="de">DE</option>
+            <option value="el">EL</option>
             <option value="en">EN</option>
             <option value="es">ES</option>
-            <option value="it">IT</option>
-            <option value="pt">PT</option>
+            <option value="fi">FI</option>
+            <option value="fr">FR</option>
             <option value="fr-CA">QC</option>
-            <option value="de">DE</option>
-            <option value="ru">RU</option>
             <option value="fr-MED">XII</option>
+            <option value="it">IT</option>
             <option value="nl">NL</option>
+            <option value="no">NO</option>
             <option value="pl">PL</option>
+            <option value="pt">PT</option>
+            <option value="ru">RU</option>
+            <option value="sv">SV</option>
             <option value="tr">TR</option>
           </select>
           <select id="gameThemeSelect" class="debug-light-toggle debug-light-lang-select" tabindex="-1">

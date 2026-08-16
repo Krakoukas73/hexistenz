@@ -77,17 +77,22 @@ $defaultTheme = $isMobileUA ? 'bleu' : 'ancien';
 // rien d'autre à toucher (ni le <select>, ni le JS, ni le HTML).
 $langDir = __DIR__ . '/json/languages/';
 $LANG_FILES = [
-    'fr' => 'french',
+    'da' => 'danish',
+    'de' => 'german',
+    'el' => 'greek',
     'en' => 'english',
     'es' => 'spanish',
-    'it' => 'italian',
-    'pt' => 'portuguese',
+    'fi' => 'finnish',
+    'fr' => 'french',
     'fr-CA' => 'fr-CA',
-    'de' => 'german',
-    'ru' => 'russian',
     'fr-MED' => 'french-medieval',
+    'it' => 'italian',
     'nl' => 'dutch',
+    'no' => 'norwegian',
     'pl' => 'polish',
+    'pt' => 'portuguese',
+    'ru' => 'russian',
+    'sv' => 'swedish',
     'tr' => 'turkish',
 ];
 $LANGS = array_keys($LANG_FILES);
@@ -103,13 +108,15 @@ $LANGS = array_keys($LANG_FILES);
 // le français et le moteur JS ira chercher la langue manquante en fetch() (cf.
 // ensureLang plus bas). Le premier affichage reste donc toujours correct, sans
 // clignotement pour un visiteur qui revient dans sa langue.
-// 2026-07-31 — repli "fr-CA" (au lieu de "fr") quand aucune préférence n'est
-// encore connue (pas de cookie), sur demande explicite. Le français reste de
-// toute façon toujours embarqué ci-dessous (array_unique(['fr', $prefLang])) :
-// c'est le rendu PHP statique (tr($t,'fr',...) partout dans ce fichier) qui
-// reste en français le temps que setLang() bascule vers fr-CA côté JS.
-$prefLang = isset($_COOKIE['hexistenz_pres_lang']) ? (string)$_COOKIE['hexistenz_pres_lang'] : 'fr-CA';
-if (!isset($LANG_FILES[$prefLang])) $prefLang = 'fr-CA';
+// 2026-08-09 — repli "en" (anglais) quand aucune préférence n'est encore
+// connue (pas de cookie), sur demande explicite — ERRATUM, remplace le repli
+// "fr-CA" en vigueur depuis le 2026-07-31, ne pas le réintroduire par erreur
+// dans un futur round. Le français reste de toute façon toujours embarqué
+// ci-dessous (array_unique(['fr', $prefLang])) : c'est le rendu PHP statique
+// (tr($t,'fr',...) partout dans ce fichier) qui reste en français le temps
+// que setLang() bascule vers en.json côté JS.
+$prefLang = isset($_COOKIE['hexistenz_pres_lang']) ? (string)$_COOKIE['hexistenz_pres_lang'] : 'en';
+if (!isset($LANG_FILES[$prefLang])) $prefLang = 'en';
 
 $t = [];
 foreach (array_unique(['fr', $prefLang]) as $code) {
@@ -232,6 +239,21 @@ function fmt_date($iso) {
 <div id="prezHeaderBanner" aria-hidden="true"></div>
 <div id="prezLeftBanner" aria-hidden="true"></div>
 <div id="prezRightBanner" aria-hidden="true"></div>
+
+<!-- 2026-08-09 — pastille version + date de release, bas-gauche, par-dessus le
+     cadre médiéval. Reprend #gameVersionBadge (game.php) à l'identique : même
+     structure (séparateur " • " littéral), mêmes variables PHP $version/
+     $versionDate déjà utilisées pour .hero-version-wrap ci-dessous, même
+     mécanisme JS de formatage (updateVersionDate(), déjà présent plus bas dans
+     ce fichier, cible #heroVersionDate ET maintenant aussi #prezVersionDate).
+     Un ancien #prezVersionBadge avait été ajouté puis explicitement retiré le
+     2026-08-08 ("c'était une erreur", cf. css/presentation.css) — CETTE FOIS,
+     demande explicite et différente : visible UNIQUEMENT en thème médiéval
+     (masqué par défaut sur le thème Bleu, cf. règle [data-theme="ancien"]
+     dans css/themes/medieval.css), pas de retour au comportement bleu d'avant. -->
+<?php if ($version): ?>
+<div id="prezVersionBadge" aria-hidden="true"><?= htmlspecialchars($version) ?><?php if ($versionDate): ?> • <span id="prezVersionDate"><?= htmlspecialchars($versionDate) ?></span><?php endif; ?></div>
+<?php endif; ?>
 
 <!-- ─── NAV ────────────────────────────────────────────────────── -->
 <nav>
@@ -1012,6 +1034,8 @@ function fmt_date($iso) {
         <span class="footer-sep">·</span>
         <a href="https://www.wildlabs.fr" class="footer-link" target="_blank" rel="noopener">Wildlabs</a>
         <span class="footer-sep">·</span>
+        <a href="https://www.youtube.com/watch?v=tOO6GYw-xAQ&list=PLr5waMN3loUtlg1KlFHRRpW1RJiBnxV02" class="footer-link" target="_blank" rel="noopener">Youtube</a>
+        <span class="footer-sep">·</span>
         <a href="https://github.com/Krakoukas73/hexistenz" class="footer-link" target="_blank" rel="noopener" data-i18n="footer.github"><?= tr($t,'fr','footer.github') ?></a>
       </div>
     </div>
@@ -1077,23 +1101,30 @@ function fmt_date($iso) {
   // à l'avance. Même logique de sélection de voix que javascript/ttsAnnouncer.js
   // (dupliquée ici plutôt qu'importée, même pattern que snapshotsPage.js/
   // replaysPage.js qui dupliquent déjà leur propre mini-map de locales).
-  const TTS_LOCALES_PREZ = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA', de: 'de-DE', ru: 'ru-RU', 'fr-MED': 'fr-FR', nl: 'nl-NL', pl: 'pl-PL', tr: 'tr-TR' };
+  const TTS_LOCALES_PREZ = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', 'fr-CA': 'fr-CA', de: 'de-DE', ru: 'ru-RU', 'fr-MED': 'fr-FR', nl: 'nl-NL', pl: 'pl-PL', sv: 'sv-SE', tr: 'tr-TR', da: 'da-DK', no: 'nb-NO', fi: 'fi-FI', el: 'el-GR' };
 
   // 2026-07-29 — reformate la date à côté de la pastille de version (span
   // #heroVersionDate, rendu en français par PHP par défaut) dans la langue en
   // cours, via Intl.DateTimeFormat — réutilise TTS_LOCALES_PREZ ci-dessus
   // (mêmes codes BCP47 déjà nécessaires pour le TTS, pas besoin d'une 2e map).
   function updateVersionDate(l) {
-    const el = document.getElementById('heroVersionDate');
-    if (!el || !HEXISTENZ_VARS_MTIME) return;
+    // 2026-08-09 — #prezVersionDate (pastille bas-gauche médiéval) ajouté à la
+    // liste des éléments reformatés : même mtime, même locale, même formatage
+    // que #heroVersionDate ci-dessus (les deux affichent la même date).
+    const ids = ['heroVersionDate', 'prezVersionDate'];
+    if (!HEXISTENZ_VARS_MTIME) return;
     const locale = TTS_LOCALES_PREZ[l] ?? TTS_LOCALES_PREZ.fr;
-    try {
-      el.textContent = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' })
-        .format(new Date(HEXISTENZ_VARS_MTIME));
-    } catch (_) {
-      // Locale non reconnue par le moteur JS (cas limite navigateur) → on garde
-      // le texte déjà affiché (rendu FR initial ou dernière langue valide) plutôt
-      // que de planter le reste de setLang().
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      try {
+        el.textContent = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' })
+          .format(new Date(HEXISTENZ_VARS_MTIME));
+      } catch (_) {
+        // Locale non reconnue par le moteur JS (cas limite navigateur) → on garde
+        // le texte déjà affiché (rendu FR initial ou dernière langue valide) plutôt
+        // que de planter le reste de setLang().
+      }
     }
   }
   // fr-CA sans voix dédiée sur la plupart des postes → repli nommé ; allemand →
@@ -1161,7 +1192,7 @@ function fmt_date($iso) {
   // une action explicite de l'utilisateur via les sélecteurs, jamais au premier
   // affichage.
   async function setLang(l, announce = true) {
-    if (!LANGS.includes(l)) l = 'fr-CA';
+    if (!LANGS.includes(l)) l = 'en';
     await ensureLang(l);
     document.documentElement.lang = l;
     document.documentElement.dataset.lang = l;
@@ -1178,10 +1209,12 @@ function fmt_date($iso) {
   }
 
   const saved = localStorage.getItem('hexistenz_pres_lang');
-  // 2026-07-31 — repli "fr-CA" (au lieu de "fr") au tout premier lancement, sur
-  // demande explicite. ensureLang() (setLang ci-dessus) ira chercher fr-CA.json
-  // à la volée si le cookie PHP n'avait pas déjà pré-embarqué la bonne langue.
-  setLang(LANGS.includes(saved) ? saved : 'fr-CA', false);
+  // 2026-08-09 — repli "en" (anglais) au tout premier lancement, sur demande
+  // explicite — ERRATUM, remplace le repli "fr-CA" du 2026-07-31, ne pas le
+  // réintroduire par erreur. ensureLang() (setLang ci-dessus) ira chercher
+  // english.json à la volée si le cookie PHP n'avait pas déjà pré-embarqué la
+  // bonne langue.
+  setLang(LANGS.includes(saved) ? saved : 'en', false);
 
   // ─── Sélecteur de thème graphique (2026-07-17) ─────────────────────────────
   // Même clé localStorage que javascript/themeManager.js (utilisé côté jeu) :

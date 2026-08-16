@@ -412,8 +412,16 @@ nav {
    corrigé en #226. */
 /* 2026-08-08 — pastille #prezVersionBadge (bas-gauche, par-dessus le cadre)
    ajoutée puis RETIRÉE le même jour sur demande explicite ("c'était une
-   erreur") : la version reste affichée uniquement en ligne dans .hero-title
-   via .hero-version-wrap ci-dessous (repli sur le comportement d'origine). */
+   erreur") : la version restait affichée uniquement en ligne dans .hero-title
+   via .hero-version-wrap ci-dessous (repli sur le comportement d'origine).
+   2026-08-09 — ERRATUM : demande explicite different cette fois-ci, la
+   pastille est réintroduite mais SEULEMENT visible en thème médiéval (jamais
+   sur le thème Bleu, où .hero-version-wrap reste l'unique affichage) — cf.
+   [data-theme="ancien"] #prezVersionBadge dans css/themes/medieval.css.
+   Masquée ici par défaut (thème Bleu / valeur de repli). */
+#prezVersionBadge {
+  display: none;
+}
 
 .hero-version-wrap {
   display: inline-block;

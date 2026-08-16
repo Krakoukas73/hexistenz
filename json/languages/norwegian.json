@@ -1,0 +1,1223 @@
+{
+  "nav": {
+    "links": {
+      "factions": "Fraksjoner",
+      "biomes": "Biomer",
+      "missions": "Oppdrag",
+      "gameplay": "Spillmekanikk",
+      "gallery": "Forvalg",
+      "creatures": "Skapninger",
+      "audio": "Lyd",
+      "daynnight": "Miljø",
+      "eda": "Tilpasning",
+      "multi": "Flerspiller",
+      "scores": "Toppliste"
+    },
+    "play": "Spill nå"
+  },
+  "theme": {
+    "bleu": "Astralblå",
+    "ancien": "Middelalder"
+  },
+  "hero": {
+    "subtitle": "Et kontemplativt sekskantspill laget med kjærlighet ❤️, Three.js, og et mildt bekymringsverdig antall fliser",
+    "inspi_text": "Inspirert av <em>Dorfromantik</em>, den pastorale sjelen i <em>The Settlers</em> (Blue Byte, 1993)\n          og de fantastiske verdenene i <em>Heroes of Might and Magic</em> (3DO).",
+    "inspi_buy": {
+      "dorfromantik": "Dorfromantik på Steam",
+      "settlers": "The Settlers på Ubisoft",
+      "heroes3": "Heroes III på GOG"
+    },
+    "tagline": "<strong>Hexistenz er et kontemplativt spill</strong>, laget for spillere som elsker å se en verden\n          og alle detaljene dens ta form sakte — det finnes ingen klokke, og ærlig talt heller ikke noe hastverk.<br><br><strong>Plasser sekskantede fliser</strong> og\n          se et landskap ta form foran øynene dine: enorme skoger av gran og bjørk, vaiende hvetemarker\n          med mistenkelig velholdte møller, middelalderlandsbyer med rykende tak, vidstrakte jernbanenett, og brede elver\n          hvor båtene dine seiler, stort sett uten uhell.<br><br>Fullfør oppdrag, avskjær kometer, omring flisene dine, og bygg gradvis\n          en levende verden, én flis om gangen — ingen straff for å stirre på en fin bakkeskråning i tjue minutter.<br><br><strong>Spill alene eller i flerspiller</strong>, gjenoppta et\n          lagret spill når du vil, <strong>fang dine beste øyeblikk i galleriet</strong>, og gjenopplev\n          spillene dine i høy fart med nedlastbare reprisevideoer.<br><br>Spillet er spillbart akkurat nå og fullt oversatt til 17 språk, inkludert 1100-talls gammelfransk — for spillere som liker at middelalderlandsbyene deres er språklig korrekte.<br><br>Spillet er gratis, uten registrering, uten pay-to-win, og uten kjøp i spillet: kort sagt, laget av ren nostalgi og en stri vilje til aldri å tjene penger på sekskanter.",
+    "btn_play": "Spill nå",
+    "btn_how": "Hvordan spille?",
+    "stats": {
+      "biomes_label": "Biomer",
+      "games_label": "Spill",
+      "factions_label": "Fraksjoner",
+      "langs_label": "Språk",
+      "themes_label": "Grafiske temaer"
+    }
+  },
+  "factions": {
+    "label": "To måter å se verden på",
+    "title1": "Flatjordere og globetroende",
+    "title2": "To uforsonlige fraksjoner",
+    "sub": "Hexistenz deler byggerne sine i <strong>to uforsonlige fraksjoner</strong>. Offisielt et visuelt valg,\n      uoffisielt en filosofisk overbevisning. Velg side — vennskap har overlevd verre.",
+    "flat": {
+      "tag": "Flat modus",
+      "name": "🪨 Den flate verden",
+      "desc": "Rutenettet strekker seg flatt og ordnet ut. Hver flis blir del av et perfekt jevnt platå,\n            akkurat slik de gamle alltid visste.\n            For dem som stoler på øynene sine."
+    },
+    "globe": {
+      "tag": "Globus-modus",
+      "name": "🌍 Den kuleformede verden",
+      "desc": "Verdens krumning åpenbarer seg etter hvert som rutenettet vokser — fjerne fliser\n            kruller mot horisonten, fordi noen av oss aksepterer vitenskapen i stor skala. En sanntids GPU-effekt som gir svimlende dybde\n            til hvert spill."
+    },
+    "vs": "Debatten er ikke avgjort. Den blir det aldri."
+  },
+  "biomes": {
+    "label": "Biomene",
+    "title": "Seks biomer å koble sammen",
+    "sub": "Hver flis har seks trekantede sektorer. <strong>Match identiske biomer</strong> for å danne soner, maksimere poengsummen din, og kortvarig føle deg som byplanlegger.",
+    "grass": {
+      "name": "Eng",
+      "desc": "Gressletter der hvert strå skjelver i vinden, spekket med viltvoksende blomster, steiner, hjort og busker. Nøytral grunn mellom de store nettverkene — biomenes Sveits.",
+      "tag": "Nøytralt biom"
+    },
+    "field": {
+      "name": "Åker",
+      "desc": "Vindsvaiende hvete, prosedurale møller og høyballer. Chi-mai-temaet spiller når kameraet stryker over aksene — prøv å ikke gråte.",
+      "tag": "Jordbrukssone"
+    },
+    "forest": {
+      "name": "Skog",
+      "desc": "Gran, bjørk og osp som InstancedMesh, med kroner som svaier i vinden helt ned til underskogen. Sopp, vedstabler, hjort — opptil 22 millioner trekanter på skjermen, hver eneste én saligt uvitende om de andre.",
+      "tag": "Tett skogsmark"
+    },
+    "house": {
+      "name": "Landsby",
+      "desc": "Middelalderhus med volumetrisk røyk, vakttårn, fontener, animerte kjerrer, hunder og hester — ingen av dem har noensinne klaget på røyken.",
+      "tag": "Menneskelig bosetning"
+    },
+    "water": {
+      "name": "Vann",
+      "desc": "Sammenhengende vannflate med organisk strandlinje, animerte bølger og skum i akvarellstil. Animerte båter med kjølvann, prosedurale strender og sonehalo — ingen svømmeopplæring nødvendig.",
+      "tag": "Vannsystem ⛵"
+    },
+    "rail": {
+      "name": "Jernbane",
+      "desc": "Prosedurale skinner, sviller, pukk. Tog med vogner, endestasjoner og lokomotivrøyk — og en rutetabell ingen noensinne har sett.",
+      "tag": "Jernbanenettverk 🚂"
+    }
+  },
+  "missions": {
+    "label": "Mål",
+    "title": "Oppdrag",
+    "sub": "Hvert spill genererer automatiske mål knyttet til biomer og nettverk. Å fullføre ett gir <strong>100 poeng og, viktigere, legger til 3 nye fliser i trekkbunken</strong> — teoretisk sett muliggjør dette uendelige spill, i praksis begrenset av tålmodigheten din.",
+    "zone": {
+      "name": "Biomsone",
+      "desc": "Nå et minimumsareal i et gitt biom: <em>«8-sektors skog»</em>, <em>«12-sektors eng»</em>…"
+    },
+    "rail": {
+      "name": "Jernbanelinje",
+      "desc": "Legg et påkrevd antall jernbanesektorer. Hver plasserte jernbanetrekant teller mot dette oppdraget — ingen lokomotiv kreves, bare skinner."
+    },
+    "trains": {
+      "name": "Tog",
+      "desc": "Bygg et påkrevd antall aktive toglinjer — hver linje forbinder to stasjoner via sammenhengende, ubrutte skinner. Hull er ikke til forhandling, spør enhver konduktør."
+    },
+    "water": {
+      "name": "Vannvei",
+      "desc": "Dann en vannsone med et minimumsareal. Hver plasserte vanntrekant teller mot dette oppdraget."
+    },
+    "boats": {
+      "name": "Båter",
+      "desc": "La et påkrevd antall båter dukke opp på rutenettet. En båt dukker automatisk opp på hver innsjø omringet av landfliser — ingen skippersertifikat kreves."
+    },
+    "comets": {
+      "name": "Kometer",
+      "desc": "Kometer stryker over himmelen i sanntid. Klikk på dem for å få dem til å eksplodere og score poeng — refleks og årvåkenhet kreves."
+    },
+    "village": {
+      "name": "Blomstrende landsby",
+      "desc": "Bygg en tett landsby: klynge nok tilstøtende hussektorer til å nå kravet. Reguleringsplaner er, heldigvis, fiktive."
+    },
+    "fields": {
+      "name": "Dyrket mark",
+      "desc": "Utvid åkre til sammenhengende soner. Møller dukker bare opp når sonen er stor nok til å huse dem — de er sjenerte sånn."
+    },
+    "mills": {
+      "name": "Vindmøller",
+      "desc": "Bygg store hvetemarksoner for å få vindmøller til å dukke opp. En mølle dukker automatisk opp midt i hver tilstrekkelig store åkersone."
+    }
+  },
+  "gameplay": {
+    "label": "Spillmekanikk",
+    "title": "Slik spiller du",
+    "sub": "En enkel løkke, <strong>uendelig dybde</strong>. Hver flis du plasserer forvandler verden — ingen angre-knapp for det virkelige liv, men her finnes det en.",
+    "ui_caption": "Nåværende flis · Neste flis · Gjenværende fliser",
+    "steps": {
+      "draw": {
+        "title": "Trekk",
+        "desc": "En sekskantet flis dukker opp — seks trekantede sektorer, hver et biom. Følg med på den neste for å planlegge fremover, eller la være og lev farlig."
+      },
+      "orient": {
+        "title": "Orienter",
+        "desc": "Roter flisen for å tilpasse kantene. Vann og jernbane krever kontinuitet — en dårlig plassering kan ødelegge nettverket og din rekke av stillferdig selvtillit."
+      },
+      "place": {
+        "title": "Plasser",
+        "desc": "Velg et sted på det aksiale rutenettet. Å omringe en flis med seks naboer gir en stor umiddelbar bonus — det nærmeste spillet kommer applaus."
+      },
+      "score": {
+        "title": "Poeng",
+        "desc": "Fullfør oppdrag og soner, avskjær kometer, og send så inn din beste poengsum til den globale topplisten så fremmede kan dømme deg i stillhet."
+      }
+    },
+    "score_label": "Poengsystem",
+    "pills": {
+      "place": "Flis plassert",
+      "edge": "Matchende kant",
+      "network": "Nettverk tilkoblet",
+      "surround": "Flis omringet",
+      "mission": "Oppdrag fullført",
+      "comet": "Komet avskjært",
+      "bonus": "Bonuscelle dekket"
+    },
+    "kbd_title": "TASTATURKONTROLLER",
+    "kbd": {
+      "camera_label": "kamera",
+      "left_click_kbd": "Venstreklikk",
+      "left_click_desc": "flytt kamera",
+      "right_click_kbd": "Høyreklikk",
+      "right_click_desc": "roter kamera",
+      "wheel_kbd": "Hjul",
+      "space_kbd": "Mellomrom",
+      "wheel_desc": "zoom",
+      "reset_cam": "tilbakestill kamera",
+      "zoom": "zoom inn / ut",
+      "shift_kbd": "SHIFT",
+      "speed_up": "øker bevegelses-/zoomhastighet",
+      "undo": "angre",
+      "customization": "tilpasning",
+      "perf_hud": "ytelses-HUD",
+      "snapshot": "Skjermbilde",
+      "gallery": "Skjermbildegalleri",
+      "replay": "Spillreprise",
+      "immersive": "oppslukende modus",
+      "super_immersive": "super-oppslukende modus",
+      "mute": "demp",
+      "mute_tts": "demp stemme",
+      "help": "hjelp"
+    }
+  },
+  "gallery": {
+    "label": "Visuelle forvalg",
+    "title1": "Flere stemninger",
+    "title2": "Uendelige tilpasninger",
+    "sub": "Mange klare-til-bruk visuelle forvalg — men hvert av dem er bare et utgangspunkt: fargekorrigering (LUT), filmatiske effekter (kromatisk aberrasjon, filmkorn, tilt-shift), retro pikselering, EGA- og Amiga-estetikk, volumetrisk røyk, prosedural himmel… <strong>Hundrevis av kombinasjoner</strong> for å forvandle hele verden etter din smak, eller til noe smaken din ville protestert kraftig mot. Enhver tilpasning kan eksporteres med ett klikk og deles med andre spillere.",
+    "preset_word": "Forvalg",
+    "presets": {
+      "autumn": "Høst",
+      "summer": "Klar sommer",
+      "nordic": "Nordisk",
+      "amiga": "Amiga",
+      "ega": "EGA 16 farger",
+      "cga": "CGA 320×200 4 farger",
+      "apple2": "Apple II",
+      "psyche": "Psyke-LSD"
+    }
+  },
+  "creatures": {
+    "label": "Verdens liv",
+    "title": "En verden full av skapninger",
+    "sub": "Verden bare eksisterer ikke — <strong>den puster</strong>. Dyr, fugler og innbyggere gir liv til hvert biom gjennom årstidene, fullstendig uberørt av byggerekkefølgen din.",
+    "sheep": {
+      "name": "Sauer",
+      "desc": "Flokker beiter fredelig på engene, og driver med det vindsvaiende gresset, saligt uvitende om at de står oppå en poengmekanikk."
+    },
+    "crows": {
+      "name": "Kråker",
+      "desc": "Kråkeflokker sirkler over hvetemarkene, på vakt etter enhver ubevoktet flekk — tenk på dem som verdens minst subtile revisorer."
+    },
+    "farmer": {
+      "name": "Bonde",
+      "desc": "Med høygaffel i hånd steller bonden hveten sin, kommer og går i takt med jordbrukssesongene, evig én åker unna en fridag."
+    },
+    "druid": {
+      "name": "Druide",
+      "desc": "En enslig skikkelse vandrer blant trærne, en stillferdig vokter av skogene og deres hemmeligheter — for det meste hemmeligheten om hvor all soppen ble av."
+    },
+    "witch": {
+      "name": "Heks",
+      "desc": "I enkelte skoger, når natten faller på, sies det at hekser vandrer mellom trærne, tiltrukket av stillheten og glørne fra glemte bål. Få får noensinne øye på dem — enda færre våger å følge etter, og ingen har levert en formell klage."
+    },
+    "moon": {
+      "name": "Méliès-månen",
+      "desc": "I nattmodus bærer månen det ikoniske ansiktet fra Méliès' Reisen til månen — en hilsen til stumfilmens tid, gjemt i stjernehimmelen, og synlig uimponert over alle flisplasseringene dine."
+    },
+    "seagulls": {
+      "name": "Måker",
+      "desc": "Små flokker med måker sirkler over de største vannmassene, med en og annen etternøler som driver bort fra flokken for å forfølge sine egne interesser."
+    },
+    "fireflies": {
+      "name": "Ildfluer",
+      "desc": "Når natten faller på, driver svermer av glitrende ildfluer nær bakken, og tegner varme lyspunkter som mykt vandrer rundt kameraet som om de har et sted å være."
+    },
+    "population": {
+      "villages_label": "Landsbyer",
+      "forests_label": "Skoger",
+      "fields_label": "Hvetemarker",
+      "water_label": "Vann",
+      "meadows_label": "Enger",
+      "tags": {
+        "village_women": "Landsbykvinner",
+        "village_men": "Landsbymenn",
+        "farmer": "Bonde",
+        "blacksmith": "Smed",
+        "merchant": "Kjøpmann",
+        "innkeeper": "Kroeier",
+        "guard": "Vakt",
+        "soldier": "Soldat",
+        "knight": "Ridder",
+        "archer": "Bueskytter",
+        "warriors": "Krigere",
+        "mage": "Magiker",
+        "monk": "Munk",
+        "witch": "Heks",
+        "crows": "Kråker",
+        "windmill": "Vindmølle",
+        "scarecrow": "Fugleskremsel",
+        "boat": "Båt",
+        "rowboats": "Robåter",
+        "seagulls": "Måker",
+        "deer": "Hjort",
+        "wildflowers": "Viltvoksende blomster"
+      }
+    },
+    "note": "22 forskjellige ansikter befolker landsbyer og skoger, hver med sin egen silhuett, kostyme og rolle. Ingen kopierte statister — en ekte befolkning, flis for flis, organisert i ånden om ikke i praksis."
+  },
+  "audio": {
+    "label": "Lyddesign",
+    "title": "En verden du kan høre",
+    "sub": "Lyden følger kameraet <strong>i sanntid</strong> — hvert biom, tog og båt har sin egen stemme, som stiger og forsvinner med avstand, som et svært tålmodig orkester.",
+    "spatial": {
+      "name": "3D romlig lyd",
+      "desc": "Landsbystemning, fugleskvitring fra skog og eng, kråker over åkrene, bølger mot stranden, tog og båter — hver lydkildes volum følger dens virkelige avstand og retning, så det å streife av gårde lønner seg i seg selv."
+    },
+    "chimai": {
+      "name": "Chi Mai, det skjulte temaet",
+      "desc": "Senk kameraet lavt over en hvetemark, og et skjult melodisk tema settes i gang — musikken og andre lyder tones ned for å gi det plass. Ja, det er akkurat så dramatisk som det høres ut."
+    },
+    "adaptive": {
+      "name": "Adaptiv musikk",
+      "desc": "Intro-, spill- og avslutningsspor krysstones jevnt sammen, hentet fra flere varianter slik at ingen to spill høres helt like ut — ingen to, men et mistenkelig antall vil føles kjent."
+    },
+    "voice": {
+      "name": "En stemme som kommenterer spillet",
+      "desc": "En muntlig forteller (nettleserens innebygde tale-til-tekst, ingen ekstern tjeneste) roper ut poengene, oppdragene og viktige grensesnittøyeblikk live — en kort klokkelyd går forut for hvert nytt og hvert fullførte oppdrag. Tilgjengelig på alle 9 språk i spillet, med en mannsstemme automatisk valgt for tysk og russisk, fordi noen tydeligvis mente det var viktig. T-tasten demper den alene, uten å røre resten av lydsporet — for når oppmuntringen blir for mye."
+    },
+    "silence": {
+      "name": "Stillhet på kommando",
+      "desc": "M-tasten kutter og gjenoppretter momentant hele lydsporet, musikk inkludert — praktisk for et stille spill under et anrop eller et møte sjefen din tror har din fulle oppmerksomhet."
+    }
+  },
+  "daynnight": {
+    "label": "Verdensstemning",
+    "title": "Miljø",
+    "sub": "<strong>Én bryter forandrer alt</strong>. Sol, skyer og blå himmel viker for stjerner, måne og kometer — ingen komitémøte nødvendig.",
+    "day": {
+      "name": "Dagmodus",
+      "list": [
+        "🌤 Sol som kretser på sitt eget rendrings-lag",
+        "⛅ Prosedural volumetrisk himmel med animerte FBM-skyer",
+        "🔵 Senit/horisont-gradient i varme blåtoner",
+        "🚫 Kometer skjult — for mye lys for dem, de er sjenerte"
+      ]
+    },
+    "night": {
+      "name": "Nattmodus",
+      "list": [
+        "🌙 Måne, dyp nattlig senit/horisont-gradient",
+        "✨ Glitrende stjerner på en dedikert kule",
+        "☄️ Kometer som stryker over himmelen — klikk for å få dem til å eksplodere",
+        "🌑 Mørk atmosfære, landsbyrøyk mer synlig, søvnløshet upåvirket"
+      ]
+    },
+    "smoke": {
+      "name": "Røyk",
+      "list": [
+        "🏠 Opptil 48 samtidige røyksøyler, ray-marchet i sanntid over piper og lokomotiver",
+        "🌬️ 4-oktavs turbulens som driver med høyden — hver søyle er unik, som et fingeravtrykk laget av sot",
+        "🎲 Bare ett av tre hus røyker, tilfeldig valgt når flisen genereres — de to andre glemte visst å tenne bålet",
+        "🌙 Enda mer atmosfærisk når natten faller på"
+      ]
+    },
+    "godrays": {
+      "name": "Gudestråler",
+      "list": [
+        "☀️ Volumetriske lysstråler som stiger fra solen eller månen",
+        "🌲 Trenger gjennom løvverk, tårn og skyer for filmatisk belysning",
+        "🎚️ Lengde, diffusjon og terskel justerbar via kunstretningsredigereren, for din indre filmfotograf"
+      ]
+    },
+    "rain": {
+      "name": "Regn",
+      "list": [
+        "💧 Dynamiske regnbyger du kan utløse på sparket fra værpanelet, ingen paraply nødvendig",
+        "⛈️ Går naturlig over i uvær og lyn",
+        "🎬 Stemning forsterket av den filmatiske vignetteringen og filmkornet"
+      ]
+    },
+    "mist": {
+      "name": "Morgentåke",
+      "list": [
+        "🌫️ Lavt slør som demper avstander og mykner silhuetter",
+        "☀️ Løfter seg gradvis etter hvert som minuttene går, som de fleste morgenmysterier",
+        "🎚️ Tåketetthet og farge justerbar i kunstretningsredigereren"
+      ]
+    },
+    "storm": {
+      "name": "Uvær og skogbranner",
+      "list": [
+        "⚡ Lyn slår ned under uværsskyene og kan sette en flis i brann — naturens måte å redigere layouten din på",
+        "🔥 Trær, hus, tårn og vindmøller brenner i sin faktiske høyde, blir svertet, og vokser deretter tilbake, tilsynelatende uberørt",
+        "🌬️ Brannen driver med vinden, sprer seg til naboer og stopper brått ved vannkanten, som endelig gjør nytte for seg",
+        "🌧️ Regn bremser spredningen og drukner noen ganger brannen helt"
+      ]
+    }
+  },
+  "eda": {
+    "label": "Kunstretningsredigerer (EDA)",
+    "title": "Ekstrem tilpasning",
+    "sub": "Utover de mange forvalgene, eksponerer EDA <strong>dusinvis av parametere justerbare i sanntid</strong>, fordelt på 3 faner — LUT, Filmatisk, Miljø. Hver glidebryter reagerer umiddelbart, ingen omlasting, og hele konfigurasjonen kopieres/eksporteres som JSON for å bli gjenspilt, delt, eller stille angret på.",
+    "lut": {
+      "label": "LUT",
+      "desc": "Tåke, lyskilde, full fargekorrigering (RGB-kurver, gamma, nivåer) og biomspesifikk palett — nok kontroller til å gjøre en eng om til et åsted hvis du ikke er forsiktig."
+    },
+    "cinematic": {
+      "label": "Filmatisk",
+      "desc": "Gudestråler, tilt-shift, bloom, retro pikselering og skjermkrumning — for å filme verden i stedet for bare å se på den."
+    },
+    "environment": {
+      "label": "Miljø",
+      "desc": "Skyer og skydekke, vind (hvete, gress, trær), dynamisk vær (tåke, ildfluer, regn), verdensform (globus/flat), dag/natt-bryter og kvalitets-/tetthetsforvalg — hele klimaet, i bånd."
+    }
+  },
+  "multi": {
+    "title1": "Flerspiller",
+    "title2": "Bygg sammen",
+    "sub": "Bli med i eller opprett et rom med en 6-bokstavs kode. Rutenettet er <strong>delt i sanntid</strong> — hver spiller plasserer sine fliser og ser andres trekk idet de skjer, på godt og vondt.",
+    "features": [
+      "Alle spill lagres — gjenoppta eller spill av på nytt når som helst",
+      "Rom kan bli med i når som helst, selv midt i spillet, ingen tillatelseslapp nødvendig",
+      "Sanntidssynkronisering · PHP + JSON-backend, som holder det hele sammen med stillferdig verdighet",
+      "Kartet vokser i fellesskap, flis for flis, krangel for krangel"
+    ],
+    "gallery_title": "DEL SKJERMBILDENE DINE",
+    "gallery_promo": "Udødeliggjør dine beste spill: 📷-knappen fanger verden uten HUD, og 🖼️-knappen åpner det <strong>delte galleriet, synlig for alle spillere</strong> — skryterett inkludert",
+    "replay_title": "Ta opp spillene dine som video",
+    "replay_promo": "Med ett klikk kan du <strong>spille av hele spillet ditt i høy fart</strong> og laste det ned som video, rett fra nettleseren — ingen redigeringsferdigheter nødvendig, bare litt forfengelighet.",
+    "btn_create": "Opprett et spill",
+    "room_title": "Romkode",
+    "room_status": "Spill pågår · 3 spillere",
+    "tiles_placed_label": "Fliser plassert"
+  },
+  "scores": {
+    "label": "Global toppliste",
+    "title": "De mest effektive byggerne",
+    "empty": "Ingen poengsummer ennå — topplisten er et tomt sekskantet tomrom, som venter på en helt.",
+    "try_luck": "Prøv lykken →",
+    "headline_stat": "fliser plassert",
+    "pts_suffix": "poeng",
+    "trains_s": "linje",
+    "trains_p": "linjer",
+    "boats_s": "båt",
+    "boats_p": "båter",
+    "mills_s": "mølle",
+    "mills_p": "møller",
+    "comets_s": "komet",
+    "comets_p": "kometer",
+    "largest_zone": "største sone",
+    "biome_labels": {
+      "forest": {
+        "s": "tre",
+        "p": "trær"
+      },
+      "water": {
+        "s": "vann",
+        "p": "vann"
+      },
+      "house": {
+        "s": "hus",
+        "p": "hus"
+      },
+      "field": {
+        "s": "hvetemark",
+        "p": "hvetemarker"
+      },
+      "grass": {
+        "s": "eng",
+        "p": "enger"
+      },
+      "rail": {
+        "s": "jernbane",
+        "p": "jernbaner"
+      }
+    }
+  },
+  "footer": {
+    "copy": "Et kontemplativt sekskantspill laget med kjærlighet ❤️, Three.js, og et urimelig antall fliser",
+    "github": "GitHub"
+  },
+  "game": {
+    "gallery": {
+      "title": "Skjermbildegalleri",
+      "empty": "Ingen skjermbilder ennå. Mesterverket ditt venter — trykk 📷 i spillet for å ta ett.",
+      "close": "Lukk",
+      "loading": "Laster inn…",
+      "tilesCount": "Spill med {n} fliser",
+      "modeBouliste": "Globus-modus",
+      "modePlatiste": "Flat modus",
+      "captured": "Skjermbilde tatt! Ettertiden takker deg."
+    },
+    "sound": {
+      "on": "Lyd på",
+      "off": "Lyd av"
+    },
+    "replay": {
+      "restart": "Tilbake til start",
+      "playPause": "Spill / Pause",
+      "close": "Lukk reprise"
+    },
+    "eda": {
+      "mainTitle": "Kunstretningsredigerer",
+      "ambiances": "FORVALG",
+      "ambiancePrefix": "forvalg",
+      "tabs": {
+        "lut": "LUT",
+        "cinematic": "Filmatisk",
+        "environment": "Miljø"
+      },
+      "headers": {
+        "lutFog": "1. Tåke",
+        "lutSun": "2. Lyskilde",
+        "lutGrading": "3. Fargekorrigering",
+        "lutPalette": "4. Biompalett",
+        "cinema1": "1. FILMATISK",
+        "godRays": "2. Gudestråler",
+        "tiltShift": "3. Tilt-shift",
+        "bloom": "4. Bloom",
+        "pixelisation": "5. PIKSELERING",
+        "crt": "6. SKJERMKRUMNING",
+        "nuages": "3. SKYER",
+        "vent": "4. VIND",
+        "worldShape": "5. Verdensform",
+        "dayNight": "6. Dag / Natt",
+        "quality": "7. Kvalitet / tetthet",
+        "weather": "8. Vær",
+        "waterFoam": "1. Skum",
+        "waterWake": "2. Båtens kjølvann",
+        "windWheat": "4.1 Hvetestrå",
+        "windGrass": "4.2 Gresstrå",
+        "windTree": "4.3 Trær"
+      },
+      "toggleTitles": {
+        "lutGrading": "Aktiver / deaktiver fargekorrigering",
+        "lutPalette": "Aktiver / deaktiver biompalett",
+        "cinema1": "Aktiver / deaktiver filmatiske effekter",
+        "godRays": "Aktiver / deaktiver gudestråler",
+        "tiltShift": "Aktiver / deaktiver tilt-shift",
+        "bloom": "Aktiver / deaktiver bloom (gløden, ikke blomstene)",
+        "pixelisation": "Aktiver / deaktiver pikselering",
+        "crt": "Aktiver / deaktiver skjermkrumning",
+        "nuages": "Aktiver / deaktiver skyer",
+        "vent": "Aktiver / deaktiver all vind (hvete, gress, trær)",
+        "worldShape": "Bytt mellom kuleformet (globus) og flat verden — ingen internasjonal traktat nødvendig",
+        "dayNight": "Bytt mellom dag og natt",
+        "waterFoam": "Aktiver / deaktiver skum",
+        "waterWake": "Aktiver / deaktiver båtens kjølvann"
+      },
+      "modeActuel": "Nåværende modus",
+      "preregalages": "Forvalg",
+      "presetNames": {
+        "default": "Standard",
+        "mist": "Tåke",
+        "autumn": "Høst",
+        "summerVivid": "Klar sommer",
+        "winter": "Vinter",
+        "sepia": "Sepia",
+        "nordic": "Nordisk",
+        "desert": "Ørken",
+        "pong": "Pong",
+        "appleII": "Apple II",
+        "cga": "CGA",
+        "ega": "EGA",
+        "amiga": "Amiga",
+        "psyche": "Psykedelisk"
+      },
+      "themeNames": {
+        "bleu": "Astralblå",
+        "ancien": "Middelalder"
+      },
+      "modes": {
+        "bouliste": "Globus",
+        "platiste": "Flat",
+        "jour": "Dag",
+        "nuit": "Natt"
+      },
+      "quality": {
+        "faible": "Lav",
+        "moyen": "Middels",
+        "eleve": "Høy",
+        "max": "Maks"
+      },
+      "qualityTooltip": "{label} tetthet ({value})",
+      "weatherStopAll": "⏹ Stopp alt",
+      "weatherStopAllTitle": "Stopper alle miljøhendelser som kjører nå. Fred, endelig.",
+      "weatherGroups": {
+        "morningMist": "🌫️ Morgentåke",
+        "fireflies": "✨ Ildfluer",
+        "clouds": "☁️ Regnskyer",
+        "rain": "🌧️ Regn",
+        "storm": "⛈️ Uvær",
+        "lightning": "⚡ Lyn",
+        "fire": "🔥 Ild",
+        "panic": "🐑 Dyrepanikk"
+      },
+      "weatherRequires": "(krever {label})",
+      "weatherSwitchTitle": "Aktiver / deaktiver",
+      "weatherCloudsSwitchTitle": "Aktiver / deaktiver skyer",
+      "weatherResetTitle": "Tilbakestill",
+      "presetTooltipApply": "Bruk forvalget «{name}»",
+      "presetTooltipDefault": "Gå tilbake til standardverdier (angre dine verste avgjørelser)",
+      "footer": {
+        "copy": "📋 Kopier",
+        "copyTitle": "Kopier alle nåværende LUT + PIX + WATER + CINEMA + WIND + CLOUDS + verdensform + dag/natt + tetthet + vær-innstillinger som JSON (grunnlag for et fremtidig stemningsforvalg med ferdigkonfigurerte væreffekter) — et lite arkiv over din tvilsomme smak",
+        "copied": "✓ Kopiert!",
+        "undo": "↩ Angre",
+        "undoTitle": "Angre siste endring — ingen dømmekraft her",
+        "redo": "↪ Gjør om",
+        "redoTitle": "Gjør om den angrede endringen, hvis du har ombestemt deg om å ombestemme deg",
+        "reset": "Tilbakestill",
+        "resetTitle": "Tilbakestill til standardverdier. Blanke ark, en ny start, en sjanse til å gjøre alt feil igjen",
+        "compare": "Sammenlign",
+        "compareBack": "⟳ Tilbake",
+        "compareTitle": "Bytt mellom nåværende innstillinger og sist brukte forvalg, for behagelig tvil",
+        "lastPresetTitle": "Sist brukte forvalg"
+      },
+      "labels": {
+        "environment": {
+          "fogDensity": "Eksp. tetthet",
+          "fogNear": "Start (lineær)",
+          "fogFar": "Slutt (lineær)",
+          "skyColor": "Himmel",
+          "fogColor": "Tåkefarge",
+          "domeColorTop": "Kuppeltopp",
+          "domeColorBottom": "Kuppelbunn"
+        },
+        "renderer": {
+          "toneMappingExposure": "Global eksponering"
+        },
+        "lights": {
+          "hemisphereIntensity": "Himmelsfærens intensitet",
+          "sunIntensity": "Intensitet",
+          "sunOrbitRadius": "Baneradius",
+          "sunOrbitHeight": "Banehøyde",
+          "sunOrbitSpeed": "Banehastighet",
+          "sunVisualScale": "Størrelse",
+          "fillIntensity": "Fyllys",
+          "hemisphereSkyColor": "Himmelsfære himmel",
+          "hemisphereGroundColor": "Himmelsfære bakke",
+          "sunColor": "Sol",
+          "fillColor": "Fyll"
+        },
+        "grading": {
+          "brightness": "Lysstyrke",
+          "contrast": "Kontrast",
+          "saturation": "Metning",
+          "vibrance": "Fargeintensitet",
+          "hue": "Fargetoneskift",
+          "gamma": "Gamma",
+          "blackLevel": "Sortnivå",
+          "whiteLevel": "Hvitnivå",
+          "red": "Rødkanal",
+          "green": "Grønnkanal",
+          "blue": "Blåkanal",
+          "redCurve": "Rødkurve",
+          "greenCurve": "Grønnkurve",
+          "blueCurve": "Blåkurve"
+        },
+        "palette": {
+          "strength": "Palettstyrke",
+          "saturation": "Metning",
+          "contrast": "Kontrast",
+          "warmShift": "Varm / kald",
+          "targets": {
+            "field": "Åkre",
+            "forest": "Skoger",
+            "grass": "Enger",
+            "house": "Landsbyer",
+            "rail": "Jernbaner",
+            "water": "Vann"
+          }
+        },
+        "water": {
+          "foamWidth": "Rekkevidde",
+          "foamScale": "Finhet",
+          "foamDensity": "Strandtetthet",
+          "foamAmbient": "Overflate",
+          "foamSharp": "Skarphet",
+          "foamSpeed": "Hastighet",
+          "deepDistance": "Gradient — rekkevidde",
+          "opacity": "Vann — ugjennomsiktighet"
+        },
+        "wake": {
+          "armWidth": "Armbredde",
+          "spread": "V-spredning",
+          "length": "Lengde",
+          "scale": "Finhet",
+          "density": "Tetthet",
+          "opacity": "Ugjennomsiktighet"
+        },
+        "wind": {
+          "wheat": {
+            "strength": "Amplitude",
+            "speed": "Hastighet"
+          },
+          "grass": {
+            "strength": "Amplitude",
+            "speed": "Hastighet",
+            "sway": "Svaiing"
+          },
+          "tree": {
+            "strength": "Amplitude",
+            "speed": "Hastighet",
+            "frequency": "Frekvens",
+            "turbulence": "Turbulens",
+            "gustStrength": "Vindkast",
+            "detailStrength": "Detalj"
+          }
+        },
+        "cloud": {
+          "coverage": "Dekning",
+          "scale": "Mønsterskala",
+          "speed": "Driftshastighet"
+        },
+        "quality": {
+          "density": "Tetthet"
+        },
+        "cin": {
+          "vignette": "Vignettering",
+          "grain": "Filmkorn",
+          "chromatic": "Kromatisk aberrasjon",
+          "halation": "Halasjon",
+          "barrel": "Tønnedistorsjon",
+          "scanLines": "Skannelinjer",
+          "scanLinesIntensity": "Skannelinjeintensitet",
+          "godRays": "Intensitet",
+          "godRaysLength": "Lengde",
+          "godRaysDiffusion": "Diffusjon",
+          "godRaysThreshold": "Lysstyrketerskel",
+          "godRaysLayers": "Lagdeling",
+          "tilt": "Intensitet",
+          "focusCenter": "Fokussenter",
+          "focusBand": "Skarpt område",
+          "bloomIntensity": "Intensitet",
+          "bloomThreshold": "Terskel",
+          "bloomRadius": "Radius",
+          "bloomSoftness": "Mykhet",
+          "crtCurvature": "Skjermkrumning",
+          "crtMask": "Svarte kanter",
+          "crtCornerDark": "CRT-hjørneavskygging"
+        },
+        "pix": {
+          "pixelSize": "Radius (piksler)",
+          "normalEdge": "Relieffkontur",
+          "depthEdge": "Dybdekontur"
+        },
+        "vfx": {
+          "mist": {
+            "densite": "Tetthet",
+            "compacite": "Kompakthet",
+            "elevation": "Høyde"
+          },
+          "fireflies": {
+            "densite": "Tetthet",
+            "taille": "Størrelse",
+            "vagabondage": "Vandring",
+            "scintillement": "Glitring"
+          },
+          "rain": {
+            "densite": "Tetthet",
+            "tailleGoutte": "Dråpestørrelse",
+            "impactSol": "Bakkenedslag"
+          },
+          "cloud": {
+            "densite": "Tetthet",
+            "altitude": "Høyde",
+            "epaisseur": "Tykkelse"
+          },
+          "storm": {
+            "frequenceEclairs": "Lynfrekvens",
+            "luminositeEclair": "Lynlysstyrke",
+            "intensitePluie": "Regnintensitet",
+            "altitudeChape": "Skydekkehøyde",
+            "opaciteChape": "Skydekke-ugjennomsiktighet"
+          },
+          "fire": {
+            "probaAllumage": "Antenningssjanse",
+            "densiteFlammes": "Flammetetthet",
+            "duree": "Varighet",
+            "taille": "Størrelse",
+            "propagation": "Spredning"
+          }
+        }
+      }
+    },
+    "help": {
+      "topbar.fps": "Vis/skjul det avanserte ytelses-HUD-et, for både de nysgjerrige og de engstelige",
+      "topbar.eda": "Åpne eller lukk rendringspanelet — dusinvis av kontroller, ingen voksentilsyn",
+      "topbar.snapshot": "Skjermbilde (uten HUD)",
+      "topbar.gallery": "Skjermbildegalleri",
+      "topbar.replay": "Spillreprise",
+      "topbar.lang": "Språk",
+      "topbar.theme": "Grafisk tema (Blå / Vintage)",
+      "topbar.mute": "Demp / gjenopprett lyd",
+      "topbar.muteVoice": "Demp / gjenopprett stemme (TTS)",
+      "renderer.toneMappingExposure": "Global rendringseksponering (ACESFilmic). Styrer hvor mye lys som når «sensoren» før noen fargekorrigering.\nVerdier < 1 mørklegger hele scenen, > 2 kan brenne ut høylysene.\nTypisk: 1,2–1,8 for et naturlig utseende, med mindre du sikter mot forhørsrom-sjik.",
+      "environment.fogDensity": "Tetthet på den eksponentielle tåken (FogExp2). Bare aktiv når «Lineær slutt» er 0.\nSikten faller svært raskt: ved 0,07 er scenen nesten ugjennomsiktig.\nFor kontrollert visuell rekkevidde, foretrekk lineær modus via «Start» og «Slutt».",
+      "environment.fogNear": "Avstand i 3D-enheter der lineær tåke begynner.\nSå snart «Slutt» > 0, byttes det automatisk fra FogExp2 til THREE.Fog(near, far).\nVed 0: tåken starter helt i forgrunnen. Ved 5: nærliggende objekter forblir skarpe.",
+      "environment.fogFar": "Avstand der lineær tåke er helt ugjennomsiktig.\nSett til 0 for å gå tilbake til eksponentiell modus.\nEksempel: Start = 3, Slutt = 18 → en visuell rekkevidde på 15 enheter — stemningsfullt uten å drukne alt.",
+      "lights.hemisphereIntensity": "Intensitet på himmelsfærelyset (himmel + bakke).\nBelyser flater som ikke er direkte utsatt for sola.\nFor høyt: flater ut skygger og fjerner dybde. For lavt: baksidene faller i total mørke.",
+      "lights.sunIntensity": "Styrke på det retningsbestemte lyset (solen).\nBestemmer skyggens hardhet og relieffkontrast.\nVerdier > 5 kan brenne ut lyse flater hvis den globale eksponeringen også er høy.",
+      "lights.sunOrbitRadius": "Radius på solens sirkulære bane rundt scenens sentrum.\nEn liten radius (< 5) gir bratt vinklet lys fra sentrum; en stor (> 20) gir mer strøkent lys fra kantene.",
+      "lights.sunOrbitHeight": "Vertikal høyde på solen over scenens plan.\nHøy = korte skygger, lys ovenfra. Lav = lange, strøkne skygger (gyllen time eller solnedgang).",
+      "lights.sunOrbitSpeed": "Vinkelhastighet på solen i radianer/sekund.\nVed 0,06 tar en full omdreining ≈ 100 sekunder. Ved 0: fast sol. Ved 1: skyggene roterer raskt.",
+      "lights.sunVisualScale": "Tilsynelatende størrelse på solskiven på himmelen.\nRent visuelt — påvirker verken lysstyrke eller skygger. I bunn og grunn en forfengelighetsmåler.",
+      "lights.fillIntensity": "Intensitet på et mykt fyllys, motsatt solen.\nÅpner opp harde skyggeområder. Nyttig for å unngå helt svarte flekker under overheng eller på den bortvendte siden av åser, der landsbyboerne tilsynelatende frykter å tråkke.",
+      "grading.brightness": "Ekstra lysstyrkeforskyvning lagt til etter rendring.\nLegger en konstant verdi til alle kanaler.\nSkiller seg fra eksponering: forsterker ikke høylys, endrer ikke tonemapping.",
+      "grading.contrast": "Global kontrast via dreiepunkt rundt 50 % grått.\n> 1: skyver mørke og lyse partier fra hverandre (filmatisk utseende). < 1: komprimerer (flatt/utvasket utseende).\nVed ytterpunkter → helsvart eller helhvitt.",
+      "grading.saturation": "Global metning. Blander gråtoneversjonen (luma) med originalfargen.\n0 = gråtoner. 1 = normal. > 1 = overmettet.\nVed svært høye verdier (3+) klipper fargene og kan snus — en rask vei til en hodepinefremkallende verden.",
+      "grading.vibrance": "Smart fargeintensitet: forsterker matte farger mens allerede mettede fargetoner spares.\nMildere enn rå metning for naturlige grønnfarger.\nNegativ: dempet livlige farger først, for de følelsesmessig utmattede.",
+      "grading.hue": "Global rotasjon av alle fargetoner rundt fargehjulet.\n±0,5 = halv omdreining (rød ↔ cyan). Subtilt ved lave verdier.\nNyttig for å korrigere en fargeskjevhet eller skape en snodig palett ingen ba om men alle husker.",
+      "grading.gamma": "Gammakorrigering brukt på mellomtoner.\n< 1 = lysere mellomtoner; > 1 = mørkere.\nVirker ikke lineært på ytterpunktene (rene svarte/hvite).",
+      "grading.blackLevel": "Sortpunktnivå. Løfter rene sorte mot grått.\nSkaper et «utvasket filmatisk» eller «løftet sort»-utseende.\nFor høyt = tap av dybde og tetthet i skyggene.",
+      "grading.whiteLevel": "Hvitpunktnivå. Komprimerer høylys under 1,0.\nVed 0,871: rent hvitt blir kremfarget, ingenting klipper.\nNyttig for et mykt utseende, en subtil «S-kurve».",
+      "grading.red": "Multiplikativ forsterkning av rødkanalen etter fargekorrigering.\n> 1 varmer opp scenen (oransje/rav-tone). < 1 kjøler den ned.\nKombinert med grønn og blå muliggjør presis hvitbalansekorrigering.",
+      "grading.green": "Multiplikativ forsterkning av grønnkanalen.\nGrønn dominerer opplevd lysstyrke (≈ 59 %).\nÅ senke denne kanalen gir en fiolett/magenta-effekt; å heve den gjør bildet grønnere og oppleves lysere.",
+      "grading.blue": "Multiplikativ forsterkning av blåkanalen.\nÅ øke gir en kald/nattlig stemning. Å redusere tørker ut blåfargene for et varmt eller sepia-utseende.",
+      "grading.redCurve": "Rød tonekurve: bruker en potensfunksjon på kanalen.\n< 1 = konveks kurve (løfter røde mellomtoner). > 1 = graver seg inn i mellomtonene.\nBrukes etter rødforsterkningen.",
+      "grading.greenCurve": "Grønn tonekurve. Former grønnkanalens respons i mellomtonene.\nNyttig for å finjustere opplevd kontrast uten å røre ytterpunktene.",
+      "grading.blueCurve": "Blå tonekurve. Former stemningen i mellomtonene.\nKurve < 1 = tettere blåfarger i høylysene. > 1 = uthulte blåfarger (varmt utseende i mellomtonene).",
+      "palette.strength": "Total styrke på paletteharmonisering på utvalgte teksturer.\n0: ingen effekt. 1: teksturene rekoloreres fullstendig mot målfargen.\nFungerer ved å matche GLB-materialnavn — stille, i kulissene, som en svært nøye interiørarkitekt.",
+      "palette.saturation": "Metning brukt etter paletteharmonisering.\n< 1: roer ned rekolorerte teksturer. > 1: intensiverer dem.\nLar deg justere uten å røre målfargene.",
+      "palette.contrast": "Kontrast brukt på farger etter harmonisering.\nEn liten økning (1,05–1,2) forbedrer lesbarheten til rekolorerte teksturer.",
+      "palette.warmShift": "Global varm/kald-forskyvning brukt på hele biompaletten.\nNegativ → kjøligere/blåere toner. Positiv → varmere/gyldne toner.",
+      "environment.skyColor": "Rendringsmotorens bakgrunnsfarge, synlig utenfor kuppelen og objektene.\nVanligvis mørk slik at den ikke stikker gjennom bak scenen.",
+      "environment.fogColor": "Farge på tåken, eksponentiell eller lineær.\nObjekter smelter inn i denne fargetonen etter hvert som avstanden øker.\nBør matche himmelfargen for en sammenhengende horisont.",
+      "environment.domeColorTop": "Farge på toppen av den sfæriske atmosfærekuppelen.\nSynlig på himmelen over objektene (hvis kuppel-ugjennomsiktighet > 0).",
+      "environment.domeColorBottom": "Farge på bunnen av atmosfærekuppelen.\nSimulerer horisonten eller en lav dis nær bakken.",
+      "lights.hemisphereSkyColor": "Tone på «himmel»-komponenten av himmelsfærelyset.\nFarger oppovervendte flater (tak, flate overflater).",
+      "lights.hemisphereGroundColor": "Tone på «bakke»-komponenten av himmelsfærelyset.\nFarger nedovervendte flater (undersiden av broer, husmager).",
+      "lights.sunColor": "Farge på solens retningsbestemte lys.\nOransje ved solnedgang, hvit ved middagstid, blåtonet under overskyet himmel.\nPåvirker sterkt fargen på kastede skygger.",
+      "lights.fillColor": "Farge på fyllyset.\nVanligvis komplementær til solen for å balansere skyggene.",
+      "palette.targets.field": "Målfarge for harmonisering av dyrkede åker-teksturer.",
+      "palette.targets.forest": "Målfarge for skog- og tre-teksturer.",
+      "palette.targets.grass": "Målfarge for enger og gress.",
+      "palette.targets.house": "Målfarge for hus og landsbybygninger.",
+      "palette.targets.rail": "Målfarge for skinner og jernbaneinfrastruktur.",
+      "palette.targets.water": "Målfarge for vann (innsjøer, elver, hav).",
+      "pix.pixelSize": "Størrelse på én piksel i skjermenheter. Ved 1: nativ oppløsning. Ved 8: kraftig pikselert, 8-bit-stil rendring.\nHøye verdier reduserer GPU-belastningen (færre fragmenter å beregne) og forsterker det retro utseendet.\nKombinert med konturer gir det en lowpoly + omriss-stil.",
+      "pix.normalEdge": "Intensitet på konturer basert på overflatenormaler.\nOppdager grenser mellom ulikt orienterte flater (f.eks. en takkant, et vegghjørne).\n0 = ingen normalbaserte konturer. 1 = sterke omriss ved hver geometriske overgang.",
+      "pix.depthEdge": "Intensitet på konturer basert på dybde (z-buffer).\nSporer silhuetter mellom objekter i ulik avstand.\nUtfyller de normalbaserte konturene: sammen gir de et tegneserie- eller tegneseriehefte-utseende.",
+      "pix.worldShape": "Velger verdens tilsynelatende krumning.\n«Globus»: verden er en kule, horisonten krummer seg — miniplanet-effekt, for de opplyste.\n«Flat»: ingen krumning, tradisjonell flat visning — klassisk isometrisk utseende, for de rettroende.",
+      "env.dayNight": "Bytter mellom dag og natt.\nEndrer det synlige himmellegemet (sol/måne), himmelen, omgivelsesfargene, og bringer frem kometer om natten. Ingen jetlag involvert.",
+      "quality.density": "Global innholdstetthetsmultiplikator (0,15 til 1,0).\nReduserer antall naturlige rekvisitter, gresstrå og sauer for å lette scenegraf-gjennomgangen og sikte mot 60 FPS på svakere maskiner.\nPåvirker ikke terreng, vann, bygninger eller karakterer (spillmekanikk og systemer er allerede optimalisert separat). Bygger innholdet på nytt ved hver endring — saueflokken er den første som merker budsjettkuttene.",
+      "cin.tilt": "Intensitet på tilt-shift-effekten: progressiv uskarphet øverst og nederst i bildet.\nSimulerer en vippelinse som reduserer dybdeskarphet i sentrum.\nGir illusjonen av en miniatyrmodell — svært sterk ved 1.",
+      "cin.focusCenter": "Vertikal posisjon for tilt-shiftens skarpe fokussone.\n0 = toppen av bildet, 0,5 = sentrum, 1 = bunnen.\nÅ flytte den ned setter bakkenivå-elementer i fokus.",
+      "cin.focusBand": "Bredde på tilt-shiftens skarpe sone (som en andel av høyden).\n0,1 = svært smal sone, 0,5 = halve bildet i fokus, 1 = alt skarpt (effekten deaktivert).",
+      "cin.vignette": "Mørklegging av bildets kanter og hjørner.\nSimulerer lysfall ved kantene på en vidvinkellinse.\nForsterker dybdeinntrykket og trekker blikket mot sentrum.\nGår opp til 2: over 1 blir kantene nesten helt sorte.",
+      "cin.grain": "Mengde filmkorn lagt over rendringen.\nSimulerer ufullkommenhetene i sølvhalogenfilm eller en følsom sensor.\nSubtilt ved 0,2, altoverskyggende ved 1 — da ser du i praksis på statisk støy med en historie.",
+      "cin.chromatic": "Kromatisk aberrasjon: sideveis forskyvning av fargekanalene mot kantene.\nSimulerer feilene i en ufullkommen linse som ikke fokuserer alle bølgelengder på samme punkt.\nSubtilt ved 0,2, psykedelisk over 0,7.",
+      "cin.halation": "Glødende glorie rundt svært lyse områder, typisk for sølvhalogenfilm.\nSterkt lys «lekker» litt inn i naboliggende mørke områder.\nTilfører varme og et organisk preg — vakkert på solnedganger, tilgivende på alt annet.",
+      "cin.barrel": "Tønnedistorsjon: bildets kanter presses utover.\nSimulerer fisheye- eller vidvinkellinser. Forsterker et «overvåkningskamera»- eller lo-fi-utseende.\nVed 1 buler bildet så kraftig at man føler seg personlig overvåket.",
+      "cin.scanLines": "Sammenflettede mørke horisontale linjer, som etterligner en CRT-skjerm eller et gammelt TV-apparat.\n0 = ingen skannelinjer. 6 = svært markerte linjer, retro-TV-utseende.\nKraftig kombinert med en CGA/EGA-palett for en vintage estetikk foreldrene dine vil kjenne igjen.",
+      "cin.scanLinesIntensity": "Svartdybde på skannelinjene. 0 = gjennomsiktig (ingen mørklegging, selv med\nskannelinjer aktivert). 1 = helt sort. Ingen effekt hvis Skannelinjer er 0.",
+      "cin.godRays": "Intensitet på skumringsstrålene (gudestråler) som stråler ut fra solens skjermposisjon.\nLettvekts skjermrom-effekt, ingen ekstra rendringspass — spesielt synlig\nnær horisonten eller når solen delvis er skjult bak et tre eller et tårn.\n0 = deaktivert (null GPU-kostnad).",
+      "cin.godRaysLength": "Strålenes rekkevidde, som en andel av skjermen, mellom den viste pikselen og solen.\nLav = korte stråler lokalisert rundt solen. Høy = stråler som strekker seg over\nen stor del av bildet.",
+      "cin.godRaysDiffusion": "Falloff på strålene langs veien mot solen.\nLav = korte, skarpe stråler. Høy = lange, myke stråler som strekker seg\nlangt fra lyskilden.",
+      "cin.godRaysThreshold": "Lysstyrketerskel over hvilken en piksel behandles som en lyskilde\n(himmel, sol) og bidrar til strålene. Lav = flere områder bidrar (strålene\ner mer fremtredende). Høy = bare de lyseste områdene (selve solen) genererer dem.",
+      "cin.godRaysLayers": "Bryter den jevne stråle-gradienten opp i stablede tetthetslag — en lagdelt,\ngjennomskinnelig sløreffekt (mille-feuille) i stedet for en kontinuerlig glorie.\n0 = klassisk jevn gradient. 1 = markert lagdeling, tydelig stratifiserte stråler.",
+      "cin.bloomIntensity": "Bloom-intensitet: en myk glødende glorie rundt høylys (sol, måne,\nstjerner, opplyste vinduer, HUD-elementer). Påvirker bare piksler over\nterskelen satt nedenfor — sløret aldri hele bildet.\n0 = deaktivert (null GPU-kostnad).",
+      "cin.bloomThreshold": "Lysstyrketerskel over hvilken en piksel bidrar til bloom.\nLav = flere områder (selv moderat lyse) genererer en glorie.\nHøy = bare de mest intense kildene (sol, lykter) genererer en.",
+      "cin.bloomRadius": "Radius på uskarpheten brukt rundt bloom-kildepiksler, i skjermpiksler.\nLav = tett, skarp glorie. Høy = bredere, mer diffus glorie.",
+      "cin.bloomSoftness": "Mykhet på overgangen ved bloom-terskelen.\nLav = skarpt skille mellom «bidrar» og «bidrar ikke».\nHøy = gradvis overgang, mykere glorie ved kildenes kant.",
+      "cin.crtCurvature": "CRT-stil skjermkrumning: forvrenger bildet som om det vises\npå en buet overflate. Uavhengig av tønnedistorsjonen (linse) ovenfor.\n0 = ingen forvrengning (null GPU-kostnad).",
+      "cin.crtMask": "Maskerer områdene som faller utenfor bildet når skjermkrumning brukes\n(svarte kanter) i stedet for å strekke dem. 0 = strukne kanter (ingen maske),\n1 = kanter utenfor skjermen helt maskert i sort. Ingen effekt hvis krumning er 0.",
+      "cin.crtCornerDark": "Ekstra mørklegging av skjermens hjørner, typisk for et CRT-rør.\n0 = ingen mørklegging. Ingen effekt hvis skjermkrumning er 0.",
+      "water.foamWidth": "Rekkevidde på skumbåndet nær stranden (i meter).\n0 = ingen strandskum. Høye verdier = en bred hvit kant langs hele kysten.",
+      "water.foamScale": "Skala på skumteksturen. Jo høyere verdi, jo finere og tettere skummønster.\nLavt = store flekker, høyt = fint, skumaktig korn.",
+      "water.foamDensity": "Utløsningsterskel for strandskum. Jo høyere verdi, jo mer overflate dekkes av skum nær kanten.",
+      "water.foamAmbient": "Terskel for omgivelsesskum, synlig over hele vannoverflaten (ikke bare stranden).\n0 = perfekt jevn overflate til havs. Høye verdier = skumtopper/krusninger spredt overalt.",
+      "water.foamSharp": "Skarphet på skumkanten. Lav = myk, diffus overgang. Høy = skarp, tydelig utskåret omriss.",
+      "water.foamSpeed": "Animasjonshastighet på skummet (mønsterrulling over tid). 0 = frosset, statisk skum.",
+      "water.deepDistance": "Avstand fra strand til åpent vann som fargeovergangen grunt/dypt strekker seg over.\nLav = tett overgang nær kanten. Høy = gradient spredt over et stort område.",
+      "water.opacity": "Grunnleggende ugjennomsiktighet på vannflaten. Lav = gjennomsiktig vann som viser bunnen. Høy = ugjennomsiktig vann.",
+      "wake.armWidth": "Halvbredde på hver arm av det V-formede kjølvannet bak båten.",
+      "wake.spread": "Divergens på V-en: hvor raskt de to armene sprer seg fra hverandre etter hvert som de beveger seg vekk fra båten.",
+      "wake.length": "Lengde kjølvannet tones ut over bak båten før det forsvinner.",
+      "wake.scale": "Skala på kjølvannets skummønster. Jo høyere verdi, jo finere korn.",
+      "wake.density": "Skumdekning på kjølvannet. Lav = diskret kjølvann, høy = tett skumstripe.",
+      "wake.opacity": "Maksimal ugjennomsiktighet på kjølvannet, sterkest rett bak båten og tonet ut med lengden.",
+      "wind.wheat.strength": "Amplitude på hveteaksenes svaiing. 0 = stillestående.",
+      "wind.wheat.speed": "Svingehastighet på hveten i vinden.",
+      "wind.grass.strength": "Amplitude på gresstråenes svaiing.",
+      "wind.grass.speed": "Svingehastighet på gresset i vinden.",
+      "wind.grass.sway": "Ekstra sinusformet svaiing for hvert strå, uavhengig av vindstøyen.",
+      "wind.tree.strength": "Amplitude på trekronenes svaiing. Å endre denne innstillingen rekompilerer shaderne til allerede plantede trær (en kort hakking kan forekomme).",
+      "wind.tree.speed": "Svingehastighet på trærne i vinden.",
+      "wind.tree.frequency": "Romlig frekvens på hovedvindbølgen langs stammen/løvverket.",
+      "wind.tree.turbulence": "Intensitet på vindkastene og sekundærdetaljene lagt til hovedvindbølgen.",
+      "wind.tree.gustStrength": "Vekt på vindkastene (langsommere, bredere variasjon) i den totale bevegelsen.",
+      "wind.tree.detailStrength": "Vekt på finoppløst detalj (rask krusning) i den totale bevegelsen.",
+      "cloud.coverage": "Skydekke ved horisonten. 0 = klar himmel, 1 = overskyet himmel.",
+      "cloud.scale": "Skala på skymønsteret. Høy verdi = mindre, finere skyer; lav verdi = brede skymasser.",
+      "cloud.speed": "Drivhastighet på skyene ved horisonten.",
+      "stats.drawCalls": "Totalt antall rendringskall (draw calls) utstedt av Three.js denne rammen.\nHvert synlig objekt koster minst 1 draw call — skygger legger til flere.\n> 200 dc: følg med på ytelsen på mobile GPU-er, som gjør så godt de kan.",
+      "stats.trackedDc": "Draw calls tilskrevet sporede objektkategorier (fliser, trær, skinner…).\nForskjellen fra totalen = ukategoriserte draw calls (UI, hjelpere, himmelboks…) — GPU-ens skrotskuff.",
+      "stats.shadows": "Estimerte draw calls brukt til skyggerendring (shadow map).\nHvert skygge-«kastende» objekt rendrer scenen på nytt fra solens perspektiv.\nReduser shadowMapSize eller antall skyggekastere for å senke denne kostnaden.",
+      "stats.triangles": "Totalt antall trekanter rendret denne rammen.\nEn indikator på geometrisk kompleksitet — skygger dobler dette tallet.\nLOD-nett (level of detail) reduserer dette antallet på avstand, og forenkler stille verden når du ikke ser nøye etter.",
+      "stats.objects": "Totalt antall 3D-objekter (Mesh, Group…) sporet i scenen.\nStemmer ikke nøyaktig med draw calls: ett objekt kan generere flere passeringer.",
+      "stats.textures": "Antall aktive teksturer i GPU-minnet.\nEn ufrigjort tekstur blir værende i VRAM. Verdt å følge med på etter lasting av nye fliser — VRAM har følelser også.",
+      "stats.shaders": "Antall kompilerte og aktive shader-programmer (GLSL).\nHver material + define-kombinasjon = én shader. For mange varianter = hakking på første ramme, GPU-ens versjon av sceneskrekk.",
+      "game.tiles": "Totalt antall fliser plassert på brettet siden spillstart.\nHver flis kan tilhøre ett eller flere biomer avhengig av sammensetningen.",
+      "game.score": "Poengsummen: poengene du har opptjent i dette spillet. Det eneste tallet som visstnok betyr noe.",
+      "game.efficiency": "Effektivitet = poeng ÷ fliser plassert, redusert mens for få fliser er plassert til at det er meningsfullt.\nVerdensrangeringen (Toppliste-seksjonen på nettsiden) er basert på DENNE effektiviteten, ikke råpoengsummen! Kvalitet fremfor kvantitet, som bestemoren din alltid sa.",
+      "game.mills": "Antall møller på rutenettet.\nEn mølle dukker automatisk opp i midten av hver store hvetemarksone, uberørt av byggetillatelser.",
+      "game.trains": "Dannede toglinjer: én linje = to stasjoner forbundet med sammenhengende skinner.\nJo lengre linjen er, jo høyere poengsum.",
+      "game.boats": "Aktive båter: en båt dukker opp på hver vannmasse omringet av land.\nHver båt genererer poeng så lenge den holder seg «flytende» — ingen sjøforsikring inkludert.",
+      "game.comets": "Avskjærte kometer: tilfeldige hendelser som stryker over brettet.\nÅ plassere en flis på det forutsagte stedet i rett øyeblikk lar deg avskjære dem. Astronomilekser, gamifisert.",
+      "game.grass": "Totalt antall engfliser plassert.\nMaksareal = største sammenhengende engsone (tilstøtende fliser av samme biom).",
+      "game.largestGrass": "Største sammenhengende engsone (i antall tilkoblede fliser).\nEn stor sammenhengende sone gir flere poeng ved spillslutt.",
+      "game.field": "Totalt antall hvetemarkfliser plassert.\nÅkre ved siden av landsbyer eller elver gir bonuser.",
+      "game.largestField": "Største sammenhengende åkersone. Bestemmer sluttbonusen for innhøstingen.",
+      "game.forest": "Totalt antall skogfliser plassert.\nTette skoger (store soner) er dyrelivsreservater og gir mer poeng.",
+      "game.largestForest": "Største sammenhengende skog. Skoger > 7 fliser utløser noen ganger spesielle hendelser.",
+      "game.house": "Totalt antall landsbyfliser plassert.\nIsolerte hus er lite verdt; en tett landsby godt tilkoblet jernbanenettet gir mye. Eiendomslogikk, sekskantutgaven.",
+      "game.largestHouse": "Største sammenhengende landsby. En landsby = tilstøtende hus.\nMange, tette landsbyer maksimerer bybonusen.",
+      "game.water": "Totalt antall vannfliser plassert (innsjøer, elver, hav).\nVann som grenser til andre biomer skaper verdifulle kystsoner.",
+      "game.largestWater": "Største sammenhengende vannmasse. En innsjø > 5 fliser kan huse ekstra båter.",
+      "game.rail": "Totalt antall jernbanefliser plassert.\nSkinner alene gir ingenting — det er forbindelsen mellom to stasjoner som skaper en linje.",
+      "game.largestRail": "Lengste sammenhengende jernbane (i fliser). En indikator på nettverkets maksimale rekkevidde.",
+      "game.activeTile": "Flisen du er i ferd med å plassere neste.\nFlytt markøren med Z/Q/S/D, roter med musehjulet, og plasser med MELLOMROM.\nHver side av flisen tilsvarer et biom — planlegg forbindelsene dine!",
+      "game.nextTile": "Neste flis som kommer i spill etter at du har plassert den nåværende.\nSe for deg formen på forhånd for å forberede det beste stedet — litt fremsyn er gull verdt, i motsetning til i det virkelige liv.",
+      "game.deckRemaining": "Antall fliser som gjenstår i trekkbunken.\nSpillet slutter når bunken er tom — la hver plassering telle!",
+      "hs.summary": "Spillsammendrag: fliser plassert, toglinjer, båter, avskjærte kometer.",
+      "hs.grass": "Eng — totalt antall fliser / største sammenhengende sone.",
+      "hs.field": "Hvetemark — totalt antall fliser / største sammenhengende sone.",
+      "hs.forest": "Skog — totalt antall fliser / største sammenhengende sone.",
+      "hs.house": "Landsby — totalt antall fliser / største sammenhengende sone.",
+      "hs.water": "Vann — totalt antall fliser / største sammenhengende vannmasse.",
+      "hs.rail": "Jernbane — totalt antall fliser / lengste sammenhengende linje.",
+      "fps.fps": "Bilder per sekund rendret av Three.js-motoren.\n60 FPS = jevn rendring, rammebudsjettet overholdt. < 30 FPS = merkbare treghet.\nVerdien blir rød når rammebudsjettet (16,7 ms) jevnlig overskrides — motorens måte å sukke høyt på.",
+      "fps.adj": "Kvalitativ vurdering av nåværende jevnhet.\nGrønn (Utmerket / Jevn): alt i orden. Oransje (Grei / Akseptabel): akseptabelt, men følg med. Rød (Anstrengt / Presset / Maks belastning): motoren er under press — let etter flaskehalsen, og kanskje færre sauer.",
+      "fps.cpu": "Prosentandel av rammebudsjettet (16,7 ms) brukt av JavaScript-tråden.\nInkluderer spillogikk, oppdateringer av overlegg, animasjoner og GC-pauser.\n> 80 %: CPU-en er flaskehalsen — reduser oppdateringsfrekvensen eller antall aktive overlegg.",
+      "fps.gpu": "Prosentandel av rammebudsjettet brukt av GPU-rendring.\nMålt via en ekte, asynkron GPU-tidsmåling (EXT_disjoint_timer_query_webgl2) —\nden viste verdien kan henge etter med 1 til noen få rammer. Hvis utvidelsen ikke er tilgjengelig på denne\ndriveren/nettleseren, faller den tilbake til en CPU-innsendingstimer (prefikset «≈», mindre pålitelig, men gjør sitt beste).\n> 80 %: GPU-en er mettet — reduser trekanter/fragmenter (vegetasjon, etterbehandling), draw calls eller skygger.",
+      "menu.solo": "Solomodus — spill alene, i ditt eget tempo, uten å svare til noen.\nPoengsummene dine sendes til den globale topplisten når spillet er over.",
+      "menu.multi": "Flerspillermodus — spill i sanntid med andre spillere.\nOpprett et rom og del koden, eller bli med i et eksisterende spill.",
+      "menu.platiste": "Flat geometri — rutenettet ligger på et horisontalt plan.\nBedre lesbarhet og forutsigbar oppførsel: anbefales for både nybegynnere og tradisjonalister.",
+      "menu.bouliste": "Sfærisk geometri — flisene følger en planets krumning.\nEn mer oppslukende visning, men det buede rutenettet kan virke forvirrende i starten — vitenskap var aldri ment å være enkelt.",
+      "menu.confirm": "Bekreft og gå videre til neste steg.",
+      "menu.create": "Opprett et nytt flerspillerrom.\nEn unik kode genereres automatisk — del den med andre spillere slik at de kan bli med.",
+      "menu.join": "Bli med i et eksisterende rom med koden vist ovenfor.",
+      "menu.back": "Gå tilbake til hjemskjermen.",
+      "game.gridPercent": "Antall fliser plassert på rutenettet siden spillstart.\nHver plassering øker denne telleren, også i flerspillermodus.",
+      "game.lastScore": "Poeng opptjent ved siste plassering.\nInkluderer sonebonusen hvis flisen utvidet eller lukket en sammenhengende sone, pluss eventuelle oppdragsbonuser.",
+      "game.newGame": "Start et nytt spill.\nDet nåværende spillet forblir aktivt og spillbart — du kan gå tilbake til det når som helst fra menyen, ingen hard følelser.",
+      "game.abandonGame": "Avbryt det nåværende spillet.\nSpillet blir permanent avsluttet: du vil ikke kunne spille det igjen eller sende inn en ny poengsum. Velg med omhu — dette er endelig."
+    },
+    "missionHelp": {
+      "forest": "Plasser fliser med skog 🌲-sektorer.\nHver skogtrekant plassert på brettet fremmer dette oppdraget.\nTette soner gir flere poeng ved spillslutt — trærne setter pris på selskapet.",
+      "house": "Plasser fliser med landsby 🛖-sektorer.\nHver hustrekant plassert fremmer dette oppdraget.\nLandsbyer tilkoblet jernbanenettet er spesielt lønnsomme — beliggenhet, beliggenhet, beliggenhet.",
+      "rail": "Plasser fliser med skinner 🛤️.\nHver jernbanetrekant plassert fremmer dette oppdraget.\nSkinner alene gir ingenting uten en stasjon i hver ende — ambisjoner trenger en destinasjon.",
+      "water": "Plasser fliser med vann 💧-sektorer.\nHver vanntrekant plassert fremmer dette oppdraget.\nStore vannmasser kan huse båter.",
+      "grass": "Plasser fliser med eng 🌿-sektorer.\nHver engtrekant plassert fremmer dette oppdraget.\nStore sammenhengende engsoner gir en arealbonus.",
+      "field": "Plasser fliser med hvetemark 🌾-sektorer.\nHver åkertrekant plassert fremmer dette oppdraget.\nÅkre nær landsbyer eller elver gir bonuser — gode naboer lønner seg.",
+      "train": "Koble to stasjoner med sammenhengende skinner 🚂.\nHver nye fullførte toglinje fremmer dette oppdraget.\nJo lengre linjen er, jo høyere poengsum.",
+      "boat": "Skap vannmasser omringet av land ⛵.\nEn båt dukker automatisk opp på hver innsjø omringet av landfliser.\nHver ny båt fremmer dette oppdraget — ingen sjøsettingsseremoni nødvendig.",
+      "mill": "Bygg store hvetemarksoner ⚙️.\nEn mølle dukker automatisk opp i midten av hver tilstrekkelig store åkersone.\nHver ny mølle fremmer dette oppdraget."
+    },
+    "missionTitles": {
+      "forest": {
+        "one": "Dyrk en skog med {target} trær",
+        "other": "Dyrk en skog med {target} trær"
+      },
+      "house": {
+        "one": "Bygg en landsby med {target} hus",
+        "other": "Bygg en landsby med {target} hus"
+      },
+      "rail": {
+        "one": "Forleng en jernbane med {target} skinner",
+        "other": "Forleng en jernbane med {target} skinner"
+      },
+      "water": {
+        "one": "Koble en vannvei med {target} fliser",
+        "other": "Koble en vannvei med {target} fliser"
+      },
+      "grass": {
+        "one": "Utvid en eng med {target} fliser",
+        "other": "Utvid en eng med {target} fliser"
+      },
+      "field": {
+        "one": "Dyrk {target} hvetemarkfliser",
+        "other": "Dyrk {target} hvetemarkfliser"
+      },
+      "train": {
+        "one": "Kjør {target} tog",
+        "other": "Kjør {target} tog"
+      },
+      "boat": {
+        "one": "Sjøsett {target} båt",
+        "other": "Sjøsett {target} båter"
+      },
+      "mill": {
+        "one": "Driv {target} mølle",
+        "other": "Driv {target} møller"
+      }
+    },
+    "ui": {
+      "modals": {
+        "scoreEnd": {
+          "kicker": "Spillet er over — sluttresultat",
+          "save": "Lagre"
+        },
+        "abandon": {
+          "kicker": "Avbryte spillet?",
+          "sub": "Dette spillet kan ikke gjenopptas etterpå.",
+          "cancel": "AVBRYT",
+          "confirm": "FORLAT"
+        }
+      },
+      "hud": {
+        "player": "SPILLER",
+        "room": "ROM",
+        "abandon": "FORLAT",
+        "newGame": "NYTT SPILL",
+        "statsTitle": "SPILLSTATISTIKK",
+        "mills": "Møller",
+        "trains": "Tog",
+        "boats": "Båter",
+        "comets": "Kometer",
+        "total": "Totalt",
+        "grassMax": "Sammenhengende",
+        "fieldMax": "Sammenhengende",
+        "forestMax": "Sammenhengende",
+        "houseMax": "Sammenhengende",
+        "waterMax": "Sammenhengende",
+        "railMax": "Sammenhengende",
+        "biomes": {
+          "grass": "Eng",
+          "field": "Hvetemark",
+          "forest": "Skog",
+          "house": "Landsby",
+          "water": "Vann",
+          "rail": "Jernbane"
+        },
+        "activeTileTitle": "GJELDENDE FLIS",
+        "nextTileTitle": "NESTE FLIS",
+        "deckRemaining": "GJENVÆRENDE",
+        "tilesPlaced": "PLASSERT",
+        "missionsTitle": "AKTIVE OPPDRAG",
+        "noMission": "Ingen oppdrag",
+        "efficiencyLabel": "Effektivitet",
+        "scoreLabel": "Poengsum"
+      },
+      "help": {
+        "title": "Hjelp",
+        "closeAria": "Lukk hjelp",
+        "objective": {
+          "title": "Grunnregler",
+          "text": "Plasser sekskantede fliser, koble sammen matchende teksturer, og fullfør oppdrag. Hver godt tilpasset kant lønner seg; vann og skinner lønner seg enda mer — verden belønner dem som planlegger fremover, av og til.",
+          "points": {
+            "tile": "per plassert flis",
+            "edge": "per matchende kant mot en nabo-flis",
+            "waterRail": "per vann/vann- eller skinne/skinne-forbindelse",
+            "surround": "bonus når en flis er omringet på alle 6 sider",
+            "mission": "per fullført oppdrag",
+            "bonus": "hvis du plasserer en flis på en bonuscelle"
+          }
+        },
+        "placement": {
+          "title": "Plassering",
+          "items": [
+            "Spillet starter med 50 fliser.",
+            "Den første kan plasseres hvor som helst; senere fliser må berøre en plassert flis — ingen svevende landsbyer, beklager.",
+            "Spillet slutter når bunken er tom.",
+            "Det spillbare området utvides med hver plassering."
+          ]
+        },
+        "waterRail": {
+          "title": "Vann og skinner",
+          "text": "Vann og skinner er strenge nettverk og vanskeligere å plassere. Til gjengjeld gir hver riktige forbindelse flere poeng — høy risiko, høy gevinst, lav toleranse for blindveier.",
+          "water": "kobler bare til vann: +25",
+          "rail": "kobler bare til skinner: +25"
+        },
+        "bonusCells": {
+          "title": "Bonusceller",
+          "text": "Mellom 1 og 4 bonusceller genereres på rutenettet. De endrer ingen plasseringsregler: klarer du å plassere en flis på én, forsvinner den og gir umiddelbart +500 poeng. Det nærmeste dette spillet kommer gratis penger.",
+          "label": "valgfritt mål, ren poengsum, null risiko"
+        },
+        "blackCells": {
+          "title": "Svarte celler",
+          "text": "Svarte celler er spesielle fliser som allerede finnes på rutenettet. De fungerer som jokere: de fyller inn det som mangler rundt seg og godtar forbindelser med enhver tilstøtende tekstur — sekskantverdenens diplomater.",
+          "label": "regnes som kompatibel med enhver tilstøtende kant"
+        },
+        "textures": {
+          "title": "Teksturer og verdier",
+          "field": {
+            "label": "Hvetemark",
+            "code": "1-2 nek"
+          },
+          "forest": {
+            "label": "Skog",
+            "code": "1-6 trær"
+          },
+          "grass": {
+            "label": "Eng",
+            "code": "1"
+          },
+          "house": {
+            "label": "Landsby",
+            "code": "1-4 hus"
+          },
+          "water": {
+            "label": "Vann",
+            "code": "1"
+          },
+          "rail": {
+            "label": "Skinne",
+            "code": "1"
+          }
+        },
+        "missions": {
+          "title": "Oppdrag",
+          "text1": "Hver gang en ny gjeldende flis dukker opp, er det 20 % sjanse for at et oppdrag legges til. Det kan be om skog, landsby, jernbane, vannvei, eng, hvetemark, synlige tog, båter eller møller — verdens krav, levert tilfeldig.",
+          "text2": "Belønning: +100 poeng og +3 fliser. Målene fremgår etter type; et fullført oppdrag forblir synlig i 5 runder, og soler seg i sin egen glans. Faktiske verdier teller: eng/vann/skinne = 1; hvetemark = 1-2; hus = 1-4; skog = 1-6 trær. Møller ⚙️ teller antall aktive store åkersoner."
+        },
+        "controls": {
+          "title": "Kontroller",
+          "moveCamera": "Flytt kameraet",
+          "resetCamera": "Tilbakestill kameraet",
+          "zoom": "Zoom inn / ut",
+          "undo": "Angre siste trekk",
+          "toggleHelp": "Vis / skjul denne hjelpen",
+          "muteSound": "Demp / gjenopprett all lyd",
+          "muteVoice": "Demp / gjenopprett taleannonseringer",
+          "immersive": "Oppslukende modus",
+          "superImmersive": "Super-oppslukende modus",
+          "speedUp": "Øker bevegelses- og zoomhastighet",
+          "wheelZoomRotate": "Zoom eller roter hvis tilgjengelig",
+          "rightClick": "Roter kameraet",
+          "perfHud": "Vis / skjul FPS-HUD",
+          "eda": "Vis / skjul EDA-HUD",
+          "snapshot": "Ta et skjermbilde",
+          "gallery": "Åpne skjermbildegalleriet",
+          "replay": "Vis / skjul spillreprise-HUD",
+          "wheelKbd": "Hjul",
+          "leftClickKbd": "Venstreklikk",
+          "rightClickKbd": "Høyreklikk",
+          "spaceKbd": "MELLOMROM",
+          "shiftSpaceKbd": "SHIFT+MELLOMROM"
+        }
+      }
+    },
+    "highscore": {
+      "saving": "Lagrer...",
+      "saved": "Poengsum lagret! Går tilbake til menyen...",
+      "error": "Feil ved lagring av poengsum.",
+      "defaultName": "Spiller"
+    },
+    "multiplayerRooms": {
+      "modeCopy": "Opprett et nytt spill eller bli med i et eksisterende med en kode.",
+      "nameLabel": "Kallenavn",
+      "namePlaceholder": "Ditt kallenavn",
+      "codeLabel": "Spillkode",
+      "codePlaceholder": "f.eks. 377EA7",
+      "availableRoomsLabel": "Tilgjengelige spill / sikkerhetskopier",
+      "loadingRooms": "Laster inn spill...",
+      "btnCreate": "OPPRETT",
+      "btnJoin": "BLI MED",
+      "btnBack": "TILBAKE",
+      "selectExisting": "Velg et eksisterende spill",
+      "noRoomsFound": "Ingen spill funnet i /json/games",
+      "listUnavailable": "Liste utilgjengelig - PHP-server svarer ikke",
+      "roomsCount": {
+        "one": "{count} spill tilgjengelig / sikkerhetskopier",
+        "other": "{count} spill tilgjengelige / sikkerhetskopier"
+      },
+      "unknownDate": "ukjent dato",
+      "playerWord": {
+        "one": "spiller",
+        "other": "spillere"
+      },
+      "tileWord": {
+        "one": "flis",
+        "other": "fliser"
+      },
+      "creatingRoom": "Oppretter spill {code}...",
+      "missingCode": "Mangler spillkode.",
+      "joiningRoom": "Kobler til spill {code}...",
+      "roomNotFound": "Spill {code} funnet, men øyeblikksbilde mangler. Utdatert JSON avvist.",
+      "defaultNamePrefix": "Spiller"
+    },
+    "startupMenu": {
+      "nameChoice": {
+        "title": "Hva heter du?",
+        "label": "Fornavnet ditt (eller kallenavn)",
+        "placeholder": "f.eks. Alex",
+        "confirm": "FORTSETT →"
+      },
+      "home": {
+        "title": "Velg spillmodus: solo eller flerspiller.",
+        "solo": "SOLO",
+        "multi": "MULTI"
+      },
+      "worldShape": {
+        "title": "Velg planetens geometri:",
+        "flat": "FLAT",
+        "globe": "GLOBUS",
+        "note": "Vi anbefaler «<i>flat</i>» for å begynne. Du kan bytte fraksjon når som helst i spillet, for selv planeter har rett til en identitetskrise."
+      }
+    },
+    "preloader": {
+      "loading": "Kaller frem sekskanter…",
+      "loadingPct": "Kaller frem sekskanter… {pct} %",
+      "loadingCount": "{loaded} filer / {total} filer · {loadedMB} MB / {totalMB} MB — nesten der, sannsynligvis"
+    },
+    "placementOverlay": {
+      "ok": "OK",
+      "outOfGrid": "UTENFOR RUTENETTET",
+      "forbidden": "FORBUDT",
+      "incompatibleNetwork": "UFORENLIG NETTVERK",
+      "edgeTypes": {
+        "field": "åker",
+        "forest": "skog",
+        "water": "vann",
+        "rail": "jernbane",
+        "house": "hus",
+        "grass": "eng"
+      }
+    },
+    "multiplayerClient": {
+      "unreadableResponse": "Uleselig serverrespons ({status}): {text}",
+      "serverError": "Serverfeil {status}"
+    },
+    "kbdHint": "H eller ESC&nbsp;→ hjelp &nbsp;|&nbsp; M&nbsp;→ demp &nbsp;|&nbsp; T&nbsp;→ demp stemme &nbsp;|&nbsp; MELLOMROM&nbsp;→ oppslukende &nbsp;|&nbsp; SHIFT+MELLOMROM&nbsp;→ super-oppslukende",
+    "superImmersifExitHint": "MELLOMROM for å avslutte super-oppslukende modus",
+    "langName": "Norsk",
+    "tts": {
+      "pointsAnnounce": "{n} poeng!",
+      "voiceOn": "Stemme på",
+      "voiceOff": "Stemme av",
+      "newMission": "Nytt oppdrag: {title}",
+      "missionCompleted": "Godt jobbet! Oppdrag fullført! Verden nikker anerkjennende.",
+      "edaOpened": "Kunstretningsredigerer",
+      "helpOpened": "Hjelp",
+      "millsCount": "Du har {n} møller",
+      "trainsCount": "Du har {n} tog",
+      "boatsCount": "Du har {n} båter",
+      "cometsCount": "Du har {n} kometer",
+      "languageChanged": "Norsk språk",
+      "themeChanged": "Tema {theme}"
+    },
+    "fpsAdjectives": {
+      "disastrous": "Katastrofalt",
+      "bad": "Dårlig",
+      "mediocre": "Middelmådig",
+      "passable": "Akseptabelt",
+      "good": "Bra",
+      "splendid": "Strålende"
+    }
+  }
+}

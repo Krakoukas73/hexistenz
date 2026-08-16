@@ -24,7 +24,14 @@ function clampDensity(value) {
   return Math.min(MAX_DENSITY, Math.max(MIN_DENSITY, n));
 }
 
-let _density = MAX_DENSITY;
+// 2026-08-09 — densité par défaut au tout premier lancement (aucune valeur en
+// localStorage) : 0.20 (réglage "custom", ne correspond à aucun des 4 boutons
+// de préréglage faible/moyen/élevé/max), sur demande explicite — même logique
+// que la langue par défaut fr-CA (gameLangReactive.js::getGameLang()) et le
+// thème par défaut 'ancien' (themeManager.js::getTheme()). N'affecte que les
+// visiteurs sans préférence déjà enregistrée ; quiconque a déjà réglé le
+// slider garde son choix (lu depuis localStorage ci-dessous, jamais écrasé).
+let _density = 0.20;
 try {
   const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
   if (stored != null) _density = clampDensity(parseFloat(stored));

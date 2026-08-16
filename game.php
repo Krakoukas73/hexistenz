@@ -169,9 +169,10 @@ $defaultTheme = $isMobileUA ? 'bleu' : 'ancien';
     // Le HUD lui-même reste rendu en FR par PHP ; javascript/gameHudI18n.js
     // rattrape la traduction juste après si la langue sauvegardée n'est pas FR.
     (function() {
-      // 2026-07-31 — repli "fr-CA" (au lieu de "fr") au tout premier lancement,
-      // sur demande explicite (cf. gameLangReactive.js::getGameLang()).
-      var l = localStorage.getItem('hexistenz_pres_lang') || 'fr-CA';
+      // 2026-08-09 — repli "en" (anglais) au tout premier lancement, sur
+      // demande explicite — ERRATUM, remplace le repli "fr-CA" du 2026-07-31
+      // (cf. gameLangReactive.js::getGameLang()).
+      var l = localStorage.getItem('hexistenz_pres_lang') || 'en';
       document.documentElement.dataset.lang = l;
     })();
     // 2026-07-17 — restaure le thème graphique choisi dans la prez (même clé
